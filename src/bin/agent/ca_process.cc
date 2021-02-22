@@ -141,6 +141,14 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             (http_listeners_.back()->getLocalPort() != server_port)) {
             // Create a TLS context.
             TlsContextPtr tls_context;
+            // When TLS is enabled configure it.
+            if (!ctx->getCertFile().empty()) {
+                TlsContext::configure(tls_context,
+                                      ctx->getTrustAnchor(),
+                                      ctx->getCertFile(),
+                                      ctx->getKeyFile(),
+                                      ctx->getCertRequired());
+            }
 
             // Create response creator factory first. It will be used to
             // generate response creators. Each response creator will be
