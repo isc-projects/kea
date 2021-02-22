@@ -1,7 +1,18 @@
-1871.	[build]		razvan
+1872.	[build]		razvan
 	Library version numbers bumped for Kea 1.9.5 development
 	version.
 	(Gitlab #1713)
+
+1871.	[bug]		andrei
+	The cache threshold feature introduced in 1.9.4 modified
+	previously versioned schema 9.5. This caused problems for people
+	who had already upgraded to 9.5 which in Kea versions means 1.9.2
+	and 1.9.3.
+	In this change, the upgrade commands were moved to schema 9.6 and
+	are only applied if the database does not contain the required
+	columns. Affected Kea installments can now be upgraded to 1.9.5
+	and above seamlessly.
+	(Gitlab #1698)
 
 1870.	[bug]		razvan
 	Fixed a crash when using the Kea Legal Log Hooks Library with
