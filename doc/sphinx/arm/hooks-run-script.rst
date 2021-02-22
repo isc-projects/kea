@@ -33,6 +33,10 @@ the script (including next step) to be ignored.
 
 .. note::
 
+   The script inherits all privileges from the server which calls it.
+
+.. note::
+
    Currently the functionality underneath 'sync' parameter is not implemented
    and enabling synchronous calls to external script is not supported.
 

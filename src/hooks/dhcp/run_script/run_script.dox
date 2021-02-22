@@ -72,6 +72,9 @@ to wait synchronously for the script to finish execution.
 If the 'sync' parameter is false, then the script will be launched and Kea
 will not wait for the execution to finish, causing all the OUT parameters of
 the script (including next step) to be ignored.
+
+The script inherits all privileges from the server which calls it.
+
 Currently the functionality underneath 'sync' parameter is not implemented
 and enabling synchronous calls to external script is not supported.
 
