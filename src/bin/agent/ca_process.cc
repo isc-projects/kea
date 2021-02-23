@@ -144,6 +144,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // When TLS is enabled configure it.
             if (!ctx->getCertFile().empty()) {
                 TlsContext::configure(tls_context,
+                                      TlsRole::SERVER,
                                       ctx->getTrustAnchor(),
                                       ctx->getCertFile(),
                                       ctx->getKeyFile(),
