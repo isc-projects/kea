@@ -1,11 +1,11 @@
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
-SHTESTS += ca_process_tests.sh
+SHTESTS += ca_process_tests.sh #tls_ca_process_tests.sh
 
-noinst_SCRIPTS = ca_process_tests.sh
+noinst_SCRIPTS = ca_process_tests.sh tls_ca_process_tests.sh
 
-EXTRA_DIST  = ca_process_tests.sh.in
+EXTRA_DIST  = ca_process_tests.sh.in tls_ca_process_tests.sh.in
 EXTRA_DIST += testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -27,8 +27,9 @@ AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../agent_parser.yy\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES  = ca_process_tests.sh test_data_files_config.h
-DISTCLEANFILES += test_basic_auth_libraries.h test_callout_libraries.h
+DISTCLEANFILES  = ca_process_tests.sh tls_ca_process_tests.sh
+DISTCLEANFILES += test_data_files_config.h test_basic_auth_libraries.h
+DISTCLEANFILES += test_callout_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
