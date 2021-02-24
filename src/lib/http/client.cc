@@ -1438,6 +1438,10 @@ HttpClient::asyncSendRequest(const Url& url,
         isc_throw(HttpClientError, "invalid URL specified for the HTTP client");
     }
 
+    if ((url.getScheme() == Url::Scheme::HTTPS) && !context) {
+        isc_throw(HttpClientError, "HTTPS URL scheme but no TLS context");
+    }
+
     if (!request) {
         isc_throw(HttpClientError, "HTTP request must not be null");
     }
