@@ -30,6 +30,52 @@ TEST_CA_DIR="@abs_top_builddir@/src/lib/asiolink/testutils/ca"
 
 # Control Agent configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
+
+# Configuration without TLS.
+CONFIG_NONE="{
+    \"Control-agent\":
+    {
+        \"http-host\": \"127.0.0.1\",
+        \"http-port\": 8443,
+        \"loggers\": [
+        {
+            \"name\": \"kea-ctrl-agent\",
+            \"output_options\": [
+                {
+                    \"output\": \"${LOG_FILE}\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# Configuration without mutual authentication i.e. only channel protection.
+CONFIG_NOCR="{
+    \"Control-agent\":
+    {
+        \"http-host\": \"127.0.0.1\",
+        \"http-port\": 8443,
+        \"trust-anchor\": \"${TEST_CA_DIR}/kea-ca.crt\",
+        \"cert-file\": \"${TEST_CA_DIR}/kea-server-addr.crt\",
+        \"key-file\": \"${TEST_CA_DIR}/kea-server.key\",
+        \"cert-required\": false,
+        \"loggers\": [
+        {
+            \"name\": \"kea-ctrl-agent\",
+            \"output_options\": [
+                {
+                    \"output\": \"${LOG_FILE}\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# Configuration with mutual authentication.
 CONFIG="{
     \"Control-agent\":
     {
@@ -38,6 +84,7 @@ CONFIG="{
         \"trust-anchor\": \"${TEST_CA_DIR}/kea-ca.crt\",
         \"cert-file\": \"${TEST_CA_DIR}/kea-server-addr.crt\",
         \"key-file\": \"${TEST_CA_DIR}/kea-server.key\",
+        \"cert-required\": true,
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
@@ -69,7 +116,8 @@ tmpfile_path="@abs_top_builddir@/src/bin/agent/tests"
 list_commands_test() {
     local test_name="${1}"
     local config="${2}"
-    local expected_response="${3}"
+    local arguments="${3}"
+    local expected_response="${4}"
 
     # Setup phase: start CA.
 
@@ -116,13 +164,11 @@ list_commands_test() {
 
     # Main test phase: send command, check response.
     tmp="echo | ${shell_bin_path}/${shell_bin} --port 8443 \
- --ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt \
- --key ${TEST_CA_DIR}/kea-client.key > ${tmpfile_path}/shell-stdout.txt"
+    ${arguments} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
 
     echo | ${shell_bin_path}/${shell_bin} --port 8443 \
- --ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt \
- --key ${TEST_CA_DIR}/kea-client.key > ${tmpfile_path}/shell-stdout.txt
+    ${arguments} > ${tmpfile_path}/shell-stdout.txt
     EXIT_CODE=$?
 
     # Check the exit code
@@ -172,4 +218,11 @@ list_commands_test() {
     test_finish 0
 }
 
-list_commands_test "list-commands" "${CONFIG}" "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+list_commands_test "No TLS" "${CONFIG_NONE}" "" \
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+list_commands_test "Encrypted" "${CONFIG_NOCR}" \
+"--ca ${TEST_CA_DIR}/kea-ca.crt" \
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+list_commands_test "Authenticated" "${CONFIG}" \
+"--ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt --key ${TEST_CA_DIR}/kea-client.key" \
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
