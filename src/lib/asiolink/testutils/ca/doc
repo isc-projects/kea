@@ -1,0 +1,81 @@
+Similar to doc/examples/https/nginx/kea-nginx.conf
+ password is keatest
+ Country Name is US
+ Organization Name is ISC Inc.
+ Common Name is the key name.
+
+1 - create a CA self signed certificate (password is keatest)
+ openssl genrsa -aes128 -out kea-ca.key 4096
+ openssl req -new -x509 -days 3650 -key kea-ca.key -out kea-ca.crt
+
+2 - create a key for the client and decipher it
+ openssl genrsa -aes128 -out kea-client-aes.key 2048
+ openssl rsa -in kea-client-aes.key -out kea-client.key
+ rm kea-client-aes.key
+
+3 - create a certificate for the client
+ openssl req -new -key kea-client.key -out kea-client.csr
+ openssl x509 -req -days 3650 -in kea-client.csr -CA kea-ca.crt \
+  -CAkey kea-ca.key -set_serial 10 -out kea-client.crt -sha256
+
+4 - create a PKCS#12 bundle on macOS (password is keatest)
+ openssl pkcs12 -in kea-client.crt -inkey kea-client.key -export \
+  -out kea-client.p12
+
+5 - create a key for the server and decipher it (same than 2)
+ openssl genrsa -aes128 -out kea-server-aes.key 2048
+ openssl rsa -in kea-server-aes.key -out kea-server.key
+ rm kea-server-aes.key
+
+6 - create a certificate with a subject alternate name set to localhost
+ for the server
+ openssl req -new -key kea-server.key -out kea-server.csr \
+  -config server-conf.cnf
+ openssl x509 -req -days 3650 -in kea-server.csr -CA kea-ca.crt \
+  -CAkey kea-ca.key -set_serial 20 -out kea-server.crt \
+  -extfile ext-conf.cnf -sha256
+
+7 - create a certificate with a subject alternate name set to 127.0.0.1
+ and ::1 for the server
+ openssl req -new -key kea-server.key -out kea-server-addr.csr \
+  -config server-addr-conf.cnf
+ openssl x509 -req -days 3650 -in kea-server-addr.csr -CA kea-ca.crt \
+  -CAkey kea-ca.key -set_serial 30 -out kea-server-addr.crt \
+  -extfile ext-addr-conf.cnf -sha256
+
+8 - use c_rehash or openssl rehash to create hashes
+
+Setup the control agent: kea-ctrl-agent.json sample.
+
+Using curl.
+Note the localhost is important: using 127.0.0.1 instead can make the
+subjectAltName check to fail. curl is also picky about http vs https.
+
+to send a command (e.g. list-commands) directly to the control agent
+listening at port 8000:
+
+curl -D - -X POST -H Content-Type:application/json \
+ -d '{ "command": "list-commands" }' http://localhost:8000
+
+With the CA only (so authenticating the server only):
+curl -D - -X POST -H Content-Type:application/json --cacert kea-ca.crt \
+ -d '{ "command": "list-commands" }' https://localhost:8443
+
+With mutual authentication using OpenSSL:
+curl -D - -X POST -H Content-Type:application/json \
+ --cacert kea-ca.crt --cert kea-client.crt --key kea-client.key \
+
+With the mutual authentication on macOS (when the OpenSSL one fails):
+curl -D - -X POST -H Content-Type:application/json \
+ --cacert kea-ca.crt --cert kea-client.p12:keatest --cert-type P12 \
+ -d '{ "command": "list-commands" }' https://localhost:8443
+
+To the control agent:
+echo | kea-shell
+
+With server authentication only:
+echo | kea-shell --ca kea-ca.crt --port 8443 --host localhost
+
+With the mutual authentication:
+echo | kea-shell --ca kea-ca.crt --port 8443 --host localhost \
+ --cert kea-client.crt --key kea-client.key
