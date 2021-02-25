@@ -9,8 +9,6 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/crypto_tls.h>
-#include <asiolink/botan_tls.h>
-#include <asiolink/openssl_tls.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/testutils/test_tls.h>
 #include <testutils/gtest_utils.h>

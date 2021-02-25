@@ -10,7 +10,6 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/crypto_tls.h>
-#include <asiolink/openssl_tls.h>
 
 #include <sys/stat.h>
 

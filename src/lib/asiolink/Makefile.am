@@ -17,6 +17,8 @@ libkea_asiolink_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += asio_wrapper.h
 libkea_asiolink_la_SOURCES += addr_utilities.cc addr_utilities.h
+libkea_asiolink_la_SOURCES += botan_tls.h
+libkea_asiolink_la_SOURCES += common_tls.h
 libkea_asiolink_la_SOURCES += crypto_tls.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
 libkea_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
@@ -28,6 +30,7 @@ libkea_asiolink_la_SOURCES += io_error.h
 libkea_asiolink_la_SOURCES += io_service.h io_service.cc
 libkea_asiolink_la_SOURCES += io_service_signal.cc io_service_signal.h
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
+libkea_asiolink_la_SOURCES += openssl_tls.h
 libkea_asiolink_la_SOURCES += process_spawn.h process_spawn.cc
 libkea_asiolink_la_SOURCES += tcp_acceptor.h
 libkea_asiolink_la_SOURCES += tcp_endpoint.h
@@ -41,10 +44,10 @@ libkea_asiolink_la_SOURCES += unix_domain_socket_acceptor.h
 libkea_asiolink_la_SOURCES += unix_domain_socket_endpoint.h
 
 if HAVE_BOTAN
-#libkea_asiolink_la_SOURCES += botan_tls.cc botan_tls.h
+#libkea_asiolink_la_SOURCES += botan_tls.cc
 endif
 if HAVE_OPENSSL
-libkea_asiolink_la_SOURCES += openssl_tls.cc openssl_tls.h
+libkea_asiolink_la_SOURCES += openssl_tls.cc
 endif
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
@@ -60,6 +63,8 @@ libkea_asiolink_include_HEADERS = \
 	addr_utilities.h \
 	asio_wrapper.h \
 	asiolink.h \
+	botan_tls.h \
+	common_tls.h \
 	crypto_tls.h \
 	dummy_io_cb.h \
 	interval_timer.h \
@@ -71,6 +76,7 @@ libkea_asiolink_include_HEADERS = \
 	io_service.h \
 	io_service_signal.h \
 	io_socket.h \
+	openssl_tls.h \
 	process_spawn.h \
 	tcp_acceptor.h \
 	tcp_endpoint.h \

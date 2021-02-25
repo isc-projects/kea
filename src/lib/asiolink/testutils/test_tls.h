@@ -12,8 +12,6 @@
 #endif
 
 #include <asiolink/crypto_tls.h>
-#include <asiolink/botan_tls.h>
-#include <asiolink/openssl_tls.h>
 
 #include <string>
 
