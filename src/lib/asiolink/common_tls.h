@@ -144,7 +144,7 @@ public:
     /// @note Do not forget to free it when no longer used.
     virtual TlsCertificate* getPeerCert() = 0;
 
-    /// @break Return the commonName part of the subjectName of
+    /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
@@ -152,7 +152,7 @@ public:
     /// @return The commonName part of the subjectName or the empty string.
     virtual std::string getSubject() = 0;
 
-    /// @break Return the commonName part of the issuerName of
+    /// @brief Return the commonName part of the issuerName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.

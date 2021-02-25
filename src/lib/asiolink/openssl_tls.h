@@ -109,9 +109,9 @@ typedef ::X509 TlsCertificate;
 /// @brief TlsStreamBase constructor.
 /// @brief TLS stream base class.
 ///
-/// @param Callback The type of callbacks.
-/// @param TlsStreamImpl The type of underlying TLS streams.
-/// @param TlsCertificate The type of X509 certificates.
+/// @tparam Callback The type of callbacks.
+/// @tparam TlsStreamImpl The type of underlying TLS streams.
+/// @tparam TlsCertificate The type of X509 certificates.
 template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
 TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
@@ -121,7 +121,7 @@ TlsStreamBase(IOService& service, TlsContextPtr context)
 
 /// @brief OpenSSL TLS stream.
 ///
-/// @param callback The callback.
+/// @tparam callback The callback.
 template <typename Callback>
 class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate> {
 public:
@@ -173,7 +173,7 @@ public:
         return (::SSL_get_peer_certificate(this->native_handle()));
     }
 
-    /// @break Return the commonName part of the subjectName of
+    /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
@@ -203,7 +203,7 @@ public:
         return (ret);
     }
 
-    /// @break Return the commonName part of the issuerName of
+    /// @brief Return the commonName part of the issuerName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
