@@ -236,12 +236,28 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 /// @brief The type of X509 certificates.
 typedef ::X509 TlsCertificate;
 
+/// @brief TlsStreamBase constructor.
+/// @brief TLS stream base class.
+///
+/// @param Callback The type of callbacks.
+/// @param TlsStreamImpl The type of underlying TLS streams.
+/// @param TlsCertificate The type of X509 certificates.
+template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
+TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate>::
+TlsStreamBase(IOService& service, TlsContextPtr context)
+    : TlsStreamImpl(service.get_io_service(), context->getContext()),
+      role_(context->getRole()) {
+}
+
 /// @brief OpenSSL TLS stream.
 ///
 /// @param callback The callback.
 template <typename Callback>
-class TlsStream : public TlsStreamImpl {
+class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate> {
 public:
+
+    /// @brief Type of the base.
+    typedef TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate> Base;
 
     /// @brief Constructor.
     ///
@@ -256,20 +272,15 @@ public:
     /// @brief Destructor.
     virtual ~TlsStream() { }
 
-    /// @brief Returns the role.
-    TlsRole getRole() const {
-        return (role_);
-    }
-
     /// @brief TLS Handshake.
     ///
     /// @param callback Callback object.
     virtual void handshake(Callback& callback) {
         using namespace boost::asio::ssl;
-        if (role_ == SERVER) {
-            async_handshake(stream_base::server, callback);
+        if (Base::getRole() == SERVER) {
+            Base::async_handshake(stream_base::server, callback);
         } else {
-            async_handshake(stream_base::client, callback);
+            Base::async_handshake(stream_base::client, callback);
         }
     }
 
@@ -277,7 +288,7 @@ public:
     ///
     /// @param callback Callback object.
     virtual void shutdown(Callback& callback) {
-        async_shutdown(callback);
+        Base::async_shutdown(callback);
     }
 
     /// @brief Clear the SSL object.
@@ -293,16 +304,13 @@ public:
         return (::SSL_get_peer_certificate(this->native_handle()));
     }
 
-    /// @brief The role i.e. client or server.
-    TlsRole role_;
-
     /// @break Return the commonName part of the subjectName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
     ///
     /// @return The commonName part of the subjectName or the empty string.
-    std::string getSubject() {
+    virtual std::string getSubject() {
         TlsCertificate* cert = getPeerCert();
         if (!cert) {
             return ("");
@@ -332,7 +340,7 @@ public:
     /// First commonName when there are more than one, in UTF-8.
     ///
     /// @return The commonName part of the issuerName or the empty string.
-    std::string getIssuer() {
+    virtual std::string getIssuer() {
         TlsCertificate* cert = getPeerCert();
         if (!cert) {
             return ("");

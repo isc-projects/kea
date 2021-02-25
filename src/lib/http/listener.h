@@ -10,8 +10,6 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/crypto_tls.h>
-#include <asiolink/openssl_tls.h>
-#include <asiolink/botan_tls.h>
 #include <exceptions/exceptions.h>
 #include <http/response_creator_factory.h>
 #include <boost/shared_ptr.hpp>
