@@ -182,6 +182,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
         AC_COMPILE_IFELSE(
                 [AC_LANG_PROGRAM(
                         [#include <thread>
+                         #include <memory>
                          std::shared_ptr<std::thread> th;],
                         [th.reset(new std::thread([[]]() { return; }));
                          th->join();])],
