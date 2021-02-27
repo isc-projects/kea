@@ -8,7 +8,7 @@
 
 #include <database/backend_selector.h>
 #include <exceptions/exceptions.h>
-#include <climits>
+#include <limits>
 #include <sstream>
 
 using namespace isc::data;
