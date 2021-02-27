@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <stdint.h>
 #include <typeinfo>
+#include <limits>
 
 namespace isc {
 namespace dhcp {
