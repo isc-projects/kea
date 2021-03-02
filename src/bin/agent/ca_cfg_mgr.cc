@@ -29,6 +29,8 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
+      trust_anchor_(orig.trust_anchor_), cert_file_(orig.cert_file_),
+      key_file_(orig.key_file_), cert_required_(orig.cert_required_),
       hooks_config_(orig.hooks_config_), auth_config_(orig.auth_config_) {
 }
 
