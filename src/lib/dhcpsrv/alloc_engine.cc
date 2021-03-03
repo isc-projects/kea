@@ -1959,6 +1959,8 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
         // Is this solicit (fake = true) or request (fake = false)
         ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
+
+        // The lease that will be assigned to a client
         ctx.callout_handle_->setArgument("lease6", lease);
 
         // This is the first callout, so no need to clear any arguments
@@ -4167,8 +4169,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         ctx.callout_handle_->setArgument("subnet4", subnet4);
 
         // Is this solicit (fake = true) or request (fake = false)
-        ctx.callout_handle_->setArgument("fake_allocation",
-                                         ctx.fake_allocation_);
+        ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
 
         // The lease that will be assigned to a client
         ctx.callout_handle_->setArgument("lease4", expired);

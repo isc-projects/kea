@@ -1441,11 +1441,11 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
         // hook library.
         ScopedEnableOptionsCopy<Pkt4> query_resp_options_copy(query, rsp);
 
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query4", query);
+
         // Set our response
         callout_handle->setArgument("response4", rsp);
-
-        // Also pass the corresponding query packet as argument
-        callout_handle->setArgument("query4", query);
 
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_pkt4_send_,
