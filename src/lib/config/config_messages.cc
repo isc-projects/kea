@@ -10,6 +10,9 @@ namespace config {
 extern const isc::log::MessageID COMMAND_ACCEPTOR_START = "COMMAND_ACCEPTOR_START";
 extern const isc::log::MessageID COMMAND_DEREGISTERED = "COMMAND_DEREGISTERED";
 extern const isc::log::MessageID COMMAND_EXTENDED_REGISTERED = "COMMAND_EXTENDED_REGISTERED";
+extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STARTED = "COMMAND_HTTP_LISTENER_STARTED";
+extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPED = "COMMAND_HTTP_LISTENER_STOPPED";
+extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPING = "COMMAND_HTTP_LISTENER_STOPPING";
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR1 = "COMMAND_PROCESS_ERROR1";
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR2 = "COMMAND_PROCESS_ERROR2";
 extern const isc::log::MessageID COMMAND_RECEIVED = "COMMAND_RECEIVED";
@@ -40,6 +43,9 @@ const char* values[] = {
     "COMMAND_ACCEPTOR_START", "Starting to accept connections via unix domain socket bound to %1",
     "COMMAND_DEREGISTERED", "Command %1 deregistered",
     "COMMAND_EXTENDED_REGISTERED", "Command %1 registered",
+    "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on %2:%3",
+    "COMMAND_HTTP_LISTENER_STOPPED", "Command HTTP listener for %1:%2 stopped.",
+    "COMMAND_HTTP_LISTENER_STOPPING", "Stopping Command HTTP listener for %1:%2",
     "COMMAND_PROCESS_ERROR1", "Error while processing command: %1",
     "COMMAND_PROCESS_ERROR2", "Error while processing command: %1",
     "COMMAND_RECEIVED", "Received command '%1'",

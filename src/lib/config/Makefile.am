@@ -14,8 +14,12 @@ libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 libkea_cfgclient_la_SOURCES += config_messages.h config_messages.cc
 libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
 libkea_cfgclient_la_SOURCES += timeouts.h
+libkea_cfgclient_la_SOURCES += cmd_http_listener.cc cmd_http_listener.h
+libkea_cfgclient_la_SOURCES += cmd_response_creator.cc cmd_response_creator.h
+libkea_cfgclient_la_SOURCES += cmd_response_creator_factory.h
 
-libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/http/libkea-http.la
+libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

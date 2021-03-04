@@ -1,0 +1,118 @@
+// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
+#include <asiolink/io_service.h>
+#include <cmd_http_listener.h>
+#include <cmd_response_creator_factory.h>
+#include <config_log.h>
+#include <config/timeouts.h>
+
+#include <boost/pointer_cast.hpp>
+
+using namespace isc::asiolink;
+using namespace isc::config;
+using namespace isc::data;
+using namespace isc::http;
+
+namespace isc {
+namespace config {
+
+CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
+                                 const uint16_t thread_pool_size /* = 1 */)
+    : address_(address), port_(port), http_listener_(), thread_pool_size_(thread_pool_size), threads_() {
+}
+
+CmdHttpListener::~CmdHttpListener() {
+    stop();
+}
+
+void
+CmdHttpListener::start() {
+    if (isListening()) {
+        isc_throw(InvalidOperation, "CmdHttpListener is already listening!");
+    }
+
+    try {
+        // Create a new IOService.
+        io_service_.reset(new IOService());
+
+        // Create the response creator factory first. It will be used to
+        // generate response creators. Each response creator will be
+        // used to generate the answer to specific request.
+        HttpResponseCreatorFactoryPtr rcf(new CmdResponseCreatorFactory());
+
+        // Create the HTTP listener. It will open up a TCP socket and be
+        // prepared to accept incoming connections.
+        http_listener_.reset(new HttpListener(*io_service_, address_, port_, rcf,
+                                              HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
+                                              HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
+
+        // Create a pool of threads, each calls run on our IOService_service instance.
+        for (std::size_t i = 0; i < thread_pool_size_; ++i)
+        {
+            boost::shared_ptr<std::thread> thread(new std::thread(
+                std::bind(&IOService::run, io_service_)));
+            threads_.push_back(thread);
+        }
+
+        // Instruct the HTTP listener to actually open socket, install
+        // callback and start listening.
+        http_listener_->start();
+
+        // OK, seems like we're good to go.
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STARTED)
+                  .arg(thread_pool_size_)
+                  .arg(address_)
+                  .arg(port_);
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "CmdHttpListener::run failed:" << ex.what());
+    }
+}
+
+void
+CmdHttpListener::stop() {
+    // Nothing to do.
+    if (!io_service_) {
+        return;
+    }
+
+    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STOPPING)
+              .arg(address_)
+              .arg(port_);
+
+    // Stop the IOService first.
+    io_service_->stop();
+
+    // Stop the threads next.
+    for (std::size_t i = 0; i < threads_.size(); ++i) {
+            threads_[i]->join();
+    }
+
+    threads_.clear();
+
+    // Get rid of the listener.
+    http_listener_.reset();
+
+    // Ditch the IOService.
+    io_service_.reset();
+
+    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STOPPED)
+              .arg(address_)
+              .arg(port_);
+}
+
+bool
+CmdHttpListener::isListening() const {
+    // If we have a listener we're listening.
+    return (http_listener_ != 0);
+}
+
+} // namespace isc::config
+} // namespace isc

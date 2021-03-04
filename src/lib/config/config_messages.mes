@@ -122,3 +122,19 @@ This error message is issued when the command manager was unable to set
 ready status after scheduling asynchronous send. This is programmatic error
 that should be reported. The command manager may or may not continue
 to operate correctly.
+
+% COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3
+This debug messages is issued when an HTTP listener has been started to
+accept connections from Command API clients through which commands can be
+received and responses sent.  Arguments detail the number of threads
+that the listener is using, and the address and port at which it
+is listening.
+
+% COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for %1:%2
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has begun to shutdown.
+
+% COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for %1:%2 stopped.
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has completed shutdown.
+
