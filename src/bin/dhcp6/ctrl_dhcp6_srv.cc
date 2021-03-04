@@ -1255,16 +1255,18 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
-    // Disable service until the connection is recovered.
-    network_state_->disableService(NetworkState::Origin::DB_CONNECTION);
-
-    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
-
     if (!db_reconnect_ctl) {
         // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
         return (false);
     }
+
+    // Disable service until the connection is recovered.
+    if (db_reconnect_ctl->retriesLeft() == db_reconnect_ctl->maxRetries()) {
+        network_state_->disableService(NetworkState::Origin::DB_CONNECTION);
+    }
+
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
 
     // If reconnect isn't enabled log it, initiate a shutdown and return false.
     if (!db_reconnect_ctl->retriesLeft() ||
