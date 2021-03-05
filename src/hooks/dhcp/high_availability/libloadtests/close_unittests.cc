@@ -114,7 +114,9 @@ public:
     }
 
     /// @brief Return HA configuration with three servers in JSON format.
-    ConstElementPtr createValidJsonConfiguration() const;
+    ///
+    /// @param backup Flag to set this server as backup server.
+    ConstElementPtr createValidJsonConfiguration(bool backup = false) const;
 
     /// @brief Run parters.
     ///
@@ -127,11 +129,12 @@ public:
 };
 
 ConstElementPtr
-CloseHATest::createValidJsonConfiguration() const {
-    std::string config_text =
+CloseHATest::createValidJsonConfiguration(bool backup) const {
+    std::ostringstream config_text;
+    config_text <<
         "["
         "     {"
-        "         \"this-server-name\": \"server1\","
+        "         \"this-server-name\": \"" << (!backup ? "server1" : "server2") << "\","
         "         \"mode\": \"passive-backup\","
         "         \"wait-backup-ack\": true,"
         "         \"peers\": ["
@@ -154,7 +157,7 @@ CloseHATest::createValidJsonConfiguration() const {
         "     }"
         "]";
 
-    return (Element::fromJSON(config_text));
+    return (Element::fromJSON(config_text.str()));
 }
 
 void
@@ -340,6 +343,11 @@ TEST_F(CloseHATest, close4) {
     leases->push_back(lease);
     Lease4CollectionPtr deleted_leases(new Lease4Collection());
 
+    // Check that the disabled state is reset on dhcp4_srv_configured.
+    ASSERT_TRUE(network_state->isServiceEnabled());
+    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
     // Start HA service.
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp4_srv_configured_));
     {
@@ -349,6 +357,8 @@ TEST_F(CloseHATest, close4) {
         HooksManager::callCallouts(testHooks.hook_index_dhcp4_srv_configured_,
                                    *handle);
     }
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
 
     // Pretend to be the parter.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp4");
@@ -370,6 +380,8 @@ TEST_F(CloseHATest, close4) {
     ASSERT_TRUE(state);
     ASSERT_EQ(Element::string, state->getType());
     EXPECT_EQ("passive-backup", state->stringValue());
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
 
     // Submit packet.
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_buffer4_receive_));
@@ -422,6 +434,88 @@ TEST_F(CloseHATest, close4) {
     EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
     EXPECT_TRUE(HooksManager::unloadLibraries());
 
+    ASSERT_TRUE(network_state->isServiceEnabled());
+
+    // Stop partners.
+    wthread_->stop();
+}
+
+// Test that checks the library can be close in a DHCPv4 server.
+TEST_F(CloseHATest, close4Backup) {
+    // Start partners.
+    wthread_.reset(new WatchedThread());
+    wthread_->start([this] () { runPartners(); });
+
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration(true));
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
+    // Load the library.
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    ASSERT_TRUE(HooksManager::loadLibraries(libraries));
+
+    // Prepare objects.
+    IOServicePtr io_service(new IOService());
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+
+    // Check that the disabled state is reset on dhcp4_srv_configured.
+    ASSERT_TRUE(network_state->isServiceEnabled());
+    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Start HA service.
+    EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp4_srv_configured_));
+    {
+        CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+        handle->setArgument("io_context", io_service);
+        handle->setArgument("network_state", network_state);
+        HooksManager::callCallouts(testHooks.hook_index_dhcp4_srv_configured_,
+                                   *handle);
+    }
+
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Pretend to be the parter.
+    ConstElementPtr command = createCommand("ha-heartbeat", "dhcp4");
+    ConstElementPtr response;
+    EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
+    {
+        CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+        handle->setArgument("command", command);
+        handle->setArgument("response", response);
+        HooksManager::callCommandHandlers("ha-heartbeat", *handle);
+        handle->getArgument("response", response);
+    }
+    int code = 0;
+    ConstElementPtr arguments = parseAnswer(code, response);
+    EXPECT_EQ(0, code);
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+    ConstElementPtr state = arguments->get("state");
+    ASSERT_TRUE(state);
+    ASSERT_EQ(Element::string, state->getType());
+    EXPECT_EQ("backup", state->stringValue());
+
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Done: purge I/Os.
+    io_service->poll();
+    io_service->stop();
+    io_service.reset();
+
+    EXPECT_TRUE(HooksManager::unloadLibraries());
+
+    // Tell the HA to cleanup first.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    EXPECT_TRUE(HooksManager::unloadLibraries());
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
+
     // Stop partners.
     wthread_->stop();
 }
@@ -463,6 +557,11 @@ TEST_F(CloseHATest, close6) {
     leases->push_back(lease);
     Lease6CollectionPtr deleted_leases(new Lease6Collection());
 
+    // Check that the disabled state is reset on dhcp6_srv_configured.
+    ASSERT_TRUE(network_state->isServiceEnabled());
+    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
     // Start HA service.
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp6_srv_configured_));
     {
@@ -472,6 +571,8 @@ TEST_F(CloseHATest, close6) {
         HooksManager::callCallouts(testHooks.hook_index_dhcp6_srv_configured_,
                                    *handle);
     }
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
 
     // Pretend to be the parter.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp6");
@@ -493,6 +594,8 @@ TEST_F(CloseHATest, close6) {
     ASSERT_TRUE(state);
     ASSERT_EQ(Element::string, state->getType());
     EXPECT_EQ("passive-backup", state->stringValue());
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
 
     // Submit packet.
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_buffer6_receive_));
@@ -544,6 +647,88 @@ TEST_F(CloseHATest, close6) {
     // Tell the HA to cleanup first.
     EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
     EXPECT_TRUE(HooksManager::unloadLibraries());
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
+
+    // Stop partners.
+    wthread_->stop();
+}
+
+// Test that checks the library can be close in a DHCPv6 server.
+TEST_F(CloseHATest, close6Backup) {
+    // Start partners.
+    wthread_.reset(new WatchedThread());
+    wthread_->start([this] () { runPartners(); });
+
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration(true));
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp6");
+
+    // Load the library.
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    ASSERT_TRUE(HooksManager::loadLibraries(libraries));
+
+    // Prepare objects.
+    IOServicePtr io_service(new IOService());
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+
+    // Check that the disabled state is reset on dhcp6_srv_configured.
+    ASSERT_TRUE(network_state->isServiceEnabled());
+    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Start HA service.
+    EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp6_srv_configured_));
+    {
+        CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+        handle->setArgument("io_context", io_service);
+        handle->setArgument("network_state", network_state);
+        HooksManager::callCallouts(testHooks.hook_index_dhcp6_srv_configured_,
+                                   *handle);
+    }
+
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Pretend to be the parter.
+    ConstElementPtr command = createCommand("ha-heartbeat", "dhcp6");
+    ConstElementPtr response;
+    EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
+    {
+        CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+        handle->setArgument("command", command);
+        handle->setArgument("response", response);
+        HooksManager::callCommandHandlers("ha-heartbeat", *handle);
+        handle->getArgument("response", response);
+    }
+    int code = 0;
+    ConstElementPtr arguments = parseAnswer(code, response);
+    EXPECT_EQ(0, code);
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+    ConstElementPtr state = arguments->get("state");
+    ASSERT_TRUE(state);
+    ASSERT_EQ(Element::string, state->getType());
+    EXPECT_EQ("backup", state->stringValue());
+
+    ASSERT_FALSE(network_state->isServiceEnabled());
+
+    // Done: purge I/Os.
+    io_service->poll();
+    io_service->stop();
+    io_service.reset();
+
+    EXPECT_TRUE(HooksManager::unloadLibraries());
+
+    // Tell the HA to cleanup first.
+    EXPECT_NO_THROW(HooksManager::prepareUnloadLibraries());
+    EXPECT_TRUE(HooksManager::unloadLibraries());
+
+    ASSERT_TRUE(network_state->isServiceEnabled());
 
     // Stop partners.
     wthread_->stop();

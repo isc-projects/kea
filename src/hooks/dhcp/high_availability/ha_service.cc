@@ -63,11 +63,17 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
         communication_state_.reset(new CommunicationState6(io_service_, config));
     }
 
+    network_state_->reset(NetworkState::Origin::HA_COMMAND);
+
     startModel(HA_WAITING_ST);
 
     LOG_INFO(ha_logger, HA_SERVICE_STARTED)
         .arg(HAConfig::HAModeToString(config->getHAMode()))
         .arg(HAConfig::PeerConfig::roleToString(config->getThisServerConfig()->getRole()));
+}
+
+HaService::~HaService() {
+    network_state_->reset(NetworkState::Origin::HA_COMMAND);
 }
 
 void
@@ -841,8 +847,6 @@ HAService::verboseTransition(const unsigned state) {
             .arg(current_state_name)
             .arg(new_state_name);
     }
-
-
 
     // If we're transitioning directly from the "waiting" to "ready"
     // state it indicates that the database synchronization is
@@ -2036,7 +2040,6 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 }
                             }
 
-
                         } catch (const std::exception& ex) {
                             LOG_WARN(ha_logger, HA_LEASE_SYNC_FAILED)
                                 .arg((*l)->str())
@@ -2514,7 +2517,6 @@ HAService::processMaintenanceStart() {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Server is now in the partner-down state as its"
                              " partner appears to be offline for maintenance."));
-
 
     } else if (captured_rcode == CONTROL_RESULT_SUCCESS) {
         // If the partner responded indicating no error it means that the

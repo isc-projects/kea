@@ -98,6 +98,9 @@ public:
               const HAConfigPtr& config,
               const HAServerType& server_type = HAServerType::DHCPv4);
 
+    /// @brief Destructor.
+    ~HAService();
+
     /// @brief Returns HA server type used in object construction.
     HAServerType getServerType() const {
         return (server_type_);
@@ -529,7 +532,6 @@ public:
                                  const dhcp::Lease4CollectionPtr& deleted_leases,
                                  const hooks::ParkingLotHandlePtr& parking_lot);
 
-
     /// @brief Schedules asynchronous IPv6 lease updates.
     ///
     /// This method schedules asynchronous IPv6 lease updates as a result of the
@@ -814,7 +816,6 @@ protected:
                                  const dhcp::LeasePtr& last_lease,
                                  PostSyncCallback post_sync_action,
                                  const bool dhcp_disabled);
-
 
 public:
 
