@@ -39,9 +39,11 @@ run_unittests_SOURCES += dummy_io_callback_unittest.cc
 run_unittests_SOURCES += tcp_acceptor_unittest.cc
 run_unittests_SOURCES += unix_domain_socket_unittest.cc
 run_unittests_SOURCES += process_spawn_unittest.cc
+if HAVE_OPENSSL
 run_unittests_SOURCES += tls_unittest.cc
 run_unittests_SOURCES += tls_acceptor_unittest.cc
 run_unittests_SOURCES += tls_socket_unittest.cc
+endif
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

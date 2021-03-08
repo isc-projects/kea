@@ -191,7 +191,7 @@ template <typename C> void
 UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
 
     // Ignore opens on already-open socket.  (Don't throw a failure because
-    // of uncertainties as to what precedes whan when using asynchronous I/O.)
+    // of uncertainties as to what precedes when using asynchronous I/O.)
     // It also allows us a treat a passed-in socket in exactly the same way as
     // a self-managed socket (in that we can call the open() and close() methods
     // of this class).

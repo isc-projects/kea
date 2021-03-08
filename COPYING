@@ -604,3 +604,8 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 The ext/coroutine code is externally maintained and distributed under
 the Boost Software License, Version 1.0.  (See its accompanying file
 LICENSE_1_0.txt.)
+
+Sample TLS clients and servers are used for tests and are included in
+src/lib/asiolink/testutils. The files are distributed under Boost
+Software license 1.0 and are used for testing only. They're not part
+of Kea installation.

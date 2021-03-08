@@ -30,6 +30,14 @@ namespace asiolink {
 /// @brief Client and server roles.
 enum TlsRole { CLIENT, SERVER };
 
+/// @brief Forward declaration of backend TLS context.
+class TlsContext;
+
+/// @brief The type of shared pointers to TlsContext objects.
+///
+/// @note Not clear we need shared pointers but they cover more use cases...
+typedef boost::shared_ptr<TlsContext> TlsContextPtr;
+
 /// @brief TLS context base class.
 class TlsContextBase : private boost::noncopyable {
 public:
@@ -47,6 +55,22 @@ public:
     }
 
     /// @note No need for a role set method.
+
+    /// @brief Configure.
+    ///
+    /// @param context The TLS context to configure.
+    /// @param role The TLS role client or server.
+    /// @param ca_file The certificate file or directory name.
+    /// @param cert_file The certificate file name.
+    /// @param key_file The private key file name.
+    /// @param cert_required True if peer certificates are required,
+    /// false if they are optional.
+    static void configure(TlsContextPtr& context,
+                          TlsRole role,
+                          const std::string& ca_file,
+                          const std::string& cert_file,
+                          const std::string& key_file,
+                          bool cert_required);
 
     /// @brief Set the peer certificate requirement mode.
     ///
@@ -81,7 +105,7 @@ public:
     /// file not found, bad format, etc.
     virtual void loadCertFile(const std::string& cert_file) = 0;
 
-    /// @brief Load the private key file name.
+    /// @brief Load the private key from a file.
     ///
     /// @param key_file The private key file name.
     /// @throw isc::cryptolink::LibraryError on various errors as
@@ -92,14 +116,6 @@ public:
     /// @brief The role i.e. client or server.
     TlsRole role_;
 };
-
-/// @brief Forward declaration of OpenSSL TLS context.
-class TlsContext;
-
-/// @brief The type of shared pointers to TlsContext objects.
-///
-/// @note Not clear we need shared pointers but they covers more use cases...
-typedef boost::shared_ptr<TlsContext> TlsContextPtr;
 
 /// @brief TLS stream base class.
 ///
@@ -136,6 +152,8 @@ public:
     virtual void shutdown(Callback& callback) = 0;
 
     /// @brief Clear the TLS state.
+    ///
+    /// @note For some unit tests only.
     virtual void clear() = 0;
 
     /// @brief Return the peer certificate.

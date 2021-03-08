@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+/// @file openssl_tls.cc OpenSSL implementation of the TLS API.
+
 #include <config.h>
 
 #ifdef WITH_OPENSSL
@@ -92,43 +94,6 @@ TlsContext::loadKeyFile(const std::string& key_file) {
     context_.use_private_key_file(key_file, context::file_format::pem, ec);
     if (ec) {
         isc_throw(LibraryError, ec.message());
-    }
-}
-
-namespace { // anonymous namespace
-
-// C++17 has this function but Kea is still C++11 so provide it.
-bool
-isDir(const std::string& name) {
-    struct stat stats;
-    if (::stat(name.c_str(), &stats) < 0) {
-        return (false);
-    }
-    return ((stats.st_mode & S_IFMT) == S_IFDIR);
-}
-
-} // end of namespace
-
-void
-TlsContext::configure(TlsContextPtr& context,
-                      TlsRole role,
-                      const std::string& ca_file,
-                      const std::string& cert_file,
-                      const std::string& key_file,
-                      bool cert_required) {
-    try {
-        context.reset(new TlsContext(role));
-        if (isDir(ca_file)) {
-            context->loadCaPath(ca_file);
-        } else {
-            context->loadCaFile(ca_file);
-        }
-        context->loadCertFile(cert_file);
-        context->loadKeyFile(key_file);
-        context->setCertRequired(cert_required);
-    } catch (...) {
-        context.reset();
-        throw;
     }
 }
 

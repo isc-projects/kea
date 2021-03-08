@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// \brief Test of TCPSocket
+/// @brief Test of TCPSocket
 ///
 /// Tests the functionality of a TCPSocket by working through an open-send-
 /// receive-close sequence and checking that the asynchronous notifications
@@ -43,7 +43,7 @@ namespace {
 const char SERVER_ADDRESS[] = "127.0.0.1";
 const unsigned short SERVER_PORT = 5303;
 
-// TODO: Shouldn't we send something that is real message?
+/// @todo Shouldn't we send something that is real message?
 const char OUTBOUND_DATA[] = "Data sent from client to server";
 const char INBOUND_DATA[] = "Returned data from server to client";
 }
@@ -300,7 +300,7 @@ TEST(TCPSocket, processReceivedData) {
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 }
 
-// TODO: Need to add a test to check the cancel() method
+/// @todo Need to add a test to check the cancel() method
 
 // Tests the operation of a TCPSocket by opening it, sending an asynchronous
 // message to a server, receiving an asynchronous message from the server and

@@ -4,27 +4,69 @@ Similar to doc/examples/https/nginx/kea-nginx.conf
  Organization Name is ISC Inc.
  Common Name is the key name.
 
+Some critical details:
+ - recent versions of OpenSSL requires at least 2038 bit RSA
+ - certificate version should be 3 (enforced by Botan for leaves),
+  if openssl creates a version 1 add an extension
+ - RSA allows a simpler format than PKCS#8 for RSA private keys
+  but Botan and other algorithms require PKCS#8
+ - some tools check the alternate subject name of the server so put
+  a correct value in it
+
+Files:
+ - doc.txt this file
+ - ext-addr-conf.cnf extension definition file to add an IP address subject
+  alternative name to the server certificate (IP 127.0.0.1)
+ - ext-conf.cnf extension definition file to add a subject alternative
+  name to the server certificate (DNS localhost)
+ - kea-ca.crt Certification Authority (CA) certificate
+ - kea-ca.key Certification Authority (CA) private key (password keatest)
+ - kea-client.crt client certificate
+ - kea-client.csr client PKCS#10 certificate request
+ - kea-client.key client private key (not encrypted)
+ - kea-client.p12 client PKCS#12 archive with the certificate and the private
+  key (required by curl on macOS or iOS when built with Secure Transport)
+ - kea-other.crt test client certificate (signed by another CA)
+ - kea-other.key test client private key (signed by another CA, not encrypted)
+ - kea-self.crt test client certificate (self-signed)
+ - kea-self.key test client private key (self-signed, not encrypted)
+ - kea-server-addr.crt server certificate using the 127.0.0.1 IP address
+ - kea-server-addr.csr server PKCS#10 certificate request using the
+  127.0.0.1 IP address
+ - kea-server.crt server certificate using the localhost DNS name
+ - kea-server.csr server PKCS#10 certificate request using the localhost
+  DNS name
+ - kea-server.key server private key (all certificates, not encrypted)
+ - server-addr-conf.cnf OpenSSL configuration file to add an IP address
+  subject alternative name (127.0.0.1 and ::1)
+ - server-conf.cnf OpenSSL configuration file to add a DNS subject
+  alternative name (localhost)
+
+Procedure to build CA, server and client files:
+
 1 - create a CA self signed certificate (password is keatest)
  openssl genrsa -aes128 -out kea-ca.key 4096
- openssl req -new -x509 -days 3650 -key kea-ca.key -out kea-ca.crt
+ openssl req -new -x509 -days 3650 -key kea-ca.key -out kea-ca.crt \
+ -extensions v3_ca -config server-conf.cnf
 
-2 - create a key for the client and decipher it
+2 - create a key for the client and convert to PKCS#8
  openssl genrsa -aes128 -out kea-client-aes.key 2048
- openssl rsa -in kea-client-aes.key -out kea-client.key
+ openssl pkcs8 -in kea-client-aes.key -out kea-client.key -nocrypt
  rm kea-client-aes.key
 
 3 - create a certificate for the client
  openssl req -new -key kea-client.key -out kea-client.csr
  openssl x509 -req -days 3650 -in kea-client.csr -CA kea-ca.crt \
-  -CAkey kea-ca.key -set_serial 10 -out kea-client.crt -sha256
+  -CAkey kea-ca.key -set_serial 10 -out kea-client.crt \
+  -extfile /dev/null -sha256
 
 4 - create a PKCS#12 bundle on macOS (password is keatest)
  openssl pkcs12 -in kea-client.crt -inkey kea-client.key -export \
   -out kea-client.p12
 
-5 - create a key for the server and decipher it (same than 2)
+5 - create a key for the server and convert to PKCS#8 (same than 2)
  openssl genrsa -aes128 -out kea-server-aes.key 2048
- openssl rsa -in kea-server-aes.key -out kea-server.key
+ openssl pkcs8 -in kea-server-aes.key -out kea-server.key -nocrypt
  rm kea-server-aes.key
 
 6 - create a certificate with a subject alternate name set to localhost

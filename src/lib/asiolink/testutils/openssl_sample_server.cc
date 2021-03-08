@@ -11,6 +11,8 @@
 // Use the cpp03 version because the cpp11 version does not compile with
 // some g++ e.g. on Fedora 33.
 
+#include <config.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <boost/bind/bind.hpp>

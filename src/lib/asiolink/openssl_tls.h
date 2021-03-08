@@ -23,6 +23,15 @@
 namespace isc {
 namespace asiolink {
 
+/// @brief Translate TLS role into implementation.
+inline boost::asio::ssl::stream_base::handshake_type roleToImpl(TlsRole role) {
+    if (role == TlsRole::SERVER) {
+        return (boost::asio::ssl::stream_base::server);
+    } else {
+        return (boost::asio::ssl::stream_base::client);
+    }
+}
+
 /// @brief OpenSSL TLS context.
 class TlsContext : public TlsContextBase {
 public:
@@ -71,26 +80,10 @@ public:
     /// @param cert_file The certificate file name.
     virtual void loadCertFile(const std::string& cert_file);
 
-    /// @brief Load the private key file name.
+    /// @brief Load the private key from a file.
     ///
     /// @param key_file The private key file name.
     virtual void loadKeyFile(const std::string& key_file);
-
-    /// @brief Configure.
-    ///
-    /// @param context The TLS context to configure.
-    /// @param role The TLS role client or server.
-    /// @param ca_file The certificate file or directory name.
-    /// @param cert_file The certificate file name.
-    /// @param key_file The private key file name.
-    /// @param cert_required True if peer certificates are required,
-    /// false if they are optional.
-    static void configure(TlsContextPtr& context,
-                          TlsRole role,
-                          const std::string& ca_file,
-                          const std::string& cert_file,
-                          const std::string& key_file,
-                          bool cert_required);
 
 protected:
     /// @brief Cached cert_required value.
@@ -107,11 +100,13 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 typedef ::X509 TlsCertificate;
 
 /// @brief TlsStreamBase constructor.
-/// @brief TLS stream base class.
 ///
 /// @tparam Callback The type of callbacks.
 /// @tparam TlsStreamImpl The type of underlying TLS streams.
 /// @tparam TlsCertificate The type of X509 certificates.
+/// @param service I/O Service object used to manage the stream.
+/// @param context Pointer to the TLS context.
+/// @note The caller must not provide a null pointer to the TLS context.
 template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
 TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
@@ -145,12 +140,7 @@ public:
     ///
     /// @param callback Callback object.
     virtual void handshake(Callback& callback) {
-        using namespace boost::asio::ssl;
-        if (Base::getRole() == SERVER) {
-            Base::async_handshake(stream_base::server, callback);
-        } else {
-            Base::async_handshake(stream_base::client, callback);
-        }
+        Base::async_handshake(roleToImpl(Base::getRole()), callback);
     }
 
     /// @brief TLS shutdown.
@@ -233,6 +223,9 @@ public:
         return (ret);
     }
 };
+
+// Stream truncated error code.
+const int STREAM_TRUNCATED = boost::asio::ssl::error::stream_truncated;
 
 } // namespace asiolink
 } // namespace isc

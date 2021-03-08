@@ -204,6 +204,9 @@ public:
     virtual void close();
 
     /// @brief TLS shutdown.
+    ///
+    /// The callback is called on completion i.e. when the peer performs
+    /// a shutdown or a close.
     virtual void shutdown(C& callback);
 
     /// @brief Returns reference to the underlying ASIO socket.
@@ -234,7 +237,7 @@ private:
     /// @brief Underlying TCP socket.
     typename TlsStream<C>::lowest_layer_type& socket_;
 
-    /// TODO: Remove temporary buffer
+    /// @todo Remove temporary buffer
     /// The current implementation copies the buffer passed to asyncSend() into
     /// a temporary buffer and precedes it with a two-byte count field.  As
     /// ASIO should really be just about sending and receiving data, the TCP
@@ -280,8 +283,8 @@ TLSSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     }
 
     // Ignore opens on already-open socket.  Don't throw a failure because
-    // of uncertainties as to what precedes whan when using asynchronous I/O.
-    // At also allows us a treat a passed-in socket as a self-managed socket.
+    // of uncertainties as to what precedes when using asynchronous I/O.
+    // Also allows us a treat a passed-in socket as a self-managed socket.
     if (!socket_.is_open()) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(boost::asio::ip::tcp::v4());
@@ -358,7 +361,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
 
     // Need to copy the data into a temporary buffer and precede it with
     // a two-byte count field.
-    // TODO: arrange for the buffer passed to be preceded by the count
+    // @todo arrange for the buffer passed to be preceded by the count
     try {
         // Ensure it fits into 16 bits
         uint16_t count = boost::numeric_cast<uint16_t>(length);
