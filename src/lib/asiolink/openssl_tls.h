@@ -237,7 +237,6 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 typedef ::X509 TlsCertificate;
 
 /// @brief TlsStreamBase constructor.
-/// @brief TLS stream base class.
 ///
 /// @param Callback The type of callbacks.
 /// @param TlsStreamImpl The type of underlying TLS streams.
@@ -276,12 +275,7 @@ public:
     ///
     /// @param callback Callback object.
     virtual void handshake(Callback& callback) {
-        using namespace boost::asio::ssl;
-        if (Base::getRole() == SERVER) {
-            Base::async_handshake(stream_base::server, callback);
-        } else {
-            Base::async_handshake(stream_base::client, callback);
-        }
+        Base::async_handshake(roleToImpl(Base::getRole()), callback);
     }
 
     /// @brief TLS shutdown.
@@ -364,6 +358,9 @@ public:
         return (ret);
     }
 };
+
+// Stream truncated error code.
+const int STREAM_TRUNCATED = boost::asio::ssl::error::stream_truncated;
 
 } // namespace asiolink
 } // namespace isc

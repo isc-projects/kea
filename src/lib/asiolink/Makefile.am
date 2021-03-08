@@ -88,11 +88,3 @@ libkea_asiolink_include_HEADERS = \
 	unix_domain_socket.h \
 	unix_domain_socket_acceptor.h \
 	unix_domain_socket_endpoint.h
-
-if HAVE_BOTAN
-libkea_asiolink_include_HEADERS += botan_tls.h
-endif
-
-if HAVE_OPENSSL
-libkea_asiolink_include_HEADERS += openssl_tls.h
-endif

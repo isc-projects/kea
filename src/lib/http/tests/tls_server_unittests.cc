@@ -458,7 +458,7 @@ public:
                     return;
                 }
             }
-            stream_.async_handshake(ssl::stream_base::client,
+            stream_.async_handshake(roleToImpl(TlsRole::CLIENT),
             [this, request](const boost::system::error_code& ec) {
                 if (ec) {
                     ADD_FAILURE() << "error occurred during handshake: "
@@ -622,7 +622,7 @@ public:
         // If the connection is closed we'd typically get eof or
         // stream_truncated status code.
         return ((ec.value() == boost::asio::error::eof) ||
-                (ec.value() == boost::asio::ssl::error::stream_truncated));
+                (ec.value() == STREAM_TRUNCATED));
     }
 
     /// @brief Close connection.
@@ -640,7 +640,7 @@ private:
     boost::asio::io_service& io_service_;
 
     /// @brief A socket used for the connection.
-    ssl::stream<tcp::socket> stream_;
+    TlsStreamImpl stream_;
 
     /// @brief Buffer into which response is written.
     std::array<char, 8192> buf_;
