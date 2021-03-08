@@ -236,6 +236,21 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 /// @brief The type of X509 certificates.
 typedef ::X509 TlsCertificate;
 
+<<<<<<< HEAD
+=======
+/// @brief TlsStreamBase constructor.
+///
+/// @param Callback The type of callbacks.
+/// @param TlsStreamImpl The type of underlying TLS streams.
+/// @param TlsCertificate The type of X509 certificates.
+template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
+TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate>::
+TlsStreamBase(IOService& service, TlsContextPtr context)
+    : TlsStreamImpl(service.get_io_service(), context->getContext()),
+      role_(context->getRole()) {
+}
+
+>>>>>>> [#1661] Addressed some 1661 comments (port)
 /// @brief OpenSSL TLS stream.
 ///
 /// @param callback The callback.
@@ -264,12 +279,16 @@ public:
     ///
     /// @param callback Callback object.
     virtual void handshake(Callback& callback) {
+<<<<<<< HEAD
         using namespace boost::asio::ssl;
         if (role_ == SERVER) {
             async_handshake(stream_base::server, callback);
         } else {
             async_handshake(stream_base::client, callback);
         }
+=======
+        Base::async_handshake(roleToImpl(Base::getRole()), callback);
+>>>>>>> [#1661] Addressed some 1661 comments (port)
     }
 
     /// @brief TLS shutdown.
@@ -294,6 +313,9 @@ public:
     /// @brief The role i.e. client or server.
     TlsRole role_;
 };
+
+// Stream truncated error code.
+const int STREAM_TRUNCATED = boost::asio::ssl::error::stream_truncated;
 
 } // namespace asiolink
 } // namespace isc
