@@ -224,7 +224,7 @@ const char SERVER_ADDRESS[] = "127.0.0.1";
 const unsigned short SERVER_PORT = 18123;
 
 /// @brief Class of test callbacks.
-class Callback {
+class TestCallback {
 public:
     /// @brief State part.
     class State {
@@ -250,11 +250,11 @@ public:
     ///
     /// Used to shared pointer to state to allow the callback object to
     /// be copied keeping the state member values.
-    Callback() : state_(new State()) {
+    TestCallback() : state_(new State()) {
     }
 
     /// @brief Destructor.
-    virtual ~Callback() {
+    virtual ~TestCallback() {
     }
 
     /// @brief Callback function (one argument).
@@ -295,8 +295,8 @@ TEST(TLSTest, stream) {
     IOService service;
     TlsContextPtr ctx;
     ASSERT_NO_THROW(ctx.reset(new TlsContext(TlsRole::CLIENT)));
-    boost::scoped_ptr<TlsStream<Callback> > st;
-    ASSERT_NO_THROW(st.reset(new TlsStream<Callback>(service, ctx)));
+    boost::scoped_ptr<TlsStream<TestCallback> > st;
+    ASSERT_NO_THROW(st.reset(new TlsStream<TestCallback>(service, ctx)));
 }
 
 namespace { // anonymous namespace.
@@ -309,24 +309,24 @@ TEST(TLSTest, noHandshake) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
     TlsContextPtr client_ctx;
     test::configClient(client_ctx);
-    TlsStream<Callback> client(service, client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
 
     // Connect to.
     client.lowest_layer().open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.lowest_layer().async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -348,7 +348,7 @@ TEST(TLSTest, noHandshake) {
 
     // Send on the client.
     char send_buf[] = "some text...";
-    Callback send_cb;
+    TestCallback send_cb;
     async_write(client, boost::asio::buffer(send_buf), send_cb);
     while (!send_cb.getCalled()) {
         service.run_one();
@@ -358,7 +358,7 @@ TEST(TLSTest, noHandshake) {
 
     // Receive on the server.
     vector<char> receive_buf(64);
-    Callback receive_cb;
+    TestCallback receive_cb;
     server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
     while (!receive_cb.getCalled()) {
         service.run_one();
@@ -378,24 +378,24 @@ TEST(TLSTest, serverNotConfigured) {
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
     // Skip config.
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
     TlsContextPtr client_ctx;
     test::configClient(client_ctx);
-    TlsStream<Callback> client(service, client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
 
     // Connect to.
     client.lowest_layer().open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.lowest_layer().async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -416,9 +416,9 @@ TEST(TLSTest, serverNotConfigured) {
     }
 
     // Perform TLS handshakes.
-    Callback server_cb;
+    TestCallback server_cb;
     server.handshake(server_cb);
-    Callback client_cb;
+    TestCallback client_cb;
     client.handshake(client_cb);
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
         service.run_one();
@@ -445,24 +445,24 @@ TEST(TLSTest, clientNotConfigured) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
     TlsContextPtr client_ctx(new TlsContext(TlsRole::CLIENT));
     // Skip config.
-    TlsStream<Callback> client(service, client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
 
     // Connect to.
     client.lowest_layer().open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.lowest_layer().async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -483,9 +483,9 @@ TEST(TLSTest, clientNotConfigured) {
     }
 
     // Perform TLS handshakes.
-    Callback server_cb;
+    TestCallback server_cb;
     server.async_handshake(ssl::stream_base::server, server_cb);
-    Callback client_cb;
+    TestCallback client_cb;
     client.async_handshake(ssl::stream_base::client, client_cb);
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
         service.run_one();
@@ -512,14 +512,14 @@ TEST(TLSTest, clientHTTPnoS) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
@@ -527,7 +527,7 @@ TEST(TLSTest, clientHTTPnoS) {
 
     // Connect to.
     client.open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -548,12 +548,12 @@ TEST(TLSTest, clientHTTPnoS) {
     }
 
     // Perform server TLS handshake.
-    Callback server_cb;
+    TestCallback server_cb;
     server.async_handshake(ssl::stream_base::server, server_cb);
 
     // Client sending a HTTP GET.
     char send_buf[] = "GET / HTTP/1.1\r\n";
-    Callback client_cb;
+    TestCallback client_cb;
     client.async_send(boost::asio::buffer(send_buf), client_cb);
 
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
@@ -580,14 +580,14 @@ TEST(TLSTest, unknownClient) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
@@ -595,7 +595,7 @@ TEST(TLSTest, unknownClient) {
 
     // Connect to.
     client.open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -616,12 +616,12 @@ TEST(TLSTest, unknownClient) {
     }
 
     // Perform server TLS handshake.
-    Callback server_cb;
+    TestCallback server_cb;
     server.async_handshake(ssl::stream_base::server, server_cb);
 
     // Client sending something which is not a TLS ClientHello.
     char send_buf[] = "hello my server...";
-    Callback client_cb;
+    TestCallback client_cb;
     client.async_send(boost::asio::buffer(send_buf), client_cb);
 
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
@@ -654,24 +654,24 @@ TEST(TLSTest, anotherClient) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part using a certificate signed by another CA.
     TlsContextPtr client_ctx;
     test::configOther(client_ctx);
-    TlsStream<Callback> client(service, client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
 
     // Connect to.
     client.lowest_layer().open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.lowest_layer().async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -692,9 +692,9 @@ TEST(TLSTest, anotherClient) {
     }
 
     // Perform TLS handshakes.
-    Callback server_cb;
+    TestCallback server_cb;
     server.async_handshake(ssl::stream_base::server, server_cb);
-    Callback client_cb;
+    TestCallback client_cb;
     client.async_handshake(ssl::stream_base::client, client_cb);
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
         service.run_one();
@@ -726,24 +726,24 @@ TEST(TLSTest, selfSigned) {
     // Server part.
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
-    TlsStream<Callback> server(service, server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
 
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(service.get_io_service(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    Callback accept_cb;
+    TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part using a self-signed certificate.
     TlsContextPtr client_ctx;
     test::configSelf(client_ctx);
-    TlsStream<Callback> client(service, client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
 
     // Connect to.
     client.lowest_layer().open(tcp::v4());
-    Callback connect_cb;
+    TestCallback connect_cb;
     client.lowest_layer().async_connect(server_ep, connect_cb);
 
     // Run accept and connect.
@@ -764,9 +764,9 @@ TEST(TLSTest, selfSigned) {
     }
 
     // Perform TLS handshakes.
-    Callback server_cb;
+    TestCallback server_cb;
     server.async_handshake(ssl::stream_base::server, server_cb);
-    Callback client_cb;
+    TestCallback client_cb;
     client.async_handshake(ssl::stream_base::client, client_cb);
     while (!server_cb.getCalled() || !client_cb.getCalled()) {
         service.run_one();
