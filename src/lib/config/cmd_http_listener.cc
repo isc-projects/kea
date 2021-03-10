@@ -13,6 +13,7 @@
 #include <cmd_response_creator_factory.h>
 #include <config_log.h>
 #include <config/timeouts.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/pointer_cast.hpp>
 
@@ -20,6 +21,7 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::util;
 
 namespace isc {
 namespace config {
@@ -35,6 +37,13 @@ CmdHttpListener::~CmdHttpListener() {
 
 void
 CmdHttpListener::start() {
+    // We must be in multi-threading mode.
+    if (!MultiThreadingMgr::instance().getMode()) {
+        isc_throw(InvalidOperation, "CmdHttpListener cannot be started"
+                  " when multi-threading is disabled");
+    }
+
+    // Punt if we're already listening.
     if (isListening()) {
         isc_throw(InvalidOperation, "CmdHttpListener is already listening!");
     }
