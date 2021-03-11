@@ -54,7 +54,7 @@ const char INBOUND_DATA[] = "Returned data from server to client";
 /// The arguments to the completion callback are stored for later retrieval.
 class TLSCallback {
 public:
-    /// \brief Operations the server is doing
+    /// @brief Operations the server is doing
     enum Operation {
         ACCEPT = 0,     ///< accept() was issued
         OPEN = 1,       ///< Client connected to server
@@ -64,7 +64,7 @@ public:
         NONE = 5        ///< "Not set" state
     };
 
-    /// \brief Minimum size of buffers
+    /// @brief Minimum size of buffers
     enum {
         MIN_SIZE = (64 * 1024 + 2)          ///< 64kB + two bytes for a count
     };
@@ -86,7 +86,7 @@ public:
         std::vector<uint8_t>       data_;          ///< Receive buffer
     };
 
-    /// \brief Constructor
+    /// @brief Constructor
     ///
     /// Constructs the object.  It also creates the data member pointed to by
     /// a shared pointer.  When used as a callback object, this is copied as it
@@ -97,25 +97,25 @@ public:
     /// shared pointer is copied, which leaves both objects pointing to the same
     /// data.
     ///
-    /// \param which Which of the two callback objects this is
+    /// @param which Which of the two callback objects this is
     TLSCallback(std::string which) : ptr_(new PrivateData())
     {
         ptr_->name_ = which;
     }
 
-    /// \brief Destructor
+    /// @brief Destructor
     ///
     /// No code needed, destroying the shared pointer destroys the private data.
     virtual ~TLSCallback()
     {}
 
-    /// \brief Client Callback Function
+    /// @brief Client Callback Function
     ///
     /// Called when an asynchronous operation is completed by the client, this
     /// stores the origin of the operation in the client_called_ data member.
     ///
-    /// \param ec I/O completion error code passed to callback function.
-    /// \param length Number of bytes transferred
+    /// @param ec I/O completion error code passed to callback function.
+    /// @param length Number of bytes transferred
     void operator()(boost::system::error_code ec = boost::system::error_code(),
                             size_t length = 0)
     {
@@ -124,54 +124,54 @@ public:
         ptr_->length_ = length;
     }
 
-    /// \brief Get I/O completion error code
+    /// @brief Get I/O completion error code
     int getCode() {
         return (ptr_->error_code_.value());
     }
 
-    /// \brief Set I/O completion code
+    /// @brief Set I/O completion code
     ///
-    /// \param code New value of completion code
+    /// @param code New value of completion code
     void setCode(int code) {
         ptr_->error_code_ = boost::system::error_code(code, boost::system::error_code().category());
     }
 
-    /// \brief Get number of bytes transferred in I/O
+    /// @brief Get number of bytes transferred in I/O
     size_t& length() {
         return (ptr_->length_);
     }
 
-    /// \brief Get cumulative number of bytes transferred in I/O
+    /// @brief Get cumulative number of bytes transferred in I/O
     size_t& cumulative() {
         return (ptr_->cumulative_);
     }
 
-    /// \brief Get expected amount of data
+    /// @brief Get expected amount of data
     size_t& expected() {
         return (ptr_->expected_);
     }
 
-    /// \brief Get offset into data
+    /// @brief Get offset into data
     size_t& offset() {
         return (ptr_->offset_);
     }
 
-    /// \brief Get data member
+    /// @brief Get data member
     uint8_t* data() {
         return (&ptr_->data_[0]);
     }
 
-    /// \brief Get flag to say what was queued
+    /// @brief Get flag to say what was queued
     Operation& queued() {
         return (ptr_->queued_);
     }
 
-    /// \brief Get flag to say when callback was called
+    /// @brief Get flag to say when callback was called
     Operation& called() {
         return (ptr_->called_);
     }
 
-    /// \brief Return instance of callback name
+    /// @brief Return instance of callback name
     std::string& name() {
         return (ptr_->name_);
     }
@@ -192,8 +192,8 @@ private:
 // from the remote end is equal to the value in the count field plus two bytes
 // for the count field itself.
 //
-// \param stream Stream on which the server is reading data
-// \param server_cb Structure in which server data is held.
+// @param stream Stream on which the server is reading data
+// @param server_cb Structure in which server data is held.
 void
 serverRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
 

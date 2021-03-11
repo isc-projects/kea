@@ -222,31 +222,31 @@ public:
     }
 
 private:
-    // Two variables to hold the socket - a socket and a pointer to it.  This
-    // handles the case where a socket is passed to the TCPSocket on
-    // construction, or where it is asked to manage its own socket.
+    /// Two variables to hold the socket - a socket and a pointer to it.  This
+    /// handles the case where a socket is passed to the TCPSocket on
+    /// construction, or where it is asked to manage its own socket.
 
-    // Pointer to own socket
+    /// Pointer to own socket
     std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
 
-    // Socket
+    /// Socket
     boost::asio::ip::tcp::socket& socket_;
 
-    // @todo Remove temporary buffer
-    // The current implementation copies the buffer passed to asyncSend() into
-    // a temporary buffer and precedes it with a two-byte count field.  As
-    // ASIO should really be just about sending and receiving data, the TCP
-    // code should not do this.  If the protocol using this requires a two-byte
-    // count, it should add it before calling this code.  (This may be best
-    // achieved by altering isc::dns::buffer to have pairs of methods:
-    // getLength()/getTCPLength(), getData()/getTCPData(), with the getTCPXxx()
-    // methods taking into account a two-byte count field.)
-    //
-    // The option of sending the data in two operations, the count followed by
-    // the data was discounted as that would lead to two callbacks which would
-    // cause problems with the stackless coroutine code.
+    /// @todo Remove temporary buffer
+    /// The current implementation copies the buffer passed to asyncSend() into
+    /// a temporary buffer and precedes it with a two-byte count field.  As
+    /// ASIO should really be just about sending and receiving data, the TCP
+    /// code should not do this.  If the protocol using this requires a two-byte
+    /// count, it should add it before calling this code.  (This may be best
+    /// achieved by altering isc::dns::buffer to have pairs of methods:
+    /// getLength()/getTCPLength(), getData()/getTCPData(), with the getTCPXxx()
+    /// methods taking into account a two-byte count field.)
+    ///
+    /// The option of sending the data in two operations, the count followed by
+    /// the data was discounted as that would lead to two callbacks which would
+    /// cause problems with the stackless coroutine code.
 
-    // Send buffer
+    /// Send buffer
     isc::util::OutputBufferPtr send_buffer_;
 };
 
@@ -348,19 +348,19 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
 {
     if (socket_.is_open()) {
 
-        // Need to copy the data into a temporary buffer and precede it with
-        // a two-byte count field.
-        // @todo arrange for the buffer passed to be preceded by the count
+        /// Need to copy the data into a temporary buffer and precede it with
+        /// a two-byte count field.
+        /// @todo arrange for the buffer passed to be preceded by the count
         try {
-            // Ensure it fits into 16 bits
+            /// Ensure it fits into 16 bits
             uint16_t count = boost::numeric_cast<uint16_t>(length);
 
-            // Copy data into a buffer preceded by the count field.
+            /// Copy data into a buffer preceded by the count field.
             send_buffer_.reset(new isc::util::OutputBuffer(length + 2));
             send_buffer_->writeUint16(count);
             send_buffer_->writeData(data, length);
 
-            // ... and send it
+            /// ... and send it
             socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
                                send_buffer_->getLength()), callback);
         } catch (const boost::numeric::bad_numeric_cast&) {

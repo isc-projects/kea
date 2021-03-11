@@ -29,6 +29,29 @@ using namespace isc::asiolink;
 using namespace isc::cryptolink;
 using namespace std;
 
+namespace { // anonymous namespace.
+
+/// @brief Test TLS context class exposing protected methods.
+class TestTlsContext : public TlsContext {
+public:
+    /// @brief Constructor.
+    ///
+    /// @param role The TLS role client or server.
+    explicit TestTlsContext(TlsRole role) : TlsContext(role) { }
+
+    /// @brief Destructor.
+    virtual ~TestTlsContext() { }
+
+    /// @brief Make protected methods visible in tests.
+    using TlsContext::setCertRequired;
+    using TlsContext::loadCaFile;
+    using TlsContext::loadCaPath;
+    using TlsContext::loadCertFile;
+    using TlsContext::loadKeyFile;
+};
+
+} // end of anonymous namespace.
+
 // Test if we can get a client context.
 TEST(TLSTest, clientContext) {
     TlsContextPtr ctx;
@@ -66,7 +89,7 @@ TEST(TLSTest, certRequired) {
 #endif
     };
 
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_TRUE(ctx.getCertRequired());
     EXPECT_TRUE(check(ctx));
     ASSERT_NO_THROW(ctx.setCertRequired(false));
@@ -80,30 +103,30 @@ TEST(TLSTest, certRequired) {
 // Test if the certificate authority can be loaded.
 TEST(TLSTest, loadCAFile) {
     string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     ASSERT_NO_THROW(ctx.loadCaFile(ca));
 }
 
 // Test that no certificate authority gives an error.
 TEST(TLSTest, loadNoCAFile) {
     string ca("/no-such-file");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW_MSG(ctx.loadCaFile(ca), LibraryError,
                      "No such file or directory");
 }
 
-#ifdef WITH_BOTAH
+#ifdef WITH_BOTAN
 // Test that a directory can't be loaded with Botan.
 TEST(TLSTest, loadCAPath) {
     string ca(TEST_CA_DIR);
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW(ctx.loadCaPath(ca), NotImplemented);
 }
 #else // WITH_OPENSSL
 // Test that a directory can be loaded.
 TEST(TLSTest, loadCAPath) {
     string ca(TEST_CA_DIR);
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     ASSERT_NO_THROW(ctx.loadCaPath(ca));
 }
 #endif
@@ -111,7 +134,7 @@ TEST(TLSTest, loadCAPath) {
 // Test that a certificate is wanted.
 TEST(TLSTest, loadKeyCA) {
     string ca(string(TEST_CA_DIR) + "/kea-ca.key");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
 #ifdef WITH_OPENSSL
 #if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER >= 0x10100000L)
     EXPECT_THROW_MSG(ctx.loadCaFile(ca), LibraryError,
@@ -123,14 +146,14 @@ TEST(TLSTest, loadKeyCA) {
 // Test if the end entity certificate can be loaded.
 TEST(TLSTest, loadCertFile) {
     string cert(string(TEST_CA_DIR) + "/kea-client.crt");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     ASSERT_NO_THROW(ctx.loadCertFile(cert));
 }
 
 // Test that no end entity certificate gives an error.
 TEST(TLSTest, loadNoCertFile) {
     string cert("/no-such-file");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW_MSG(ctx.loadCertFile(cert), LibraryError,
                      "No such file or directory");
 }
@@ -138,7 +161,7 @@ TEST(TLSTest, loadNoCertFile) {
 // Test that a certificate is wanted.
 TEST(TLSTest, loadCsrCertFile) {
     string cert(string(TEST_CA_DIR) + "/kea-client.csr");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW_MSG(ctx.loadCertFile(cert), LibraryError,
                      "no start line");
 }
@@ -146,14 +169,14 @@ TEST(TLSTest, loadCsrCertFile) {
 // Test if the private key can be loaded.
 TEST(TLSTest, loadKeyFile) {
     string key(string(TEST_CA_DIR) + "/kea-client.key");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     ASSERT_NO_THROW(ctx.loadKeyFile(key));
 }
 
 // Test that no private key gives an error.
 TEST(TLSTest, loadNoKeyFile) {
     string key("/no-such-file");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW_MSG(ctx.loadKeyFile(key), LibraryError,
                      "No such file or directory");
 }
@@ -161,7 +184,7 @@ TEST(TLSTest, loadNoKeyFile) {
 // Test that a private key is wanted.
 TEST(TLSTest, loadCertKeyFile) {
     string key(string(TEST_CA_DIR) + "/kea-client.crt");
-    TlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::CLIENT);
     EXPECT_THROW_MSG(ctx.loadKeyFile(key), LibraryError,
                      "no start line");
 }
@@ -169,7 +192,7 @@ TEST(TLSTest, loadCertKeyFile) {
 // Test that the certificate and private key must match.
 TEST(TLSTest, loadMismatch) {
     string cert(string(TEST_CA_DIR) + "/kea-server.crt");
-    TlsContext ctx(TlsRole::SERVER);
+    TestTlsContext ctx(TlsRole::SERVER);
     EXPECT_NO_THROW(ctx.loadCertFile(cert));
     string key(string(TEST_CA_DIR) + "/kea-client.key");
     // In fact OpenSSL checks only RSA key values...
@@ -784,12 +807,6 @@ TEST(TLSTest, selfSigned) {
 #if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER >= 0x10100000L)
     EXPECT_FALSE(client_cb.getCode());
 #endif
-#endif
-
-    // Used when adding other error cases.
-#if 0
-    cerr << "server: '" << server_cb.getCode().message() << "'\n";
-    cerr << "client: '" << client_cb.getCode().message() << "'\n";
 #endif
 
     // Close client and server.

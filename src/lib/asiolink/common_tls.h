@@ -72,26 +72,27 @@ public:
                           const std::string& key_file,
                           bool cert_required);
 
-    /// @brief Set the peer certificate requirement mode.
-    ///
-    /// @param cert_required True if peer certificates are required,
-    /// false if they are optional.
-    virtual void setCertRequired(bool cert_required) = 0;
-
     /// @brief Get the peer certificate requirement mode.
     ///
     /// @return True if peer certificates are required, false if they
     /// are optional.
     virtual bool getCertRequired() const = 0;
 
-    /// @brief Load the trust anchor aka certificate authority.
+protected:
+    /// @brief Set the peer certificate requirement mode.
+    ///
+    /// @param cert_required True if peer certificates are required,
+    /// false if they are optional.
+    virtual void setCertRequired(bool cert_required) = 0;
+
+    /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_file The certificate file name.
     /// @throw isc::cryptolink::LibraryError on various errors as
     /// file not found, bad format, etc.
     virtual void loadCaFile(const std::string& ca_file) = 0;
 
-    /// @brief Load the trust anchor aka certificate authority.
+    /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_path The certificate directory name.
     /// @throw isc::cryptolink::LibraryError on various errors as
@@ -121,8 +122,7 @@ public:
 ///
 /// @tparam Callback The type of callbacks.
 /// @tparam TlsStreamImpl The type of underlying TLS streams.
-/// @tparam TlsCertificate The type of X509 certificates.
-template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
+template <typename Callback, typename TlsStreamImpl>
 class TlsStreamBase : public TlsStreamImpl {
 public:
 
@@ -156,16 +156,13 @@ public:
     /// @note For some unit tests only.
     virtual void clear() = 0;
 
-    /// @brief Return the peer certificate.
-    ///
-    /// @note The native_handle() method is used so it can't be made const.
-    /// @note Do not forget to free it when no longer used.
-    virtual TlsCertificate* getPeerCert() = 0;
-
     /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
+    /// RFC 3280 provides as a commonName example "Susan Housley",
+    /// to idea to give access to this come from the Role Based
+    /// Access Control experiment.
     ///
     /// @return The commonName part of the subjectName or the empty string.
     virtual std::string getSubject() = 0;
@@ -174,6 +171,9 @@ public:
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
+    /// The issuerName is the subjectName of the signing certificate
+    /// (the issue in PKIX terms). The idea is to encode a group as
+    /// members of an intermediate certification authority.
     ///
     /// @return The commonName part of the issuerName or the empty string.
     virtual std::string getIssuer() = 0;

@@ -359,9 +359,9 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
                   "attempt to send on a TLS socket that is not open");
     }
 
-    // Need to copy the data into a temporary buffer and precede it with
-    // a two-byte count field.
-    // @todo arrange for the buffer passed to be preceded by the count
+    /// Need to copy the data into a temporary buffer and precede it with
+    /// a two-byte count field.
+    /// @todo arrange for the buffer passed to be preceded by the count
     try {
         // Ensure it fits into 16 bits
         uint16_t count = boost::numeric_cast<uint16_t>(length);

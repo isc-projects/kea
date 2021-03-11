@@ -35,26 +35,27 @@ public:
     /// @param role The TLS role client or server.
     explicit TlsContext(TlsRole role);
 
-    /// @brief Set the peer certificate requirement mode.
-    ///
-    /// @param cert_required True if peer certificates are required,
-    /// false if they are optional.
-    virtual void setCertRequired(bool cert_required);
-
     /// @brief Get the peer certificate requirement mode.
     ///
     /// @return True if peer certificates are required, false if they
     /// are optional.
     virtual bool getCertRequired() const;
 
-    /// @brief Load the trust anchor aka certificate authority.
+protected:
+    /// @brief Set the peer certificate requirement mode.
+    ///
+    /// @param cert_required True if peer certificates are required,
+    /// false if they are optional.
+    virtual void setCertRequired(bool cert_required);
+
+    /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_file The certificate file name.
     /// @throw isc::cryptolink::LibraryError on various errors as
     /// file not found, bad format, etc.
     virtual void loadCaFile(const std::string& ca_file);
 
-    /// @brief Load the trust anchor aka certificate authority.
+    /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_path The certificate directory name.
     /// @throw isc::cryptolink::LibraryError on various errors as
@@ -75,27 +76,25 @@ public:
     /// file not found, bad format, etc.
     virtual void loadKeyFile(const std::string& key_file);
 
-protected:
     /// @brief Cached cert_required value.
     bool cert_required_;
+
+    /// @brief Allow access to protected methods by the base class.
+    friend class TlsContextBase;
 };
 
 /// @brief The type of Botan TLS streams (in fact pure TCP streams).
 typedef boost::asio::ip::tcp::socket TlsStreamImpl;
 
-/// @brief Dummy type of X509 certificates.
-struct TlsCertificate { };
-
 /// @brief TlsStreamBase constructor.
 ///
 /// @tparam Callback The type of callbacks.
 /// @tparam TlsStreamImpl The type of underlying TLS streams.
-/// @tparam TlsCertificate The type of X509 certificates.
 /// @param service I/O Service object used to manage the stream.
 /// @param context Pointer to the TLS context.
 /// @note The caller must not provide a null pointer to the TLS context.
-template <typename Callback, typename TlsStreamImpl, typename TlsCertificate>
-TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate>::
+template <typename Callback, typename TlsStreamImpl>
+TlsStreamBase<Callback, TlsStreamImpl>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
     : TlsStreamImpl(service.get_io_service()), role_(context->getRole()) {
 }
@@ -104,11 +103,11 @@ TlsStreamBase(IOService& service, TlsContextPtr context)
 ///
 /// @tparam callback The callback.
 template <typename Callback>
-class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate> {
+class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl> {
 public:
 
     /// @brief Type of the base.
-    typedef TlsStreamBase<Callback, TlsStreamImpl, TlsCertificate> Base;
+    typedef TlsStreamBase<Callback, TlsStreamImpl> Base;
 
     /// @brief Constructor.
     ///
@@ -141,18 +140,14 @@ public:
         isc_throw(NotImplemented, "Botan TLS is not yet supported");
     }
 
-    /// @brief Return the peer certificate.
-    ///
-    /// @note The native_handle() method is used so it can't be made const.
-    /// @note Do not forget to free it when no longer used.
-    virtual TlsCertificate* getPeerCert() {
-        return (0);
-    }
-
     /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
+    /// RFC 3280 provides as a commonName example "Susan Housley",
+    /// to idea to give access to this come from the Role Based
+    /// Access Control experiment.
+    ///
     ///
     /// @return The commonName part of the subjectName or the empty string.
     std::string getSubject() {
@@ -163,6 +158,10 @@ public:
     /// the peer certificate.
     ///
     /// First commonName when there are more than one, in UTF-8.
+    /// The issuerName is the subjectName of the signing certificate
+    /// (the issue in PKIX terms). The idea is to encode a group as
+    /// members of an intermediate certification authority.
+    ///
     ///
     /// @return The commonName part of the issuerName or the empty string.
     std::string getIssuer() {
