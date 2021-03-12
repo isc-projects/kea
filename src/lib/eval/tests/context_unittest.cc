@@ -1479,37 +1479,43 @@ TEST_F(EvalContextTest, toHexString) {
 
 // Test the parsing of a addrtotext expression
 TEST_F(EvalContextTest, addressToText) {
-    EvalContext eval(Option::V6);
+    {
+        EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(10.0.0.1) == '10.0.0.1'"));
-    EXPECT_TRUE(parsed_);
+        EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(10.0.0.1) == '10.0.0.1'"));
+        EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression.size());
+        ASSERT_EQ(4, eval.expression.size());
 
-    TokenPtr tmp1 = eval.expression.at(0);
-    TokenPtr tmp2 = eval.expression.at(1);
-    TokenPtr tmp3 = eval.expression.at(2);
-    TokenPtr tmp4 = eval.expression.at(3);
+        TokenPtr tmp1 = eval.expression.at(0);
+        TokenPtr tmp2 = eval.expression.at(1);
+        TokenPtr tmp3 = eval.expression.at(2);
+        TokenPtr tmp4 = eval.expression.at(3);
 
-    checkTokenIpAddress(tmp1, "10.0.0.1");
-    checkTokenIpAddressToText(tmp2, "10.0.0.1");
-    checkTokenString(tmp3, "10.0.0.1");
-    checkTokenEq(tmp4);
+        checkTokenIpAddress(tmp1, "10.0.0.1");
+        checkTokenIpAddressToText(tmp2, "10.0.0.1");
+        checkTokenString(tmp3, "10.0.0.1");
+        checkTokenEq(tmp4);
+    }
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(2001:db8::1) == '2001:db8::1'"));
-    EXPECT_TRUE(parsed_);
+    {
+        EvalContext eval(Option::V4);
 
-    ASSERT_EQ(4, eval.expression.size());
+        EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(2001:db8::1) == '2001:db8::1'"));
+        EXPECT_TRUE(parsed_);
 
-    tmp1 = eval.expression.at(0);
-    tmp2 = eval.expression.at(1);
-    tmp3 = eval.expression.at(2);
-    tmp4 = eval.expression.at(3);
+        ASSERT_EQ(4, eval.expression.size());
 
-    checkTokenIpAddress(tmp1, "2001:db8::1");
-    checkTokenIpAddressToText(tmp2, "2001:db8::1");
-    checkTokenString(tmp3, "2001:db8::1");
-    checkTokenEq(tmp4);
+        TokenPtr tmp1 = eval.expression.at(0);
+        TokenPtr tmp2 = eval.expression.at(1);
+        TokenPtr tmp3 = eval.expression.at(2);
+        TokenPtr tmp4 = eval.expression.at(3);
+
+        checkTokenIpAddress(tmp1, "2001:db8::1");
+        checkTokenIpAddressToText(tmp2, "2001:db8::1");
+        checkTokenString(tmp3, "2001:db8::1");
+        checkTokenEq(tmp4);
+    }
 }
 
 //
