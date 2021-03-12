@@ -32,6 +32,15 @@
 #include <sstream>
 #include <string>
 
+#ifdef WITH_BOTAN
+#define DISABLE_SOME_TESTS
+#endif
+#ifdef WITH_OPENSSL
+#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#define DISABLE_SOME_TESTS
+#endif
+#endif
+
 using namespace boost::asio;
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
@@ -1129,14 +1138,18 @@ public:
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.
 TEST_F(HttpsClientTest, consecutiveRequests) {
+#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
+#endif
 }
 
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.
 TEST_F(HttpsClientTest, consecutiveRequestsMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
+#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
+#endif
 }
 
 // Test that two consecutive requests can be sent over non-persistent connection.
@@ -1238,7 +1251,9 @@ TEST_F(HttpsClientTest, DISABLED_clientRequestLateStartNoQueueMultiThreading) {
 // timeout occurs and there are requests queued after the request which
 // times out.
 TEST_F(HttpsClientTest, clientRequestLateStartQueue) {
+#ifndef DISABLE_SOME_TESTS
     testClientRequestLateStart(true);
+#endif
 }
 
 // This test verifies the behavior of the HTTP client when the premature
@@ -1246,7 +1261,9 @@ TEST_F(HttpsClientTest, clientRequestLateStartQueue) {
 // times out.
 TEST_F(HttpsClientTest, clientRequestLateStartQueueMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
+#ifndef DISABLE_SOME_TESTS
     testClientRequestLateStart(true);
+#endif
 }
 
 // Test that client times out when connection takes too long.
@@ -1262,13 +1279,17 @@ TEST_F(HttpsClientTest, clientConnectTimeoutMultiThreading) {
 
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpsClientTest, connectCloseCallbacks) {
+#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
+#endif
 }
 
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpsClientTest, connectCloseCallbacksMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
+#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
+#endif
 }
 
 /// Tests that HttpClient::closeIfOutOfBand works correctly.
