@@ -470,6 +470,28 @@ public:
         EXPECT_TRUE(tohex);
     }
 
+    /// @brief checks if the given token is a addrtotext operator
+    void checkTokenIpAddressToText(const TokenPtr& token,
+                                   const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenIpAddressToText> addrtotext =
+            boost::dynamic_pointer_cast<TokenIpAddressToText>(token);
+        EXPECT_TRUE(addrtotext);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        std::vector<uint8_t> bytes = IOAddress(expected).toBytes();
+        values.push(std::string(bytes.begin(), bytes.end()));
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+        string value = values.top();
+
+        EXPECT_EQ(value, expected);
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -1455,6 +1477,41 @@ TEST_F(EvalContextTest, toHexString) {
     checkTokenToHexString(tmp3);
 }
 
+// Test the parsing of a addrtotext expression
+TEST_F(EvalContextTest, addressToText) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(10.0.0.1) == '10.0.0.1'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenIpAddress(tmp1, "10.0.0.1");
+    checkTokenIpAddressToText(tmp2, "10.0.0.1");
+    checkTokenString(tmp3, "10.0.0.1");
+    checkTokenEq(tmp4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(2001:db8::1) == '2001:db8::1'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    tmp1 = eval.expression.at(0);
+    tmp2 = eval.expression.at(1);
+    tmp3 = eval.expression.at(2);
+    tmp4 = eval.expression.at(3);
+
+    checkTokenIpAddress(tmp1, "2001:db8::1");
+    checkTokenIpAddressToText(tmp2, "2001:db8::1");
+    checkTokenString(tmp3, "2001:db8::1");
+    checkTokenEq(tmp4);
+}
+
 //
 // Test some scanner error cases
 TEST_F(EvalContextTest, scanErrors) {
@@ -1627,6 +1684,10 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'a' + == 'a'", "<string>:1.7-8: syntax error, unexpected ==");
     checkError("'a' ++ 'b' == 'ab'",
                "<string>:1.6: syntax error, unexpected +");
+    checkError("addrtotext('cafebabecafebabe')",
+               "<string>:1.31: syntax error, unexpected end of file, expecting ==");
+    checkError("addrtotext('')",
+               "<string>:1.15: syntax error, unexpected end of file, expecting ==");
 }
 
 // Tests some type error cases
@@ -1659,6 +1720,7 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("'true' or 'false'",
                "<string>:1.8-9: syntax error, unexpected or, "
                "expecting == or +");
+
     // Ifelse requires a boolean condition and string branches.
     checkError("ifelse('foobar','foo','bar')",
                "<string>:1.16: syntax error, unexpected \",\", "
@@ -1677,6 +1739,10 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("option[123].option[host-name].exists",
                "<string>:1.20-28: syntax error, unexpected option name, "
                "expecting integer");
+
+    // Addrtotext requires string storing the binary representation of the address.
+    checkError("addrtotext('192.100.1.1')",
+               "<string>:1.26: syntax error, unexpected end of file, expecting ==");
 }
 
 

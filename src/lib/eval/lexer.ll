@@ -219,6 +219,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
 "hexstring"    return isc::eval::EvalParser::make_TOHEXSTRING(loc);
+"addrtotext"   return isc::eval::EvalParser::make_ADDRTOTEXT(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);

@@ -14,6 +14,7 @@ extern const isc::log::MessageID EVAL_DEBUG_HEXSTRING = "EVAL_DEBUG_HEXSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_FALSE = "EVAL_DEBUG_IFELSE_FALSE";
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_TRUE = "EVAL_DEBUG_IFELSE_TRUE";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS = "EVAL_DEBUG_IPADDRESS";
+extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT = "EVAL_DEBUG_IPADDRESSTOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER = "EVAL_DEBUG_MEMBER";
 extern const isc::log::MessageID EVAL_DEBUG_NOT = "EVAL_DEBUG_NOT";
 extern const isc::log::MessageID EVAL_DEBUG_OPTION = "EVAL_DEBUG_OPTION";
@@ -55,6 +56,7 @@ const char* values[] = {
     "EVAL_DEBUG_IFELSE_FALSE", "Popping %1 (false) and %2, leaving %3",
     "EVAL_DEBUG_IFELSE_TRUE", "Popping %1 (true) and %2, leaving %3",
     "EVAL_DEBUG_IPADDRESS", "Pushing IPAddress %1",
+    "EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress %1",
     "EVAL_DEBUG_MEMBER", "Checking membership of '%1', pushing result %2",
     "EVAL_DEBUG_NOT", "Popping %1 pushing %2",
     "EVAL_DEBUG_OPTION", "Pushing option %1 with value %2",

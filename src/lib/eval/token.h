@@ -207,6 +207,23 @@ protected:
     std::string value_;
 };
 
+/// @brief Token representing an IP address as a string
+///
+/// This token holds the value of an IP address as a string, for instance
+/// 10.0.0.1 is '10.0.0.1'
+class TokenIpAddressToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenIpAddressToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented IP address as a string will be pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
 /// @brief Token that represents a value of an option
 ///
 /// This represents a reference to a given option, e.g. in the expression

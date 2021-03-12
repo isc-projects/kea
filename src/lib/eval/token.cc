@@ -103,6 +103,36 @@ TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         .arg(toHex(value_));
 }
 
+void
+TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    uint8_t size = op.size();
+
+    if ((size != sizeof(uint32_t)) && (size != INET_ADDRSTRLEN)) {
+        isc_throw(EvalTypeError, "Can not convert to valid address.");
+    }
+
+    std::vector<uint8_t> binary(op.begin(), op.end());
+
+    if (size == sizeof(uint32_t)) {
+        op = asiolink::IOAddress::fromBytes(AF_INET, binary.data()).toText();
+    } else {
+        op = asiolink::IOAddress::fromBytes(AF_INET6, binary.data()).toText();
+    }
+
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESSTOTEXT)
+        .arg(op);
+}
+
 OptionPtr
 TokenOption::getOption(Pkt& pkt) {
     return (pkt.getOption(option_code_));

@@ -758,6 +758,60 @@ TEST_F(TokenTest, ipaddress) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test checks that a TokenIpAddressToText, representing an IP address as
+// a string, can be used in Pkt4/Pkt6 evaluation.
+// (The actual packet is not used)
+TEST_F(TokenTest, addressToText) {
+    TokenPtr address((new TokenIpAddressToText()));
+    std::vector<uint8_t> bytes;
+
+    std::string value;
+    values_.push(value);
+
+    // Invalid data size fails.
+    EXPECT_THROW(address->evaluate(*pkt4_, values_), EvalTypeError);
+
+    value = "10.0.0.1";
+    values_.push(value);
+
+    // Invalid data size fails.
+    EXPECT_THROW(address->evaluate(*pkt4_, values_), EvalTypeError);
+
+    bytes = IOAddress(value).toBytes();
+    values_.push(std::string(bytes.begin(), bytes.end()));
+
+    EXPECT_NO_THROW(address->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+
+    value = "2001:db8::1";
+    bytes = IOAddress(value).toBytes();
+    values_.push(std::string(bytes.begin(), bytes.end()));
+
+    EXPECT_NO_THROW(address->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(2, values_.size());
+
+    // Check IPv6 address
+    EXPECT_EQ(11, values_.top().size());
+    EXPECT_EQ("2001:db8::1", values_.top());
+    values_.pop();
+
+    // Check IPv4 address
+    EXPECT_EQ(8, values_.top().size());
+    EXPECT_EQ("10.0.0.1", values_.top());
+    values_.pop();
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_IPADDRESSTOTEXT Pushing IPAddress 10.0.0.1");
+    addString("EVAL_DEBUG_IPADDRESSTOTEXT Pushing IPAddress 2001:db8::1");
+    EXPECT_TRUE(checkFile());
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv4 packet and properly store the option's value.
 TEST_F(TokenTest, optionString4) {

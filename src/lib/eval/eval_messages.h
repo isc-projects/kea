@@ -15,6 +15,7 @@ extern const isc::log::MessageID EVAL_DEBUG_HEXSTRING;
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_FALSE;
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_TRUE;
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS;
+extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT;
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER;
 extern const isc::log::MessageID EVAL_DEBUG_NOT;
 extern const isc::log::MessageID EVAL_DEBUG_OPTION;

@@ -76,6 +76,7 @@ using namespace isc::eval;
   PLUS "+"
   IFELSE "ifelse"
   TOHEXSTRING "hexstring"
+  ADDRTOTEXT "addrtotext"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -372,6 +373,11 @@ string_expr : STRING
                   {
                       TokenPtr tohex(new TokenToHexString());
                       ctx.expression.push_back(tohex);
+                  }
+            | ADDRTOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr addrtotext(new TokenIpAddressToText());
+                      ctx.expression.push_back(addrtotext);
                   }
             | VENDOR "." ENTERPRISE
                 {
