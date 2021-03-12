@@ -230,6 +230,7 @@ const int STREAM_TRUNCATED = boost::asio::ssl::error::stream_truncated;
 const int STREAM_TRUNCATED = ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
 #endif
 
+<<<<<<< HEAD
 /// @brief The type of underlying TLS streams.
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 
@@ -317,6 +318,8 @@ public:
 // Stream truncated error code.
 const int STREAM_TRUNCATED = boost::asio::ssl::error::stream_truncated;
 
+=======
+>>>>>>> [#1661] Fixed rebase
 } // namespace asiolink
 } // namespace isc
 
