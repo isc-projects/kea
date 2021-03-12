@@ -6,7 +6,7 @@
 
 /// @brief Test of TLSSocket
 ///
-/// Tests the functionality of a TCPSocket by working through an open-send-
+/// Tests the functionality of a TLSSocket by working through an open-send-
 /// receive-close sequence and checking that the asynchronous notifications
 /// work.
 
