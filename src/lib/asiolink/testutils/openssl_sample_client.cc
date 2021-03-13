@@ -157,9 +157,9 @@ int main(int argc, char* argv[])
     auto endpoints = resolver.resolve(argv[1], argv[2]);
 
 #ifdef HAVE_GENERIC_TLS_METHOD
-    boost::asio::ssl::context ctx(boost::asio::ssl::context::tls);
+    boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tls);
 #else
-    boost::asio::ssl::context ctx(boost::asio::ssl::context::tlsv12);
+    boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tlsv12);
 #endif
     ctx.load_verify_file(CA_("kea-ca.crt"));
     ctx.use_certificate_chain_file(CA_("kea-client.crt"));

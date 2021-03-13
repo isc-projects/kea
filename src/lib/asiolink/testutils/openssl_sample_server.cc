@@ -107,9 +107,9 @@ public:
       acceptor_(io_context,
           boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
 #ifdef HAVE_GENERIC_TLS_METHOD
-      context_(boost::asio::ssl::context::tls)
+      context_(boost::asio::ssl::context::method::tls)
 #else
-      context_(boost::asio::ssl::context::tlsv12)
+      context_(boost::asio::ssl::context::method::tlsv12)
 #endif
   {
     //context_.set_options(
