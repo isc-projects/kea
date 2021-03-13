@@ -10,12 +10,13 @@
 
 #include <config.h>
 
+#include <iostream>
+
 #ifdef HAVE_GENERIC_TLS_METHOD
 
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <iostream>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 
@@ -176,8 +177,6 @@ int main(int argc, char* argv[])
   return 0;
 }
 #else // !HAVE_GENERIC_TLS_METHOD
-
-#include <iostream>
 
 int main()
 {

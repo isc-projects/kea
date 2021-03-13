@@ -1098,6 +1098,8 @@ CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 # Can be required by gtest, boost and perhaps still asio
 AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 
+# Now that Crypto backend and Boost were done we can address TLS.
+AX_TLS
 
 #
 # Check availability of benchmark.

@@ -357,6 +357,33 @@ EOF
                            ])],
          [AC_MSG_RESULT([yes])],
          [AC_MSG_ERROR([HMAC functions return void: please use OpenSSL version 1.0.1 or later])])
+    LIBS=${LIBS_SAVED}
+    CPPFLAGS=${CPPFLAGS_SAVED}
+fi
+
+AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
+AM_CONDITIONAL(HAVE_OPENSSL, test "$CRYPTO_NAME" = "OpenSSL")
+AC_SUBST(CRYPTO_INCLUDES)
+AC_SUBST(CRYPTO_CFLAGS)
+AC_SUBST(CRYPTO_LIBS)
+AC_SUBST(CRYPTO_LDFLAGS)
+AC_SUBST(CRYPTO_PACKAGE)
+AC_SUBST(CRYPTO_RPATH)
+AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
+]
+)
+# End of AX_CRYPTO
+
+# Test TLS support using both crypto and boost.
+AC_DEFUN([AX_TLS], [
+if test "x${CRYPTO_NAME}" = "xBotan"
+then
+    AC_MSG_WARN([Botan TLS support is not yet done])
+fi
+if test "x${CRYPTO_NAME}" = "xOpenSSL"
+then
+    CPPFLAGS_SAVED=$CPPFLAGS
+    CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS $BOOST_INCLUDES"
     dnl Check boost ASIO SSL
     AC_CHECK_HEADERS([boost/asio/ssl.hpp],,
         [AC_MSG_ERROR([Missing required boost ssl header file])])
@@ -397,15 +424,5 @@ EOF
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
-
-AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
-AM_CONDITIONAL(HAVE_OPENSSL, test "$CRYPTO_NAME" = "OpenSSL")
-AC_SUBST(CRYPTO_INCLUDES)
-AC_SUBST(CRYPTO_CFLAGS)
-AC_SUBST(CRYPTO_LIBS)
-AC_SUBST(CRYPTO_LDFLAGS)
-AC_SUBST(CRYPTO_PACKAGE)
-AC_SUBST(CRYPTO_RPATH)
-AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
-]
-)
+])
+# End of AX_TLS
