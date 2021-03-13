@@ -368,7 +368,32 @@ EOF
         [AC_MSG_RESULT(yes)
          AC_DEFINE([HAVE_GENERIC_TLS_METHOD], [1],
          [Define to 1 if boost::asio::ssl::context::tls is available])],
-        [AC_MSG_RESULT(no)])
+        [AC_MSG_RESULT(no)
+         AC_MSG_CHECKING([Verifying TLS 1.2 fallback])
+         AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
+                              [auto ctx(boost::asio::ssl::context::tlsv12);])],
+             [AC_MSG_RESULT(yes)
+              AC_DEFINE([HAVE_TLS_1_2_METHOD], [1],
+              [Define to 1 if boost::asio::ssl::context::tlsv12 is available])],
+             [AC_MSG_RESULT(no)
+              AC_MSG_WARN([The boost version is very old: TLS support can use insecure features])])])
+    dnl Check if the stream_truncated (SSL short read) error is available
+    AC_MSG_CHECKING([stream_truncated (SSL short read) error])
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
+                         [const int ec =
+                          boost::asio::ssl::error::stream_truncated;])],
+        [AC_MSG_RESULT(yes)
+         AC_DEFINE([HAVE_STREAM_TRUNCATED_ERROR], [1],
+         [Define to 1 if boost::asio::ssl::error::stream_truncated is available])],
+        [AC_MSG_RESULT(no)
+         AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
+                              [const int ec =
+                               ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);])],
+             [],
+             [AC_MSG_ERROR([Can not find a definition for stream_truncated (SSL short read) error])])])
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi

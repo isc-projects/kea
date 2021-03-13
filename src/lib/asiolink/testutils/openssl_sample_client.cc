@@ -159,7 +159,11 @@ int main(int argc, char* argv[])
 #ifdef HAVE_GENERIC_TLS_METHOD
     boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tls);
 #else
+#ifdef HAVE_TLS_1_2_METHOD
     boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tlsv12);
+#else
+    boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tlsv1);
+#endif
 #endif
     ctx.load_verify_file(CA_("kea-ca.crt"));
     ctx.use_certificate_chain_file(CA_("kea-client.crt"));

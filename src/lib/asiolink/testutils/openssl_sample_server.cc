@@ -109,7 +109,11 @@ public:
 #ifdef HAVE_GENERIC_TLS_METHOD
       context_(boost::asio::ssl::context::method::tls)
 #else
+#ifdef HAVE_TLS_1_2_METHOD
       context_(boost::asio::ssl::context::method::tlsv12)
+#else
+      context_(boost::asio::ssl::context::method::tlsv1)
+#endif
 #endif
   {
     //context_.set_options(
