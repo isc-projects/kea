@@ -13,6 +13,8 @@
 
 #include <config.h>
 
+#ifdef HAVE_GENERIC_TLS_METHOD
+
 #include <cstdlib>
 #include <iostream>
 #include <boost/bind/bind.hpp>
@@ -106,15 +108,7 @@ public:
     : io_context_(io_context),
       acceptor_(io_context,
           boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-#ifdef HAVE_GENERIC_TLS_METHOD
       context_(boost::asio::ssl::context::method::tls)
-#else
-#ifdef HAVE_TLS_1_2_METHOD
-      context_(boost::asio::ssl::context::method::tlsv12)
-#else
-      context_(boost::asio::ssl::context::method::tlsv1)
-#endif
-#endif
   {
     //context_.set_options(
     //    boost::asio::ssl::context::default_workarounds
@@ -185,3 +179,15 @@ int main(int argc, char* argv[])
 
   return 0;
 }
+
+#else // !HAVE_GENERIC_TLS_METHOD
+
+#include <iostream>
+
+int main()
+{
+  std::cerr << "this tool requires recent boost version\n";
+  return 0;
+}
+#endif
+

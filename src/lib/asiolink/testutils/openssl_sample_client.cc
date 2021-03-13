@@ -10,6 +10,8 @@
 
 #include <config.h>
 
+#ifdef HAVE_GENERIC_TLS_METHOD
+
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -32,7 +34,7 @@ class client
 public:
   client(boost::asio::io_service& io_context,
       boost::asio::ssl::context& context,
-      const tcp::resolver::results_type& endpoints)
+      const tcp::endpoint& endpoint)
     : socket_(io_context, context)
   {
     socket_.set_verify_mode(boost::asio::ssl::verify_peer |
@@ -40,7 +42,7 @@ public:
     socket_.set_verify_callback(
         std::bind(&client::verify_certificate, this, _1, _2));
 
-    connect(endpoints);
+    connect(endpoint);
   }
 
 private:
@@ -63,11 +65,10 @@ private:
     return preverified;
   }
 
-  void connect(const tcp::resolver::results_type& endpoints)
+  void connect(const tcp::endpoint& endpoint)
   {
-    boost::asio::async_connect(socket_.lowest_layer(), endpoints,
-        [this](const boost::system::error_code& error,
-          const tcp::endpoint& /*endpoint*/)
+    socket_.lowest_layer().async_connect(endpoint,
+        [this](const boost::system::error_code& error)
         {
           if (!error)
           {
@@ -147,30 +148,23 @@ int main(int argc, char* argv[])
   {
     if (argc != 3)
     {
-      std::cerr << "Usage: client <host> <port>\n";
+      std::cerr << "Usage: client <addr> <port>\n";
       return 1;
     }
 
     boost::asio::io_service io_context;
 
-    tcp::resolver resolver(io_context);
-    auto endpoints = resolver.resolve(argv[1], argv[2]);
+    using namespace std; // For atoi.
+    tcp::endpoint endpoint(
+      boost::asio::ip::address::from_string(argv[1]), atoi(argv[2]));
 
-#ifdef HAVE_GENERIC_TLS_METHOD
     boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tls);
-#else
-#ifdef HAVE_TLS_1_2_METHOD
-    boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tlsv12);
-#else
-    boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tlsv1);
-#endif
-#endif
     ctx.load_verify_file(CA_("kea-ca.crt"));
     ctx.use_certificate_chain_file(CA_("kea-client.crt"));
     ctx.use_private_key_file(CA_("kea-client.key"),
                              boost::asio::ssl::context::pem);
 
-    client c(io_context, ctx, endpoints);
+    client c(io_context, ctx, endpoint);
 
     io_context.run();
   }
@@ -181,3 +175,13 @@ int main(int argc, char* argv[])
 
   return 0;
 }
+#else // !HAVE_GENERIC_TLS_METHOD
+
+#include <iostream>
+
+int main()
+{
+  std::cerr << "this tool requires recent boost version\n";
+  return 0;
+}
+#endif
