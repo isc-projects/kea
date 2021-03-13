@@ -25,9 +25,16 @@ using namespace isc::cryptolink;
 namespace isc {
 namespace asiolink {
 
+// Enforce TLS 1.2 when the generic TLS method is not available (i.e.
+// the boost version is older than 1.64.0).
 TlsContext::TlsContext(TlsRole role)
     : TlsContextBase(role), cert_required_(true),
-      context_(context::method::tls) {
+#ifdef HAVE_GENERIC_TLS_METHOD
+      context_(context::method::tls)
+#else
+      context_(context::method::tlsv12)
+#endif
+{
     // Not leave the verify mode to OpenSSL default.
     setCertRequired(true);
 }

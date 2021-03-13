@@ -360,6 +360,15 @@ EOF
     dnl Check boost ASIO SSL
     AC_CHECK_HEADERS([boost/asio/ssl.hpp],,
         [AC_MSG_ERROR([Missing required boost ssl header file])])
+    dnl Check if the generic TLS method is available
+    AC_MSG_CHECKING([Generic TLS method])
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
+                         [auto ctx(boost::asio::ssl::context::tls);])],
+        [AC_MSG_RESULT(yes)
+         AC_DEFINE([HAVE_GENERIC_TLS_METHOD], [1],
+         [Define to 1 if boost::asio::ssl::context::tls is available])],
+        [AC_MSG_RESULT(no)])
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
