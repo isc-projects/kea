@@ -1690,6 +1690,8 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'a' + == 'a'", "<string>:1.7-8: syntax error, unexpected ==");
     checkError("'a' ++ 'b' == 'ab'",
                "<string>:1.6: syntax error, unexpected +");
+    checkError("addrtotext(10.0.0.1, 10.0.0.2)",
+               "<string>:1.20: syntax error, unexpected \",\", expecting )");
     checkError("addrtotext('cafebabecafebabe')",
                "<string>:1.31: syntax error, unexpected end of file, expecting ==");
     checkError("addrtotext('')",
