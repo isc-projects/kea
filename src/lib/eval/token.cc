@@ -192,7 +192,6 @@ TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
 }
 
 OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
-
     // Check if there is Relay Agent Option.
     OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
@@ -204,7 +203,6 @@ OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
 }
 
 OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
-
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
@@ -241,7 +239,6 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
 
 void
 TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
-
     string value;
     vector<uint8_t> binary;
     string type_str;
@@ -293,7 +290,6 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
-
     vector<uint8_t> binary;
     string value;
     string type_str;
@@ -320,28 +316,23 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
             binary = pkt4.getGiaddr().toBytes();
             type_str = "giaddr";
             break;
-
         case CIADDR:
             binary = pkt4.getCiaddr().toBytes();
             type_str = "ciaddr";
             break;
-
         case YIADDR:
             binary = pkt4.getYiaddr().toBytes();
             type_str = "yiaddr";
             break;
-
         case SIADDR:
             binary = pkt4.getSiaddr().toBytes();
             type_str = "siaddr";
             break;
-
         case HLEN:
             // Pad the uint8_t field to 4 bytes.
             value = EvalContext::fromUint32(pkt4.getHlen());
             type_str = "hlen";
             break;
-
         case HTYPE:
             // Pad the uint8_t field to 4 bytes.
             value = EvalContext::fromUint32(pkt4.getHtype());
@@ -355,7 +346,6 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
             value = EvalContext::fromUint32(pkt4.getTransid());
             type_str = "transid";
             break;
-
         default:
             isc_throw(EvalTypeError, "Bad field specified: "
                       << static_cast<int>(type_) );
@@ -379,7 +369,6 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
-
     string value;
     string type_str;
     try {
@@ -420,7 +409,6 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
-
     vector<uint8_t> binary;
     string type_str;
     try {
@@ -483,7 +471,6 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for == operator, got " << values.size());
@@ -508,7 +495,6 @@ TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for substring operator, got " << values.size());
@@ -604,7 +590,6 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for concat, got " << values.size());
@@ -627,7 +612,6 @@ TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for ifelse, got " << values.size());
@@ -696,7 +680,6 @@ TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -719,7 +702,6 @@ TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for and operator, got " << values.size());
@@ -747,7 +729,6 @@ TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
-
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for or operator, got " << values.size());
@@ -790,14 +771,12 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
                          uint16_t option_code)
     :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
-     field_(option_code ? SUBOPTION : EXISTS)
-{
+     field_(option_code ? SUBOPTION : EXISTS) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
     :TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
-     field_(field)
-{
+     field_(field) {
     if (field_ == EXISTS) {
         representation_type_ = TokenOption::EXISTS;
     }
@@ -812,7 +791,6 @@ TokenVendor::FieldType TokenVendor::getField() const {
 }
 
 void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
-
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -909,8 +887,7 @@ TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    FieldType field, uint16_t index)
-    :TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index)
-{
+    :TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
     field_ = field;
 }
 
@@ -919,7 +896,6 @@ uint16_t TokenVendorClass::getDataIndex() const {
 }
 
 void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
-
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1013,7 +989,6 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
 
 TokenInteger::TokenInteger(const uint32_t value)
     :TokenString(EvalContext::fromUint32(value)), int_value_(value) {
-
 }
 
 OptionPtr
