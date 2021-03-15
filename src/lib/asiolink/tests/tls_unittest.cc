@@ -362,7 +362,7 @@ public:
                 return;
             }
         }
-        ADD_FAILURE() << party << " got expected error '" << errmsg_ << "'";
+        ADD_FAILURE() << party << " got unexpected error '" << errmsg_ << "'";
     }
 
 };
@@ -535,6 +535,8 @@ TEST(TLSTest, loadNoKeyFile) {
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
     // OpenSSL error.
     exps.addThrow("No such file or directory");
+    // Another possible error.
+    exps.addThrow("PEM lib");
     exps.runCanThrow([] {
         string key("/no-such-file");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -552,6 +554,8 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow(botan_error);
     // OpenSSL error.
     exps.addThrow("no start line");
+    // Another possible error.
+    exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
         string key(string(TEST_CA_DIR) + "/kea-client.crt");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -980,6 +984,8 @@ TEST(TLSTest, clientHTTPnoS) {
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL error (OpenSSL recognizes HTTP).
     exps.addError("http request");
+    // Another OpenSSL error (not all OpenSSL recognizes HTTP).
+    exps.addError("wrong version number");
     exps.checkAsync("server", server_cb);
     if (timeout) {
         std::cout << "server timeout\n";
