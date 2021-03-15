@@ -867,15 +867,6 @@ class VagrantEnv(object):
 
         # install python3 for centos 8
         if self.system == 'centos' and self.revision == '8':
-            # we need log4cplus that is in the nexus
-            cmd = 'bash -c \'cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
-            cmd += '[nexus]\n'
-            cmd += 'name=ISC Repo\n'
-            cmd += 'baseurl=https://packages.isc.org/repository/kea-1.7-centos-8-ci/\n'
-            cmd += 'enabled=1\n'
-            cmd += 'gpgcheck=0\n'
-            cmd += "EOF\n\'"
-            self.execute(cmd)
             self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
             self.python = 'python3'
 
@@ -1302,22 +1293,6 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
-
-        # prepare lib4cplus as epel repos are not available for rhel 8 yet
-        if revision == '8' and not os.path.exists('/usr/include/log4cplus/logger.h'):
-            if not os.path.exists('srpms'):
-                execute('mkdir srpms')
-            execute('rm -rf srpms/*')
-            execute('rm -rf rpmbuild')
-            execute('wget --no-verbose -O srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm '
-                    'https://rpmfind.net/linux/epel/7/SRPMS/Packages/l/log4cplus-1.1.3-0.4.rc3.el7.src.rpm',
-                    check_times=check_times)
-            execute('rpmbuild --rebuild srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm',
-                    env=env, timeout=120, check_times=check_times)
-            execute('sudo rpm -i rpmbuild/RPMS/x86_64/log4cplus-1.1.3-0.4.rc3.el8.x86_64.rpm',
-                    env=env, check_times=check_times)
-            execute('sudo rpm -i rpmbuild/RPMS/x86_64/log4cplus-devel-1.1.3-0.4.rc3.el8.x86_64.rpm',
-                    env=env, check_times=check_times)
 
         if 'unittest' in features:
             _install_gtest_sources()
