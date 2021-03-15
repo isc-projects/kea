@@ -57,7 +57,7 @@ if HAVE_OPENSSL
 # Boost ASIO SSL sample server and client for C++11.
 # https://www.boost.org/doc/libs/1_75_0/doc/html/boost_asio/example/cpp11/ssl/
 # openssl_sample_server <port>
-# openssl_sample_server <name-or-address> <port>
+# openssl_sample_server <address> <port>
 
 noinst_PROGRAMS = openssl_sample_client openssl_sample_server
 
