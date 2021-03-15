@@ -625,7 +625,7 @@ class VagrantEnv(object):
 
     def package(self):
         """Package Vagrant system into Vagrant box."""
-        execute('vagrant halt', cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
+        execute('vagrant halt', cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False, attempts=3)
 
         box_path = os.path.join(self.vagrant_dir, 'kea-%s-%s.box' % (self.system, self.revision))
         if os.path.exists(box_path):
@@ -641,6 +641,8 @@ class VagrantEnv(object):
                 execute('sudo rm -rf %s' % lxc_box_dir)
             os.mkdir(lxc_box_dir)
             lxc_container_path = os.path.join('/var/lib/lxc', self.name)
+
+            # add vagrant universal key to accepted keys
             execute('sudo bash -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8ia'
                     'llvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ'
                     '6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTB'
@@ -649,13 +651,26 @@ class VagrantEnv(object):
                     'YSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYC'
                     'zRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"'
                     '> %s/rootfs/home/vagrant/.ssh/authorized_keys\'' % lxc_container_path)
+
+            # reset machine-id
+            execute('sudo rm -f %s/rootfs/var/lib/dbus/machine-id' % lxc_container_path)
+            #execute('sudo truncate -s 0 %s/rootfs/etc/machine-id' % lxc_container_path)
+            execute('sudo rm -f %s/rootfs/etc/machine-id' % lxc_container_path)
+
+            # pack rootfs
             cmd = 'sudo bash -c "'
             cmd += 'cd %s '
             cmd += '&& tar --numeric-owner --anchored --exclude=./rootfs/dev/log -czf %s/rootfs.tar.gz ./rootfs/*'
             cmd += '"'
             execute(cmd % (lxc_container_path, lxc_box_dir))
+
+            # copy lxc config from runtime container
             execute('sudo cp %s/config %s/lxc-config' % (lxc_container_path, lxc_box_dir))
+            # remove mac address from eth0 - it should be dynamically assigned
+            execute("sudo sed -i '/lxc.net.0.hwaddr/d' %s/lxc-config" % lxc_box_dir)
+            # correct files ownership
             execute('sudo chown `id -un`:`id -gn` *', cwd=lxc_box_dir)
+            # and other metadata
             with open(os.path.join(lxc_box_dir, 'metadata.json'), 'w') as f:
                 now = datetime.datetime.now()
                 f.write('{\n')
@@ -664,6 +679,7 @@ class VagrantEnv(object):
                 f.write('  "built-on": "%s"\n' % now.strftime('%c'))
                 f.write('}\n')
 
+            # pack vagrant box with metadata and config
             execute('tar -czf %s ./*' % box_path, cwd=lxc_box_dir)
             execute('sudo rm -rf %s' % lxc_box_dir)
 
@@ -913,6 +929,31 @@ class VagrantEnv(object):
                  dt // 60, dt % 60)
         log.info('')
 
+    def prepare_for_boxing(self):
+        if self.system not in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel']:
+            return
+
+        # setup a script that on first boot will set machine-id
+        cmd = 'bash -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
+        cmd += '[Unit]\n'
+        cmd += 'Description=Generate New Machine ID\n'
+        cmd += 'Documentation=man:systemd-firstboot(1)\n'
+        cmd += 'DefaultDependencies=no\n'
+        cmd += 'Conflicts=shutdown.target\n'
+        cmd += 'After=systemd-remount-fs.service\n'
+        cmd += 'Before=systemd-sysusers.service sysinit.target shutdown.target\n'
+        cmd += 'ConditionPathIsReadWrite=/etc\n'
+        cmd += 'ConditionFirstBoot=yes\n'
+        cmd += '[Service]\n'
+        cmd += 'Type=oneshot\n'
+        cmd += 'RemainAfterExit=yes\n'
+        cmd += 'ExecStart=/usr/bin/systemd-firstboot --setup-machine-id\n'
+        cmd += '[Install]\n'
+        cmd += 'WantedBy=sysinit.target\n'
+        cmd += "EOF\n\'"
+        self.execute(cmd)
+        self.execute('sudo systemctl enable systemd-firstboot.service')
+
 
 def _install_gtest_sources():
     """Install gtest sources."""
@@ -1035,6 +1076,7 @@ def _configure_pgsql(system, features):
         #    local   all             all                                     peer
         # to:
         #    local   all             all                                     md5
+
     log.info('postgresql just configured')
 
 
@@ -1956,16 +1998,17 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
     return dt, error, total, passed
 
 
-def package_box(provider, system, revision, features, dry_run, check_times, reuse):
+def package_box(provider, system, revision, features, dry_run, check_times, reuse, skip_upload):
     """Prepare Vagrant box of specified system."""
     ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
     if not reuse:
         ve.destroy()
     ve.bring_up_latest_box()
     ve.prepare_system()
-    # TODO cleanup
+    ve.prepare_for_boxing()
     box_path = ve.package()
-    ve.upload_to_cloud(box_path)
+    if not skip_upload:
+        ve.upload_to_cloud(box_path)
 
 
 def ssh(provider, system, revision):
@@ -2174,6 +2217,9 @@ def parse_args():
                         help='Repository for 3rd party dependencies and for uploading built packages.')
     parser.add_argument('-u', '--reuse', action='store_true',
                         help='Reuse existing system image, otherwise (default case) if there is any exising then destroy it first.')
+    parser.add_argument('-k', '--skip-upload', action='store_true',
+                        help='Skip uploading prepared box to cloud, otherwise (default case) upload it.')
+
 
     args = main_parser.parse_args()
 
@@ -2446,7 +2492,7 @@ def main():
         features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'native-pkg'])
 
         log.info('Enabled features: %s', ' '.join(features))
-        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse)
+        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse, args.skip_upload)
 
     elif args.command == "prepare-system":
         prepare_system_cmd(args)
