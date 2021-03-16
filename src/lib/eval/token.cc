@@ -170,7 +170,8 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << *(reinterpret_cast<int16_t*>(const_cast<char*>(op.data())));
+    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
+    tmp << static_cast<int16_t>(ntohs(value));
     op = tmp.str();
     values.push(op);
 
@@ -193,7 +194,8 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << *(reinterpret_cast<int32_t*>(const_cast<char*>(op.data())));
+    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
+    tmp << static_cast<int32_t>(ntohl(value));
     op = tmp.str();
     values.push(op);
 
@@ -239,7 +241,8 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
+    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
+    tmp << ntohs(value);
     op = tmp.str();
     values.push(op);
 
@@ -262,7 +265,8 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
+    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
+    tmp << ntohl(value);
     op = tmp.str();
     values.push(op);
 
