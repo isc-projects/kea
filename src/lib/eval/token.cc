@@ -133,6 +133,144 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         .arg(op);
 }
 
+void
+TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(int8_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid int8.");
+    }
+
+    stringstream tmp;
+    tmp << static_cast<int32_t>(*(reinterpret_cast<int8_t*>(const_cast<char*>(op.data()))));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT8TOTEXT)
+        .arg(op);
+}
+
+void
+TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(int16_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid int16.");
+    }
+
+    stringstream tmp;
+    tmp << *(reinterpret_cast<int16_t*>(const_cast<char*>(op.data())));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT16TOTEXT)
+        .arg(op);
+}
+
+void
+TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(int32_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid int32.");
+    }
+
+    stringstream tmp;
+    tmp << *(reinterpret_cast<int32_t*>(const_cast<char*>(op.data())));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT32TOTEXT)
+        .arg(op);
+}
+
+void
+TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(uint8_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid uint8.");
+    }
+
+    stringstream tmp;
+    tmp << static_cast<uint32_t>(*(reinterpret_cast<uint8_t*>(const_cast<char*>(op.data()))));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT8TOTEXT)
+        .arg(op);
+}
+
+void
+TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(uint16_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid uint16.");
+    }
+
+    stringstream tmp;
+    tmp << *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT16TOTEXT)
+        .arg(op);
+}
+
+void
+TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op.size() != sizeof(uint32_t)) {
+        isc_throw(EvalTypeError, "Can not convert to valid uint32.");
+    }
+
+    stringstream tmp;
+    tmp << *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
+    op = tmp.str();
+    values.push(op);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT32TOTEXT)
+        .arg(op);
+}
+
 OptionPtr
 TokenOption::getOption(Pkt& pkt) {
     return (pkt.getOption(option_code_));

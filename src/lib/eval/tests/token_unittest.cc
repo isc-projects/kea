@@ -812,6 +812,136 @@ TEST_F(TokenTest, addressToText) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test checks that a TokenIntToText, representing an integer as a string,
+// can be used in Pkt4/Pkt6 evaluation.
+// (The actual packet is not used)
+TEST_F(TokenTest, integerToText) {
+    TokenPtr int8token((new TokenInt8ToText()));
+    TokenPtr int16token((new TokenInt16ToText()));
+    TokenPtr int32token((new TokenInt32ToText()));
+    TokenPtr uint8token((new TokenUInt8ToText()));
+    TokenPtr uint16token((new TokenUInt16ToText()));
+    TokenPtr uint32token((new TokenUInt32ToText()));
+
+    std::vector<uint8_t> bytes;
+    std::string value;
+
+    // Invalid data size fails.
+    values_.push(value);
+    EXPECT_THROW(int8token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(int16token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(int32token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint8token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint16token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint32token->evaluate(*pkt4_, values_), EvalTypeError);
+
+    value = "0123456789";
+
+    // Invalid data size fails.
+    values_.push(value);
+    EXPECT_THROW(int8token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(int16token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(int32token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint8token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint16token->evaluate(*pkt4_, values_), EvalTypeError);
+    values_.push(value);
+    EXPECT_THROW(uint32token->evaluate(*pkt4_, values_), EvalTypeError);
+
+    uint64_t data = -1;
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(int8_t)));
+
+    EXPECT_NO_THROW(int8token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(int16_t)));
+
+    EXPECT_NO_THROW(int16token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(2, values_.size());
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(int32_t)));
+
+    EXPECT_NO_THROW(int32token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(3, values_.size());
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(uint8_t)));
+
+    EXPECT_NO_THROW(uint8token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(4, values_.size());
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(uint16_t)));
+
+    EXPECT_NO_THROW(uint16token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(5, values_.size());
+
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(uint32_t)));
+
+    EXPECT_NO_THROW(uint32token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(6, values_.size());
+
+    // Check uint32
+    EXPECT_EQ(10, values_.top().size());
+    EXPECT_EQ("4294967295", values_.top());
+    values_.pop();
+
+    // Check uint16
+    EXPECT_EQ(5, values_.top().size());
+    EXPECT_EQ("65535", values_.top());
+    values_.pop();
+
+    // Check uint8
+    EXPECT_EQ(3, values_.top().size());
+    EXPECT_EQ("255", values_.top());
+    values_.pop();
+
+    // Check int32
+    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ("-1", values_.top());
+    values_.pop();
+
+    // Check int16
+    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ("-1", values_.top());
+    values_.pop();
+
+    // Check int8
+    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ("-1", values_.top());
+    values_.pop();
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_INT8TOTEXT Pushing Int8 -1");
+    addString("EVAL_DEBUG_INT16TOTEXT Pushing Int16 -1");
+    addString("EVAL_DEBUG_INT32TOTEXT Pushing Int32 -1");
+    addString("EVAL_DEBUG_UINT8TOTEXT Pushing UInt8 255");
+    addString("EVAL_DEBUG_UINT16TOTEXT Pushing UInt16 65535");
+    addString("EVAL_DEBUG_UINT32TOTEXT Pushing UInt32 4294967295");
+    EXPECT_TRUE(checkFile());
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv4 packet and properly store the option's value.
 TEST_F(TokenTest, optionString4) {

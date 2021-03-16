@@ -220,6 +220,12 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
 "hexstring"    return isc::eval::EvalParser::make_TOHEXSTRING(loc);
 "addrtotext"   return isc::eval::EvalParser::make_ADDRTOTEXT(loc);
+"int8totext"   return isc::eval::EvalParser::make_INT8TOTEXT(loc);
+"int16totext"  return isc::eval::EvalParser::make_INT16TOTEXT(loc);
+"int32totext"  return isc::eval::EvalParser::make_INT32TOTEXT(loc);
+"uint8totext"  return isc::eval::EvalParser::make_UINT8TOTEXT(loc);
+"uint16totext" return isc::eval::EvalParser::make_UINT16TOTEXT(loc);
+"uint32totext" return isc::eval::EvalParser::make_UINT32TOTEXT(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);

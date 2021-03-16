@@ -13,6 +13,9 @@ extern const isc::log::MessageID EVAL_DEBUG_EQUAL = "EVAL_DEBUG_EQUAL";
 extern const isc::log::MessageID EVAL_DEBUG_HEXSTRING = "EVAL_DEBUG_HEXSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_FALSE = "EVAL_DEBUG_IFELSE_FALSE";
 extern const isc::log::MessageID EVAL_DEBUG_IFELSE_TRUE = "EVAL_DEBUG_IFELSE_TRUE";
+extern const isc::log::MessageID EVAL_DEBUG_INT16TOTEXT = "EVAL_DEBUG_INT16TOTEXT";
+extern const isc::log::MessageID EVAL_DEBUG_INT32TOTEXT = "EVAL_DEBUG_INT32TOTEXT";
+extern const isc::log::MessageID EVAL_DEBUG_INT8TOTEXT = "EVAL_DEBUG_INT8TOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS = "EVAL_DEBUG_IPADDRESS";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT = "EVAL_DEBUG_IPADDRESSTOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER = "EVAL_DEBUG_MEMBER";
@@ -31,6 +34,9 @@ extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE = "EVAL_DEBUG_SUBSTR
 extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION = "EVAL_DEBUG_SUB_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION = "EVAL_DEBUG_SUB_OPTION_NO_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING = "EVAL_DEBUG_TOHEXSTRING";
+extern const isc::log::MessageID EVAL_DEBUG_UINT16TOTEXT = "EVAL_DEBUG_UINT16TOTEXT";
+extern const isc::log::MessageID EVAL_DEBUG_UINT32TOTEXT = "EVAL_DEBUG_UINT32TOTEXT";
+extern const isc::log::MessageID EVAL_DEBUG_UINT8TOTEXT = "EVAL_DEBUG_UINT8TOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA = "EVAL_DEBUG_VENDOR_CLASS_DATA";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND = "EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID = "EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID";
@@ -55,6 +61,9 @@ const char* values[] = {
     "EVAL_DEBUG_HEXSTRING", "Pushing hex string %1",
     "EVAL_DEBUG_IFELSE_FALSE", "Popping %1 (false) and %2, leaving %3",
     "EVAL_DEBUG_IFELSE_TRUE", "Popping %1 (true) and %2, leaving %3",
+    "EVAL_DEBUG_INT16TOTEXT", "Pushing Int16 %1",
+    "EVAL_DEBUG_INT32TOTEXT", "Pushing Int32 %1",
+    "EVAL_DEBUG_INT8TOTEXT", "Pushing Int8 %1",
     "EVAL_DEBUG_IPADDRESS", "Pushing IPAddress %1",
     "EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress %1",
     "EVAL_DEBUG_MEMBER", "Checking membership of '%1', pushing result %2",
@@ -73,6 +82,9 @@ const char* values[] = {
     "EVAL_DEBUG_SUB_OPTION", "Pushing option %1 sub-option %2 with value %3",
     "EVAL_DEBUG_SUB_OPTION_NO_OPTION", "Requested option %1 sub-option %2, but the parent option is not present, pushing result %3",
     "EVAL_DEBUG_TOHEXSTRING", "Popping binary value %1 and separator %2, pushing result %3",
+    "EVAL_DEBUG_UINT16TOTEXT", "Pushing UInt16 %1",
+    "EVAL_DEBUG_UINT32TOTEXT", "Pushing UInt32 %1",
+    "EVAL_DEBUG_UINT8TOTEXT", "Pushing UInt8 %1",
     "EVAL_DEBUG_VENDOR_CLASS_DATA", "Data %1 (out of %2 received) in vendor class found, pushing result '%3'",
     "EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND", "Requested data index %1, but option with enterprise-id %2 has only %3 data tuple(s), pushing result '%4'",
     "EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID", "Pushing enterprise-id %1 as result 0x%2",

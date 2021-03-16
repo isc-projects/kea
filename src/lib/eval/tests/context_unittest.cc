@@ -492,6 +492,42 @@ public:
         EXPECT_EQ(value, expected);
     }
 
+    /// @brief checks if the given token is a inttotext operator
+    template <typename Integer, typename TokenInteger>
+    void checkTokenIntToText(const TokenPtr& token,
+                             const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenInteger> inttotext =
+            boost::dynamic_pointer_cast<TokenInteger>(token);
+        EXPECT_TRUE(inttotext);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        Integer n;
+
+        try {
+            if (is_signed<Integer>()) {
+                n = static_cast<Integer>(boost::lexical_cast<int32_t>(expected));
+            } else {
+                n = static_cast<Integer>(boost::lexical_cast<uint32_t>(expected));
+            }
+        } catch (const boost::bad_lexical_cast& e) {
+            FAIL() << "invalid value " << expected << " while expecting "
+                   << boost::core::demangle(typeid(n).name()) << " error: "
+                   << e.what();
+        }
+
+        values.push(std::string(const_cast<const char*>(reinterpret_cast<char*>(&n)), sizeof(Integer)));
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+        string value = values.top();
+
+        EXPECT_EQ(value, expected);
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -895,7 +931,6 @@ TEST_F(EvalContextTest, ipaddress6prefix) {
 
     checkTokenIpAddress(tmp, "2001:db8::");
 }
-
 
 // Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
@@ -1518,6 +1553,126 @@ TEST_F(EvalContextTest, addressToText) {
     }
 }
 
+// Test the parsing of a int8_t expression
+TEST_F(EvalContextTest, int8ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("int8totext(255) == '-1'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 255);
+    checkTokenIntToText<int8_t, TokenInt8ToText>(tmp2, "-1");
+    checkTokenString(tmp3, "-1");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of a int16_t expression
+TEST_F(EvalContextTest, int16ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("int16totext(65535) == '-1'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 65535);
+    checkTokenIntToText<int16_t, TokenInt16ToText>(tmp2, "-1");
+    checkTokenString(tmp3, "-1");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of a int32_t expression
+TEST_F(EvalContextTest, int32ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("int32totext(4294967295) == '-1'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 4294967295);
+    checkTokenIntToText<int32_t, TokenInt32ToText>(tmp2, "-1");
+    checkTokenString(tmp3, "-1");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of a uint8_t expression
+TEST_F(EvalContextTest, uint8ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("uint8totext(255) == '255'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 255);
+    checkTokenIntToText<uint8_t, TokenUInt8ToText>(tmp2, "255");
+    checkTokenString(tmp3, "255");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of a uint16_t expression
+TEST_F(EvalContextTest, uint16ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("uint16totext(65535) == '65535'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 65535);
+    checkTokenIntToText<uint16_t, TokenUInt16ToText>(tmp2, "65535");
+    checkTokenString(tmp3, "65535");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of a uint32_t expression
+TEST_F(EvalContextTest, uint32ToText) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("uint32totext(4294967295) == '4294967295'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenInteger(tmp1, 4294967295);
+    checkTokenIntToText<uint32_t, TokenUInt32ToText>(tmp2, "4294967295");
+    checkTokenString(tmp3, "4294967295");
+    checkTokenEq(tmp4);
+}
+
 //
 // Test some scanner error cases
 TEST_F(EvalContextTest, scanErrors) {
@@ -1696,6 +1851,42 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.31: syntax error, unexpected end of file, expecting ==");
     checkError("addrtotext('')",
                "<string>:1.15: syntax error, unexpected end of file, expecting ==");
+    checkError("int8totext('01', '01')",
+               "<string>:1.16: syntax error, unexpected \",\", expecting )");
+    checkError("int8totext('0123')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+    checkError("int8totext('')",
+               "<string>:1.15: syntax error, unexpected end of file, expecting ==");
+    checkError("int16totext('0123', '0123')",
+               "<string>:1.19: syntax error, unexpected \",\", expecting )");
+    checkError("int16totext('01')",
+               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+    checkError("int16totext('')",
+               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+    checkError("int32totext('01234567', '01234567')",
+               "<string>:1.23: syntax error, unexpected \",\", expecting )");
+    checkError("int32totext('01')",
+               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+    checkError("int32totext('')",
+               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+    checkError("uint8totext('01', '01')",
+               "<string>:1.17: syntax error, unexpected \",\", expecting )");
+    checkError("uint8totext('0123')",
+               "<string>:1.20: syntax error, unexpected end of file, expecting ==");
+    checkError("uint8totext('')",
+               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+    checkError("uint16totext('0123', '0123')",
+               "<string>:1.20: syntax error, unexpected \",\", expecting )");
+    checkError("uint16totext('01')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+    checkError("uint16totext('')",
+               "<string>:1.17: syntax error, unexpected end of file, expecting ==");
+    checkError("uint32totext('01234567', '01234567')",
+               "<string>:1.24: syntax error, unexpected \",\", expecting )");
+    checkError("uint32totext('01')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+    checkError("uint32totext('')",
+               "<string>:1.17: syntax error, unexpected end of file, expecting ==");
 }
 
 // Tests some type error cases
@@ -1751,8 +1942,31 @@ TEST_F(EvalContextTest, typeErrors) {
     // Addrtotext requires string storing the binary representation of the address.
     checkError("addrtotext('192.100.1.1')",
                "<string>:1.26: syntax error, unexpected end of file, expecting ==");
-}
 
+    // Int8totext requires string storing the binary representation of the 8 bits integer.
+    checkError("int8totext('0123')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+
+    // Int16totext requires string storing the binary representation of the 16 bits integer.
+    checkError("int16totext('01')",
+               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+
+    // Int32totext requires string storing the binary representation of the 32 bits integer.
+    checkError("int32totext('01')",
+               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+
+    // Uint8totext requires string storing the binary representation of the 8 bits unsigned integer.
+    checkError("uint8totext('0123')",
+               "<string>:1.20: syntax error, unexpected end of file, expecting ==");
+
+    // Uint16totext requires string storing the binary representation of the 16 bits unsigned integer.
+    checkError("uint16totext('01')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+
+    // Uint32totext requires string storing the binary representation of the 32 bits unsigned integer.
+    checkError("uint32totext('01')",
+               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+}
 
 TEST_F(EvalContextTest, vendor4SpecificVendorExists) {
     testVendor("vendor[4491].exists", Option::V4, 4491, TokenOption::EXISTS);

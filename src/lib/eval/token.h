@@ -224,6 +224,114 @@ public:
     void evaluate(Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token representing an 8 bits integer as a string
+///
+/// This token holds the value of an 8 bits integer as a string, for instance
+/// 0xff is '-1'
+class TokenInt8ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenInt8ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 8 bits integer as a string will be pushed
+    /// here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a 16 bits integer as a string
+///
+/// This token holds the value of a 16 bits integer as a string, for instance
+/// 0xffff is '-1'
+class TokenInt16ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenInt16ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 16 bits integer as a string will be pushed
+    /// here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a 32 bits integer as a string
+///
+/// This token holds the value of a 32 bits integer as a string, for instance
+/// 0xffffffff is '-1'
+class TokenInt32ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenInt32ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 32 bits integer as a string will be pushed
+    /// here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing an 8 bits unsigned integer as a string
+///
+/// This token holds the value of an 8 bits unsigned integer as a string, for
+/// instance 0xff is '255'
+class TokenUInt8ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenUInt8ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 8 bits unsigned integer as a string will be
+    /// pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a 16 bits unsigned integer as a string
+///
+/// This token holds the value of a 16 bits unsigned integer as a string, for
+/// instance 0xffff is '65535'
+class TokenUInt16ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenUInt16ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 16 bits unsigned integer as a string will be
+    /// pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a 32 bits unsigned integer as a string
+///
+/// This token holds the value of a 32 bits unsigned integer as a string, for
+/// instance 0xffffffff is '4294967295'
+class TokenUInt32ToText : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenUInt32ToText() {}
+
+    /// @brief Token evaluation (puts value of the string on the stack after
+    /// decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented 32 bits unsigned integer as a string will be
+    /// pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
 /// @brief Token that represents a value of an option
 ///
 /// This represents a reference to a given option, e.g. in the expression

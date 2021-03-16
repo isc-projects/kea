@@ -77,6 +77,12 @@ using namespace isc::eval;
   IFELSE "ifelse"
   TOHEXSTRING "hexstring"
   ADDRTOTEXT "addrtotext"
+  INT8TOTEXT "int8totext"
+  INT16TOTEXT "int16totext"
+  INT32TOTEXT "int32totext"
+  UINT8TOTEXT "uint8totext"
+  UINT16TOTEXT "uint16totext"
+  UINT32TOTEXT "uint32totext"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -378,6 +384,36 @@ string_expr : STRING
                   {
                       TokenPtr addrtotext(new TokenIpAddressToText());
                       ctx.expression.push_back(addrtotext);
+                  }
+            | INT8TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr int8totext(new TokenInt8ToText());
+                      ctx.expression.push_back(int8totext);
+                  }
+            | INT16TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr int16totext(new TokenInt16ToText());
+                      ctx.expression.push_back(int16totext);
+                  }
+            | INT32TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr int32totext(new TokenInt32ToText());
+                      ctx.expression.push_back(int32totext);
+                  }
+            | UINT8TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr uint8totext(new TokenUInt8ToText());
+                      ctx.expression.push_back(uint8totext);
+                  }
+            | UINT16TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr uint16totext(new TokenUInt16ToText());
+                      ctx.expression.push_back(uint16totext);
+                  }
+            | UINT32TOTEXT "(" string_expr ")"
+                  {
+                      TokenPtr uint32totext(new TokenUInt32ToText());
+                      ctx.expression.push_back(uint32totext);
                   }
             | VENDOR "." ENTERPRISE
                 {
