@@ -31,8 +31,7 @@ public:
 
 
 /// @brief Evaluation context, an interface to the expression evaluation.
-class EvalContext
-{
+class EvalContext {
 public:
 
     /// @brief Specifies what type of expression the parser is expected to see
@@ -136,6 +135,35 @@ public:
     static uint32_t convertUint32(const std::string& number,
                                   const isc::eval::location& loc);
 
+    /// @brief Attempts to convert string to signed 32bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static int32_t convertInt32(const std::string& number,
+                                const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to unsigned 16bit integer
+    ///
+    /// For reverse conversion, see @ref fromUint16
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static uint16_t convertUint16(const std::string& number,
+                                  const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to signed 16bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static int16_t convertInt16(const std::string& number,
+                                const isc::eval::location& loc);
+
     /// @brief Attempts to convert string to unsigned 8bit integer
     ///
     /// @param number string to be converted
@@ -164,7 +192,7 @@ public:
     int8_t convertNestLevelNumber(const std::string& nest_level,
                                   const isc::eval::location& loc);
 
-    /// @brief Converts integer to string representation
+    /// @brief Converts unsigned 32bit integer to string representation
     ///
     /// The integer is coded as a 4 byte long string in network order, e.g.
     /// 6 is represented as 00000006. For reverse conversion, see
@@ -173,6 +201,16 @@ public:
     /// @param integer value to be converted
     /// @return 4 byte long string that encodes the value.
     static std::string fromUint32(const uint32_t integer);
+
+    /// @brief Converts unsigned 16bit integer to string representation
+    ///
+    /// The integer is coded as a 2 byte long string in network order, e.g.
+    /// 6 is represented as 0006. For reverse conversion, see
+    /// @ref convertUint16.
+    ///
+    /// @param integer value to be converted
+    /// @return 2 byte long string that encodes the value.
+    static std::string fromUint16(const uint16_t integer);
 
     /// @brief Returns the universe (v4 or v6)
     ///
@@ -205,7 +243,7 @@ public:
 
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+} // end of isc::eval namespace
+} // end of isc namespace
 
 #endif

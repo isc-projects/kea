@@ -25,8 +25,7 @@ EvalContext::EvalContext(const Option::Universe& option_universe,
 {
 }
 
-EvalContext::~EvalContext()
-{
+EvalContext::~EvalContext() {
 }
 
 bool
@@ -35,8 +34,7 @@ EvalContext::acceptAll(const ClientClass&) {
 }
 
 bool
-EvalContext::parseString(const std::string& str, ParserType type)
-{
+EvalContext::parseString(const std::string& str, ParserType type) {
     file_ = "<string>";
     string_ = str;
     scanStringBegin(type);
@@ -54,21 +52,18 @@ EvalContext::parseString(const std::string& str, ParserType type)
 }
 
 void
-EvalContext::error(const isc::eval::location& loc, const std::string& what)
-{
+EvalContext::error(const isc::eval::location& loc, const std::string& what) {
     isc_throw(EvalParseError, loc << ": " << what);
 }
 
 void
-EvalContext::error (const std::string& what)
-{
+EvalContext::error (const std::string& what) {
     isc_throw(EvalParseError, what);
 }
 
 uint16_t
 EvalContext::convertOptionCode(const std::string& option_code,
-                               const isc::eval::location& loc)
-{
+                               const isc::eval::location& loc) {
     int n = 0;
     try {
         n  = boost::lexical_cast<int>(option_code);
@@ -92,8 +87,7 @@ EvalContext::convertOptionCode(const std::string& option_code,
 
 uint16_t
 EvalContext::convertOptionName(const std::string& option_name,
-                               const isc::eval::location& loc)
-{
+                               const isc::eval::location& loc) {
     const std::string global_space = (option_universe_ == Option::V4) ?
         DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
 
@@ -116,8 +110,7 @@ EvalContext::convertOptionName(const std::string& option_name,
 
 int8_t
 EvalContext::convertNestLevelNumber(const std::string& nest_level,
-                                    const isc::eval::location& loc)
-{
+                                    const isc::eval::location& loc) {
     int8_t n = convertInt8(nest_level, loc);
     if (option_universe_ == Option::V6) {
         if ((n < - HOP_COUNT_LIMIT) || (n >= HOP_COUNT_LIMIT)) {
@@ -133,11 +126,10 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
 
 uint8_t
 EvalContext::convertUint8(const std::string& number,
-                          const isc::eval::location& loc)
-{
-    int n = 0;
+                          const isc::eval::location& loc) {
+    int32_t n = 0;
     try {
-        n  = boost::lexical_cast<int>(number);
+        n = boost::lexical_cast<int32_t>(number);
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid integer value in " + number);
     }
@@ -151,39 +143,90 @@ EvalContext::convertUint8(const std::string& number,
 
 int8_t
 EvalContext::convertInt8(const std::string& number,
-                         const isc::eval::location& loc)
-{
-    int n = 0;
+                         const isc::eval::location& loc) {
+    int32_t n = 0;
     try {
-        n  = boost::lexical_cast<int>(number);
+        n = boost::lexical_cast<int32_t>(number);
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid integer value in " + number);
     }
     if (n < std::numeric_limits<int8_t>::min() ||
         n > std::numeric_limits<int8_t>::max()) {
         error(loc, "Invalid value in "
-              + number + ". Allowed range: 0..255");
+              + number + ". Allowed range: -128..127");
     }
 
-    return (static_cast<uint8_t>(n));
+    return (static_cast<int8_t>(n));
+}
+
+uint16_t
+EvalContext::convertUint16(const std::string& number,
+                           const isc::eval::location& loc) {
+    int64_t n = 0;
+    try {
+        n = boost::lexical_cast<int64_t>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid value in " + number);
+    }
+    if (n < 0 || n > std::numeric_limits<uint16_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: 0..65535");
+    }
+
+    return (static_cast<uint16_t>(n));
+}
+
+int16_t
+EvalContext::convertInt16(const std::string& number,
+                          const isc::eval::location& loc) {
+    uint64_t n = 0;
+    try {
+        n = boost::lexical_cast<int64_t>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid value in " + number);
+    }
+    if (n > std::numeric_limits<int16_t>::max() ||
+        n < std::numeric_limits<int16_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: -32768..32767");
+    }
+
+    return (static_cast<int16_t>(n));
 }
 
 uint32_t
 EvalContext::convertUint32(const std::string& number,
-                          const isc::eval::location& loc)
-{
-    uint64_t n = 0;
+                           const isc::eval::location& loc) {
+    int64_t n = 0;
     try {
-        n  = boost::lexical_cast<uint64_t>(number);
+        n = boost::lexical_cast<int64_t>(number);
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid value in " + number);
     }
-    if (n > std::numeric_limits<uint32_t>::max()) {
+    if (n < 0 || n > std::numeric_limits<uint32_t>::max()) {
         error(loc, "Invalid value in "
               + number + ". Allowed range: 0..4294967295");
     }
 
     return (static_cast<uint32_t>(n));
+}
+
+int32_t
+EvalContext::convertInt32(const std::string& number,
+                          const isc::eval::location& loc) {
+    int64_t n = 0;
+    try {
+        n = boost::lexical_cast<int64_t>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid value in " + number);
+    }
+    if (n > std::numeric_limits<int32_t>::max() ||
+        n < std::numeric_limits<int32_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: -2147483648..2147483647");
+    }
+
+    return (static_cast<int32_t>(n));
 }
 
 std::string
@@ -197,13 +240,21 @@ EvalContext::fromUint32(const uint32_t integer) {
     return (tmp);
 }
 
+std::string
+EvalContext::fromUint16(const uint16_t integer) {
+    std::string tmp(2, 0);
+    tmp[0] = (integer >> 8) & 0xff;
+    tmp[1] = integer & 0xff;
+
+    return (tmp);
+}
+
 bool
 EvalContext::isClientClassDefined(const ClientClass& client_class) {
     return (check_defined_(client_class));
 }
 
 void
-EvalContext::fatal (const std::string& what)
-{
+EvalContext::fatal(const std::string& what) {
     isc_throw(Unexpected, what);
 }

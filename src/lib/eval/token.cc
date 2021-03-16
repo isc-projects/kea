@@ -171,7 +171,8 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     stringstream tmp;
     uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    tmp << static_cast<int16_t>(ntohs(value));
+    std::string data = EvalContext::fromUint16(value);
+    tmp << *(reinterpret_cast<int16_t *>(const_cast<char *>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -195,7 +196,8 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     stringstream tmp;
     uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    tmp << static_cast<int32_t>(ntohl(value));
+    std::string data = EvalContext::fromUint32(value);
+    tmp << *(reinterpret_cast<int32_t *>(const_cast<char *>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -242,7 +244,8 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     stringstream tmp;
     uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    tmp << ntohs(value);
+    std::string data = EvalContext::fromUint16(value);
+    tmp << *(reinterpret_cast<uint16_t *>(const_cast<char *>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -266,7 +269,8 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     stringstream tmp;
     uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    tmp << ntohl(value);
+    std::string data = EvalContext::fromUint32(value);
+    tmp << *(reinterpret_cast<uint32_t *>(const_cast<char *>(data.data())));
     op = tmp.str();
     values.push(op);
 
