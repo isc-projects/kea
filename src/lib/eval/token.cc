@@ -32,6 +32,7 @@ using isc::util::encode::toHex;
 
 void
 TokenString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -70,6 +71,7 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
 
 void
 TokenHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -95,6 +97,7 @@ TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
 
 void
 TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -105,6 +108,7 @@ TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -135,6 +139,7 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -158,6 +163,7 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -172,7 +178,7 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     stringstream tmp;
     uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
     std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<int16_t *>(const_cast<char *>(data.data())));
+    tmp << *(reinterpret_cast<int16_t*>(const_cast<char*>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -183,6 +189,7 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -197,7 +204,7 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     stringstream tmp;
     uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
     std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<int32_t *>(const_cast<char *>(data.data())));
+    tmp << *(reinterpret_cast<int32_t*>(const_cast<char*>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -208,6 +215,7 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -231,6 +239,7 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -245,7 +254,7 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     stringstream tmp;
     uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
     std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<uint16_t *>(const_cast<char *>(data.data())));
+    tmp << *(reinterpret_cast<uint16_t*>(const_cast<char*>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -256,6 +265,7 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -270,7 +280,7 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     stringstream tmp;
     uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
     std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<uint32_t *>(const_cast<char *>(data.data())));
+    tmp << *(reinterpret_cast<uint32_t*>(const_cast<char*>(data.data())));
     op = tmp.str();
     values.push(op);
 
@@ -286,6 +296,7 @@ TokenOption::getOption(Pkt& pkt) {
 
 void
 TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
+
     OptionPtr opt = getOption(pkt);
     std::string opt_str;
     if (opt) {
@@ -385,6 +396,7 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
 
 void
 TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
+
     string value;
     vector<uint8_t> binary;
     string type_str;
@@ -436,6 +448,7 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
+
     vector<uint8_t> binary;
     string value;
     string type_str;
@@ -515,6 +528,7 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
+
     string value;
     string type_str;
     try {
@@ -555,6 +569,7 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
+
     vector<uint8_t> binary;
     string type_str;
     try {
@@ -617,6 +632,7 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
 
 void
 TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for == operator, got " << values.size());
@@ -641,6 +657,7 @@ TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for substring operator, got " << values.size());
@@ -736,6 +753,7 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for concat, got " << values.size());
@@ -758,6 +776,7 @@ TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for ifelse, got " << values.size());
@@ -793,6 +812,7 @@ TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for hexstring, got " << values.size());
@@ -826,6 +846,7 @@ TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -848,6 +869,7 @@ TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for and operator, got " << values.size());
@@ -875,6 +897,7 @@ TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for or operator, got " << values.size());
@@ -902,6 +925,7 @@ TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
 void
 TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
+
     if (pkt.inClass(client_class_)) {
         values.push("true");
     } else {
@@ -937,6 +961,7 @@ TokenVendor::FieldType TokenVendor::getField() const {
 }
 
 void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
+
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1042,6 +1067,7 @@ uint16_t TokenVendorClass::getDataIndex() const {
 }
 
 void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
+
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1147,6 +1173,7 @@ TokenSubOption::getSubOption(const OptionPtr& parent) {
 
 void
 TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
+
     OptionPtr parent = getOption(pkt);
     std::string txt;
     isc::log::MessageID msgid = EVAL_DEBUG_SUB_OPTION;
