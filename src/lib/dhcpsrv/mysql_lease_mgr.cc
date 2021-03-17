@@ -1783,6 +1783,7 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), timer_name_("") {
 
+    // Create unique timer name per instance.
     timer_name_ = "MySqlLeaseMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
@@ -1825,7 +1826,6 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString());
-
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED)
@@ -1855,7 +1855,6 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
             // Invoke application layer connection failed callback.
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
-
             return (false);
         }
 
@@ -1897,6 +1896,7 @@ MySqlLeaseMgr::createContext() const {
     ctx->exchange4_.reset(new MySqlLease4Exchange());
     ctx->exchange6_.reset(new MySqlLease6Exchange());
 
+    // Create ReconnectCtl for this connection.
     ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);

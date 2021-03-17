@@ -3009,10 +3009,12 @@ MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnect
                             tagged_statements.end());
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
+    // Create unique timer name per instance.
     timer_name_ = "MySqlConfigBackend4[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
 
+    // Create ReconnectCtl for this connection.
     conn_.makeReconnectCtl(timer_name_);
 }
 

@@ -1217,6 +1217,7 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), timer_name_("") {
 
+    // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
@@ -1259,7 +1260,6 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString());
-
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED)
@@ -1289,7 +1289,6 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
             // Invoke application layer connection failed callback.
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
-
             return (false);
         }
 
@@ -1339,6 +1338,7 @@ PgSqlLeaseMgr::createContext() const {
     ctx->exchange4_.reset(new PgSqlLease4Exchange());
     ctx->exchange6_.reset(new PgSqlLease6Exchange());
 
+    // Create ReconnectCtl for this connection.
     ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);

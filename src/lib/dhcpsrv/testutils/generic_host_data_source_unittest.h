@@ -549,7 +549,7 @@ public:
         isc::dhcp::CfgMgr::instance().clear();
     }
 
-    ~HostMgrDbLostCallbackTest() {
+    virtual ~HostMgrDbLostCallbackTest() {
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
@@ -564,10 +564,6 @@ public:
     /// appropriate schema and create a basic host manager to
     /// wipe out any prior instance
     virtual void SetUp() {
-        isc::dhcp::HostMgr::setIOService(io_service_);
-        isc::db::DatabaseConnection::db_lost_callback_ = 0;
-        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
-        isc::db::DatabaseConnection::db_failed_callback_ = 0;
         // Ensure we have the proper schema with no transient data.
         createSchema();
         // Wipe out any pre-existing mgr
@@ -580,10 +576,6 @@ public:
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
     virtual void TearDown() {
-        isc::dhcp::HostMgr::setIOService(isc::asiolink::IOServicePtr());
-        isc::db::DatabaseConnection::db_lost_callback_ = 0;
-        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
-        isc::db::DatabaseConnection::db_failed_callback_ = 0;
         // If data wipe enabled, delete transient data otherwise destroy the schema
         destroySchema();
         isc::dhcp::CfgMgr::instance().clear();

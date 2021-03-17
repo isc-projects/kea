@@ -2222,6 +2222,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
     : parameters_(parameters), ip_reservations_unique_(true), unusable_(false),
       timer_name_("") {
 
+    // Create unique timer name per instance.
     timer_name_ = "PgSqlHostMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
@@ -2277,6 +2278,7 @@ PgSqlHostDataSourceImpl::createContext() const {
     ctx->host_ipv6_reservation_exchange_.reset(new PgSqlIPv6ReservationExchange());
     ctx->host_option_exchange_.reset(new PgSqlOptionExchange());
 
+    // Create ReconnectCtl for this connection.
     ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);
@@ -2308,7 +2310,6 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
                 HostMgr::addBackend(hds);
             }
         }
-
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED)
@@ -2338,7 +2339,6 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
             // Invoke application layer connection failed callback.
             DatabaseConnection::invokeDbFailedCallback(db_reconnect_ctl);
-
             return (false);
         }
 
