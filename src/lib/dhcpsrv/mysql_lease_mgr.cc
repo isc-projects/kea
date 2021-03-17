@@ -1737,9 +1737,9 @@ bool MySqlLeaseStatsQuery::negative_count_ = false;
 // MySqlLeaseContext Constructor
 
 MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters,
-                                     const isc::asiolink::IOServicePtr& io_service,
+                                     IOServiceAccessCallbackPtr io_service_access_callback,
                                      DbCallback db_reconnect_callback)
-    : conn_(parameters, io_service, db_reconnect_callback) {
+    : conn_(parameters, io_service_access_callback, db_reconnect_callback) {
 }
 
 // MySqlLeaseContextAlloc Constructor and Destructor
@@ -1882,8 +1882,8 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 MySqlLeaseContextPtr
 MySqlLeaseMgr::createContext() const {
     MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_,
-                                                   LeaseMgr::getIOService(),
-                                                   &MySqlLeaseMgr::dbReconnect));
+        IOServiceAccessCallbackPtr(new IOServiceAccessCallback(&LeaseMgr::getIOService)),
+        &MySqlLeaseMgr::dbReconnect));
 
     // Open the database.
     ctx->conn_.openDatabase();

@@ -43,10 +43,10 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See PgSqlLeaseMgr constructor.
-    /// @param io_service The IOService object, used for all ASIO operations.
+    /// @param io_service_access_callback The IOService access callback.
     /// @param db_reconnect_callback The connection recovery callback.
     PgSqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters,
-                      const isc::asiolink::IOServicePtr& io_service,
+                      db::IOServiceAccessCallbackPtr io_service_access_callback,
                       db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.

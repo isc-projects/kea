@@ -307,13 +307,14 @@ public:
     /// Initialize PgSqlConnection object with parameters needed for connection.
     ///
     /// @param parameters Specify the connection details.
-    /// @param io_service The IOService object, used for all ASIO operations.
+    /// @param io_access_callback The IOService access callback.
     /// @param callback The connection recovery callback.
     PgSqlConnection(const ParameterMap& parameters,
-                    const isc::asiolink::IOServicePtr& io_service = isc::asiolink::IOServicePtr(),
+                    IOServiceAccessCallbackPtr io_access_callback = IOServiceAccessCallbackPtr(),
                     DbCallback callback = DbCallback())
-        : DatabaseConnection(parameters), io_service_(io_service),
-          callback_(callback) {
+        : DatabaseConnection(parameters),
+          io_service_access_callback_(io_access_callback),
+          io_service_(), callback_(callback) {
     }
 
     /// @brief Destructor
@@ -425,6 +426,9 @@ public:
     ///
     /// @note The recover function must be run on the IO Service thread.
     void startRecoverDbConnection() {
+        if (!io_service_ && io_service_access_callback_) {
+            io_service_ = (*io_service_access_callback_)();
+        }
         if (callback_ && io_service_) {
             io_service_->post(std::bind(callback_, reconnectCtl()));
         }
@@ -450,6 +454,10 @@ public:
     operator bool() const {
         return (conn_);
     }
+
+    /// @brief Callback which returns the IOService that can be used to recover
+    /// the connection.
+    IOServiceAccessCallbackPtr io_service_access_callback_;
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;

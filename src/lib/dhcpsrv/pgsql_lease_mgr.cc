@@ -1171,9 +1171,9 @@ bool PgSqlLeaseStatsQuery::negative_count_ = false;
 // PgSqlLeaseContext Constructor
 
 PgSqlLeaseContext::PgSqlLeaseContext(const DatabaseConnection::ParameterMap& parameters,
-                                     const isc::asiolink::IOServicePtr& io_service,
+                                     IOServiceAccessCallbackPtr io_service_access_callback,
                                      DbCallback db_reconnect_callback)
-    : conn_(parameters, io_service, db_reconnect_callback) {
+    : conn_(parameters, io_service_access_callback, db_reconnect_callback) {
 }
 
 // PgSqlLeaseContextAlloc Constructor and Destructor
@@ -1316,8 +1316,8 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 PgSqlLeaseContextPtr
 PgSqlLeaseMgr::createContext() const {
     PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_,
-                                                   LeaseMgr::getIOService(),
-                                                   &PgSqlLeaseMgr::dbReconnect));
+        IOServiceAccessCallbackPtr(new IOServiceAccessCallback(&LeaseMgr::getIOService)),
+        &PgSqlLeaseMgr::dbReconnect));
 
     // Open the database.
     ctx->conn_.openDatabase();

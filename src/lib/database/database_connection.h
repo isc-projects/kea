@@ -7,6 +7,7 @@
 #ifndef DATABASE_CONNECTION_H
 #define DATABASE_CONNECTION_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -159,6 +160,13 @@ typedef boost::shared_ptr<ReconnectCtl> ReconnectCtlPtr;
 
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
+
+/// @brief Callback which returns the IOService that can be used to recover the
+/// connection.
+typedef std::function<isc::asiolink::IOServicePtr ()> IOServiceAccessCallback;
+
+/// @brief Pointer to an instance of IOServiceAccessCallbackPtr
+typedef boost::shared_ptr<IOServiceAccessCallback> IOServiceAccessCallbackPtr;
 
 /// @brief Common database connection class.
 ///
