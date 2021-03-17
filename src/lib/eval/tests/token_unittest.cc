@@ -765,13 +765,7 @@ TEST_F(TokenTest, addressToText) {
     TokenPtr address((new TokenIpAddressToText()));
     std::vector<uint8_t> bytes;
 
-    std::string value;
-    values_.push(value);
-
-    // Invalid data size fails.
-    EXPECT_THROW(address->evaluate(*pkt4_, values_), EvalTypeError);
-
-    value = "10.0.0.1";
+    std::string value = "10.0.0.1";
     values_.push(value);
 
     // Invalid data size fails.
@@ -793,6 +787,17 @@ TEST_F(TokenTest, addressToText) {
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(2, values_.size());
+
+    values_.push(std::string());
+    EXPECT_NO_THROW(address->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(3, values_.size());
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
 
     // Check IPv6 address
     EXPECT_EQ(11, values_.top().size());
@@ -824,23 +829,7 @@ TEST_F(TokenTest, integerToText) {
     TokenPtr uint32token((new TokenUInt32ToText()));
 
     std::vector<uint8_t> bytes;
-    std::string value;
-
-    // Invalid data size fails.
-    values_.push(value);
-    EXPECT_THROW(int8token->evaluate(*pkt4_, values_), EvalTypeError);
-    values_.push(value);
-    EXPECT_THROW(int16token->evaluate(*pkt4_, values_), EvalTypeError);
-    values_.push(value);
-    EXPECT_THROW(int32token->evaluate(*pkt4_, values_), EvalTypeError);
-    values_.push(value);
-    EXPECT_THROW(uint8token->evaluate(*pkt4_, values_), EvalTypeError);
-    values_.push(value);
-    EXPECT_THROW(uint16token->evaluate(*pkt4_, values_), EvalTypeError);
-    values_.push(value);
-    EXPECT_THROW(uint32token->evaluate(*pkt4_, values_), EvalTypeError);
-
-    value = "0123456789";
+    std::string value = "0123456789";
 
     // Invalid data size fails.
     values_.push(value);
@@ -899,6 +888,74 @@ TEST_F(TokenTest, integerToText) {
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(6, values_.size());
+
+    value = "";
+
+    values_.push(value);
+    EXPECT_NO_THROW(int8token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(7, values_.size());
+
+    values_.push(value);
+    EXPECT_NO_THROW(int16token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(8, values_.size());
+
+    values_.push(value);
+    EXPECT_NO_THROW(int32token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(9, values_.size());
+
+    values_.push(value);
+    EXPECT_NO_THROW(uint8token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(10, values_.size());
+
+    values_.push(value);
+    EXPECT_NO_THROW(uint16token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(11, values_.size());
+
+    values_.push(value);
+    EXPECT_NO_THROW(uint32token->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(12, values_.size());
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Check empty data
+    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ("", values_.top());
+    values_.pop();
 
     // Check uint32
     EXPECT_EQ(10, values_.top().size());

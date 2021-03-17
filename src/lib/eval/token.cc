@@ -113,10 +113,13 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
-    values.pop();
 
-    uint8_t size = op.size();
+    if (!(size = op.size())) {
+        return;
+    }
+    values.pop();
 
     if ((size != sizeof(uint32_t)) && (size != INET_ADDRSTRLEN)) {
         isc_throw(EvalTypeError, "Can not convert to valid address.");
@@ -144,10 +147,15 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(int8_t)) {
+    if (size != sizeof(int8_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid int8.");
     }
 
@@ -168,10 +176,15 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(int16_t)) {
+    if (size != sizeof(int16_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid int16.");
     }
 
@@ -194,10 +207,15 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(int32_t)) {
+    if (size != sizeof(int32_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid int32.");
     }
 
@@ -220,10 +238,15 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(uint8_t)) {
+    if (size != sizeof(uint8_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid uint8.");
     }
 
@@ -244,10 +267,15 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(uint16_t)) {
+    if (size != sizeof(uint16_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid uint16.");
     }
 
@@ -270,10 +298,15 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
+    size_t size;
     string op = values.top();
+
+    if (!(size = op.size())) {
+        return;
+    }
     values.pop();
 
-    if (op.size() != sizeof(uint32_t)) {
+    if (size != sizeof(uint32_t)) {
         isc_throw(EvalTypeError, "Can not convert to valid uint32.");
     }
 
