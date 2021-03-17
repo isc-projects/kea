@@ -1119,20 +1119,13 @@ def _install_cassandra_deb(system, revision, env, check_times):
 def _install_cassandra_rpm(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using RPM package."""
     if not os.path.exists('/usr/bin/cassandra'):
-        if system == 'centos':
-            install_pkgs('yum-utils', env=env, check_times=check_times)
-            execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/', raise_error=False)
-            execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
-            pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
-        elif system == 'fedora' and int(revision) == 33:
-            # there are not rpms for fedora33
-            return 0
-        else:
-            pkgs = 'cassandra cassandra-server libuv libuv-devel'
+        install_pkgs('yum-utils', env=env, check_times=check_times)
+        execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/', raise_error=False)
+        execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
+        pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
         install_pkgs(pkgs, env=env, check_times=check_times)
 
-    if system == 'centos':
-        execute('sudo systemctl daemon-reload')
+    execute('sudo systemctl daemon-reload')
 
     if system == 'fedora' and int(revision) >= 30:
         execute("echo '-Xms1G -Xmx1G' | sudo tee -a /etc/cassandra/jvm.options")
