@@ -1,3 +1,7 @@
+1882.	[func]		razvan
+	Implemented database connection recovery for forensic logging.
+	(Gitlab #1621)
+
 1881.	[func]		fdupont
 	Moved errors about URLs using names (vs addresses) or
 	https (vs http) scheme in High Availability hook
