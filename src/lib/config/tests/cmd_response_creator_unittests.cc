@@ -26,7 +26,7 @@ namespace ph = std::placeholders;
 namespace {
 
 /// @brief Test fixture class for @ref CmdResponseCreator.
-class CmdResponseCreatorTest :  public ::testing::Test {
+class CmdResponseCreatorTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
@@ -39,12 +39,19 @@ public:
         config::CommandMgr::instance().deregisterAll();
         // Register our "foo" command.
         config::CommandMgr::instance().
-            registerCommand("foo", std::bind(&CmdResponseCreatorTest::
-                                             fooCommandHandler,
+            registerCommand("foo", std::bind(&CmdResponseCreatorTest::fooCommandHandler,
                                              this, ph::_1, ph::_2));
     }
 
+    /// @brief Destructor.
+    ///
+    /// Removes registered commands from the command manager.
+    virtual ~CmdResponseCreatorTest() {
+        config::CommandMgr::instance().deregisterAll();
+    }
+
     /// @brief SetUp function that wraps call to initCreator.
+    ///
     /// Creates a default CmdResponseCreator and new HttpRequest.
     virtual void SetUp() {
         initCreator();
@@ -58,13 +65,6 @@ public:
         response_creator_.reset(new CmdResponseCreator(emulate_agent_flag));
         request_ = response_creator_->createNewHttpRequest();
         ASSERT_TRUE(request_) << "initCreator failed to create request";
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Removes registered commands from the command manager.
-    virtual ~CmdResponseCreatorTest() {
-        config::CommandMgr::instance().deregisterAll();
     }
 
     /// @brief Fills request context with required data to create new request.
@@ -99,7 +99,7 @@ public:
         HttpResponsePtr response;
         ASSERT_NO_THROW(
             response = response_creator_->createStockHttpResponse(request_,
-                                                                 status_code)
+                                                                  status_code)
         );
         ASSERT_TRUE(response);
         HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
@@ -221,7 +221,7 @@ TEST_F(CmdResponseCreatorTest, createDynamicHttpResponseNoEmulation) {
     // Response should be a map that is not enclosed in a list.
     ASSERT_FALSE(response_creator_->emulateAgentResponse());
     ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::map)
-                << "response is not a list: " << response_json->toString();
+                << "response is not a map: " << response_json->toString();
 
     // Response must be successful.
     EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
@@ -231,7 +231,6 @@ TEST_F(CmdResponseCreatorTest, createDynamicHttpResponseNoEmulation) {
     EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
                 std::string::npos);
 }
-
 
 // This test verifies that Internal Server Error is returned when invalid C++
 // request type is used. This is considered an error in the server logic.

@@ -45,21 +45,21 @@ public:
 
     /// @brief Fetches the port number on which to listen.
     ///
-    /// @return unit16_t containing the port number on which to listen.
+    /// @return uint16_t containing the port number on which to listen.
     uint16_t getPort() {
         return (port_);
     }
 
     /// @brief Fetches the maximum size of the thread pool.
     ///
-    /// @return unit16_t containing the maximum size of the thread pool.
+    /// @return uint16_t containing the maximum size of the thread pool.
     uint16_t getThreadPoolSize() {
         return (thread_pool_size_);
     }
 
     /// @brief Fetches the number of threads in the pool.
     ///
-    /// @return unit16_t containing the number of running threads.
+    /// @return uint16_t containing the number of running threads.
     uint16_t getThreadCount() {
         return (threads_.size());
     }
@@ -87,7 +87,7 @@ private:
 /// @brief Defines a shared pointer to CmdHttpListener.
 typedef boost::shared_ptr<CmdHttpListener> CmdHttpListenerPtr;
 
-}; // namespace isc::config
-}; // namespace isc
+} // namespace isc::config
+} // namespace isc
 
 #endif // CMD_HTTP_LISTENER_H

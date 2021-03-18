@@ -38,7 +38,7 @@ public:
     ///
     /// @param emulate_agent_response if true, responses for normal
     /// command outcomes are guaranteed to be wrapped in an Element::list.
-    /// This emulates how kea-ctrl-agent forms responses.  Defualts to true.
+    /// This emulates how kea-ctrl-agent forms responses.  Defaults to true.
     CmdResponseCreatorFactory(bool emulate_agent_response = true)
         : sole_creator_(new CmdResponseCreator(emulate_agent_response)) {
     }

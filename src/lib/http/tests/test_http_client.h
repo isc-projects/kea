@@ -29,6 +29,8 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error or completion.
+    /// @param server_address string containing the IP address of the server.
+    /// @param port port number of the server.
     explicit TestHttpClient(IOService& io_service,
                             const std::string& server_address = "127.0.0.1",
                             uint16_t port = 18123)
@@ -129,7 +131,6 @@ public:
             if (ec) {
                 // IO service stopped so simply return.
                 if (ec.value() == boost::asio::error::operation_aborted) {
-                    std::cout << "this: " << this << "IO service stopped" << std::endl;
                     return;
 
                 } else if ((ec.value() == boost::asio::error::try_again) ||
@@ -227,11 +228,17 @@ public:
         socket_.close();
     }
 
+    /// @brief Returns the HTTP response string.
+    ///
+    /// @retrurn string containg the response.
     std::string getResponse() const {
         return (response_);
     }
 
     /// @brief Returns true if the receive completed without error.
+    ///
+    /// @return True if the receive completed succesfully, false
+    /// otherwise.
     bool receiveDone() {
         return (receive_done_);
     }
@@ -256,7 +263,7 @@ private:
     /// @brief IP port of the server.
     uint16_t server_port_;
 
-    /// @brief Set to true when the receive as completed successfully.
+    /// @brief Set to true when the receive has completed successfully.
     bool receive_done_;
 };
 

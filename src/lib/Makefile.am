@@ -13,10 +13,10 @@ if HAVE_CQL
 SUBDIRS += cql
 endif
 
-SUBDIRS += config_backend hooks dhcp config stats
+SUBDIRS += config_backend hooks dhcp http config stats
 
 if HAVE_SYSREPO
 SUBDIRS += yang
 endif
 
-SUBDIRS += asiodns dhcp_ddns eval cfgrpt process dhcpsrv http
+SUBDIRS += asiodns dhcp_ddns eval cfgrpt process dhcpsrv

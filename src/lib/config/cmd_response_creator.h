@@ -35,9 +35,9 @@ public:
     ///
     /// @param emulate_agent_response if true, responses for normal
     /// command outcomes are guaranteed to be wrapped in an Element::list.
-    /// This emulates how kea-ctrl-agent forms responses.  Defualts to true.
+    /// This emulates how kea-ctrl-agent forms responses.  Defaults to true.
     CmdResponseCreator(bool emulate_agent_response = true)
-    : emulate_agent_response_(emulate_agent_response){};
+    : emulate_agent_response_(emulate_agent_response) {};
 
     /// @brief Create a new request.
     ///
@@ -68,14 +68,14 @@ public:
     /// @return an empty HttpAuthConfigPtr.
     const http::HttpAuthConfigPtr& getHttpAuthConfig() {
         static http::HttpAuthConfigPtr no_config;
-        return(no_config);
+        return (no_config);
     }
 
     /// @brief Indicates whether or not agent response emulation is enabled.
     ///
     /// @return true if emulation is enabled.
     bool emulateAgentResponse() {
-        return(emulate_agent_response_);
+        return (emulate_agent_response_);
     }
 
 private:

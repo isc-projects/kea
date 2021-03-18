@@ -28,7 +28,8 @@ namespace config {
 
 CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
                                  const uint16_t thread_pool_size /* = 1 */)
-    : address_(address), port_(port), http_listener_(), thread_pool_size_(thread_pool_size), threads_() {
+    : address_(address), port_(port), io_service_(), http_listener_(),
+      thread_pool_size_(thread_pool_size), threads_() {
 }
 
 CmdHttpListener::~CmdHttpListener() {
@@ -64,8 +65,7 @@ CmdHttpListener::start() {
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
         // Create a pool of threads, each calls run on our IOService_service instance.
-        for (std::size_t i = 0; i < thread_pool_size_; ++i)
-        {
+        for (std::size_t i = 0; i < thread_pool_size_; ++i) {
             boost::shared_ptr<std::thread> thread(new std::thread(
                 std::bind(&IOService::run, io_service_)));
             threads_.push_back(thread);
@@ -100,8 +100,8 @@ CmdHttpListener::stop() {
     io_service_->stop();
 
     // Stop the threads next.
-    for (std::size_t i = 0; i < threads_.size(); ++i) {
-            threads_[i]->join();
+    for (auto const& thread : threads_) {
+        thread->join();
     }
 
     threads_.clear();
