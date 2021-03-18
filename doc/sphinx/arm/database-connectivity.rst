@@ -6,7 +6,8 @@ Database Connectivity
 Kea servers (kea-dhcp4 and kea-dhcp6) can be configured to use a variety of
 database backends for leases, hosts, and configuration. All of them may be
 configured to support automatic recovery when connectivity is lost (see
-``max-reconnect-tries`` and ``reconnect-wait-time``).
+``max-reconnect-tries``, ``reconnect-wait-time`` and
+``disable-dhcp-on-db-loss``).
 
 It is important to understand how and when automatic recovery comes into play.
 Automatic recovery, when configured, only operates after a successful startup
@@ -28,7 +29,8 @@ allows the configuration to be corrected via command, if required.
 During normal operations, if connectivity to any of the backends is lost and
 automatic recovery for that backend is enabled, the server disconnects from the
 respective backend and then attempts to reconnect. During the recovery process,
-the server ceases to serve clients but continues to respond to commands. If
-connectivity to all backends is restored, the server returns to normal
-operations. If connectivity cannot be restored after ``max-reconnect-tries``,
-the server issues a fatal error and exits.
+the server ceases to serve clients according to the ``disable-dhcp-on-db-loss``
+configured option, but continues to respond to commands. If connectivity to all
+backends is restored, the server returns to normal operations. If connectivity
+cannot be restored after ``max-reconnect-tries``, the server issues a fatal
+error and exits.

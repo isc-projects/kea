@@ -527,6 +527,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"connect-timeout\" : 200, \n"
         "\"contact-points\": \"contact_str\", \n"
         "\"consistency\": \"quorum\", \n"
+        "\"disable-dhcp-on-db-loss\": true, \n"
         "\"serial-consistency\": \"serial\", \n"
         "\"host\": \"host_str\", \n"
         "\"keyspace\": \"keyspace_str\", \n"
