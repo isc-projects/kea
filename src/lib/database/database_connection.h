@@ -172,12 +172,17 @@ typedef boost::shared_ptr<ReconnectCtl> ReconnectCtlPtr;
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
 
-/// @brief Callback which returns the IOService that can be used to recover the
+/// @brief Function which returns the IOService that can be used to recover the
 /// connection.
-typedef std::function<isc::asiolink::IOServicePtr ()> IOServiceAccessCallback;
+///
+/// This accessor is used to lazy retrieve the IOService when the connection is
+/// lost. It is useful to retrieve it at a later time to support hook libraries
+/// which create managers on load and set IOService later on by using the
+/// dhcp4_srv_configured and dhcp6_srv_configured hooks.
+typedef std::function<isc::asiolink::IOServicePtr ()> IOServiceAccessor;
 
-/// @brief Pointer to an instance of IOServiceAccessCallbackPtr
-typedef boost::shared_ptr<IOServiceAccessCallback> IOServiceAccessCallbackPtr;
+/// @brief Pointer to an instance of IOServiceAccessor
+typedef boost::shared_ptr<IOServiceAccessor> IOServiceAccessorPtr;
 
 /// @brief Common database connection class.
 ///

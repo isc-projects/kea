@@ -1951,10 +1951,10 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See MySqlHostMgr constructor.
-    /// @param io_service_access_callback The IOService access callback.
+    /// @param io_service_accessor The IOService accessor function.
     /// @param db_reconnect_callback The connection recovery callback.
     MySqlHostContext(const DatabaseConnection::ParameterMap& parameters,
-                     IOServiceAccessCallbackPtr io_service_access_callback,
+                     IOServiceAccessorPtr io_service_accessor,
                      db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
@@ -2731,9 +2731,9 @@ TaggedStatementArray tagged_statements = { {
 // MySqlHostContext Constructor
 
 MySqlHostContext::MySqlHostContext(const DatabaseConnection::ParameterMap& parameters,
-                                   IOServiceAccessCallbackPtr io_service_access_callback,
+                                   IOServiceAccessorPtr io_service_accessor,
                                    db::DbCallback db_reconnect_callback)
-    : conn_(parameters, io_service_access_callback, db_reconnect_callback),
+    : conn_(parameters, io_service_accessor, db_reconnect_callback),
       is_readonly_(true) {
 }
 
@@ -2808,7 +2808,7 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
 MySqlHostContextPtr
 MySqlHostDataSourceImpl::createContext() const {
     MySqlHostContextPtr ctx(new MySqlHostContext(parameters_,
-        IOServiceAccessCallbackPtr(new IOServiceAccessCallback(&HostMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&HostMgr::getIOService)),
         &MySqlHostDataSourceImpl::dbReconnect));
 
     // Open the database.

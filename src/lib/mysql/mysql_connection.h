@@ -241,13 +241,12 @@ public:
     /// Initialize MySqlConnection object with parameters needed for connection.
     ///
     /// @param parameters Specify the connection details.
-    /// @param io_access_callback The IOService access callback.
+    /// @param io_accessor The IOService accessor function.
     /// @param callback The connection recovery callback.
     MySqlConnection(const ParameterMap& parameters,
-                    IOServiceAccessCallbackPtr io_access_callback = IOServiceAccessCallbackPtr(),
+                    IOServiceAccessorPtr io_accessor = IOServiceAccessorPtr(),
                     DbCallback callback = DbCallback())
-        : DatabaseConnection(parameters),
-          io_service_access_callback_(io_access_callback),
+        : DatabaseConnection(parameters), io_service_accessor_(io_accessor),
           io_service_(), callback_(callback) {
     }
 
@@ -659,9 +658,9 @@ public:
     /// @note The recover function must be run on the IO Service thread.
     void startRecoverDbConnection() {
         if (callback_) {
-            if (!io_service_ && io_service_access_callback_) {
-                io_service_ = (*io_service_access_callback_)();
-                io_service_access_callback_.reset();
+            if (!io_service_ && io_service_accessor_) {
+                io_service_ = (*io_service_accessor_)();
+                io_service_accessor_.reset();
             }
 
             if (io_service_) {
@@ -688,9 +687,14 @@ public:
     /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
 
-    /// @brief Callback which returns the IOService that can be used to recover
-    /// the connection.
-    IOServiceAccessCallbackPtr io_service_access_callback_;
+    /// @brief Accessor function which returns the IOService that can be used to
+    /// recover the connection.
+    ///
+    /// This accessor is used to lazy retrieve the IOService when the connection
+    /// is lost. It is useful to retrieve it at a later time to support hook
+    /// libraries which create managers on load and set IOService later on by
+    /// using the dhcp4_srv_configured and dhcp6_srv_configured hooks.
+    IOServiceAccessorPtr io_service_accessor_;
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;

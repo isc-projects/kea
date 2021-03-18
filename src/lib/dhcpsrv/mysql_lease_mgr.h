@@ -44,10 +44,10 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See MySqlLeaseMgr constructor.
-    /// @param io_service_access_callback The IOService access callback.
+    /// @param io_service_accessor The IOService accessor function.
     /// @param db_reconnect_callback The connection recovery callback.
     MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters,
-                      db::IOServiceAccessCallbackPtr io_service_access_callback,
+                      db::IOServiceAccessorPtr io_service_accessor,
                       db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.

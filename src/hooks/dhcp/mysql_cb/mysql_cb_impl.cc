@@ -48,7 +48,7 @@ MySqlConfigBackendImpl::
 MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
                        const DbCallback db_reconnect_callback)
     : conn_(parameters,
-            IOServiceAccessCallbackPtr(new IOServiceAccessCallback(MySqlConfigBackendImpl::getIOService)),
+            IOServiceAccessorPtr(new IOServiceAccessor(MySqlConfigBackendImpl::getIOService)),
             db_reconnect_callback), timer_name_(""),
       audit_revision_created_(false), parameters_(parameters) {
     // Test schema version first.

@@ -1313,10 +1313,10 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See PgSqlHostMgr constructor.
-    /// @param io_service_access_callback The IOService access callback.
+    /// @param io_service_accessor The IOService accessor function.
     /// @param db_reconnect_callback The connection recovery callback.
     PgSqlHostContext(const DatabaseConnection::ParameterMap& parameters,
-                     IOServiceAccessCallbackPtr io_service_access_callback,
+                     IOServiceAccessorPtr io_service_accessor,
                      db::DbCallback db_reconnect_callback);
 
     /// The exchange objects are used for transfer of data to/from the database.
@@ -2172,9 +2172,9 @@ TaggedStatementArray tagged_statements = { {
 // PgSqlHostContext Constructor
 
 PgSqlHostContext::PgSqlHostContext(const DatabaseConnection::ParameterMap& parameters,
-                                   IOServiceAccessCallbackPtr io_service_access_callback,
+                                   IOServiceAccessorPtr io_service_accessor,
                                    db::DbCallback db_reconnect_callback)
-    : conn_(parameters, io_service_access_callback, db_reconnect_callback),
+    : conn_(parameters, io_service_accessor, db_reconnect_callback),
       is_readonly_(true) {
 }
 
@@ -2249,7 +2249,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
 PgSqlHostContextPtr
 PgSqlHostDataSourceImpl::createContext() const {
     PgSqlHostContextPtr ctx(new PgSqlHostContext(parameters_,
-        IOServiceAccessCallbackPtr(new IOServiceAccessCallback(&HostMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&HostMgr::getIOService)),
         &PgSqlHostDataSourceImpl::dbReconnect));
 
     // Open the database.
