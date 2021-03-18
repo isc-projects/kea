@@ -53,7 +53,7 @@ public:
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
         : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
-        clients_(), num_threads_(), num_clients_() {
+        clients_(), num_threads_(), num_clients_(), num_in_progress_(0), num_finished_(0) {
         test_timer_.setup(std::bind(&CmdHttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
@@ -252,16 +252,20 @@ public:
         // notify everyone and finish.  The idea is to force each thread
         // to handle the same number of requests over the course of the
         // test, making verification reliable.
-        if (num_clients_ > 1) {
+        if (num_clients_ >= num_threads_) {
             std::unique_lock<std::mutex> lck(mutex_);
             ++num_in_progress_;
-            if (num_in_progress_ < num_threads_) {
-                cv_.wait(lck);
-            } else {
-                num_in_progress_ = 0;
+            if (num_in_progress_ == num_threads_) {
+                num_finished_ = 0;
                 cv_.notify_all();
+            } else {
+                bool ret = cv_.wait_for(lck, std::chrono::seconds(10),
+                                        [&]() { return (num_in_progress_ == num_threads_); });
+                if (!ret) {
+                    ADD_FAILURE() << "clients failed to start work";
+                }
             }
-        }
+         }
 
         // Create the map of response arguments.
         ElementPtr arguments = Element::createMap();
@@ -277,6 +281,25 @@ public:
         std::stringstream ss;
         ss << std::this_thread::get_id();
         arguments->set("thread-id", Element::create(ss.str()));
+
+        // If we have more clients than threads, we need to wait
+        // for each block of in-progress clients to finish.
+        if (num_clients_ >= num_threads_) {
+            std::unique_lock<std::mutex> lck(mutex_);
+            num_finished_++;
+            if (num_finished_ == num_threads_) {
+                // We're all done, notify the others and finish.
+                num_in_progress_ = 0;
+                cv_.notify_all();
+            } else {
+                // I'm done but others aren't wait here.
+                bool ret = cv_.wait_for(lck, std::chrono::seconds(10),
+                                        [&]() { return (num_finished_ == num_threads_); });
+                if (!ret) {
+                    ADD_FAILURE() << "clients failed to finish work";
+                }
+            }
+        }
 
         // We're done, ship it!
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
@@ -457,6 +480,9 @@ public:
 
     /// @brief Number of requests currently in progress.
     size_t num_in_progress_;
+
+    /// @brief Number of requests that have finished.
+    size_t num_finished_;
 
     /// @brief Mutex used to lock during thread coordination.
     std::mutex mutex_;
