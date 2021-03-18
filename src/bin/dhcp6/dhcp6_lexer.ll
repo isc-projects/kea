@@ -725,6 +725,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"disable-dhcp-on-db-loss\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_DISABLE_DHCP_ON_DB_LOSS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("disable-dhcp-on-db-loss", driver.loc_);
+    }
+}
+
 \"request-timeout\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:

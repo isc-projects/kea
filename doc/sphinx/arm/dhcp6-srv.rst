@@ -473,6 +473,11 @@ The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
+   "Dhcp6": { "lease-database": { "disable-dhcp-on-db-loss" : true, ... }, ... }
+
+The default value for MySQL and PostgreSQL is true, which disables the dhcp
+service while trying to automatically recover lost connections.
+
 .. note::
 
    Automatic reconnection to database backends is configured
@@ -634,6 +639,11 @@ be specified:
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
+
+   "Dhcp6": { "hosts-database": { "disable-dhcp-on-db-loss" : true, ... }, ... }
+
+The default value for MySQL and PostgreSQL is true, which disables the dhcp
+service while trying to automatically recover lost connections.
 
 .. note::
 

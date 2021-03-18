@@ -97,6 +97,7 @@ using namespace std;
   SERIAL_CONSISTENCY "serial-consistency"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
+  DISABLE_DHCP_ON_DB_LOSS "disable-dhcp-on-db-loss"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
@@ -908,6 +909,7 @@ database_map_param: database_type
                   | contact_points
                   | max_reconnect_tries
                   | reconnect_wait_time
+                  | disable_dhcp_on_db_loss
                   | request_timeout
                   | tcp_keepalive
                   | tcp_nodelay
@@ -1062,6 +1064,12 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.unique("reconnect-wait-time", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+disable_dhcp_on_db_loss: DISABLE_DHCP_ON_DB_LOSS COLON BOOLEAN {
+    ctx.unique("disable-dhcp-on-db-loss", ctx.loc2pos(@1));
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("disable-dhcp-on-db-loss", n);
 };
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {

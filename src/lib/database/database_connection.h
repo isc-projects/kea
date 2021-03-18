@@ -92,10 +92,11 @@ public:
     /// @param max_retries maximum number of reconnect attempts to make
     /// @param retry_interval amount of time to between reconnect attempts
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
-                 unsigned int max_retries, unsigned int retry_interval)
-        : backend_type_(backend_type), timer_name_(timer_name),
-          max_retries_(max_retries), retries_left_(max_retries),
-          retry_interval_(retry_interval) {}
+                 unsigned int max_retries, unsigned int retry_interval,
+                 bool disable_dhcp) : backend_type_(backend_type),
+          timer_name_(timer_name), max_retries_(max_retries),
+          retries_left_(max_retries), retry_interval_(retry_interval),
+          disable_dhcp_(disable_dhcp) {}
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
@@ -137,6 +138,12 @@ public:
         retries_left_ = max_retries_;
     }
 
+    /// @brief Return the flag which indicates if the connection loss should
+    /// disable the dhcp service.
+    bool disableDHCP() {
+        return (disable_dhcp_);
+    }
+
 private:
 
     /// @brief Caller backend type.
@@ -153,6 +160,10 @@ private:
 
     /// @brief The amount of time to wait between reconnect attempts
     unsigned int retry_interval_;
+
+    /// @brief Flag which indicates if the connection loss should disable the
+    /// dhcp service.
+    bool disable_dhcp_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl

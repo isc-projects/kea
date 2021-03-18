@@ -61,7 +61,8 @@ DbAccessParser::parse(std::string& access_string,
         try {
             if ((param.first == "persist") ||
                 (param.first == "tcp-nodelay") ||
-                (param.first == "readonly")) {
+                (param.first == "readonly") ||
+                (param.first == "disable-dhcp-on-db-loss")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -213,14 +214,6 @@ DbAccessParser::parse(std::string& access_string,
         (request_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("request-timeout");
         isc_throw(DbConfigError, "request-timeout " << request_timeout
-                  << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << "(" << value->getPosition() << ")");
-    }
-
-    if ((reconnect_wait_time < 0) ||
-        (reconnect_wait_time > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << "(" << value->getPosition() << ")");
     }

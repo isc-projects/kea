@@ -309,6 +309,9 @@
                 // Connection maximum reconnect tries.
                 "max-reconnect-tries": 3,
 
+                // Disable DHCP on database connection loss.
+                "disable-dhcp-on-db-loss": true,
+
                 // Connection connect timeout.
                 "connect-timeout": 100,
 

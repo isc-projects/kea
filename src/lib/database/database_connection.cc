@@ -175,8 +175,16 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of 0;
     }
 
+    bool disable_dhcp = true;
+    try {
+        parm_str = getParameter("disable-dhcp-on-db-loss");
+        disable_dhcp = boost::lexical_cast<bool>(parm_str);
+    } catch (...) {
+        // Wasn't specified so we'll use default of true;
+    }
+
     reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval);
+                                                      interval, disable_dhcp);
 }
 
 bool
@@ -233,7 +241,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             }
         } else if ((keyword == "persist") ||
                    (keyword == "tcp-nodelay") ||
-                   (keyword == "readonly")) {
+                   (keyword == "readonly") ||
+                   (keyword == "disable-dhcp-on-db-loss")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
