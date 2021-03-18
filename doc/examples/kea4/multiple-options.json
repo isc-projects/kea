@@ -90,7 +90,7 @@
              "data": "example.org"
          },
              // Domain search is also a popular option. It tells the client to
-             // attempt to resolve names within those specificed domains. For
+             // attempt to resolve names within those specified domains. For
              // example, name "foo" would be attempted to be resolved as
              // foo.mydomain.example.com and if it fails, then as
              // foo.example.com

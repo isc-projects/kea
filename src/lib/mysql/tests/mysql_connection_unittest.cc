@@ -249,7 +249,7 @@ public:
 
     /// @brief Run a raw, unprepared statement and return the result.
     ///
-    /// This is useful when running statements that can't be parametrized with a
+    /// This is useful when running statements that can't be parameterized with a
     /// question mark in place of a bound variable e.g. "SHOW GLOBAL VARIABLES"
     /// and thus cannot be prepared beforehand. All the results are string, the
     /// output should be the same as that which one would see in a mysql command

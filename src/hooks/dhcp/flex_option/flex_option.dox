@@ -79,7 +79,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 
 The sole parameter is a options list of options with:
  - @b code - Specifies the option code.
- - @b name - Speficies the option name, at least the option code or name
+ - @b name - Specifies the option name, at least the option code or name
    must be given.
  - @b add -  Specifies the add action: it takes a string expression on
    the query packet. If the option does not already exist in the response

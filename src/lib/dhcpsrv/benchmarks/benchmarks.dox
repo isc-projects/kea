@@ -39,7 +39,7 @@ $ cd src/lib/dhcpsrv/benchmarks
 $ ./run-benchmarks --benchmark_list_tests
 @endcode
 
-The list is dependandant on the configuration flags and availability of
+The list is dependant on the configuration flags and availability of
 various backends. For example, to run specific benchmark you may
 specify its name. Wildcards are supported:
 

@@ -65,7 +65,7 @@ the StatCmds class by the prefix "Lease" and it is instantiated in the outer
 handler (e.g. @ref isc::stat_cmds::StatCmds::statLease4GetHandler) rather than
 the StatCmds constructor.  This was done in the event that commands, unrelated
 to lease statistics, are added to this library and that would be better served
-by Pimpl derviations specific to them.
+by Pimpl derivations specific to them.
 
 @subsection stat_cmdsLeaseStatCode Lease Stat Commands Code Overview
 
@@ -116,7 +116,7 @@ DHCPv6 command:
 
 
 Command handling
-for both commands is symetrical consists of the following steps:
+for both commands is symmetrical consists of the following steps:
 
 -# The input parameters (if any) are parsed.  Invalid values or
 combinations if detected result in generating a CONTROL_RESULT_ERROR
@@ -139,7 +139,7 @@ an @ref isc::data::Element tree, which converted to JSON would appear as follows
     }
 @endcode
 
--# The acutal lease statistics are then retrieved from @ref isc::dhcp::LeaseMgr instance
+-# The actual lease statistics are then retrieved from @ref isc::dhcp::LeaseMgr instance
 by invoking of the three functions based on the input parameters:
 
 DHCPv4 functions:
@@ -159,7 +159,7 @@ each subnet to the result-set.  Each row combines the subnet total(s) from isc::
 with the type and state counts from the lease query results. For subnets with no query
 data (i.e. no leases), their rows have non-zero values for totals only.
 
--# Finally, a CONTROL_RESULT_SUCCESS repsonse is generated containing the populated result-set.
+-# Finally, a CONTROL_RESULT_SUCCESS response is generated containing the populated result-set.
 
 A DHCPv4 response might look like this:
 

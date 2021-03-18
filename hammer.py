@@ -115,7 +115,7 @@ IMAGE_TEMPLATES = {
 # NOTES
 # ** Alpine **
 # 1. Extracting rootfs is failing:
-#    It requires commenting out checking if rootfs has been extraced as it checks for file /bin/true which is a link.
+#    It requires commenting out checking if rootfs has been extracted as it checks for file /bin/true which is a link.
 #    Comment out in ~/.vagrant.d/gems/2.X.Y/gems/vagrant-lxc-1.4.3/scripts/lxc-template near 'Failed to extract rootfs'
 
 
@@ -448,7 +448,7 @@ class VagrantEnv(object):
     """Helper class that makes interacting with Vagrant easier.
 
     It creates Vagrantfile according to specified system. It exposes basic Vagrant functions
-    like up, upload, destro, ssh. It also provides more complex function for preparing system
+    like up, upload, destroy, ssh. It also provides more complex function for preparing system
     for Kea build and building Kea.
     """
 
@@ -1027,7 +1027,7 @@ def _configure_pgsql(system, features):
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
-        # pgsql must be enabled before runnig initdb
+        # pgsql must be enabled before running initdb
         execute('sudo sysrc postgresql_enable="yes"')
         execute('sudo /usr/local/etc/rc.d/postgresql initdb')
 
@@ -1051,7 +1051,7 @@ def _configure_pgsql(system, features):
     cmd += "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;\n"
     cmd += "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;\n"
     cmd += "EOF\n\""
-    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as posgres user directory to "/home/jenkins": Permission denied
+    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
     if 'forge' in features:
         cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
@@ -1061,7 +1061,7 @@ def _configure_pgsql(system, features):
         cmd += "CREATE DATABASE keadb;\n"
         cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
         cmd += "EOF\n\""
-        execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as posgres user directory to "/home/jenkins": Permission denied
+        execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
         # TODO: in /etc/postgresql/10/main/pg_hba.conf
         # change:
         #    local   all             all                                     peer
@@ -1636,7 +1636,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             grand_total += total
             grand_not_passed += failures + errors
 
-            # append testsuits to aggregated root
+            # append test suites to aggregated root
             for ts in root.findall('testsuite'):
                 if not ts:
                     continue
@@ -2125,11 +2125,11 @@ def parse_args():
                                 action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is '
-                                'destroing the system.')
+                                'destroying the system.')
     parent_parser2.add_argument('-c', '--clean-start', action='store_true',
                                 help='If there is pre-existing system then it is destroyed first.')
     parent_parser2.add_argument('-i', '--check-times', action='store_true',
-                                help='Do not allow executing commands infinitelly.')
+                                help='Do not allow executing commands infinitely.')
     parent_parser2.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
 
 
@@ -2184,7 +2184,7 @@ def parse_args():
     parser.add_argument('--repository-url', default=None,
                         help='Repository for 3rd party dependencies and for uploading built packages.')
     parser.add_argument('-u', '--reuse', action='store_true',
-                        help='Reuse existing system image, otherwise (default case) if there is any exising then destroy it first.')
+                        help='Reuse existing system image, otherwise (default case) if there is any existing then destroy it first.')
     parser.add_argument('-k', '--skip-upload', action='store_true',
                         help='Skip uploading prepared box to cloud, otherwise (default case) upload it.')
 
@@ -2275,7 +2275,7 @@ def _get_features(args):
 
 
 def _print_summary(results, features):
-    """Print summart of build times and unit-test results."""
+    """Print summary of build times and unit-test results."""
     print("")
     print("+===== Hammer Summary ====================================================+")
     print("|   provider |     system | revision |  duration |  status |   unit tests |")

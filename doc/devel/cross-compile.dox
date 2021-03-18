@@ -175,7 +175,7 @@ CONF_CMD+=" --with-boost-include=${ROOTFS}/usr/include"
 CONF_CMD+=" --with-boost-lib-dir=${ROOTFS}/usr/lib/${HOST}"
 @endcode
 
-Some explainations:
+Some explanations:
  - the rootfs was copied or mounted in rpi/rootfs in the home directory.
  - the build system triplet is x86_64-pc-linux-gnu (processor,
   system, application binary interface). It is returned by the config.guess

@@ -21,7 +21,7 @@ Files in this directory:
  - README: this file
  - _template.json: template used by generate-templates
  - api-files.mk: list of command files for inclusion in Makefiles
-   (can be build by ./generata-api-files)
+   (can be build by ./generate-api-files)
  - generate-templates: script generating new command files from the
   the template (_template.json)
  - generate-api-files: script generating api-files.mk

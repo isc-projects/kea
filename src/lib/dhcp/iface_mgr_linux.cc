@@ -572,7 +572,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
                        IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                        port);
         } catch (const Exception& ex) {
-            // An attempt to open and bind a socket to multicast addres
+            // An attempt to open and bind a socket to multicast address
             // has failed. We have to close the socket we previously
             // bound to link-local address - this is everything or
             // nothing strategy.

@@ -2,7 +2,7 @@ SUBDIRS = .
 
 pgsqldir = ${datarootdir}/${PACKAGE_NAME}/scripts/pgsql
 
-# non-excutable
+# non-executable
 pgsql_DATA  =
 pgsql_DATA += dhcpdb_create.pgsql
 pgsql_DATA += dhcpdb_drop.pgsql

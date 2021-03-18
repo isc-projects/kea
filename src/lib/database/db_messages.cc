@@ -43,7 +43,7 @@ const char* values[] = {
     "DATABASE_PGSQL_FATAL_ERROR", "Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).",
     "DATABASE_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DATABASE_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
-    "DATABASE_TO_JSON_ERROR", "Internal logic error: uknown %1 element found in state: %2",
+    "DATABASE_TO_JSON_ERROR", "Internal logic error: unknown %1 element found in state: %2",
     NULL
 };
 

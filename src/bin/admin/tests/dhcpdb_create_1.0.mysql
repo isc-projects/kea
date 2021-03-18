@@ -123,7 +123,7 @@ COMMIT;
 #
 # Portability
 # ===========
-# The "ENGINE = INNODB" on some tables is not portablea to another database
+# The "ENGINE = INNODB" on some tables is not portable to another database
 # and will need to be removed.
 #
 # Some columns contain binary data so are stored as VARBINARY instead of

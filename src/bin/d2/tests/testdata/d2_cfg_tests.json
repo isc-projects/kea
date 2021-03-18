@@ -475,7 +475,7 @@
 
 #----- D2.tsig-keys, digest-bits tests
 ,{
-"description" : "D2.tsig-keys, all valid algorthims",
+"description" : "D2.tsig-keys, all valid algorithms",
 "data" :
     {
     "forward-ddns" : {},

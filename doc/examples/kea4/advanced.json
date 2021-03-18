@@ -53,7 +53,7 @@
         //        otherwise load the lease as is. This is the default value.
         // fix - attempt to fix the lease by finding appropriate subnet-id value.
         //       if there is no suitable subnet, the lease is loaded as is.
-        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        // fix-del - attempt to fix the lease by finding appropriate subnet-id
         //           value. If there is no suitable subnet, the lease is deleted.
         // del - delete leases that have incorrect subnet-id values.
         "lease-checks": "fix-del"

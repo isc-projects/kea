@@ -542,7 +542,7 @@ HttpConnection::idleTimeoutCallback() {
               HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     // In theory we should shutdown first and stop/close after but
-    // it is better to put the connection management responsabilty
+    // it is better to put the connection management responsibility
     // on the client... so simply drop idle connections.
     stopThisConnection();
 }

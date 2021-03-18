@@ -110,7 +110,7 @@ implementation using a ring buffer based on Boost's boost::circular_buffer
 isc::dhcp::PacketQueueRing6).  The most critical aspects to remember when
 developing your implementation are:
 
--# It MUST be thread safe since queuing and dequeing packets are done by
+-# It MUST be thread safe since queuing and dequeuing packets are done by
 separate threads. (You might considering using std::mutex and std::lock_guard).
 
 -# Its efficiency (or lack thereof) will have a direct impact on server

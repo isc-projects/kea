@@ -169,7 +169,7 @@ Steps for this fuzzing are:
 
 -# Build Kea as described above.
 
--# Create a dictionary of keywords.  Athough AFL will mutate the files by
+-# Create a dictionary of keywords.  Although AFL will mutate the files by
    byte swaps, bit flips and the like, better results are obtained if it can
    create new files based on keywords that could appear in the file.  The
    dictionary is described in the AFL documentation, but in brief, the file

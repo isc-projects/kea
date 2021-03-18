@@ -16,7 +16,7 @@ Since version 1.9.6 Kea includes TLS support for better security.
 TLS is used on HTTP communication providing three increasing levels of
 protection:
 
-- no TLS. The connection is a plain text, unencrypted HTTP. This is
+- no TLS. The connection is plain text, unencrypted HTTP. This is
   the only option available in prior versions.
 
 - encryption i.e. protection against passive attacks and

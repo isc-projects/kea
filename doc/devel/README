@@ -1,5 +1,5 @@
 This is a folder with content for Doxygen.
 This is used by developers and is not used directly in official builds.
 
-To build doxygen documetation run:
+To build doxygen documentation run:
 make devel

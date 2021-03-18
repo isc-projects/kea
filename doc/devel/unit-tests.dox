@@ -505,7 +505,7 @@ variables. It's correct, but not readable. Quote the entire expression.
 - Single quote expressions when no variables are inside. This is to avoid the
 need to escape special shell characters like `$`.
 
-- All shell tessts are created from `.in` autoconf template files. They
+- All shell tests are created from `.in` autoconf template files. They
 initially contain template variables like `@prefix@` which are then substituted
 with the configured values. All of these should be double quoted, not
 single-quoted since they themselves can contain shell variables that need to be

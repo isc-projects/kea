@@ -862,7 +862,7 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(0, memcmp(&data[0], relay_opt_data, sizeof(relay_opt_data)));
 
     // As we have a nicely built relay packet we can check
-    // that the functions to get the peer and link addreses work
+    // that the functions to get the peer and link addresses work
     EXPECT_EQ("2001:db8::1", clone->getRelay6LinkAddress(0).toText());
     EXPECT_EQ("fe80::abcd", clone->getRelay6PeerAddress(0).toText());
 

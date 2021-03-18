@@ -1097,7 +1097,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
 /// @brief Tests v6 FQDN name sanitizing
 /// @todo This test currently verifies that Option6ClientFqdn::DomainName
 /// downcases strings used to construct it.  For some reason, currently
-/// uknown, Option4ClientFqdn preserves the case, while Option6ClientFqdn
+/// unknown, Option4ClientFqdn preserves the case, while Option6ClientFqdn
 /// downcases it (see setDomainName() in both classes.  See Trac #5700.
 TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     D2ClientMgr mgr;

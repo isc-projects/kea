@@ -67,7 +67,7 @@
 {"Dhcp4":
 
 {
-  // Kea is told to listen on specfic interfaces only.
+  // Kea is told to listen on specific interfaces only.
   "interfaces-config": {
     // You should probably list your network interfaces here (e.g. "en0")
     "interfaces": [ "en0" ]
@@ -207,7 +207,7 @@
                  ] // End of attributes
               },
 
-             // Configure an accouting server.
+             // Configure an accounting server.
              "accounting": {
                  "servers": [ {
                          "name": "127.0.0.1",

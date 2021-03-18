@@ -36,7 +36,7 @@ using namespace std;
 
 
 %define api.token.prefix {TOKEN_}
-// Tokens in an order which makes sense and related to the intented use.
+// Tokens in an order which makes sense and related to the intended use.
 // Actual regexps for tokens are defined in netconf_lexer.ll.
 %token
   END  0  "end of file"
@@ -404,7 +404,7 @@ parameters: PARAMETERS {
 
 // --- hooks-libraries end here ------------------------------------------------
 
-// --- managed-servsers starts here ---------------------------------------------
+// --- managed-servers starts here ---------------------------------------------
 managed_servers: MANAGED_SERVERS COLON LCURLY_BRACKET {
     ctx.unique("managed-servers", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));

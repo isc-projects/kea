@@ -1706,7 +1706,7 @@ public:
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
                        const bool fetch_type)
         : conn_(conn), statement_(statement), fetch_type_(fetch_type),
-          cummulative_rows_(), next_row_(cummulative_rows_.begin()),
+          cumulative_rows_(), next_row_(cumulative_rows_.begin()),
           subnet_id_(0), lease_type_(0), state_(0) {
     }
 
@@ -1722,8 +1722,8 @@ public:
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
                        const bool fetch_type, const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement),
-          fetch_type_(fetch_type), cummulative_rows_(),
-          next_row_(cummulative_rows_.begin()),
+          fetch_type_(fetch_type), cumulative_rows_(),
+          next_row_(cumulative_rows_.begin()),
           subnet_id_(0), lease_type_(0), state_(0) {
     }
 
@@ -1742,8 +1742,8 @@ public:
                        const bool fetch_type, const SubnetID& first_subnet_id,
                        const SubnetID& last_subnet_id)
         : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn),
-          statement_(statement), fetch_type_(fetch_type), cummulative_rows_(),
-          next_row_(cummulative_rows_.begin()),
+          statement_(statement), fetch_type_(fetch_type), cumulative_rows_(),
+          next_row_(cumulative_rows_.begin()),
           subnet_id_(0), lease_type_(0), state_(0) {
     }
 
@@ -1774,9 +1774,9 @@ public:
     /// have derived this class from CqlExchange and used it's executeSelect
     /// (from which this method borrows heavily). However, that would mean
     /// copying all the raw lease  data into a collection returned by
-    /// executeSelect and then aggregating that into cummulative rows.
+    /// executeSelect and then aggregating that into cumulative rows.
     /// The way we are now we go turn the raw lease data directly into the
-    /// cummulative row map.
+    /// cumulative row map.
     ///
     /// @param connection connection used to communicate with the Cassandra
     /// database
@@ -1843,7 +1843,7 @@ private:
 
 
     /// @brief map containing the aggregated lease counts
-    std::map<LeaseStatsRow, int> cummulative_rows_;
+    std::map<LeaseStatsRow, int> cumulative_rows_;
 
     /// @brief cursor pointing to the next row to read in aggregate map
     std::map<LeaseStatsRow, int>::iterator next_row_;
@@ -1939,17 +1939,17 @@ CqlLeaseStatsQuery::start() {
 
     // This gets a collection of "raw" data for all leases that match
     // the subnet selection criteria (all, range, or single subnets)
-    // then rolls them up into cummulative_rows_
+    // then rolls them up into cumulative_rows_
     executeSelect(conn_, data, statement_);
 
     // Set our row iterator to the beginning
-    next_row_ = cummulative_rows_.begin();
+    next_row_ = cumulative_rows_.begin();
 }
 
 bool
 CqlLeaseStatsQuery::getNextRow(LeaseStatsRow& row) {
     // If we're past the end, punt.
-    if (next_row_ == cummulative_rows_.end()) {
+    if (next_row_ == cumulative_rows_.end()) {
         return (false);
     }
 
@@ -2065,7 +2065,7 @@ CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArra
     }
 
     // Since we're currently forced to pull data for all leases, we
-    // iterate over them, aggregating them into cummulative LeaseStatsRows
+    // iterate over them, aggregating them into cumulative LeaseStatsRows
     AnyArray return_values;
     CassIterator* rows = cass_iterator_from_result(result_collection);
     while (cass_iterator_next(rows)) {
@@ -2081,11 +2081,11 @@ CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArra
         LeaseStatsRow raw_row(subnet_id_, static_cast<Lease::Type>(lease_type_),
                               state_, 1);
 
-        auto cum_row = cummulative_rows_.find(raw_row);
-        if (cum_row != cummulative_rows_.end()) {
-            cummulative_rows_[raw_row] = cum_row->second + 1;
+        auto cum_row = cumulative_rows_.find(raw_row);
+        if (cum_row != cumulative_rows_.end()) {
+            cumulative_rows_[raw_row] = cum_row->second + 1;
         } else {
-            cummulative_rows_.insert(std::make_pair(raw_row, 1));
+            cumulative_rows_.insert(std::make_pair(raw_row, 1));
         }
     }
 

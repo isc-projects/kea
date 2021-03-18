@@ -14,10 +14,10 @@ extend this library.
 
 @section haOverview Overview
 
-The High Availability (HA) hooks library is inteded for DHCP deployments
+The High Availability (HA) hooks library is intended for DHCP deployments
 in which there is a need to sustain the DHCP service in the event if one
 of the servers becomes unavailable as a result of a crash, power outage or
-other unexpected sitution. The other server belonging to this setup should
+other unexpected situation. The other server belonging to this setup should
 be able to handle the entire DHCP traffic directed to the system, including
 the traffic that would be normally handled by the server which became
 unavailable.
@@ -54,7 +54,7 @@ module in the main Kea code.
 It is worth to briefly explain what are the major differences between Kea HA
 implementation and the failover implemented in ISC DHCP.
 
-There are two protocols that IETF attempted to standarize:
+There are two protocols that IETF attempted to standardize:
 <a href="https://datatracker.ietf.org/doc/html/draft-ietf-dhc-failover">
 DHCPv4 Failover draft</a>, which was an Internet Draft status that had
 expired Sept. 2003. The other one is <a href="https://tools.ietf.org/html/rfc8156">
@@ -231,7 +231,7 @@ be found in the Kea Administrator's Manual.
 
 The @c isc::ha::HAService class is a heart of the HA system. It implements the
 HA state machine. It is derived from the @c isc::util::StateModel
-class. The states are documented both in the Kea Adminiatrator's
+class. The states are documented both in the Kea Administrator's
 Manual and the HA design. The declarations of the states can be
 found in the @c ha_service_states.h header file because they are
 used by multiple C++ classes.
@@ -274,8 +274,8 @@ class, rather than the "extern" functions.
 
 Internally, the @c HAImpl class methods call methods of the @c HAService
 class to perform certain actions, such as triggering lease updates,
-sending heatbeat to another server etc. However, the @c HAImpl still
-includes a fair amont of logic to retrive and validate the arguments
+sending heartbeat to another server etc. However, the @c HAImpl still
+includes a fair amount of logic to retrieve and validate the arguments
 provided within the @c isc::hooks::CalloutHandle.
 
 The @c isc::ha::HAImpl::buffer4Receive and @c isc::ha::HAImpl::buffer6Receive

@@ -108,7 +108,7 @@ void writeEthernetHeader(const Pkt4Ptr& pkt,
 /// @brief Writes both IP and UDP header into output buffer
 ///
 /// This utility function assembles IP and UDP packet headers for the
-/// provided DHCPv4 message. The source and destination addreses and
+/// provided DHCPv4 message. The source and destination addresses and
 /// ports stored in the pkt object are copied as source and destination
 /// addresses and ports into IP/UDP headers.
 ///

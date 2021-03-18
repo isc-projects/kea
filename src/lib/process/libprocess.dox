@@ -178,7 +178,7 @@ procedure:
  - walk the full configuration following only these arcs (so ignoring
    other parts of the configuration tree)
  - replace sensitive data by something else e.g. "*****"
- - try to share unchanged subtrees vs. copy to indentical.
+ - try to share unchanged subtrees vs. copy to identical.
 
 @section cplMTConsiderations Multi-Threading Consideration for Controllable Process Layer
 

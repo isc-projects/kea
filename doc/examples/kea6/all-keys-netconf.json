@@ -500,7 +500,7 @@
                 // Shared network specific ma xpreferred lifetime.
                 "max-preferred-lifetime": 2500,
 
-                // Boolen flag indicating if the server can respond to
+                // Boolean flag indicating if the server can respond to
                 // a Solicit message including a Rapid Commit option with
                 // the Reply message (See DHCPv6 rapid commit).
                 "rapid-commit": false,
@@ -655,7 +655,7 @@
                         // Subnet specific max referred lifetime.
                         "max-preferred-lifetime": 2500,
 
-                        // Boolen flag indicating if the server can respond to
+                        // Boolean flag indicating if the server can respond to
                         // a Solicit message including a Rapid Commit option with
                         // the Reply message (See DHCPv6 rapid commit).
                         "rapid-commit": false,

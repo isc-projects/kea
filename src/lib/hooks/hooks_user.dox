@@ -75,7 +75,7 @@ All examples in this guide are in C++.
 
 In the remainder of this guide, the following terminology is used:
 
-- Hook/Hook Point - used interchageably, this is a point in the code at
+- Hook/Hook Point - used interchangeably, this is a point in the code at
 which a call to user functions is made. Each hook has a name and
 each hook can have any number (including 0) of user functions
 attached to it.

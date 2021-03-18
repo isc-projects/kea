@@ -49,7 +49,7 @@ command.
    a control command over the RESTful interface (HTTP).
    The "request" argument is a pointer to the request. It is used as a
    reference and for callout contexts. The "response" argument is the
-   response which will be sent back to the resquesting client.  It is
+   response which will be sent back to the requesting client.  It is
    called after command processing.  The next step status is ignored:
    the response possibly modified will be sent back.
 

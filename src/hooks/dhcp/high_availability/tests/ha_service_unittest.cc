@@ -130,7 +130,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Pointer to the IO service used by the DHCP server.
-    /// @param network_state Objec holding state of the DHCP service
+    /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param config Parsed HA hook library configuration.
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.

@@ -9,7 +9,7 @@
         //   netconf boots.
         // - "subscribe-changes" about the subscription to notifications
         //   when the running YANG module is changed.
-        // - "validate-changes" alloes to validate or not changes.
+        // - "validate-changes" allows to validate changes or not.
         "boot-update": true,
         "subscribe-changes": true,
         "validate-changes": true,

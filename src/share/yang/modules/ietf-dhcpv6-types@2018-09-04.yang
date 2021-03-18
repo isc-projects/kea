@@ -57,7 +57,7 @@ module ietf-dhcpv6-types {
       consists of a two-octet type field and an arbitrary length (no more
       than 128 bytes) content field. Currently there are four defined types
       of DUIDs in RFC3315 and RFC6355 - DUID-LLT, DUID-EN, DUID-LL and
-      DUID-UUID. DUID-Uknown represents those unconventional DUIDs.";
+      DUID-UUID. DUID-Unknown represents those unconventional DUIDs.";
     reference "RFC3315: Section 9 and RFC6355: Section 4";
     leaf type-code {
       type uint16;

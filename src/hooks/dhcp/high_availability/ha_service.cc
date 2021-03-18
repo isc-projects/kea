@@ -1445,7 +1445,7 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
                     LOG_INFO(ha_logger, mesid)
                         .arg(query->getLabel())
                         .arg(lease_type && (lease_type->getType() == Element::string) ?
-                             lease_type->stringValue() : "(uknown)")
+                             lease_type->stringValue() : "(unknown)")
                         .arg(ip_address && (ip_address->getType() == Element::string) ?
                              ip_address->stringValue() : "(unknown)")
                         .arg(error_message && (error_message->getType() == Element::string) ?

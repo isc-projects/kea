@@ -110,7 +110,7 @@ public:
     }
 };
 
-// This test verifies that explict values for renew-timer and
+// This test verifies that explicit values for renew-timer and
 // rebind-timer are used when given.
 TEST_F(TeeTest, explicitTimers) {
     Dhcp6Client client;

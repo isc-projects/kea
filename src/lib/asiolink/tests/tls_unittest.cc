@@ -135,7 +135,7 @@ typedef function<void()> Test;
 /// Some TLS tests can not use the standard GTEST macros because they
 /// show different behaviors depending on the crypto backend and the
 /// boost library versions. Worse in some cases the behavior can not
-/// be deduced from them so #ifdef's do not work...
+/// be deduced from them so #ifdef macros do not work...
 ///
 /// Until this is adopted / widespread the policy is to use these flexible
 /// expected behavior tests ONLY when needed.
@@ -639,7 +639,7 @@ TEST(TLSTest, configureError) {
         string key = string(TEST_CA_DIR) + "/kea-client.key";
         TlsContext::configure(ctx1, TlsRole::CLIENT,
                               ca, cert, key, true);
-        // The context is reseted on errors.
+        // The context is reset on errors.
         EXPECT_FALSE(ctx1);
     });
     if (Expecteds::displayErrMsg()) {

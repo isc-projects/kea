@@ -108,7 +108,7 @@ messages: log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h
 log_messages.cc log_messages.h: log_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes
 
-logimpl_messages.cc logimpl_messages.h: log_messages.mes
+logimpl_messages.cc logimpl_messages.h: logimpl_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes
 
 else
