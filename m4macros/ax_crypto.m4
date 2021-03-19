@@ -420,7 +420,7 @@ then
                               [const int ec =
                                ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);])],
              [],
-             [AC_MSG_ERROR([Can not find a definition for stream_truncated (SSL short read) error])])])
+             [AC_MSG_ERROR([Can not find a definition for stream_truncated (SSL short read) error: sorry, your boost library is too old])])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 ])

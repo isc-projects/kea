@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 
 int main()
 {
-  std::cerr << "this tool requires recent boost version\n";
+  std::cerr << "this tool requires recent boost version (>= 1.64)\n";
   return 0;
 }
 #endif
