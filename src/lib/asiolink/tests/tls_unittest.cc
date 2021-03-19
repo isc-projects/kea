@@ -17,6 +17,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <cstdlib>
 #include <list>
 #include <string>
 #include <vector>
@@ -38,6 +39,10 @@ const char SERVER_ADDRESS[] = "127.0.0.1";
 
 /// @brief Local server port used for testing.
 const unsigned short SERVER_PORT = 18123;
+
+/// @brief Name of the environment variable controlling the display
+/// (default off) of TLS error messages.
+const char KEA_TLS_CHECK_VERBOSE[] = "KEA_TLS_CHECK_VERBOSE";
 
 /// @brief Test TLS context class exposing protected methods.
 class TestTlsContext : public TlsContext {
@@ -253,6 +258,13 @@ public:
         list_.push_back(Expected::createError(message));
     }
 
+    /// @brief Display error messages.
+    ///
+    /// @return True if error messages are displayed.
+    static bool displayErrMsg() {
+        return (getenv(KEA_TLS_CHECK_VERBOSE));
+    }
+
     /// @brief Has an error message.
     ///
     /// @return True when there is a cached error message.
@@ -444,7 +456,9 @@ TEST(TLSTest, loadNoCAFile) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadCaFile(ca);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test that a directory can be loaded.
@@ -473,7 +487,9 @@ TEST(TLSTest, loadKeyCA) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadCaFile(ca);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test if the end entity certificate can be loaded.
@@ -499,7 +515,9 @@ TEST(TLSTest, loadNoCertFile) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadCertFile(cert);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test that a certificate is wanted.
@@ -514,7 +532,9 @@ TEST(TLSTest, loadCsrCertFile) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadCertFile(cert);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test if the private key can be loaded.
@@ -542,7 +562,9 @@ TEST(TLSTest, loadNoKeyFile) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadKeyFile(key);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test that a private key is wanted.
@@ -561,7 +583,9 @@ TEST(TLSTest, loadCertKeyFile) {
         TestTlsContext ctx(TlsRole::CLIENT);
         ctx.loadKeyFile(key);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test that the certificate and private key must match.
@@ -583,7 +607,9 @@ TEST(TLSTest, loadMismatch) {
         // The explicit check function is SSL_CTX_check_private_key.
         ctx.loadKeyFile(key);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test the configure class method.
@@ -631,7 +657,9 @@ TEST(TLSTest, configure) {
         // The context is reseted on errors.
         EXPECT_FALSE(ctx);
     });
-    std::cout << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
 }
 
 // Test if we can get a stream.
@@ -710,7 +738,9 @@ TEST(TLSTest, noHandshake) {
     // OpenSSL error.
     exps.addError("uninitialized");
     exps.checkAsync("send", send_cb);
-    std::cout << "send: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "send: " << exps.getErrMsg() << "\n";
+    }
 
     // Setup a second timeout.
     IntervalTimer timer2(service);
@@ -732,10 +762,12 @@ TEST(TLSTest, noHandshake) {
     // OpenSSL error,
     exps.addError("uninitialized");
     exps.checkAsync("receive", receive_cb);
-    if (timeout) {
-        std::cout << "receive timeout\n";
-    } else {
-        std::cout << "receive: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "receive timeout\n";
+        } else {
+            std::cout << "receive: " << exps.getErrMsg() << "\n";
+        }
     }
 
     // Close client and server.
@@ -810,7 +842,9 @@ TEST(TLSTest, serverNotConfigured) {
     // OpenSSL error.
     exps.addError("sslv3 alert handshake failure");
     exps.checkAsync("server", server_cb);
-    std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
 
     exps.clear();
     // On Botan and some OpenSSL the client hangs.
@@ -818,10 +852,12 @@ TEST(TLSTest, serverNotConfigured) {
     // OpenSSL error.
     exps.addError("sslv3 alert handshake failure");
     exps.checkAsync("client", client_cb);
-    if (timeout) {
-        std::cout << "client timeout\n";
-    } else {
-        std::cout << "client: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "client timeout\n";
+        } else {
+            std::cout << "client: " << exps.getErrMsg() << "\n";
+        }
     }
 
     // Close client and server.
@@ -894,10 +930,12 @@ TEST(TLSTest, clientNotConfigured) {
     // OpenSSL error.
     exps.addError("tlsv1 alert unknown ca");
     exps.checkAsync("server", server_cb);
-    if (timeout) {
-        std::cout << "server timeout\n";
-    } else {
-        std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "server timeout\n";
+        } else {
+            std::cout << "server: " << exps.getErrMsg() << "\n";
+        }
     }
 
     exps.clear();
@@ -909,7 +947,9 @@ TEST(TLSTest, clientNotConfigured) {
     exps.addError("certificate verify failed");
     // The client should not hang.
     exps.checkAsync("client", client_cb);
-    std::cout << "client: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "client: " << exps.getErrMsg() << "\n";
+    }
 
     // Close client and server.
     EXPECT_NO_THROW(client.lowest_layer().close());
@@ -987,10 +1027,12 @@ TEST(TLSTest, clientHTTPnoS) {
     // Another OpenSSL error (not all OpenSSL recognizes HTTP).
     exps.addError("wrong version number");
     exps.checkAsync("server", server_cb);
-    if (timeout) {
-        std::cout << "server timeout\n";
-    } else {
-        std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "server timeout\n";
+        } else {
+            std::cout << "server: " << exps.getErrMsg() << "\n";
+        }
     }
 
     exps.clear();
@@ -1074,7 +1116,9 @@ TEST(TLSTest, unknownClient) {
     // Recent OpenSSL error.
     exps.addError("wrong version number");
     exps.checkAsync("server", server_cb);
-    std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
 
     exps.clear();
     // No error on the client side.
@@ -1155,7 +1199,9 @@ TEST(TLSTest, anotherClient) {
     // error 20 at 0 depth lookup:unable to get local issuer certificate
     exps.addError("certificate verify failed");
     exps.checkAsync("server", server_cb);
-    std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
 
     exps.clear();
     // Botan client hangs.
@@ -1165,10 +1211,12 @@ TEST(TLSTest, anotherClient) {
     // Old OpenSSL error.
     exps.addError("tlsv1 alert unknown ca");
     exps.checkAsync("client", client_cb);
-    if (timeout) {
-        std::cout << "client timeout\n";
-    } else if (exps.hasErrMsg()) {
-        std::cout << "client: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "client timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "client: " << exps.getErrMsg() << "\n";
+        }
     }
 
     // Close client and server.
@@ -1245,7 +1293,9 @@ TEST(TLSTest, selfSigned) {
     // error 18 at 0 depth lookup:self signed certificate
     exps.addError("certificate verify failed");
     exps.checkAsync("server", server_cb);
-    std::cout << "server: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
 
     exps.clear();
     // Botan client hangs.
@@ -1255,10 +1305,12 @@ TEST(TLSTest, selfSigned) {
     // Old OpenSSL error.
     exps.addError("tlsv1 alert unknown ca");
     exps.checkAsync("client", client_cb);
-    if (timeout) {
-        std::cout << "client timeout\n";
-    } else if (exps.hasErrMsg()) {
-        std::cout << "client: " << exps.getErrMsg() << "\n";
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "client timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "client: " << exps.getErrMsg() << "\n";
+        }
     }
 
     // Close client and server.
