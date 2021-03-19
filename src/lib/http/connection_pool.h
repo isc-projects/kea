@@ -8,7 +8,9 @@
 #define HTTP_CONNECTION_POOL_H
 
 #include <http/connection.h>
+
 #include <list>
+#include <mutex>
 
 namespace isc {
 namespace http {
@@ -48,9 +50,16 @@ public:
 
 protected:
 
+    /// @brief Stops all connections and removes them from the pool.
+    ///
+    /// Must be called from with a thread-safe context.
+    void stopAllInternal();
+
     /// @brief Set of connections.
     std::list<HttpConnectionPtr> connections_;
 
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
 };
 
 }

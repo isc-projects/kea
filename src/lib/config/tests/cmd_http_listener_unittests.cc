@@ -53,7 +53,8 @@ public:
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
         : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
-        clients_(), num_threads_(), num_clients_(), num_in_progress_(0), num_finished_(0) {
+        clients_(), num_threads_(), num_clients_(), num_in_progress_(0), num_finished_(0),
+        chunk_size_(0) {
         test_timer_.setup(std::bind(&CmdHttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
@@ -180,8 +181,8 @@ public:
         // Loop until the clients are done, an error occurs, or the time runs out.
         bool keep_going = true;
         while (keep_going) {
-            // Always call restart() before we call run();
-            io_service_.get_io_service().restart();
+            // Always call reset() before we call run();
+            io_service_.get_io_service().reset();
 
             // Run until a client stops the service.
             io_service_.run();
@@ -252,20 +253,20 @@ public:
         // notify everyone and finish.  The idea is to force each thread
         // to handle the same number of requests over the course of the
         // test, making verification reliable.
-        if (num_clients_ >= num_threads_) {
+        {
             std::unique_lock<std::mutex> lck(mutex_);
             ++num_in_progress_;
-            if (num_in_progress_ == num_threads_) {
+            if (num_in_progress_ == chunk_size_) {
                 num_finished_ = 0;
                 cv_.notify_all();
             } else {
                 bool ret = cv_.wait_for(lck, std::chrono::seconds(10),
-                                        [&]() { return (num_in_progress_ == num_threads_); });
+                                        [&]() { return (num_in_progress_ == chunk_size_); });
                 if (!ret) {
                     ADD_FAILURE() << "clients failed to start work";
                 }
             }
-         }
+        }
 
         // Create the map of response arguments.
         ElementPtr arguments = Element::createMap();
@@ -282,19 +283,17 @@ public:
         ss << std::this_thread::get_id();
         arguments->set("thread-id", Element::create(ss.str()));
 
-        // If we have more clients than threads, we need to wait
-        // for each block of in-progress clients to finish.
-        if (num_clients_ >= num_threads_) {
+        {
             std::unique_lock<std::mutex> lck(mutex_);
             num_finished_++;
-            if (num_finished_ == num_threads_) {
+            if (num_finished_ == chunk_size_) {
                 // We're all done, notify the others and finish.
                 num_in_progress_ = 0;
                 cv_.notify_all();
             } else {
                 // I'm done but others aren't wait here.
                 bool ret = cv_.wait_for(lck, std::chrono::seconds(10),
-                                        [&]() { return (num_finished_ == num_threads_); });
+                                        [&]() { return (num_finished_ == chunk_size_); });
                 if (!ret) {
                     ADD_FAILURE() << "clients failed to finish work";
                 }
@@ -332,6 +331,10 @@ public:
 
         num_threads_ = num_threads;
         num_clients_ = num_clients;
+        chunk_size_ = num_threads_;
+        if (num_clients_ < chunk_size_) {
+            chunk_size_ = num_clients_;
+        }
 
         // Register the thread command handler.
         CommandMgr::instance().registerCommand("thread",
@@ -483,6 +486,13 @@ public:
 
     /// @brief Number of requests that have finished.
     size_t num_finished_;
+
+    /// @brief Chunk size of requests that need to be processed in parallel.
+    ///
+    /// This can either be the number of threads (if the number of requests is
+    /// greater than the number of threads) or the number of requests (if the
+    /// number of threads is greater than the number of requests).
+    size_t chunk_size_;
 
     /// @brief Mutex used to lock during thread coordination.
     std::mutex mutex_;

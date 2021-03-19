@@ -230,14 +230,14 @@ public:
 
     /// @brief Returns the HTTP response string.
     ///
-    /// @retrurn string containg the response.
+    /// @return string containing the response.
     std::string getResponse() const {
         return (response_);
     }
 
     /// @brief Returns true if the receive completed without error.
     ///
-    /// @return True if the receive completed succesfully, false
+    /// @return True if the receive completed successfully, false
     /// otherwise.
     bool receiveDone() {
         return (receive_done_);
