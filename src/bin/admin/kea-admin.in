@@ -70,6 +70,7 @@ BACKEND - one of the supported backends: memfile|mysql|pgsql|cql
 PARAMETERS: Parameters are optional in general, but may be required
             for specific operation.
  -h or --host hostname - specifies a hostname of a database to connect to
+ -P or --port port - the TCP port to use for the database connection
  -u or --user name - specifies username when connecting to a database
  -p or --password pass - specifies a password when connecting to a database
  -n or --name database - specifies a database name to connect to
@@ -722,6 +723,17 @@ do
                 usage
                 exit 1
             fi
+            ;;
+        # Specify database port
+        -P|--port)
+            shift
+            if test -z "${1+x}"; then
+                log_error '-P or --port requires a parameter'
+                usage
+                exit 1
+            fi
+            db_port=${1}
+            export db_port_full_parameter="--port=${db_port}"
             ;;
         # Specify database user
         -u|--user)

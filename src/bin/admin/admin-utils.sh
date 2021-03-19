@@ -8,6 +8,15 @@
 
 # This is an utility script that is being included by other scripts.
 
+# shellcheck disable=SC2086
+# SC2086: Double quote to prevent globbing and word splitting.
+# Explicitly don't quote db_port_full_parameter so it doesn't expand to empty
+# string if it is not set.
+
+# shellcheck disable=SC2154
+# SC2154: ... is referenced but not assigned.
+# Some variables are assigned in kea-admin.
+
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -23,8 +32,6 @@ db_name='keatest'
 # output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
 # redirections. Support for them could be added through eval and single
 # parameter assignment, but eval is not recommended.
-# shellcheck disable=SC2034
-# SC2034: ... appears unused. Verify use (or export if used externally).
 run_command() {
     if test -n "${DEBUG+x}"; then
         printf '%s\n' "${*}" >&2
@@ -33,6 +40,21 @@ run_command() {
     OUTPUT=$("${@}")
     EXIT_CODE=${?}
     set -e
+}
+
+mysql_sanity_checks() {
+    # https://bugs.mysql.com/bug.php?id=55796#c321360
+    # https://dev.mysql.com/doc/refman/8.0/en/connecting.html
+    # On Unix, MySQL programs treat the host name localhost specially, in a way
+    # that is likely different from what you expect compared to other
+    # network-based programs: the client connects using a Unix socket file.
+    if test -n "${db_port+x}" && \
+        { test "${db_host}" = 'localhost' || \
+          test "${db_host}" = '127.0.0.1'; }; then
+        printf 'Warning: the MySQL client uses the default unix socket ' >&2
+        printf 'instead of TCP port %s ' "${db_port}" >&2
+        printf 'when connecting to localhost. Continuing...\n' >&2
+    fi
 }
 
 # There are two ways of calling this method.
@@ -47,22 +69,28 @@ run_command() {
 mysql_execute() {
     QUERY=$1
     shift
+
+    mysql_sanity_checks
+
     if [ $# -gt 1 ]; then
         mysql -N -B "$@" -e "${QUERY}"
     else
-        # Shellcheck complains about variables not being set. They're set in the script that calls this script.
-        # shellcheck disable=SC2154
-        mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+        --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
     fi
 }
 
 mysql_execute_script() {
     file=$1
     shift
+
+    mysql_sanity_checks
+
     if [ $# -ge 1 ]; then
         mysql -N -B "$@" < "${file}"
     else
-        mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+        --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
     fi
 }
 
@@ -97,10 +125,12 @@ pgsql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 0 ]; then
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q "$@"
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+        ${db_port_full_parameter-} -q "$@"
     else
         export PGPASSWORD=$db_password
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}"
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+        ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}"
     fi
 }
 
@@ -118,10 +148,12 @@ pgsql_execute_script() {
     file=$1
     shift
     if [ $# -gt 0 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -f "${file}" "$@"
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+        ${db_port_full_parameter-} -q -f "${file}" "$@"
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}" -f "${file}"
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+        ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" -f "${file}"
     fi
 }
 
@@ -145,6 +177,11 @@ checked_pgsql_version() {
 cql_execute() {
     query=$1
     shift
+
+    if test -n "${db_port+x}"; then
+        export CQLSH_PORT="${db_port}"
+    fi
+
     if [ $# -gt 1 ]; then
         run_command \
             cqlsh "$@" -e "$query"
@@ -164,6 +201,11 @@ cql_execute() {
 cql_execute_script() {
     file=$1
     shift
+
+    if test -n "${db_port+x}"; then
+        export CQLSH_PORT="${db_port}"
+    fi
+
     if [ $# -gt 1 ]; then
         run_command \
             cqlsh "$@" -e "$file"
