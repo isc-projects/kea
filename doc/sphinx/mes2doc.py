@@ -69,7 +69,8 @@ def read_input_files(files):
 
 
 def generate_rst(messages):
-    rst = '''
+    rst = '''.. _kea-messages:
+
 ###################
 Kea Messages Manual
 ###################

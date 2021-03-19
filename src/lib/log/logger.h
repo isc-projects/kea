@@ -30,7 +30,7 @@ class InterprocessSync;
 /// \page LoggingApi Logging API
 /// \section LoggingApiOverview Overview
 /// Kea logging uses the concepts of the widely-used Java logging
-/// package log4j (http://logging.apache.log/log4j), albeit implemented
+/// package log4j (https://logging.apache.org/log4j/), albeit implemented
 /// in C++ using an open-source port.  Features of the system are:
 ///
 /// - Within the code objects - known as loggers - can be created and

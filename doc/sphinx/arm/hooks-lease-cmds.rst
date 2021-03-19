@@ -991,4 +991,3 @@ An example result returned when the lease was found:
      "result": 0,
      "text": "NCR generated for: 2001:db8:1::1, hostname: example.com."
    }
-

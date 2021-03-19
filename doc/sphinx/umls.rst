@@ -34,7 +34,7 @@ The main loop is common to both DHCPv4 and DHPCv6 servers.
 DHCPv4 Packet Processing
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. This diagram shows the general, high level flow for processing an inbound client DHCP packet (e.g. Discover, Request, Release, etc) from receipt to the server's response.. 
+Next is the DHCPv4 packet processing, where we determine what sort of DHCP message this is, Discover, Request, Release, Decline or Inform. This diagram shows the general, high level flow for processing an inbound client DHCP packet (e.g. Discover, Request, Release, etc) from receipt to the server's response..
 
 .. figure:: uml/packet4.*
 
@@ -46,13 +46,13 @@ Next is the DHCPv4 packet processing, where we determine what sort of DHCP messa
 DHCP Request Processing
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The following diagrams focus on DHCPREQUEST processing. This chart gives an overview of the process, beginning with subnet selection, proceeding to checking for Host Reservations and evaluating client classes. Finally, before acknowledging the lease, the options are evaluated and added to the message. 
+The following diagrams focus on DHCPREQUEST processing. This chart gives an overview of the process, beginning with subnet selection, proceeding to checking for Host Reservations and evaluating client classes. Finally, before acknowledging the lease, the options are evaluated and added to the message.
 
 .. figure:: uml/request4.*
 
     DHCPREQUEST processing
 
-. 
+.
 
 .. _uml_select4:
 
@@ -72,7 +72,7 @@ Subnet selection is the process of choosing a subnet that is topologically appro
 DHCPv4 Special Case of Double-booting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After the subnet selection and before the lease allocation the DHCPv4 server handles the special case of clients restarting with an image provided by PXE boot or bootp.  Note that the Lease Request box is expanded below. 
+After the subnet selection and before the lease allocation the DHCPv4 server handles the special case of clients restarting with an image provided by PXE boot or bootp.  Note that the Lease Request box is expanded below.
 
 .. figure:: uml/assign-lease4.*
 
@@ -84,12 +84,12 @@ After the subnet selection and before the lease allocation the DHCPv4 server han
 DHCPv4 Allocate Lease
 ^^^^^^^^^^^^^^^^^^^^^
 
-This diagram provides the details of the processing the client request, showing renewing an existing lease, assigning a reserved lease and allocating an unreserved lease. The next diagram after this one shows the algorithm in more detail.  
+This diagram provides the details of the processing the client request, showing renewing an existing lease, assigning a reserved lease and allocating an unreserved lease. The next diagram after this one shows the algorithm in more detail.
 
 .. figure:: uml/request4-lease.*
 
     Allocate a lease for DHCPREQUEST
-    
+
 This diagram shows the algorithm used to validate a requested lease or select a new address to offer. The far right side of the diagram shows how a new address is selected when a new lease is required and the client has neither a requested address nor a reservation. Note that when a new lease is required and Kea iterates over pools and subnets, it starts with the subnet selected above in the subnet selection process.
 
 .. figure:: uml/requestLease4.*
@@ -123,7 +123,7 @@ The allocation engine checks for host reservations after selecting a subnet. Thi
 
 .. note::
 
-    To find a free lease the allocation engine begins with evaluating the most recently used subnet. 
+    To find a free lease the allocation engine begins with evaluating the most recently used subnet.
     The current subnet depends on the history of prior queries.
 
 
@@ -154,4 +154,3 @@ Before sending a response, options are added:
 .. figure:: uml/appendRequestedVendorOptions.*
 
     appendRequestedVendorOptions (append vendor requested options) algorithm
-

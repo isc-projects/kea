@@ -10,7 +10,7 @@
 
 The idea is to install Kea on a Raspberry Pi 4 Model B running Raspbian
 operation system (e.g. the
-<a href="https://www.raspberrypi.org/downloads/raspbian/">
+<a href="https://www.raspberrypi.org/software/operating-systems/">
 Raspbian Buster with desktop and recommended software</a> distribution)
 without having to compile Kea on the Raspberry Pi box itself as it
 takes some hours so using a standard Linux box with a x86_64 processor.

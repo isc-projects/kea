@@ -3437,7 +3437,8 @@ give the best performance. Although this section describes our results, they are
 recommendations and are very dependent on the particular hardware that was used
 for testing. We strongly advise that administrators run their own performance tests.
 
-A full report of Kea 1.7 performance results can be found `here <https://jenkins.isc.org/job/kea-1.7/job/performance/KeaPerformanceReport/>`_.
+A full report of performance results for the latest stable Kea can be found
+`here <https://jenkins.isc.org/job/kea-dev/job/performance/KeaPerformanceReport/>`_.
 This includes hardware and test scenario descriptions, as well as
 current results.
 

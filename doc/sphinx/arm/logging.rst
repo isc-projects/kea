@@ -677,16 +677,15 @@ That breaks down as like so:
     it is an address so is displayed in hexadecimal.
 
   - ``%m``
-    The log message itself. Keg log messages all begin with a message
-    identifier followed by arbitrary log text. Every message in Kea has
-    a unique identifier, which can be used as an index to the
-    `Kea Messages Manual <https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html>`__,
-    where more information can be obtained.  In our example log above, the
-    identifier is ``DHCPSRV_TIMERMGR_START_TIMER``.   The log text is typically
-    a brief description detailing the condition that caused the message to be
-    logged. In our example, the information logged,
-    ``starting timer: reclaim-expired-leases``, explains that the timer for
-    the expired lease reclamation cycle has been started.
+    The log message itself. Kea log messages all begin with a message identifier
+    followed by arbitrary log text. Every message in Kea has a unique
+    identifier, which can be used as an index to the :ref:`kea-messages`, where
+    more information can be obtained. In our example log above, the identifier
+    is ``DHCPSRV_TIMERMGR_START_TIMER``. The log text is typically a brief
+    description detailing the condition that caused the message to be logged. In
+    our example, the information logged,
+    ``starting timer: reclaim-expired-leases``, explains that the timer for the
+    expired lease reclamation cycle has been started.
 
 .. Warning::
 

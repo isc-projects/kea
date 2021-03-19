@@ -998,7 +998,7 @@
       // Type: string
       {
         "code": 59,
-        "data": "https://how-to-boot.net/pxe/os.img",
+        "data": "https://boot.example.org/pxe/os.img",
         "name": "bootfile-url"
       },
 

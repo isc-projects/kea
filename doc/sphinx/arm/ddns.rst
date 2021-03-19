@@ -328,7 +328,7 @@ TSIG Key List
 -------------
 
 A DDNS protocol exchange can be conducted with or without TSIG (defined
-in `RFC 2845 <https://tools.ietf/org/html/rfc2845>`__). This
+in `RFC 2845 <https://tools.ietf.org/html/rfc2845>`__). This
 configuration section allows the administrator to define the set of TSIG
 keys that may be used in such exchanges.
 
