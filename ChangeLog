@@ -1,3 +1,8 @@
+1873.	[func]		andrei
+	kea-admin now accepts the -P|--port parameter with a custom port
+	used to connect to the database.
+	(Gitlab #1674)
+
 Kea 1.9.5 (development) released on Feb 24, 2021
 
 1872.	[build]		razvan
