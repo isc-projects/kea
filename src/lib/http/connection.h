@@ -232,7 +232,7 @@ public:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
@@ -244,7 +244,7 @@ public:
     /// closed by the server.
     HttpConnection(asiolink::IOService& io_service,
                    const HttpAcceptorPtr& acceptor,
-                   const asiolink::TlsContextPtr& context,
+                   const asiolink::TlsContextPtr& tls_context,
                    HttpConnectionPool& connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
                    const HttpAcceptorCallback& acceptor_callback,
@@ -396,7 +396,7 @@ protected:
     long request_timeout_;
 
     /// @brief TLS context.
-    asiolink::TlsContextPtr context_;
+    asiolink::TlsContextPtr tls_context_;
 
     /// @brief Timeout after which the persistent HTTP connection is shut
     /// down by the server.

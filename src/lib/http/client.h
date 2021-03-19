@@ -176,7 +176,7 @@ public:
     /// callback can be used to recognize this condition.
     ///
     /// @param url URL where the request should be send.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param request Pointer to the object holding a request.
     /// @param response Pointer to the object where response should be stored.
     /// @param request_callback Pointer to the user callback function invoked
@@ -191,7 +191,7 @@ public:
     ///
     /// @throw HttpClientError If invalid arguments were provided.
     void asyncSendRequest(const Url& url,
-                          const asiolink::TlsContextPtr& context,
+                          const asiolink::TlsContextPtr& tls_context,
                           const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
                           const RequestHandler& request_callback,

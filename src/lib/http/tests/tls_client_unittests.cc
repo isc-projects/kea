@@ -51,6 +51,8 @@ using namespace isc::http::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
+/// @todo: put the common part of client and server tests in its own file(s).
+
 namespace {
 
 /// @brief IP address to which HTTP service is bound.

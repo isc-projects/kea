@@ -85,7 +85,7 @@ public:
     /// @param io_service IO service to be used by the listener.
     /// @param server_address Address on which the HTTP service should run.
     /// @param server_port Port number on which the HTTP service should run.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param creator_factory Pointer to the caller-defined
     /// @ref HttpResponseCreatorFactory derivation which should be used to
     /// create @ref HttpResponseCreator instances.
@@ -99,7 +99,7 @@ public:
     HttpListener(asiolink::IOService& io_service,
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
-                 const asiolink::TlsContextPtr& context,
+                 const asiolink::TlsContextPtr& tls_context,
                  const HttpResponseCreatorFactoryPtr& creator_factory,
                  const RequestTimeout& request_timeout,
                  const IdleTimeout& idle_timeout);

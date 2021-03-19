@@ -19,16 +19,16 @@ namespace http {
 HttpListenerImpl::HttpListenerImpl(IOService& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
-                                   const TlsContextPtr& context,
+                                   const TlsContextPtr& tls_context,
                                    const HttpResponseCreatorFactoryPtr& creator_factory,
                                    const long request_timeout,
                                    const long idle_timeout)
-    : io_service_(io_service), context_(context), acceptor_(),
+    : io_service_(io_service), tls_context_(tls_context), acceptor_(),
       endpoint_(), connections_(),
       creator_factory_(creator_factory),
       request_timeout_(request_timeout), idle_timeout_(idle_timeout) {
     // Create the TCP or TLS acceptor.
-    if (!context) {
+    if (!tls_context) {
         acceptor_.reset(new HttpAcceptor(io_service));
     } else {
         acceptor_.reset(new HttpsAcceptor(io_service));
@@ -125,7 +125,7 @@ HttpListenerImpl::createConnection(const HttpResponseCreatorPtr& response_creato
                                    const HttpAcceptorCallback& acceptor_callback,
                                    const HttpAcceptorCallback& handshake_callback) {
     HttpConnectionPtr
-        conn(new HttpConnection(io_service_, acceptor_, context_,
+        conn(new HttpConnection(io_service_, acceptor_, tls_context_,
                                 connections_, response_creator,
                                 acceptor_callback, handshake_callback,
                                 request_timeout_, idle_timeout_));

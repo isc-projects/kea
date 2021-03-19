@@ -38,7 +38,7 @@ public:
     /// @param connection Pointer to the new connection.
     void start(const HttpConnectionPtr& connection);
 
-    /// @brief Removes a connection them from the pool and shutdown it.
+    /// @brief Removes a connection from the pool and shutdown it.
     ///
     /// @note if the TLS connection stalls e.g. the peer does not try I/O
     /// on it the connection has to be explicitly stopped.

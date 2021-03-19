@@ -108,12 +108,12 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used for the connection.
-    /// @param context TLS context to be used for the connection.
+    /// @param tls_context TLS context to be used for the connection.
     /// @param conn_pool Back pointer to the connection pool to which this
     /// connection belongs.
     /// @param url URL associated with this connection.
     explicit Connection(IOService& io_service,
-                        const TlsContextPtr& context,
+                        const TlsContextPtr& tls_context,
                         const ConnectionPoolPtr& conn_pool,
                         const Url& url);
 
@@ -469,7 +469,7 @@ public:
     /// in progress for the given URL. Otherwise, the request is queued.
     ///
     /// @param url Destination where the request should be sent.
-    /// @param context TLS context to be used for the connection.
+    /// @param tls_context TLS context to be used for the connection.
     /// @param request Pointer to the request to be sent to the server.
     /// @param response Pointer to the object into which the response should be
     /// stored.
@@ -484,7 +484,7 @@ public:
     /// @param close_callback Pointer to the user callback to be invoked when the
     /// client closes the connection to the server.
     void queueRequest(const Url& url,
-                      const TlsContextPtr& context,
+                      const TlsContextPtr& tls_context,
                       const HttpRequestPtr& request,
                       const HttpResponsePtr& response,
                       const long request_timeout,
@@ -494,12 +494,12 @@ public:
                       const HttpClient::CloseHandler& close_callback) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            return (queueRequestInternal(url, context, request, response,
+            return (queueRequestInternal(url, tls_context, request, response,
                                          request_timeout, request_callback,
                                          connect_callback, handshake_callback,
                                          close_callback));
         } else {
-            return (queueRequestInternal(url, context, request, response,
+            return (queueRequestInternal(url, tls_context, request, response,
                                          request_timeout, request_callback,
                                          connect_callback, handshake_callback,
                                          close_callback));
@@ -585,7 +585,7 @@ private:
     /// This method should be called in a thread safe context.
     ///
     /// @param url Destination where the request should be sent.
-    /// @param context TLS context to be used for the connection.
+    /// @param tls_context TLS context to be used for the connection.
     /// @param request Pointer to the request to be sent to the server.
     /// @param response Pointer to the object into which the response should be
     /// stored.
@@ -600,7 +600,7 @@ private:
     /// @param close_callback Pointer to the user callback to be invoked when the
     /// client closes the connection to the server.
     void queueRequestInternal(const Url& url,
-                              const TlsContextPtr& context,
+                              const TlsContextPtr& tls_context,
                               const HttpRequestPtr& request,
                               const HttpResponsePtr& response,
                               const long request_timeout,
@@ -630,7 +630,7 @@ private:
             // There is no connection with this destination yet. Let's create
             // it and start the transaction.
             ConnectionPtr conn(new Connection(io_service_,
-                                              context,
+                                              tls_context,
                                               shared_from_this(),
                                               url));
             conn->doTransaction(request, response, request_timeout,
@@ -786,18 +786,18 @@ private:
 };
 
 Connection::Connection(IOService& io_service,
-                       const TlsContextPtr& context,
+                       const TlsContextPtr& tls_context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
     : conn_pool_(conn_pool), url_(url), tcp_socket_(), tls_socket_(),
       timer_(io_service), current_request_(), current_response_(),
       parser_(), current_callback_(), buf_(), input_buf_(),
       current_transid_(0), close_callback_(), started_(false) {
-    if (!context) {
+    if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
         tls_socket_.reset(new asiolink::TLSSocket<SocketCallback>(io_service,
-                                                                  context));
+                                                                  tls_context));
     }
 }
 
@@ -1426,7 +1426,7 @@ HttpClient::HttpClient(IOService& io_service)
 
 void
 HttpClient::asyncSendRequest(const Url& url,
-                             const TlsContextPtr& context,
+                             const TlsContextPtr& tls_context,
                              const HttpRequestPtr& request,
                              const HttpResponsePtr& response,
                              const HttpClient::RequestHandler& request_callback,
@@ -1438,7 +1438,7 @@ HttpClient::asyncSendRequest(const Url& url,
         isc_throw(HttpClientError, "invalid URL specified for the HTTP client");
     }
 
-    if ((url.getScheme() == Url::Scheme::HTTPS) && !context) {
+    if ((url.getScheme() == Url::Scheme::HTTPS) && !tls_context) {
         isc_throw(HttpClientError, "HTTPS URL scheme but no TLS context");
     }
 
@@ -1454,7 +1454,7 @@ HttpClient::asyncSendRequest(const Url& url,
         isc_throw(HttpClientError, "callback for HTTP transaction must not be null");
     }
 
-    impl_->conn_pool_->queueRequest(url, context, request, response,
+    impl_->conn_pool_->queueRequest(url, tls_context, request, response,
                                     request_timeout.value_,
                                     request_callback, connect_callback,
                                     handshake_callback, close_callback);

@@ -42,6 +42,8 @@ using namespace isc::http::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
+/// @todo: put the common part of client and server tests in its own file(s).
+
 namespace {
 
 /// @brief IP address to which HTTP service is bound.
@@ -213,12 +215,12 @@ public:
     HttpListenerImplCustom(IOService& io_service,
                            const IOAddress& server_address,
                            const unsigned short server_port,
-                           const TlsContextPtr& context,
+                           const TlsContextPtr& tls_context,
                            const HttpResponseCreatorFactoryPtr& creator_factory,
                            const long request_timeout,
                            const long idle_timeout)
         : HttpListenerImpl(io_service, server_address, server_port,
-                           context, creator_factory, request_timeout,
+                           tls_context, creator_factory, request_timeout,
                            idle_timeout) {
     }
 
@@ -232,7 +234,7 @@ protected:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
@@ -247,11 +249,11 @@ protected:
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
                                                const HttpAcceptorCallback& acceptor_callback,
                                                const HttpAcceptorCallback& handshake_callback) {
-        TlsContextPtr context;
-        configClient(context);
+        TlsContextPtr tls_context;
+        configClient(tls_context);
         HttpConnectionPtr
             conn(new HttpConnectionType(io_service_, acceptor_,
-                                        context_, connections_,
+                                        tls_context_, connections_,
                                         response_creator,
                                         acceptor_callback, handshake_callback,
                                         request_timeout_, idle_timeout_));
@@ -275,7 +277,7 @@ public:
     /// @param io_service IO service to be used by the listener.
     /// @param server_address Address on which the HTTP service should run.
     /// @param server_port Port number on which the HTTP service should run.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param creator_factory Pointer to the caller-defined
     /// @ref HttpResponseCreatorFactory derivation which should be used to
     /// create @ref HttpResponseCreator instances.
@@ -289,18 +291,18 @@ public:
     HttpListenerCustom(IOService& io_service,
                        const IOAddress& server_address,
                        const unsigned short server_port,
-                       const TlsContextPtr& context,
+                       const TlsContextPtr& tls_context,
                        const HttpResponseCreatorFactoryPtr& creator_factory,
                        const HttpListener::RequestTimeout& request_timeout,
                        const HttpListener::IdleTimeout& idle_timeout)
         : HttpListener(io_service, server_address, server_port,
-                       context, creator_factory,
+                       tls_context, creator_factory,
                        request_timeout, idle_timeout) {
         // Replace the default implementation with the customized version
         // using the custom derivation of the HttpConnection.
         impl_.reset(new HttpListenerImplCustom<HttpConnectionType>
                     (io_service, server_address, server_port,
-                     context, creator_factory, request_timeout.value_,
+                     tls_context, creator_factory, request_timeout.value_,
                      idle_timeout.value_));
     }
 };
@@ -315,7 +317,7 @@ public:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
@@ -327,14 +329,14 @@ public:
     /// closed by the server.
     HttpConnectionLongWriteBuffer(IOService& io_service,
                                   const HttpAcceptorPtr& acceptor,
-                                  const TlsContextPtr& context,
+                                  const TlsContextPtr& tls_context,
                                   HttpConnectionPool& connection_pool,
                                   const HttpResponseCreatorPtr& response_creator,
                                   const HttpAcceptorCallback& acceptor_callback,
                                   const HttpAcceptorCallback& handshake_callback,
                                   const long request_timeout,
                                   const long idle_timeout)
-        : HttpConnection(io_service, acceptor, context, connection_pool,
+        : HttpConnection(io_service, acceptor, tls_context, connection_pool,
                          response_creator, acceptor_callback,
                          handshake_callback, request_timeout,
                          idle_timeout) {
@@ -365,7 +367,7 @@ public:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /// @param context TLS context.
+    /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
@@ -377,14 +379,14 @@ public:
     /// closed by the server.
     HttpConnectionTransactionChange(IOService& io_service,
                                     const HttpAcceptorPtr& acceptor,
-                                    const TlsContextPtr& context,
+                                    const TlsContextPtr& tls_context,
                                     HttpConnectionPool& connection_pool,
                                     const HttpResponseCreatorPtr& response_creator,
                                     const HttpAcceptorCallback& acceptor_callback,
                                     const HttpAcceptorCallback& handshake_callback,
                                     const long request_timeout,
                                     const long idle_timeout)
-        : HttpConnection(io_service, acceptor, context, connection_pool,
+        : HttpConnection(io_service, acceptor, tls_context, connection_pool,
                          response_creator, acceptor_callback,
                          handshake_callback, request_timeout,
                          idle_timeout) {
@@ -421,10 +423,10 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    /// @param context TLS context.
-    TestHttpClient(IOService& io_service, TlsContextPtr context)
+    /// @param tls_context TLS context.
+    TestHttpClient(IOService& io_service, TlsContextPtr tls_context)
         : io_service_(io_service.get_io_service()),
-          stream_(io_service_, context->getContext()),
+          stream_(io_service_, tls_context->getContext()),
           buf_(), response_() {
     }
 

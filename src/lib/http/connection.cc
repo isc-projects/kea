@@ -64,7 +64,7 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
 
 HttpConnection::HttpConnection(asiolink::IOService& io_service,
                                const HttpAcceptorPtr& acceptor,
-                               const TlsContextPtr& context,
+                               const TlsContextPtr& tls_context,
                                HttpConnectionPool& connection_pool,
                                const HttpResponseCreatorPtr& response_creator,
                                const HttpAcceptorCallback& acceptor_callback,
@@ -73,7 +73,7 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
                                const long idle_timeout)
     : request_timer_(io_service),
       request_timeout_(request_timeout),
-      context_(context),
+      tls_context_(tls_context),
       idle_timeout_(idle_timeout),
       tcp_socket_(),
       tls_socket_(),
@@ -82,11 +82,11 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
       response_creator_(response_creator),
       acceptor_callback_(acceptor_callback),
       handshake_callback_(handshake_callback) {
-    if (!context) {
+    if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
         tls_socket_.reset(new asiolink::TLSSocket<SocketCallback>(io_service,
-                                                                  context));
+                                                                  tls_context));
     }
 }
 
@@ -110,7 +110,7 @@ HttpConnection::shutdown() {
         // Create instance of the callback to close the socket.
         SocketCallback cb(std::bind(&HttpConnection::shutdownCallback,
                                     shared_from_this(),
-                                    ph::_1)); // error
+                                    ph::_1)); // error_code
         tls_socket_->shutdown(cb);
         return;
     }
@@ -311,7 +311,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
     acceptor_callback_(ec);
 
     if (!ec) {
-        if (!context_) {
+        if (!tls_context_) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       HTTP_REQUEST_RECEIVE_START)
                 .arg(getRemoteEndpointAddressAsText())

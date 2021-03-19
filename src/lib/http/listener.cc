@@ -18,12 +18,12 @@ namespace http {
 HttpListener::HttpListener(IOService& io_service,
                            const asiolink::IOAddress& server_address,
                            const unsigned short server_port,
-                           const TlsContextPtr& context,
+                           const TlsContextPtr& tls_context,
                            const HttpResponseCreatorFactoryPtr& creator_factory,
                            const HttpListener::RequestTimeout& request_timeout,
                            const HttpListener::IdleTimeout& idle_timeout)
     : impl_(new HttpListenerImpl(io_service, server_address, server_port,
-                                 context, creator_factory,
+                                 tls_context, creator_factory,
                                  request_timeout.value_,
                                  idle_timeout.value_)) {
 }
