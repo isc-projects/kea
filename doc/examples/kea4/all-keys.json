@@ -370,6 +370,9 @@
                 // Disable DHCP on database connection loss.
                 "disable-dhcp-on-db-loss": true,
 
+                // Enable database connection recovery.
+                "enable-connection-recovery": true,
+
                 // Connection connect timeout.
                 "connect-timeout": 100,
 
