@@ -51,6 +51,7 @@ stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

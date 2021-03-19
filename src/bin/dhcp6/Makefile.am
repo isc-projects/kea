@@ -52,6 +52,7 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 if HAVE_MYSQL

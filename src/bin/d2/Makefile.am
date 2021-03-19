@@ -63,6 +63,7 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

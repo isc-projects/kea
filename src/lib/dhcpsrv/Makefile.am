@@ -201,6 +201,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/process/libkea-process.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/http/libkea-http.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 if HAVE_MYSQL

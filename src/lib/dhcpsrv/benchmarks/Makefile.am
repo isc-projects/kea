@@ -77,6 +77,7 @@ run_benchmarks_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 

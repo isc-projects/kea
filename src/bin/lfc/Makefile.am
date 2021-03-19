@@ -34,6 +34,7 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 if HAVE_MYSQL

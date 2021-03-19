@@ -43,6 +43,7 @@ libprocess_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libprocess_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

@@ -60,6 +60,7 @@ lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+lfc_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 if HAVE_MYSQL

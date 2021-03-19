@@ -37,6 +37,7 @@ libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la

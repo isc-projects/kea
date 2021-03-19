@@ -47,10 +47,10 @@ kea_netconf_SOURCES  = main.cc
 
 kea_netconf_LDADD  = libnetconf.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

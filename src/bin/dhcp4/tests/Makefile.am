@@ -132,6 +132,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

@@ -36,6 +36,7 @@ libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_flex_option_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

@@ -40,6 +40,7 @@ lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

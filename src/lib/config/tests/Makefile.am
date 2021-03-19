@@ -30,8 +30,8 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_unittests_LDADD  = $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
-run_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
