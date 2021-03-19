@@ -93,10 +93,12 @@ public:
     /// @param retry_interval amount of time to between reconnect attempts
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
-                 bool disable_dhcp) : backend_type_(backend_type),
-          timer_name_(timer_name), max_retries_(max_retries),
-          retries_left_(max_retries), retry_interval_(retry_interval),
-          disable_dhcp_(disable_dhcp) {}
+                 bool connection_recovery, bool alter_dhcp_state) :
+          backend_type_(backend_type), timer_name_(timer_name),
+          max_retries_(max_retries), retries_left_(max_retries),
+          retry_interval_(retry_interval),
+          connection_recovery_(connection_recovery),
+          alter_dhcp_state_(alter_dhcp_state) {}
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
@@ -140,8 +142,14 @@ public:
 
     /// @brief Return the flag which indicates if the connection loss should
     /// disable the dhcp service.
-    bool disableDHCP() {
-        return (disable_dhcp_);
+    bool alterDHCPState() {
+        return (alter_dhcp_state_);
+    }
+
+    /// @brief Return the flag which indicates if the connection recovery
+    /// mechanism is enabled.
+    bool connectionRecovery() {
+        return (connection_recovery_);
     }
 
 private:
@@ -161,9 +169,13 @@ private:
     /// @brief The amount of time to wait between reconnect attempts
     unsigned int retry_interval_;
 
-    /// @brief Flag which indicates if the connection loss should disable the
+    /// @brief Flag which indicates if the connection recovery mechanism is
+    /// enabled.
+    bool connection_recovery_;
+
+    /// @brief Flag which indicates if the connection loss should affect the
     /// dhcp service.
-    bool disable_dhcp_;
+    bool alter_dhcp_state_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl
@@ -210,8 +222,10 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    DatabaseConnection(const ParameterMap& parameters)
-        : parameters_(parameters), unusable_(false) {
+    /// @param callback The connection recovery callback.
+    DatabaseConnection(const ParameterMap& parameters,
+                       DbCallback callback = DbCallback())
+        : parameters_(parameters), callback_(callback), unusable_(false) {
     }
 
     /// @brief Destructor
@@ -335,6 +349,13 @@ private:
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
+
+protected:
+
+    /// @brief The callback used to recover the connection.
+    DbCallback callback_;
+
+private:
 
     /// @brief Indicates if the connection can no longer be used for normal
     /// operations. Typically a connection is marked unusable after an unrecoverable

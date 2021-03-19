@@ -48,7 +48,6 @@
        "type": "postgresql",
        "reconnect-wait-time": 3000, // expressed in ms
        "max-reconnect-tries": 3,
-       "disable-dhcp-on-db-loss": true,
        "name": "kea",
        "user": "kea",
        "password": "kea",

@@ -183,8 +183,23 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of true;
     }
 
+    bool connection_recovery = true;
+    try {
+        parm_str = getParameter("enable-connection-recovery");
+        connection_recovery = boost::lexical_cast<bool>(parm_str);
+    } catch (...) {
+        // Wasn't specified so we'll use default of true;
+    }
+
+    // If "enable-connection-recovery" is 'false' the recovery mechanism must
+    // be disabled
+    if (!connection_recovery) {
+        callback_ = DbCallback();
+    }
+
     reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval, disable_dhcp);
+                                                      interval, connection_recovery,
+                                                      disable_dhcp);
 }
 
 bool

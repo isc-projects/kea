@@ -98,6 +98,7 @@ using namespace std;
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   DISABLE_DHCP_ON_DB_LOSS "disable-dhcp-on-db-loss"
+  ENABLE_CONNECTION_RECOVERY "enable-connection-recovery"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
@@ -910,6 +911,7 @@ database_map_param: database_type
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | disable_dhcp_on_db_loss
+                  | enable_connection_recovery
                   | request_timeout
                   | tcp_keepalive
                   | tcp_nodelay
@@ -1070,6 +1072,12 @@ disable_dhcp_on_db_loss: DISABLE_DHCP_ON_DB_LOSS COLON BOOLEAN {
     ctx.unique("disable-dhcp-on-db-loss", ctx.loc2pos(@1));
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("disable-dhcp-on-db-loss", n);
+};
+
+enable_connection_recovery: ENABLE_CONNECTION_RECOVERY COLON BOOLEAN {
+    ctx.unique("enable-connection-recovery", ctx.loc2pos(@1));
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-connection-recovery", n);
 };
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {

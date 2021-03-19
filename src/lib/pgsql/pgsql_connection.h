@@ -312,8 +312,8 @@ public:
     PgSqlConnection(const ParameterMap& parameters,
                     IOServiceAccessorPtr io_accessor = IOServiceAccessorPtr(),
                     DbCallback callback = DbCallback())
-        : DatabaseConnection(parameters), io_service_accessor_(io_accessor),
-          io_service_(), callback_(callback) {
+        : DatabaseConnection(parameters, callback),
+          io_service_accessor_(io_accessor), io_service_() {
     }
 
     /// @brief Destructor
@@ -469,9 +469,6 @@ public:
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief The callback used to recover the connection.
-    DbCallback callback_;
 };
 
 } // end of isc::db namespace

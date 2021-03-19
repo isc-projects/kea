@@ -1263,7 +1263,7 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 
     // Disable service until the connection is recovered.
     if (db_reconnect_ctl->retriesLeft() == db_reconnect_ctl->maxRetries() &&
-        db_reconnect_ctl->disableDHCP()) {
+        db_reconnect_ctl->alterDHCPState()) {
         network_state_->disableService(NetworkState::Origin::DB_CONNECTION);
     }
 
@@ -1291,7 +1291,7 @@ ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     // Enable service after the connection is recovered.
-    if (db_reconnect_ctl->disableDHCP()) {
+    if (db_reconnect_ctl->alterDHCPState()) {
         network_state_->enableService(NetworkState::Origin::DB_CONNECTION);
     }
 
