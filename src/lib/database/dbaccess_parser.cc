@@ -62,7 +62,8 @@ DbAccessParser::parse(std::string& access_string,
             if ((param.first == "persist") ||
                 (param.first == "tcp-nodelay") ||
                 (param.first == "readonly") ||
-                (param.first == "disable-dhcp-on-db-loss")) {
+                (param.first == "disable-dhcp-on-db-loss") ||
+                (param.first == "enable-connection-recovery")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 

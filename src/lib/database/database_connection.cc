@@ -257,7 +257,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
         } else if ((keyword == "persist") ||
                    (keyword == "tcp-nodelay") ||
                    (keyword == "readonly") ||
-                   (keyword == "disable-dhcp-on-db-loss")) {
+                   (keyword == "disable-dhcp-on-db-loss") ||
+                   (keyword == "enable-connection-recovery")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
