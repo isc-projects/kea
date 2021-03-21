@@ -37,6 +37,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    arm/hooks
    arm/stats
    arm/ctrl-channel
+   arm/tls
    arm/logging
    arm/shell
    arm/netconf

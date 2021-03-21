@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,6 +37,10 @@ The asiolink library (libkea-asiolink) encapsulates Boost ASIO tools:
 
  - TCP socket: TCP derivation of I/O socket.
 
+ - TLS acceptor: TLS derivation of TCP acceptor.
+
+ - TLS socket: TLS derivation of I/O socket embedding a TCP socket.
+
  - UDP endpoint: UDP derivation of I/O endpoint.
 
  - UDP socket: UDP derivation of I/O socket.
@@ -46,6 +50,35 @@ The asiolink library (libkea-asiolink) encapsulates Boost ASIO tools:
  - Unix domain acceptor: Unix socket (AF_LOCAL) derivation of I/O acceptor.
 
  - Unix domain endpoint: Unix socket (AF_LOCAL) derivation of I/O endpoint.
+
+These tools in general use the error code (vs throwing exception) overload
+and for asynchronous methods / functions a callback taking the error code
+as its first argument.
+
+@section asiolinkTLSSupport TLS ASIO support
+
+The TLS support is an extension of the TCP one:
+
+ - the TLS acceptor is derived from the TCP acceptor.
+
+ - the TLS socket embeds a TCP socket.
+
+Basic socket operations as accept, connect, close, etc, are performed on
+the parent or embedded TCP socket.
+
+TLS adds a TLS context (TLS context objects encapsulate the TLS setup e.g.
+certificates) and two new operations:
+
+ - TLS handshake which must be called after accept or connect before
+  any read or write.
+
+ - TLS shutdown which is an optional orderly close prepare. It must not
+  be called on any kind of errors and after a TLS shutdown the TLS stream
+  can not be used: the only valid operation on it is to close it.
+
+@note TLS shows a stream of sequenced records interface but there is
+no direct mapping between high level TLS operations and TCP I/O,
+e.g. a TLS read can involve a TCP write and the opposite.
 
 @section asiolinkMTConsiderations Multi-Threading Consideration for Boost ASIO Utilities
 
