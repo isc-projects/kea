@@ -10,7 +10,8 @@ protection:
 
 - no TLS i.e. the only option available in prior versions.
 
-- encryption i.e. protection against passive attacks and eavesdropping.
+- encryption i.e. protection against passive attacks and eavesdropping,
+  the server is still authenticated but the client is not.
 
 - mutual authentication between the client and the server.
 
@@ -70,11 +71,6 @@ with some constraints including on the boost library:
 TLS/HTTPS configuration
 =======================
 
-TLS is asymmetric: the authentication of the server by the client is
-mandatory but the authentication of the client by the server is optional.
-In TLS terms this means the server can require the client certificate or
-not.
-
 The new TLS configuration parameters are:
 
 - the ``trust-anchor`` string parameter specifies the name of a file
@@ -89,13 +85,19 @@ The new TLS configuration parameters are:
 - the ``key-file`` string parameter specifies the private key of the
   end-entity certificate.
 
-- the ``cert-required`` boolean parameter allows a server to not
-  require the client certificate. Its default value is true which
-  means to require the client certificate and to authenticate it. This
-  flag has no meaning on the client side.
-
 The three string parameters must be either all not specified (TLS disabled)
 or all specified (TLS enabled).
+
+TLS is asymmetric: the authentication of the server by the client is
+mandatory but the authentication of the client by the server is optional.
+In TLS terms this means the server can require the client certificate or
+not so there is a server specific TLS parameter.
+
+- the ``cert-required`` boolean parameter allows a server to not
+  require the client certificate. Its default value is true which
+  means to require the client certificate and to authenticate the
+  client. This flag has no meaning on the client side: the server
+  always provides a certificate which is validated by the client.
 
 Objects in files must be in the PEM format. Files can contain more
 than one certificate but this was not tested and is not supported.
@@ -114,3 +116,8 @@ A sample set of certificates and associated objects is available at
 ``src/lib/asiolink/testutils/ca`` in sources with a ``doc.txt`` file
 explaining how they were generated using the openssl command.
 
+TLS handshake, the phase where the cryptographic parameters are exchanged
+and authentication is verified, can fail in a lot of ways. Error messages
+often do not really help to find the source of the problem.
+Both OpenSSL and Botan provide a command line tool with a verify command
+which can be used to understand and fix it.
