@@ -194,6 +194,7 @@ public:
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
+
         HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
                                                    connection_pool_,
                                                    response_creator_,
