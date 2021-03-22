@@ -94,7 +94,7 @@ DHCP queries.
    of using the ``hot-standby`` over the ``load-balancing`` mode is that the former
    has a simpler configuration. Conversely, ``load-balancing`` has higher
    performance potential at the cost of more complex configuration.
-   See :ref:`ha-load-balancing-config` for details how to split the
+   See :ref:`ha-load-balancing-config` for details on how to split the
    pools using client classification.
 
 
@@ -485,7 +485,7 @@ with the only difference that ``this-server-name`` should be set to
 
    Remember! The ``load-balancing`` mode requires that the address pools and
    delegated prefix pools are split between the active servers. During
-   the normal operation, the servers use non-overlapping pools to avoid
+   normal operation, the servers use non-overlapping pools to avoid
    allocating the same lease to different clients by both instances.
    A server will only use the pool fragments owned by the partner when
    the partner is not running. See the notes in the
