@@ -40,6 +40,8 @@ Failover protocol implementation.
 The following sections describe the configuration and operation of the
 Kea HA hook library.
 
+.. _ha-supported-configurations:
+
 Supported Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -78,6 +80,23 @@ queries as long as the primary is running or, more accurately,
 until the standby considers the primary to be offline. If the standby
 server detects the failure of the primary, it starts responding to all
 DHCP queries.
+
+.. note::
+
+   Operators often wonder whether to use ``load-balancing`` or ``hot-standby``
+   mode. The ``load-balancing`` has the benefit of splitting the DHCP load
+   between two instances, reducing the traffic processed by each of them.
+   However, it is not always clear to the operators that using the
+   ``load-balancing`` mode requires manually splitting the address pools
+   between two Kea instances using client classification. It precludes
+   two servers from allocating the same address to different clients.
+   Such a split is not needed in the ``hot-standby`` mode. Thus, the benefit
+   of using the ``hot-standby`` over the ``load-balancing`` mode is that the former
+   has a simpler configuration. Conversely, ``load-balancing`` has higher
+   performance potential at the cost of more complex configuration.
+   See :ref:`ha-load-balancing-config` for details how to split the
+   pools using client classification.
+
 
 In the configurations described above, the primary and secondary/standby
 are referred to as ``"active"`` servers, because they receive lease
@@ -461,6 +480,20 @@ on the primary server within the load-balancing configuration. The same
 configuration should be applied on the secondary and backup servers,
 with the only difference that ``this-server-name`` should be set to
 ``server2`` and ``server3`` on those servers, respectively.
+
+.. note::
+
+   Remember! The ``load-balancing`` mode requires that the address pools and
+   delegated prefix pools are split between the active servers. During
+   the normal operation, the servers use non-overlapping pools to avoid
+   allocating the same lease to different clients by both instances.
+   A server will only use the pool fragments owned by the partner when
+   the partner is not running. See the notes in the
+   :ref:`ha-supported-configurations` highlighting differences between
+   the ``load-balancing`` and ``hot-standby`` modes. The semantics of the pools
+   partitioning is explained further in this section.
+   The :ref:`ha-load-balancing-advanced-config` provides advanced pools
+   partitioning examples.
 
 ::
 
