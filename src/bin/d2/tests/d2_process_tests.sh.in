@@ -113,6 +113,28 @@ CONFIG_INVALID="{
     }
 }"
 
+CONFIG_WITH_SECRET='
+{
+  "DhcpDdns": {
+    "tsig-keys": [
+      {
+        "algorithm": "HMAC-MD5",
+        "name": "d2.md5.key",
+        "secret": "sensitivejdPJI5QxlpnfQ=="
+      }
+    ],
+    "user-context": {
+      "password": "superadmin",
+      "secret": "superadmin",
+      "shared-info": {
+        "password": "superadmin",
+        "secret": "superadmin"
+      }
+    }
+  }
+}
+'
+
 # Set the location of the executable.
 bin="kea-dhcp-ddns"
 bin_path="@abs_top_builddir@/src/bin/d2"
@@ -313,3 +335,4 @@ logger_vars_test "dhcp-ddns.variables"
 syntax_check_test "dhcp-ddns.syntax_check_success" "${CONFIG}" 0
 syntax_check_test "dhcp-ddns.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
 syntax_check_test "dhcp-ddns.syntax_check_bad_values" "${CONFIG_BAD_VALUE}" 1
+password_redact_test "dhcp-ddns.password_redact_test" "${CONFIG_WITH_SECRET}" 0

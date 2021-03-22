@@ -169,43 +169,6 @@ shutdown_test() {
     test_finish 0
 }
 
-# This test verifies that passwords are redacted in logs.
-# This function takes 2 parameters:
-# test_name
-# config - string with a content of the config (will be written to a file)
-# expected_code - expected exit code returned by kea (0 - success, 1 - failure)
-password_redact_test() {
-    local test_name="${1}"
-    local config="${2}"
-    local expected_code="${3}"
-
-    # Log the start of the test and print test name.
-    test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
-    # Create correct configuration file.
-    create_config "${config}"
-    # Instruct Control Agent to log to the specific file.
-    set_logger
-    # Check it
-    printf "Running command %s.\n" "\"${bin_path}/${bin} -d -t ${CFG_FILE}\""
-    run_command \
-        "${bin_path}/${bin}" -d -t "${CFG_FILE}"
-    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
-        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
-        clean_exit 1
-    fi
-    if grep -q 'sensitive' "${LOG_FILE}"; then
-        printf "ERROR: sensitive is present in logs\n"
-        clean_exit 1
-    fi
-    if ! grep -q 'superadmin' "${LOG_FILE}"; then
-        printf "ERROR: superadmin is not present in logs\n"
-        clean_exit 1
-    fi
-    test_finish 0
-}
-
 server_pid_file_test "${CONFIG}" DCTL_ALREADY_RUNNING
 shutdown_test "ctrl-agent.sigterm_test" 15
 shutdown_test "ctrl-agent.sigint_test" 2

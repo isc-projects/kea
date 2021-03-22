@@ -482,3 +482,4 @@ lfc_timer_test
 syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0
 syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
 syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1
+password_redact_test "dhcpv4.password_redact_test" "$(kea_dhcp_config 4)" 0

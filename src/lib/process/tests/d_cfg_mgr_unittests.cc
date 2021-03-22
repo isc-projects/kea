@@ -285,25 +285,24 @@ TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
 // This test checks that redactConfig works as expected.
 TEST_F(DStubCfgMgrTest, redactConfig) {
     // Basic case.
-    list<string> empty = { };
     string config = "{ \"foo\": 1 }";
     ConstElementPtr elem;
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
     ConstElementPtr ret;
-    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
+    ASSERT_NO_THROW(ret = redactConfig(elem));
     EXPECT_EQ(ret->str(), elem->str());
 
     // Verify redaction.
     config = "{ \"password\": \"foo\", \"secret\": \"bar\" }";
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
-    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
+    ASSERT_NO_THROW(ret = redactConfig(elem));
     string expected = "{ \"password\": \"*****\", \"secret\": \"*****\" }";
     EXPECT_EQ(expected, ret->str());
 
     // Verify that user context are skipped.
     config = "{ \"user-context\": { \"password\": \"foo\" } }";
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
-    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
+    ASSERT_NO_THROW(ret = redactConfig(elem));
     EXPECT_EQ(ret->str(), elem->str());
 
     // Verify that only given subtrees are handled.
@@ -315,6 +314,61 @@ TEST_F(DStubCfgMgrTest, redactConfig) {
     expected = "{ \"foo\": { \"password\": \"*****\" }, ";
     expected += "\"next\": { \"secret\": \"bar\" } }";
     EXPECT_EQ(expected, ret->str());
+}
+
+TEST(RedactConfig, userContext) {
+    ConstElementPtr const config(Element::fromJSON(R"(
+        {
+            "some-database": {
+                "password": "sensitive",
+                "secret": "sensitive",
+                "user": "keatest",
+                "nested-map": {
+                    "password": "sensitive",
+                    "secret": "sensitive",
+                    "user": "keatest"
+                }
+            },
+            "user-context": {
+                "password": "keatest",
+                "secret": "keatest",
+                "user": "keatest",
+                "nested-map": {
+                    "password": "keatest",
+                    "secret": "keatest",
+                    "user": "keatest"
+                }
+            }
+        }
+    )"));
+    ConstElementPtr const expected(Element::fromJSON(R"(
+        {
+            "some-database": {
+                "password": "*****",
+                "secret": "*****",
+                "user": "keatest",
+                "nested-map": {
+                    "password": "*****",
+                    "secret": "*****",
+                    "user": "keatest"
+                }
+            },
+            "user-context": {
+                "password": "keatest",
+                "secret": "keatest",
+                "user": "keatest",
+                "nested-map": {
+                    "password": "keatest",
+                    "secret": "keatest",
+                    "user": "keatest"
+                }
+            }
+        }
+    )"));
+    ConstElementPtr redacted(redactConfig(config));
+    EXPECT_TRUE(isEquivalent(redacted, expected))
+        << "Actual:\n" << prettyPrint(redacted) << "\n"
+           "Expected:\n" << prettyPrint(expected);
 }
 
 } // end of anonymous namespace

@@ -424,7 +424,7 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     EXPECT_EQ("", parameters[""]);
 }
 
-/// @brief redactConfigString test
+/// @brief redactedAccessString test
 ///
 /// Checks that the redacted configuration string includes the password only
 /// as a set of asterisks.
@@ -450,7 +450,7 @@ TEST(DatabaseConnectionTest, redactAccessString) {
     EXPECT_EQ("mysql", parameters["type"]);
 }
 
-/// @brief redactConfigString test - empty password
+/// @brief redactedAccessString test - empty password
 ///
 /// Checks that the redacted configuration string includes the password only
 /// as a set of asterisks, even if the password is null.
@@ -494,7 +494,7 @@ TEST(DatabaseConnectionTest, redactAccessStringEmptyPassword) {
     EXPECT_EQ("mysql", parameters["type"]);
 }
 
-/// @brief redactConfigString test - no password
+/// @brief redactedAccessString test - no password
 ///
 /// Checks that the redacted configuration string excludes the password if there
 /// was no password to begin with.
