@@ -86,6 +86,11 @@ The following environment variable can affect the unit tests:
   will cause the test setup logic to always drop and create the database
   schema. The default value is "true".
 
+- KEA_TLS_CHECK_VERBOSE - Specifies the TLS check default verbosity. If not
+  set, TLS unit tests triggering expected failures are by default silent.
+  If set, these TLS unit tests display the error messages which are very
+  dependent on the cryptographic backend and boost library versions.
+
 @note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically
 increase the time it takes each unit test to execute.
 
