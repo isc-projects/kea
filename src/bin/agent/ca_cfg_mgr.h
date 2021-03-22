@@ -308,20 +308,6 @@ protected:
     /// replaced by asterisks so can be safely logged to an unprivileged place.
     virtual isc::data::ConstElementPtr
     redactConfig(isc::data::ConstElementPtr config) const;
-
-private:
-    /// @brief Redact an element.
-    ///
-    /// Recursive helper of redactConfig.
-    ///
-    /// @param elem An element to redact.
-    /// @param redacted The reference to redacted flag: true means the result
-    /// was redacted so cannot be shared.
-    /// @return unmodified element or a copy of the element: in the second
-    /// case embedded passwords were replaced by asterisks and the redacted
-    /// flag was set to true.
-    virtual isc::data::ConstElementPtr
-    redactElement(isc::data::ConstElementPtr elem, bool& redacted) const;
 };
 
 /// @brief Defines a shared pointer to CtrlAgentCfgMgr.

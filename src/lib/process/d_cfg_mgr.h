@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -212,8 +212,12 @@ protected:
 
     /// @brief Redact the configuration.
     ///
-    /// This method replaces passwords by asterisks. By default it does
-    /// nothing: derived class must redefine it.
+
+    /// This method replaces passwords and secrets by asterisks. By
+    /// default it follows all subtrees at the exception of user
+    /// contexts. Please derive the method to allow a reasonable
+    /// performance by following only subtrees where the syntax allows
+    /// the presence of passwords and secrets.
     ///
     /// @param config the Element tree structure that describes the configuration.
     /// @return unmodified config or a copy of the config where passwords were

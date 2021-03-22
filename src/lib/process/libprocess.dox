@@ -166,7 +166,7 @@ during startup and the subsequent receipt of a SIGHUP:
 
 @section redact Redact Passwords
 
-There are two tools to remove sensitive data as passwords from logs:
+There are two tools to remove sensitive data as passwords or secrets from logs:
  - redactedAccessString for database access strings
  - redactConfig for full configurations
 
@@ -174,11 +174,8 @@ The redactConfig method must be defined in derived classes following this
 procedure:
  - take the grammar (bison input file with the .yy extension)
  - get the arcs between the start symbol and tokens handling sensitive
-   data e.g. PASSWORD
- - walk the full configuration following only these arcs (so ignoring
-   other parts of the configuration tree)
- - replace sensitive data by something else e.g. "*****"
- - try to share unchanged subtrees vs. copy to identical.
+   data i.e. passwords and secrets
+ - give the set of keywords of these args to the redactConfig function
 
 @section cplMTConsiderations Multi-Threading Consideration for Controllable Process Layer
 

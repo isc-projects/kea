@@ -28,6 +28,7 @@ libkea_process_la_SOURCES += daemon.cc daemon.h
 libkea_process_la_SOURCES += log_parser.cc log_parser.h
 libkea_process_la_SOURCES += logging_info.cc logging_info.h
 libkea_process_la_SOURCES += process_messages.cc process_messages.h
+libkea_process_la_SOURCES += redact_config.cc redact_config.h
 
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -95,4 +96,5 @@ libkea_process_include_HEADERS = \
 	d_process.h \
 	logging_info.h \
 	log_parser.h \
-	process_messages.h
+	process_messages.h \
+	redact_config.h

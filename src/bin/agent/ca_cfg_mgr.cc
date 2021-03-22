@@ -11,6 +11,7 @@
 #include <cc/simple_parser.h>
 #include <cc/command_interpreter.h>
 #include <http/basic_auth_config.h>
+#include <process/redact_config.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc::config;
@@ -141,60 +142,15 @@ CtrlAgentCfgMgr::parse(ConstElementPtr config_set, bool check_only) {
 ConstElementPtr
 CtrlAgentCfgMgr::redactConfig(ConstElementPtr config) const {
     bool redacted = false;
-    ConstElementPtr result = redactElement(config, redacted);
+    const std::set<std::string> follow = {
+        "Control-agent", "authentication", "clients"
+    };
+    ConstElementPtr result =
+        isc::process::redactConfig(config, redacted, follow);
     if (redacted) {
         return (result);
     }
     return (config);
-}
-
-ConstElementPtr
-CtrlAgentCfgMgr::redactElement(ConstElementPtr elem, bool& redacted) const {
-    // From isc::data::copy.
-    if (!elem) {
-        isc_throw(BadValue, "redactElement got a null pointer");
-    }
-    // Redact lists.
-    if (elem->getType() == Element::list) {
-        ElementPtr result = ElementPtr(new ListElement());
-        for (auto item : elem->listValue()) {
-            // add wants a ElementPtr so use a shallow copy.
-            ElementPtr copy = data::copy(redactElement(item, redacted), 0);
-            result->add(copy);
-        }
-        if (redacted) {
-            return (result);
-        }
-        return (elem);
-    }
-    // Redact maps.
-    if (elem->getType() == Element::map) {
-        ElementPtr result = ElementPtr(new MapElement());
-        for (auto kv : elem->mapValue()) {
-            auto key = kv.first;
-            auto value = kv.second;
-
-            if (key == "password") {
-                // Handle passwords.
-                redacted = true;
-                result->set(key, Element::create(std::string("*****")));
-            } else if ((key == "Control-agent") ||
-                       (key == "authentication") ||
-                       (key == "clients")) {
-                // Handle the arc where are passwords.
-                result->set(key, redactElement(value, redacted));
-            } else {
-                // Default case: no password here.
-                result->set(key, value);
-            }
-        }
-        if (redacted) {
-            return (result);
-        }
-        return (elem);
-    }
-    // Handle other element types.
-    return (elem);
 }
 
 data::ConstElementPtr
