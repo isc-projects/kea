@@ -1,3 +1,9 @@
+1874.	[doc]		marcin
+	Added notes in the ARM highlighting that the address and
+	delegated prefix pools must be split when HA load-balancing
+	mode is used.
+	(Gitlab #1726)
+
 1873.	[func]		andrei
 	kea-admin now accepts the -P|--port parameter with a custom port
 	used to connect to the database.
