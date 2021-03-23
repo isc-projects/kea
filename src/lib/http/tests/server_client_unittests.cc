@@ -227,19 +227,10 @@ protected:
     /// This method is virtual so as it can be overridden when customized
     /// connections are to be used, e.g. in case of unit testing.
     ///
-    /// @param io_service IO service to be used by the connection.
-    /// @param acceptor Pointer to the TCP acceptor object used to listen for
-    /// new HTTP connections.
-    /// @param tls_context TLS context.
-    /// @param connection_pool Connection pool in which this connection is
-    /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
     /// @param acceptor_callback Callback invoked when new connection is accepted.
     /// @param handshake_callback Callback invoked when TLS handshake is performed.
-    /// @param request_timeout Configured timeout for a HTTP request.
-    /// @param idle_timeout Timeout after which persistent HTTP connection is
-    /// closed by the server.
     ///
     /// @return Pointer to the created connection.
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,

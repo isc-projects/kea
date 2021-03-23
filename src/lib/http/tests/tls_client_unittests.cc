@@ -1137,22 +1137,22 @@ public:
     TlsContextPtr client_context_;
 };
 
+#ifndef DISABLE_SOME_TESTS
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.
 TEST_F(HttpsClientTest, consecutiveRequests) {
-#ifndef DISABLE_SOME_TESTS
+
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
-#endif
 }
 
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.
 TEST_F(HttpsClientTest, consecutiveRequestsMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-#ifndef DISABLE_SOME_TESTS
+
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
-#endif
 }
+#endif
 
 // Test that two consecutive requests can be sent over non-persistent connection.
 // This is achieved by sending HTTP/1.0 requests, which are non-persistent by
@@ -1249,13 +1249,13 @@ TEST_F(HttpsClientTest, DISABLED_clientRequestLateStartNoQueueMultiThreading) {
     testClientRequestLateStart(false);
 }
 
+#ifndef DISABLE_SOME_TESTS
 // This test verifies the behavior of the HTTP client when the premature
 // timeout occurs and there are requests queued after the request which
 // times out.
 TEST_F(HttpsClientTest, clientRequestLateStartQueue) {
-#ifndef DISABLE_SOME_TESTS
+
     testClientRequestLateStart(true);
-#endif
 }
 
 // This test verifies the behavior of the HTTP client when the premature
@@ -1263,10 +1263,9 @@ TEST_F(HttpsClientTest, clientRequestLateStartQueue) {
 // times out.
 TEST_F(HttpsClientTest, clientRequestLateStartQueueMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-#ifndef DISABLE_SOME_TESTS
     testClientRequestLateStart(true);
-#endif
 }
+#endif
 
 // Test that client times out when connection takes too long.
 TEST_F(HttpsClientTest, clientConnectTimeout) {
@@ -1279,20 +1278,18 @@ TEST_F(HttpsClientTest, clientConnectTimeoutMultiThreading) {
     ASSERT_NO_FATAL_FAILURE(testClientConnectTimeout());
 }
 
+#ifndef DISABLE_SOME_TESTS
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpsClientTest, connectCloseCallbacks) {
-#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
-#endif
 }
 
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpsClientTest, connectCloseCallbacksMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-#ifndef DISABLE_SOME_TESTS
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
-#endif
 }
+#endif
 
 /// Tests that HttpClient::closeIfOutOfBand works correctly.
 TEST_F(HttpsClientTest, closeIfOutOfBand) {
