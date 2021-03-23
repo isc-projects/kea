@@ -12,7 +12,6 @@
 #include <asiolink/crypto_tls.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/testutils/test_tls.h>
-#include <testutils/gtest_utils.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -387,6 +386,10 @@ public:
 
 };
 
+////////////////////////////////////////////////////////////////////////
+//                              TlsContext tests                      //
+////////////////////////////////////////////////////////////////////////
+
 // Test if we can get a client context.
 TEST(TLSTest, clientContext) {
     TlsContextPtr ctx;
@@ -643,6 +646,10 @@ TEST(TLSTest, configureError) {
         std::cout << exps.getErrMsg() << "\n";
     }
 }
+
+////////////////////////////////////////////////////////////////////////
+//                      Basic handshake failures                      //
+////////////////////////////////////////////////////////////////////////
 
 // Test if we can get a stream.
 TEST(TLSTest, stream) {
