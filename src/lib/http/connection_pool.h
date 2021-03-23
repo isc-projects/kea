@@ -46,7 +46,7 @@ public:
     /// @param connection Pointer to the connection.
     void shutdown(const HttpConnectionPtr& connection);
 
-    /// @brief Removes a connection them from the pool and stops it.
+    /// @brief Removes a connection from the pool and stops it.
     ///
     /// @param connection Pointer to the connection.
     void stop(const HttpConnectionPtr& connection);
