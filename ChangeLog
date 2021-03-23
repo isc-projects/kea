@@ -1,3 +1,7 @@
+1875.	[func]		dupont
+	TLS/HTTPS support was added to asiolink and http libraries.
+	(Gitlab #1661)
+
 1874.	[doc]		marcin
 	Added notes in the ARM highlighting that the address and
 	delegated prefix pools must be split when HA load-balancing
