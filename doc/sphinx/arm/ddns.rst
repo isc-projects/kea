@@ -597,8 +597,7 @@ the following parameters:
 -  ``key-name`` - if TSIG is used with this domain's servers,
    this value should be the name of the key from the TSIG Key List. If
    the value is blank (the default), TSIG will not be used in DDNS
-   conversations with this domain's servers. Currently this value is not
-   used as TSIG has not been implemented.
+   conversations with this domain's servers.
 
 -  ``dns-servers`` - a list of one or more DNS servers which can conduct
    the server side of the DDNS protocol for this domain. Currently, the
