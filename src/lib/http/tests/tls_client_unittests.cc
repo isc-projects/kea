@@ -1056,7 +1056,7 @@ public:
         EXPECT_EQ(-1, monitor.registered_fd_);
     }
 
-    /// @brief Simulates external registery of Connection TCP sockets
+    /// @brief Simulates external registry of Connection TCP sockets
     ///
     /// Provides methods compatible with Connection callbacks for connnect
     /// and close operations.
