@@ -40,6 +40,9 @@ public:
 
     /// @brief Removes a connection from the pool and shutdown it.
     ///
+    /// Shutdown is specific to TLS and is a first part of graceful close (note it is
+    /// NOT the same as TCP shutdown system call).
+    ///
     /// @note if the TLS connection stalls e.g. the peer does not try I/O
     /// on it the connection has to be explicitly stopped.
     ///
