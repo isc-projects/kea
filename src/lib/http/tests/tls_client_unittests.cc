@@ -239,7 +239,7 @@ public:
     /// @brief Runs IO service with optional timeout.
     ///
     /// @param timeout Optional value specifying for how long the io service
-    /// should be ran.
+    /// should be ran (ms).
     void runIOService(long timeout = 0) {
         io_service_.get_io_service().reset();
 
