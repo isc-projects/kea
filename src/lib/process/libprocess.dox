@@ -175,7 +175,9 @@ procedure:
  - take the grammar (bison input file with the .yy extension)
  - get the arcs between the start symbol and tokens handling sensitive
    data i.e. passwords and secrets
- - give the set of keywords of these args to the redactConfig function
+ - get the arcs between the start symbol and tokens handling free JSON
+   values at the exception of user contexts e.g. hooks libraries parameters
+ - give the set of keywords of these arcs to the redactConfig function
 
 @section cplMTConsiderations Multi-Threading Consideration for Controllable Process Layer
 
