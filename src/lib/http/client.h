@@ -104,6 +104,11 @@ public:
     /// @brief Optional handler invoked when client performs the TLS handshake
     /// with the server.
     ///
+    /// It is called when the TLS handshake completes:
+    /// - if the handshake succeeds it is called with error code 0
+    /// - if the handshake fails it is called with error code != 0
+    /// - if TLS is not enabled, it is not called at all
+    ///
     /// Returned boolean value indicates whether the client should continue
     /// connecting to the server (if true) or not (false).
     /// @note The second argument is not used.
