@@ -83,7 +83,7 @@ The new TLS configuration parameters are:
   containing the end-entity certificate.
 
 - the ``key-file`` string parameter specifies the private key of the
-  end-entity certificate.
+  end-entity certificate. The file must not be encrypted.
 
 The three string parameters must be either all not specified (TLS disabled)
 or all specified (TLS enabled).
@@ -104,8 +104,8 @@ than one certificate but this was not tested and is not supported.
 
 Botan requires CA certificates to have the standard CA certificate
 attributes, verifies that end-entity certificates are version 3
-certificates (as required by the TLS standard) and supports only PKCS
-8 files for the private key.
+certificates (as required by the TLS standard) and supports only PKCS 8
+files for the private key.
 
 .. note::
 
