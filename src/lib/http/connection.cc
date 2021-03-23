@@ -316,7 +316,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         } else {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                      HTTP_CLIENT_HANDSHAKE_START)
+                      HTTP_CONNECTION_HANDSHAKE_START)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         }
@@ -329,10 +329,11 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 void
 HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
     if (ec) {
+        LOG_INFO(http_logger, HTTP_CONNECTION_HANDSHAKE_FAILED)
+            .arg(getRemoteEndpointAddressAsText())
+            .arg(ec.message());
         stopThisConnection();
-    }
-
-    if (!ec) {
+    } else {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   HTTPS_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText());
