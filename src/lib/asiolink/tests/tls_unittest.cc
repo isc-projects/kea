@@ -132,6 +132,14 @@ protected:
 typedef function<void()> Test;
 
 /// @brief Class of an expected behavior.
+///
+/// Some TLS tests can not use the standard GTEST macros because they
+/// show different behaviors depending on the crypto backend and the
+/// boost library versions. Worse in some cases the behavior can not
+/// be deduced from them so #ifdef's do not work...
+///
+/// Until this is adopted / widespread the policy is to use these flexible
+/// expected behavior tests ONLY when needed.
 class Expected {
 private:
     /// Constructor.
@@ -381,27 +389,21 @@ public:
 
 // Test if we can get a client context.
 TEST(TLSTest, clientContext) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        TlsContextPtr ctx(new TlsContext(TlsRole::CLIENT));
-    });
+    TlsContextPtr ctx;
+    EXPECT_NO_THROW(ctx.reset(new TlsContext(TlsRole::CLIENT)));
 }
 
 // Test if we can get a server context.
 TEST(TLSTest, serverContext) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        TlsContextPtr ctx(new TlsContext(TlsRole::SERVER));
-    });
+    TlsContextPtr ctx;
+    EXPECT_NO_THROW(ctx.reset(new TlsContext(TlsRole::SERVER)));
 }
 
 // Test if the cert required flag is handled as expected.
 TEST(TLSTest, certRequired) {
     auto check = [] (TlsContext& ctx) -> bool {
 #ifdef WITH_BOTAN
-        // Implement it?
+        /// @todo: Implement it
         return (ctx.getCertRequired());
 #else // WITH_OPENSSL
         ::SSL_CTX* ssl_ctx = ctx.getNativeContext();
@@ -435,13 +437,9 @@ TEST(TLSTest, certRequired) {
 
 // Test if the certificate authority can be loaded.
 TEST(TLSTest, loadCAFile) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
-        TestTlsContext ctx(TlsRole::CLIENT);
-        ctx.loadCaFile(ca);
-    });
+    string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
+    TestTlsContext ctx(TlsRole::CLIENT);
+    EXPECT_NO_THROW(ctx.loadCaFile(ca));
 }
 
 // Test that no certificate authority gives an error.
@@ -463,22 +461,17 @@ TEST(TLSTest, loadNoCAFile) {
 
 // Test that a directory can be loaded.
 TEST(TLSTest, loadCAPath) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        string ca(TEST_CA_DIR);
-        TestTlsContext ctx(TlsRole::CLIENT);
-        ctx.loadCaPath(ca);
-    });
+    string ca(TEST_CA_DIR);
+    TestTlsContext ctx(TlsRole::CLIENT);
+    EXPECT_NO_THROW(ctx.loadCaPath(ca));
 }
 
 // Test that a certificate is wanted.
 TEST(TLSTest, loadKeyCA) {
     Expecteds exps;
-    exps.addNoError();
     // Botan error.
     exps.addThrow("Flatfile_Certificate_Store::Flatfile_Certificate_Store cert file is empty");
-    // LibreSSL or old OpenSSL error.
+    // LibreSSL or old OpenSSL does not check.
     exps.addNoError();
     // Recent OpenSSL error.
     exps.addThrow("no certificate or crl found");
@@ -494,13 +487,9 @@ TEST(TLSTest, loadKeyCA) {
 
 // Test if the end entity certificate can be loaded.
 TEST(TLSTest, loadCertFile) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        string cert(string(TEST_CA_DIR) + "/kea-client.crt");
-        TestTlsContext ctx(TlsRole::CLIENT);
-        ctx.loadCertFile(cert);
-    });
+    string cert(string(TEST_CA_DIR) + "/kea-client.crt");
+    TestTlsContext ctx(TlsRole::CLIENT);
+    EXPECT_NO_THROW(ctx.loadCertFile(cert));
 }
 
 // Test that no end entity certificate gives an error.
@@ -539,13 +528,9 @@ TEST(TLSTest, loadCsrCertFile) {
 
 // Test if the private key can be loaded.
 TEST(TLSTest, loadKeyFile) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        string key(string(TEST_CA_DIR) + "/kea-client.key");
-        TestTlsContext ctx(TlsRole::CLIENT);
-        ctx.loadKeyFile(key);
-    });
+    string key(string(TEST_CA_DIR) + "/kea-client.key");
+    TestTlsContext ctx(TlsRole::CLIENT);
+    EXPECT_NO_THROW(ctx.loadKeyFile(key));
 }
 
 // Test that no private key gives an error.
@@ -614,48 +599,45 @@ TEST(TLSTest, loadMismatch) {
 
 // Test the configure class method.
 TEST(TLSTest, configure) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        TlsContextPtr ctx;
-        string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
-        string cert(string(TEST_CA_DIR) + "/kea-client.crt");
-        string key(string(TEST_CA_DIR) + "/kea-client.key");
-        TlsContext::configure(ctx, TlsRole::CLIENT,
-                              ca, cert, key, true);
-        ASSERT_TRUE(ctx);
-        EXPECT_EQ(TlsRole::CLIENT, ctx->getRole());
-        EXPECT_TRUE(ctx->getCertRequired());
-    });
+    TlsContextPtr ctx;
+    string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
+    string cert(string(TEST_CA_DIR) + "/kea-client.crt");
+    string key(string(TEST_CA_DIR) + "/kea-client.key");
+    EXPECT_NO_THROW(TlsContext::configure(ctx, TlsRole::CLIENT,
+                                          ca, cert, key, true));
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(TlsRole::CLIENT, ctx->getRole());
+    EXPECT_TRUE(ctx->getCertRequired());
 
     // Retry using the directory and the server.
-    exps.runCanThrow([] {
-        TlsContextPtr ctx;
-        string ca = TEST_CA_DIR;
-        string cert = string(TEST_CA_DIR) + "/kea-server.crt";
-        string key = string(TEST_CA_DIR) + "/kea-server.key";
-        TlsContext::configure(ctx, TlsRole::SERVER,
-                              ca, cert, key, false);
-        ASSERT_TRUE(ctx);
-        EXPECT_EQ(TlsRole::SERVER, ctx->getRole());
-        EXPECT_FALSE(ctx->getCertRequired());
-    });
+    ctx.reset();
+    ca = TEST_CA_DIR;
+    cert = string(TEST_CA_DIR) + "/kea-server.crt";
+    key = string(TEST_CA_DIR) + "/kea-server.key";
+    EXPECT_NO_THROW(TlsContext::configure(ctx, TlsRole::SERVER,
+                                          ca, cert, key, false));
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(TlsRole::SERVER, ctx->getRole());
+    EXPECT_FALSE(ctx->getCertRequired());
+}
 
+// Test the configure class method error case.
+TEST(TLSTest, configureError) {
     // The error case.
-    exps.clear();
+    Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
     // OpenSSL error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
-        TlsContextPtr ctx;
+        TlsContextPtr ctx1;
         string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
         string cert = "/no-such-file";
         string key = string(TEST_CA_DIR) + "/kea-client.key";
-        TlsContext::configure(ctx, TlsRole::CLIENT,
+        TlsContext::configure(ctx1, TlsRole::CLIENT,
                               ca, cert, key, true);
         // The context is reseted on errors.
-        EXPECT_FALSE(ctx);
+        EXPECT_FALSE(ctx1);
     });
     if (Expecteds::displayErrMsg()) {
         std::cout << exps.getErrMsg() << "\n";
@@ -664,14 +646,10 @@ TEST(TLSTest, configure) {
 
 // Test if we can get a stream.
 TEST(TLSTest, stream) {
-    Expecteds exps;
-    exps.addNoError();
-    exps.runCanThrow([] {
-        IOService service;
-        TlsContextPtr ctx(new TlsContext(TlsRole::CLIENT));
-        boost::scoped_ptr<TlsStream<TestCallback> > st;
-        st.reset(new TlsStream<TestCallback>(service, ctx));
-    });
+    IOService service;
+    TlsContextPtr ctx(new TlsContext(TlsRole::CLIENT));
+    boost::scoped_ptr<TlsStream<TestCallback> > st;
+    EXPECT_NO_THROW(st.reset(new TlsStream<TestCallback>(service, ctx)));
 }
 
 // Test what happens when handshake is forgotten.
@@ -1035,10 +1013,9 @@ TEST(TLSTest, clientHTTPnoS) {
         }
     }
 
-    exps.clear();
     // No error at the client.
-    exps.addNoError();
-    exps.checkAsync("client", client_cb);
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
 
     // Close client and server.
     EXPECT_NO_THROW(client.lowest_layer().close());
@@ -1120,10 +1097,9 @@ TEST(TLSTest, unknownClient) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
     }
 
-    exps.clear();
     // No error on the client side.
-    exps.addNoError();
-    exps.checkAsync("client", client_cb);
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
 
     // Close client and server.
     EXPECT_NO_THROW(client.lowest_layer().close());
