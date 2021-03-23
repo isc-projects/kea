@@ -300,8 +300,10 @@ protected:
 
     /// @brief Redact the configuration.
     ///
-    /// This method replaces passwords by asterisks. The agent version
-    /// applies authentication clients.
+    /// This method replaces passwords and secrets by asterisks.
+    /// The agent version handles authentication clients where the syntax
+    /// has passwords and hooks-libraries parameters which have free
+    /// JSON maps.
     ///
     /// @param config Pointer to a configuration specified for the agent.
     /// @return unmodified config or a copy of the config where passwords were

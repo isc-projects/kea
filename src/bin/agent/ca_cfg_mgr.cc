@@ -143,7 +143,8 @@ ConstElementPtr
 CtrlAgentCfgMgr::redactConfig(ConstElementPtr config) const {
     bool redacted = false;
     const std::set<std::string> follow = {
-        "Control-agent", "authentication", "clients"
+        "Control-agent", "authentication", "clients",
+        "hooks-libraries", "parameters"
     };
     ConstElementPtr result =
         isc::process::redactConfig(config, redacted, follow);
