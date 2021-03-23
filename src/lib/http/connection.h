@@ -381,7 +381,7 @@ protected:
     void idleTimeoutCallback();
 
     /// @brief Shuts down current connection.
-    void shutdownThisConnection();
+    void shutdownConnection();
 
     /// @brief Stops current connection.
     void stopThisConnection();

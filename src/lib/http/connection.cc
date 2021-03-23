@@ -134,7 +134,7 @@ HttpConnection::close() {
 }
 
 void
-HttpConnection::shutdownThisConnection() {
+HttpConnection::shutdownConnection() {
     try {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_CONNECTION_SHUTDOWN)
