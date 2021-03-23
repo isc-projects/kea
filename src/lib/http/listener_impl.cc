@@ -98,11 +98,8 @@ HttpListenerImpl::accept() {
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
         std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
-    HttpAcceptorCallback handshake_callback =
-        std::bind(&HttpListenerImpl::handshakeHandler, this, ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
-                                              acceptor_callback,
-                                              handshake_callback);
+                                              acceptor_callback);
     // Add this new connection to the pool.
     connections_.start(conn);
 }
@@ -114,20 +111,12 @@ HttpListenerImpl::acceptHandler(const boost::system::error_code&) {
     accept();
 }
 
-void
-HttpListenerImpl::handshakeHandler(const boost::system::error_code&) {
-    // The TLS handshake has been performed.
-    ///////////// DO MORE!!!!!!!!
-}
-
 HttpConnectionPtr
 HttpListenerImpl::createConnection(const HttpResponseCreatorPtr& response_creator,
-                                   const HttpAcceptorCallback& acceptor_callback,
-                                   const HttpAcceptorCallback& handshake_callback) {
+                                   const HttpAcceptorCallback& callback) {
     HttpConnectionPtr
         conn(new HttpConnection(io_service_, acceptor_, tls_context_,
-                                connections_, response_creator,
-                                acceptor_callback, handshake_callback,
+                                connections_, response_creator, callback,
                                 request_timeout_, idle_timeout_));
     return (conn);
 }

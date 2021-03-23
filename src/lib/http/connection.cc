@@ -67,8 +67,7 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
                                const TlsContextPtr& tls_context,
                                HttpConnectionPool& connection_pool,
                                const HttpResponseCreatorPtr& response_creator,
-                               const HttpAcceptorCallback& acceptor_callback,
-                               const HttpAcceptorCallback& handshake_callback,
+                               const HttpAcceptorCallback& callback,
                                const long request_timeout,
                                const long idle_timeout)
     : request_timer_(io_service),
@@ -80,8 +79,7 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
-      acceptor_callback_(acceptor_callback),
-      handshake_callback_(handshake_callback) {
+      acceptor_callback_(callback) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -333,8 +331,6 @@ HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
     if (ec) {
         stopThisConnection();
     }
-
-    handshake_callback_(ec);
 
     if (!ec) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,

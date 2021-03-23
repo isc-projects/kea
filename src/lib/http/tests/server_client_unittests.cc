@@ -229,18 +229,15 @@ protected:
     ///
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param acceptor_callback Callback invoked when new connection is accepted.
-    /// @param handshake_callback Callback invoked when TLS handshake is performed.
+    /// @param callback Callback invoked when new connection is accepted.
     ///
     /// @return Pointer to the created connection.
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
-                                               const HttpAcceptorCallback& acceptor_callback,
-                                               const HttpAcceptorCallback& handshake_callback) {
+                                               const HttpAcceptorCallback& callback) {
         HttpConnectionPtr
             conn(new HttpConnectionType(io_service_, acceptor_,
                                         tls_context_, connections_,
-                                        response_creator,
-                                        acceptor_callback, handshake_callback,
+                                        response_creator, callback,
                                         request_timeout_, idle_timeout_));
         return (conn);
     }
@@ -307,8 +304,7 @@ public:
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param acceptor_callback Callback invoked when new connection is accepted.
-    /// @param handshake_callback Callback invoked when TLS handshake is performed.
+    /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
@@ -317,13 +313,11 @@ public:
                                   const TlsContextPtr& tls_context,
                                   HttpConnectionPool& connection_pool,
                                   const HttpResponseCreatorPtr& response_creator,
-                                  const HttpAcceptorCallback& acceptor_callback,
-                                  const HttpAcceptorCallback& handshake_callback,
+                                  const HttpAcceptorCallback& callback,
                                   const long request_timeout,
                                   const long idle_timeout)
         : HttpConnection(io_service, acceptor, tls_context, connection_pool,
-                         response_creator, acceptor_callback,
-                         handshake_callback, request_timeout,
+                         response_creator, callback, request_timeout,
                          idle_timeout) {
     }
 
@@ -357,8 +351,7 @@ public:
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param acceptor_callback Callback invoked when new connection is accepted.
-    /// @param handshake_callback Callback invoked when TLS handshake is performed.
+    /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
@@ -367,13 +360,11 @@ public:
                                     const TlsContextPtr& tls_context,
                                     HttpConnectionPool& connection_pool,
                                     const HttpResponseCreatorPtr& response_creator,
-                                    const HttpAcceptorCallback& acceptor_callback,
-                                    const HttpAcceptorCallback& handshake_callback,
+                                    const HttpAcceptorCallback& callback,
                                     const long request_timeout,
                                     const long idle_timeout)
         : HttpConnection(io_service, acceptor, tls_context, connection_pool,
-                         response_creator, acceptor_callback,
-                         handshake_callback, request_timeout,
+                         response_creator, callback, request_timeout,
                          idle_timeout) {
     }
 

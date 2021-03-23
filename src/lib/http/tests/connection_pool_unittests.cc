@@ -125,7 +125,6 @@ public:
                                                    connection_pool_,
                                                    response_creator_,
                                                    HttpAcceptorCallback(),
-                                                   HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
@@ -133,7 +132,6 @@ public:
                                                    TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
-                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
@@ -172,7 +170,6 @@ public:
                                                    connection_pool_,
                                                    response_creator_,
                                                    HttpAcceptorCallback(),
-                                                   HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
@@ -180,7 +177,6 @@ public:
                                                    TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
-                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
@@ -203,7 +199,6 @@ public:
                                                    connection_pool_,
                                                    response_creator_,
                                                    HttpAcceptorCallback(),
-                                                   HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));
 
@@ -211,7 +206,6 @@ public:
                                                    TlsContextPtr(),
                                                    connection_pool_,
                                                    response_creator_,
-                                                   HttpAcceptorCallback(),
                                                    HttpAcceptorCallback(),
                                                    CONN_REQUEST_TIMEOUT,
                                                    CONN_IDLE_TIMEOUT));

@@ -237,8 +237,7 @@ public:
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
-    /// @param acceptor_callback Callback invoked when new connection is accepted.
-    /// @param handshake_callback Callback invoked when TLS handshake is performed.
+    /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
@@ -247,8 +246,7 @@ public:
                    const asiolink::TlsContextPtr& tls_context,
                    HttpConnectionPool& connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
-                   const HttpAcceptorCallback& acceptor_callback,
-                   const HttpAcceptorCallback& handshake_callback,
+                   const HttpAcceptorCallback& callback,
                    const long request_timeout,
                    const long idle_timeout);
 
@@ -422,9 +420,6 @@ protected:
 
     /// @brief External TCP acceptor callback.
     HttpAcceptorCallback acceptor_callback_;
-
-    /// @brief External TLS handshake callback.
-    HttpAcceptorCallback handshake_callback_;
 };
 
 } // end of namespace isc::http
