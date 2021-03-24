@@ -187,11 +187,11 @@ the example above.
 
 .. _agent-secure-connection:
 
-Secure Connections (version before 1.9.5)
+Secure Connections (version before 1.9.6)
 =========================================
 
 The Control Agent does not natively support secure HTTP connections like
-SSL or TLS before version 1.9.5.
+SSL or TLS before version 1.9.6.
 
 In order to setup a secure connection, please use one of the
 available third-party HTTP servers and configure it to run as a reverse
@@ -297,10 +297,10 @@ can use an HTTP/HTTPS translator such as stunnel in client mode. A
 sample configuration is provided in the ``doc/examples/https/shell/``
 directory.
 
-Secure Connections (since version 1.9.5)
+Secure Connections (since version 1.9.6)
 ========================================
 
-Since the Kea version 1.9.5 the Control Agent natively supports secure
+Since the Kea version 1.9.6 the Control Agent natively supports secure
 HTTP connections using TLS. This allows a protection against users from
 the node where the agent runs, something that a reverse proxy cannot
 provide.
@@ -309,7 +309,7 @@ TLS is configured using three string parameters giving file names and
 a boolean parameter:
 
 -  The ``trust-anchor`` specifies the Certificate Authority file name or
-   with OpenSSL backend directory path.
+   directory path.
 
 -  The ``cert-file`` specifies the server certificate file name.
 
@@ -339,7 +339,7 @@ Configuring only one or two string parameters is an error.
    the HTTP authentication. To summary a Man in the Middle attack is
    still possible when both HTTPS and HTTP authentication are used.
 
-Since the Kea version 1.9.5 the ``kea-shell`` tool supports TLS.
+Since the Kea version 1.9.6 the ``kea-shell`` tool supports TLS.
 
 .. _agent-launch:
 
