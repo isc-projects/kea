@@ -527,25 +527,14 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"disable-dhcp-on-db-loss\" {
+\"disable-service-on-db-loss\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_DISABLE_DHCP_ON_DB_LOSS(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_DISABLE_SERVICE_ON_DB_LOSS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("disable-dhcp-on-db-loss", driver.loc_);
-    }
-}
-
-\"enable-connection-recovery\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::LEASE_DATABASE:
-    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_ENABLE_CONNECTION_RECOVERY(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("enable-connection-recovery", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("disable-service-on-db-loss", driver.loc_);
     }
 }
 

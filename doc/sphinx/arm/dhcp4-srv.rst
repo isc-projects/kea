@@ -506,17 +506,10 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ::
 
-   "Dhcp4": { "lease-database": { "disable-dhcp-on-db-loss" : true, ... }, ... }
+   "Dhcp4": { "lease-database": { "disable-service-on-db-loss" : true, ... }, ... }
 
 The default value for MySQL and PostgreSQL is true, which disables the dhcp
 service while trying to automatically recover lost connections.
-
-::
-
-   "Dhcp4": { "lease-database": { "enable-connection-recovery" : true, ... }, ... }
-
-The default value for MySQL and PostgreSQL is true, which enables the server to
-automatically recover lost connections.
 
 .. note::
 
@@ -732,17 +725,10 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ::
 
-   "Dhcp4": { "hosts-database": { "disable-dhcp-on-db-loss" : true, ... }, ... }
+   "Dhcp4": { "hosts-database": { "disable-service-on-db-loss" : true, ... }, ... }
 
 The default value for MySQL and PostgreSQL is true, which disables the dhcp
 service while trying to automatically recover lost connections.
-
-::
-
-   "Dhcp4": { "hosts-database": { "enable-connection-recovery" : true, ... }, ... }
-
-The default value for MySQL and PostgreSQL is true, which enables the server to
-automatically recover lost connections.
 
 .. note::
 

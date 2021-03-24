@@ -79,8 +79,7 @@ using namespace std;
   CONTACT_POINTS "contact-points"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
-  DISABLE_DHCP_ON_DB_LOSS "disable-dhcp-on-db-loss"
-  ENABLE_CONNECTION_RECOVERY "enable-connection-recovery"
+  DISABLE_SERVICE_ON_DB_LOSS "disable-service-on-db-loss"
   KEYSPACE "keyspace"
   CONSISTENCY "consistency"
   SERIAL_CONSISTENCY "serial-consistency"
@@ -864,8 +863,7 @@ database_map_param: database_type
                   | contact_points
                   | max_reconnect_tries
                   | reconnect_wait_time
-                  | disable_dhcp_on_db_loss
-                  | enable_connection_recovery
+                  | disable_service_on_db_loss
                   | request_timeout
                   | tcp_keepalive
                   | tcp_nodelay
@@ -962,16 +960,10 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
-disable_dhcp_on_db_loss: DISABLE_DHCP_ON_DB_LOSS COLON BOOLEAN {
-    ctx.unique("disable-dhcp-on-db-loss", ctx.loc2pos(@1));
+disable_service_on_db_loss: DISABLE_SERVICE_ON_DB_LOSS COLON BOOLEAN {
+    ctx.unique("disable-service-on-db-loss", ctx.loc2pos(@1));
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("disable-dhcp-on-db-loss", n);
-};
-
-enable_connection_recovery: ENABLE_CONNECTION_RECOVERY COLON BOOLEAN {
-    ctx.unique("enable-connection-recovery", ctx.loc2pos(@1));
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enable-connection-recovery", n);
+    ctx.stack_.back()->set("disable-service-on-db-loss", n);
 };
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {

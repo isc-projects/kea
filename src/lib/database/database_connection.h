@@ -85,20 +85,24 @@ public:
 ///
 class ReconnectCtl {
 public:
-    /// @brief Constructor
+    /// @brief Constructor.
     ///
     /// @param backend_type type of the caller backend.
-    /// @param timer_name timer associated to this object
-    /// @param max_retries maximum number of reconnect attempts to make
-    /// @param retry_interval amount of time to between reconnect attempts
+    /// @param timer_name timer associated to this object.
+    /// @param max_retries maximum number of reconnect attempts to make.
+    /// @param retry_interval amount of time to between reconnect attempts.
+    /// @param connection_recovery enable or disable the connection recovery
+    /// mechanism.
+    /// @param alter_service_state enable or disable changing service state on
+    /// connection loss and connection recovery.
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
-                 bool connection_recovery, bool alter_dhcp_state) :
+                 bool connection_recovery, bool alter_service_state) :
           backend_type_(backend_type), timer_name_(timer_name),
           max_retries_(max_retries), retries_left_(max_retries),
           retry_interval_(retry_interval),
           connection_recovery_(connection_recovery),
-          alter_dhcp_state_(alter_dhcp_state) {}
+          alter_service_state_(alter_service_state) {}
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
@@ -125,25 +129,25 @@ public:
         return (max_retries_);
     }
 
-    /// @brief Returns the number for retries remaining
+    /// @brief Returns the number for retries remaining.
     unsigned int retriesLeft() {
         return (retries_left_);
     }
 
-    /// @brief Returns the amount of time to wait between reconnect attempts
+    /// @brief Returns the amount of time to wait between reconnect attempts.
     unsigned int retryInterval() {
         return (retry_interval_);
     }
 
-    /// @brief Resets the retries count
+    /// @brief Resets the retries count.
     void resetRetries() {
         retries_left_ = max_retries_;
     }
 
     /// @brief Return the flag which indicates if the connection loss should
-    /// disable the dhcp service.
-    bool alterDHCPState() {
-        return (alter_dhcp_state_);
+    /// affect the service.
+    bool alterServiceState() {
+        return (alter_service_state_);
     }
 
     /// @brief Return the flag which indicates if the connection recovery
@@ -160,13 +164,13 @@ private:
     /// @brief Timer associated to this object.
     std::string timer_name_;
 
-    /// @brief Maximum number of retry attempts to make
+    /// @brief Maximum number of retry attempts to make.
     unsigned int max_retries_;
 
-    /// @brief Number of attempts remaining
+    /// @brief Number of attempts remaining.
     unsigned int retries_left_;
 
-    /// @brief The amount of time to wait between reconnect attempts
+    /// @brief The amount of time to wait between reconnect attempts.
     unsigned int retry_interval_;
 
     /// @brief Flag which indicates if the connection recovery mechanism is
@@ -174,8 +178,8 @@ private:
     bool connection_recovery_;
 
     /// @brief Flag which indicates if the connection loss should affect the
-    /// dhcp service.
-    bool alter_dhcp_state_;
+    /// service.
+    bool alter_service_state_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl

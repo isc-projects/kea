@@ -310,10 +310,7 @@
                 "max-reconnect-tries": 3,
 
                 // Disable DHCP on database connection loss.
-                "disable-dhcp-on-db-loss": true,
-
-                // Enable database connection recovery.
-                "enable-connection-recovery": true,
+                "disable-service-on-db-loss": true,
 
                 // Connection connect timeout.
                 "connect-timeout": 100,
