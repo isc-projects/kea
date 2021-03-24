@@ -178,6 +178,15 @@ public:
     /// @return true if the premature timeout is suspected, false otherwise.
     bool checkPrematureTimeout(const uint64_t transid);
 
+    /// @brief Fetches the native socket descriptor
+    ///
+    /// This is intended strictly for logging purposes. Manipulating or
+    /// using this fd for anyother purpose is not recommended.
+    ///
+    /// @return the connection's socket file descriptor or -1 if the
+    /// socket is not currently open.
+    int getSocketFd() { return(socket_.getNative()); }
+
 private:
 
     /// @brief Starts new asynchronous transaction (HTTP request and response).
@@ -426,6 +435,139 @@ private:
 /// @brief Shared pointer to the connection.
 typedef boost::shared_ptr<Connection> ConnectionPtr;
 
+/// @brief Container of Connections for a given URL
+class ConnectionList {
+public:
+    /// @brief Constructor
+    ///
+    /// @param url URL associated with this connection list.
+    /// @param max_connections maximum number of connections
+    /// allowed for in the list URL
+    ConnectionList(Url url, size_t max_connections)
+            : url_(url), max_connections_(max_connections) {
+    }
+
+    /// @brief Add a new connection to the list
+    ///
+    /// @param connection the connection to add
+    ///
+    /// @throw BadValue if the maximum number of connections already
+    /// exist.
+    void addConnection(ConnectionPtr connection) {
+        if (full()) {
+            isc_throw(BadValue, "URL: " << url_.toText()
+                      << ", already at maximum connectsions: "
+                      << max_connections_);
+        }
+
+        connections_.push_back(connection);
+    }
+
+    /// @brief Closes a connection and removes it from the list. (Wonder
+    /// if I should call this removeConnection?)
+    ///
+    /// @param connection the connection to remove
+    void closeConnection(ConnectionPtr connection) {
+        for (auto it = connections_.begin(); it != connections_.end(); ++it) {
+            if (*it == connection) {
+                (*it)->close();
+                connections_.erase(it);
+                break;
+            }
+        }
+    }
+
+    /// @brief Closes all connections and clears the list.
+    void closeAllConnections() {
+        for (auto connection : connections_) {
+            connection->close();
+        }
+
+        connections_.clear();
+    }
+
+    /// @brief Find the first idle connection.
+    ///
+    /// Iterates over the existing connections and returns the
+    /// first connection which is not currently in a transaction.
+    ///
+    /// @return The first idle connection or an empty pointer if
+    /// all connections are busy.
+    ConnectionPtr getIdleConnection() {
+        for (auto connection : connections_) {
+            if (!connection->isTransactionOngoing()) {
+                return(connection);
+            }
+        }
+
+        return(ConnectionPtr());
+    }
+
+    /// @brief Find a connection by its socket descriptor.
+    ///
+    /// @param socket_fd socket descriptor to find
+    ///
+    /// @return The connection or an empty pointer if no matching
+    /// connection exists.
+    ConnectionPtr findBySocketFd(int socket_fd) {
+        for (auto connection : connections_) {
+            if (connection->isMySocket(socket_fd)) {
+                return(connection);
+            }
+        }
+
+        return(ConnectionPtr());
+    }
+
+    /// @brief Indicates if there are no connections in the list.
+    ///
+    /// @return true if the list is empty.
+    bool empty() {
+        return(connections_.empty());
+    }
+
+    /// @brief Indicates if list contains the maximum number.
+    ///
+    /// @return true if the list is full.
+    bool full() {
+        return(connections_.size() >= max_connections_);
+    }
+
+    /// @brief Fetches the number of connections in the list.
+    ///
+    /// @return the number of connections in the list.
+    size_t size() {
+        return connections_.size();
+    }
+
+    /// @brief Fetches the maxium number of connections.
+    ///
+    /// @return the maxium number of connections.
+    size_t max_connections() const {
+        return max_connections_;
+    }
+
+    /// @brief Fetches the URL.
+    ///
+    /// @return the URL.
+    const Url& getUrl() const {
+        return url_;
+    }
+
+private:
+    /// @brief URL supported by the list.
+    Url url_;
+
+    /// @brief Maxium number of concurrent connections allowed in the list.
+    size_t max_connections_;
+
+    /// @brief List of concurrent connections.
+    std::vector<ConnectionPtr> connections_;
+};
+
+/// @brief Defines a pointer to a ConnectionList instance.
+typedef boost::shared_ptr<ConnectionList> ConnectionListPtr;
+
 /// @brief Connection pool for managing multiple connections.
 ///
 /// Connection pool creates and destroys connections. It holds pointers
@@ -440,8 +582,11 @@ public:
     ///
     /// @param io_service Reference to the IO service to be used by the
     /// connections.
-    explicit ConnectionPool(IOService& io_service)
-        : io_service_(io_service), conns_(), queue_(), mutex_() {
+    /// @param max_url_connections maxium number of concurrent
+    /// connections allowed per URL.
+    explicit ConnectionPool(IOService& io_service, size_t max_url_connections)
+        : io_service_(io_service), conns_(), queue_(), mutex_(),
+        max_url_connections_(max_url_connections) {
     }
 
     /// @brief Destructor.
@@ -506,20 +651,20 @@ public:
         }
     }
 
-    /// @brief Closes connection and removes associated information from the
-    /// connection pool.
+    /// @brief Closes a URL's connections and removes associated information
+    /// from the connection pool.
     ///
     /// @param url URL for which connection should be closed.
-    void closeConnection(const Url& url) {
+    void closeUrlConnections(const Url& url) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lk(mutex_);
-            closeConnectionInternal(url);
+            closeUrlConnectionsInternal(url);
         } else {
-            closeConnectionInternal(url);
+            closeUrlConnectionsInternal(url);
         }
     }
 
-    /// @brief Closes all connections and removes associated information from
+    /// @brief Closes all URLS and removes associated information from
     /// the connection pool.
     void closeAll() {
         if (MultiThreadingMgr::instance().getMode()) {
@@ -561,15 +706,36 @@ private:
     void processNextRequestInternal(const Url& url) {
         // Check if there is a queue for this URL. If there is no queue, there
         // is no request queued either.
-        auto it = queue_.find(url);
-        if (it != queue_.end()) {
-            // If the queue is non empty, we take the oldest request.
-            if (!it->second.empty()) {
-                RequestDescriptor desc = it->second.front();
-                it->second.pop();
-                desc.conn_->doTransaction(desc.request_, desc.response_,
-                                          desc.request_timeout_,
-                                          desc.callback_,
+        auto queue_it = queue_.find(url);
+        if (queue_it != queue_.end()) {
+            if (!queue_it->second.empty()) {
+                // We have at least one queued request. Do we have an
+                // idle connection?
+                auto conns_it = conns_.find(url);
+                if (conns_it == conns_.end()) {
+                    isc_throw(Unexpected, "no connection list for :" << url.toText());
+                }
+
+                // Now, look for an idle connection.
+                ConnectionPtr connection = conns_it->second->getIdleConnection();
+                if (!connection) {
+                    TOMS_TRACE_LOG("no idle connections, don't dequeue");
+                    // @todo TKM think the question below through... you perf teseted it
+                    // with simple return.
+                    // We shouldn't be here w/o an idle connection? ... if this is called
+                    // terminate, then how can the instigating connection not be free?
+                    // isc_throw(Unexpected, "no idle connections for :" << url.toText());
+                    // Let's leave it on the queue, nothing idle yet?
+                    return;
+                }
+
+                // Dequeue the oldest request and start a transaction for it using
+                // the idle connection.
+                RequestDescriptor desc = queue_it->second.front();
+                queue_it->second.pop();
+                desc.conn_ = connection;
+                connection->doTransaction(desc.request_, desc.response_,
+                                          desc.request_timeout_, desc.callback_,
                                           desc.connect_callback_,
                                           desc.handshake_callback_,
                                           desc.close_callback_);
@@ -608,71 +774,78 @@ private:
                               const HttpClient::ConnectHandler& connect_callback,
                               const HttpClient::HandshakeHandler& handshake_callback,
                               const HttpClient::CloseHandler& close_callback) {
+        // Find the connection list for the url
+        ConnectionListPtr url_connections;
         auto it = conns_.find(url);
         if (it != conns_.end()) {
-            ConnectionPtr conn = it->second;
-            // There is a connection for this URL already. Check if it is idle.
-            if (conn->isTransactionOngoing()) {
-                // Connection is busy, so let's queue the request.
-                queue_[url].push(RequestDescriptor(conn, request, response,
+            url_connections = it->second;
+        } else {
+            // Doesn't exist yet, so create it.
+            url_connections.reset(new ConnectionList(url, max_url_connections_));
+            conns_[url] = url_connections;
+        }
+
+        // Now, look for an idle connection.
+        ConnectionPtr connection = url_connections->getIdleConnection();
+        if (!connection) {
+            if (url_connections->full()) {
+                TOMS_TRACE_LOG("no idle connections, queue request");
+                // All connections busy, queue it.
+                queue_[url].push(RequestDescriptor(ConnectionPtr(), request, response,
                                                    request_timeout,
                                                    request_callback,
                                                    connect_callback,
                                                    handshake_callback,
                                                    close_callback));
-            } else {
-                // Connection is idle, so we can start the transaction.
-                conn->doTransaction(request, response, request_timeout,
-                                    request_callback, connect_callback,
-                                    handshake_callback, close_callback);
+                return;
             }
-        } else {
-            // There is no connection with this destination yet. Let's create
-            // it and start the transaction.
-            ConnectionPtr conn(new Connection(io_service_,
-                                              tls_context,
-                                              shared_from_this(),
-                                              url));
-            conn->doTransaction(request, response, request_timeout,
-                                request_callback, connect_callback,
-                                handshake_callback, close_callback);
-            conns_[url] = conn;
+
+            // Room to make another connection with this destination, so make one.
+            TOMS_TRACE_LOG("creating a new connection");
+            connection.reset(new Connection(io_service_, shared_from_this(), url));
+            url_connections->addConnection(connection);
         }
+
+        // Use the connection to start the transaction.
+        TOMS_TRACE_LOG("doTransaction using fd:" << connection->getSocketFd());
+        connection->doTransaction(request, response, request_timeout, request_callback,
+                                  connect_callback, handshake_callback, close_callback);
     }
 
-    /// @brief Closes connection and removes associated information from the
-    /// connection pool.
+    /// @brief Closes a URL's connections and clears its queue
     ///
     /// This method should be called in a thread safe context.
     ///
     /// @param url URL for which connection should be closed.
-    void closeConnectionInternal(const Url& url) {
-        // Close connection for the specified URL.
-        auto conns_it = conns_.find(url);
-        if (conns_it != conns_.end()) {
-            conns_it->second->close();
-            conns_.erase(conns_it);
-        }
-
+    void closeUrlConnectionsInternal(const Url& url) {
         // Remove requests from the queue.
         auto queue_it = queue_.find(url);
         if (queue_it != queue_.end()) {
             queue_.erase(queue_it);
         }
+
+        // Close connections for the URL.
+        auto it = conns_.find(url);
+        if (it != conns_.end()) {
+            it->second->closeAllConnections();
+        }
     }
 
-    /// @brief Closes all connections and removes associated information from
-    /// the connection pool.
+    /// @brief Closes all connections for all URLs and removes associated
+    /// information from the connection pool.
     ///
     /// This method should be called in a thread safe context.
     void closeAllInternal() {
-        for (auto conns_it = conns_.begin(); conns_it != conns_.end();
-             ++conns_it) {
-            conns_it->second->close();
+        // Remove all requests from the queue.
+        queue_.clear();
+
+        // Close connections for each URL.
+        for (auto it = conns_.begin(); it != conns_.end(); ++it) {
+            it->second->closeAllConnections();
         }
 
+        // Remove all of the connections.
         conns_.clear();
-        queue_.clear();
     }
 
     /// @brief Closes a connection if it has an out-of-band socket event
@@ -694,12 +867,9 @@ private:
         for (auto conns_it = conns_.begin(); conns_it != conns_.end();
              ++conns_it) {
 
-            if (!conns_it->second->isMySocket(socket_fd)) {
-                // Not this connection.
-                continue;
-            }
-
-            if (conns_it->second->isTransactionOngoing()) {
+            ConnectionListPtr url_connections = conns_it->second;
+            ConnectionPtr connection = url_connections->findBySocketFd(socket_fd);
+            if (connection && connection->isTransactionOngoing()) {
                 // Matches but is in a transaction, all is well.
                 return;
             }
@@ -709,17 +879,10 @@ private:
             // let's close it.  Note we do not remove any queued
             // requests, as this might somehow be occurring in
             // between them.
-            conns_it->second->close();
-            conns_.erase(conns_it);
+            url_connections->closeConnection(connection);
             break;
         }
     }
-
-    /// @brief Holds reference to the IO service.
-    IOService& io_service_;
-
-    /// @brief Holds mapping of URLs to connections.
-    std::map<Url, ConnectionPtr> conns_;
 
     /// @brief Request descriptor holds parameters associated with the
     /// particular request.
@@ -778,11 +941,20 @@ private:
         HttpClient::CloseHandler close_callback_;
     };
 
-    /// @brief Holds the queue of requests for different URLs.
+    /// @brief A reference to the IOService that drives socket IO.
+    IOService& io_service_;
+
+    /// @brief Holds lists of connections for each URL.
+    std::map<Url, ConnectionListPtr> conns_;
+
+    /// @brief Holds the queue of requests for each URL.
     std::map<Url, std::queue<RequestDescriptor> > queue_;
 
     /// @brief Mutex to protect the internal state.
     std::mutex mutex_;
+
+    /// @brief Maximum number of connections per URL.
+    size_t max_url_connections_;
 };
 
 Connection::Connection(IOService& io_service,
@@ -1006,9 +1178,13 @@ Connection::checkPrematureTimeoutInternal(const uint64_t transid) {
     // transaction doesn't match the one associated with the handler it,
     // also means that the transaction timed out prematurely.
     if (!isTransactionOngoing() || (transid != current_transid_)) {
-        LOG_WARN(http_logger, HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED);
+        LOG_WARN(http_logger, HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED)
+                .arg(isTransactionOngoing())
+                .arg(transid)
+                .arg(current_transid_);
         return (true);
     }
+
     return (false);
 }
 
@@ -1026,6 +1202,7 @@ Connection::terminate(const boost::system::error_code& ec,
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
                               const std::string& parsing_error) {
+    TOMS_TRACE_LOG(" on:" << socket_.getNative())
     HttpResponsePtr response;
 
     if (isTransactionOngoing()) {
@@ -1098,6 +1275,7 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     // another transaction if there is at least one.
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool) {
+        TOMS_TRACE_LOG(" more work...");
         if (MultiThreadingMgr::instance().getMode()) {
             UnlockGuard<std::mutex> lock(mutex_);
             conn_pool->processNextRequest(url_);
@@ -1138,6 +1316,7 @@ Connection::doHandshake(const uint64_t transid) {
 
 void
 Connection::doSend(const uint64_t transid) {
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
     SocketCallback socket_cb(std::bind(&Connection::sendCallback,
                                        shared_from_this(),
                                        transid,
@@ -1148,15 +1327,16 @@ Connection::doSend(const uint64_t transid) {
             tcp_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
             return;
         }
+
         if (tls_socket_) {
             tls_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
             return;
         }
+
         // Should never reach this point.
         std::cerr << "internal error: can't find a socket to send to\n";
         isc_throw(Unexpected,
                   "internal error: can't find a socket to send to");
-
     } catch (...) {
         terminate(boost::asio::error::not_connected);
     }
@@ -1164,13 +1344,13 @@ Connection::doSend(const uint64_t transid) {
 
 void
 Connection::doReceive(const uint64_t transid) {
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
     TCPEndpoint endpoint;
     SocketCallback socket_cb(std::bind(&Connection::receiveCallback,
                                        shared_from_this(),
                                        transid,
                                        ph::_1,
                                        ph::_2));
-
     try {
         if (tcp_socket_) {
             tcp_socket_->asyncReceive(static_cast<void*>(input_buf_.data()),
@@ -1198,6 +1378,7 @@ void
 Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
                             const uint64_t transid,
                             const boost::system::error_code& ec) {
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1275,6 +1456,7 @@ void
 Connection::sendCallback(const uint64_t transid,
                          const boost::system::error_code& ec,
                          size_t length) {
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1319,6 +1501,7 @@ void
 Connection::receiveCallback(const uint64_t transid,
                             const boost::system::error_code& ec,
                             size_t length) {
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1407,21 +1590,130 @@ namespace http {
 /// @brief HttpClient implementation.
 class HttpClientImpl {
 public:
-
     /// @brief Constructor.
     ///
-    /// Creates new connection pool.
-    HttpClientImpl(IOService& io_service)
-        : conn_pool_(new ConnectionPool(io_service)) {
+    /// If single-threading:
+    /// - Creates the connection pool passing in the caller's IOService
+    /// and a maximum number of connections per URL value of 1.
+    /// If multi-threading:
+    /// - Creates a private IOService
+    /// - Creates a thread pool with the thread_pool_size threads
+    /// - Creates the connection pool passing the private IOService
+    /// and the thread_pool_size as the maximum nubmer of connections
+    /// per URL.
+    ///
+    /// @param io_service IOService that will drive connection IO in single
+    /// threaded mode.  (Currently ignored in multi-threaded mode)
+    ///
+    /// @param thread_pool_size maximum number of concurrent threads
+    /// Internally this also sets the maximum number concurrent connections
+    /// per URL.
+    HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0) :
+        thread_pool_size_(thread_pool_size) {
+        if (thread_pool_size_ > 0) {
+            // Create our own private IOService.
+            my_io_service_.reset(new IOService());
+
+            // Create a pool of threads, each calls run on the same, private
+            // io_service instance
+            for (std::size_t i = 0; i < thread_pool_size_; ++i)
+            {
+                boost::shared_ptr<std::thread> thread(new std::thread(std::bind(&IOService::run,
+                                                                      my_io_service_)));
+                threads_.push_back(thread);
+            }
+
+            // Create the connection pool. Note that we use the thread_pool_size
+            // as the maximum connections per URL value.
+            conn_pool_.reset(new ConnectionPool(*my_io_service_, thread_pool_size_));
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC, HTTP_CLIENT_MT_STARTED)
+                     .arg(threads_.size());
+        } else {
+            // Single-threaded mode: use the caller's IOService,
+            // one connection per URL.
+            conn_pool_.reset(new ConnectionPool(io_service, 1));
+        }
+    }
+
+    /// @brief Destructor
+    ///
+    /// Calls stop().
+    ~HttpClientImpl() {
+        stop();
+    }
+
+    /// @brief Close all connections, and if multi-threaded, stop internal IOService
+    /// and the thread pool.
+    void stop() {
+        if (my_io_service_) {
+            // Stop the private IOService.
+            my_io_service_->stop();
+
+            // Shutdown the threads.
+            for (std::size_t i = 0; i < threads_.size(); ++i) {
+                threads_[i]->join();
+            }
+
+            threads_.clear();
+        }
+
+        // Close all the connections.
+        conn_pool_->closeAll();
+
+        // Get rid of the IOService.
+        my_io_service_.reset();
+    }
+
+    /// @brief Fetches the internal IOService used in multi-threaded mode.
+    ///
+    /// @return A pointer to the IOService, or an empty pointer when
+    /// in single-threaded mode.
+    asiolink::IOServicePtr getMyIOService() { return(my_io_service_); };
+
+    /// @brief Fetches the maximum size of the thread pool.
+    ///
+    /// @return unit16_t containing the maximum size of the thread pool.
+    uint16_t getThreadPoolSize() {
+        return (thread_pool_size_);
+    }
+
+    /// @brief Fetches the number of threads in the pool.
+    ///
+    /// @return unit16_t containing the number of running threads.
+    uint16_t getThreadCount() {
+        return (threads_.size());
     }
 
     /// @brief Holds a pointer to the connection pool.
     ConnectionPoolPtr conn_pool_;
 
+private:
+    /// @brief Maxim number of threads in the thread pool.
+    size_t thread_pool_size_;
+
+    /// @brief Pool of threads used to service connections in multi-threaded
+    /// mode.
+    std::vector<boost::shared_ptr<std::thread> > threads_;
+
+    /// @brief Pointer to private IOService used in multi-threaded mode.
+    asiolink::IOServicePtr my_io_service_;
 };
 
-HttpClient::HttpClient(IOService& io_service)
-    : impl_(new HttpClientImpl(io_service)) {
+HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size) {
+    if (thread_pool_size > 0) {
+        if (!MultiThreadingMgr::instance().getMode()) {
+            isc_throw(InvalidOperation,
+                      "HttpClient thread_pool_size must be zero"
+                      "when Kea core multi-threading is disabled");
+        }
+    }
+
+    impl_.reset(new HttpClientImpl(io_service, thread_pool_size));
+}
+
+HttpClient::~HttpClient() {
+    stop();
 }
 
 void
@@ -1467,7 +1759,23 @@ HttpClient::closeIfOutOfBand(int socket_fd)  {
 
 void
 HttpClient::stop() {
-    impl_->conn_pool_->closeAll();
+    TOMS_TRACE_LOG("client stop");
+    impl_->stop();
+}
+
+const IOServicePtr
+HttpClient::getMyIOService() const {
+    return (impl_->getMyIOService());
+}
+
+uint16_t
+HttpClient::getThreadPoolSize() const {
+    return (impl_->getThreadPoolSize());
+}
+
+uint16_t
+HttpClient::getThreadCount() const {
+    return (impl_->getThreadCount());
 }
 
 } // end of namespace isc::http

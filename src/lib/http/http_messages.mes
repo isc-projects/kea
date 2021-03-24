@@ -38,6 +38,10 @@ from the server. The first argument specifies an URL of the server. The
 second argument provides a response in the textual format. The request is
 truncated by the logger if it is too large to be printed.
 
+% HTTP_CLIENT_MT_STARTED HttpClient has been started in multi-threaded mode running %1 threads
+This debug message is issued when a multit-threaded HTTP client instance has
+been created.  The argument specifies the maximum number of threads.
+
 % HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request authorized for '%1'
 This information message is issued when the server receives with a matching
 authentication header. The argument provides the user id.
@@ -129,7 +133,7 @@ produced the data.
 This debug message is issued when the persistent HTTP connection is being
 closed as a result of being idle.
 
-% HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred, possibly caused by system clock change
+% HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid_: %3
 This warning message is issued when unexpected timeout occurred during the
 transaction. This is proven to occur when the system clock is moved manually
 or as a result of synchronization with a time server. Any ongoing transactions

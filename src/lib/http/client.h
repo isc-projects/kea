@@ -15,6 +15,8 @@
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
+#include <thread>
+#include <vector>
 
 namespace isc {
 namespace http {
@@ -122,7 +124,13 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the HTTP client.
-    explicit HttpClient(asiolink::IOService& io_service);
+    /// @param thread_pool_size maximum number of threads in the thread pool.
+    /// Currently this also sets the maximum number of concurrent connections
+    /// per URL.
+    explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0);
+
+    /// @brief Destructor.
+    ~HttpClient();
 
     /// @brief Queues new asynchronous HTTP request.
     ///
@@ -226,11 +234,31 @@ public:
     /// @param socket_fd socket descriptor to check
     void closeIfOutOfBand(int socket_fd);
 
+    /// @brief Fetches a pointer to the internal IOService used to
+    /// drive the thread-pool in multi-threaded mode.
+    ///
+    /// @return pointer to the IOService instance, or an emtpy pointer
+    /// in single-threaded mode.
+    const asiolink::IOServicePtr getMyIOService() const;
+
+    /// @brief Fetches the maximum size of the thread pool.
+    ///
+    /// @return unit16_t containing the maximum size of the thread pool.
+    uint16_t getThreadPoolSize() const;
+
+    /// @brief Fetches the number of threads in the pool.
+    ///
+    /// @return unit16_t containing the number of running threads.
+    uint16_t getThreadCount() const;
+
 private:
 
     /// @brief Pointer to the HTTP client implementation.
     boost::shared_ptr<HttpClientImpl> impl_;
 };
+
+/// @brief Defines a pointer to an HttpClient instance.
+typedef boost::shared_ptr<HttpClient> HttpClientPtr;
 
 } // end of namespace isc::http
 } // end of namespace isc

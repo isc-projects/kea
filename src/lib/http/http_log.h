@@ -20,4 +20,13 @@ extern isc::log::Logger http_logger;
 } // namespace http
 } // namespace isc
 
+#ifndef TOMS_TRACE_LOG
+#include <thread>
+
+#define TOMS_TRACE_LOG(msg) {std::cout << std::this_thread::get_id() << ":" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << msg << std::endl;}
+
+#define TOMS_LOG(msg)
+
+#endif
+
 #endif // HTTP_LOG_H
