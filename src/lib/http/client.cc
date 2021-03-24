@@ -178,15 +178,6 @@ public:
     /// @return true if the premature timeout is suspected, false otherwise.
     bool checkPrematureTimeout(const uint64_t transid);
 
-    /// @brief Fetches the native socket descriptor
-    ///
-    /// This is intended strictly for logging purposes. Manipulating or
-    /// using this fd for anyother purpose is not recommended.
-    ///
-    /// @return the connection's socket file descriptor or -1 if the
-    /// socket is not currently open.
-    int getSocketFd() { return(socket_.getNative()); }
-
 private:
 
     /// @brief Starts new asynchronous transaction (HTTP request and response).
@@ -385,6 +376,18 @@ private:
     /// This is a weak pointer to avoid circular dependency between the
     /// Connection and ConnectionPool.
     boost::weak_ptr<ConnectionPool> conn_pool_;
+
+    int getSocketFd() {
+        int fd = -1;
+
+        if (tcp_socket_) {
+            fd = tcp_socket_->getNative();
+        } else if (tls_socket_) {
+            fd = tls_socket_->getNative();
+        }
+
+        return (fd);
+    }
 
     /// @brief URL for this connection.
     Url url_;
@@ -802,12 +805,13 @@ private:
 
             // Room to make another connection with this destination, so make one.
             TOMS_TRACE_LOG("creating a new connection");
-            connection.reset(new Connection(io_service_, shared_from_this(), url));
+            connection.reset(new Connection(io_service_, tls_context, 
+                                            shared_from_this(), url));
             url_connections->addConnection(connection);
         }
 
         // Use the connection to start the transaction.
-        TOMS_TRACE_LOG("doTransaction using fd:" << connection->getSocketFd());
+        TOMS_TRACE_LOG("doTransaction");
         connection->doTransaction(request, response, request_timeout, request_callback,
                                   connect_callback, handshake_callback, close_callback);
     }
@@ -1202,7 +1206,7 @@ Connection::terminate(const boost::system::error_code& ec,
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
                               const std::string& parsing_error) {
-    TOMS_TRACE_LOG(" on:" << socket_.getNative())
+    TOMS_TRACE_LOG(" on:" << getSocketFd())
     HttpResponsePtr response;
 
     if (isTransactionOngoing()) {
@@ -1316,7 +1320,7 @@ Connection::doHandshake(const uint64_t transid) {
 
 void
 Connection::doSend(const uint64_t transid) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     SocketCallback socket_cb(std::bind(&Connection::sendCallback,
                                        shared_from_this(),
                                        transid,
@@ -1344,7 +1348,7 @@ Connection::doSend(const uint64_t transid) {
 
 void
 Connection::doReceive(const uint64_t transid) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     TCPEndpoint endpoint;
     SocketCallback socket_cb(std::bind(&Connection::receiveCallback,
                                        shared_from_this(),
@@ -1378,7 +1382,7 @@ void
 Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
                             const uint64_t transid,
                             const boost::system::error_code& ec) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1456,7 +1460,7 @@ void
 Connection::sendCallback(const uint64_t transid,
                          const boost::system::error_code& ec,
                          size_t length) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1501,7 +1505,7 @@ void
 Connection::receiveCallback(const uint64_t transid,
                             const boost::system::error_code& ec,
                             size_t length) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << socket_.getNative());
+    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }

@@ -312,7 +312,8 @@ public:
 
         HttpResponseJsonPtr response_json = boost::make_shared<HttpResponseJson>();
 
-        ASSERT_NO_THROW(client_->asyncSendRequest(url, request, response_json,
+        ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
+                                                  request, response_json,
             [this, request](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
                    const std::string&) {
@@ -375,9 +376,12 @@ public:
         factory_.reset(new TestHttpResponseCreatorFactory());
     
         // Need to create a Listener on
-        listener_.reset(new HttpListener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                                         factory_, HttpListener::RequestTimeout(10000),
+        listener_.reset(new HttpListener(io_service_, 
+                                         IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                                         TlsContextPtr(), factory_,
+                                         HttpListener::RequestTimeout(10000),
                                          HttpListener::IdleTimeout(10000)));
+
         // Start the server.
         ASSERT_NO_THROW(listener_->start());
 
@@ -411,6 +415,8 @@ public:
             ConstElementPtr sequence = response->getJsonElement("sequence");
             ASSERT_TRUE(sequence);
         }
+
+        ASSERT_NO_THROW(client_->stop());
 
         ASSERT_NO_THROW(listener_->stop());
     }

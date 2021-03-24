@@ -12,6 +12,7 @@ extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED = "HTTP_BAD_CL
 extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS = "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED = "HTTP_BAD_SERVER_RESPONSE_RECEIVED";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS = "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS";
+extern const isc::log::MessageID HTTP_CLIENT_MT_STARTED = "HTTP_CLIENT_MT_STARTED";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_AUTHORIZED = "HTTP_CLIENT_REQUEST_AUTHORIZED";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER = "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NOT_AUTHORIZED = "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED";
@@ -48,6 +49,7 @@ const char* values[] = {
     "HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about bad request received from %1:\n%2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED", "bad response received when communicating with %1: %2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about bad response received from %1:\n%2",
+    "HTTP_CLIENT_MT_STARTED", "HttpClient has been started in multi-threaded mode running %1 threads",
     "HTTP_CLIENT_REQUEST_AUTHORIZED", "received HTTP request authorized for '%1'",
     "HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER", "received HTTP request with malformed authentication header: %1",
     "HTTP_CLIENT_REQUEST_NOT_AUTHORIZED", "received HTTP request with not matching authentication header",
@@ -66,7 +68,7 @@ const char* values[] = {
     "HTTP_CONNECTION_STOP_FAILED", "stopping HTTP connection failed",
     "HTTP_DATA_RECEIVED", "received %1 bytes from %2",
     "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED", "closing persistent connection with %1 as a result of a timeout",
-    "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred, possibly caused by system clock change",
+    "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid_: %3",
     "HTTP_REQUEST_RECEIVE_START", "start receiving request from %1 with timeout %2",
     "HTTP_SERVER_RESPONSE_RECEIVED", "received HTTP response from %1",
     "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about well-formed response received from %1:\n%2",

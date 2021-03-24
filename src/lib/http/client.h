@@ -8,6 +8,7 @@
 #define HTTP_CLIENT_H
 
 #include <asiolink/io_service.h>
+#include <asiolink/tls_socket.h>
 #include <exceptions/exceptions.h>
 #include <http/url.h>
 #include <http/request.h>
