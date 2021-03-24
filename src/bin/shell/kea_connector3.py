@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@ This is PYTHON 3.x version of HTTP connection establishment
 """
 
 import urllib.request
+import ssl
+import os
 
 from kea_conn import CAResponse # CARequest
 
@@ -16,7 +18,7 @@ def send_to_control_agent(params):
     """ Sends a request to Control Agent, receives a response and returns it."""
 
     # First, create the URL
-    url = "http://" + params.http_host + ":"
+    url = params.scheme + "://" + params.http_host + ":"
     url += str(params.http_port) + str(params.path)
 
     # Now prepare the request (URL, headers and body)
@@ -24,8 +26,22 @@ def send_to_control_agent(params):
                                  data=str.encode(params.content),
                                  headers=params.headers)
 
+    # Set up the SSL context.
+    ssl_ctx = None
+    capath = None
+    cafile = None
+    if params.ca:
+        if os.path.isdir(params.ca):
+            capath = params.ca
+        else:
+            cafile = params.ca
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ssl_ctx.load_verify_locations(cafile, capath)
+        if params.cert:
+            ssl_ctx.load_cert_chain(param.cert[0], param.cert[1])
+
     # Establish connection, send the request.
-    resp = urllib.request.urlopen(req)
+    resp = urllib.request.urlopen(req, context=ssl_ctx)
 
     # Now get the response details, put it in CAResponse and return it
     result = CAResponse(resp.getcode(), resp.reason,

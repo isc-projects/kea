@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,8 +13,11 @@ class CARequest:
     This class defines the HTTP request to be sent.
     The supported parameters listed are:
      - path (specifies the path on the server, CA uses only /)
+     - scheme - http or https
      - http_host - hostname of the CA
-     - http-port - TCP port of the CA
+     - http_port - TCP port of the CA
+     - ca - False or CA file or path
+     - cert - False or cert file or cert and key files pair
      - command - specifies the command to send (e.g. list-commands)
      - service - specifies service that is target for the command (e.g. dhcp4)
      - timeout - timeout (in ms)
@@ -24,8 +27,11 @@ class CARequest:
      - version - version to be reported in HTTP header
     """
     path = '/'
+    scheme = 'http'
     http_host = ''
     http_port = 0
+    ca = False
+    cert = False
     command = ''
     service = ''
     timeout = 0

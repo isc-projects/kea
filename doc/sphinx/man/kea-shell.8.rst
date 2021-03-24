@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ kea-shell - Text client for Control Agent process
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--auth-user**] [**--auth-password**] [**--timeout**] [**--service**] [command]
+:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-password**] [**--timeout**] [**--service**] [command]
 
 Description
 ~~~~~~~~~~~
@@ -24,7 +24,9 @@ The ``kea-shell`` provides a REST client for the Kea Control Agent (CA).
 It takes command as a command-line parameter that is being sent to CA
 with proper JSON encapsulation. Optional arguments may be specified on
 the standard input. The request is sent via HTTP and a response is
-retrieved, displayed on the standard output.
+retrieved, displayed on the standard output. Basic HTTP authentication
+and HTTPS i.e. TLS transport are supported.
+
 
 Arguments
 ~~~~~~~~~
@@ -49,6 +51,19 @@ The arguments are as follows:
    Specifies the path in the URL to connect to. If not specified, an empty
    path is used. As Control Agent listens at the empty path, this
    parameter is useful only with a reverse proxy.
+
+``--ca``
+   Specifies the file or directory name of the Cerfication Authority.
+   If not specified HTTPS is not used.
+
+``--cert``
+   Specifies the file name of the user end-entity public key certificate.
+   If specified the file name of the user key must be specified too.
+
+``--key``
+   Specifies the file name of the user key file. If specified the file
+   name of the user certificate must be specified too. Note that
+   encrypted key file are not supported.
 
 ``--auth-user``
    Specifies the user id for basic HTTP authentication. If not specified

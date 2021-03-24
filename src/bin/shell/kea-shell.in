@@ -67,6 +67,15 @@ def shell_body():
     parser.add_argument('--path', type=str, default='',
                         help='Path of the URL to connect to '
                         '(default: "")')
+    parser.add_argument('--ca', type=str, default='',
+                        help='File or directory name of the CA '
+                        '(default: "" i.e. do not use HTTPS)')
+    parser.add_argument('--cert', type=str, default='',
+                        help='File name of the client certificate '
+                        '(default: "" i.e. do not use HTTPS)')
+    parser.add_argument('--key', type=str, default='',
+                        help='File name of the client private key '
+                        '(default: "" i.e. do not use HTTPS)')
     parser.add_argument('--timeout', type=int, default='10',
                         help='Timeout (in seconds) when attempting to '
                         'connect to CA (default: 10)')
@@ -96,6 +105,15 @@ def shell_body():
     params.http_host = cmd_args.host
     params.http_port = cmd_args.port
     params.path += cmd_args.path
+    if cmd_args.ca:
+        params.ca = cmd_args.ca
+        params.scheme = 'https'
+    if (cmd_args.cert != '' and cmd_args.key == '') or \
+       (cmd_args.cert == '' and cmd_args.key != ''):
+        print("--cert and --key must be used together")
+        sys.exit(1)
+    if cmd_args.cert:
+        params.cert = (cmd_args.cert, cmd_args.key)
     if cmd_args.auth_user != '':
         user = cmd_args.auth_user
         password = cmd_args.auth_password
