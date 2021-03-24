@@ -61,16 +61,7 @@ if HAVE_OPENSSL
 
 noinst_PROGRAMS = openssl_sample_client openssl_sample_server
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 openssl_sample_client_SOURCES = openssl_sample_client.cc
-=======
-openssl_sample_client_SOURCES = openssl_sample_client.cpp
->>>>>>> [#1661] Renamed samples
 openssl_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
 openssl_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 openssl_sample_client_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
@@ -79,36 +70,5 @@ openssl_sample_server_SOURCES = openssl_sample_server.cc
 openssl_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
 openssl_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 openssl_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
-=======
-#openssl_sample_client_SOURCES = openssl_sample_client.cc
-#openssl_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
-#openssl_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-#openssl_sample_client_LDADD = $(CRYPTO_LIBS)
-
-#openssl_sample_server_SOURCES = openssl_sample_server.cc
-#openssl_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
-#openssl_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-#openssl_sample_server_LDADD = $(CRYPTO_LIBS)
->>>>>>> [#1661] Fixed build on last Fedora
-=======
-openssl_sample_client_SOURCES = openssl_sample_client.cc
-=======
-openssl_sample_client_SOURCES = openssl_sample_client.cpp
->>>>>>> [#1661] Renamed samples
-=======
-openssl_sample_client_SOURCES = openssl_sample_client.cc
->>>>>>> [#1661] Addressed some 1661 comments (port)
-=======
-openssl_sample_client_SOURCES = openssl_sample_client.cc
->>>>>>> [#1662] Fixed rebase
-openssl_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
-openssl_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-openssl_sample_client_LDADD = $(CRYPTO_LIBS)
-
-openssl_sample_server_SOURCES = openssl_sample_server.cc
-openssl_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
-openssl_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-openssl_sample_server_LDADD = $(CRYPTO_LIBS)
->>>>>>> [#1661] Moved to cpp03 server example
 endif
 endif

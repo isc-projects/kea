@@ -45,7 +45,6 @@ TlsContext::TlsContext(TlsRole role)
 
 boost::asio::ssl::context&
 TlsContext::getContext() {
-    ::SSL_CTX_up_ref(context_.native_handle());
     return (context_);
 }
 
