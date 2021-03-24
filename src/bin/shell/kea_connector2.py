@@ -15,6 +15,10 @@ from kea_conn import CAResponse # CARequest
 def send_to_control_agent(params):
     """ Sends a request to Control Agent, receives a response and returns it."""
 
+    # No HTTP support.
+    if params.ca or params.cert:
+        raise NotImplementedError('Python2 kea-shell does not support HTTPS')
+
     # Establish HTTP connection first.
     conn = httplib.HTTPConnection(params.http_host, params.http_port)
     conn.connect()
