@@ -88,7 +88,6 @@ exclude_patterns = [
     'arm/hooks-run-script.rst',
     'arm/hooks-stat-cmds.rst',
     'arm/hammer.rst',
-    'arm/tls.rst',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
