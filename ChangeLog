@@ -1,4 +1,8 @@
-1875.	[func]		dupont
+1876.	[doc]		fdupont
+	Added documentation for TLS/HTTPS support.
+	(Gitlab #1664)
+
+1875.	[func]		fdupont
 	TLS/HTTPS support was added to asiolink and http libraries.
 	(Gitlab #1661)
 

@@ -1,19 +1,23 @@
 .. _tls:
 
-*****************
 TLS/HTTPS support
-*****************
+=================
 
 Since version 1.9.6 Kea includes TLS support for a better security.
 TLS is used on HTTP communication providing three increasing levels of
 protection:
 
-- no TLS i.e. the only option available in prior versions.
+- no TLS. The connection is a plain text, unencrypted HTTP. This is
+  the only option available in prior versions.
 
-- encryption i.e. protection against passive attacks and eavesdropping,
-  the server is still authenticated but the client is not.
+- encryption i.e. protection against passive attacks and
+  eavesdropping, the server is still authenticated but the client is
+  not. This is the typical mode when securing a web site, where
+  clients and servers are not under the control of a common entity.
 
-- mutual authentication between the client and the server.
+- mutual authentication between the client and the server. This mode
+  is stricter than the previous one and is the default when TLS is
+  enabled.
 
 .. note::
 
@@ -26,7 +30,7 @@ protection:
 .. _tls_config:
 
 Kea Installation with TLS/HTTPS support
-=======================================
+---------------------------------------
 
 TLS/HTTPS support is available with OpenSSL and Botan cryptographic backends
 with some constraints including on the boost library:
@@ -43,6 +47,9 @@ with some constraints including on the boost library:
 
 - OpenSSL 3.x was not yet released and Kea does not build with it.
 
+- LibreSSL 3.2.4 was tested. LibreSSL shares the OpenSSL 1.0.2 API so
+  it should work but is not supported.
+
 - Botan 1.x versions are obsolete so should not be considered.
   The TLS support was not tested and is not supported on these versions.
 
@@ -53,7 +60,7 @@ with some constraints including on the boost library:
   from the corresponding Botan distribution and to install them manually
   in the Botan include directory but of course this should be a last
   resort procedure. Note that without these header files Kea can still
-  build but the TLS support is disable: any attempt to use it will fail
+  build but the TLS support is disabled: any attempt to use it will fail
   with a fatal error.
 
 - very old boost versions provide a SSL support (based on OpenSSL) without
@@ -63,13 +70,13 @@ with some constraints including on the boost library:
 - boost versions older than 1.64 provide a SSL support with a not flexible
   choice of the TLS version: Kea enforces the use of TLS 1.2 with them.
 
-- boost versions newer than 1.64 (included) provide a SSL support with
-  a generic TLS version: the best (higher) version available on both peers
-  is selected.
+- boost versions 1.64 or newer provide a SSL support with a generic
+  TLS version: the best (higher) version available on both peers is
+  selected.
 
 
 TLS/HTTPS configuration
-=======================
+-----------------------
 
 The new TLS configuration parameters are:
 
@@ -80,10 +87,13 @@ The new TLS configuration parameters are:
   searched for certificates.
 
 - the ``cert-file`` string parameter specifies the name of the file
-  containing the end-entity certificate.
+  containing the end-entity certificate of the Kea instance
+  being configured.
 
 - the ``key-file`` string parameter specifies the private key of the
-  end-entity certificate. The file must not be encrypted.
+  end-entity certificate of Kea instance being configured..
+  The file must not be encrypted and it is highly recommended to
+  restrict its access.
 
 The three string parameters must be either all not specified (TLS disabled)
 or all specified (TLS enabled).
@@ -114,7 +124,8 @@ files for the private key.
 
 A sample set of certificates and associated objects is available at
 ``src/lib/asiolink/testutils/ca`` in sources with a ``doc.txt`` file
-explaining how they were generated using the openssl command.
+explaining how they were generated using the openssl command. These
+files are for testing purpose only. **Do not use them in production,**
 
 TLS handshake, the phase where the cryptographic parameters are exchanged
 and authentication is verified, can fail in a lot of ways. Error messages

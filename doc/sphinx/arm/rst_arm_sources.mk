@@ -30,6 +30,7 @@ rst_arm_sources += arm/lfc.rst
 rst_arm_sources += arm/logging.rst
 rst_arm_sources += arm/netconf.rst
 rst_arm_sources += arm/quickstart.rst
+rst_arm_sources += arm/security.rst
 rst_arm_sources += arm/shell.rst
 rst_arm_sources += arm/stats.rst
 rst_arm_sources += arm/stork.rst
