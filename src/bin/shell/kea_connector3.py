@@ -38,7 +38,7 @@ def send_to_control_agent(params):
         ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_ctx.load_verify_locations(cafile, capath)
         if params.cert:
-            ssl_ctx.load_cert_chain(param.cert[0], param.cert[1])
+            ssl_ctx.load_cert_chain(params.cert[0], params.cert[1])
 
     # Establish connection, send the request.
     resp = urllib.request.urlopen(req, context=ssl_ctx)
