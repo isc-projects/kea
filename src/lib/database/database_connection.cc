@@ -298,7 +298,7 @@ ReconnectCtl::onFailActionFromText(const std::string& text) {
     } else if (text == "server-retry-continue") {
         return (OnFailAction::SERVE_RETRY_CONTINUE);
     } else {
-        isc_throw(InvalidType, "Invalid on fail action: " << text);
+        isc_throw(BadValue, "Invalid action on failed connection recovery: " << text);
     }
 }
 
