@@ -3,7 +3,7 @@ SHTESTS =
 # if we are using file based configuration approach.
 SHTESTS += ca_process_tests.sh
 if CA_TLS_TEST
-SHTESTS += #tls_ca_process_tests.sh
+SHTESTS += tls_ca_process_tests.sh
 endif
 
 noinst_SCRIPTS = ca_process_tests.sh tls_ca_process_tests.sh
