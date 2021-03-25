@@ -88,9 +88,12 @@ public:
 
     /// @brief Constructor.
     ///
+    /// It clears the DHCP state using origin HA internal command and starts the
+    /// state model in waiting state.
+    ///
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param config Parsed HA hook library configuration.
-    /// @param network_state Objec holding state of the DHCP service
+    /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
     HAService(const asiolink::IOServicePtr& io_service,
@@ -99,7 +102,9 @@ public:
               const HAServerType& server_type = HAServerType::DHCPv4);
 
     /// @brief Destructor.
-    ~HAService();
+    ///
+    /// It clears the DHCP state using origin HA internal command.
+    virtual ~HAService();
 
     /// @brief Returns HA server type used in object construction.
     HAServerType getServerType() const {

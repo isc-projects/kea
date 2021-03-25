@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -307,6 +307,15 @@ CloseHATest::runPartners() {
 }
 
 // Test that checks the library can be close in a DHCPv4 server.
+// 1. Creates one active and 2 backup servers.
+// 2. Check that the network state is reset and updated to expected state when
+// creating the HAService by calling the dhcp4_srv_configured hook.
+// 3. Send ha-heartbeat to make the server transition 'passive-backup' state.
+// 4. Call buffer4_receive and leases4_committed hooks to make sure that the
+// parked packet is owned strictly by the HA library.
+// 5. Verify that releasing the query will release all resources.
+// 6. Unload the library which should not have any dangling resources.
+// 7. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close4) {
     // Start partners.
     wthread_.reset(new WatchedThread());
@@ -360,7 +369,7 @@ TEST_F(CloseHATest, close4) {
 
     ASSERT_TRUE(network_state->isServiceEnabled());
 
-    // Pretend to be the parter.
+    // Pretend to be the partner.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp4");
     ConstElementPtr response;
     EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
@@ -441,6 +450,12 @@ TEST_F(CloseHATest, close4) {
 }
 
 // Test that checks the library can be close in a DHCPv4 server.
+// 1. Creates one active and 2 backup servers.
+// 2. Check that the network state is reset and updated to expected state when
+// creating the HAService by calling the dhcp4_srv_configured hook.
+// 3. Send ha-heartbeat to make the server transition 'backup' state.
+// 4. Unload the library which should not have any dangling resources.
+// 5. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close4Backup) {
     // Start partners.
     wthread_.reset(new WatchedThread());
@@ -463,7 +478,9 @@ TEST_F(CloseHATest, close4Backup) {
     IOServicePtr io_service(new IOService());
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
 
-    // Check that the disabled state is reset on dhcp4_srv_configured.
+    // Check that the state is computed on dhcp4_srv_configured.
+    // It is first reset by the constructor and then adjusted by running the
+    // state model.
     ASSERT_TRUE(network_state->isServiceEnabled());
     network_state->disableService(NetworkState::Origin::HA_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
@@ -480,7 +497,7 @@ TEST_F(CloseHATest, close4Backup) {
 
     ASSERT_FALSE(network_state->isServiceEnabled());
 
-    // Pretend to be the parter.
+    // Transition to backup state.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp4");
     ConstElementPtr response;
     EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
@@ -521,6 +538,15 @@ TEST_F(CloseHATest, close4Backup) {
 }
 
 // Test that checks the library can be close in a DHCPv6 server.
+// 1. Creates one active and 2 backup servers.
+// 2. Check that the network state is reset and updated to expected state when
+// creating the HAService by calling the dhcp6_srv_configured hook.
+// 3. Send ha-heartbeat to make the server transition 'passive-backup' state.
+// 4. Call buffer6_receive and leases6_committed hooks to make sure that the
+// parked packet is owned strictly by the HA library.
+// 5. Verify that releasing the query will release all resources.
+// 6. Unload the library which should not have any dangling resources.
+// 7. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close6) {
     // Start partners.
     wthread_.reset(new WatchedThread());
@@ -574,7 +600,7 @@ TEST_F(CloseHATest, close6) {
 
     ASSERT_TRUE(network_state->isServiceEnabled());
 
-    // Pretend to be the parter.
+    // Pretend to be the partner.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp6");
     ConstElementPtr response;
     EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
@@ -655,6 +681,12 @@ TEST_F(CloseHATest, close6) {
 }
 
 // Test that checks the library can be close in a DHCPv6 server.
+// 1. Creates one active and 2 backup servers.
+// 2. Check that the network state is reset and updated to expected state when
+// creating the HAService by calling the dhcp6_srv_configured hook.
+// 3. Send ha-heartbeat to make the server transition 'backup' state.
+// 4. Unload the library which should not have any dangling resources.
+// 5. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close6Backup) {
     // Start partners.
     wthread_.reset(new WatchedThread());
@@ -677,7 +709,9 @@ TEST_F(CloseHATest, close6Backup) {
     IOServicePtr io_service(new IOService());
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
 
-    // Check that the disabled state is reset on dhcp6_srv_configured.
+    // Check that the state is computed on dhcp6_srv_configured.
+    // It is first reset by the constructor and then adjusted by running the
+    // state model.
     ASSERT_TRUE(network_state->isServiceEnabled());
     network_state->disableService(NetworkState::Origin::HA_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
@@ -694,7 +728,7 @@ TEST_F(CloseHATest, close6Backup) {
 
     ASSERT_FALSE(network_state->isServiceEnabled());
 
-    // Pretend to be the parter.
+    // Transition to backup state.
     ConstElementPtr command = createCommand("ha-heartbeat", "dhcp6");
     ConstElementPtr response;
     EXPECT_TRUE(HooksManager::commandHandlersPresent("ha-heartbeat"));
