@@ -28,6 +28,17 @@
 #include <mutex>
 #include <queue>
 
+#ifndef TOMS_TRACE_LOG
+#include <thread>
+#if 0
+#define TOMS_TRACE_LOG(msg) {std::cout << std::this_thread::get_id() << ":" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << msg << std::endl;}
+
+#else
+#define TOMS_TRACE_LOG(msg)
+#endif
+
+#endif
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::http;
@@ -371,13 +382,10 @@ private:
     /// after invocation. Defaults to false.
     void closeCallback(const bool clear = false);
 
-    /// @brief Pointer to the connection pool owning this connection.
+    /// @brief Fetches the current socket descriptor, if one.
     ///
-    /// This is a weak pointer to avoid circular dependency between the
-    /// Connection and ConnectionPool.
-    boost::weak_ptr<ConnectionPool> conn_pool_;
-
-    int getSocketFd() {
+    /// @return The socket descriptor or -1.
+    int getSocketFd() const {
         int fd = -1;
 
         if (tcp_socket_) {
@@ -388,6 +396,12 @@ private:
 
         return (fd);
     }
+
+    /// @brief Pointer to the connection pool owning this connection.
+    ///
+    /// This is a weak pointer to avoid circular dependency between the
+    /// Connection and ConnectionPool.
+    boost::weak_ptr<ConnectionPool> conn_pool_;
 
     /// @brief URL for this connection.
     Url url_;
@@ -459,15 +473,14 @@ public:
     void addConnection(ConnectionPtr connection) {
         if (full()) {
             isc_throw(BadValue, "URL: " << url_.toText()
-                      << ", already at maximum connectsions: "
+                      << ", already at maximum connections: "
                       << max_connections_);
         }
 
         connections_.push_back(connection);
     }
 
-    /// @brief Closes a connection and removes it from the list. (Wonder
-    /// if I should call this removeConnection?)
+    /// @brief Closes a connection and removes it from the list. 
     ///
     /// @param connection the connection to remove
     void closeConnection(ConnectionPtr connection) {
@@ -543,9 +556,9 @@ public:
         return connections_.size();
     }
 
-    /// @brief Fetches the maxium number of connections.
+    /// @brief Fetches the maximum number of connections.
     ///
-    /// @return the maxium number of connections.
+    /// @return the maxim number of connections.
     size_t max_connections() const {
         return max_connections_;
     }
@@ -561,7 +574,7 @@ private:
     /// @brief URL supported by the list.
     Url url_;
 
-    /// @brief Maxium number of concurrent connections allowed in the list.
+    /// @brief Maximum number of concurrent connections allowed in the list.
     size_t max_connections_;
 
     /// @brief List of concurrent connections.
@@ -585,7 +598,7 @@ public:
     ///
     /// @param io_service Reference to the IO service to be used by the
     /// connections.
-    /// @param max_url_connections maxium number of concurrent
+    /// @param max_url_connections maximum number of concurrent
     /// connections allowed per URL.
     explicit ConnectionPool(IOService& io_service, size_t max_url_connections)
         : io_service_(io_service), conns_(), queue_(), mutex_(),
@@ -722,11 +735,14 @@ private:
                 // Now, look for an idle connection.
                 ConnectionPtr connection = conns_it->second->getIdleConnection();
                 if (!connection) {
-                    TOMS_TRACE_LOG("no idle connections, don't dequeue");
-                    // @todo TKM think the question below through... you perf teseted it
-                    // with simple return.
-                    // We shouldn't be here w/o an idle connection? ... if this is called
-                    // terminate, then how can the instigating connection not be free?
+                    TOMS_TRACE_LOG("*** No idle connections, don't dequeue?");
+                    // @todo Resolve this,  throw or just return, possibly log and return
+                    //
+                    // We shouldn't be in this function w/o an idle connection as it is called
+                    // from by terminate() after completion of a transaction? It should not be
+                    // possible for the connection that got us here to not be busy.
+                    // Do we throw or just not dequeue ther request?  It was TSAN tested and
+                    // perf tested with just the return.
                     // isc_throw(Unexpected, "no idle connections for :" << url.toText());
                     // Let's leave it on the queue, nothing idle yet?
                     return;
@@ -1206,7 +1222,8 @@ Connection::terminate(const boost::system::error_code& ec,
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
                               const std::string& parsing_error) {
-    TOMS_TRACE_LOG(" on:" << getSocketFd())
+    TOMS_TRACE_LOG("terminate on: " << getSocketFd() 
+                    << ", isTransactionOngoing? " << isTransactionOngoing());
     HttpResponsePtr response;
 
     if (isTransactionOngoing()) {
@@ -1279,7 +1296,8 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     // another transaction if there is at least one.
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool) {
-        TOMS_TRACE_LOG(" more work...");
+        TOMS_TRACE_LOG(" more work on? " << getSocketFd() 
+                    << ", isTransactionOngoing? " << isTransactionOngoing());
         if (MultiThreadingMgr::instance().getMode()) {
             UnlockGuard<std::mutex> lock(mutex_);
             conn_pool->processNextRequest(url_);
@@ -1603,7 +1621,7 @@ public:
     /// - Creates a private IOService
     /// - Creates a thread pool with the thread_pool_size threads
     /// - Creates the connection pool passing the private IOService
-    /// and the thread_pool_size as the maximum nubmer of connections
+    /// and the thread_pool_size as the maximum number of connections
     /// per URL.
     ///
     /// @param io_service IOService that will drive connection IO in single

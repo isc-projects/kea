@@ -45,7 +45,7 @@ class HttpClientImpl;
 /// server's response. The last argument specified in this call is the pointer
 /// to the callback function, which should be launched when the response is
 /// received, an error occurs or when a timeout in the transmission is
-/// signalled.
+/// signaled.
 ///
 /// The HTTP client supports multiple simultaneous and persistent connections
 /// with different destinations. The client determines if the connection is
@@ -57,6 +57,16 @@ class HttpClientImpl;
 /// destination, e.g. as a result of sending previous request, the new
 /// request is queued in the FIFO queue. When the previous request completes,
 /// the next request in the queue for the particular URL will be initiated.
+///
+/// Furthermore, the class supports two modes of operation: single-threaded
+/// and multi-threaded mode.  In single-threaded mode, all IO is driven by
+/// an external IOService passed into the class constructor, and ultimately
+/// only a single connection per URL can be open at any given time. 
+///
+/// In multi-threaded mode, an internal thread pool, driven by a private
+/// IOService instance, is used to support multiple concurrent connections
+/// per URL. Currently the number of connections per URL is equal to the
+/// number of threads in the thread pool.
 ///
 /// The client tests the persistent connection for usability before sending
 /// a request by trying to read from the socket (with message peeking). If
@@ -133,15 +143,28 @@ public:
     /// @brief Destructor.
     ~HttpClient();
 
-    /// @brief Queues new asynchronous HTTP request.
+    /// @brief Queues new asynchronous HTTP request for a given URL.
     ///
-    /// The client creates one connection for the specified URL. If the
-    /// connection with the particular destination already exists, it will be
-    /// re-used for the new transaction scheduled with this call. If another
-    /// transaction is still in progress, the new transaction is queued. The
-    /// queued transactions are started in the FIFO order one after another. If
-    /// the connection is idle or the connection doesn't exist, the new
-    /// transaction is started immediately.
+    /// The client maintains an internal connection pool which manages lists 
+    /// of connections per URL. In single-threaded mode, each URL is limited 
+    /// to a single /connection.  In multi-threaded mode, each URL may have 
+    /// more than one open connection per URL, enabling the client to carry
+    /// on multiple concurrent requests per URL.
+    ///
+    /// The client will search the pool for an open, idle connection for the
+    /// given URL.  If there are no idle connections, the client will open
+    /// a new connection up to the maximum number of connections allowed by the
+    /// thread mode.  If all possible connections are busy, the request is 
+    /// pushed on to back of a URL-specific FIFO queue of pending requests.
+    ///
+    /// If however, there is an idle connection available than a new transaction
+    /// for the request will be initiated immediately upon that connection.
+    ///
+    /// Note that when a connection completes a transaction, and its URL
+    /// queue is not empty, it will pop a pending request from the front of 
+    /// the queue and begin a new transaction for that request. The net effect
+    /// is that requests are always pulled from the front of the queue unless
+    /// the queue is empty. 
     ///
     /// The existing connection is tested before it is used for the new
     /// transaction by attempting to read (with message peeking) from
@@ -178,7 +201,7 @@ public:
     ///
     /// If message parsing was successful the second argument of the callback
     /// contains a pointer to the parsed response (the same pointer as provided
-    ///by the caller as the argument). If parsing was unsuccessful, the null
+    /// by the caller as the argument). If parsing was unsuccessful, the null
     /// pointer is returned.
     ///
     /// The default timeout for the transaction is set to 10 seconds
@@ -238,7 +261,7 @@ public:
     /// @brief Fetches a pointer to the internal IOService used to
     /// drive the thread-pool in multi-threaded mode.
     ///
-    /// @return pointer to the IOService instance, or an emtpy pointer
+    /// @return pointer to the IOService instance, or an empty pointer
     /// in single-threaded mode.
     const asiolink::IOServicePtr getMyIOService() const;
 

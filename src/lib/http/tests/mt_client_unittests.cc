@@ -5,29 +5,25 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <cc/data.h>
 #include <http/client.h>
-#include <http/http_types.h>
 #include <http/listener.h>
-#include <http/listener_impl.h>
 #include <http/post_request_json.h>
 #include <http/response_creator.h>
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
-#include <http/tests/response_test.h>
 #include <http/url.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <list>
 #include <sstream>
 #include <string>
 
@@ -35,78 +31,33 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::http;
-using namespace isc::http::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
-
-namespace isc {
-data::ConstElementPtr 
-http::HttpResponse::getJsonElement(const std::string& element_name) const {
-    try {
-        ConstElementPtr body = Element::fromJSON(getBody());
-        if (body) {
-            const std::map<std::string, ConstElementPtr>& map_value = body->mapValue();
-            auto map_element = map_value.find(element_name);
-            if (map_element != map_value.end()) {
-                return (map_element->second);
-            }
-        }
-
-    } catch (const std::exception& ex) {
-        isc_throw(HttpResponseError, "unable to get JSON element "
-                  << element_name << ": " << ex.what());
-    }
-
-    return (ConstElementPtr());
-}
-}
-
 
 namespace {
 
 /// @brief IP address to which HTTP service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
 
-/// @brief IPv6 address to whch HTTP service is bound.
+/// @brief IPv6 address to which HTTP service is bound.
 const std::string IPV6_SERVER_ADDRESS = "::1";
 
 /// @brief Port number to which HTTP service is bound.
 const unsigned short SERVER_PORT = 18123;
 
-/// @brief Request Timeout used in most of the tests (ms).
-const long REQUEST_TIMEOUT = 10000;
-
-/// @brief Persistent connection idle timeout used in most of the tests (ms).
-const long IDLE_TIMEOUT = 10000;
-
-/// @brief Persistent connection idle timeout used in tests where idle connections
-/// are tested (ms).
-const long SHORT_IDLE_TIMEOUT = 200;
-
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
 
-/// @brief Test HTTP response.
-typedef TestHttpResponseBase<HttpResponseJson> Response;
-
-/// @brief Pointer to test HTTP response.
-typedef boost::shared_ptr<Response> ResponsePtr;
-
-/// @brief Generic test HTTP response.
-typedef TestHttpResponseBase<HttpResponse> GenericResponse;
-
-/// @brief Pointer to generic test HTTP response.
-typedef boost::shared_ptr<GenericResponse> GenericResponsePtr;
-
+/// @brief Container request/response pair handled by a given thread.
 struct ClientRR {
     std::string thread_id_;
-    HttpRequestPtr request_;
-    HttpResponsePtr response_;
+    PostHttpRequestJsonPtr request_;
+    HttpResponseJsonPtr response_;
 };
 
+/// @brief Pointer to a ClientRR.
 typedef boost::shared_ptr<ClientRR> ClientRRPtr;
 
-/// @todo  Creator and Factory are currently with server_client_unittests.cc
 /// @brief Implementation of the @ref HttpResponseCreator.
 class TestHttpResponseCreator : public HttpResponseCreator {
 public:
@@ -131,26 +82,19 @@ private:
         // The request hasn't been finalized so the request object
         // doesn't contain any information about the HTTP version number
         // used. But, the context should have this data (assuming the
-        // HTTP version is parsed ok).
+        // HTTP version is parsed OK).
         HttpVersion http_version(request->context()->http_version_major_,
                                  request->context()->http_version_minor_);
         // This will generate the response holding JSON content.
-        ResponsePtr response(new Response(http_version, status_code));
+        HttpResponseJsonPtr response(new HttpResponseJson(http_version, status_code));
         response->finalize();
         return (response);
     }
 
     /// @brief Creates HTTP response.
     ///
-    /// This method generates 3 types of responses:
-    /// - response with a requested content type,
-    /// - partial response with incomplete JSON body,
-    /// - response with JSON body copied from the request.
-    ///
-    /// The first one is useful to test situations when received response can't
-    /// be parsed because of the content type mismatch. The second one is useful
-    /// to test request timeouts. The third type is used by most of the unit tests
-    /// to test successful transactions.
+    /// This method generates a response with the JSON body copied 
+    /// from the request.
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP OK response with no content.
@@ -159,56 +103,22 @@ private:
         // Request must always be JSON.
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
-        ConstElementPtr body;
-        if (request_json) {
-            body = request_json->getBodyAsJson();
-            if (body) {
-                // Check if the client requested one of the two first response
-                // types.
-                GenericResponsePtr response;
-                ConstElementPtr content_type = body->get("requested-content-type");
-                ConstElementPtr partial_response = body->get("partial-response");
-                if (content_type || partial_response) {
-                    // The first two response types can only be generated using the
-                    // generic response as we have to explicitly modify some of the
-                    // values.
-                    response.reset(new GenericResponse(request->getHttpVersion(),
-                                                       HttpStatusCode::OK));
-                    HttpResponseContextPtr ctx = response->context();
 
-                    if (content_type) {
-                        // Provide requested content type.
-                        ctx->headers_.push_back(HttpHeaderContext("Content-Type",
-                                                                  content_type->stringValue()));
-                        // It doesn't matter what body is there.
-                        ctx->body_ = "abcd";
-                        response->finalize();
-
-                    } else {
-                        // Generate JSON response.
-                        ctx->headers_.push_back(HttpHeaderContext("Content-Type",
-                                                                  "application/json"));
-                        // The body lacks '}' so the client will be waiting for it and
-                        // eventually should time out.
-                        ctx->body_ = "{";
-                        response->finalize();
-                        // The auto generated Content-Length header would be based on the
-                        // body size (so set to 1 byte). We have to override it to
-                        // account for the missing '}' character.
-                        response->setContentLength(2);
-                    }
-                    return (response);
-                }
-            }
+        if (!request_json) {
+            return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
-        // Third type of response is requested.
-        ResponsePtr response(new Response(request->getHttpVersion(),
-                                          HttpStatusCode::OK));
-        // If body was included in the request. Let's copy it.
-        if (body) {
-            response->setBodyAsJson(body);
+        // Request must always contain a body.
+        ConstElementPtr body = request_json->getBodyAsJson();
+        if (!body) {
+            return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
+
+        HttpResponseJsonPtr response(new HttpResponseJson(request->getHttpVersion(),
+                                                          HttpStatusCode::OK));
+
+        // Echo request body back in the response.
+        response->setBodyAsJson(body);
 
         response->finalize();
         return (response);
@@ -228,7 +138,7 @@ public:
     }
 };
 
-/// @brief Test fixture class for testing HTTP client.
+/// @brief Test fixture class for testing multi-threaded HTTP client.
 class MtHttpClientTest : public ::testing::Test {
 public:
 
@@ -243,11 +153,13 @@ public:
 
     /// @brief Destructor.
     ~MtHttpClientTest() {
+        if (client_) {
+            client_->stop();
+        }
+
         if (listener_) {
             listener_->stop();
         }
-
-        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -262,7 +174,8 @@ public:
         io_service_.stop();
     }
 
-   void runIOService() {
+    /// @brief Runs test's IOService until the desired number of have been carried out.
+    void runIOService() {
         // Loop until the clients are done, an error occurs, or the time runs out.
         while (clientRRs_.size() < num_requests_) {
             // Always call restart() before we call run();
@@ -301,21 +214,35 @@ public:
         return (request);
     }
 
-    void startRequest() {
+    /// @brief Initiates a single HTTP request.
+    ///
+    /// Constructs an HTTP post whose body is a JSON map containing a
+    /// single integer element, "sequence".
+    ///
+    /// The request completion handler will block each requesting thread
+    /// until the number of in-progress threads reaches the number of
+    /// threads in the pool.  At that point, the handler will unblock
+    /// until all threads have finished preparing the response and are
+    /// ready to return.   The handler will notify all pending threads
+    /// and invoke stop() on the test's main IO service thread. 
+    ///
+    /// @param sequence value for the integer element, "sequence",
+    /// to send in the request.
+    void startRequest(int sequence) {
         // Create the URL on which the server can be reached.
         std::stringstream ss;
         ss << "http://" << SERVER_ADDRESS << ":" << SERVER_PORT;
         Url url(ss.str());
 
         // Initiate request to the server.
-        PostHttpRequestJsonPtr request = createRequest("sequence", 1);
+        PostHttpRequestJsonPtr request_json = createRequest("sequence", sequence);
 
         HttpResponseJsonPtr response_json = boost::make_shared<HttpResponseJson>();
 
         ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
-                                                  request, response_json,
-            [this, request](const boost::system::error_code& ec,
-                   const HttpResponsePtr& response,
+                                                  request_json, response_json,
+            [this, request_json, response_json](const boost::system::error_code& ec,
+                   const HttpResponsePtr&/* response*/,
                    const std::string&) {
             // Bail on an error.
             ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
@@ -342,8 +269,8 @@ public:
             // Create the ClientRR.
             ClientRRPtr clientRR(new ClientRR());
             clientRR->thread_id_ =  ss.str();
-            clientRR->request_ = request;
-            clientRR->response_ = response;
+            clientRR->request_ = request_json;
+            clientRR->response_ = response_json;
 
             {
                 std::unique_lock<std::mutex> lck(mutex_);
@@ -353,7 +280,7 @@ public:
                     // We're all done, notify the others and finish.
                     num_in_progress_ = 0;
                     cv_.notify_all();
-                    // Stop the test's IOservice.
+                    // Stop the test's IOService.
                     io_service_.stop();
                 } else {
                     // I'm done but others aren't wait here.
@@ -367,10 +294,35 @@ public:
         }));
     }
 
+    /// @brief Starts one or more HTTP requests via HttpClient to a test listener.
+    ///
+    /// This function command creates a HttpClient with the given number
+    /// of threads. It initiates then given number of HTTP requests. Each 
+    /// request carries a single integer element, "sequence" in its body.
+    /// The response is expected to be this same element echoed back.
+    /// Then it iteratively runs the test's IOService until all
+    /// the requests have been responded to, an error occurs, or the
+    /// test times out.
+    ///
+    /// It requires that the number of requests, when greater than the
+    /// number of threads, be a multiple of the number of threads.  The
+    /// requests completion handler is structured in such a way as to ensure
+    /// (we hope) that each client thread handles the same number of requests.
+    ///
+    /// @param num_threads - the number of threads the HttpClient
+    /// should use. A value of 0 puts the HttpClient in single-threaded mode.
+    /// @param num_requests - the number of requests that should be carried out.
+    /// Must be greater than 0. If it is greater than num_threads it must be a
+    /// multiple of num_threads.
+    ///
+    /// @param num_threads
+    /// @param num_requests
     void threadRequestAndReceive(size_t num_threads, size_t num_requests) {
         // First we makes sure the parameter rules apply.
         ASSERT_TRUE((num_threads == 0) || (num_requests < num_threads) 
                     || (num_requests % num_threads == 0));
+        num_threads_ = num_threads;
+        num_requests_ = num_requests;
 
         // Make a factory
         factory_.reset(new TestHttpResponseCreatorFactory());
@@ -385,35 +337,94 @@ public:
         // Start the server.
         ASSERT_NO_THROW(listener_->start());
 
-        num_threads_ = num_threads;
-        num_requests_ = num_requests;
-
         // Create an MT client with num_threads
         ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
         ASSERT_TRUE(client_);
 
         if (num_threads_ == 0) {
+            // If we single-threaded client should not have it's own IOService.
             ASSERT_FALSE(client_->getMyIOService());
         } else {
+            // If we multi-threaded client should have it's own IOService.
             ASSERT_TRUE(client_->getMyIOService());
         }
+
+        // Verify the pool size and number of threads are as expected.
         ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
         ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Start the requisite number of requests.
-        for (auto i = 0; i < num_requests_; ++i) {
-            startRequest();
+        for (int i = 0; i < num_requests_; ++i) {
+            startRequest(i + 1);
         }
 
         // Run test thread IOService.  This drives the listener's IO.
         ASSERT_NO_THROW(runIOService());
 
+        // We should have a response for each request.
         ASSERT_EQ(clientRRs_.size(), num_requests_);
+
+        // Create a map to track number of responses for each client thread.
+        std::map<std::string, int> responses_per_thread;
+
+        // Get the stringified thread-id of the test's main thread.
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        std::string main_thread_id = ss.str();
+
+        // Iterate over the client request/response pairs.
         for (auto const& clientRR : clientRRs_ ) {
-            HttpResponsePtr response = clientRR->response_;
-            ASSERT_TRUE(response);
-            ConstElementPtr sequence = response->getJsonElement("sequence");
+            // Make sure it's whole.
+            ASSERT_FALSE(clientRR->thread_id_.empty());
+            ASSERT_TRUE(clientRR->request_);
+            ASSERT_TRUE(clientRR->response_);
+
+            // Request should contain an integer sequence number.
+            int request_sequence;
+            ConstElementPtr sequence = clientRR->request_->getJsonElement("sequence");
             ASSERT_TRUE(sequence);
+            ASSERT_NO_THROW(request_sequence = sequence->intValue());
+
+            // Response should contain an integer sequence number.
+            int response_sequence;
+            sequence = clientRR->response_->getJsonElement("sequence");
+            ASSERT_TRUE(sequence);
+            ASSERT_NO_THROW(response_sequence = sequence->intValue());
+
+            // Request and Response sequence numbers should match.
+            ASSERT_EQ(request_sequence, response_sequence);
+
+            if (num_threads_ == 0) {
+                // For ST mode thread id should always be the main thread.
+                ASSERT_EQ(clientRR->thread_id_, main_thread_id);
+            } else {
+                // For MT mode the thread id should never be the main thread.
+                ASSERT_NE(clientRR->thread_id_, main_thread_id);
+            }
+
+            // Bump the response count for the given client thread-id.
+            auto it = responses_per_thread.find(clientRR->thread_id_);
+            if (it != responses_per_thread.end()) {
+                responses_per_thread[clientRR->thread_id_] = it->second + 1;
+            } else {
+                responses_per_thread[clientRR->thread_id_] = 1;
+            }
+        }
+
+        // Make sure we have the expected number of responding threads.
+        if (num_threads_ == 0) {
+            ASSERT_EQ(responses_per_thread.size(), 1);
+        } else {
+            size_t expected_thread_count = (num_requests_ < num_threads_ ?
+                                            num_requests_ : num_threads_);
+            ASSERT_EQ(responses_per_thread.size(), expected_thread_count);
+        }
+
+        // Each thread-id ought to have received the same number of responses.
+        for (auto const& it : responses_per_thread) {
+            EXPECT_EQ(it.second, num_requests_ / responses_per_thread.size())
+                      << "thread-id: " << it.first
+                      << ", responses: " << it.second << std::endl;
         }
 
         ASSERT_NO_THROW(client_->stop());
@@ -513,35 +524,39 @@ TEST_F(MtHttpClientTest, basics) {
     // Create another multi-threaded instance.
     ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
 
-    // Make sure destruction doesn't throw. Note, if destuctor
-    // doesn't stop the threads correctly the test will crash upon exit.
+    // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
 }
 
+// Now we'll run some permutations of the number of client threads
+// and the number of client requests.
+
+// Single-threaded, three requests.
 TEST_F(MtHttpClientTest, zeroByThree) {
-    // Zero threads = ST mode.
-    size_t num_threads = 0; 
+    size_t num_threads = 0; // Zero threads = ST mode.
     size_t num_requests = 3;
     threadRequestAndReceive(num_threads, num_requests);
 }
 
-
+// Multi-threaded with one thread, three requests.
 TEST_F(MtHttpClientTest, oneByThree) {
     size_t num_threads = 1;
     size_t num_requests = 3;
     threadRequestAndReceive(num_threads, num_requests);
 }
 
+// Multi-threaded with threads, three requests.
 TEST_F(MtHttpClientTest, threeByThree) {
     size_t num_threads = 3;
     size_t num_requests = 3;
     threadRequestAndReceive(num_threads, num_requests);
 }
 
+// Multi-threaded with threads, nine requests.
 TEST_F(MtHttpClientTest, threeByNine) {
     size_t num_threads = 3;
     size_t num_requests = 9;
     threadRequestAndReceive(num_threads, num_requests);
 }
 
-}
+} // end of anonymous namespace
