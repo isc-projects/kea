@@ -9,7 +9,8 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/netconf\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../netconf_parser.yy\"
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
 
 CLEANFILES = *.json *.log
 

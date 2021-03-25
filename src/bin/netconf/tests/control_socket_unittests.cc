@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -613,7 +613,7 @@ HttpControlSocketTest::createReflectListener() {
     listener_.reset(new
                 HttpListener(io_service_,
                              IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             factory,
+                             TlsContextPtr(), factory,
                              HttpListener::RequestTimeout(2000),
                              HttpListener::IdleTimeout(2000)));
 }

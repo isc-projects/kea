@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,9 @@
 
 #include <netconf/http_control_socket.h>
 #include <cc/command_interpreter.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tls_socket.h>
 #include <http/client.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
@@ -84,7 +87,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     string receive_errmsg;
     HttpResponseJsonPtr response(new HttpResponseJson());
 
-    client.asyncSendRequest(getUrl(), request, response,
+    client.asyncSendRequest(getUrl(), TlsContextPtr(), request, response,
                 [&io_service, &received_ec, &receive_errmsg]
                 (const boost::system::error_code& ec,
                 const HttpResponsePtr&, const string& errmsg) {
