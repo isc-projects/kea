@@ -143,14 +143,14 @@ TLS support
 Starting with 1.9.6, kea-shell supports HTTPS connections. The TLS/HTTPS
 support requires python 3. Additional command line arguments are:
 
-- ``--ca`` Specifies the file or directory name of the Certification
+-  ``--ca`` Specifies the file or directory name of the Certification
    Authority.  If not specified HTTPS is not used.
 
 -  ``--cert`` Specifies the file name of the user end-entity public key
    certificate. If specified, the file name of the user key must be specified
    too.
 
-- ``--key`` Specifies the file name of the user key file. If specified
+-  ``--key`` Specifies the file name of the user key file. If specified
    the file name of the user certificate must be specified too. Note
    that encrypted key files are not supported.
 
