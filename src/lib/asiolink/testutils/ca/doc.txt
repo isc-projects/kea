@@ -33,6 +33,9 @@ Files:
  - kea-server-addr.crt server certificate using the 127.0.0.1 IP address
  - kea-server-addr.csr server PKCS#10 certificate request using the
   127.0.0.1 IP address
+ - kea-server-raw.crt server certificate with no subject alternative name
+ - kea-server-raw.csr server PKCS#10 certificate request using no
+  subject alternative name
  - kea-server.crt server certificate using the localhost DNS name
  - kea-server.csr server PKCS#10 certificate request using the localhost
   DNS name

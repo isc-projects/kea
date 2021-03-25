@@ -104,7 +104,8 @@ default URL is ``http://127.0.0.1:8000/``.
 
 The ``trust-anchor``, ``cert-file``, ```key-file`` and ``cert-required``
 parameters specify the TLS setup for HTTP i.e. HTTPS. If these parameters
-are not specified HTTP is used.
+are not specified HTTP is used. The TLS/HTTPS support in Kea is
+described in :ref:`tls`.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
 received commands to the Kea servers for processing. For example,
@@ -303,12 +304,12 @@ Secure Connections (since version 1.9.6)
 Since the Kea version 1.9.6 the Control Agent natively supports secure
 HTTP connections using TLS. This allows a protection against users from
 the node where the agent runs, something that a reverse proxy cannot
-provide.
+provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
 
 TLS is configured using three string parameters giving file names and
 a boolean parameter:
 
--  The ``trust-anchor`` specifies the Certificate Authority file name or
+-  The ``trust-anchor`` specifies the Certification Authority file name or
    directory path.
 
 -  The ``cert-file`` specifies the server certificate file name.
@@ -322,22 +323,21 @@ a boolean parameter:
 
 The file format is PEM. Either all the string parameters are specified and
 HTTP over TLS aka HTTPS is used, or none is specified and plain HTTP is used.
-Configuring only one or two string parameters is an error.
+Configuring only one or two string parameters raises an error.
 
 .. note::
 
    When client certificates are not required only the server side is
-   authenticated i.e. the communication is encrypted with an unknown client.
-   This protects only against passive attacks, active attacks as Man in the
-   Middle is still possible.
+   authenticated i.e. the communication is encrypted with an unknown
+   client.  This protects only against passive attacks, i.e. active
+   attacks as Man in the Middle is still possible.
 
 .. note::
 
    No standard HTTP authentication scheme cryptographically bind  its end
    entity with TLS. This means that the TLS client and server can be
    mutually authenticated but there is no proof they are the same as
-   the HTTP authentication. To summary a Man in the Middle attack is
-   still possible when both HTTPS and HTTP authentication are used.
+   for the HTTP authentication.
 
 Since the Kea version 1.9.6 the ``kea-shell`` tool supports TLS.
 

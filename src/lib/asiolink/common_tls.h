@@ -64,13 +64,16 @@ public:
     /// @param cert_file The certificate file name.
     /// @param key_file The private key file name.
     /// @param cert_required True if peer certificates are required,
-    /// false if they are optional.
+    /// false if they are optional. This is a server specific parameter.
+    /// @throw isc::cryptolink::LibraryError on various errors from
+    /// the cryptographic backend.
+    /// @throw isc::BadValue when cert_required is set to false for a client.
     static void configure(TlsContextPtr& context,
                           TlsRole role,
                           const std::string& ca_file,
                           const std::string& cert_file,
                           const std::string& key_file,
-                          bool cert_required);
+                          bool cert_required = true);
 
     /// @brief Get the peer certificate requirement mode.
     ///
@@ -83,6 +86,7 @@ protected:
     ///
     /// @param cert_required True if peer certificates are required,
     /// false if they are optional.
+    /// @throw isc::BadValue when cert_required is set to false for a client.
     virtual void setCertRequired(bool cert_required) = 0;
 
     /// @brief Load the trust anchor aka certification authority.

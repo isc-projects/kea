@@ -22,6 +22,15 @@ namespace test {
 /// @brief Configure the TLS server.
 void configServer(TlsContextPtr& ctx);
 
+/// @brief Configure trusted self-signed TLS server.
+void configTrustedSelf(TlsContextPtr& ctx);
+
+/// @brief Configure the TLS server with no client certificate request.
+void configServerNoReq(TlsContextPtr& ctx);
+
+/// @brief Configure the TLS server with no subject alternative name.
+void configServerRaw(TlsContextPtr& ctx);
+
 /// @brief Configure the TLS client.
 void configClient(TlsContextPtr& ctx);
 

@@ -22,6 +22,10 @@ TlsContext::TlsContext(TlsRole role)
 
 void
 TlsContext::setCertRequired(bool cert_required) {
+    if (!cert_required && (getRole() == TlsRole::CLIENT)) {
+        isc_throw(BadValue,
+                  "'cert-required' parameter must be true for a TLS client");
+    }
     cert_required_ = cert_required;
 }
 

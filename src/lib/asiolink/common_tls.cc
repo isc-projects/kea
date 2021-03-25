@@ -41,6 +41,7 @@ TlsContextBase::configure(TlsContextPtr& context,
                           bool cert_required) {
     try {
         context.reset(new TlsContext(role));
+        context->setCertRequired(cert_required);
         if (isDir(ca_file)) {
             context->loadCaPath(ca_file);
         } else {
@@ -48,7 +49,6 @@ TlsContextBase::configure(TlsContextPtr& context,
         }
         context->loadCertFile(cert_file);
         context->loadKeyFile(key_file);
-        context->setCertRequired(cert_required);
     } catch (...) {
         context.reset();
         throw;

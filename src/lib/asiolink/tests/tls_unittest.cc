@@ -427,7 +427,7 @@ TEST(TLSTest, certRequired) {
 #endif
     };
 
-    TestTlsContext ctx(TlsRole::CLIENT);
+    TestTlsContext ctx(TlsRole::SERVER);
     EXPECT_TRUE(ctx.getCertRequired());
     EXPECT_TRUE(check(ctx));
     ASSERT_NO_THROW(ctx.setCertRequired(false));
@@ -436,6 +436,15 @@ TEST(TLSTest, certRequired) {
     ASSERT_NO_THROW(ctx.setCertRequired(true));
     EXPECT_TRUE(ctx.getCertRequired());
     EXPECT_TRUE(check(ctx));
+
+    // Client role is different so test it too.
+    TestTlsContext cctx(TlsRole::CLIENT);
+    EXPECT_TRUE(cctx.getCertRequired());
+    EXPECT_TRUE(check(cctx));
+    ASSERT_NO_THROW(cctx.setCertRequired(true));
+    EXPECT_TRUE(cctx.getCertRequired());
+    EXPECT_TRUE(check(cctx));
+    EXPECT_THROW(cctx.setCertRequired(false), isc::BadValue);
 }
 
 // Test if the certificate authority can be loaded.
@@ -461,6 +470,28 @@ TEST(TLSTest, loadNoCAFile) {
         std::cout << exps.getErrMsg() << "\n";
     }
 }
+
+#ifdef WITH_BOTAN
+// Test that Botan requires a real CA certificate so fails with
+// trusted self-signed client.
+/// @note: convert to GTEST when gtest_utils.h will be moved.
+TEST(TLSTest, loadTrustedSelfCAFile) {
+    Expecteds exps;
+    // Botan error.
+    string botan_error = "Flatfile_Certificate_Store received non CA cert ";
+    botan_error += "C=\"US\",X520.State=\"Some-State\",O=\"ISC Inc.\",";
+    botan_error += "CN=\"kea-self\"";
+    exps.addThrow(botan_error);
+    exps.runCanThrow([] {
+        string ca(string(TEST_CA_DIR) + "/kea-self.crt");
+        TestTlsContext ctx(TlsRole::CLIENT);
+        ctx.loadCaFile(ca);
+    });
+    if (Expecteds::displayErrMsg()) {
+        std::cout << exps.getErrMsg() << "\n";
+    }
+}
+#endif // WITH_BOTAN
 
 // Test that a directory can be loaded.
 TEST(TLSTest, loadCAPath) {
@@ -1300,5 +1331,229 @@ TEST(TLSTest, selfSigned) {
     EXPECT_NO_THROW(client.lowest_layer().close());
     EXPECT_NO_THROW(server.lowest_layer().close());
 }
+
+////////////////////////////////////////////////////////////////////////
+//                      TLS handshake corner case                     //
+////////////////////////////////////////////////////////////////////////
+
+// Some special cases.
+
+// Test what happens when the client uses a certificate from another CA
+// but the client certificate request and validation are disabled.
+TEST(TLSTest, anotherClientNoReq) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServerNoReq(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part using a certificate signed by another CA.
+    TlsContextPtr client_ctx;
+    test::configOther(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb;
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb;
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // Should not fail.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the server uses a certificate without subject
+// alternative name (but still a version 3 certificate).
+TEST(TLSTest, serverRaw) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServerRaw(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb;
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb;
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // Should not fail.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+#ifdef WITH_OPENSSL
+// Test what happens when the client uses a trusted self-signed certificate.
+// Not really a failure case as it works...
+TEST(TLSTest, trustedSelfSigned) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configTrustedSelf(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part using a self-signed certificate.
+    TlsContextPtr client_ctx;
+    test::configSelf(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb;
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb;
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // It should work for all OpenSSL.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+#endif // WITH_OPENSSL
 
 } // end of anonymous namespace.
