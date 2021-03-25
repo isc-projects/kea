@@ -1403,6 +1403,20 @@ AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
 
+# Decide if the control agent TLS test can work.
+ca_tls_test=no
+if test "x$enable_shell" != "xno"; then
+  major="${PYTHON_VERSION:0:1}"
+  if test "x$major" = "x3"; then
+    if test "x${CRYPTO_NAME}" = "xOpenSSL"; then
+      ca_tls_test=yes
+    fi
+  else
+    AC_MSG_WARN("python2 kea-shell does not support HTTPS")
+  fi
+fi
+AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
+
 AC_ARG_WITH([sphinx],
   AC_HELP_STRING([--with-sphinx=PATH], [path to sphinx-build tool]),
   [sphinx_path="$withval"])

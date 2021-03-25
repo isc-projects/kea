@@ -304,10 +304,13 @@ public:
         } catch (const LibraryError& ex) {
             thrown = true;
             errmsg_ = ex.what();
+        } catch (const isc::BadValue& ex) {
+            thrown = true;
+            errmsg_ = ex.what();
         } catch (const exception& ex) {
             thrown = true;
             errmsg_ = ex.what();
-            ADD_FAILURE() << "expect only LibraryError exception";
+            ADD_FAILURE() << "expect only LibraryError or BadValue exception";
         }
 
         // Check the no error case.
@@ -659,10 +662,14 @@ TEST(TLSTest, configure) {
 TEST(TLSTest, configureError) {
     // The error case.
     Expecteds exps;
+    // Common part of the error message.
+    string common_error = "load of cert file '/no-such-file' failed: ";
     // Botan error.
-    exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
+    string botan_error = "I/O error: DataSource: Failure opening file /no-such-file";
+    exps.addThrow(common_error + botan_error);
     // OpenSSL error.
-    exps.addThrow("No such file or directory");
+    string openssl_error = "No such file or directory";
+    exps.addThrow(common_error + openssl_error);
     exps.runCanThrow([] {
         TlsContextPtr ctx1;
         string ca(string(TEST_CA_DIR) + "/kea-ca.crt");

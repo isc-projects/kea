@@ -43,12 +43,32 @@ TlsContextBase::configure(TlsContextPtr& context,
         context.reset(new TlsContext(role));
         context->setCertRequired(cert_required);
         if (isDir(ca_file)) {
-            context->loadCaPath(ca_file);
+            try {
+                context->loadCaPath(ca_file);
+            } catch (const std::exception& ex) {
+                isc_throw(isc::BadValue, "load of CA directory '"
+                          << ca_file << "' failed: " << ex.what());
+            }
         } else {
-            context->loadCaFile(ca_file);
+            try {
+                context->loadCaFile(ca_file);
+            } catch (const std::exception& ex) {
+                isc_throw(isc::BadValue, "load of CA file '"
+                          << ca_file << "' failed: " << ex.what());
+            }
         }
-        context->loadCertFile(cert_file);
-        context->loadKeyFile(key_file);
+        try {
+            context->loadCertFile(cert_file);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "load of cert file '"
+                      << cert_file << "' failed: " << ex.what());
+        }
+        try {
+            context->loadKeyFile(key_file);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "load of private key file '"
+                      << cert_file << "' failed: " << ex.what());
+        }
     } catch (...) {
         context.reset();
         throw;

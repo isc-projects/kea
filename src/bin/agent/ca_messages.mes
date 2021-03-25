@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,11 @@ in earlier log entries, possibly on lower levels.
 % CTRL_AGENT_FAILED application experienced a fatal error: %1
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
+
+% CTRL_AGENT_HTTPS_SERVICE_STARTED HTTPS service bound to address %1:%2
+This informational message indicates that the server has started HTTPS service
+on the specified address and port. All control commands should be sent to this
+address and port over a TLS channel.
 
 % CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
 This informational message indicates that the server has started HTTP service

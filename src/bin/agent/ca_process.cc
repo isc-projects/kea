@@ -134,6 +134,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         }
 
         uint16_t server_port = ctx->getHttpPort();
+        bool use_https = false;
 
         // Only open a new listener if the configuration has changed.
         if (http_listeners_.empty() ||
@@ -149,6 +150,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                                       ctx->getCertFile(),
                                       ctx->getKeyFile(),
                                       ctx->getCertRequired());
+                use_https = true;
             }
 
             // Create response creator factory first. It will be used to
@@ -175,9 +177,13 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         }
 
         // Ok, seems we're good to go.
-        LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
-            .arg(server_address.toText()).arg(server_port);
-
+        if (use_https) {
+          LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_STARTED)
+              .arg(server_address.toText()).arg(server_port);
+        } else {
+            LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
+                .arg(server_address.toText()).arg(server_port);
+        }
     });
 
     int rcode = 0;

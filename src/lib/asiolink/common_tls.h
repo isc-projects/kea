@@ -65,9 +65,7 @@ public:
     /// @param key_file The private key file name.
     /// @param cert_required True if peer certificates are required,
     /// false if they are optional. This is a server specific parameter.
-    /// @throw isc::cryptolink::LibraryError on various errors from
-    /// the cryptographic backend.
-    /// @throw isc::BadValue when cert_required is set to false for a client.
+    /// @throw isc::BadValue on error.
     static void configure(TlsContextPtr& context,
                           TlsRole role,
                           const std::string& ca_file,
