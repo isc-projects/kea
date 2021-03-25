@@ -122,16 +122,12 @@ public:
     virtual ~TlsStream() { }
 
     /// @brief TLS Handshake.
-    ///
-    /// @param callback Callback object.
-    virtual void handshake(Callback& callback) {
+    virtual void handshake(Callback&) {
         isc_throw(NotImplemented, "Botan TLS is not yet supported");
     }
 
     /// @brief TLS shutdown.
-    ///
-    /// @param callback Callback object.
-    virtual void shutdown(Callback& callback) {
+    virtual void shutdown(Callback&) {
         isc_throw(NotImplemented, "Botan TLS is not yet supported");
     }
 
