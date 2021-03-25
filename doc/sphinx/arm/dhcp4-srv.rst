@@ -506,10 +506,15 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ::
 
-   "Dhcp4": { "lease-database": { "disable-service-on-db-loss" : true, ... }, ... }
+   "Dhcp4": { "lease-database": { "on-fail" : "stop-retry-exit", ... }, ... }
 
-The default value for MySQL and PostgreSQL is true, which disables the dhcp
-service while trying to automatically recover lost connections.
+The default value for MySQL and PostgreSQL is ``stop-retry-exit``, which
+disables the dhcp service while trying to automatically recover lost connections
+and shuts down the server on failure after ``max-reconnect-tries``.
+Other valid values are: ``serve-retry-exit`` which does not disable the dhcp
+service but shuts down the server on failure after ``max-reconnect-tries`` and
+``serve-retry-continue`` which does not disable the dhcp service and does not
+shut down the server even if the recovery fails.
 
 .. note::
 
@@ -725,10 +730,15 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ::
 
-   "Dhcp4": { "hosts-database": { "disable-service-on-db-loss" : true, ... }, ... }
+   "Dhcp4": { "hosts-database": { "on-fail" : "stop-retry-exit", ... }, ... }
 
-The default value for MySQL and PostgreSQL is true, which disables the dhcp
-service while trying to automatically recover lost connections.
+The default value for MySQL and PostgreSQL is ``stop-retry-exit``, which
+disables the dhcp service while trying to automatically recover lost connections
+and shuts down the server on failure after ``max-reconnect-tries``.
+Other valid values are: ``serve-retry-exit`` which does not disable the dhcp
+service but shuts down the server on failure after ``max-reconnect-tries`` and
+``serve-retry-continue`` which does not disable the dhcp service and does not
+shut down the server even if the recovery fails.
 
 .. note::
 

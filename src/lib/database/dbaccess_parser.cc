@@ -61,8 +61,7 @@ DbAccessParser::parse(std::string& access_string,
         try {
             if ((param.first == "persist") ||
                 (param.first == "tcp-nodelay") ||
-                (param.first == "readonly") ||
-                (param.first == "disable-service-on-db-loss")) {
+                (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -117,6 +116,7 @@ DbAccessParser::parse(std::string& access_string,
                 // keyspace
                 // consistency
                 // serial-consistency
+                // on-fail
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {

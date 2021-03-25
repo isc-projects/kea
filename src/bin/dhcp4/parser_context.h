@@ -243,6 +243,9 @@ public:
         /// Used while parsing Dhcp4/*-database/type.
         DATABASE_TYPE,
 
+        /// Used while parsing Dhcp4/*-database/on-fail.
+        DATABASE_ON_FAIL,
+
         /// Used while parsing Dhcp4/host-reservation-identifiers.
         HOST_RESERVATION_IDENTIFIERS,
 

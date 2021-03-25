@@ -309,8 +309,10 @@
                 // Connection maximum reconnect tries.
                 "max-reconnect-tries": 3,
 
-                // Disable DHCP on database connection loss.
-                "disable-service-on-db-loss": true,
+                // Action to take when connection recovery fails.
+                // Supported values: stop-retry-exit, serve-retry-exit,
+                // serve-retry-continue
+                "on-fail": "stop-retry-exit",
 
                 // Connection connect timeout.
                 "connect-timeout": 100,

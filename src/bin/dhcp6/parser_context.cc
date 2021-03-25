@@ -171,6 +171,8 @@ Parser6Context::contextName()
         return ("hosts-database");
     case DATABASE_TYPE:
         return ("database-type");
+    case DATABASE_ON_FAIL:
+        return ("database-on-fail");
     case MAC_SOURCES:
         return ("mac-sources");
     case HOST_RESERVATION_IDENTIFIERS:

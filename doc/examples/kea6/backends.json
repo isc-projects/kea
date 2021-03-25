@@ -42,7 +42,7 @@
 //      "password": "secret1",
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
-//      "disable-service-on-db-loss": true,
+//      "on-fail": "stop-retry-exit",
 //      "connect-timeout": 3
 //  },
 
@@ -62,7 +62,7 @@
 //      "password": "secret1",
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
-//      "disable-service-on-db-loss": true,
+//      "on-fail": "stop-retry-exit",
 //      "connect-timeout": 3
 //  },
 

@@ -1269,13 +1269,16 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
 
-    // If reconnect isn't enabled log it, initiate a shutdown and return false.
+    // If reconnect isn't enabled log it, initiate a shutdown if needed and
+    // return false.
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
             .arg(db_reconnect_ctl->retryInterval());
-        shutdownServer(EXIT_FAILURE);
+        if (db_reconnect_ctl->exitOnFailure()) {
+            shutdownServer(EXIT_FAILURE);
+        }
         return (false);
     }
 
@@ -1313,7 +1316,9 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_FAILED)
             .arg(db_reconnect_ctl->maxRetries());
 
-    shutdownServer(EXIT_FAILURE);
+    if (db_reconnect_ctl->exitOnFailure()) {
+        shutdownServer(EXIT_FAILURE);
+    }
 
     return (true);
 }

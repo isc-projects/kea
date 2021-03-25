@@ -79,7 +79,10 @@ using namespace std;
   CONTACT_POINTS "contact-points"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
-  DISABLE_SERVICE_ON_DB_LOSS "disable-service-on-db-loss"
+  ON_FAIL "on-fail"
+  STOP_RETRY_EXIT "stop-retry-exit"
+  SERVE_RETRY_EXIT "serve-retry-exit"
+  SERVE_RETRY_CONTINUE "serve-retry-continue"
   KEYSPACE "keyspace"
   CONSISTENCY "consistency"
   SERIAL_CONSISTENCY "serial-consistency"
@@ -276,6 +279,7 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> db_type
+%type <ElementPtr> on_fail_mode
 %type <ElementPtr> hr_mode
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
@@ -863,7 +867,7 @@ database_map_param: database_type
                   | contact_points
                   | max_reconnect_tries
                   | reconnect_wait_time
-                  | disable_service_on_db_loss
+                  | on_fail
                   | request_timeout
                   | tcp_keepalive
                   | tcp_nodelay
@@ -960,11 +964,18 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
-disable_service_on_db_loss: DISABLE_SERVICE_ON_DB_LOSS COLON BOOLEAN {
-    ctx.unique("disable-service-on-db-loss", ctx.loc2pos(@1));
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("disable-service-on-db-loss", n);
+on_fail: ON_FAIL {
+    ctx.unique("on-fail", ctx.loc2pos(@1));
+    ctx.enter(ctx.DATABASE_ON_FAIL);
+} COLON on_fail_mode {
+    ctx.stack_.back()->set("on-fail", $4);
+    ctx.leave();
 };
+
+on_fail_mode: STOP_RETRY_EXIT { $$ = ElementPtr(new StringElement("stop-retry-exit", ctx.loc2pos(@1))); }
+            | SERVE_RETRY_EXIT { $$ = ElementPtr(new StringElement("serve-retry-exit", ctx.loc2pos(@1))); }
+            | SERVE_RETRY_CONTINUE { $$ = ElementPtr(new StringElement("serve-retry-continue", ctx.loc2pos(@1))); }
+            ;
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.unique("max-row-errors", ctx.loc2pos(@1));

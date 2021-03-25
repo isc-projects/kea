@@ -76,6 +76,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Type of action to take on connection loss.
+enum class OnFailAction {
+    STOP_RETRY_EXIT,
+    SERVE_RETRY_EXIT,
+    SERVE_RETRY_CONTINUE
+};
+
 /// @brief Warehouses DB reconnect control values
 ///
 /// When a DatabaseConnection loses connectivity to its backend, it
@@ -91,18 +98,13 @@ public:
     /// @param timer_name timer associated to this object.
     /// @param max_retries maximum number of reconnect attempts to make.
     /// @param retry_interval amount of time to between reconnect attempts.
-    /// @param connection_recovery enable or disable the connection recovery
-    /// mechanism.
-    /// @param alter_service_state enable or disable changing service state on
-    /// connection loss and connection recovery.
+    /// @param action which should be taken on connection loss.
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
-                 bool connection_recovery, bool alter_service_state) :
+                 OnFailAction action) :
           backend_type_(backend_type), timer_name_(timer_name),
           max_retries_(max_retries), retries_left_(max_retries),
-          retry_interval_(retry_interval),
-          connection_recovery_(connection_recovery),
-          alter_service_state_(alter_service_state) {}
+          retry_interval_(retry_interval), action_(action) {}
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
@@ -144,17 +146,30 @@ public:
         retries_left_ = max_retries_;
     }
 
-    /// @brief Return the flag which indicates if the connection loss should
-    /// affect the service.
+    /// @brief Return true if the connection loss should affect the service,
+    /// false otherwise
     bool alterServiceState() {
-        return (alter_service_state_);
+        return (action_ == OnFailAction::STOP_RETRY_EXIT);
     }
 
-    /// @brief Return the flag which indicates if the connection recovery
-    /// mechanism is enabled.
-    bool connectionRecovery() {
-        return (connection_recovery_);
+    /// @brief Return true if the connection recovery mechanism should exit on
+    /// failure, false otherwise.
+    bool exitOnFailure() {
+        return ((action_ == OnFailAction::STOP_RETRY_EXIT) ||
+                (action_ == OnFailAction::SERVE_RETRY_EXIT));
     }
+
+    /// @brief Convert action to string.
+    ///
+    /// @param action The action type to be converted to text.
+    /// @return The text representation of the action type.
+    static std::string onFailActionToText(OnFailAction action);
+
+    /// @brief Convert string to action.
+    ///
+    /// @param text The text to be converted to action type.
+    /// @return The action type corresponding to the text representation.
+    static OnFailAction onFailActionFromText(const std::string& text);
 
 private:
 
@@ -173,13 +188,8 @@ private:
     /// @brief The amount of time to wait between reconnect attempts.
     unsigned int retry_interval_;
 
-    /// @brief Flag which indicates if the connection recovery mechanism is
-    /// enabled.
-    bool connection_recovery_;
-
-    /// @brief Flag which indicates if the connection loss should affect the
-    /// service.
-    bool alter_service_state_;
+    /// @brief Action to take on connection loss.
+    OnFailAction action_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl

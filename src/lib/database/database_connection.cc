@@ -175,31 +175,16 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of 0;
     }
 
-    bool disable_dhcp = true;
+    OnFailAction action = OnFailAction::STOP_RETRY_EXIT;
     try {
-        parm_str = getParameter("disable-service-on-db-loss");
-        disable_dhcp = boost::lexical_cast<bool>(parm_str);
+        parm_str = getParameter("on-fail");
+        action = ReconnectCtl::onFailActionFromText(parm_str);
     } catch (...) {
-        // Wasn't specified so we'll use default of true;
-    }
-
-    bool connection_recovery = true;
-    try {
-        parm_str = getParameter("enable-connection-recovery");
-        connection_recovery = boost::lexical_cast<bool>(parm_str);
-    } catch (...) {
-        // Wasn't specified so we'll use default of true;
-    }
-
-    // If "enable-connection-recovery" is 'false' the recovery mechanism must
-    // be disabled
-    if (!connection_recovery) {
-        callback_ = DbCallback();
+        // Wasn't specified so we'll use default of "stop-retry-exit";
     }
 
     reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval, connection_recovery,
-                                                      disable_dhcp);
+                                                      interval, action);
 }
 
 bool
@@ -256,8 +241,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             }
         } else if ((keyword == "persist") ||
                    (keyword == "tcp-nodelay") ||
-                   (keyword == "readonly") ||
-                   (keyword == "disable-service-on-db-loss")) {
+                   (keyword == "readonly")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
@@ -274,7 +258,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "contact-points") ||
                    (keyword == "consistency") ||
                    (keyword == "serial-consistency") ||
-                   (keyword == "keyspace")) {
+                   (keyword == "keyspace") ||
+                   (keyword == "on-fail")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
             LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
@@ -289,6 +274,32 @@ isc::data::ElementPtr
 DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
     ParameterMap params = parse(dbaccess);
     return (toElement(params));
+}
+
+std::string
+ReconnectCtl::onFailActionToText(OnFailAction action) {
+    switch (action) {
+    case OnFailAction::STOP_RETRY_EXIT:
+        return ("stop-retry-exit");
+    case OnFailAction::SERVE_RETRY_EXIT:
+        return ("server-retry-exit");
+    case OnFailAction::SERVE_RETRY_CONTINUE:
+        return ("serve-retry-continue");
+    }
+    return ("invalid-action-type");
+}
+
+OnFailAction
+ReconnectCtl::onFailActionFromText(const std::string& text) {
+    if (text == "stop-retry-exit") {
+        return (OnFailAction::STOP_RETRY_EXIT);
+    } else if (text == "serve-retry-exit") {
+        return (OnFailAction::SERVE_RETRY_EXIT);
+    } else if (text == "server-retry-continue") {
+        return (OnFailAction::SERVE_RETRY_CONTINUE);
+    } else {
+        isc_throw(InvalidType, "Invalid on fail action: " << text);
+    }
 }
 
 DbCallback DatabaseConnection::db_lost_callback_ = 0;
