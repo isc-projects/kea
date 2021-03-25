@@ -72,7 +72,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
         .arg(HAConfig::PeerConfig::roleToString(config->getThisServerConfig()->getRole()));
 }
 
-HaService::~HaService() {
+HAService::~HAService() {
     network_state_->reset(NetworkState::Origin::HA_COMMAND);
 }
 
