@@ -17,7 +17,8 @@ class CARequest:
      - http_host - hostname of the CA
      - http_port - TCP port of the CA
      - ca - False or CA file or path
-     - cert - False or cert file or cert and key files pair
+     - cert - False or cert file
+     - key - False or private key file
      - command - specifies the command to send (e.g. list-commands)
      - service - specifies service that is target for the command (e.g. dhcp4)
      - timeout - timeout (in ms)
@@ -32,6 +33,7 @@ class CARequest:
     http_port = 0
     ca = False
     cert = False
+    key = False
     command = ''
     service = ''
     timeout = 0

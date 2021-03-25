@@ -68,6 +68,8 @@ Other switches are:
 
 -  ``-v`` - prints the software version.
 
+See :ref:`shell-tls` for TLS/HTTPS support new command line arguments.
+
 Once started, the shell reads parameters for the command from standard
 input, which are expected to be in JSON format. When all have been read,
 the shell establishes a connection with the CA using HTTP, sends the
@@ -133,27 +135,28 @@ tool.
    When using this tool with basic HTTP authentication please keep in
    mind that command line arguments are not hidden to local users.
 
+.. _shell-tls:
+
 TLS support
 ===========
 
-.. _shell-tls:
+Starting with 1.9.6, kea-shell supports HTTPS connections. The TLS/HTTPS
+support requires python 3. Additional command line arguments are:
 
-Starting with 1.9.6, kea-shell supports HTTPS connections. The TLS requires
-python 3. Additional command line options are:
-
--  ``--ca`` Specifies the file or directory name of the Cerfication Authority.
-   If not specified HTTPS is not used.
+- ``--ca`` Specifies the file or directory name of the Certification
+   Authority.  If not specified HTTPS is not used.
 
 -  ``--cert`` Specifies the file name of the user end-entity public key
    certificate. If specified, the file name of the user key must be specified
    too.
 
--  ``--key`` Specifies the file name of the user key file. If specified the file
-   name of the user certificate must be specified too. Note that
-   encrypted key file are not supported.
+- ``--key`` Specifies the file name of the user key file. If specified
+   the file name of the user certificate must be specified too. Note
+   that encrypted key files are not supported.
 
-For example, a basic HTTPS request to get a list of commands could look like this:
+For example, a basic HTTPS request to get a list of commands could
+look like this:
 
 .. code-block:: console
 
-   $ kea-shell --host 127.0.0.1 --port 8000 --ca ./kea-ca.crt  list-commands
+   $ kea-shell --host 127.0.0.1 --port 8000 --ca ./kea-ca.crt list-commands

@@ -53,7 +53,7 @@ The arguments are as follows:
    parameter is useful only with a reverse proxy.
 
 ``--ca``
-   Specifies the file or directory name of the Cerfication Authority.
+   Specifies the file or directory name of the Certification Authority.
    If not specified HTTPS is not used.
 
 ``--cert``
@@ -63,7 +63,7 @@ The arguments are as follows:
 ``--key``
    Specifies the file name of the user key file. If specified the file
    name of the user certificate must be specified too. Note that
-   encrypted key file are not supported.
+   encrypted key files are not supported.
 
 ``--auth-user``
    Specifies the user id for basic HTTP authentication. If not specified

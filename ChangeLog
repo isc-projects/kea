@@ -1,3 +1,10 @@
+1877.	[func]		fdupont
+	kea-shell supports TLS/HTTPS. This is limited to the python 3
+	version i.e. if kea-shell is configured with python 2 it still
+	works in 1.9.6 but raises an error if a new TLS/HTTPS argument
+	is specified.
+	(Gitlab #1663)
+
 1876.	[doc]		fdupont
 	Added documentation for TLS/HTTPS support.
 	(Gitlab #1664)

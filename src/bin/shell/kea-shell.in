@@ -72,10 +72,10 @@ def shell_body():
                         '(default: "" i.e. do not use HTTPS)')
     parser.add_argument('--cert', type=str, default='',
                         help='File name of the client certificate '
-                        '(default: "" i.e. do not use HTTPS)')
+                        '(default: "")')
     parser.add_argument('--key', type=str, default='',
                         help='File name of the client private key '
-                        '(default: "" i.e. do not use HTTPS)')
+                        '(default: "")')
     parser.add_argument('--timeout', type=int, default='10',
                         help='Timeout (in seconds) when attempting to '
                         'connect to CA (default: 10)')
@@ -113,7 +113,9 @@ def shell_body():
         print("--cert and --key must be used together")
         sys.exit(1)
     if cmd_args.cert:
-        params.cert = (cmd_args.cert, cmd_args.key)
+        params.cert = cmd_args.cert
+    if cmd_args.key:
+        params.key = cmd_args.key
     if cmd_args.auth_user != '':
         user = cmd_args.auth_user
         password = cmd_args.auth_password
