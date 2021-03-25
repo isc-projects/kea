@@ -306,7 +306,8 @@ CloseHATest::runPartners() {
     }
 }
 
-// Test that checks the library can be close in a DHCPv4 server.
+// Test that checks that the library can be loaded and unloaded from a DHCPv4
+// active server.
 // 1. Creates one active and 2 backup servers.
 // 2. Check that the network state is reset and updated to expected state when
 // creating the HAService by calling the dhcp4_srv_configured hook.
@@ -449,7 +450,8 @@ TEST_F(CloseHATest, close4) {
     wthread_->stop();
 }
 
-// Test that checks the library can be close in a DHCPv4 server.
+// Test that checks that the library can be loaded and unloaded from a DHCPv4
+// backup server.
 // 1. Creates one active and 2 backup servers.
 // 2. Check that the network state is reset and updated to expected state when
 // creating the HAService by calling the dhcp4_srv_configured hook.
@@ -537,7 +539,8 @@ TEST_F(CloseHATest, close4Backup) {
     wthread_->stop();
 }
 
-// Test that checks the library can be close in a DHCPv6 server.
+// Test that checks that the library can be loaded and unloaded from a DHCPv6
+// active server.
 // 1. Creates one active and 2 backup servers.
 // 2. Check that the network state is reset and updated to expected state when
 // creating the HAService by calling the dhcp6_srv_configured hook.
@@ -680,7 +683,8 @@ TEST_F(CloseHATest, close6) {
     wthread_->stop();
 }
 
-// Test that checks the library can be close in a DHCPv6 server.
+// Test that checks that the library can be loaded and unloaded from a DHCPv6
+// backup server.
 // 1. Creates one active and 2 backup servers.
 // 2. Check that the network state is reset and updated to expected state when
 // creating the HAService by calling the dhcp6_srv_configured hook.
