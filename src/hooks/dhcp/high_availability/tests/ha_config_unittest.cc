@@ -604,6 +604,61 @@ TEST_F(HAConfigTest, invalidURL) {
         " https scheme for server server2");
 }
 
+// URL hostname must be an addree.
+TEST_F(HAConfigTest, badURLName) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://localhost:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "bad url 'http://localhost:8080/': "
+        "Failed to convert string to address 'localhost': "
+        "Invalid argument for server server2");
+}
+
+// URL HTTPS scheme is not (yet) supported.
+TEST_F(HAConfigTest, badURLHttps) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"https://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "bad url 'https://127.0.0.1:8080/': "
+        "https scheme is not supported for server server2");
+}
+
 // Only certain roles are allowed.
 TEST_F(HAConfigTest, unsupportedRole) {
     testInvalidConfig(

@@ -6,12 +6,15 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
 #include <exceptions/exceptions.h>
 #include <util/strutil.h>
 #include <ha_config.h>
 #include <ha_service_states.h>
 #include <sstream>
 
+using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::util;
 
@@ -272,6 +275,25 @@ HAConfig::validate() const {
         if (!p->second->getUrl().isValid()) {
             isc_throw(HAConfigValidationError, "invalid URL: "
                       << p->second->getUrl().getErrorMessage()
+                      << " for server " << p->second->getName());
+        }
+
+        // The hostname must be an address, not a name.
+        IOAddress addr("::");
+        try {
+            addr = IOAddress(p->second->getUrl().getHostname());
+        } catch (const IOError& ex) {
+            isc_throw(HAConfigValidationError, "bad url '"
+                      << p->second->getUrl().toText()
+                      << "': " << ex.what()
+                      << " for server " << p->second->getName());
+        }
+
+        // Refuse HTTPS scheme as TLS is not (yet) supported.
+        if (p->second->getUrl().getScheme() == Url::HTTPS) {
+            isc_throw(HAConfigValidationError, "bad url '"
+                      << p->second->getUrl().toText()
+                      << "': https scheme is not supported"
                       << " for server " << p->second->getName());
         }
 
