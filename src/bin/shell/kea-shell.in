@@ -113,8 +113,12 @@ def shell_body():
         print("--cert and --key must be used together")
         sys.exit(1)
     if cmd_args.cert:
+        if cmd_args.ca == '':
+            print("--cert and --key with HTTPS disabled (no --ca)")
+            sys.exit(1)
         params.cert = cmd_args.cert
     if cmd_args.key:
+        # HTTPS check already done for the cert
         params.key = cmd_args.key
     if cmd_args.auth_user != '':
         user = cmd_args.auth_user
