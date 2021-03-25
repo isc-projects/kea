@@ -49,7 +49,7 @@ where:
    If not specified or specified as the empty string authentication is
    not used.
 
-- ``--auth-password`` specifies the password for basic HTTP authentication.
+-  ``--auth-password`` specifies the password for basic HTTP authentication.
    If not specified but the user id is specified an empty password is used.
 
 -  ``--timeout seconds`` specifies the timeout (in seconds) for the
@@ -132,3 +132,28 @@ tool.
 
    When using this tool with basic HTTP authentication please keep in
    mind that command line arguments are not hidden to local users.
+
+TLS support
+===========
+
+.. _shell-tls:
+
+Starting with 1.9.6, kea-shell supports HTTPS connections. The TLS requires
+python 3. Additional command line options are:
+
+-  ``--ca`` Specifies the file or directory name of the Cerfication Authority.
+   If not specified HTTPS is not used.
+
+-  ``--cert`` Specifies the file name of the user end-entity public key
+   certificate. If specified, the file name of the user key must be specified
+   too.
+
+-  ``--key`` Specifies the file name of the user key file. If specified the file
+   name of the user certificate must be specified too. Note that
+   encrypted key file are not supported.
+
+For example, a basic HTTPS request to get a list of commands could look like this:
+
+.. code-block:: console
+
+   $ kea-shell --host 127.0.0.1 --port 8000 --ca ./kea-ca.crt  list-commands
