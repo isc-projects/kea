@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,8 +16,8 @@ def send_to_control_agent(params):
     """ Sends a request to Control Agent, receives a response and returns it."""
 
     # No HTTP support.
-    if params.ca or params.cert:
-        raise NotImplementedError('Python2 kea-shell does not support HTTPS')
+    if params.scheme == 'https':
+        raise NotImplementedError('python2 kea-shell does not support HTTPS')
 
     # Establish HTTP connection first.
     conn = httplib.HTTPConnection(params.http_host, params.http_port)

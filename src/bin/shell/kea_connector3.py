@@ -31,11 +31,11 @@ def send_to_control_agent(params):
     capath = None
     cafile = None
     if params.ca:
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         if os.path.isdir(params.ca):
             capath = params.ca
         else:
             cafile = params.ca
-        ssl_ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ssl_ctx.load_verify_locations(cafile, capath)
         if params.cert:
             ssl_ctx.load_cert_chain(params.cert[0], params.cert[1])
