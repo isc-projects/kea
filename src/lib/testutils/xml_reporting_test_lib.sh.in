@@ -256,30 +256,7 @@ _add_test_suite() {
 # matches googletest's time in the XML attribute time="..." which is seconds
 # rounded to 3 decimals.
 _calculate() {
-    local expression=${1}
-    local result
-    result=$(echo "
-
-        # 3 decimals maximum
-        scale = 3
-
-        # Store result.
-        result = ${expression}
-
-        # If subunit, print the leading zero.
-        if (0 < result && result < 1) print 0
-
-        # Print the result.
-        print result
-
-    " | bc)
-
-    # Delete trailing zeros and trailing dot.
-    if printf '%s' "${result}" | grep -F '.' > /dev/null 2>&1; then
-        result=$(printf '%s' "${result}" | sed 's/0*$//g' | sed 's/\.$//g')
-    fi
-
-    printf '%s' "${result}"
+    awk "BEGIN{print ${*}}";
 }
 
 # Create XML with header and top-level tags if the file doesn't exist.
