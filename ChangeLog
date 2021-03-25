@@ -1,3 +1,11 @@
+1878.	[bug]		razvan
+	Request enabling DHCP service when the HA hooks library is
+	unloaded. It may remain disabled if it had been disabled outside
+	of the HA hooks library. Prior to this change, if the HA hooks
+	library disabled the DHCP service it would always remain disabled
+	after the hooks library was unloaded.
+	(Gitlab #1697)
+
 1877.	[func]		fdupont
 	kea-shell supports TLS/HTTPS. This is limited to the python 3
 	version i.e. if kea-shell is configured with python 2 it still
