@@ -186,7 +186,7 @@ const char* values[] = {
     "DHCP6_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP6_DB_BACKEND_STARTED", "lease database started (type: %1, name: %2)",
     "DHCP6_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
-    "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP6_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
     "DHCP6_DB_RECONNECT_SUCCEEDED", "database connection recovered.",

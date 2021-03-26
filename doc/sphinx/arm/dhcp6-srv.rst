@@ -492,14 +492,18 @@ The possible values are:
 
 .. note::
 
-   Automatic reconnection to database backends is configured
-   individually per backend. This allows users to tailor the recovery
-   parameters to each backend they use. We do suggest that users enable it
-   either for all backends or none, so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is
-   disabled will result in the server shutting itself down. This
-   includes cases when the lease database backend and the hosts database
-   backend are connected to the same database instance.
+   Automatic reconnection to database backends is configured individually per
+   backend. This allows users to tailor the recovery parameters to each backend
+   they use. We do suggest that users enable it either for all backends or none,
+   so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is disabled will result
+   (if configured) in the server shutting itself down. This includes cases when
+   the lease database backend and the hosts database backend are connected to
+   the same database instance.
+   It is highly recommended to not change the ``stop-retry-exit`` default
+   setting for the lease manager as it is critical for the connection to be
+   active while processing DHCP traffic. Change this only if the server is used
+   exclusively as a configuration tool.
 
 ..
 
@@ -671,14 +675,14 @@ The possible values are:
 
 .. note::
 
-   Automatic reconnection to database backends is configured
-   individually per backend. This allows users to tailor the recovery
-   parameters to each backend they use. We do suggest that users enable it
-   either for all backends or none, so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is
-   disabled will result in the server shutting itself down. This
-   includes cases when the lease database backend and the hosts database
-   backend are connected to the same database instance.
+   Automatic reconnection to database backends is configured individually per
+   backend. This allows users to tailor the recovery parameters to each backend
+   they use. We do suggest that users enable it either for all backends or none,
+   so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is disabled will result
+   (if configured) in the server shutting itself down. This includes cases when
+   the lease database backend and the hosts database backend are connected to
+   the same database instance.
 
 Finally, the credentials of the account under which the server will
 access the database should be set:

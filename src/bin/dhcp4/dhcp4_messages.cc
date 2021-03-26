@@ -193,7 +193,7 @@ const char* values[] = {
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
     "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP4_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
-    "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!",
+    "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCP4_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP4_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
     "DHCP4_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
