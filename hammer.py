@@ -1767,7 +1767,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     if 'install' in features:
         # install packages
         execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
-        execute('sudo rpm -i ~/rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
+        execute('sudo rpm -i %s/RPMS/x86_64/*rpm' % rpm_root_path, check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
         services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
