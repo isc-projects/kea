@@ -1029,7 +1029,7 @@ def _configure_pgsql(system, features):
         execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
 
     if system == 'freebsd':
-        # redirecting output from start script to /dev/null otherwise the postgresql rc.d script hangs
+        # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
         # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
         execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
@@ -1903,7 +1903,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         raise NotImplementedError('no implementation for %s' % system)
 
     if system in ['ubuntu', 'debian']:
-        # TODO: /tmp/workspace/kea-dev/pkg/kea-src/
+        # NOTE: /tmp/workspace/kea-dev/pkg/kea-src/
         execute('mv kea-src/isc-kea_* %s' % pkgs_dir)
         execute('mv kea-src/*deb %s' % pkgs_dir)
     elif system in ['fedora', 'centos', 'rhel']:
@@ -2396,7 +2396,7 @@ def prepare_system_cmd(args):
                               ccache_dir)
 
 def upload_to_repo(args, pkgs_dir):
-   # NOTE: note the differences (if any) system/revision vs args.system/revision
+   # NOTE: note the differences (if any) in system/revision vs args.system/revision
    system, revision = get_system_revision()
    repo_url = _get_full_repo_url(args.repository_url, system, revision, args.pkg_version)
    assert repo_url is not None
@@ -2419,14 +2419,8 @@ def upload_to_repo(args, pkgs_dir):
 
    upload_cmd += ' ' + repo_url
 
-   # args.system all, system = debian
-   # debug: fn = isc-kea-premium-radius_1.9.4-isc0016620210121003948_amd64.deb
-   # upload cmd: curl -v --netrc -f https://packages.aws.isc.org/repository/kea-1.9-debian-10-ci/
-   # fp: kea-pkg/isc-kea-premium-radius_1.9.4-isc0016620210121003948_amd64.deb
-
    for fn in os.listdir(pkgs_dir):
        log.info("debug: fn = %s", fn)
-       # isc-kea-premium-host-cmds-dbgsym_1.9.4-isc0016520210120235224_amd64.deb
        if file_ext and not fn.endswith(file_ext):
            log.info('File extension "%s" is not supported by upload_to_repo function', file_ext)
            continue
