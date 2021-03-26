@@ -1,3 +1,10 @@
+1881.	[func]		fdupont
+	Moved errors about URLs using names (vs addresses) or
+	https (vs http) scheme in High Availability hook
+	configuration from connection opening time to
+	configuration time.
+	(Gitlab #1758)
+
 1880.	[build]		fdupont
 	TLS support is now reported by configure in the
 	cryptographic backend section.
