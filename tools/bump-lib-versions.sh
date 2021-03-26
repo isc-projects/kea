@@ -137,7 +137,12 @@ fi
 sed -i "s/^\/\/ Version .* of the hooks framework, set for Kea .*/\/\/ Version ${new_hooks_version} of the hooks framework, set for $(echo "${new_release_tag}" | tr '-' ' ')/" "src/lib/hooks/hooks.h"
 sed -i "s/KEA_HOOKS_VERSION.*/KEA_HOOKS_VERSION = ${new_hooks_version};/" "src/lib/hooks/hooks.h"
 
-for lib in $(git diff "${old_release_tag}" --name-only src/lib/ | cut -d '/' -f 3 | sort -uV); do
+for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3 | sort -uV); do
+  # Skip over files and anything that is not a directory.
+  if test ! -d "src/lib/${lib}"; then
+    continue
+  fi
+
   old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
   new_version=$((old_version + increment))
   if ! ${is_new_tag_stable_release}; then
