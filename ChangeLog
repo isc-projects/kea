@@ -1,3 +1,9 @@
+1879.	[func]		fdupont
+	The Control Agent now supports TLS/HTTPS. This works with OpenSSL
+        and there are known problems with Botan, which will be addressed
+        in the future.
+        (Gitlab #1662)
+
 1878.	[bug]		razvan
 	Request enabling DHCP service when the HA hooks library is
 	unloaded. It may remain disabled if it had been disabled outside
