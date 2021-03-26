@@ -282,7 +282,7 @@ ReconnectCtl::onFailActionToText(OnFailAction action) {
     case OnFailAction::STOP_RETRY_EXIT:
         return ("stop-retry-exit");
     case OnFailAction::SERVE_RETRY_EXIT:
-        return ("server-retry-exit");
+        return ("serve-retry-exit");
     case OnFailAction::SERVE_RETRY_CONTINUE:
         return ("serve-retry-continue");
     }
@@ -295,7 +295,7 @@ ReconnectCtl::onFailActionFromText(const std::string& text) {
         return (OnFailAction::STOP_RETRY_EXIT);
     } else if (text == "serve-retry-exit") {
         return (OnFailAction::SERVE_RETRY_EXIT);
-    } else if (text == "server-retry-continue") {
+    } else if (text == "serve-retry-continue") {
         return (OnFailAction::SERVE_RETRY_CONTINUE);
     } else {
         isc_throw(BadValue, "Invalid action on connection loss: " << text);

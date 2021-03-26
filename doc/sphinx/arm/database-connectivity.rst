@@ -33,15 +33,18 @@ option and continues to respond to commands.
 
 The ``on-fail`` parameter configures the actions the server should take when a
 connection is lost. It can have one of the following values:
-``stop-retry-exit`` which indicates that the server should stop the service
-while it tries to recover the connection and exit if recovery is not successful
-after ``max-reconnect-tries``.
-``serve-retry-exit`` which indicates that the server should not stop the service
-while it tries to recover the connection and exit if recovery is not successful
-after ``max-reconnect-tries``.
-``serve-retry-continue`` which indicates that the server should not stop the
-service while it tries to recover the connection and not exit if recovery is not
-successful after ``max-reconnect-tries``.
+
+-  ``stop-retry-exit`` which indicates that the server should stop the service
+   while it tries to recover the connection and exit if recovery is not
+   successful after ``max-reconnect-tries``.
+
+-  ``serve-retry-exit`` which indicates that the server should not stop the
+   service while it tries to recover the connection and exit if recovery is not
+   successful after ``max-reconnect-tries``.
+
+-  ``serve-retry-continue`` which indicates that the server should not stop the
+   service while it tries to recover the connection and not exit if recovery is
+   not successful after ``max-reconnect-tries``.
 
 If connectivity to all backends is restored, the server returns to normal
 operations. If the connection can not be restored and the server is configured

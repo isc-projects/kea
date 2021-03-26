@@ -477,13 +477,18 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
    "Dhcp6": { "lease-database": { "on-fail" : "stop-retry-exit", ... }, ... }
 
-The default value for MySQL and PostgreSQL is ``stop-retry-exit``, which
-disables the dhcp service while trying to automatically recover lost connections
-and shuts down the server on failure after ``max-reconnect-tries``.
-Other valid values are: ``serve-retry-exit`` which does not disable the dhcp
-service but shuts down the server on failure after ``max-reconnect-tries`` and
-``serve-retry-continue`` which does not disable the dhcp service and does not
-shut down the server even if the recovery fails.
+The possible values are:
+
+-  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+   recover lost connections. Shuts down the server on failure after exhausting
+   ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
+
+-  ``serve-retry-exit`` DHCP service continues while trying to automatically
+   recover lost connections. Shuts down the server on failure after exhausting
+   ``max-reconnect-tries``.
+
+-  ``serve-retry-continue`` DHCP service continues and does not shut down the
+   server even if the recovery fails.
 
 .. note::
 
@@ -651,13 +656,18 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
    "Dhcp6": { "hosts-database": { "on-fail" : "stop-retry-exit", ... }, ... }
 
-The default value for MySQL and PostgreSQL is ``stop-retry-exit``, which
-disables the dhcp service while trying to automatically recover lost connections
-and shuts down the server on failure after ``max-reconnect-tries``.
-Other valid values are: ``serve-retry-exit`` which does not disable the dhcp
-service but shuts down the server on failure after ``max-reconnect-tries`` and
-``serve-retry-continue`` which does not disable the dhcp service and does not
-shut down the server even if the recovery fails.
+The possible values are:
+
+-  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+   recover lost connections. Shuts down the server on failure after exhausting
+   ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
+
+-  ``serve-retry-exit`` DHCP service continues while trying to automatically
+   recover lost connections. Shuts down the server on failure after exhausting
+   ``max-reconnect-tries``.
+
+-  ``serve-retry-continue`` DHCP service continues and does not shut down the
+   server even if the recovery fails.
 
 .. note::
 
