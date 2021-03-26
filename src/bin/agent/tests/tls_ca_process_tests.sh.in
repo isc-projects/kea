@@ -28,9 +28,6 @@ LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
 # Path to the test certificate authority directory.
 TEST_CA_DIR="@abs_top_builddir@/src/lib/asiolink/testutils/ca"
 
-# Control Agent configuration to be stored in the configuration file.
-# todo: use actual configuration once we support it.
-
 # Configuration without TLS.
 CONFIG_NONE="{
     \"Control-agent\":

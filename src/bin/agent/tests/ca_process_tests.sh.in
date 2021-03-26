@@ -25,7 +25,6 @@ CFG_FILE="@abs_top_builddir@/src/bin/agent/tests/test_config.json"
 LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
 
 # Control Agent configuration to be stored in the configuration file.
-# todo: use actual configuration once we support it.
 CONFIG="{
     \"Control-agent\":
     {
