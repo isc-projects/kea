@@ -215,7 +215,7 @@ list_commands_test() {
     test_finish 0
 }
 
-list_commands_test "No TLS" "${CONFIG_NONE}" "" \
+list_commands_test "NoTLS" "${CONFIG_NONE}" "" \
 "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 list_commands_test "Encrypted" "${CONFIG_NOCR}" \
 "--ca ${TEST_CA_DIR}/kea-ca.crt" \
