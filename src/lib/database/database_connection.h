@@ -152,8 +152,8 @@ public:
         return (action_ == OnFailAction::STOP_RETRY_EXIT);
     }
 
-    /// @brief Return true if the connection recovery mechanism should exit on
-    /// failure, false otherwise.
+    /// @brief Return true if the connection recovery mechanism should shut down
+    /// the server on failure, false otherwise.
     bool exitOnFailure() {
         return ((action_ == OnFailAction::STOP_RETRY_EXIT) ||
                 (action_ == OnFailAction::SERVE_RETRY_EXIT));
