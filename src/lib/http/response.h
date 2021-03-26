@@ -158,12 +158,6 @@ public:
     /// @brief Returns HTTP response body as string.
     virtual std::string getBody() const;
 
-    /// @brief Retrieves JSON body.
-    ///
-    /// @return Pointer to the root element of the JSON structure.
-    /// @throw HttpResponseJsonError if an error occurred.
-    data::ConstElementPtr getBodyAsJson() const;
-
     /// @brief Retrieves a single JSON element.
     ///
     /// The element must be at top level of the JSON structure.
