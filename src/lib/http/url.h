@@ -83,6 +83,10 @@ public:
     /// @brief Returns textual representation of the URL.
     std::string toText() const;
 
+    const std::string& rawUrl() const {
+        return (url_);
+    }
+
 private:
 
     /// @brief Returns boolean value indicating if the URL is valid.
