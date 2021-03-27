@@ -1,3 +1,8 @@
+1880.	[build]		fdupont
+	TLS support is now reported by configure in the
+	cryptographic backend section.
+	(Gitlab #1774)
+
 1879.	[func]		fdupont
 	The Control Agent now supports TLS/HTTPS. This works with
 	OpenSSL and there are known problems with Botan, which will
@@ -6,10 +11,10 @@
 
 1878.	[bug]		razvan
 	Request enabling DHCP service when the HA hooks library is
-	unloaded. It may remain disabled if it had been disabled outside
-	of the HA hooks library. Prior to this change, if the HA hooks
-	library disabled the DHCP service it would always remain disabled
-	after the hooks library was unloaded.
+	unloaded. It may remain disabled if it had been disabled
+	outside of the HA hooks library. Prior to this change, if
+	the HA hooks library disabled the DHCP service it would
+	always remain disabled 	after the hooks library was unloaded.
 	(Gitlab #1697)
 
 1877.	[func]		fdupont
@@ -34,8 +39,8 @@
 	(Gitlab #1726)
 
 1873.	[func]		andrei
-	kea-admin now accepts the -P|--port parameter with a custom port
-	used to connect to the database.
+	kea-admin now accepts the -P|--port parameter with a custom
+	port used to connect to the database.
 	(Gitlab #1674)
 
 Kea 1.9.5 (development) released on Feb 24, 2021
