@@ -1403,14 +1403,18 @@ AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
 
+# Decide if TLS is supported.
+tls_support=no
+if test "x${CRYPTO_NAME}" = "xOpenSSL"; then
+  tls_support=yes
+fi
+
 # Decide if the control agent TLS test can work.
 ca_tls_test=no
 if test "x$enable_shell" != "xno"; then
-  major="${PYTHON_VERSION:0:1}"
+  major=` echo $PYTHON_VERSION | cut -d '.' -f 1`
   if test "x$major" = "x3"; then
-    if test "x${CRYPTO_NAME}" = "xOpenSSL"; then
-      ca_tls_test=yes
-    fi
+    ca_tls_test="$tls_support"
   else
     AC_MSG_WARN("python2 kea-shell does not support HTTPS")
   fi
@@ -2003,6 +2007,7 @@ ${CRYPTO_NAME}:
   CRYPTO_INCLUDES: ${CRYPTO_INCLUDES}
   CRYPTO_LDFLAGS:  ${CRYPTO_LDFLAGS}
   CRYPTO_LIBS:     ${CRYPTO_LIBS}
+  TLS support:     $tls_support
 
 ${DISABLED_CRYPTO}: no
 
