@@ -6,6 +6,11 @@
 
 $NAMESPACE isc::http
 
+% HTTPS_REQUEST_RECEIVE_START start receiving request from %1
+This debug message is issued when the server starts receiving new request
+over the established connection. The argument specifies the address
+of the remote endpoint.
+
 % HTTP_BAD_CLIENT_REQUEST_RECEIVED bad request received from %1: %2
 This debug message is issued when an HTTP client sends malformed request to
 the server. This includes HTTP requests using unexpected content types,
@@ -85,13 +90,13 @@ This is an error message emitted when the close connection callback
 registered on the connection failed unexpectedly.  This is a programmatic
 error that should be submitted as a bug.
 
+% HTTP_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
+
 % HTTP_CONNECTION_HANDSHAKE_START start TLS handshake with %1 with timeout %2
 This debug message is issued when the server starts the TLS handshake
 with the remote endpoint. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
-
-% HTTP_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
 
 % HTTP_CONNECTION_SHUTDOWN shutting down HTTP connection from %1
 This debug message is issued when one of the HTTP connections is shut down.
@@ -159,8 +164,3 @@ first argument specifies an address of the remote endpoint to which the
 response is being sent. The second argument provides a response in the
 textual form. The response is truncated by the logger if it is too large
 to be printed.
-
-% HTTPS_REQUEST_RECEIVE_START start receiving request from %1
-This debug message is issued when the server starts receiving new request
-over the established connection. The argument specifies the address
-of the remote endpoint.

@@ -1,3 +1,5 @@
+Kea 1.9.6 (development) released on March 31, 2021
+
 1882.	[func]		razvan
 	Implemented database connection recovery for forensic logging.
 	To achieve this, the "on-fail" connection parameter has been added

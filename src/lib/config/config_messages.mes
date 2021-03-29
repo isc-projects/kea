@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,21 @@ open and this command is issued, the daemon will not be able to process it.
 This debug message indicates that the daemon started supporting specified
 command. The handler for the registered command includes a parameter holding
 entire command to be processed.
+
+% COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3
+This debug messages is issued when an HTTP listener has been started to
+accept connections from Command API clients through which commands can be
+received and responses sent.  Arguments detail the number of threads
+that the listener is using, and the address and port at which it
+is listening.
+
+% COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for %1:%2 stopped.
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has completed shutdown.
+
+% COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for %1:%2
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has begun to shutdown.
 
 % COMMAND_PROCESS_ERROR1 Error while processing command: %1
 This warning message indicates that the server encountered an error while
@@ -122,19 +137,3 @@ This error message is issued when the command manager was unable to set
 ready status after scheduling asynchronous send. This is programmatic error
 that should be reported. The command manager may or may not continue
 to operate correctly.
-
-% COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3
-This debug messages is issued when an HTTP listener has been started to
-accept connections from Command API clients through which commands can be
-received and responses sent.  Arguments detail the number of threads
-that the listener is using, and the address and port at which it
-is listening.
-
-% COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for %1:%2
-This debug messages is issued when the Command HTTP listener, listening
-at the given address and port, has begun to shutdown.
-
-% COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for %1:%2 stopped.
-This debug messages is issued when the Command HTTP listener, listening
-at the given address and port, has completed shutdown.
-
