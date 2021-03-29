@@ -2,13 +2,10 @@ SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
 SHTESTS += ca_process_tests.sh
-if CA_TLS_TEST
-SHTESTS += tls_ca_process_tests.sh
-endif
 
-noinst_SCRIPTS = ca_process_tests.sh tls_ca_process_tests.sh
+noinst_SCRIPTS = ca_process_tests.sh
 
-EXTRA_DIST  = ca_process_tests.sh.in tls_ca_process_tests.sh.in
+EXTRA_DIST  = ca_process_tests.sh.in
 EXTRA_DIST += testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS

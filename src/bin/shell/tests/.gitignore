@@ -1,3 +1,4 @@
 /basic_auth_tests.sh
 /shell_process_tests.sh
 /shell_unittest.py
+/tls_ca_process_tests.sh

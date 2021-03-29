@@ -1412,7 +1412,7 @@ fi
 # Decide if the control agent TLS test can work.
 ca_tls_test=no
 if test "x$enable_shell" != "xno"; then
-  major=` echo $PYTHON_VERSION | cut -d '.' -f 1`
+  major=$(echo $PYTHON_VERSION | cut -d '.' -f 1)
   if test "x$major" = "x3"; then
     ca_tls_test="$tls_support"
   else
@@ -1637,8 +1637,6 @@ AC_CONFIG_FILES([src/bin/agent/tests/ca_process_tests.sh],
 AC_CONFIG_FILES([src/bin/agent/tests/test_basic_auth_libraries.h])
 AC_CONFIG_FILES([src/bin/agent/tests/test_callout_libraries.h])
 AC_CONFIG_FILES([src/bin/agent/tests/test_data_files_config.h])
-AC_CONFIG_FILES([src/bin/agent/tests/tls_ca_process_tests.sh],
-                [chmod +x src/bin/agent/tests/tls_ca_process_tests.sh])
 AC_CONFIG_FILES([src/bin/d2/Makefile])
 AC_CONFIG_FILES([src/bin/d2/tests/Makefile])
 AC_CONFIG_FILES([src/bin/d2/tests/d2_process_tests.sh],
@@ -1687,6 +1685,8 @@ AC_CONFIG_FILES([src/bin/shell/tests/shell_process_tests.sh],
                 [chmod +x src/bin/shell/tests/shell_process_tests.sh])
 AC_CONFIG_FILES([src/bin/shell/tests/shell_unittest.py],
                 [chmod +x src/bin/shell/tests/shell_unittest.py])
+AC_CONFIG_FILES([src/bin/shell/tests/tls_ca_process_tests.sh],
+                [chmod +x src/bin/shell/tests/tls_ca_process_tests.sh])
 AC_CONFIG_FILES([src/hooks/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/Makefile])
