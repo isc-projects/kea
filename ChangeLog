@@ -1,22 +1,21 @@
 Kea 1.9.6 (development) released on March 31, 2021
 
 1883.	[build]		andrei
-        Library version numbers bumped for Kea 1.9.6 development
-        version.
-        (Gitlab #1772)
+    Bump library versions for Kea 1.9.6 release.
+    (Gitlab #1772)
 
 1882.	[func]		razvan
 	Implemented database connection recovery for forensic logging.
-	To achieve this, the "on-fail" connection parameter has been added
-	to control the action performed on connection loss.
-	The supported values are "stop-retry-exit", "serve-retry-exit" and
-	"serve-retry-continue". They indicate if the server should disable
-	the service on connection loss ("stop-retry-exit") or if on recovery
-	failure the server should shut down ("stop-retry-exit" and
-	"serve-retry-exit") or continue ("serve-retry-continue").
-	The default value used (if not configured) is "stop-retry-exit" for
-	lease, host and config backends, and "serve-retry-continue" for
-	forensic log.
+	To achieve this, the "on-fail" connection parameter has been
+	added to control the action performed on connection loss.
+	The supported values are "stop-retry-exit", "serve-retry-exit"
+	and "serve-retry-continue". They indicate if the server should
+	disable the service on connection loss ("stop-retry-exit") or if
+	on recovery failure the server should shut down
+	("stop-retry-exit" and "serve-retry-exit") or continue
+	("serve-retry-continue"). The default value used (if not
+	configured) is "stop-retry-exit" for lease, host and config
+	backends, and "serve-retry-continue" for forensic log.
 	(Gitlab #1621)
 
 1881.	[func]		fdupont
