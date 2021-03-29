@@ -26,7 +26,7 @@ CFG_FILE="@abs_top_builddir@/src/bin/agent/tests/test_config.json"
 LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
 
 # Path to the test certificate authority directory.
-TEST_CA_DIR="@abs_top_builddir@/src/lib/asiolink/testutils/ca"
+TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"
 
 # Configuration without TLS.
 CONFIG_NONE="{
