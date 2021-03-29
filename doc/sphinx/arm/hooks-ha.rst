@@ -771,7 +771,7 @@ user id "foo" with the password "bar".
    version 1.9.6 the ``https`` schema requires a TLS setup which
    should be implemented for Kea version 1.9.7. The hostname part
    must be an IPv4 address or an IPv6 address between square
-   brackets, e.g. ``http://[2001::db8::1]:8080/``. Names are not
+   brackets, e.g. ``http://[2001:db8::1]:8080/``. Names are not
    accepted.
 
 .. _ha-load-balancing-advanced-config:
