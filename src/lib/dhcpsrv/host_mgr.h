@@ -87,7 +87,8 @@ public:
     /// host backend. It holds "keyword=value" pairs, separated by spaces.
     /// @param if_unusable flag which indicates if the host data source should
     /// be deleted only if it is unusable.
-    /// @return true when found and removed, false when not found.
+    /// @return false when not removed because it is not found or because it is
+    /// still usable (if_unusable is true), true otherwise.
     static bool delBackend(const std::string& db_type,
                            const std::string& access,
                            bool if_unusable = false);

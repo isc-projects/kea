@@ -3370,7 +3370,7 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
         std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
@@ -3416,7 +3416,16 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our recovered connectivity callback should have been invoked.
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -3437,7 +3446,7 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
         std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
@@ -3479,8 +3488,17 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our failed connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 }

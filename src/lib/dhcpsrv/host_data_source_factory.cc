@@ -106,11 +106,16 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
                            bool if_unusable) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
+    bool deleted = false;
+    if (if_unusable) {
+        deleted = true;
+    }
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type || (*it)->getParameters() != parameters) {
             continue;
         }
         if (if_unusable && (!(*it)->isUnusable())) {
+            deleted = false;
             continue;
         }
         LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
@@ -118,7 +123,7 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
         sources.erase(it);
         return (true);
     }
-    return (false);
+    return (deleted);
 }
 
 bool

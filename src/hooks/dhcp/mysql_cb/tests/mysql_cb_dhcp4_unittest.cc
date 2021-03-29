@@ -4423,13 +4423,13 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedCallback() {
 
     access = invalidConnectString();
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
     const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
-    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access, true);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -4440,7 +4440,7 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedCallback() {
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost and failed connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
@@ -4461,7 +4461,7 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCa
         std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
@@ -4488,13 +4488,13 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCa
     access = invalidConnectString();
     access += extra;
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
     const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
-    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access, true);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -4505,7 +4505,7 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCa
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -4521,7 +4521,16 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCa
 
     io_service_->poll();
 
-    // Our recovered connectivity callback should have been invoked.
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -4542,7 +4551,7 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallb
         std::bind(&MySqlConfigBackendDHCPv4DbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
@@ -4569,13 +4578,13 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallb
     access = invalidConnectString();
     access += extra;
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
     const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
-    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access + " ", true);
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access, true);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -4586,7 +4595,7 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallb
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -4595,8 +4604,17 @@ MySqlConfigBackendDHCPv4DbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallb
 
     io_service_->poll();
 
-    // Our recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 }

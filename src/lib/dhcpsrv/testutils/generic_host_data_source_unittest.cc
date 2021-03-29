@@ -2779,9 +2779,9 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
 
     access = invalidConnectString();
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
-    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -2792,7 +2792,7 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost and failed connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
@@ -2813,7 +2813,7 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
         std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
@@ -2841,9 +2841,9 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     access = invalidConnectString();
     access += extra;
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
-    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -2854,7 +2854,7 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -2868,7 +2868,16 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our recovered connectivity callback should have been invoked.
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -2889,7 +2898,7 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
         std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectString();
-    std::string extra = " max-reconnect-tries=2 reconnect-wait-time=1";
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
@@ -2917,9 +2926,9 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     access = invalidConnectString();
     access += extra;
     CfgMgr::instance().clear();
-    // by adding an extra space in the access string will cause the DatabaseConnection::parse
-    // to throw resulting in failure to recreate the manager
-    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access + " ");
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
@@ -2930,7 +2939,7 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our lost and recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(1, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
@@ -2939,8 +2948,17 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
 
     io_service_->poll();
 
-    // Our recovered connectivity callback should have been invoked.
+    // Our lost connectivity callback should have been invoked.
     EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 }

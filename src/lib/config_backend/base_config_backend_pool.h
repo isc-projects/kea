@@ -84,24 +84,29 @@ public:
     /// key=value pairs.
     /// @param if_unusable Flag which indicates if the config backend should be
     /// deleted only if it is unusable.
+    /// @return false when not removed because it is not found or because it is
+    /// still usable (if_unusable is true), true otherwise.
     bool del(const std::string& db_type, const std::string& dbaccess,
              bool if_unusable) {
         isc::db::DatabaseConnection::ParameterMap parameters =
             isc::db::DatabaseConnection::parse(dbaccess);
-
+        bool deleted = false;
+        if (if_unusable) {
+            deleted = true;
+        }
         typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
-
         while (backend != backends_.end()) {
             if ((*backend)->getType() != db_type || (*backend)->getParameters() != parameters) {
                 ++backend;
             } else if (if_unusable && (!(*backend)->isUnusable())) {
+                deleted = false;
                 ++backend;
             } else {
                 backends_.erase(backend);
                 return (true);
             }
         }
-        return (false);
+        return (deleted);
     }
 
 protected:
