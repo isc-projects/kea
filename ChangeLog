@@ -1,5 +1,10 @@
 Kea 1.9.6 (development) released on March 31, 2021
 
+1883.	[build]		andrei
+        Library version numbers bumped for Kea 1.9.6 development
+        version.
+        (Gitlab #1772)
+
 1882.	[func]		razvan
 	Implemented database connection recovery for forensic logging.
 	To achieve this, the "on-fail" connection parameter has been added
