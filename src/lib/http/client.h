@@ -59,13 +59,13 @@ class HttpClientImpl;
 /// the next request in the queue for the particular URL will be initiated.
 ///
 /// Furthermore, the class supports two modes of operation: single-threaded
-/// and multi-threaded mode.  In single-threaded mode, all IO is driven by
+/// and multi-threaded mode. In single-threaded mode, all IO is driven by
 /// an external IOService passed into the class constructor, and ultimately
-/// only a single connection per URL can be open at any given time. 
+/// only a single connection per URL can be open at any given time.
 ///
-/// In multi-threaded mode, an internal thread pool, driven by a private
-/// IOService instance, is used to support multiple concurrent connections
-/// per URL. Currently the number of connections per URL is equal to the
+/// In multi-threaded mode an internal thread pool driven by a private
+/// IOService instance is used to support multiple concurrent connections
+/// per URL. Currently, the number of connections per URL is set to the
 /// number of threads in the thread pool.
 ///
 /// The client tests the persistent connection for usability before sending
@@ -136,8 +136,9 @@ public:
     ///
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
-    /// Currently this also sets the maximum number of concurrent connections
-    /// per URL.
+    /// A value greater than zero enables multi-threaded mode as sets the
+    /// maximum number of concurrent connections per URL.  A value of zero
+    /// (default) enables single-threaded mode with one connection per URL.
     explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0);
 
     /// @brief Destructor.
@@ -145,26 +146,26 @@ public:
 
     /// @brief Queues new asynchronous HTTP request for a given URL.
     ///
-    /// The client maintains an internal connection pool which manages lists 
-    /// of connections per URL. In single-threaded mode, each URL is limited 
-    /// to a single /connection.  In multi-threaded mode, each URL may have 
+    /// The client maintains an internal connection pool which manages lists
+    /// of connections per URL. In single-threaded mode, each URL is limited
+    /// to a single /connection.  In multi-threaded mode, each URL may have
     /// more than one open connection per URL, enabling the client to carry
     /// on multiple concurrent requests per URL.
     ///
     /// The client will search the pool for an open, idle connection for the
     /// given URL.  If there are no idle connections, the client will open
     /// a new connection up to the maximum number of connections allowed by the
-    /// thread mode.  If all possible connections are busy, the request is 
+    /// thread mode.  If all possible connections are busy, the request is
     /// pushed on to back of a URL-specific FIFO queue of pending requests.
     ///
     /// If however, there is an idle connection available than a new transaction
     /// for the request will be initiated immediately upon that connection.
     ///
     /// Note that when a connection completes a transaction, and its URL
-    /// queue is not empty, it will pop a pending request from the front of 
+    /// queue is not empty, it will pop a pending request from the front of
     /// the queue and begin a new transaction for that request. The net effect
     /// is that requests are always pulled from the front of the queue unless
-    /// the queue is empty. 
+    /// the queue is empty.
     ///
     /// The existing connection is tested before it is used for the new
     /// transaction by attempting to read (with message peeking) from
@@ -241,7 +242,11 @@ public:
                           const CloseHandler& close_callback =
                           CloseHandler());
 
-    /// @brief Closes all connections.
+    /// @brief Halts client-side IO activity.
+    ///
+    /// Closes all connections, discards any queued requests, and in
+    /// multi-threaded mode discards the thread-pool and the internal
+    /// IOService.
     void stop();
 
     /// @brief Closes a connection if it has an out-of-band socket event

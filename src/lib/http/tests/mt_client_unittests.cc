@@ -50,12 +50,15 @@ const long TEST_TIMEOUT = 10000;
 
 /// @brief Container request/response pair handled by a given thread.
 struct ClientRR {
+    /// @brief Thread id of the client thread handling the request as a string.
     std::string thread_id_;
+    /// @brief HTTP request submitted by the client thread.
     PostHttpRequestJsonPtr request_;
+    /// @brief HTTP response received by the client thread.
     HttpResponseJsonPtr response_;
 };
 
-/// @brief Pointer to a ClientRR.
+/// @brief Pointer to a ClientRR instance.
 typedef boost::shared_ptr<ClientRR> ClientRRPtr;
 
 /// @brief Implementation of the @ref HttpResponseCreator.
@@ -93,7 +96,7 @@ private:
 
     /// @brief Creates HTTP response.
     ///
-    /// This method generates a response with the JSON body copied 
+    /// This method generates a response with the JSON body copied
     /// from the request.
     ///
     /// @param request Pointer to the HTTP request.
@@ -103,7 +106,6 @@ private:
         // Request must always be JSON.
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
-
         if (!request_json) {
             return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
@@ -114,6 +116,7 @@ private:
             return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
+        // Create the response.
         HttpResponseJsonPtr response(new HttpResponseJson(request->getHttpVersion(),
                                                           HttpStatusCode::OK));
 
@@ -138,7 +141,7 @@ public:
     }
 };
 
-/// @brief Test fixture class for testing multi-threaded HTTP client.
+/// @brief Test fixture class for testing threading modes of HTTP client.
 class MtHttpClientTest : public ::testing::Test {
 public:
 
@@ -162,7 +165,7 @@ public:
         }
     }
 
-    /// @brief Callback function invoke upon test timeout.
+    /// @brief Callback function to invoke upon test timeout.
     ///
     /// It stops the IO service and reports test timeout.
     ///
@@ -174,11 +177,12 @@ public:
         io_service_.stop();
     }
 
-    /// @brief Runs test's IOService until the desired number of have been carried out.
+    /// @brief Runs the test's IOService until the desired number of rquests
+    /// have been carried out or the test fails.
     void runIOService() {
         // Loop until the clients are done, an error occurs, or the time runs out.
         while (clientRRs_.size() < num_requests_) {
-            // Always call restart() before we call run();
+            // Always call reset() before we call run();
             io_service_.get_io_service().reset();
 
             // Run until a client stops the service.
@@ -186,7 +190,7 @@ public:
         }
     }
 
-    /// @brief Creates HTTP request with JSON body.
+    /// @brief Creates an HTTP request with JSON body.
     ///
     /// It includes a JSON parameter with a specified value.
     ///
@@ -206,7 +210,6 @@ public:
         request->setBodyAsJson(body);
         try {
             request->finalize();
-
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "failed to create request: " << ex.what();
         }
@@ -224,7 +227,7 @@ public:
     /// threads in the pool.  At that point, the handler will unblock
     /// until all threads have finished preparing the response and are
     /// ready to return.   The handler will notify all pending threads
-    /// and invoke stop() on the test's main IO service thread. 
+    /// and invoke stop() on the test's main IO service thread.
     ///
     /// @param sequence value for the integer element, "sequence",
     /// to send in the request.
@@ -236,17 +239,16 @@ public:
 
         // Initiate request to the server.
         PostHttpRequestJsonPtr request_json = createRequest("sequence", sequence);
-
         HttpResponseJsonPtr response_json = boost::make_shared<HttpResponseJson>();
-
         ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
                                                   request_json, response_json,
             [this, request_json, response_json](const boost::system::error_code& ec,
-                   const HttpResponsePtr&/* response*/,
+                   const HttpResponsePtr&,
                    const std::string&) {
             // Bail on an error.
             ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
-
+           
+            // Wait here until we have a many in progress as we have threads. 
             {
                 std::unique_lock<std::mutex> lck(mutex_);
                 ++num_in_progress_;
@@ -272,6 +274,7 @@ public:
             clientRR->request_ = request_json;
             clientRR->response_ = response_json;
 
+            // Wait here until we have as many ready to finish as we have threads. 
             {
                 std::unique_lock<std::mutex> lck(mutex_);
                 num_finished_++;
@@ -297,7 +300,7 @@ public:
     /// @brief Starts one or more HTTP requests via HttpClient to a test listener.
     ///
     /// This function command creates a HttpClient with the given number
-    /// of threads. It initiates then given number of HTTP requests. Each 
+    /// of threads. It initiates then given number of HTTP requests. Each
     /// request carries a single integer element, "sequence" in its body.
     /// The response is expected to be this same element echoed back.
     /// Then it iteratively runs the test's IOService until all
@@ -319,16 +322,16 @@ public:
     /// @param num_requests
     void threadRequestAndReceive(size_t num_threads, size_t num_requests) {
         // First we makes sure the parameter rules apply.
-        ASSERT_TRUE((num_threads == 0) || (num_requests < num_threads) 
+        ASSERT_TRUE((num_threads == 0) || (num_requests < num_threads)
                     || (num_requests % num_threads == 0));
         num_threads_ = num_threads;
         num_requests_ = num_requests;
 
         // Make a factory
         factory_.reset(new TestHttpResponseCreatorFactory());
-    
+
         // Need to create a Listener on
-        listener_.reset(new HttpListener(io_service_, 
+        listener_.reset(new HttpListener(io_service_,
                                          IOAddress(SERVER_ADDRESS), SERVER_PORT,
                                          TlsContextPtr(), factory_,
                                          HttpListener::RequestTimeout(10000),
@@ -467,7 +470,7 @@ public:
 
     /// @brief Condition variable used make client threads wait
     /// until number of in-progress requests reaches the number
-    /// of client requests. 
+    /// of client requests.
     std::condition_variable cv_;
 };
 
