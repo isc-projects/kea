@@ -110,6 +110,7 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
     if (if_unusable) {
         deleted = true;
     }
+
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type || (*it)->getParameters() != parameters) {
             continue;

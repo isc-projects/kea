@@ -94,7 +94,9 @@ public:
         if (if_unusable) {
             deleted = true;
         }
+
         typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
+
         while (backend != backends_.end()) {
             if ((*backend)->getType() != db_type || (*backend)->getParameters() != parameters) {
                 ++backend;
