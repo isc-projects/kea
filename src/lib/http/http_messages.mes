@@ -91,6 +91,8 @@ registered on the connection failed unexpectedly.  This is a programmatic
 error that should be submitted as a bug.
 
 % HTTP_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
+This information message is issued when the TLS handshake failed at the
+server side. The client address and the error message are displayed.
 
 % HTTP_CONNECTION_HANDSHAKE_START start TLS handshake with %1 with timeout %2
 This debug message is issued when the server starts the TLS handshake
