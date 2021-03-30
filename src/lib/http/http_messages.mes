@@ -133,7 +133,7 @@ produced the data.
 This debug message is issued when the persistent HTTP connection is being
 closed as a result of being idle.
 
-% HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid_: %3
+% HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
 This warning message is issued when unexpected timeout occurred during the
 transaction. This is proven to occur when the system clock is moved manually
 or as a result of synchronization with a time server. Any ongoing transactions
