@@ -421,12 +421,13 @@ public:
         ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
         ASSERT_EQ(client_->getThreadCount(), num_threads);
 
-        // Start the requisite number of requests. b * l * t
+        // Start the requisite number of requests:
+        //   batch * listners * threads.
         int sequence = 0;
-        for (int b = 0; b < num_batches; ++b) {
-            for (int port_offset = 0; port_offset < num_listeners_; ++port_offset) {
-                for (int t = 0; t < effective_threads; ++t) {
-                    startRequest(++sequence, port_offset);
+        for (auto b = 0; b < num_batches; ++b) {
+            for (auto l = 0; l < num_listeners_; ++l) {
+                for (auto t = 0; t < effective_threads; ++t) {
+                    startRequest(++sequence, l);
                 }
             }
         }
