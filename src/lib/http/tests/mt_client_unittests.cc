@@ -39,9 +39,6 @@ namespace {
 /// @brief IP address to which HTTP service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
 
-/// @brief IPv6 address to which HTTP service is bound.
-const std::string IPV6_SERVER_ADDRESS = "::1";
-
 /// @brief Port number to which HTTP service is bound.
 const unsigned short SERVER_PORT = 18123;
 
@@ -62,8 +59,28 @@ struct ClientRR {
 typedef boost::shared_ptr<ClientRR> ClientRRPtr;
 
 /// @brief Implementation of the @ref HttpResponseCreator.
+///
+/// Creates a response to a request containing body content
+/// as follows:
+///
+/// ```
+///     { "sequence" : nnnn }
+/// ```
+///
+/// The response will include the sequence number of the request
+/// as well as the server port passed into the creator's constructor:
+///
+/// ```
+///     { "sequence": nnnn, "server-port": xxxx }
+/// ```
 class TestHttpResponseCreator : public HttpResponseCreator {
 public:
+    /// @brief Constructor
+    ///
+    /// @param server_port integer value the server listens upon, it is
+    /// echoed back in responses as "server-port".
+    TestHttpResponseCreator(uint16_t server_port)
+    : server_port_(server_port) { }
 
     /// @brief Create a new request.
     ///
@@ -74,7 +91,6 @@ public:
     }
 
 private:
-
     /// @brief Creates HTTP response.
     ///
     /// @param request Pointer to the HTTP request.
@@ -96,8 +112,13 @@ private:
 
     /// @brief Creates HTTP response.
     ///
-    /// This method generates a response with the JSON body copied
-    /// from the request.
+    /// Generates a response which echoes the requests sequence
+    /// number as well as the creator's server port value. Responses
+    /// should appear as follows:
+    ///
+    /// ```
+    ///     { "sequence" : nnnn }
+    /// ```
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP OK response with no content.
@@ -110,15 +131,19 @@ private:
             return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
-        // Request must always contain a body.
-        ConstElementPtr body = request_json->getBodyAsJson();
-        if (!body) {
+        // Extract the sequence from the request.
+        ConstElementPtr sequence = request_json->getJsonElement("sequence");
+        if (!sequence) {
             return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
         // Create the response.
         HttpResponseJsonPtr response(new HttpResponseJson(request->getHttpVersion(),
                                                           HttpStatusCode::OK));
+        // Construct the body.
+        ElementPtr body = Element::createMap();
+        body->set("server-port", Element::create(server_port_));
+        body->set("sequence", sequence);
 
         // Echo request body back in the response.
         response->setBodyAsJson(body);
@@ -126,6 +151,12 @@ private:
         response->finalize();
         return (response);
     }
+
+    /// @brief Port upon which this creator's server is listening.
+    ///
+    /// The intent is to use the value to determine which server generated
+    /// a given response.
+    uint16_t server_port_;
 };
 
 /// @brief Implementation of the test @ref HttpResponseCreatorFactory.
@@ -134,11 +165,23 @@ private:
 class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
 public:
 
+    /// @brief Constructor
+    ///
+    /// @param server_port listener port of the server.
+    TestHttpResponseCreatorFactory(uint16_t server_port)
+    : server_port_(server_port) {};
+
     /// @brief Creates @ref TestHttpResponseCreator instance.
     virtual HttpResponseCreatorPtr create() const {
-        HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator());
+        HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator(server_port_));
         return (response_creator);
     }
+
+    /// @brief Port upon which this factory's server is listening.
+    ///
+    /// The intent is to use the value to determine which server generated
+    /// a given response.
+    uint16_t server_port_;
 };
 
 /// @brief Test fixture class for testing threading modes of HTTP client.
@@ -147,8 +190,9 @@ public:
 
     /// @brief Constructor.
     MtHttpClientTest()
-        : io_service_(), client_(), listener_(), factory_(), test_timer_(io_service_),
-        num_threads_(0), num_requests_(0), num_in_progress_(0), num_finished_(0) {
+        : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
+        test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
+        expected_requests_(0), num_in_progress_(0), num_finished_(0) {
         test_timer_.setup(std::bind(&MtHttpClientTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         MultiThreadingMgr::instance().setMode(true);
@@ -156,12 +200,14 @@ public:
 
     /// @brief Destructor.
     ~MtHttpClientTest() {
+        // Stop the client.
         if (client_) {
             client_->stop();
         }
 
-        if (listener_) {
-            listener_->stop();
+        // Stop all listeners.
+        for (const auto& listener : listeners_) {
+            listener->stop();
         }
     }
 
@@ -177,11 +223,11 @@ public:
         io_service_.stop();
     }
 
-    /// @brief Runs the test's IOService until the desired number of rquests
+    /// @brief Runs the test's IOService until the desired number of requests
     /// have been carried out or the test fails.
     void runIOService() {
         // Loop until the clients are done, an error occurs, or the time runs out.
-        while (clientRRs_.size() < num_requests_) {
+        while (clientRRs_.size() < expected_requests_) {
             // Always call reset() before we call run();
             io_service_.get_io_service().reset();
 
@@ -203,7 +249,7 @@ public:
                                          const HttpVersion& version = HttpVersion(1, 1)) {
         // Create POST request with JSON body.
         PostHttpRequestJsonPtr request(new PostHttpRequestJson(HttpRequest::Method::HTTP_POST,
-                                                               "/", version));
+                                                               "/boo", version));
         // Body is a map with a specified parameter included.
         ElementPtr body = Element::createMap();
         body->set(parameter_name, Element::create(value));
@@ -224,17 +270,17 @@ public:
     ///
     /// The request completion handler will block each requesting thread
     /// until the number of in-progress threads reaches the number of
-    /// threads in the pool.  At that point, the handler will unblock
-    /// until all threads have finished preparing the response and are
-    /// ready to return.   The handler will notify all pending threads
+    /// threads in the pool. At that point, the handler will unblock
+    /// until all threads have finished preparing their response and are
+    /// ready to return. The handler will then notify all pending threads
     /// and invoke stop() on the test's main IO service thread.
     ///
     /// @param sequence value for the integer element, "sequence",
     /// to send in the request.
-    void startRequest(int sequence) {
+    void startRequest(int sequence, int port_offset = 0) {
         // Create the URL on which the server can be reached.
         std::stringstream ss;
-        ss << "http://" << SERVER_ADDRESS << ":" << SERVER_PORT;
+        ss << "http://" << SERVER_ADDRESS << ":" << (SERVER_PORT + port_offset);
         Url url(ss.str());
 
         // Initiate request to the server.
@@ -247,15 +293,17 @@ public:
                    const std::string&) {
             // Bail on an error.
             ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
-           
-            // Wait here until we have a many in progress as we have threads. 
+
+            // Wait here until we have as many in progress as we have threads.
             {
                 std::unique_lock<std::mutex> lck(mutex_);
                 ++num_in_progress_;
                 if (num_threads_ == 0 || num_in_progress_ == num_threads_) {
+                    // Everybody has one, let's go.
                     num_finished_ = 0;
                     cv_.notify_all();
                 } else {
+                    // I'm ready but others aren't wait here.
                     bool ret = cv_.wait_for(lck, std::chrono::seconds(10),
                                             [&]() { return (num_in_progress_ == num_threads_); });
                     if (!ret) {
@@ -274,10 +322,10 @@ public:
             clientRR->request_ = request_json;
             clientRR->response_ = response_json;
 
-            // Wait here until we have as many ready to finish as we have threads. 
+            // Wait here until we have as many ready to finish as we have threads.
             {
                 std::unique_lock<std::mutex> lck(mutex_);
-                num_finished_++;
+                ++num_finished_;
                 clientRRs_.push_back(clientRR);
                 if (num_threads_ == 0 || num_finished_ == num_threads_) {
                     // We're all done, notify the others and finish.
@@ -297,48 +345,65 @@ public:
         }));
     }
 
-    /// @brief Starts one or more HTTP requests via HttpClient to a test listener.
+    /// @brief Carries out HTTP requests via HttpClient to HTTP listener(s).
     ///
-    /// This function command creates a HttpClient with the given number
-    /// of threads. It initiates then given number of HTTP requests. Each
-    /// request carries a single integer element, "sequence" in its body.
-    /// The response is expected to be this same element echoed back.
+    /// This function creates one HttpClient with the given number
+    /// of threads and then the given number of HttpListeners. It then
+    /// initiates the given number of request batches where each batch
+    /// contains one request per thread per listener.
+    ///
     /// Then it iteratively runs the test's IOService until all
     /// the requests have been responded to, an error occurs, or the
     /// test times out.
     ///
-    /// It requires that the number of requests, when greater than the
-    /// number of threads, be a multiple of the number of threads.  The
-    /// requests completion handler is structured in such a way as to ensure
-    /// (we hope) that each client thread handles the same number of requests.
+    /// Each request carries a single integer element, "sequence", which
+    /// uniquely identifies the request. Each response is expected to
+    /// contain this value echoed back along with the listener's server
+    /// port number. Thus each response can be matched to it's request
+    /// and to the listener that handled the request.
     ///
-    /// @param num_threads - the number of threads the HttpClient
-    /// should use. A value of 0 puts the HttpClient in single-threaded mode.
-    /// @param num_requests - the number of requests that should be carried out.
-    /// Must be greater than 0. If it is greater than num_threads it must be a
-    /// multiple of num_threads.
+    /// After all requests have been conducted, the function verifies
+    /// that:
     ///
-    /// @param num_threads
-    /// @param num_requests
-    void threadRequestAndReceive(size_t num_threads, size_t num_requests) {
-        // First we makes sure the parameter rules apply.
-        ASSERT_TRUE((num_threads == 0) || (num_requests < num_threads)
-                    || (num_requests % num_threads == 0));
+    /// 1. The number of requests conducted is correct
+    /// 2. The sequence numbers in request-response pairs match
+    /// 3. Each client thread handled the same number of requests
+    /// 4. Each listener handled the same number of requests
+    ///
+    /// @param num_threads number of threads the HttpClient should use.
+    /// A value of 0 puts the HttpClient in single-threaded mode.
+    /// @param num_batches number of batches of requests that should be
+    /// conducted.
+    /// @param num_listeners number of HttpListeners to create.
+    void threadRequestAndReceive(size_t num_threads, size_t num_batches, size_t num_listeners = 1) {
+        ASSERT_TRUE(num_batches);
+        ASSERT_TRUE(num_listeners);
         num_threads_ = num_threads;
-        num_requests_ = num_requests;
+        num_batches_ = num_batches;
+        num_listeners_ = num_listeners;
 
-        // Make a factory
-        factory_.reset(new TestHttpResponseCreatorFactory());
+        // Client in ST is, in effect, 1 thread.
+        size_t effective_threads = (num_threads_ == 0 ? 1 : num_threads_);
 
-        // Need to create a Listener on
-        listener_.reset(new HttpListener(io_service_,
-                                         IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                                         TlsContextPtr(), factory_,
-                                         HttpListener::RequestTimeout(10000),
-                                         HttpListener::IdleTimeout(10000)));
+        // Calculate the expected number of requests.
+        expected_requests_ = (num_batches_ * num_listeners_  * effective_threads);
 
-        // Start the server.
-        ASSERT_NO_THROW(listener_->start());
+        for (auto i = 0; i < num_listeners_; ++i) {
+            // Make a factory
+            HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT+i));
+            factories_.push_back(factory);
+
+            // Need to create a Listener on
+            HttpListenerPtr listener(new HttpListener(io_service_,
+                                                      IOAddress(SERVER_ADDRESS), SERVER_PORT+i,
+                                                      TlsContextPtr(), factory,
+                                                      HttpListener::RequestTimeout(10000),
+                                                      HttpListener::IdleTimeout(10000)));
+            listeners_.push_back(listener);
+
+            // Start the server.
+            ASSERT_NO_THROW(listener->start());
+        }
 
         // Create an MT client with num_threads
         ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
@@ -356,19 +421,35 @@ public:
         ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
         ASSERT_EQ(client_->getThreadCount(), num_threads);
 
-        // Start the requisite number of requests.
-        for (int i = 0; i < num_requests_; ++i) {
-            startRequest(i + 1);
+        // Start the requisite number of requests. b * l * t
+        int sequence = 0;
+        for (int b = 0; b < num_batches; ++b) {
+            for (int port_offset = 0; port_offset < num_listeners_; ++port_offset) {
+                for (int t = 0; t < effective_threads; ++t) {
+                    startRequest(++sequence, port_offset);
+                }
+            }
         }
 
-        // Run test thread IOService.  This drives the listener's IO.
+        // Run test thread IOService. This drives the listener's IO.
         ASSERT_NO_THROW(runIOService());
 
+        // Client should stop without issue.
+        ASSERT_NO_THROW(client_->stop());
+
+        // Listeners should stop without issue.
+        for (const auto& listener : listeners_) {
+            ASSERT_NO_THROW(listener->stop());
+        }
+
         // We should have a response for each request.
-        ASSERT_EQ(clientRRs_.size(), num_requests_);
+        ASSERT_EQ(clientRRs_.size(), expected_requests_);
 
         // Create a map to track number of responses for each client thread.
         std::map<std::string, int> responses_per_thread;
+
+        // Create a map to track number of responses for each listener port.
+        std::map<uint16_t, int> responses_per_listener;
 
         // Get the stringified thread-id of the test's main thread.
         std::stringstream ss;
@@ -397,6 +478,10 @@ public:
             // Request and Response sequence numbers should match.
             ASSERT_EQ(request_sequence, response_sequence);
 
+            ConstElementPtr server_port_elem = clientRR->response_->getJsonElement("server-port");
+            ASSERT_TRUE(server_port_elem);
+            uint16_t server_port = server_port_elem->intValue();
+
             if (num_threads_ == 0) {
                 // For ST mode thread id should always be the main thread.
                 ASSERT_EQ(clientRR->thread_id_, main_thread_id);
@@ -406,33 +491,41 @@ public:
             }
 
             // Bump the response count for the given client thread-id.
-            auto it = responses_per_thread.find(clientRR->thread_id_);
-            if (it != responses_per_thread.end()) {
-                responses_per_thread[clientRR->thread_id_] = it->second + 1;
+            auto rit = responses_per_thread.find(clientRR->thread_id_);
+            if (rit != responses_per_thread.end()) {
+                responses_per_thread[clientRR->thread_id_] = rit->second + 1;
             } else {
                 responses_per_thread[clientRR->thread_id_] = 1;
             }
+
+            // Bump the response count for the given server port.
+            auto lit = responses_per_listener.find(server_port);
+            if (lit != responses_per_listener.end()) {
+                responses_per_listener[server_port] = lit->second + 1;
+            } else {
+                responses_per_listener[server_port] = 1;
+            }
         }
 
-        // Make sure we have the expected number of responding threads.
-        if (num_threads_ == 0) {
-            ASSERT_EQ(responses_per_thread.size(), 1);
-        } else {
-            size_t expected_thread_count = (num_requests_ < num_threads_ ?
-                                            num_requests_ : num_threads_);
-            ASSERT_EQ(responses_per_thread.size(), expected_thread_count);
-        }
+        // Make sure that all client threads received responses.
+        ASSERT_EQ(responses_per_thread.size(), num_threads ? num_threads : 1);
 
-        // Each thread-id ought to have received the same number of responses.
+        // Make sure that each client thread received the same number of responses.
         for (auto const& it : responses_per_thread) {
-            EXPECT_EQ(it.second, num_requests_ / responses_per_thread.size())
+            EXPECT_EQ(it.second, (num_batches_ * num_listeners_))
                       << "thread-id: " << it.first
                       << ", responses: " << it.second << std::endl;
         }
 
-        ASSERT_NO_THROW(client_->stop());
+        // Make sure that all listeners generated responses.
+        ASSERT_EQ(responses_per_listener.size(), num_listeners_);
 
-        ASSERT_NO_THROW(listener_->stop());
+        // Make sure Each listener generated the same number of responses.
+        for (auto const& it : responses_per_listener) {
+            EXPECT_EQ(it.second, (num_batches_ * effective_threads))
+                      << "server-port: " << it.first
+                      << ", responses: " << it.second << std::endl;
+        }
     }
 
     /// @brief IO service used in the tests.
@@ -447,14 +540,23 @@ public:
     /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
 
+    std::vector<HttpListenerPtr> listeners_;
+    std::vector<HttpResponseCreatorFactoryPtr> factories_;
+
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
 
     /// @brief Number of threads HttpClient should use.
     size_t num_threads_;
 
-    /// @brief Number of client requests to conduct.
-    size_t num_requests_;
+    /// @brief Number of request batches to conduct.
+    size_t num_batches_;
+
+    /// @brief Number of listeners to start.
+    size_t num_listeners_;
+
+    /// @brief Number of expected requests to carry out.
+    size_t expected_requests_;
 
     /// @brief Number of requests that are in progress.
     size_t num_in_progress_;
@@ -531,35 +633,59 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client.reset());
 }
 
-// Now we'll run some permutations of the number of client threads
-// and the number of client requests.
+// Now we'll run some permutations of the number of client threads,
+// requests, and listeners.
 
-// Single-threaded, three requests.
-TEST_F(MtHttpClientTest, zeroByThree) {
+// Single-threaded, three batches, one listener.
+TEST_F(MtHttpClientTest, zeroByThreeByOne) {
     size_t num_threads = 0; // Zero threads = ST mode.
-    size_t num_requests = 3;
-    threadRequestAndReceive(num_threads, num_requests);
+    size_t num_batches = 3;
+    threadRequestAndReceive(num_threads, num_batches);
 }
 
-// Multi-threaded with one thread, three requests.
-TEST_F(MtHttpClientTest, oneByThree) {
+// Single-threaded, three batches, three listeners.
+TEST_F(MtHttpClientTest, zeroByThreeByThree) {
+    size_t num_threads = 0; // Zero threads = ST mode.
+    size_t num_batches = 3;
+    size_t num_listeners= 3;
+    threadRequestAndReceive(num_threads, num_batches, num_listeners);
+}
+
+// Multi-threaded with one thread, three batches, one listener
+TEST_F(MtHttpClientTest, oneByThreeByOne) {
     size_t num_threads = 1;
-    size_t num_requests = 3;
-    threadRequestAndReceive(num_threads, num_requests);
+    size_t num_batches = 3;
+    threadRequestAndReceive(num_threads, num_batches);
 }
 
-// Multi-threaded with threads, three requests.
-TEST_F(MtHttpClientTest, threeByThree) {
+// Multi-threaded with three threads, three batches, one listener
+TEST_F(MtHttpClientTest, threeByThreeByOne) {
     size_t num_threads = 3;
-    size_t num_requests = 3;
-    threadRequestAndReceive(num_threads, num_requests);
+    size_t num_batches = 3;
+    threadRequestAndReceive(num_threads, num_batches);
 }
 
-// Multi-threaded with threads, nine requests.
-TEST_F(MtHttpClientTest, threeByNine) {
+// Multi-threaded with three threads, nine batches, one listener
+TEST_F(MtHttpClientTest, threeByNineByOne) {
     size_t num_threads = 3;
-    size_t num_requests = 9;
-    threadRequestAndReceive(num_threads, num_requests);
+    size_t num_batches = 9;
+    threadRequestAndReceive(num_threads, num_batches);
+}
+
+// Multi-threaded with two threads, four batches, two listeners
+TEST_F(MtHttpClientTest, twoByFourByTwo) {
+    size_t num_threads = 2;
+    size_t num_batches = 4;
+    size_t num_listeners = 2;
+    threadRequestAndReceive(num_threads, num_batches, num_listeners);
+}
+
+// Multi-threaded with four threads, four batches, two listeners
+TEST_F(MtHttpClientTest, fourByFourByTwo) {
+    size_t num_threads = 4;
+    size_t num_batches = 4;
+    size_t num_listeners = 2;
+    threadRequestAndReceive(num_threads, num_batches, num_listeners);
 }
 
 } // end of anonymous namespace
