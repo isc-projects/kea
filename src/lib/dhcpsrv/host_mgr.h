@@ -634,7 +634,7 @@ public:
 
     /// @brief Sets IO service to be used by the Host Manager.
     ///
-    /// @param IOService object, used for all ASIO operations.
+    /// @param io_service IOService object, used for all ASIO operations.
     static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
         io_service_ = io_service;
     }

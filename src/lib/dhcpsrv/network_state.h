@@ -100,7 +100,7 @@ public:
 
     /// @brief Disable the DHCP service state for respective transition origin.
     ///
-    /// @node If any of the user commands, HA internal commands or connection
+    /// @note If any of the user commands, HA internal commands or connection
     /// recovery processes disable the dhcp service, the service will remain
     /// disabled until all flags are cleared.
     ///
@@ -109,7 +109,7 @@ public:
 
     /// @brief Enable the DHCP service state for respective transition origin.
     ///
-    /// @node If any of the user commands, HA internal commands or connection
+    /// @note If any of the user commands, HA internal commands or connection
     /// recovery processes disable the dhcp service, the service will remain
     /// disabled until all flags are cleared.
     ///
@@ -121,7 +121,7 @@ public:
     /// Reset internal counters for a specific 'origin' after the server has
     /// been reconfigured or all the connections have been restored.
     ///
-    /// @param origin The origin for which the state flags need to be reset.
+    /// @param type The origin for which the state flags need to be reset.
     void reset(const NetworkState::Origin& type);
 
     /// @brief Enables DHCP service globally and for scopes which have been

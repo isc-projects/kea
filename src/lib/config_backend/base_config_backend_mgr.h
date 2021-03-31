@@ -195,9 +195,9 @@ public:
     /// deleted only if it is unusable.
     /// @return false when not removed because it is not found or because it is
     /// still usable (if_unusable is true), true otherwise.
-    bool delBackend(const std::string& db_type, const std::string& access,
+    bool delBackend(const std::string& db_type, const std::string& dbaccess,
                     bool if_unusable) {
-        return (pool_->del(db_type, access, if_unusable));
+        return (pool_->del(db_type, dbaccess, if_unusable));
     }
 
     /// @brief Returns underlying config backend pool.

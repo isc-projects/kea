@@ -45,7 +45,7 @@ public:
     /// @brief Sets appropriate disabled or enabled DHCP service state for the
     /// respective origin.
     ///
-    /// @node If any of the user commands, HA internal commands or connection
+    /// @note If any of the user commands, HA internal commands or connection
     /// recovery processes disable the dhcp service, the service will remain
     /// disabled until all flags are cleared.
     /// In the case of the connection recovery a reference count is used

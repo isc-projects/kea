@@ -44,12 +44,12 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 /// @brief Calculates TTL for a DNS resource record based on lease life time.
 ///
 /// Per RFC 4702 Section 5, the RR TTL should be calculated as:
-/// TTL = ((lease life time / 3)  < 10 minutes) ? 10 minutes : (lease life time / 3) 
+/// TTL = ((lease life time / 3)  < 10 minutes) ? 10 minutes : (lease life time / 3)
 ///
 /// This function may be expanded in the future to support configurable
 /// parameters.
 ///
-/// @param valid_lft valid life time of the lease
+/// @param lease_life_time valid life time of the lease
 ///
 /// @return the calculated TTL.
 uint32_t calculateDdnsTtl(uint32_t lease_life_time);
