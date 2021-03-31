@@ -170,7 +170,7 @@ instantiated with the appropriate value and put onto the expression vector.
    representation.
  - isc::dhcp::TokenInt32ToText -- represents the signed 32 bits integer in string
    representation.
-  - isc::dhcp::TokenUInt8ToText -- represents the unsigned 8 bits integer in string
+ - isc::dhcp::TokenUInt8ToText -- represents the unsigned 8 bits integer in string
    representation.
  - isc::dhcp::TokenUInt16ToText -- represents the unsigned 16 bits integer in string
    representation.
