@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,11 @@
 
 #include <functional>
 #include <iostream>
+#include <sstream>
 #include <list>
 #include <map>
 #include <mutex>
+#include <thread>
 
 namespace isc {
 namespace hooks {
@@ -60,26 +62,45 @@ namespace hooks {
 /// destruction of the parked objects.
 class ParkingLot {
 public:
-
     /// @brief Parks an object.
     ///
     /// @tparam Type of the parked object.
     /// @param parked_object object to be parked, e.g. pointer to a packet.
     /// @param unpark_callback callback function to be invoked when the object
     /// is unparked.
-    /// @throw InvalidOperation if the @c reference() wasn't called prior to
-    /// parking the object.
+    /// @param require_reference when true, the object to park must have an
+    /// existing reference in the parking lot. If false, the reference will be
+    /// be created.
+    /// @throw InvalidOperation if the @c reference() or @c park() have not been
+    /// called prior to parking the object.
+    /// @throw Unexpected if the reference count is not greater than zero. This
+    /// represents an invalid state and should not happen.
     template<typename T>
-    void park(T parked_object, std::function<void()> unpark_callback) {
+    void park(T parked_object, std::function<void()> unpark_callback,
+              bool require_reference = true) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
-        if (it == parking_.end() || it->refcount_ <= 0) {
-            isc_throw(InvalidOperation, "unable to park an object because"
-                      " reference count for this object hasn't been increased."
-                      " Call ParkingLot::reference() first");
-        } else {
-            it->update(parked_object, unpark_callback);
+        if (it == parking_.end()) {
+            if (require_reference) {
+                isc_throw(InvalidOperation, "unable to park an object because"
+                      " reference does not exist.");
+            }
+
+            // Not there add it.
+            ParkingInfo pinfo(parked_object, unpark_callback);
+            parking_[makeKey(parked_object)] = pinfo;
+            return;
         }
+
+        // Catch the case where it exists but refcount is invalid.
+        if (it->second.refcount_ <= 0) {
+            isc_throw(Unexpected, "unable to park an object because"
+                      " reference hasn't been increased.");
+        }
+
+        // Already there, bump the reference count and set the
+        // the callback.
+        it->second.update(parked_object, unpark_callback);
     }
 
     /// @brief Increases reference counter for the parked object.
@@ -95,11 +116,43 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it == parking_.end()) {
-            ParkingInfo parking_info(parked_object);
-            parking_.push_back(parking_info);
+            // It's not there, add it with a ref count of 1.
+            ParkingInfo pinfo(parked_object);
+            parking_[makeKey(parked_object)] = pinfo;
         } else {
-            ++it->refcount_;
+            // It's already there, bump the ref count.
+            ++it->second.refcount_;
         }
+    }
+
+    /// @brief Decreases the reference counter for the parked object.
+    ///
+    /// This method is called by the callouts to decrease the reference count
+    /// on a parked object.  If the reference count reaches zero the object
+    /// is removed from the parking lot without invoking its callback.
+    ///
+    /// @tparam Type of the parked object.
+    /// @param parked_object object which will be parked.
+    /// @return true if the object was found in the parking lot, false
+    /// otherwise.
+    template<typename T>
+    bool dereference(T parked_object) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = find(parked_object);
+        if (it == parking_.end()) {
+            // It's not there, nothing to do.
+            return (false);
+        }
+
+        // It's there decrement the ref count.
+        --it->second.refcount_;
+
+        if (it->second.refcount_ <= 0) {
+            // No more references, unpark it.
+            parking_.erase(it);
+        }
+
+        return (true);
     }
 
     /// @brief Signals that the object should be unparked.
@@ -128,14 +181,14 @@ public:
             }
 
             if (force) {
-                it->refcount_ = 0;
+                it->second.refcount_ = 0;
             } else {
-                --it->refcount_;
+                --it->second.refcount_;
             }
 
-            if (it->refcount_ <= 0) {
+            if (it->second.refcount_ <= 0) {
                 // Unpark the packet and set the callback.
-                cb = it->unpark_callback_;
+                cb = it->second.unpark_callback_;
                 parking_.erase(it);
             }
         }
@@ -172,13 +225,18 @@ public:
         return (false);
     }
 
-private:
+public:
 
     /// @brief Holds information about parked object.
     struct ParkingInfo {
         boost::any parked_object_;               ///< parked object
         std::function<void()> unpark_callback_;  ///< pointer to the callback
         int refcount_;                           ///< current reference count
+
+        /// @brief Constructor.
+        ///
+        /// Default constructor.
+        ParkingInfo() {};
 
         /// @brief Constructor.
         ///
@@ -201,8 +259,10 @@ private:
         }
     };
 
-    /// @brief Type of list of parked objects.
-    typedef std::list<ParkingInfo> ParkingInfoList;
+private:
+
+    /// @brief Map which stores parked objects.
+    typedef std::map<std::string, ParkingInfo> ParkingInfoList;
 
     /// @brief Type of the iterator in the list of parked objects.
     typedef ParkingInfoList::iterator ParkingInfoListIterator;
@@ -210,20 +270,27 @@ private:
     /// @brief Container holding parked objects for this parking lot.
     ParkingInfoList parking_;
 
+    /// @brief Construct the key for a given parked object.
+    ///
+    /// @tparam T parked object type.
+    /// @param parked_object object from which the key should be constructed.
+    /// @return string containing the object's key.
+    template<typename T>
+    std::string makeKey(T parked_object) {
+        std::stringstream ss;
+        ss << boost::any_cast<T>(parked_object);
+        return(ss.str());
+    }
+
     /// @brief Search for the information about the parked object.
     ///
     /// @tparam T parked object type.
-    /// @param parked_object object for which the information should be found.
-    /// @return Iterator pointing to the parked object, or @c parking_.end() if
-    /// no such object found.
+    /// @param parked_object object for which to search.
+    /// @return Iterator pointing to the parked object, or @c parking_.end()
+    /// if no such object found.
     template<typename T>
     ParkingInfoListIterator find(T parked_object) {
-        for (auto it = parking_.begin(); it != parking_.end(); ++it) {
-            if (boost::any_cast<T>(it->parked_object_) == parked_object) {
-                return (it);
-            }
-        }
-        return (parking_.end());
+        return(parking_.find(makeKey(parked_object)));
     }
 
     /// @brief The mutex to protect parking lot internal state.
@@ -268,6 +335,21 @@ public:
     template<typename T>
     void reference(T parked_object) {
         parking_lot_->reference(parked_object);
+    }
+
+    /// @brief Decreases the reference counter for the parked object.
+    ///
+    /// This method is called by the callouts to decrease the reference count
+    /// of a parked object. If the reference count reaches zero the object
+    /// is removed from the parking lot without invoking its callback.
+    ///
+    /// @tparam Type of the parked object.
+    /// @param parked_object object which will be parked.
+    /// @return true if the object was found in the parking lot, false
+    /// otherwise.
+    template<typename T>
+    bool dereference(T parked_object) {
+        return (parking_lot_->dereference(parked_object));
     }
 
     /// @brief Signals that the object should be unparked.

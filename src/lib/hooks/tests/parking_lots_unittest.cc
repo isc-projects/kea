@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <hooks/parking_lots.h>
 #include <boost/weak_ptr.hpp>
+#include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -16,6 +17,12 @@ using namespace isc;
 using namespace isc::hooks;
 
 namespace {
+
+// Defines a pointer to a string. The tests use shared pointers
+// as parked objects to ensure key matching works correctly with
+// them.  We're doing this because real-world use parked objects
+// are typically pointers to packets.
+typedef boost::shared_ptr<std::string> StringPtr;
 
 // Test that it is possible to create and retrieve parking lots for
 // specified hook points.
@@ -41,22 +48,34 @@ TEST(ParkingLotsTest, createGetParkingLot) {
     EXPECT_FALSE(parking_lot3 == parking_lot0);
 }
 
-// Test that object can't be parked if it hasn't been referenced on the
-// parking lot.
-TEST(ParkingLotTest, parkWithoutReferencing) {
+// Verify that parking objects obey require-reference parameter.
+TEST(ParkingLotsTest, parkRequireReferenceTests) {
     ParkingLot parking_lot;
-    std::string parked_object = "foo";
-    EXPECT_THROW(parking_lot.park(parked_object, [] {
-    }), InvalidOperation);
+
+    // Create object to park.
+    StringPtr parked_object(new std::string("foo"));
+
+    // Cannot park an unreferenced object by default
+    EXPECT_THROW(parking_lot.park(parked_object, [] {}),
+                 InvalidOperation);
+
+    // Cannot park an unreferenced object when require_reference
+    // parameter is true.
+    EXPECT_THROW(parking_lot.park(parked_object, [] {}, true),
+                 InvalidOperation);
+
+    // Can park an unreferenced object when require_reference
+    // parameter is false.
+    EXPECT_NO_THROW(parking_lot.park(parked_object, [] {}, false));
 }
 
 // Test that object can be parked and then unparked.
-TEST(ParkingLotTest, unpark) {
+TEST(ParkingLotsTest, unpark) {
     ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
     ParkingLotHandlePtr parking_lot_handle =
         boost::make_shared<ParkingLotHandle>(parking_lot);
 
-    std::string parked_object = "foo";
+    StringPtr parked_object(new std::string("foo"));
 
     // Reference the parked object twice because we're going to test that
     // reference counting works fine.
@@ -85,12 +104,12 @@ TEST(ParkingLotTest, unpark) {
 }
 
 // Test that parked object can be dropped.
-TEST(ParkingLotTest, drop) {
+TEST(ParkingLotsTest, drop) {
     ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
     ParkingLotHandlePtr parking_lot_handle =
         boost::make_shared<ParkingLotHandle>(parking_lot);
 
-    std::string parked_object = "foo";
+    StringPtr parked_object(new std::string("foo"));
 
     // Reference object twice to test that dropping the packet ignores
     // reference counting.
@@ -113,7 +132,7 @@ TEST(ParkingLotTest, drop) {
 }
 
 // Test that parked lots can be cleared.
-TEST(ParkingLotTest, clear) {
+TEST(ParkingLotsTest, clear) {
     ParkingLotsPtr parking_lots = boost::make_shared<ParkingLots>();
     ParkingLotPtr parking_lot = parking_lots->getParkingLotPtr(1234);
     ASSERT_TRUE(parking_lot);
@@ -151,6 +170,84 @@ TEST(ParkingLotTest, clear) {
 
     // The parked object was destroyed.
     EXPECT_TRUE(weak_parked_object.expired());
+}
+
+// Test that object can be parked and dereferenced.
+TEST(ParkingLotsTest, dereference) {
+    ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
+    ParkingLotHandlePtr parking_lot_handle =
+        boost::make_shared<ParkingLotHandle>(parking_lot);
+
+    StringPtr parked_object(new std::string("foo"));
+
+    // Reference the parked object twice because we're going to test that
+    // reference counting works fine.
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+
+    // This flag will indicate if the callback has been called.
+    bool unparked = false;
+    ASSERT_NO_THROW(parking_lot->park(parked_object, [&unparked] {
+        unparked = true;
+    }));
+
+    // Try to dereference the object. It should decrease the reference count,
+    // but not unpark the packet yet or invoke the callback.
+    EXPECT_TRUE(parking_lot_handle->dereference(parked_object));
+    EXPECT_FALSE(unparked);
+
+    // Try to dereference the object. It should decrease the reference count,
+    // but and unpark the packet but not invoke the callback.
+    EXPECT_TRUE(parking_lot_handle->dereference(parked_object));
+    EXPECT_FALSE(unparked);
+
+    // Try to dereference the object. It should return false indicating
+    // the object is no longer parked.
+    EXPECT_FALSE(parking_lot_handle->dereference(parked_object));
+    EXPECT_FALSE(unparked);
+}
+
+// Verifies that parked objects are correctly distinguished from
+// one another.
+TEST(ParkingLotsTest, multipleObjects) {
+    ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
+    ParkingLotHandlePtr parking_lot_handle =
+        boost::make_shared<ParkingLotHandle>(parking_lot);
+
+    // Create an object and park it.
+    StringPtr object_one(new std::string("one"));
+    int unparked_one = 0;
+    ASSERT_NO_THROW(parking_lot->park(object_one, [&unparked_one] {
+        ++unparked_one;
+    }, false));
+
+    // Create a second object and park it.
+    StringPtr object_two(new std::string("two"));
+    int unparked_two = 0;
+    ASSERT_NO_THROW(parking_lot->park(object_two, [&unparked_two] {
+        ++unparked_two;
+    }, false));
+
+    // Create a third object but don't park it.
+    StringPtr object_three(new std::string("three"));
+
+    // Try to unpark object_three. It should fail, and no callbacks
+    // should get invoked.
+    EXPECT_FALSE(parking_lot_handle->unpark(object_three));
+    EXPECT_EQ(unparked_one, 0);
+    EXPECT_EQ(unparked_two, 0);
+
+    // Unpark object one.  It should succeed and its callback should
+    // get invoked.
+    EXPECT_TRUE(parking_lot_handle->unpark(object_one));
+    EXPECT_EQ(unparked_one, 1);
+    EXPECT_EQ(unparked_two, 0);
+
+    // Unpark object two.  It should succeed and its callback should
+    // get invoked.
+    EXPECT_TRUE(parking_lot_handle->unpark(object_two));
+    EXPECT_EQ(unparked_one, 1);
+    EXPECT_EQ(unparked_two, 1);
 }
 
 }
