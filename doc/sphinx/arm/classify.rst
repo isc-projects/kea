@@ -467,39 +467,39 @@ Notes:
 
    .. table:: List of Conversion to Text Expressions
 
-   +-----------------------+-------------------------+------------------------+
-   | Name                  | Example                 | Description            |
-   +=======================+=========================+========================+
-   | AddressToText         | addrtotext (192.10.0.1) | Represent the 4 bytes  |
-   |                       | addrtotext (2003:db8::) | of an IPv4 address or  |
-   |                       |                         | the 16 bytes of an     |
-   |                       |                         | IPv6 address in human  |
-   |                       |                         | readable format        |
-   +-----------------------+-------------------------+------------------------+
-   | Int8ToText            | int8totext (128)        | Represents the 8 bits  |
-   |                       |                         | signed integer in text |
-   |                       |                         | format                 |
-   +-----------------------+-------------------------+------------------------+
-   | Int16ToText           | int16totext (128)       | Represents the 16 bits |
-   |                       |                         | signed integer in text |
-   |                       |                         | format                 |
-   +-----------------------+-------------------------+------------------------+
-   | Int32ToText           | int32totext (128)       | Represents the 32 bits |
-   |                       |                         | signed integer in text |
-   |                       |                         | format                 |
-   +-----------------------+-------------------------+------------------------+
-   | UInt8ToText           | uint8totext (128)       | Represents the 8 bits  |
-   |                       |                         | unsigned integer in    |
-   |                       |                         | text format            |
-   +-----------------------+-------------------------+------------------------+
-   | UInt16ToText          | uint16totext (128)      | Represents the 16 bits |
-   |                       |                         | unsigned integer in    |
-   |                       |                         | text format            |
-   +-----------------------+-------------------------+------------------------+
-   | UInt32ToText          | uint32totext (128)      | Represents the 32 bits |
-   |                       |                         | unsigned integer in    |
-   |                       |                         | text format            |
-   +-----------------------+-------------------------+------------------------+
+   +-----------------------+---------------------------+------------------------+
+   | Name                  | Example                   | Description            |
+   +=======================+===========================+========================+
+   | AddressToText         | addrtotext (192.10.0.1)   | Represent the 4 bytes  |
+   |                       | addrtotext (2003:db8::)   | of an IPv4 address or  |
+   |                       |                           | the 16 bytes of an     |
+   |                       |                           | IPv6 address in human  |
+   |                       |                           | readable format        |
+   +-----------------------+---------------------------+------------------------+
+   | Int8ToText            | int8totext (-1)           | Represents the 8 bits  |
+   |                       |                           | signed integer in text |
+   |                       |                           | format                 |
+   +-----------------------+---------------------------+------------------------+
+   | Int16ToText           | int16totext (-1)          | Represents the 16 bits |
+   |                       |                           | signed integer in text |
+   |                       |                           | format                 |
+   +-----------------------+---------------------------+------------------------+
+   | Int32ToText           | int32totext (-1)          | Represents the 32 bits |
+   |                       |                           | signed integer in text |
+   |                       |                           | format                 |
+   +-----------------------+---------------------------+------------------------+
+   | UInt8ToText           | uint8totext (255)         | Represents the 8 bits  |
+   |                       |                           | unsigned integer in    |
+   |                       |                           | text format            |
+   +-----------------------+---------------------------+------------------------+
+   | UInt16ToText          | uint16totext (65535)      | Represents the 16 bits |
+   |                       |                           | unsigned integer in    |
+   |                       |                           | text format            |
+   +-----------------------+---------------------------+------------------------+
+   | UInt32ToText          | uint32totext (4294967295) | Represents the 32 bits |
+   |                       |                           | unsigned integer in    |
+   |                       |                           | text format            |
+   +-----------------------+---------------------------+------------------------+
 
 Notes:
 
