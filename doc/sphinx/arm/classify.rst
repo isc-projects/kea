@@ -465,6 +465,52 @@ Notes:
    |                       |                         | e.g. 0a:1b:2c:3e      |
    +-----------------------+-------------------------+-----------------------+
 
+   .. table:: List of Conversion to Text Expressions
+
+   +-----------------------+-------------------------+------------------------+
+   | Name                  | Example                 | Description            |
+   +=======================+=========================+========================+
+   | AddressToText         | addrtotext (192.10.0.1) | Represent the 4 bytes  |
+   |                       | addrtotext (2003:db8::) | of an IPv4 address or  |
+   |                       |                         | the 16 bytes of an     |
+   |                       |                         | IPv6 address in human  |
+   |                       |                         | readable format        |
+   +-----------------------+-------------------------+------------------------+
+   | Int8ToText            | int8totext (128)        | Represents the 8 bits  |
+   |                       |                         | signed integer in text |
+   |                       |                         | format                 |
+   +-----------------------+-------------------------+------------------------+
+   | Int16ToText           | int16totext (128)       | Represents the 16 bits |
+   |                       |                         | signed integer in text |
+   |                       |                         | format                 |
+   +-----------------------+-------------------------+------------------------+
+   | Int32ToText           | int32totext (128)       | Represents the 32 bits |
+   |                       |                         | signed integer in text |
+   |                       |                         | format                 |
+   +-----------------------+-------------------------+------------------------+
+   | UInt8ToText           | uint8totext (128)       | Represents the 8 bits  |
+   |                       |                         | unsigned integer in    |
+   |                       |                         | text format            |
+   +-----------------------+-------------------------+------------------------+
+   | UInt16ToText          | uint16totext (128)      | Represents the 16 bits |
+   |                       |                         | unsigned integer in    |
+   |                       |                         | text format            |
+   +-----------------------+-------------------------+------------------------+
+   | UInt32ToText          | uint32totext (128)      | Represents the 32 bits |
+   |                       |                         | unsigned integer in    |
+   |                       |                         | text format            |
+   +-----------------------+-------------------------+------------------------+
+
+Notes:
+
+The conversion operators can be used to transform data from binary to the text
+representation. The only requirement is that the input data type length matches
+an expected value.
+The AddressToText token expects 4 bytes for IPv4 addresses or 16 bytes for IPv6
+addresses. The Int8ToText and UInt8ToText expect 1 byte, the Int16ToText and
+UInt16ToText expect 2 bytes and Int32ToText and UInt32ToText expect 4 bytes.
+For all conversion tokens, if the data length is 0, the result string is empty.
+
 Logical operators
 -----------------
 

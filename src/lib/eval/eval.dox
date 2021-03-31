@@ -144,6 +144,7 @@ instantiated with the appropriate value and put onto the expression vector.
    hex string, e.g. 0x666f6f which is actually "foo".
  - isc::dhcp::TokenIpAddress -- represents a constant IP address, encoded as
    a 4 or 16 byte binary string, e.g., 10.0.0.1 is 0x10000001.
+ - isc::dhcp::TokenIpAddressToText -- represents an IP address in text format.
  - isc::dhcp::TokenOption -- represents an option in a packet, e.g.
                     option[123].text.
  - isc::dhcp::TokenRelay4Option -- represents a sub-option inserted by the
@@ -163,6 +164,18 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenIfElse -- represents the ifelse(cond, iftrue, ifelse) operator.
  - isc::dhcp::TokenToHexString -- represents the hexstring operator which
    converts a binary value to its hexadecimal string representation.
+ - isc::dhcp::TokenInt8ToText -- represents the signed 8 bits integer in string
+   representation.
+ - isc::dhcp::TokenInt16ToText -- represents the signed 16 bits integer in string
+   representation.
+ - isc::dhcp::TokenInt32ToText -- represents the signed 32 bits integer in string
+   representation.
+  - isc::dhcp::TokenUInt8ToText -- represents the unsigned 8 bits integer in string
+   representation.
+ - isc::dhcp::TokenUInt16ToText -- represents the unsigned 16 bits integer in string
+   representation.
+ - isc::dhcp::TokenUInt32ToText -- represents the unsigned 32 bits integer in string
+   representation.
  - isc::dhcp::TokenNot -- the logical not operator.
  - isc::dhcp::TokenAnd -- the logical and (strict) operator.
  - isc::dhcp::TokenOr -- the logical or (strict) operator (strict means
