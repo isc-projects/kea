@@ -95,8 +95,8 @@ This is the last moment to freeze code! :snowflake:
    1. Click "Build with Parameters"
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick final
-1. [ ] When the upload is completed then copy SHA checksums from the log and write an email to signers@isc.org requesting signatures
-   of final tarballs on repo.isc.org indicating release directories. Attach SHA checksums to the request.
+1. [ ] When the upload is completed, copy SHA checksums from the log and open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) requesting signatures of final tarballs on repo.isc.org indicating release directories. Attach SHA checksums to the request.
+   1. [ ] Also send a request on the Support Mattermost channel linking the Signing issue and the release checklist.
 1. [ ] Upload final RPM & DEB packages to cloudsmith.io
    1. Go to [release-pkgs-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-upload-internal/).
    1. Click "Build with Parameters" link
@@ -135,4 +135,3 @@ This is the last moment to freeze code! :snowflake:
     * `a.b.z-git` where `z == c + 1` or
     * `a.y.0-git` where `y == b + 1` or
     * `x.1.0-git` where `x == a + 1`
-- [ ] Bump up `REF_KEA_VERSION` in `qa-dhcp/kea/jenkins/tarball-internal.jenkinsfile` to `x.y.z` i.e. released version
