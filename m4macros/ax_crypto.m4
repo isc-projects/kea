@@ -205,7 +205,7 @@ EOF
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
         if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([botan/botan.h}
+                AC_MSG_RESULT([botan/botan.h
 was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated

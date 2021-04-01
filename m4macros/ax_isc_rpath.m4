@@ -33,8 +33,8 @@ if test x$rpath != xno; then
 
     # check -Wl,-R and -R rather than gcc specific -rpath to be as portable
     # as possible.  -Wl,-R seems to be safer, so we try it first.  In some
-    # cases -R is not actually recognized but AC_LINK_IFELSE doesn't fail due to
-    # that.
+    # cases -R is not actually recognized but AC_LINK_IFELSE doesn't fail due
+    # to that.
     AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
         [AC_MSG_RESULT(yes)
