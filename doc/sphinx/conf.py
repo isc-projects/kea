@@ -28,12 +28,22 @@ author = 'Internet Systems Consortium'
 
 # get current kea version
 config_ac_path = '../../configure.ac'
+changelog_path = '../../ChangeLog'
 release = 'UNRELEASED'
 with open(config_ac_path) as f:
     for line in f.readlines():
         if line.startswith('AC_INIT(kea'):
             parts = line.split(',')
             release = parts[1]
+            # If the first line of the ChangeLog announces release, it means
+            # that this is the final release.
+            dash_parts = release.split('-')
+            candidate_release = dash_parts[0]
+            with open(changelog_path) as changelog_file:
+                first_line = changelog_file.readline()
+                if candidate_release in first_line and "released" in first_line:
+                    release = candidate_release
+            break
 version = release
 
 # -- General configuration ---------------------------------------------------
