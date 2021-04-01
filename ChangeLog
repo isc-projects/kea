@@ -1,3 +1,8 @@
+1884.	[doc]		fdupont
+	HTTP_CONNECTION_HANDSHAKE_FAILED log message got a
+	description.
+	(Gitlab #1779)
+
 Kea 1.9.6 (development) released on March 31, 2021
 
 1883.	[build]		andrei
