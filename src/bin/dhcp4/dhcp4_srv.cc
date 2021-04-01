@@ -1317,11 +1317,8 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                                                   static_cast<int64_t>(1));
     }
 
-    bool packet_park = false;
-
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
     if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
@@ -1348,55 +1345,61 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         }
         callout_handle->setArgument("deleted_leases4", deleted_leases);
 
-        // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
-                                   *callout_handle);
+        if (allow_packet_park) {
+            // We proactively park the packet. We'll unpark it without invoking
+            // the callback (i.e. drop) unless the callout status is set to
+            // is NEXT_STEP_PARK.  Otherwise the callback we bind here will be
+            // executed when the hook library unparks the packet.
+            HooksManager::park("leases4_committed", query,
+            [this, callout_handle, query, rsp]() mutable {
+                if (MultiThreadingMgr::instance().getMode()) {
+                    typedef function<void()> CallBack;
+                    boost::shared_ptr<CallBack> call_back =
+                        boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
+                                                               this, callout_handle, query, rsp));
+                    MultiThreadingMgr::instance().getThreadPool().add(call_back);
+                } else {
+                    processPacketPktSend(callout_handle, query, rsp);
+                    processPacketBufferSend(callout_handle, rsp);
+                }
+            }, false);
+        }
 
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_LEASES4_COMMITTED_DROP)
-                .arg(query->getLabel());
+        try {
+            // Call all installed callouts
+            HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
+                                       *callout_handle);
+        } catch(...) {
+            // Make sure we don't orphan a parked packet.
+            if (allow_packet_park) {
+                HooksManager::drop("leases4_committed", query);
+            }
+
+            throw;
+        }
+
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
+            && allow_packet_park) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_LEASES4_COMMITTED_PARK)
+                      .arg(query->getLabel());
+            // Since the hook library(ies) are going to do the unparking, then
+            // reset the pointer to the response to indicate to the caller that
+            // it should return, as the packet processing will continue via
+            // the callback.
             rsp.reset();
-
-        } else if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
-                   && allow_packet_park) {
-            packet_park = true;
+        } else {
+            // Drop the park job on the packet, it isn't needed.
+            HooksManager::drop("leases4_committed", query);
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_LEASES4_COMMITTED_DROP)
+                          .arg(query->getLabel());
+                rsp.reset();
+            }
         }
     }
 
-    if (!rsp) {
-        return;
-    }
-
-    // PARKING SPOT after leases4_committed hook point.
-    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-    if (packet_park) {
-        LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                  DHCP4_HOOK_LEASES4_COMMITTED_PARK)
-            .arg(query->getLabel());
-
-        // Park the packet. The function we bind here will be executed when the hook
-        // library unparks the packet.
-        HooksManager::park("leases4_committed", query,
-        [this, callout_handle, query, rsp]() mutable {
-            if (MultiThreadingMgr::instance().getMode()) {
-                typedef function<void()> CallBack;
-                boost::shared_ptr<CallBack> call_back =
-                    boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
-                                                           this, callout_handle, query, rsp));
-                MultiThreadingMgr::instance().getThreadPool().add(call_back);
-            } else {
-                processPacketPktSend(callout_handle, query, rsp);
-                processPacketBufferSend(callout_handle, rsp);
-            }
-        });
-
-        // If we have parked the packet, let's reset the pointer to the
-        // response to indicate to the caller that it should return, as
-        // the packet processing will continue via the callback.
-        rsp.reset();
-
-    } else {
+    // If we have a response prep it for shipment.
+    if (rsp) {
         processPacketPktSend(callout_handle, query, rsp);
     }
 }

@@ -86,8 +86,10 @@ public:
                       " reference does not exist.");
             }
 
-            // Not there add it.
+            // Not there add it. We reset the refcount to zero since
+            // techinically there are no references yet.
             ParkingInfo pinfo(parked_object, unpark_callback);
+            pinfo.refcount_ = 0;
             parking_[makeKey(parked_object)] = pinfo;
             return;
         }
