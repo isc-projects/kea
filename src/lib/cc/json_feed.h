@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,9 @@ public:
 /// As '{', '}', '[' and ']' can be embedded in JSON strings two states
 /// for strings and escape in strings are required. Note the processing
 /// of escapes is greatly simplified compared to ECMA 404 figure 5.
+///
+/// Added support for '#' to end of line (old), '//' to end of line (new, C++)
+/// and '/*' to '*/' (new, C) comments both before JSON and inside JSON.
 
 /// Note that this mechanism doesn't check if the JSON structure is well
 /// formed. It merely detects the end of the JSON structure if this structure
@@ -78,20 +81,35 @@ public:
     /// @brief Skipping whitespaces before actual JSON.
     static const int WHITESPACE_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 2;
 
+    /// @brief Skipping an old style comment before actual JSON.
+    static const int OLD_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 3;
+
+    /// @brief Skipping a new style comment before actual JSON.
+    static const int NEW_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 4;
+
+    /// @brief Skipping a C++ style comment before actual JSON.
+    static const int CPP_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 5;
+
+    /// @brief Skipping a C style comment before actual JSON.
+    static const int C_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 6;
+
+    /// @brief Ending a C style comment before actual JSON.
+    static const int END_C_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 7;
+
     /// @brief Found first opening brace or square bracket.
-    static const int JSON_START_ST = SM_DERIVED_STATE_MIN + 3;
+    static const int JSON_START_ST = SM_DERIVED_STATE_MIN + 8;
 
     /// @brief Parsing JSON.
-    static const int INNER_JSON_ST = SM_DERIVED_STATE_MIN + 4;
+    static const int INNER_JSON_ST = SM_DERIVED_STATE_MIN + 9;
 
     /// @brief Parsing JSON string.
-    static const int STRING_JSON_ST = SM_DERIVED_STATE_MIN + 5;
+    static const int STRING_JSON_ST = SM_DERIVED_STATE_MIN + 10;
 
     /// @brief JSON escape next character.
-    static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 6;
+    static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 11;
 
     /// @brief Found last closing brace or square bracket.
-    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 7;
+    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 12;
 
     /// @brief Found opening and closing brace or square bracket.
     ///
@@ -262,6 +280,21 @@ private:
 
     /// @brief Handler for WHITESPACE_BEFORE_JSON_ST.
     void whiteSpaceBeforeJSONHandler();
+
+    /// @brief Handler for OLD_COMMENT_BEFORE_JSON_ST.
+    void oldCommentBeforeJSONHandler();
+
+    /// @brief Handler for NEW_COMMENT_BEFORE_JSON_ST.
+    void newCommentBeforeJSONHandler();
+
+    /// @brief Handler for CPP_COMMENT_BEFORE_JSON_ST.
+    void cppCommentBeforeJSONHandler();
+
+    /// @brief Handler for C_COMMENT_BEFORE_JSON_ST.
+    void cCommentBeforeJSONHandler();
+
+    /// @brief Handler for END_C_COMMENT_BEFORE_JSON_ST.
+    void endCCommentBeforeJSONHandler();
 
     /// @brief Handler for the FIRST_BRACE_ST.
     void innerJSONHandler();

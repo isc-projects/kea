@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,11 @@ namespace config {
 
 const int JSONFeed::RECEIVE_START_ST;
 const int JSONFeed::WHITESPACE_BEFORE_JSON_ST;
+const int JSONFeed::OLD_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::NEW_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::CPP_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::C_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::END_C_COMMENT_BEFORE_JSON_ST;
 const int JSONFeed::JSON_START_ST;
 const int JSONFeed::INNER_JSON_ST;
 const int JSONFeed::STRING_JSON_ST;
@@ -138,6 +143,16 @@ JSONFeed::defineStates() {
                 std::bind(&JSONFeed::receiveStartHandler, this));
     defineState(WHITESPACE_BEFORE_JSON_ST, "WHITESPACE_BEFORE_JSON_ST",
                 std::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
+    defineState(OLD_COMMENT_BEFORE_JSON_ST, "OLD_COMMENT_BEFORE_JSON_ST",
+		std::bind(&JSONFeed::oldCommentBeforeJSONHandler, this));
+    defineState(NEW_COMMENT_BEFORE_JSON_ST, "NEW_COMMENT_BEFORE_JSON_ST",
+		std::bind(&JSONFeed::newCommentBeforeJSONHandler, this));
+    defineState(CPP_COMMENT_BEFORE_JSON_ST, "CPP_COMMENT_BEFORE_JSON_ST",
+		std::bind(&JSONFeed::cppCommentBeforeJSONHandler, this));
+    defineState(C_COMMENT_BEFORE_JSON_ST, "C_COMMENT_BEFORE_JSON_ST",
+		std::bind(&JSONFeed::cCommentBeforeJSONHandler, this));
+    defineState(END_C_COMMENT_BEFORE_JSON_ST, "END_C_COMMENT_BEFORE_JSON_ST",
+		std::bind(&JSONFeed::endCCommentBeforeJSONHandler, this));
     defineState(INNER_JSON_ST, "INNER_JSON_ST",
                 std::bind(&JSONFeed::innerJSONHandler, this));
     defineState(STRING_JSON_ST, "STRING_JSON_ST",
