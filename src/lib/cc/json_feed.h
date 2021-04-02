@@ -108,8 +108,23 @@ public:
     /// @brief JSON escape next character.
     static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 11;
 
+    /// @brief Skipping an old style comment.
+    static const int OLD_COMMENT_ST = SM_DERIVED_STATE_MIN + 12;
+
+    /// @brief Skipping a new style comment.
+    static const int NEW_COMMENT_ST = SM_DERIVED_STATE_MIN + 13;
+
+    /// @brief Skipping a C++ style comment.
+    static const int CPP_COMMENT_ST = SM_DERIVED_STATE_MIN + 14;
+
+    /// @brief Skipping a C style comment.
+    static const int C_COMMENT_ST = SM_DERIVED_STATE_MIN + 15;
+
+    /// @brief Ending a C style comment.
+    static const int END_C_COMMENT_ST = SM_DERIVED_STATE_MIN + 16;
+
     /// @brief Found last closing brace or square bracket.
-    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 12;
+    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 17;
 
     /// @brief Found opening and closing brace or square bracket.
     ///
@@ -304,6 +319,21 @@ private:
 
     /// @brief Handler for the ESCAPE_JSON_ST;
     void escapeJSONHandler();
+
+    /// @brief Handler for OLD_COMMENT_ST.
+    void oldCommentHandler();
+
+    /// @brief Handler for NEW_COMMENT_ST.
+    void newCommentHandler();
+
+    /// @brief Handler for CPP_COMMENT_ST.
+    void cppCommentHandler();
+
+    /// @brief Handler for C_COMMENT_ST.
+    void cCommentHandler();
+
+    /// @brief Handler for END_C_COMMENT_ST.
+    void endCCommentHandler();
 
     /// @brief Handler for the JSON_END_ST.
     void endJSONHandler();

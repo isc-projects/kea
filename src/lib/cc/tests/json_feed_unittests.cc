@@ -280,8 +280,8 @@ TEST_F(JSONFeedTest, whiteSpaceBefore) {
     testRead(json, expected);
 }
 
-// This test verifies that shell style comments before JSON are ignored.
-TEST_F(JSONFeedTest, shellCommentBefore) {
+// This test verifies that bash style comments before JSON are ignored.
+TEST_F(JSONFeedTest, bashCommentBefore) {
     std::string json = "# ahah\n  # foo\"bar\n{ }\n";
     std::string expected = "{ }";
     testRead(json, expected);
@@ -302,9 +302,38 @@ TEST_F(JSONFeedTest, multiLineCommentBefore) {
 }
 
 // This test verifies that an error is signalled a slash does not begin
-// a C++ or C style comment.
+// a C++ or C style comment before JSON.
 TEST_F(JSONFeedTest, badCommentBefore) {
     std::string json = "/# foo\n [ ]\n";
+    std::string err_msg = "invalid characters /#";
+    testInvalidRead(json, err_msg);
+}
+
+// This test verifies that bash style comments are ignored.
+TEST_F(JSONFeedTest, bashComments) {
+    std::string json = "{ # ahah\n \"foo\": # value?\n \"bar\" }";
+    std::string expected = "{ \n \"foo\": \n \"bar\" }";
+    testRead(json, expected);
+}
+
+// This test verifies that C++ style comments are ignored.
+TEST_F(JSONFeedTest, cppComments) {
+    std::string json = "[ # ahah\n \"foo\", # value?\n \"bar\" ]";
+    std::string expected = "[ \n \"foo\", \n \"bar\" ]";
+    testRead(json, expected);
+}
+
+// This test verifies that multi-line comments are ignored.
+TEST_F(JSONFeedTest, multiLineComments) {
+    std::string json = "{ /* ahah\n \"// foobar*/\n \"foo\": \"bar\" }\n";
+    std::string expected = "{ \n\n \"foo\": \"bar\" }";
+    testRead(json, expected);
+}
+
+// This test verifies that an error is signalled a slash does not begin
+// a C++ or C style comment.
+TEST_F(JSONFeedTest, badComment) {
+    std::string json = "[ /# foo\n ]\n";
     std::string err_msg = "invalid characters /#";
     testInvalidRead(json, err_msg);
 }
@@ -320,6 +349,100 @@ TEST_F(JSONFeedTest, trailing) {
     EXPECT_TRUE(feed.feedOk());
     std::string expected = "[ 1, 2]";
     EXPECT_EQ(expected, feed.getProcessedText());
+}
+
+// Example from DHCPv4 unit tests.
+TEST_F(JSONFeedTest, bashComment4) {
+    JSONFeed feed;
+    ASSERT_NO_THROW(feed.initModel());
+    std::string json = "{ \"Dhcp4\": { \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},\n"
+        "# this is a comment\n"
+        "\"rebind-timer\": 2000, \n"
+        "# lots of comments here\n"
+        "# and here\n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 } }";
+    feed.postBuffer(&json[0], json.size());
+    feed.poll();
+    EXPECT_FALSE(feed.needData());
+    EXPECT_TRUE(feed.feedOk());
+    EXPECT_NO_THROW(feed.toElement());
+}
+
+// Example from DHCPv4 unit tests.
+TEST_F(JSONFeedTest, bashCommentsInline4) {
+    JSONFeed feed;
+    ASSERT_NO_THROW(feed.initModel());
+    std::string json = "{ \"Dhcp4\": { \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},\n"
+        "\"rebind-timer\": 2000, # everything after # is ignored\n"
+        "\"renew-timer\": 1000, # this will be ignored, too\n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 } }";
+    feed.postBuffer(&json[0], json.size());
+    feed.poll();
+    EXPECT_FALSE(feed.needData());
+    EXPECT_TRUE(feed.feedOk());
+    EXPECT_NO_THROW(feed.toElement());
+}
+
+// Example from DHCPv6 unit tests.
+TEST_F(JSONFeedTest, cppComments6) {
+    JSONFeed feed;
+    ASSERT_NO_THROW(feed.initModel());
+    std::string json = "{ \"Dhcp6\": { \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},\n"
+        "\"preferred-lifetime\": 3000, // this is a comment \n"
+        "\"rebind-timer\": 2000, // everything after // is ignored\n"
+        "\"renew-timer\": 1000, // this will be ignored, too\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 } }";
+    feed.postBuffer(&json[0], json.size());
+    feed.poll();
+    EXPECT_FALSE(feed.needData());
+    EXPECT_TRUE(feed.feedOk());
+    EXPECT_NO_THROW(feed.toElement());
+}
+
+// Example from DHCPv6 unit tests.
+TEST_F(JSONFeedTest, multilineComments6) {
+    JSONFeed feed;
+    ASSERT_NO_THROW(feed.initModel());
+    std::string json = "{ \"Dhcp6\": { \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},\n"
+        "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
+        "that\n can \n span \n multiple \n lines */ \n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 } }";
+    feed.postBuffer(&json[0], json.size());
+    feed.poll();
+    EXPECT_FALSE(feed.needData());
+    EXPECT_TRUE(feed.feedOk());
+    EXPECT_NO_THROW(feed.toElement());
 }
 
 } // end of anonymous namespace.

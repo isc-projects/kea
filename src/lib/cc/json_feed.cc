@@ -27,6 +27,11 @@ const int JSONFeed::JSON_START_ST;
 const int JSONFeed::INNER_JSON_ST;
 const int JSONFeed::STRING_JSON_ST;
 const int JSONFeed::ESCAPE_JSON_ST;
+const int JSONFeed::OLD_COMMENT_ST;
+const int JSONFeed::NEW_COMMENT_ST;
+const int JSONFeed::CPP_COMMENT_ST;
+const int JSONFeed::C_COMMENT_ST;
+const int JSONFeed::END_C_COMMENT_ST;
 const int JSONFeed::JSON_END_ST;
 const int JSONFeed::FEED_OK_ST;
 const int JSONFeed::FEED_FAILED_ST;
@@ -159,6 +164,16 @@ JSONFeed::defineStates() {
                 std::bind(&JSONFeed::stringJSONHandler, this));
     defineState(ESCAPE_JSON_ST, "ESCAPE_JSON_ST",
                 std::bind(&JSONFeed::escapeJSONHandler, this));
+    defineState(OLD_COMMENT_ST, "OLD_COMMENT_ST",
+                std::bind(&JSONFeed::oldCommentHandler, this));
+    defineState(NEW_COMMENT_ST, "NEW_COMMENT_ST",
+                std::bind(&JSONFeed::newCommentHandler, this));
+    defineState(CPP_COMMENT_ST, "CPP_COMMENT_ST",
+                std::bind(&JSONFeed::cppCommentHandler, this));
+    defineState(C_COMMENT_ST, "C_COMMENT_ST",
+                std::bind(&JSONFeed::cCommentHandler, this));
+    defineState(END_C_COMMENT_ST, "END_C_COMMENT_ST",
+                std::bind(&JSONFeed::endCCommentHandler, this));
     defineState(JSON_END_ST, "JSON_END_ST",
                 std::bind(&JSONFeed::endJSONHandler, this));
 }
@@ -394,17 +409,17 @@ void
 JSONFeed::innerJSONHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        output_.push_back(c);
-
         switch(c) {
         case '{':
         case '[':
+            output_.push_back(c);
             transition(getCurrState(), DATA_READ_OK_EVT);
             ++open_scopes_;
             break;
 
         case '}':
         case ']':
+            output_.push_back(c);
             if (--open_scopes_ == 0) {
                 transition(JSON_END_ST, FEED_OK_EVT);
 
@@ -414,10 +429,20 @@ JSONFeed::innerJSONHandler() {
             break;
 
         case '"':
+            output_.push_back(c);
             transition(STRING_JSON_ST, DATA_READ_OK_EVT);
             break;
 
+        case '#':
+            transition(OLD_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '/':
+            transition(NEW_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
         default:
+            output_.push_back(c);
             postNextEvent(DATA_READ_OK_EVT);
         }
     }
@@ -451,6 +476,100 @@ JSONFeed::escapeJSONHandler() {
         output_.push_back(c);
 
         transition(STRING_JSON_ST, DATA_READ_OK_EVT);
+    }
+}
+
+void
+JSONFeed::oldCommentHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '\n':
+            output_.push_back(c);
+            transition(INNER_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::newCommentHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '/':
+            transition(CPP_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '*':
+            transition(C_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            feedFailure("invalid characters /" + std::string(1, c));
+        }
+    }
+}
+
+void
+JSONFeed::cppCommentHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '\n':
+            transition(INNER_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::cCommentHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '*':
+            transition(END_C_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '\n':
+            output_.push_back(c);
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::endCCommentHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '/':
+            transition(INNER_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '\n':
+            output_.push_back(c);
+            transition(C_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            transition(C_COMMENT_ST, DATA_READ_OK_EVT);
+            break;
+        }
     }
 }
 
