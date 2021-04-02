@@ -1,3 +1,10 @@
+1887.	[build]		andrei
+	Used autoupdate and some manual tweaking to convert deprecated
+	autoconf macros to newer supported macros. Previously, autoconf
+	versions 2.70 and above would excessively warn about the obsolete
+	macros.
+	(Gitlab #1632)
+
 1886.	[doc]		tomek
 	Added a section in the ARM explaining the relationship between
 	keactrl and systemd scripts.
