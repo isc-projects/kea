@@ -703,7 +703,7 @@ pgsql_lease_stat_upgrade_test() {
     # verify the upgrade mechanisms which prepopulate the lease stat
     # tables.
     #
-    # Initialize database to scheme 1.0.
+    # Initialize database to schema 1.0.
     pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
 
@@ -944,7 +944,7 @@ pgsql_unused_subnet_id_test() {
     # verify the upgrade mechanisms which prepopulate the lease stat
     # tables.
     #
-    # Initialize database to scheme 1.0.
+    # Initialize database to schema 1.0.
     pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
 
