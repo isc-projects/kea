@@ -144,15 +144,15 @@ JSONFeed::defineStates() {
     defineState(WHITESPACE_BEFORE_JSON_ST, "WHITESPACE_BEFORE_JSON_ST",
                 std::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
     defineState(OLD_COMMENT_BEFORE_JSON_ST, "OLD_COMMENT_BEFORE_JSON_ST",
-		std::bind(&JSONFeed::oldCommentBeforeJSONHandler, this));
+                std::bind(&JSONFeed::oldCommentBeforeJSONHandler, this));
     defineState(NEW_COMMENT_BEFORE_JSON_ST, "NEW_COMMENT_BEFORE_JSON_ST",
-		std::bind(&JSONFeed::newCommentBeforeJSONHandler, this));
+                std::bind(&JSONFeed::newCommentBeforeJSONHandler, this));
     defineState(CPP_COMMENT_BEFORE_JSON_ST, "CPP_COMMENT_BEFORE_JSON_ST",
-		std::bind(&JSONFeed::cppCommentBeforeJSONHandler, this));
+                std::bind(&JSONFeed::cppCommentBeforeJSONHandler, this));
     defineState(C_COMMENT_BEFORE_JSON_ST, "C_COMMENT_BEFORE_JSON_ST",
-		std::bind(&JSONFeed::cCommentBeforeJSONHandler, this));
+                std::bind(&JSONFeed::cCommentBeforeJSONHandler, this));
     defineState(END_C_COMMENT_BEFORE_JSON_ST, "END_C_COMMENT_BEFORE_JSON_ST",
-		std::bind(&JSONFeed::endCCommentBeforeJSONHandler, this));
+                std::bind(&JSONFeed::endCCommentBeforeJSONHandler, this));
     defineState(INNER_JSON_ST, "INNER_JSON_ST",
                 std::bind(&JSONFeed::innerJSONHandler, this));
     defineState(STRING_JSON_ST, "STRING_JSON_ST",
@@ -243,6 +243,14 @@ JSONFeed::receiveStartHandler() {
                 transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
                 return;
 
+            case '#':
+                transition(OLD_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+                return;
+
+            case '/':
+                transition(NEW_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+                return;
+
             case '{':
             case '[':
                 output_.push_back(c);
@@ -276,6 +284,14 @@ JSONFeed::whiteSpaceBeforeJSONHandler() {
             transition(getCurrState(), DATA_READ_OK_EVT);
             break;
 
+        case '#':
+            transition(OLD_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            return;
+
+        case '/':
+            transition(NEW_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            return;
+
         case '{':
         case '[':
             output_.push_back(c);
@@ -287,6 +303,89 @@ JSONFeed::whiteSpaceBeforeJSONHandler() {
         case '"':
         default:
             feedFailure("invalid character " + std::string(1, c));
+        }
+    }
+}
+
+void
+JSONFeed::oldCommentBeforeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '\n':
+            transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::newCommentBeforeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '/':
+            transition(CPP_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '*':
+            transition(C_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            feedFailure("invalid characters /" + std::string(1, c));
+        }
+    }
+}
+
+void
+JSONFeed::cppCommentBeforeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '\n':
+            transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::cCommentBeforeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '*':
+            transition(END_C_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            postNextEvent(DATA_READ_OK_EVT);
+            break;
+        }
+    }
+}
+
+void
+JSONFeed::endCCommentBeforeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch (c) {
+        case '/':
+            transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            transition(C_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
         }
     }
 }
@@ -370,7 +469,6 @@ JSONFeed::endJSONHandler() {
         invalidEventError("endJSONHandler", getNextEvent());
     }
 }
-
 
 } // end of namespace config
 } // end of namespace isc
