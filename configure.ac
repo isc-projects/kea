@@ -1322,8 +1322,11 @@ AC_ARG_ENABLE(generate_parser,
   enable_generate_parser=$enableval, enable_generate_parser=no)
 
 # Check if flex is available. Flex is not needed for building Kea sources,
-# unless you want to regenerate grammars
-AC_PROG_LEX
+# unless you want to regenerate grammars.
+# Autoconf 2.70 added an option and warns if not provided,
+m4_version_prereq([2.70],
+  [AC_PROG_LEX(noyywrap)],
+  [AC_PROG_LEX])
 
 # Check if bison is available. Bison is not needed for building Kea sources,
 # unless you want to regenerate grammars
@@ -1617,7 +1620,7 @@ AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset
 
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
-# Autoconf 2.70 has runstatedir but is not yet released.
+# Autoconf 2.70 has runstatedir.
 m4_version_prereq([2.70], [], [dnl
     AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])dnl
     AC_SUBST(runstatedir)dnl
