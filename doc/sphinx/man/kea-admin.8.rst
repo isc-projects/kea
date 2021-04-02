@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ kea-admin - Shell script for managing Kea databases
 Synopsis
 ~~~~~~~~
 
-:program:`kea-admin` [command] [backend] [**-u** database username] [**-p** database password] [**-n** database name] [**-d** scripts directory] [**-4** | **-6**] [**-o** output file] [**-v**]
+:program:`kea-admin` [command] [backend] [**-h** database_host] [**-P** database_port] [**-u** database_username] [**-p** [database_password]] [**-n** database_name] [**-d** script_directory] [**-v**] [**-4** | **-6**] [**-o** output_file]
 
 Description
 ~~~~~~~~~~~
@@ -55,15 +55,24 @@ Arguments
 
 ``backend``
    Specifies the backend type. Currently allowed backends are: memfile,
-   mysql, and pgsql.
+   mysql, pgsql, and cql.
+
+``-h|--host hostname``
+   Specifies the hostname when connecting to a database. If not specified,
+   the default value of **localhost** is used.
+
+``-P|--port port``
+   Specifies the port when connecting to a database. If not specified,
+   the default value chosen by the database client is used.
 
 ``-u|--user username``
    Specifies the username when connecting to a database. If not specified,
    the default value of **keatest** is used.
 
 ``-p|--password password``
-   Specifies the password when connecting to a database. If not
-   specified, the default value of **keatest** is used.
+   Specifies the password when connecting to a database.
+   If only ``-p`` or ``--password`` is given, the user is prompted for a password.
+   If not specified at all, the default value of **keatest** is used.
 
 ``-n|--name database-name``
    Specifies the name of the database to connect to. If not specified, the
