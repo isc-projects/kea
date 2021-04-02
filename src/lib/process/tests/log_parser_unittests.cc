@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -376,6 +376,7 @@ TEST_F(LoggingTest, logRotate) {
 // Verifies that a valid output option,'pattern' paress correctly.
 TEST_F(LoggingTest, validPattern) {
 
+    // Note the backslash must be doubled in the pattern definition.
     const char* config_txt =
     "{ \"loggers\": ["
     "    {"
@@ -383,7 +384,7 @@ TEST_F(LoggingTest, validPattern) {
     "        \"output_options\": ["
     "            {"
     "                \"output\": \"stdout\","
-    "                \"pattern\": \"mylog %m\n\""
+    "                \"pattern\": \"mylog %m\\n\""
     "            }"
     "        ],"
     "        \"severity\": \"INFO\""

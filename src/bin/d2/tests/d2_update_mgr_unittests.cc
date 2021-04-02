@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,7 +102,7 @@ public:
         " \"use-conflict-resolution\" : true "
         "}";
 
-        const char* dhcids[] = { "111111", "222222", "333333", "444444"};
+        const char* dhcids[] = { "111111", "222222", "333333", "444444" };
         canned_count_ = 4;
         for (int i = 0; i < canned_count_; i++) {
             dhcp_ddns::NameChangeRequestPtr ncr = NameChangeRequest::
@@ -122,27 +122,27 @@ public:
                   "\"port\" : 88 , "
                   "\"tsig-keys\": [] ,"
                   "\"forward-ddns\" : {"
-                  "\"ddns-domains\": [ "
-                  "{ \"name\": \"example.com.\" , "
-                  "  \"dns-servers\" : [ "
-                  "  { \"ip-address\": \"127.0.0.1\", \"port\" : 5301  } "
-                  "  ] },"
-                  "{ \"name\": \"org.\" , "
-                  "  \"dns-servers\" : [ "
-                  "  { \"ip-address\": \"127.0.0.1\" } "
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"example.com.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301  } "
+                  "   ] },"
+                  "  { \"name\": \"org.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] }"
                   "  ] }, "
-                  "] }, "
                   "\"reverse-ddns\" : { "
-                  "\"ddns-domains\": [ "
-                  "{ \"name\": \"1.168.192.in-addr.arpa.\" , "
-                  "  \"dns-servers\" : [ "
-                  "  { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
-                  "  ] }, "
-                  "{ \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
-                  "  \"dns-servers\" : [ "
-                  "  { \"ip-address\": \"127.0.0.1\" } "
-                  "  ] } "
-                  "] } }";
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"1.168.192.in-addr.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
+                  "   ] }, "
+                  "  { \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] } "
+                  "  ] } }";
 
         // If this configuration fails to parse most tests will fail.
         ASSERT_TRUE(fromJSON(canned_config_));

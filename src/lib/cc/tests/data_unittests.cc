@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -163,7 +163,9 @@ TEST(Element, from_and_to_json) {
 
     // some json specific format tests, here the str() output is
     // different from the string input
-    EXPECT_EQ("100", Element::fromJSON("+100")->str());
+    // +100 is incorrect according to the ECMA 404 JSON standard.
+    // Keeping it as it will be reversed.
+    // EXPECT_EQ("100", Element::fromJSON("+100")->str());
     EXPECT_EQ("100.0", Element::fromJSON("1e2")->str());
     EXPECT_EQ("100.0", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100.0", Element::fromJSON("-1e2")->str());

@@ -529,7 +529,6 @@ TEST_F(SrvConfigTest, unparse) {
     std::string header6 = "{\n\"Dhcp6\": {\n";
 
     std::string defaults = "\"decline-probation-period\": 0,\n";
-    defaults += "\"dhcp4o6-port\": 0,\n";
     defaults += "\"interfaces-config\": { \"interfaces\": [ ],\n";
     defaults += " \"re-detect\": false },\n";
     defaults += "\"option-def\": [ ],\n";
@@ -545,8 +544,7 @@ TEST_F(SrvConfigTest, unparse) {
 
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
-    std::string defaults4 = "\"echo-client-id\": true,\n";
-    defaults4 += "\"shared-networks\": [ ],\n";
+    std::string defaults4 = "\"shared-networks\": [ ],\n";
     defaults4 += "\"subnet4\": [ ],\n";
     defaults4 += "\"host-reservation-identifiers\": ";
     defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n";

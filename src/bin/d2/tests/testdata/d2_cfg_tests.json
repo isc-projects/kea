@@ -363,8 +363,8 @@
             "name" : "first.key",
             "algorithm" : "HMAC-MD5",
             "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
-            }
-            ,{
+            },
+            {
             "name" : "first.key",
             "algorithm" : "HMAC-MD5",
             "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
@@ -557,7 +557,7 @@
             "algorithm" : "HMAC-MD5",
             "digest-bits" : 72,
             "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
-            },
+            }
         ]
     }
 }
@@ -577,7 +577,7 @@
             "algorithm" : "HMAC-SHA1",
             "digest-bits" : 72,
             "secret" : "hRrp29wzUv3uzSNRLlY68w=="
-            },
+            }
         ]
     }
 }
@@ -597,7 +597,7 @@
             "algorithm" : "HMAC-SHA224",
             "digest-bits" : 104,
             "secret" : "bZEG7Ow8OgAUPfLWV3aAUQ=="
-            },
+            }
         ]
     }
 }
@@ -617,7 +617,7 @@
             "algorithm" : "hmac-sha256",
             "digest-bits" : 120,
             "secret" : "bjF4hYhTfQ5MX0siagelsw=="
-            },
+            }
         ]
     }
 }
@@ -637,7 +637,7 @@
             "algorithm" : "hmac-sha384",
             "digest-bits" : 184,
             "secret" : "Gwk53fvy3CmbupoI9TgigA=="
-            },
+            }
         ]
     }
 }

@@ -858,7 +858,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "        \"assigned-addresses\", \"declined-addresses\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 20, 16, 10, 3, 0 ],\n"
+        "       [ 20, 16, 10, 3, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -885,7 +885,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "   \"rows\": [\n"
         "       [ 10, 256, 300, 2, 3 ],\n"
         "       [ 20, 16, 10, 3, 0 ],\n"
-        "       [ 30, 256, 0, 0, 0 ],\n"
+        "       [ 30, 256, 0, 0, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -912,7 +912,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "   \"rows\": [\n"
         "       [ 20, 16, 10, 3, 0 ],\n"
         "       [ 30, 256, 0, 0, 0 ],\n"
-        "       [ 40, 16, 4, 4, 0 ],\n"
+        "       [ 40, 16, 4, 4, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -939,7 +939,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "   \"rows\": [\n"
         "       [ 30, 256, 0, 0, 0 ],\n"
         "       [ 40, 16, 4, 4, 0 ],\n"
-        "       [ 50, 256, 2, 1, 1 ],\n"
+        "       [ 50, 256, 2, 1, 1 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -965,7 +965,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "   ],\n"
         "   \"rows\": [\n"
         "       [ 30, 256, 0, 0, 0 ],\n"
-        "       [ 40, 16, 4, 4, 0 ],\n"
+        "       [ 40, 16, 4, 4, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1314,7 +1314,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"rows\": [\n"
         "       [ 10, 65536, 10000, 2, 3, 0, 0, 0 ],\n"
         "       [ 20, 16777216, 10, 3, 0, 0, 0, 0 ],\n"
-        "       [ 30, 16, 2, 1, 1, 65536, 4, 3 ],\n"
+        "       [ 30, 16, 2, 1, 1, 65536, 4, 3 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1472,10 +1472,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
                     (*test).exp_response_, (*test).exp_result_json);
         }
     }
-
 }
-
-
 
 } // end of anonymous namespace
 

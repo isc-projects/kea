@@ -529,7 +529,6 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"consistency\": \"quorum\", \n"
         "\"on-fail\": \"stop-retry-exit\", \n"
         "\"serial-consistency\": \"serial\", \n"
-        "\"host\": \"host_str\", \n"
         "\"keyspace\": \"keyspace_str\", \n"
         "\"lfc-interval\" : 100, \n"
         "\"host\": \"whatevah\", \n"
