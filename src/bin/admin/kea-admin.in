@@ -59,20 +59,22 @@ Usage: %s COMMAND BACKEND [parameters]
 COMMAND: Currently supported operations are:
 
  - db-init: Initializes new database. Useful for first time installation.
- - db-version: Checks version of the existing database scheme. Useful
- -             for checking databaseB version when preparing for an upgrade.
- - db-upgrade: Upgrades your database scheme
- - lease-dump: Dumps current leases to a CSV file
- - stats-recount: Recounts lease statistics
+ - db-version: Checks version of the existing database schema. Useful
+ -             for checking database version when preparing for an upgrade.
+ - db-upgrade: Upgrades your database schema.
+ - lease-dump: Dumps current leases to a CSV file.
+ - stats-recount: Recounts lease statistics.
 
 BACKEND - one of the supported backends: memfile|mysql|pgsql|cql
 
 PARAMETERS: Parameters are optional in general, but may be required
-            for specific operation.
+            for specific operations.
  -h or --host hostname - specifies a hostname of a database to connect to
- -P or --port port - the TCP port to use for the database connection
+ -P or --port port - specifies the TCP port to use for the database connection
  -u or --user name - specifies username when connecting to a database
- -p or --password pass - specifies a password when connecting to a database
+ -p or --password [password] - specifies a password for the database connection;
+                               if omitted from the command line,
+                               then the user will be prompted for a password
  -n or --name database - specifies a database name to connect to
  -d or --directory - path to upgrade scripts (default: %s)
  -v or --version - print kea-admin version and quit.
@@ -747,12 +749,19 @@ do
             ;;
         # Specify database password
         -p|--password)
-            shift
-            db_password=${1}
-            if [ -z "${db_password}" ]; then
-                log_error "-p or --password requires a parameter"
-                usage
-                exit 1
+            # If there is at least one more parameter following...
+            if test "${#}" -gt 1; then
+                # Then take it as password.
+                shift
+                db_password=${1}
+            else
+                # Otherwise read from standard input while hiding feedback to
+                # the terminal.
+                printf 'Password: '
+                stty -echo
+                read -r db_password
+                stty echo
+                printf '\n'
             fi
             ;;
         # Specify database name
