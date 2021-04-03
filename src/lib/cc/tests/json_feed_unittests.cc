@@ -296,7 +296,7 @@ TEST_F(JSONFeedTest, cppCommentBefore) {
 
 // This test verifies that multi-line comments before JSON are ignored.
 TEST_F(JSONFeedTest, multiLineCommentBefore) {
-    std::string json = "/* ahah\n \"// foobar*/\n { \"foo\": \"bar\" }\n";
+    std::string json = "/* ahah\n \"// foo*bar**/\n { \"foo\": \"bar\" }\n";
     std::string expected = "{ \"foo\": \"bar\" }";
     testRead(json, expected);
 }
@@ -325,7 +325,7 @@ TEST_F(JSONFeedTest, cppComments) {
 
 // This test verifies that multi-line comments are ignored.
 TEST_F(JSONFeedTest, multiLineComments) {
-    std::string json = "{ /* ahah\n \"// foobar*/\n \"foo\": \"bar\" }\n";
+    std::string json = "{ /* ahah\n \"// foo*bar**/\n \"foo\": \"bar\" }\n";
     std::string expected = "{ \n\n \"foo\": \"bar\" }";
     testRead(json, expected);
 }

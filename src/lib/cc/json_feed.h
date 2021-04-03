@@ -81,50 +81,44 @@ public:
     /// @brief Skipping whitespaces before actual JSON.
     static const int WHITESPACE_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 2;
 
-    /// @brief Skipping an old style comment before actual JSON.
-    static const int OLD_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 3;
+    /// @brief Skipping an end-of-line comment before actual JSON.
+    static const int EOL_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 3;
 
-    /// @brief Skipping a new style comment before actual JSON.
-    static const int NEW_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 4;
-
-    /// @brief Skipping a C++ style comment before actual JSON.
-    static const int CPP_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 5;
+    /// @brief Starting a slash comment before actual JSON.
+    static const int START_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 4;
 
     /// @brief Skipping a C style comment before actual JSON.
-    static const int C_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 6;
+    static const int C_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 5;
 
-    /// @brief Ending a C style comment before actual JSON.
-    static const int END_C_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 7;
+    /// @brief Stopping a C style comment before actual JSON.
+    static const int STOP_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 6;
 
     /// @brief Found first opening brace or square bracket.
-    static const int JSON_START_ST = SM_DERIVED_STATE_MIN + 8;
+    static const int JSON_START_ST = SM_DERIVED_STATE_MIN + 7;
 
     /// @brief Parsing JSON.
-    static const int INNER_JSON_ST = SM_DERIVED_STATE_MIN + 9;
+    static const int INNER_JSON_ST = SM_DERIVED_STATE_MIN + 8;
 
     /// @brief Parsing JSON string.
-    static const int STRING_JSON_ST = SM_DERIVED_STATE_MIN + 10;
+    static const int STRING_JSON_ST = SM_DERIVED_STATE_MIN + 9;
 
     /// @brief JSON escape next character.
-    static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 11;
+    static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 10;
 
-    /// @brief Skipping an old style comment.
-    static const int OLD_COMMENT_ST = SM_DERIVED_STATE_MIN + 12;
+    /// @brief Skipping an end-of-line comment.
+    static const int EOL_COMMENT_ST = SM_DERIVED_STATE_MIN + 11;
 
-    /// @brief Skipping a new style comment.
-    static const int NEW_COMMENT_ST = SM_DERIVED_STATE_MIN + 13;
-
-    /// @brief Skipping a C++ style comment.
-    static const int CPP_COMMENT_ST = SM_DERIVED_STATE_MIN + 14;
+    /// @brief Starting a slash comment.
+    static const int START_COMMENT_ST = SM_DERIVED_STATE_MIN + 12;
 
     /// @brief Skipping a C style comment.
-    static const int C_COMMENT_ST = SM_DERIVED_STATE_MIN + 15;
+    static const int C_COMMENT_ST = SM_DERIVED_STATE_MIN + 13;
 
-    /// @brief Ending a C style comment.
-    static const int END_C_COMMENT_ST = SM_DERIVED_STATE_MIN + 16;
+    /// @brief Stopping a C style comment.
+    static const int STOP_COMMENT_ST = SM_DERIVED_STATE_MIN + 14;
 
     /// @brief Found last closing brace or square bracket.
-    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 17;
+    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 15;
 
     /// @brief Found opening and closing brace or square bracket.
     ///
@@ -296,20 +290,17 @@ private:
     /// @brief Handler for WHITESPACE_BEFORE_JSON_ST.
     void whiteSpaceBeforeJSONHandler();
 
-    /// @brief Handler for OLD_COMMENT_BEFORE_JSON_ST.
-    void oldCommentBeforeJSONHandler();
+    /// @brief Handler for EOL_COMMENT_BEFORE_JSON_ST.
+    void eolCommentBeforeJSONHandler();
 
-    /// @brief Handler for NEW_COMMENT_BEFORE_JSON_ST.
-    void newCommentBeforeJSONHandler();
-
-    /// @brief Handler for CPP_COMMENT_BEFORE_JSON_ST.
-    void cppCommentBeforeJSONHandler();
+    /// @brief Handler for START_COMMENT_BEFORE_JSON_ST.
+    void startCommentBeforeJSONHandler();
 
     /// @brief Handler for C_COMMENT_BEFORE_JSON_ST.
     void cCommentBeforeJSONHandler();
 
-    /// @brief Handler for END_C_COMMENT_BEFORE_JSON_ST.
-    void endCCommentBeforeJSONHandler();
+    /// @brief Handler for STOP_COMMENT_BEFORE_JSON_ST.
+    void stopCommentBeforeJSONHandler();
 
     /// @brief Handler for the FIRST_BRACE_ST.
     void innerJSONHandler();
@@ -320,20 +311,17 @@ private:
     /// @brief Handler for the ESCAPE_JSON_ST;
     void escapeJSONHandler();
 
-    /// @brief Handler for OLD_COMMENT_ST.
-    void oldCommentHandler();
+    /// @brief Handler for EOL_COMMENT_ST.
+    void eolCommentHandler();
 
-    /// @brief Handler for NEW_COMMENT_ST.
-    void newCommentHandler();
-
-    /// @brief Handler for CPP_COMMENT_ST.
-    void cppCommentHandler();
+    /// @brief Handler for START_COMMENT_ST.
+    void startCommentHandler();
 
     /// @brief Handler for C_COMMENT_ST.
     void cCommentHandler();
 
-    /// @brief Handler for END_C_COMMENT_ST.
-    void endCCommentHandler();
+    /// @brief Handler for STOP_COMMENT_ST.
+    void stopCommentHandler();
 
     /// @brief Handler for the JSON_END_ST.
     void endJSONHandler();

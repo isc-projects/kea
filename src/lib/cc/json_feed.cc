@@ -18,20 +18,18 @@ namespace config {
 
 const int JSONFeed::RECEIVE_START_ST;
 const int JSONFeed::WHITESPACE_BEFORE_JSON_ST;
-const int JSONFeed::OLD_COMMENT_BEFORE_JSON_ST;
-const int JSONFeed::NEW_COMMENT_BEFORE_JSON_ST;
-const int JSONFeed::CPP_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::EOL_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::START_COMMENT_BEFORE_JSON_ST;
 const int JSONFeed::C_COMMENT_BEFORE_JSON_ST;
-const int JSONFeed::END_C_COMMENT_BEFORE_JSON_ST;
+const int JSONFeed::STOP_COMMENT_BEFORE_JSON_ST;
 const int JSONFeed::JSON_START_ST;
 const int JSONFeed::INNER_JSON_ST;
 const int JSONFeed::STRING_JSON_ST;
 const int JSONFeed::ESCAPE_JSON_ST;
-const int JSONFeed::OLD_COMMENT_ST;
-const int JSONFeed::NEW_COMMENT_ST;
-const int JSONFeed::CPP_COMMENT_ST;
+const int JSONFeed::EOL_COMMENT_ST;
+const int JSONFeed::START_COMMENT_ST;
 const int JSONFeed::C_COMMENT_ST;
-const int JSONFeed::END_C_COMMENT_ST;
+const int JSONFeed::STOP_COMMENT_ST;
 const int JSONFeed::JSON_END_ST;
 const int JSONFeed::FEED_OK_ST;
 const int JSONFeed::FEED_FAILED_ST;
@@ -148,32 +146,28 @@ JSONFeed::defineStates() {
                 std::bind(&JSONFeed::receiveStartHandler, this));
     defineState(WHITESPACE_BEFORE_JSON_ST, "WHITESPACE_BEFORE_JSON_ST",
                 std::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
-    defineState(OLD_COMMENT_BEFORE_JSON_ST, "OLD_COMMENT_BEFORE_JSON_ST",
-                std::bind(&JSONFeed::oldCommentBeforeJSONHandler, this));
-    defineState(NEW_COMMENT_BEFORE_JSON_ST, "NEW_COMMENT_BEFORE_JSON_ST",
-                std::bind(&JSONFeed::newCommentBeforeJSONHandler, this));
-    defineState(CPP_COMMENT_BEFORE_JSON_ST, "CPP_COMMENT_BEFORE_JSON_ST",
-                std::bind(&JSONFeed::cppCommentBeforeJSONHandler, this));
+    defineState(EOL_COMMENT_BEFORE_JSON_ST, "EOL_COMMENT_BEFORE_JSON_ST",
+                std::bind(&JSONFeed::eolCommentBeforeJSONHandler, this));
+    defineState(START_COMMENT_BEFORE_JSON_ST, "START_COMMENT_BEFORE_JSON_ST",
+                std::bind(&JSONFeed::startCommentBeforeJSONHandler, this));
     defineState(C_COMMENT_BEFORE_JSON_ST, "C_COMMENT_BEFORE_JSON_ST",
                 std::bind(&JSONFeed::cCommentBeforeJSONHandler, this));
-    defineState(END_C_COMMENT_BEFORE_JSON_ST, "END_C_COMMENT_BEFORE_JSON_ST",
-                std::bind(&JSONFeed::endCCommentBeforeJSONHandler, this));
+    defineState(STOP_COMMENT_BEFORE_JSON_ST, "STOP_COMMENT_BEFORE_JSON_ST",
+                std::bind(&JSONFeed::stopCommentBeforeJSONHandler, this));
     defineState(INNER_JSON_ST, "INNER_JSON_ST",
                 std::bind(&JSONFeed::innerJSONHandler, this));
     defineState(STRING_JSON_ST, "STRING_JSON_ST",
                 std::bind(&JSONFeed::stringJSONHandler, this));
     defineState(ESCAPE_JSON_ST, "ESCAPE_JSON_ST",
                 std::bind(&JSONFeed::escapeJSONHandler, this));
-    defineState(OLD_COMMENT_ST, "OLD_COMMENT_ST",
-                std::bind(&JSONFeed::oldCommentHandler, this));
-    defineState(NEW_COMMENT_ST, "NEW_COMMENT_ST",
-                std::bind(&JSONFeed::newCommentHandler, this));
-    defineState(CPP_COMMENT_ST, "CPP_COMMENT_ST",
-                std::bind(&JSONFeed::cppCommentHandler, this));
+    defineState(EOL_COMMENT_ST, "EOL_COMMENT_ST",
+                std::bind(&JSONFeed::eolCommentHandler, this));
+    defineState(START_COMMENT_ST, "START_COMMENT_ST",
+                std::bind(&JSONFeed::startCommentHandler, this));
     defineState(C_COMMENT_ST, "C_COMMENT_ST",
                 std::bind(&JSONFeed::cCommentHandler, this));
-    defineState(END_C_COMMENT_ST, "END_C_COMMENT_ST",
-                std::bind(&JSONFeed::endCCommentHandler, this));
+    defineState(STOP_COMMENT_ST, "STOP_COMMENT_ST",
+                std::bind(&JSONFeed::stopCommentHandler, this));
     defineState(JSON_END_ST, "JSON_END_ST",
                 std::bind(&JSONFeed::endJSONHandler, this));
 }
@@ -259,11 +253,11 @@ JSONFeed::receiveStartHandler() {
                 return;
 
             case '#':
-                transition(OLD_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+                transition(EOL_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
                 return;
 
             case '/':
-                transition(NEW_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+                transition(START_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
                 return;
 
             case '{':
@@ -300,11 +294,11 @@ JSONFeed::whiteSpaceBeforeJSONHandler() {
             break;
 
         case '#':
-            transition(OLD_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            transition(EOL_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
             return;
 
         case '/':
-            transition(NEW_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            transition(START_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
             return;
 
         case '{':
@@ -323,7 +317,7 @@ JSONFeed::whiteSpaceBeforeJSONHandler() {
 }
 
 void
-JSONFeed::oldCommentBeforeJSONHandler() {
+JSONFeed::eolCommentBeforeJSONHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
@@ -339,12 +333,12 @@ JSONFeed::oldCommentBeforeJSONHandler() {
 }
 
 void
-JSONFeed::newCommentBeforeJSONHandler() {
+JSONFeed::startCommentBeforeJSONHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '/':
-            transition(CPP_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            transition(EOL_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
             break;
 
         case '*':
@@ -358,28 +352,12 @@ JSONFeed::newCommentBeforeJSONHandler() {
 }
 
 void
-JSONFeed::cppCommentBeforeJSONHandler() {
-    char c = getNextFromBuffer();
-    if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        switch (c) {
-        case '\n':
-            transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
-            break;
-
-        default:
-            postNextEvent(DATA_READ_OK_EVT);
-            break;
-        }
-    }
-}
-
-void
 JSONFeed::cCommentBeforeJSONHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '*':
-            transition(END_C_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            transition(STOP_COMMENT_BEFORE_JSON_ST, DATA_READ_OK_EVT);
             break;
 
         default:
@@ -390,12 +368,16 @@ JSONFeed::cCommentBeforeJSONHandler() {
 }
 
 void
-JSONFeed::endCCommentBeforeJSONHandler() {
+JSONFeed::stopCommentBeforeJSONHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '/':
             transition(WHITESPACE_BEFORE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '*':
+            transition(getCurrState(), DATA_READ_OK_EVT);
             break;
 
         default:
@@ -434,11 +416,11 @@ JSONFeed::innerJSONHandler() {
             break;
 
         case '#':
-            transition(OLD_COMMENT_ST, DATA_READ_OK_EVT);
+            transition(EOL_COMMENT_ST, DATA_READ_OK_EVT);
             break;
 
         case '/':
-            transition(NEW_COMMENT_ST, DATA_READ_OK_EVT);
+            transition(START_COMMENT_ST, DATA_READ_OK_EVT);
             break;
 
         default:
@@ -480,7 +462,7 @@ JSONFeed::escapeJSONHandler() {
 }
 
 void
-JSONFeed::oldCommentHandler() {
+JSONFeed::eolCommentHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
@@ -497,12 +479,12 @@ JSONFeed::oldCommentHandler() {
 }
 
 void
-JSONFeed::newCommentHandler() {
+JSONFeed::startCommentHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '/':
-            transition(CPP_COMMENT_ST, DATA_READ_OK_EVT);
+            transition(EOL_COMMENT_ST, DATA_READ_OK_EVT);
             break;
 
         case '*':
@@ -516,28 +498,12 @@ JSONFeed::newCommentHandler() {
 }
 
 void
-JSONFeed::cppCommentHandler() {
-    char c = getNextFromBuffer();
-    if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        switch (c) {
-        case '\n':
-            transition(INNER_JSON_ST, DATA_READ_OK_EVT);
-            break;
-
-        default:
-            postNextEvent(DATA_READ_OK_EVT);
-            break;
-        }
-    }
-}
-
-void
 JSONFeed::cCommentHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '*':
-            transition(END_C_COMMENT_ST, DATA_READ_OK_EVT);
+            transition(STOP_COMMENT_ST, DATA_READ_OK_EVT);
             break;
 
         case '\n':
@@ -553,12 +519,16 @@ JSONFeed::cCommentHandler() {
 }
 
 void
-JSONFeed::endCCommentHandler() {
+JSONFeed::stopCommentHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch (c) {
         case '/':
             transition(INNER_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '*':
+            transition(getCurrState(), DATA_READ_OK_EVT);
             break;
 
         case '\n':
