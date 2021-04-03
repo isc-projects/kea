@@ -1348,7 +1348,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         if (allow_packet_park) {
             // We proactively park the packet. We'll unpark it without invoking
             // the callback (i.e. drop) unless the callout status is set to
-            // is NEXT_STEP_PARK.  Otherwise the callback we bind here will be
+            // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
             // executed when the hook library unparks the packet.
             HooksManager::park("leases4_committed", query,
             [this, callout_handle, query, rsp]() mutable {
@@ -1362,7 +1362,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                     processPacketPktSend(callout_handle, query, rsp);
                     processPacketBufferSend(callout_handle, rsp);
                 }
-            }, false);
+            });
         }
 
         try {

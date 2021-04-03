@@ -875,9 +875,6 @@ TEST_F(HooksManagerTest, Parking) {
     std::string parked_object = "foo";
     handle->setArgument("parked_object", parked_object);
 
-    // Call both installed callouts.
-    HooksManager::callCallouts(hookpt_one_index_, *handle);
-
     // This boolean value will be set to true when the packet gets unparked.
     bool unparked = false;
 
@@ -891,6 +888,9 @@ TEST_F(HooksManagerTest, Parking) {
             unparked = true;
         })
     );
+
+    // Call both installed callouts.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
 
     // We have two callouts which should have returned pointers to the
     // functions which we can call to simulate completion of asynchronous
@@ -940,14 +940,8 @@ TEST_F(HooksManagerTest, ServerUnpark) {
     std::string parked_object = "foo";
     handle->setArgument("parked_object", parked_object);
 
-    // Call installed callout.
-    HooksManager::callCallouts(hookpt_one_index_, *handle);
-
     // This boolean value will be set to true when the packet gets unparked.
     bool unparked = false;
-
-    // It should be possible for the server to increase reference counter.
-    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
 
     // The callouts instruct us to park the object. We associated the callback
     // function with the parked object, which sets "unparked" flag to true. We
@@ -957,6 +951,12 @@ TEST_F(HooksManagerTest, ServerUnpark) {
     [&unparked] {
         unparked = true;
     });
+
+    // It should be possible for the server to increase reference counter.
+    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
 
     // Server can force unparking the object.
     EXPECT_TRUE(HooksManager::unpark<std::string>("hookpt_one", "foo"));
@@ -988,14 +988,8 @@ TEST_F(HooksManagerTest, ServerDropParked) {
     std::string parked_object = "foo";
     handle->setArgument("parked_object", parked_object);
 
-    // Call installed callout.
-    HooksManager::callCallouts(hookpt_one_index_, *handle);
-
     // This boolean value will be set to true when the packet gets unparked.
     bool unparked = false;
-
-    // It should be possible for the server to increase reference counter.
-    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
 
     // The callouts instruct us to park the object. We associated the callback
     // function with the parked object, which sets "unparked" flag to true. We
@@ -1005,6 +999,12 @@ TEST_F(HooksManagerTest, ServerDropParked) {
     [&unparked] {
         unparked = true;
     });
+
+    // It should be possible for the server to increase reference counter.
+    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
 
     // Drop the parked packet. The callback should not be called.
     EXPECT_TRUE(HooksManager::drop<std::string>("hookpt_one", "foo"));
@@ -1045,9 +1045,6 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     std::string parked_object = "foo";
     handle->setArgument("parked_object", parked_object);
 
-    // Call installed callout.
-    HooksManager::callCallouts(hookpt_one_index_, *handle);
-
     // This boolean value will be set to true when the packet gets unparked.
     bool unparked = false;
 
@@ -1059,6 +1056,9 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     [&unparked] {
         unparked = true;
     });
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
 
     // Reset the handle to allow a reload.
     handle.reset();

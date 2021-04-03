@@ -37,24 +37,34 @@ namespace hooks {
 /// particular hook point only have access to the parking lots dedicated to
 /// them.
 ///
-/// The parking lot object supports 3 actions: "park", "unpark" and "reference".
-/// In the typical case, the server parks the object and the callouts unpark and
-/// reference the objects. Therefore, the @ref ParkingLot object is not passed
-/// directly to the callouts. Instead, a ParkingLotHandle object is provided
-/// to the callout, which only provides access to "unpark" and "reference"
-/// operations.
+/// The parking lot object supports 5 actions: "park", "reference", "derefence",
+/// "unpark", and "drop".
 ///
-/// Referencing an object is performed by the callouts before the
-/// @c CalloutHandle::NEXT_STEP_PARK is returned to the server and before the
-/// server parks the object. Trying to park unreferenced object will result
-/// in error. Referencing (reference counting) as an important part of the
+/// In the typical case, the server parks the object and the callouts reference
+/// and unpark the objects. Therefore, the @ref ParkingLot object is not passed
+/// directly to the callouts. Instead, a ParkingLotHandle object is provided
+/// to the callout, which only provides access to "reference", "dereference",
+/// and "unpark" operations.
+///
+/// Parking an object is performed, proactively by the server, before callouts
+/// are invoked.  Referencing (and derefencing) an object is performed by the
+/// callouts before the @c CalloutHandle::NEXT_STEP_PARK is returned to the
+/// server.
+///
+/// Trying to reference (or deference) and unparked object will result
+/// in error. Referencing (reference counting) is an important part of the
 /// parking mechanism, which allows multiple callouts, installed on the same
 /// hook point, to perform asynchronous operations and guarantees that the
 /// object remains parked until all those asynchronous operations complete.
 /// Each such callout must call @c unpark() when it desires the object to
-/// be unparked, but the object will be unparked when all callouts call this
-/// function, i.e. when all callouts signal completion of their respective
+/// be unparked, but the object will only be unparked when all callouts call
+/// this function, i.e. when all callouts signal completion of their respective
 /// asynchronous operations.
+///
+/// Dereferencing, decrements the reference count without invoking the unpark
+/// callback.  This allows hook callouts to proactively reference the object
+/// in a callout and then cancel the reference should further processing
+/// deem it the reference unnecessary.
 ///
 /// The types of the parked objects provided as T parameter of respective
 /// functions are most often shared pointers. One should not use references
@@ -68,93 +78,62 @@ public:
     /// @param parked_object object to be parked, e.g. pointer to a packet.
     /// @param unpark_callback callback function to be invoked when the object
     /// is unparked.
-    /// @param require_reference when true, the object to park must have an
-    /// existing reference in the parking lot. If false, the reference will be
-    /// be created.
-    /// @throw InvalidOperation if the @c reference() or @c park() have not been
-    /// called prior to parking the object.
-    /// @throw Unexpected if the reference count is not greater than zero. This
-    /// represents an invalid state and should not happen.
+    /// @throw InvalidOperation if this object has already been parked.
     template<typename T>
-    void park(T parked_object, std::function<void()> unpark_callback,
-              bool require_reference = true) {
+    void park(T parked_object, std::function<void()> unpark_callback) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
-        if (it == parking_.end()) {
-            if (require_reference) {
-                isc_throw(InvalidOperation, "unable to park an object because"
-                      " reference does not exist.");
-            }
-
-            // Not there add it. We reset the refcount to zero since
-            // techinically there are no references yet.
-            ParkingInfo pinfo(parked_object, unpark_callback);
-            pinfo.refcount_ = 0;
-            parking_[makeKey(parked_object)] = pinfo;
-            return;
+        if (it != parking_.end()) {
+            isc_throw(InvalidOperation, "object is already parked!");
         }
 
-        // Catch the case where it exists but refcount is invalid.
-        if (it->second.refcount_ <= 0) {
-            isc_throw(Unexpected, "unable to park an object because"
-                      " reference hasn't been increased.");
-        }
-
-        // Already there, bump the reference count and set the
-        // the callback.
-        it->second.update(parked_object, unpark_callback);
+        // Add the object to the parking lot. At this point refcount = 0.
+        ParkingInfo pinfo(parked_object, unpark_callback);
+        parking_[makeKey(parked_object)] = pinfo;
+        return;
     }
 
     /// @brief Increases reference counter for the parked object.
     ///
     /// This method is called by the callouts to increase a reference count
-    /// on the object to be parked. It must be called before the object is
-    /// actually parked.
+    /// on the object to be parked. It may only be called after the object
+    /// has been parked
     ///
     /// @tparam Type of the parked object.
     /// @param parked_object object which will be parked.
+    /// @return the integer number of references for this object.
     template<typename T>
-    void reference(T parked_object) {
+    int reference(T parked_object) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it == parking_.end()) {
-            // It's not there, add it with a ref count of 1.
-            ParkingInfo pinfo(parked_object);
-            parking_[makeKey(parked_object)] = pinfo;
-        } else {
-            // It's already there, bump the ref count.
-            ++it->second.refcount_;
+            isc_throw(InvalidOperation, "cannot reference an object"
+                      "that has not been parked.");
         }
+
+        // Bump and return the reference count
+        return (++it->second.refcount_);
     }
 
     /// @brief Decreases the reference counter for the parked object.
     ///
     /// This method is called by the callouts to decrease the reference count
-    /// on a parked object.  If the reference count reaches zero the object
-    /// is removed from the parking lot without invoking its callback.
+    /// on a parked object.
     ///
     /// @tparam Type of the parked object.
-    /// @param parked_object object which will be parked.
-    /// @return true if the object was found in the parking lot, false
-    /// otherwise.
+    /// @param parked_object parked object whose count should be reduced.
+    /// @return the integer number of references for this object.
     template<typename T>
-    bool dereference(T parked_object) {
+    int dereference(T parked_object) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = find(parked_object);
         if (it == parking_.end()) {
-            // It's not there, nothing to do.
-            return (false);
+            isc_throw(InvalidOperation, "cannot dereference an object"
+                      "that has not been parked.");
         }
 
-        // It's there decrement the ref count.
-        --it->second.refcount_;
-
-        if (it->second.refcount_ <= 0) {
-            // No more references, unpark it.
-            parking_.erase(it);
-        }
-
-        return (true);
+        // Decrement and return the reference count.
+       return (--it->second.refcount_);
     }
 
     /// @brief Signals that the object should be unparked.
@@ -247,7 +226,7 @@ public:
         ParkingInfo(const boost::any& parked_object,
                     std::function<void()> callback = 0)
             : parked_object_(parked_object), unpark_callback_(callback),
-              refcount_(1) {
+              refcount_(0) {
         }
 
         /// @brief Update parking information.
@@ -334,23 +313,22 @@ public:
     ///
     /// @tparam Type of the parked object.
     /// @param parked_object object which will be parked.
+    /// @return new reference count as an integer
     template<typename T>
-    void reference(T parked_object) {
-        parking_lot_->reference(parked_object);
+    int reference(T parked_object) {
+        return (parking_lot_->reference(parked_object));
     }
 
     /// @brief Decreases the reference counter for the parked object.
     ///
     /// This method is called by the callouts to decrease the reference count
-    /// of a parked object. If the reference count reaches zero the object
-    /// is removed from the parking lot without invoking its callback.
+    /// of a parked object.
     ///
     /// @tparam Type of the parked object.
     /// @param parked_object object which will be parked.
-    /// @return true if the object was found in the parking lot, false
-    /// otherwise.
+    /// @return new reference count as an integer
     template<typename T>
-    bool dereference(T parked_object) {
+    int dereference(T parked_object) {
         return (parking_lot_->dereference(parked_object));
     }
 

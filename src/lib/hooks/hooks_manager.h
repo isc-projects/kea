@@ -289,11 +289,9 @@ public:
     /// @param unpark_callback callback invoked when the packet is unparked.
     template<typename T>
     static void park(const std::string& hook_name, T parked_object,
-                     std::function<void()> unpark_callback,
-                     bool require_reference = true) {
+                     std::function<void()> unpark_callback) {
         ServerHooks::getServerHooks().
-            getParkingLotPtr(hook_name)->park(parked_object, unpark_callback,
-                                              require_reference);
+            getParkingLotPtr(hook_name)->park(parked_object, unpark_callback);
     }
 
     /// @brief Forces unparking the object (packet).
