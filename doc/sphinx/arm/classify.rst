@@ -465,7 +465,7 @@ Notes:
    |                       |                         | e.g. 0a:1b:2c:3e      |
    +-----------------------+-------------------------+-----------------------+
 
-   .. table:: List of Conversion to Text Expressions
+.. table:: List of Conversion to Text Expressions
 
    +-----------------------+---------------------------+------------------------+
    | Name                  | Example                   | Description            |
