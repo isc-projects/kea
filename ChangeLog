@@ -1,3 +1,9 @@
+1902.	[func]		andrei, fdupont
+	All logs that expose configuration, either in full or in snippets
+	now have the values of "password" and "secret" entries replaced
+	with asterisks "*****".
+	(Gitlab #1721)
+
 1901.	[bug]		marcin
 	Corrected a bug in DHCPv4 subnet selection. The server ignored
 	the Subnet Selection option supplied by a client if its query
