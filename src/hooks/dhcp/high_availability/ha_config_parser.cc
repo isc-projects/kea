@@ -25,16 +25,24 @@ const SimpleDefaults HA_CONFIG_LB_DEFAULTS = {
 
 /// @brief Default values for HA configuration.
 const SimpleDefaults HA_CONFIG_DEFAULTS = {
-    { "delayed-updates-limit", Element::integer, "0" },
-    { "heartbeat-delay", Element::integer, "10000" },
-    { "max-ack-delay", Element::integer, "10000" },
-    { "max-response-delay", Element::integer, "60000" },
-    { "max-unacked-clients", Element::integer, "10" },
-    { "send-lease-updates", Element::boolean, "true" },
-    { "sync-leases", Element::boolean, "true" },
-    { "sync-timeout", Element::integer, "60000" },
-    { "sync-page-limit", Element::integer, "10000" },
-    { "wait-backup-ack", Element::boolean, "false" }
+    { "delayed-updates-limit",   Element::integer, "0" },
+    { "heartbeat-delay",         Element::integer, "10000" },
+    { "max-ack-delay",           Element::integer, "10000" },
+    { "max-response-delay",      Element::integer, "60000" },
+    { "max-unacked-clients",     Element::integer, "10" },
+    { "send-lease-updates",      Element::boolean, "true" },
+    { "sync-leases",             Element::boolean, "true" },
+    { "sync-timeout",            Element::integer, "60000" },
+    { "sync-page-limit",         Element::integer, "10000" },
+    { "wait-backup-ack",         Element::boolean, "false" }
+};
+
+/// @brief Default values for HA multi-threading configuration.
+const SimpleDefaults HA_CONFIG_MT_DEFAULTS = {
+    { "enable-multi-threading",    Element::boolean, "false" },
+    { "http-client-threads",       Element::integer, "0" },
+    { "http-dedicated-listener",   Element::boolean, "false" },
+    { "http-listener-threads",     Element::integer, "0" }
 };
 
 /// @brief Default values for HA peer configuration.
@@ -175,6 +183,33 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get 'wait-backup-ack'.
     config_storage->setWaitBackupAck(getBoolean(c, "wait-backup-ack"));
 
+    // Get multi-threading map.
+    ElementPtr mt_config = boost::const_pointer_cast<Element>(c->get("multi-threading"));
+    if (!mt_config) {
+        // Not there, make an empty one.
+        mt_config = Element::createMap();
+        c->set("multi-threading", mt_config);
+    } else if (mt_config->getType() != Element::map) {
+        isc_throw(ConfigError, "multi-threading configuration must be a map");
+    }
+   
+    // Backfill the MT defaults. 
+    setDefaults(mt_config, HA_CONFIG_MT_DEFAULTS);
+
+    // Get 'enable-multi-threading'.
+    config_storage->setEnableMultiThreading(getBoolean(mt_config, "enable-multi-threading"));
+
+    // Get 'http-dedicated-listener'.
+    config_storage->setHttpDedicatedListener(getBoolean(mt_config, "http-dedicated-listener"));
+
+    // Get 'http-listener-threads'.
+    uint16_t threads = getAndValidateInteger<uint16_t>(mt_config, "http-listener-threads");
+    config_storage->setHttpListenerThreads(threads);
+
+    // Get 'http-client-threads'.
+    threads = getAndValidateInteger<uint16_t>(mt_config, "http-client-threads");
+    config_storage->setHttpClientThreads(threads);
+
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();
 
@@ -300,7 +335,7 @@ HAConfigParser::logConfigStatus(const HAConfigPtr& config_storage) const {
     }
 
     // With this setting the server will not take ownership of the partner's
-    // scope in case of partner's failure. This setting is ok if the
+    // scope in case of partner's failure. This setting is OK if the
     // administrator desires to have more control over scopes selection.
     // The administrator will need to send ha-scopes command to instruct
     // the server to take ownership of the scope. In some cases he may

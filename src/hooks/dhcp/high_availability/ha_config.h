@@ -179,7 +179,6 @@ public:
     /// @brief Map of the servers' configurations.
     typedef std::map<std::string, PeerConfigPtr> PeerConfigMap;
 
-
     /// @brief Configuration specific to a single HA state.
     class StateConfig {
     public:
@@ -218,7 +217,7 @@ public:
 
     private:
 
-        /// @brief Idenitifier of state for which configuration is held.
+        /// @brief Identifier of state for which configuration is held.
         int state_;
 
         /// @brief Pausing mode in the given state.
@@ -509,13 +508,84 @@ public:
         wait_backup_ack_ = wait_backup_ack;
     }
 
-    /// @brief Checks if the server is configured to wait for tha acknowledgments
+    /// @brief Checks if the server is configured to wait for the acknowledgments
     /// to the lease updates from the backup server or not.
     ///
     /// @return true if the server is configured to wait for the acknowledgments
     /// or false otherwise.
     bool amWaitingBackupAck() const {
         return (wait_backup_ack_);
+    }
+
+    /// @brief Checks if the server is configured for multi-threaded operation.
+    ///
+    /// @return true if the server is configured for multi-threaded operation
+    bool getEnableMultiThreading() {
+        return (enable_multi_threading_);
+    }
+
+    /// @brief Sets whether or not server is configured for multi-threaded operation.
+    ///
+    /// @param http_enabled boolean flag that enables multi-threaded operation
+    /// when true.
+    void setEnableMultiThreading(bool enable_multi_threading) {
+        enable_multi_threading_ = enable_multi_threading;
+    }
+
+    /// @brief Checks if the server is configured to use its own HTTP listener.
+    ///
+    /// When this is true, the server should instantiate an HTTP listener instance
+    /// which listens on this server's URL.  If false, this server will rely on
+    /// a kea-control-agent.
+    ///
+    /// @return true if the server is configured to use its own HTTP listener. 
+    bool getHttpDedicatedListener() {
+        return (http_dedicated_listener_);
+    }
+
+    /// @brief Sets whether or not the server is configured  use its one HTTP
+    /// listener.
+    ///
+    /// @param http_dedicated_listener flag that enables the use of a dedicated
+    /// listener when true.
+    void setHttpDedicatedListener(bool http_dedicated_listener) {
+        http_dedicated_listener_ = http_dedicated_listener;
+    }
+
+    /// @brief Fetches the number of threads the dedicated HTTP listener should use.
+    ///
+    /// A value of 0 instructs the server to determine the maximum number of threads 
+    /// the listener should use.  A value greater than 0 sets maximum number of
+    /// threads the listener should use.
+    ///
+    /// @return number of the listener is configured to use.
+    uint16_t getHttpListenerThreads() {
+        return (http_listener_threads_);
+    }
+
+    /// @brief Sets the number of threads the dedicated HTTP listener should use.
+    ///
+    /// @return number of the listener should use.
+    void setHttpListenerThreads(uint16_t http_listener_threads) {
+        http_listener_threads_ = http_listener_threads;
+    }
+
+    /// @brief Fetches the number of threads the HTTP Client should use.
+    ///
+    /// A value of 0 instructs the server to determine the maximum number of threads 
+    /// the client should use.  A value greater than 0 sets maximum number of
+    /// threads the client should use.
+    ///
+    /// @return number of the client is configured to use.
+    uint16_t getHttpClientThreads() {
+        return (http_client_threads_);
+    }
+
+    /// @brief Sets the number of threads the HTTP client should use.
+    ///
+    /// @return number of the client should use.
+    void setHttpClientThreads(uint16_t http_client_threads) {
+        http_client_threads_ = http_client_threads;
     }
 
     /// @brief Returns configuration of the specified server.
@@ -584,6 +654,10 @@ public:
     uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.
     uint32_t max_unacked_clients_;        ///< Maximum number of unacked clients.
     bool wait_backup_ack_;                ///< Wait for lease update ack from backup?
+    bool enable_multi_threading_;         ///< Enable multi-threading.
+    bool http_dedicated_listener_;        ///< Enable use of own HTTP listener.
+    uint16_t http_listener_threads_;      ///< Number of HTTP listener threads.
+    uint16_t http_client_threads_;        ///< Number of HTTP client threads.
     PeerConfigMap peers_;                 ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_; ///< State machine configuration.
 };

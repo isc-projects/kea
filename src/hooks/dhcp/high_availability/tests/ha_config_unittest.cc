@@ -14,6 +14,8 @@
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
 #include <util/state_model.h>
+#include <util/multi_threading_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <string>
 
 using namespace isc;
@@ -203,6 +205,12 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
                     getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
+
+    // Verify multi-threading default values.
+    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that hot standby configuration is parsed correctly.
@@ -311,6 +319,12 @@ TEST_F(HAConfigTest, configureHotStandby) {
                     getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    // Verify multi-threading default values.
+    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that passive-backup configuration is parsed correctly.
@@ -371,6 +385,12 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("dGVzdDoxMjPCow==", cfg->getBasicAuth()->getCredential());
+
+    // Verify multi-threading default values.
+    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
 }
 
 // This server name must not be empty.
@@ -604,7 +624,7 @@ TEST_F(HAConfigTest, invalidURL) {
         " https scheme for server server2");
 }
 
-// URL hostname must be an addree.
+// URL hostname must be an address.
 TEST_F(HAConfigTest, badURLName) {
     testInvalidConfig(
         "["
@@ -1357,6 +1377,58 @@ TEST_F(HAConfigTest, pausingToString) {
     EXPECT_EQ("once",
               HAConfig::StateConfig::pausingToString(STATE_PAUSE_ONCE));
 
+}
+
+// Verifies that HA multi-threading parses correctly.  It checks
+// HA+MT can only be enabled when Kea core MT is enabled.  It
+// also checks that HA+MT parameters can be set to custom values. 
+TEST_F(HAConfigTest, configureMultiThreading) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"wait-backup-ack\": true,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"backup\""
+        "            }"
+        "        ],"
+        "       \"multi-threading\": {"
+        "           \"enable-multi-threading\": true,"
+        "           \"http-dedicated-listener\": true,"
+        "           \"http-listener-threads\": 4,"
+        "           \"http-client-threads\": 5"
+        "       }"
+        "    }"
+        "]";
+
+    // Verify that HA+MT cannot be enabled when Kea core MT is disabled.
+    util::MultiThreadingMgr::instance().setMode(false);
+    HAImplPtr impl(new HAImpl());
+    ASSERT_THROW_MSG(impl->configure(Element::fromJSON(ha_config)), ConfigError,
+                     "HA multi-threading cannot be enabled when"
+                     " Kea core multi-threading is disabled");
+
+    // Verify that HA+MT can be enabled when Kea core MT is enabled.
+    util::MultiThreadingMgr::instance().setMode(true);
+    impl.reset(new HAImpl());
+    ASSERT_NO_THROW_LOG(impl->configure(Element::fromJSON(ha_config)));
+
+    // Verify that the multi-threading values are correct.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(4, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(5, impl->getConfig()->getHttpClientThreads());
+
+    util::MultiThreadingMgr::instance().setMode(false);
 }
 
 } // end of anonymous namespace
