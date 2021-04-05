@@ -837,13 +837,13 @@ public:
 
         EXPECT_FALSE(state->isPoked());
 
-        ASSERT_NO_THROW(parking_lot->reference(query));
-
         // Let's park the packet and associate it with the callback function which
         // simply records the fact that it has been called. We expect that it wasn't
         // because the parked packet should be dropped as a result of lease updates
         // failures.
         ASSERT_NO_THROW(parking_lot->park(query, unpark_handler));
+
+        ASSERT_NO_THROW(parking_lot->reference(query));
 
         // Actually perform the lease updates.
         ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [this]() {
@@ -939,13 +939,13 @@ public:
 
         EXPECT_FALSE(state->isPoked());
 
-        ASSERT_NO_THROW(parking_lot->reference(query));
-
         // Let's park the packet and associate it with the callback function which
         // simply records the fact that it has been called. We expect that it wasn't
         // because the parked packet should be dropped as a result of lease updates
         // failures.
         ASSERT_NO_THROW(parking_lot->park(query, unpark_handler));
+
+        ASSERT_NO_THROW(parking_lot->reference(query));
 
         // Actually perform the lease updates.
         ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [this]() {

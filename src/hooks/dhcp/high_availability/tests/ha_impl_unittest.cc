@@ -17,6 +17,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
 #include <hooks/hooks_manager.h>
+#include <testutils/gtest_utils.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -30,6 +31,29 @@ using namespace isc::ha::test;
 using namespace isc::hooks;
 
 namespace {
+
+/// @brief Structure that holds registered hook indexes.
+///
+/// This allows us to park packets.
+struct TestHooks {
+    /// @brief Index of leases4_committed callout.
+    int hook_index_leases4_committed_;
+
+    /// @brief Index of leases6_committed callout.
+    int hook_index_leases6_committed_;
+
+    /// @brief Constructor
+    ///
+    /// The constructor registers hook points for callout tests.
+    TestHooks() {
+        hook_index_leases4_committed_ =
+            HooksManager::registerHook("leases4_committed");
+        hook_index_leases6_committed_ =
+            HooksManager::registerHook("leases6_committed");
+    }
+};
+
+TestHooks test_hooks;
 
 /// @brief Derivation of the @c HAImpl which provides access to protected
 /// methods and members.
@@ -331,6 +355,9 @@ TEST_F(HAImplTest, leases4Committed) {
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
     ASSERT_TRUE(callout_handle);
 
+    // Set the hook index so we can park packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases4_committed_);
+
     // query4
     Pkt4Ptr query4 = createMessage4(DHCPREQUEST, 1, 0, 0);
     callout_handle->setArgument("query4", query4);
@@ -346,12 +373,15 @@ TEST_F(HAImplTest, leases4Committed) {
     // Set initial status.
     callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
     // There are no leases so the callout should return.
     ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
 
     // No updates are generated so the default status should not be modified.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
-    EXPECT_FALSE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 
     // Create a lease and pass it to the callout, but temporarily disable lease
     // updates.
@@ -364,17 +394,25 @@ TEST_F(HAImplTest, leases4Committed) {
 
     ha_impl.config_->setSendLeaseUpdates(false);
 
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
     // Run the callout again.
     ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
 
     // No updates are generated so the default status should not be modified.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
-    EXPECT_FALSE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 
     // Enable updates and retry.
     ha_impl.config_->setSendLeaseUpdates(true);
     callout_handle->setArgument("leases4", leases4);
-    ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
+
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
+    // Run the callout again.
+    ASSERT_NO_THROW_LOG(ha_impl.leases4Committed(*callout_handle));
 
     // This time the lease update should be generated and the status should
     // be set to "park".
@@ -403,6 +441,9 @@ TEST_F(HAImplTest, leases6Committed) {
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
     ASSERT_TRUE(callout_handle);
 
+    // Set the hook index so we can park packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases6_committed_);
+
     // query6
     Pkt6Ptr query6 = createMessage6(DHCPV6_REQUEST, 1, 0);
     callout_handle->setArgument("query6", query6);
@@ -418,12 +459,15 @@ TEST_F(HAImplTest, leases6Committed) {
     // Set initial status.
     callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
     // There are no leases so the callout should return.
     ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
 
     // No updates are generated so the default status should not be modified.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
-    EXPECT_FALSE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 
     // Create a lease and pass it to the callout, but temporarily disable lease
     // updates.
@@ -435,16 +479,23 @@ TEST_F(HAImplTest, leases6Committed) {
 
     ha_impl.config_->setSendLeaseUpdates(false);
 
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
     // Run the callout again.
     ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
 
     // No updates are generated so the default status should not be modified.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
-    EXPECT_FALSE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 
     // Enable updates and retry.
     ha_impl.config_->setSendLeaseUpdates(true);
     callout_handle->setArgument("leases6", leases6);
+
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
     ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
 
     // This time the lease update should be generated and the status should

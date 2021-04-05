@@ -400,6 +400,11 @@ TEST_F(CloseHATest, close4) {
         CalloutHandlePtr handle = query->getCalloutHandle();
         ScopedCalloutHandleState handle_state(handle);
         handle->setArgument("query4", query);
+
+        // Park the packtet proactively as the server normally would.
+        HooksManager::park("leases4_committed", query, []{});
+
+        // Invoke the callouts.
         HooksManager::callCallouts(testHooks.hook_index_buffer4_receive_,
                                    *handle);
         EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle->getStatus());
@@ -633,6 +638,11 @@ TEST_F(CloseHATest, close6) {
         CalloutHandlePtr handle = query->getCalloutHandle();
         ScopedCalloutHandleState handle_state(handle);
         handle->setArgument("query6", query);
+
+        // Park the packtet proactively as the server normally would.
+        HooksManager::park("leases6_committed", query, []{});
+
+        // Invoke the callouts.
         HooksManager::callCallouts(testHooks.hook_index_buffer6_receive_,
                                    *handle);
         EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle->getStatus());

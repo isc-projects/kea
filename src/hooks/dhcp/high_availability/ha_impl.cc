@@ -148,7 +148,7 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
         return;
     }
 
-    // The callout returns this status code to indicate to the server that  it
+    // The callout returns this status code to indicate to the server that it
     // should leave the packet parked.  It will be unparked until each hook
     // library with a reference, unparks the packet.
     callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
@@ -242,22 +242,23 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // pointer until we unpark the packet.
     ParkingLotHandlePtr parking_lot = callout_handle.getParkingLotHandlePtr();
 
+    // Create a reference to the parked packet. This signals that we have a
+    // stake in unparking it.
+    parking_lot->reference(query6);
+
     // Asynchronously send lease updates. In some cases no updates will be sent,
     // e.g. when this server is in the partner-down state and there are no backup
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
     if (service_->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
+        // Dereference the parked packet.  This releases our stake in it.
+        parking_lot->dereference(query6);
         return;
     }
 
-    // This is required step every time we ask the server to park the packet.
-    // The reference counting is required to keep the packet parked until
-    // all callouts call unpark. Then, the packet gets unparked and the
-    // associated callback is triggered. The callback resumes packet processing.
-    parking_lot->reference(query6);
-
     // The callout returns this status code to indicate to the server that it
-    // should park the query packet.
+    // should leave the packet parked.  It will be unparked until each hook
+    // library with a reference, unparks the packet.
     callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
 }
 

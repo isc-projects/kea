@@ -108,7 +108,7 @@ public:
         auto it = find(parked_object);
         if (it == parking_.end()) {
             isc_throw(InvalidOperation, "cannot reference an object"
-                      "that has not been parked.");
+                      " that has not been parked.");
         }
 
         // Bump and return the reference count
@@ -129,7 +129,7 @@ public:
         auto it = find(parked_object);
         if (it == parking_.end()) {
             isc_throw(InvalidOperation, "cannot dereference an object"
-                      "that has not been parked.");
+                      " that has not been parked.");
         }
 
         // Decrement and return the reference count.
