@@ -52,8 +52,7 @@ public:
 
     /// \brief Constructor
     Filename(const std::string& name) :
-        full_name_(""), directory_(""), name_(""), extension_("")
-    {
+        full_name_(""), directory_(""), name_(""), extension_("") {
         setName(name);
     }
 
@@ -149,7 +148,7 @@ private:
     /// \param name Returned name part
     /// \param extension Returned extension part
     void split(const std::string& full_name, std::string& directory,
-       std::string& name, std::string& extension) const;
+               std::string& name, std::string& extension) const;
 
     // Members
 

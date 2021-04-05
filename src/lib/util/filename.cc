@@ -24,9 +24,8 @@ namespace util {
 // been replaced by forward slashes.
 
 void
-Filename::split(const string& full_name, string& directory,
-    string& name, string& extension) const
-{
+Filename::split(const string& full_name, string& directory, string& name,
+                string& extension) const {
     directory = name = extension = "";
     if (!full_name.empty()) {
 
