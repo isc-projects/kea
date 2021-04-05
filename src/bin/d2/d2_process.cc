@@ -208,7 +208,7 @@ isc::data::ConstElementPtr
 D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC, DHCP_DDNS_CONFIGURE)
         .arg(check_only ? "check" : "update")
-        .arg(config_set->str());
+        .arg(getD2CfgMgr()->redactConfig(config_set)->str());
 
     isc::data::ConstElementPtr answer;
     answer = getCfgMgr()->simpleParseConfig(config_set, check_only,

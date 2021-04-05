@@ -282,8 +282,9 @@ public:
     /// @return Summary of the configuration in the textual format.
     virtual std::string getConfigSummary(const uint32_t selection);
 
-protected:
+    std::list<std::list<std::string>> jsonPathsToRedact() const final override;
 
+protected:
     /// @brief Parses configuration of the D2.
     ///
     /// @param config Pointer to a configuration specified for D2.

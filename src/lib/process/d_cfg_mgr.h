@@ -12,9 +12,11 @@
 #include <cc/user_context.h>
 #include <process/config_base.h>
 #include <exceptions/exceptions.h>
-#include <functional>
 
 #include <stdint.h>
+
+#include <functional>
+#include <list>
 #include <string>
 
 namespace isc {
@@ -162,6 +164,20 @@ public:
     /// @return Summary of the configuration in the textual format.
     virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
+    /// @brief Redact the configuration.
+    ///
+    /// This method replaces passwords and secrets by asterisks. By
+    /// default it follows all subtrees at the exception of user
+    /// contexts. Please derive the method to allow a reasonable
+    /// performance by following only subtrees where the syntax allows
+    /// the presence of passwords and secrets.
+    ///
+    /// @param config the Element tree structure that describes the configuration.
+    /// @return unmodified config or a copy of the config where passwords were
+    /// replaced by asterisks so can be safely logged to an unprivileged place.
+    isc::data::ConstElementPtr
+    redactConfig(isc::data::ConstElementPtr const& config) const;
+
 protected:
     /// @brief Adds default values to the given config
     ///
@@ -210,20 +226,17 @@ protected:
     virtual isc::data::ConstElementPtr parse(isc::data::ConstElementPtr config,
                                              bool check_only);
 
-    /// @brief Redact the configuration.
+    /// @brief Return a list of all paths that contain passwords or secrets.
     ///
-
-    /// This method replaces passwords and secrets by asterisks. By
-    /// default it follows all subtrees at the exception of user
-    /// contexts. Please derive the method to allow a reasonable
-    /// performance by following only subtrees where the syntax allows
-    /// the presence of passwords and secrets.
+    /// Used in @ref isc::process::Daemon::redactConfig to only make copies and
+    /// only redact configuration subtrees that contain passwords or secrets.
     ///
-    /// @param config the Element tree structure that describes the configuration.
-    /// @return unmodified config or a copy of the config where passwords were
-    /// replaced by asterisks so can be safely logged to an unprivileged place.
-    virtual isc::data::ConstElementPtr
-    redactConfig(isc::data::ConstElementPtr config) const;
+    /// This method needs to be overridden in each process that has a distinct
+    /// configuration structure.
+    ///
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    virtual std::list<std::list<std::string>> jsonPathsToRedact() const;
 
 private:
     /// @brief Pointer to the configuration context instance.

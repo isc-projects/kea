@@ -852,7 +852,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
-              .arg(config->str());
+        .arg(Dhcpv4Srv::redactConfig(config)->str());
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
@@ -1030,7 +1030,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
-              .arg(config->str());
+        .arg(Dhcpv4Srv::redactConfig(config)->str());
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 

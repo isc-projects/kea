@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cc/data.h>
 #include <process/daemon.h>
 #include <process/log_parser.h>
@@ -12,11 +13,13 @@
 #include <log/logger_name.h>
 #include <log/logger_support.h>
 #include <process/config_base.h>
+#include <process/redact_config.h>
 #include <util/filename.h>
 
 #include <functional>
 #include <sstream>
 #include <fstream>
+
 #include <errno.h>
 
 using namespace isc::data;
@@ -244,5 +247,26 @@ Daemon::writeConfigFile(const std::string& config_file,
     return (bytes);
 }
 
+
+std::list<std::list<std::string>> Daemon::jsonPathsToRedact() {
+    static std::list<std::list<std::string>> _({
+        {"config-control", "config-databases"},
+        {"hooks-libraries", "parameters"},
+        {"hosts-database"},
+        {"hosts-databases"},
+        {"lease-database"},
+    });
+    return _;
 }
+
+isc::data::ConstElementPtr
+Daemon::redactConfig(isc::data::ConstElementPtr const& config) {
+    isc::data::ConstElementPtr result(config);
+    for (std::list<std::string>& json_path : jsonPathsToRedact()) {
+        result = isc::process::redactConfig(result, json_path);
+    }
+    return result;
 }
+
+}  // namespace process
+}  // namespace isc

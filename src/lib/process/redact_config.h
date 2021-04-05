@@ -8,7 +8,7 @@
 #define REDACT_CONFIG_H
 
 #include <cc/data.h>
-#include <set>
+#include <list>
 
 namespace isc {
 namespace process {
@@ -21,17 +21,15 @@ namespace process {
 ///  - it skips user context.
 ///  - if a not empty list of keywords is given it follows only them.
 ///
-/// @param config the Element tree structure that describes the configuration.
-/// @param redacted The reference to redacted flag: true means the result
-/// was redacted so cannot be shared.
-/// @param follow The set of keywords of subtrees where a password or a
-/// secret can be found.
-/// @return unmodified config or a copy of the config where passwords and
-/// secrets were replaced by asterisks so can be safely logged to an
-/// unprivileged place.
-isc::data::ConstElementPtr redactConfig(isc::data::ConstElementPtr elem,
-                                        bool& redacted,
-                                        const std::set<std::string>& follow);
+/// @param element initially the Element tree structure that describe the
+/// configuration and smaller subtrees in recursive calls.
+/// @param json_path JSON path to redact
+///
+/// @return a copy of the config where passwords and secrets were replaced by
+/// asterisks so it can be safely logged to an unprivileged place.
+isc::data::ConstElementPtr
+redactConfig(isc::data::ConstElementPtr const& element,
+             std::list<std::string> const& json_path = {});
 
 } // namespace process
 } // namespace isc

@@ -298,18 +298,13 @@ protected:
     /// @return Returns a ConfigPtr to the new context instance.
     virtual process::ConfigPtr createNewContext();
 
-    /// @brief Redact the configuration.
+    /// @brief Return a list of all paths that contain passwords or secrets.
     ///
-    /// This method replaces passwords and secrets by asterisks.
-    /// The agent version handles authentication clients where the syntax
-    /// has passwords and hooks-libraries parameters which have free
-    /// JSON maps.
+    /// Used in @ref isc::process::DCfgMgrBase::redactConfig.
     ///
-    /// @param config Pointer to a configuration specified for the agent.
-    /// @return unmodified config or a copy of the config where passwords were
-    /// replaced by asterisks so can be safely logged to an unprivileged place.
-    virtual isc::data::ConstElementPtr
-    redactConfig(isc::data::ConstElementPtr config) const;
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    std::list<std::list<std::string>> jsonPathsToRedact() const final override;
 };
 
 /// @brief Defines a shared pointer to CtrlAgentCfgMgr.

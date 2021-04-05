@@ -855,7 +855,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
-              .arg(config->str());
+        .arg(Dhcpv6Srv::redactConfig(config)->str());
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
@@ -1051,7 +1051,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
-              .arg(config->str());
+        .arg(Dhcpv6Srv::redactConfig(config)->str());
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 

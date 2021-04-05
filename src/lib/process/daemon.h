@@ -11,8 +11,11 @@
 #include <process/config_base.h>
 #include <util/pid_file.h>
 #include <asiolink/io_service_signal.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <list>
 #include <string>
 
 namespace isc {
@@ -224,6 +227,25 @@ public:
     void setExitValue(int value) {
         exit_value_ = value;
     }
+
+    /// @brief Return a list of all paths that contain passwords or secrets.
+    ///
+    /// Used in @ref isc::process::Daemon::redactConfig to only make copies and
+    /// only redact configuration subtrees that contain passwords or secrets.
+    ///
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    static std::list<std::list<std::string>> jsonPathsToRedact();
+
+    /// @brief Redact a configuration.
+    ///
+    /// Calls @ref isc::process::redactConfig
+    ///
+    /// @param config the Element tree structure that describes the configuration.
+    ///
+    /// @return the redacted configuration
+    static isc::data::ConstElementPtr
+    redactConfig(isc::data::ConstElementPtr const& config);
 
 protected:
 

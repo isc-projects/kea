@@ -58,15 +58,17 @@ DCfgMgrBase::setContext(ConfigPtr& context) {
 }
 
 ConstElementPtr
-DCfgMgrBase::redactConfig(ConstElementPtr config_set) const {
-    bool redacted = false;
-    set<string> follow = { };
-    ConstElementPtr result =
-        isc::process::redactConfig(config_set, redacted, follow);
-    if (redacted) {
-        return (result);
+DCfgMgrBase::redactConfig(ConstElementPtr const& config) const {
+    ConstElementPtr result(config);
+    for (std::list<std::string>& json_path : jsonPathsToRedact()) {
+        result = isc::process::redactConfig(result, json_path);
     }
-    return (config_set);
+    return result;
+}
+
+list<list<string>> DCfgMgrBase::jsonPathsToRedact() const {
+    static list<list<string>> _({});
+    return _;
 }
 
 isc::data::ConstElementPtr

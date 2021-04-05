@@ -5,13 +5,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <agent/ca_cfg_mgr.h>
 #include <agent/ca_log.h>
 #include <agent/simple_parser.h>
 #include <cc/simple_parser.h>
 #include <cc/command_interpreter.h>
 #include <http/basic_auth_config.h>
-#include <process/redact_config.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc::config;
@@ -139,19 +139,13 @@ CtrlAgentCfgMgr::parse(ConstElementPtr config_set, bool check_only) {
     return (answer);
 }
 
-ConstElementPtr
-CtrlAgentCfgMgr::redactConfig(ConstElementPtr config) const {
-    bool redacted = false;
-    const std::set<std::string> follow = {
-        "Control-agent", "authentication", "clients",
-        "hooks-libraries", "parameters"
-    };
-    ConstElementPtr result =
-        isc::process::redactConfig(config, redacted, follow);
-    if (redacted) {
-        return (result);
-    }
-    return (config);
+std::list<std::list<std::string>>
+CtrlAgentCfgMgr::jsonPathsToRedact() const {
+    static std::list<std::list<std::string>> _({
+        {"authentication", "clients"},
+        {"hooks-libraries", "parameters"},
+    });
+    return _;
 }
 
 data::ConstElementPtr

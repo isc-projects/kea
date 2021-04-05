@@ -309,6 +309,13 @@ D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
     return (answer);
 }
 
+std::list<std::list<std::string>>
+D2CfgMgr::jsonPathsToRedact() const {
+    static std::list<std::list<std::string>> _({
+        {"tsig-keys"},
+    });
+    return _;
+}
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace d2
+}  // namespace isc

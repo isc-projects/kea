@@ -4,7 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <process/redact_config.h>
+
+#include <boost/make_shared.hpp>
 
 using namespace isc::data;
 using namespace std;
@@ -13,57 +17,57 @@ namespace isc {
 namespace process {
 
 ConstElementPtr
-redactConfig(ConstElementPtr elem, bool& redacted, const set<string>& follow) {
-    // From isc::data::copy.
-    if (!elem) {
+redactConfig(ConstElementPtr const& element,
+             list<string> const& json_path) {
+    if (!element) {
         isc_throw(BadValue, "redactConfig got a null pointer");
     }
 
-    // Redact lists.
-    if (elem->getType() == Element::list) {
-        ElementPtr result = ElementPtr(new ListElement());
-        for (auto item : elem->listValue()) {
-            // add wants a ElementPtr so use a shallow copy.
-            ElementPtr copy =
-                data::copy(redactConfig(item, redacted, follow), 0);
-            result->add(copy);
+    ElementPtr result;
+    if (element->getType() == Element::list) {
+        // Redact lists.
+        result = boost::make_shared<ListElement>();
+        for (ConstElementPtr const& item : element->listValue()) {
+            // add wants an ElementPtr so use a shallow copy.
+            // We could hypothetically filter lists through JSON paths, but we
+            // would have to dig inside the list's children to see if we have a
+            // match. So we always copy because it's faster.
+            result->add(data::copy(redactConfig(item, json_path), 0));
         }
-        if (redacted) {
-            return (result);
-        }
-        return (elem);
-    }
-
-    // Redact maps.
-    if (elem->getType() == Element::map) {
-        ElementPtr result = ElementPtr(new MapElement());
-        for (auto kv : elem->mapValue()) {
-            auto key = kv.first;
-            auto value = kv.second;
+    } else if (element->getType() == Element::map) {
+        // Redact maps.
+        result = boost::make_shared<MapElement>();
+        for (auto kv : element->mapValue()) {
+            std::string const& key(kv.first);
+            ConstElementPtr const& value(kv.second);
 
             if ((key == "password") || (key == "secret")) {
                 // Handle passwords.
-                redacted = true;
-                result->set(key, Element::create(std::string("*****")));
+                result->set(key, Element::create(string("*****")));
             } else if (key == "user-context") {
                 // Skip user contexts.
                 result->set(key, value);
-            } else if (follow.empty() || follow.count(key)) {
-                // Handle this subtree where are passwords or secrets.
-                result->set(key, redactConfig(value, redacted, follow));
+            } else if (json_path.empty()) {
+                // Passwords or secrets expected in this subtree.
+                result->set(key, isc::data::copy(
+                                     redactConfig(value, json_path)));
+            } else if (key == json_path.front()) {
+                // Passwords or secrets expected in this subtree.
+                auto it(json_path.begin());
+                std::advance(it, 1);
+                list<string> new_json_path(it, json_path.end());
+                result->set(key, isc::data::copy(
+                                     redactConfig(value, new_json_path)));
             } else {
-                // Not follow: no passwords and secrets in this subtree.
+                // No passwords or secrets expected in this subtree.
                 result->set(key, value);
             }
         }
-        if (redacted) {
-            return (result);
-        }
-        return (elem);
+    } else {
+        return element;
     }
 
-    // Handle other element types.
-    return (elem);
+    return result;
 }
 
 } // namespace process

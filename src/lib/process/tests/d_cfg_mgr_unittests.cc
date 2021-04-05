@@ -285,41 +285,33 @@ TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
 // This test checks that redactConfig works as expected.
 TEST_F(DStubCfgMgrTest, redactConfig) {
     // Basic case.
-    bool redacted = false;
-    set<string> empty = { };
+    list<string> empty = { };
     string config = "{ \"foo\": 1 }";
     ConstElementPtr elem;
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
     ConstElementPtr ret;
-    ASSERT_NO_THROW(ret = redactConfig(elem, redacted, empty));
-    EXPECT_FALSE(redacted);
+    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
     EXPECT_EQ(ret->str(), elem->str());
 
     // Verify redaction.
-    redacted = false;
     config = "{ \"password\": \"foo\", \"secret\": \"bar\" }";
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
-    ASSERT_NO_THROW(ret = redactConfig(elem, redacted, empty));
-    EXPECT_TRUE(redacted);
+    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
     string expected = "{ \"password\": \"*****\", \"secret\": \"*****\" }";
     EXPECT_EQ(expected, ret->str());
 
     // Verify that user context are skipped.
-    redacted = false;
     config = "{ \"user-context\": { \"password\": \"foo\" } }";
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
-    ASSERT_NO_THROW(ret = redactConfig(elem, redacted, empty));
-    EXPECT_FALSE(redacted);
+    ASSERT_NO_THROW(ret = redactConfig(elem, empty));
     EXPECT_EQ(ret->str(), elem->str());
 
     // Verify that only given subtrees are handled.
-    redacted = false;
-    set<string> keys = { "foo" };
+    list<string> keys = { "foo" };
     config = "{ \"foo\": { \"password\": \"foo\" }, ";
     config += "\"next\": { \"secret\": \"bar\" } }";
     ASSERT_NO_THROW(elem = Element::fromJSON(config));
-    ASSERT_NO_THROW(ret = redactConfig(elem, redacted, keys));
-    EXPECT_TRUE(redacted);
+    ASSERT_NO_THROW(ret = redactConfig(elem, keys));
     expected = "{ \"foo\": { \"password\": \"*****\" }, ";
     expected += "\"next\": { \"secret\": \"bar\" } }";
     EXPECT_EQ(expected, ret->str());
