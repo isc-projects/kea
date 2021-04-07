@@ -16,7 +16,7 @@
 #include <iostream>
 #include <sstream>
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <mutex>
 #include <thread>
 
@@ -243,7 +243,7 @@ public:
 private:
 
     /// @brief Map which stores parked objects.
-    typedef std::map<std::string, ParkingInfo> ParkingInfoList;
+    typedef std::unordered_map<std::string, ParkingInfo> ParkingInfoList;
 
     /// @brief Type of the iterator in the list of parked objects.
     typedef ParkingInfoList::iterator ParkingInfoListIterator;
@@ -402,7 +402,7 @@ public:
 private:
 
     /// @brief Container holding parking lots for various hook points.
-    std::map<int, ParkingLotPtr> parking_lots_;
+    std::unordered_map<int, ParkingLotPtr> parking_lots_;
 
     /// @brief The mutex to protect parking lots internal state.
     std::mutex mutex_;
