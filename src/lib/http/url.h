@@ -83,6 +83,7 @@ public:
     /// @brief Returns textual representation of the URL.
     std::string toText() const;
 
+    /// @brief Returns the raw, unparsed url string.
     const std::string& rawUrl() const {
         return (url_);
     }

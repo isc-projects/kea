@@ -411,10 +411,10 @@ public:
 
         if (num_threads_ == 0) {
             // If we single-threaded client should not have it's own IOService.
-            ASSERT_FALSE(client_->getMyIOService());
+            ASSERT_FALSE(client_->getThreadIOService());
         } else {
             // If we multi-threaded client should have it's own IOService.
-            ASSERT_TRUE(client_->getMyIOService());
+            ASSERT_TRUE(client_->getThreadIOService());
         }
 
         // Verify the pool size and number of threads are as expected.
@@ -587,7 +587,7 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 0)));
     ASSERT_TRUE(client);
 
-    ASSERT_FALSE(client->getMyIOService());
+    ASSERT_FALSE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), 0);
     ASSERT_EQ(client->getThreadCount(), 0);
 
@@ -609,7 +609,7 @@ TEST_F(MtHttpClientTest, basics) {
 
     // Verify that it has an internal IOService and that thread pool size
     // and thread count match.
-    ASSERT_TRUE(client->getMyIOService());
+    ASSERT_TRUE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 3);
 
@@ -617,7 +617,7 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client->stop());
 
     // Verify we're stopped.
-    ASSERT_FALSE(client->getMyIOService());
+    ASSERT_FALSE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 0);
 

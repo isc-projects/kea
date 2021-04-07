@@ -136,7 +136,7 @@ public:
     ///
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
-    /// A value greater than zero enables multi-threaded mode as sets the
+    /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
     /// (default) enables single-threaded mode with one connection per URL.
     explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0);
@@ -148,7 +148,7 @@ public:
     ///
     /// The client maintains an internal connection pool which manages lists
     /// of connections per URL. In single-threaded mode, each URL is limited
-    /// to a single /connection.  In multi-threaded mode, each URL may have
+    /// to a single connection.  In multi-threaded mode, each URL may have
     /// more than one open connection per URL, enabling the client to carry
     /// on multiple concurrent requests per URL.
     ///
@@ -268,16 +268,16 @@ public:
     ///
     /// @return pointer to the IOService instance, or an empty pointer
     /// in single-threaded mode.
-    const asiolink::IOServicePtr getMyIOService() const;
+    const asiolink::IOServicePtr getThreadIOService() const;
 
     /// @brief Fetches the maximum size of the thread pool.
     ///
-    /// @return unit16_t containing the maximum size of the thread pool.
+    /// @return maximum size of the thread pool.
     uint16_t getThreadPoolSize() const;
 
     /// @brief Fetches the number of threads in the pool.
     ///
-    /// @return unit16_t containing the number of running threads.
+    /// @return number of running threads.
     uint16_t getThreadCount() const;
 
 private:
