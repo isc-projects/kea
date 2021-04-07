@@ -60,7 +60,6 @@ using namespace isc::util;
 /// help message (and exits). -d &lt;dir&gt; will make it write the
 /// output file(s) to dir instead of current working directory
 
-
 /// \brief Print Version
 ///
 /// Prints the program's version number.
@@ -86,29 +85,6 @@ usage() {
         "<message-file> is the name of the input message file.\n";
 }
 
-
-/// \brief Create Time
-///
-/// Returns the current time as a suitably-formatted string.
-///
-/// \return Current time
-
-string
-currentTime() {
-
-    // Get a text representation of the current time.
-    time_t curtime;
-    time(&curtime);
-    struct tm* timeinfo;
-    timeinfo = localtime(&curtime);
-
-    char buffer[80];
-    strftime(buffer, 80, "%a %b %d %Y %H:%M", timeinfo);
-
-    return (std::string(buffer));
-}
-
-
 /// \brief Create Header Sentinel
 ///
 /// Given the name of a file, create an \#ifdef sentinel name.  The name is
@@ -128,7 +104,6 @@ sentinel(Filename& file) {
     isc::util::str::uppercase(sentinel_text);
     return (sentinel_text);
 }
-
 
 /// \brief Quote String
 ///
@@ -156,7 +131,6 @@ quoteString(const string& instring) {
     return (outstring);
 }
 
-
 /// \brief Sorted Identifiers
 ///
 /// Given a dictionary, return a vector holding the message IDs in sorted
@@ -178,7 +152,6 @@ sortedIdentifiers(MessageDictionary& dictionary) {
 
     return (ident);
 }
-
 
 /// \brief Split Namespace
 ///
@@ -209,7 +182,6 @@ splitNamespace(string ns) {
     return (isc::util::str::tokens(ns, ":"));
 }
 
-
 /// \brief Write Opening Namespace(s)
 ///
 /// Writes the lines listing the namespaces in use.
@@ -224,7 +196,6 @@ writeOpeningNamespace(ostream& output, const vector<string>& ns) {
         output << "\n";
     }
 }
-
 
 /// \brief Write Closing Namespace(s)
 ///
@@ -254,11 +225,11 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
 ///     working directory.
-
 void
-writeHeaderFile(const string& file, const vector<string>& ns_components,
-                MessageDictionary& dictionary, const char* output_directory)
-{
+writeHeaderFile(const string& file,
+                const vector<string>& ns_components,
+                MessageDictionary& dictionary,
+                const char* output_directory) {
     Filename message_file(file);
     Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
     if (output_directory != NULL) {
@@ -317,16 +288,13 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     hfile.close();
 }
 
-
 /// \brief Convert Non Alpha-Numeric Characters to Underscores
 ///
 /// Simple function for use in a call to transform
-
 char
 replaceNonAlphaNum(char c) {
     return (isalnum(c) ? c : '_');
 }
-
 
 /// \brief Write Program File
 ///
@@ -362,10 +330,10 @@ replaceNonAlphaNum(char c) {
 ///     to the given directory. If NULL, they are written to the current
 ///     working directory.
 void
-writeProgramFile(const string& file, const vector<string>& ns_components,
+writeProgramFile(const string& file,
+                 const vector<string>& ns_components,
                  MessageDictionary& dictionary,
-                 const char* output_directory)
-{
+                 const char* output_directory) {
     Filename message_file(file);
     Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
     if (output_directory) {
@@ -424,7 +392,6 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
                 quoteString(dictionary.getText(*i)) << "\",\n";
     }
 
-
     // ... and the postamble
     ccfile <<
         "    NULL\n" <<
@@ -445,14 +412,12 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ccfile.close();
 }
 
-
 /// \brief Error and exit if there are duplicate entries
 ///
 /// If the input file contained duplicate message IDs, we print an
 /// error for each of them, then exit the program with a non-0 value.
 ///
 /// \param reader Message Reader used to read the file
-
 void
 errorDuplicates(MessageReader& reader) {
 
@@ -474,12 +439,10 @@ errorDuplicates(MessageReader& reader) {
     }
 }
 
-
 /// \brief Main Program
 ///
 /// Parses the options then dispatches to the appropriate function.  See the
 /// main file header for the invocation.
-
 int
 main(int argc, char* argv[]) {
 
@@ -570,5 +533,4 @@ main(int argc, char* argv[]) {
     }
 
     return (0);
-
 }
