@@ -22,23 +22,11 @@
 
 #include <atomic>
 #include <array>
-#include <unordered_set>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <mutex>
 #include <queue>
-
-#ifndef TOMS_TRACE_LOG
-#include <thread>
-#if 0
-#define TOMS_TRACE_LOG(msg) {std::cout << std::this_thread::get_id() << ":" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << msg << std::endl;}
-
-#else
-#define TOMS_TRACE_LOG(msg)
-#endif
-
-#endif
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -585,7 +573,6 @@ private:
                 // idle connection?
                 ConnectionPtr connection = destination->getIdleConnection();
                 if (!connection) {
-                    TOMS_TRACE_LOG("*** No idle connections, don't dequeue?");
                     // @todo Resolve this,  throw or just return, possibly log and return
                     //
                     // We shouldn't be in this function w/o an idle connection as it is called
@@ -654,7 +641,6 @@ private:
 
         if (!connection) {
             if (destination->connectionsFull()) {
-                TOMS_TRACE_LOG("no idle connections, queue request");
                 // All connections busy, queue it.
                 destination->pushRequest(RequestDescriptor(ConnectionPtr(), request, response,
                                                            request_timeout,
@@ -666,14 +652,12 @@ private:
             }
 
             // Room to make another connection with this destination, so make one.
-            TOMS_TRACE_LOG("creating a new connection");
             connection.reset(new Connection(io_service_, tls_context,
                                             shared_from_this(), url));
             destination->addConnection(connection);
         }
 
         // Use the connection to start the transaction.
-        TOMS_TRACE_LOG("doTransaction");
         connection->doTransaction(request, response, request_timeout, request_callback,
                                   connect_callback, handshake_callback, close_callback);
     }
@@ -1245,10 +1229,7 @@ Connection::terminate(const boost::system::error_code& ec,
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
                               const std::string& parsing_error) {
-    TOMS_TRACE_LOG("terminate on: " << getSocketFd()
-                    << ", isTransactionOngoing? " << isTransactionOngoing());
     HttpResponsePtr response;
-
     if (isTransactionOngoing()) {
 
         timer_.cancel();
@@ -1319,8 +1300,6 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     // another transaction if there is at least one.
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool) {
-        TOMS_TRACE_LOG(" more work on? " << getSocketFd()
-                    << ", isTransactionOngoing? " << isTransactionOngoing());
         if (MultiThreadingMgr::instance().getMode()) {
             UnlockGuard<std::mutex> lock(mutex_);
             conn_pool->processNextRequest(url_);
@@ -1361,7 +1340,6 @@ Connection::doHandshake(const uint64_t transid) {
 
 void
 Connection::doSend(const uint64_t transid) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     SocketCallback socket_cb(std::bind(&Connection::sendCallback,
                                        shared_from_this(),
                                        transid,
@@ -1389,7 +1367,6 @@ Connection::doSend(const uint64_t transid) {
 
 void
 Connection::doReceive(const uint64_t transid) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     TCPEndpoint endpoint;
     SocketCallback socket_cb(std::bind(&Connection::receiveCallback,
                                        shared_from_this(),
@@ -1423,7 +1400,6 @@ void
 Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
                             const uint64_t transid,
                             const boost::system::error_code& ec) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1501,7 +1477,6 @@ void
 Connection::sendCallback(const uint64_t transid,
                          const boost::system::error_code& ec,
                          size_t length) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1546,7 +1521,6 @@ void
 Connection::receiveCallback(const uint64_t transid,
                             const boost::system::error_code& ec,
                             size_t length) {
-    TOMS_TRACE_LOG("transid:" << transid << " on:" << getSocketFd());
     if (checkPrematureTimeout(transid)) {
         return;
     }
@@ -1804,7 +1778,6 @@ HttpClient::closeIfOutOfBand(int socket_fd)  {
 
 void
 HttpClient::stop() {
-    TOMS_TRACE_LOG("client stop");
     impl_->stop();
 }
 
