@@ -225,6 +225,39 @@ public:
                                  const uint8_t duid_seed,
                                  const uint16_t elapsed_time) const;
 
+    /// @brief Sets the DHCP mulit-threading configuration in staging SrvConfig.
+    ///
+    /// @param enable_multi_threading  value that maps to enable-multi-threading.
+    /// @param thread_pool_size value that maps to thread-pool-size.
+    /// @param queue_size value that maps to queue-size.
+    void setDHCPMultiThreadingConfig(bool enable_multi_threading,
+                                     uint32_t thread_pool_size = 0,
+                                     uint32_t queue_size = 16);
+
+    /// @brief Constructs JSON string for HA "multi-threading" element.
+    ///
+    /// Constructs a JSON string with the following content:
+    ///
+    /// ```
+    /// "multi-threading" {
+    ///     "enable-multi-threading": <bool>,
+    ///     "dedicated-http-listener":  <bool>,
+    ///     "http-listener-threads": <int>,
+    ///     "http-client-threads": <int>
+    /// }"
+    /// ```
+    ///
+    /// @param enable_multi_threading value for enable-multi-threading.
+    /// @param http_dedicated_listener value for dedicated-http-listener.
+    /// @param http_listener_threads value for http-listener-threads
+    /// @param http_client_threads value for http-client-threads
+    ///
+    /// @return JSON string
+    std::string makeHAMtJson(bool enable_multi_threading,
+                             bool http_dedicated_listener,
+                             uint32_t http_listener_threads,
+                             uint32_t http_client_threads);
+
     /// @brief Creates test DHCPv6 query instance.
     ///
     /// @param duid_text DUID to be included in the query. It is used in load

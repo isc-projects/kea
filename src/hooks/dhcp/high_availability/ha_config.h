@@ -538,7 +538,7 @@ public:
     /// which listens on this server's URL.  If false, this server will rely on
     /// a kea-control-agent.
     ///
-    /// @return true if the server is configured to use its own HTTP listener. 
+    /// @return true if the server is configured to use its own HTTP listener.
     bool getHttpDedicatedListener() {
         return (http_dedicated_listener_);
     }
@@ -552,39 +552,31 @@ public:
         http_dedicated_listener_ = http_dedicated_listener;
     }
 
-    /// @brief Fetches the number of threads the dedicated HTTP listener should use.
-    ///
-    /// A value of 0 instructs the server to determine the maximum number of threads 
-    /// the listener should use.  A value greater than 0 sets maximum number of
-    /// threads the listener should use.
+    /// @brief Fetches the number of threads the HTTP listener should use.
     ///
     /// @return number of the listener is configured to use.
-    uint16_t getHttpListenerThreads() {
+    uint32_t getHttpListenerThreads() {
         return (http_listener_threads_);
     }
 
-    /// @brief Sets the number of threads the dedicated HTTP listener should use.
+    /// @brief Sets the number of threads the HTTP listener should use.
     ///
     /// @return number of the listener should use.
-    void setHttpListenerThreads(uint16_t http_listener_threads) {
+    void setHttpListenerThreads(uint32_t http_listener_threads) {
         http_listener_threads_ = http_listener_threads;
     }
 
     /// @brief Fetches the number of threads the HTTP Client should use.
     ///
-    /// A value of 0 instructs the server to determine the maximum number of threads 
-    /// the client should use.  A value greater than 0 sets maximum number of
-    /// threads the client should use.
-    ///
     /// @return number of the client is configured to use.
-    uint16_t getHttpClientThreads() {
+    uint32_t getHttpClientThreads() {
         return (http_client_threads_);
     }
 
     /// @brief Sets the number of threads the HTTP client should use.
     ///
     /// @return number of the client should use.
-    void setHttpClientThreads(uint16_t http_client_threads) {
+    void setHttpClientThreads(uint32_t http_client_threads) {
         http_client_threads_ = http_client_threads;
     }
 
@@ -637,8 +629,17 @@ public:
 
     /// @brief Validates configuration.
     ///
+    /// In addition to sanity checking the configuration, it will
+    /// check HA+MTi configuration against Core multi-threading
+    /// configuration add adjust HA+MT values as follows:
+    /// 1. if DHCP multi-threading is disabled, HA+MT will be disabled.
+    /// 2. If http-listener-threads is 0, it will be replaced with
+    /// the number of DHCP threads
+    /// 3. If http-client-threads is 0, it will be replaced with
+    /// the number of DHCP threads
+    ///
     /// @throw HAConfigValidationError if configuration is invalid.
-    void validate() const;
+    void validate();
 
     std::string this_server_name_;        ///< This server name.
     HAMode ha_mode_;                      ///< Mode of operation.
@@ -656,8 +657,8 @@ public:
     bool wait_backup_ack_;                ///< Wait for lease update ack from backup?
     bool enable_multi_threading_;         ///< Enable multi-threading.
     bool http_dedicated_listener_;        ///< Enable use of own HTTP listener.
-    uint16_t http_listener_threads_;      ///< Number of HTTP listener threads.
-    uint16_t http_client_threads_;        ///< Number of HTTP client threads.
+    uint32_t http_listener_threads_;      ///< Number of HTTP listener threads.
+    uint32_t http_client_threads_;        ///< Number of HTTP client threads.
     PeerConfigMap peers_;                 ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_; ///< State machine configuration.
 };

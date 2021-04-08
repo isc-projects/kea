@@ -1379,56 +1379,138 @@ TEST_F(HAConfigTest, pausingToString) {
 
 }
 
-// Verifies that HA multi-threading parses correctly.  It checks
-// HA+MT can only be enabled when Kea core MT is enabled.  It
-// also checks that HA+MT parameters can be set to custom values. 
-TEST_F(HAConfigTest, configureMultiThreading) {
-    const std::string ha_config =
-        "["
-        "    {"
-        "        \"this-server-name\": \"server1\","
-        "        \"mode\": \"passive-backup\","
-        "        \"wait-backup-ack\": true,"
-        "        \"peers\": ["
-        "            {"
-        "                \"name\": \"server1\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
-        "                \"role\": \"primary\""
-        "            },"
-        "            {"
-        "                \"name\": \"server2\","
-        "                \"url\": \"http://127.0.0.1:8081/\","
-        "                \"role\": \"backup\""
-        "            }"
-        "        ],"
-        "       \"multi-threading\": {"
-        "           \"enable-multi-threading\": true,"
-        "           \"http-dedicated-listener\": true,"
-        "           \"http-listener-threads\": 4,"
-        "           \"http-client-threads\": 5"
-        "       }"
-        "    }"
-        "]";
+// Verifies permuations of HA+MT configuration.
+TEST_F(HAConfigTest, multiThreadingPermutations) {
 
-    // Verify that HA+MT cannot be enabled when Kea core MT is disabled.
-    util::MultiThreadingMgr::instance().setMode(false);
-    HAImplPtr impl(new HAImpl());
-    ASSERT_THROW_MSG(impl->configure(Element::fromJSON(ha_config)), ConfigError,
-                     "HA multi-threading cannot be enabled when"
-                     " Kea core multi-threading is disabled");
+    // Structure describing a test scenario.
+    struct Scenario {
+        std::string desc_;              // Description of the scenario.
+        std::string mt_json_;           // multi-threading config to use.
+        bool dhcp_mt_enabled_;          // True if DHCP multi-threading is enabled.
+        uint32_t dhcp_threads_;         // Value of DHCP thread-pool-size.
+        bool exp_ha_mt_enabled_;        // If HA+MT should be enabled
+        bool exp_listener_;             // if HA+MT should use dedicated listener.
+        uint32_t exp_listener_threads_; // Expected number of listener threads.
+        uint32_t exp_client_threads_;   // Expected number of client threads.
+    };
 
-    // Verify that HA+MT can be enabled when Kea core MT is enabled.
-    util::MultiThreadingMgr::instance().setMode(true);
-    impl.reset(new HAImpl());
-    ASSERT_NO_THROW_LOG(impl->configure(Element::fromJSON(ha_config)));
+    // Mnemonic constants.
+    bool dhcp_mt = true;
+    bool ha_mt = true;
+    bool listener = true;
 
-    // Verify that the multi-threading values are correct.
-    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(4, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(5, impl->getConfig()->getHttpClientThreads());
+    // Number of threads the system reports as supported.
+    uint32_t sys_threads = MultiThreadingMgr::detectThreadCount();
 
-    util::MultiThreadingMgr::instance().setMode(false);
+    std::vector<Scenario> scenarios {
+        {
+            "1 no ha+mt/default",
+            "",
+            dhcp_mt, 4,
+            !ha_mt, !listener, 0, 0
+        },
+        {
+            "2 dhcp mt enabled, ha mt disabled",
+            makeHAMtJson(!ha_mt, !listener, 0, 0),
+            dhcp_mt, 4,
+            !ha_mt, !listener, 0, 0
+        },
+        {
+            "3 dhcp  mt disabled, mt enabled",
+            makeHAMtJson(ha_mt, listener, 0, 0),
+            !dhcp_mt, 4,
+            !ha_mt, !listener, 0, 0
+        },
+        {
+            "4 dhcp mt enabled, mt enabled, listener disabled",
+            makeHAMtJson(ha_mt, !listener, 0, 0),
+            dhcp_mt, 4,
+            ha_mt, !listener, 4, 4
+        },
+        {
+            "5 dhcp mt enabled, mt enabled, listener enabled",
+            makeHAMtJson(ha_mt, !listener, 0, 0),
+            dhcp_mt, 4,
+            ha_mt, !listener, 4, 4
+        },
+        {
+            "6 explicit DHCP threads, explicit thread values",
+            makeHAMtJson(ha_mt, listener, 5, 6),
+            dhcp_mt, 4,
+            ha_mt, listener, 5, 6
+        },
+        {
+            "7 explicit DHCP threads, zero thread values",
+            makeHAMtJson(ha_mt, listener, 0, 0),
+            dhcp_mt, 8,
+            ha_mt, listener, 8, 8
+        },
+        {
+            "8 DHCP auto detect threads, zero thread values",
+            // Special case: if system reports supported threads as 0
+            // then HA+MT should be disabled.  Otherwise it should
+            // be enabled with listener and client threads set to the
+            // reported value.
+            makeHAMtJson(ha_mt, listener, 0, 0),
+            dhcp_mt, 0,
+            (sys_threads > 0), listener, sys_threads, sys_threads
+        }
+    };
+
+    // Iterate over the scenarios.
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_);
+
+        // Build the HA JSON configuration.
+        std::stringstream ss;
+        ss <<
+            "["
+            "    {"
+            "        \"this-server-name\": \"server1\","
+            "        \"mode\": \"passive-backup\","
+            "        \"wait-backup-ack\": true,"
+            "        \"peers\": ["
+            "            {"
+            "                \"name\": \"server1\","
+            "                \"url\": \"http://127.0.0.1:8080/\","
+            "                \"role\": \"primary\""
+            "            },"
+            "            {"
+            "                \"name\": \"server2\","
+            "                \"url\": \"http://127.0.0.1:8081/\","
+            "                \"role\": \"backup\""
+            "            }"
+            "        ]";
+
+        if (!scenario.mt_json_.empty()) {
+            ss << "," << scenario.mt_json_;
+        }
+
+        ss << "}]";
+        ConstElementPtr config_json;
+        ASSERT_NO_THROW_LOG(config_json = Element::fromJSON(ss.str()));
+
+        // Set DHCP multi-threading configuration in CfgMgr.
+        setDHCPMultiThreadingConfig(scenario.dhcp_mt_enabled_, scenario.dhcp_threads_);
+
+        // Create and configure the implementation.
+        HAImplPtr impl(new HAImpl());
+        ASSERT_NO_THROW_LOG(impl->configure(config_json));
+
+        // Fetch the updated config.
+        HAConfigPtr ha_config = impl->getConfig();
+
+        // Verify the configuration is as expected.
+        if (!scenario.exp_ha_mt_enabled_) {
+            // When HA+MT is disabled, the other values are moot.
+            ASSERT_FALSE(ha_config->getEnableMultiThreading());
+        } else {
+            ASSERT_TRUE(ha_config->getEnableMultiThreading());
+            EXPECT_EQ(ha_config->getHttpDedicatedListener(), scenario.exp_listener_);
+            EXPECT_EQ(ha_config->getHttpListenerThreads(), scenario.exp_listener_threads_);
+            EXPECT_EQ(ha_config->getHttpClientThreads(), scenario.exp_client_threads_);
+       }
+    }
 }
 
 } // end of anonymous namespace

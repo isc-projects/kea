@@ -8,6 +8,8 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
@@ -18,6 +20,7 @@
 using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::util;
+using namespace isc::dhcp;
 
 namespace isc {
 namespace ha {
@@ -265,7 +268,7 @@ HAConfig::getOtherServersConfig() const {
 }
 
 void
-HAConfig::validate() const {
+HAConfig::validate() {
     // Peers configurations must be provided.
     if (peers_.count(getThisServerName()) == 0) {
         isc_throw(HAConfigValidationError, "no peer configuration specified for the '"
@@ -400,13 +403,46 @@ HAConfig::validate() const {
     }
 
     if (enable_multi_threading_) {
-        if (!MultiThreadingMgr::instance().getMode()) {
-            isc_throw(HAConfigValidationError, "HA multi-threading cannot be enabled"
-                      " when Kea core multi-threading is disabled");
+        // We get it from staging because applying the DHCP multi-threading configuration
+        // occurs after library loading during the (re)configuration process.
+        auto mcfg = CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading();
+        bool dhcp_mt_enabled = false;
+        uint32_t dhcp_threads = 0;
+        uint32_t dummy_queue_size = 0;
+        CfgMultiThreading::extract(mcfg, dhcp_mt_enabled, dhcp_threads, dummy_queue_size);
+
+        if (!dhcp_mt_enabled) {
+            // @todo replace with a WARNING log
+            std::cout << "HA multi-threading cannot be enabled when"
+                      << " Kea core multi-threading is disabled"
+                      << std::endl;
+            enable_multi_threading_ = false;
+            return;
         }
-    } else {
-        // @todo should we emit a warning if core MT is enabled, and HA+MT
-        // is disabled?
+
+        // When DHCP threads is configured as zero, we should auto-detect.
+        if (!dhcp_threads) {
+            dhcp_threads = MultiThreadingMgr::detectThreadCount();
+            // If machine says it cannot support threads.
+            if (!dhcp_threads) {
+                // @todo - this needs a WARNING log
+                std::cout << "DHCP threads is 0, but detectThreadCount returns 0" << std::endl;
+                enable_multi_threading_ = false;
+                return;
+            }
+        }
+
+        // If http_listener_threads_ is 0, then we use the same number of
+        // threads as DHCP does.
+        if (http_listener_threads_ == 0) {
+            http_listener_threads_ = dhcp_threads;
+        }
+
+        // If http_client_threads_ is 0, then we use the same number of
+        // threads as DHCP does.
+        if (http_client_threads_ == 0) {
+            http_client_threads_ = dhcp_threads;
+        }
     }
 }
 

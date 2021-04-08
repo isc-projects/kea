@@ -192,8 +192,8 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     } else if (mt_config->getType() != Element::map) {
         isc_throw(ConfigError, "multi-threading configuration must be a map");
     }
-   
-    // Backfill the MT defaults. 
+
+    // Backfill the MT defaults.
     setDefaults(mt_config, HA_CONFIG_MT_DEFAULTS);
 
     // Get 'enable-multi-threading'.
@@ -203,11 +203,11 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     config_storage->setHttpDedicatedListener(getBoolean(mt_config, "http-dedicated-listener"));
 
     // Get 'http-listener-threads'.
-    uint16_t threads = getAndValidateInteger<uint16_t>(mt_config, "http-listener-threads");
+    uint32_t threads = getAndValidateInteger<uint32_t>(mt_config, "http-listener-threads");
     config_storage->setHttpListenerThreads(threads);
 
     // Get 'http-client-threads'.
-    threads = getAndValidateInteger<uint16_t>(mt_config, "http-client-threads");
+    threads = getAndValidateInteger<uint32_t>(mt_config, "http-client-threads");
     config_storage->setHttpClientThreads(threads);
 
     // Peers configuration parsing.
