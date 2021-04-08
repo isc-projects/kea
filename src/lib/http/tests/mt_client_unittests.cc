@@ -49,8 +49,10 @@ const long TEST_TIMEOUT = 10000;
 struct ClientRR {
     /// @brief Thread id of the client thread handling the request as a string.
     std::string thread_id_;
+
     /// @brief HTTP request submitted by the client thread.
     PostHttpRequestJsonPtr request_;
+
     /// @brief HTTP response received by the client thread.
     HttpResponseJsonPtr response_;
 };
@@ -94,6 +96,8 @@ private:
     /// @brief Creates HTTP response.
     ///
     /// @param request Pointer to the HTTP request.
+    /// @param status_code status code to include in the response.
+    ///
     /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
     createStockHttpResponse(const HttpRequestPtr& request,
@@ -128,13 +132,13 @@ private:
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
         if (!request_json) {
-            return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
+            return (createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
         // Extract the sequence from the request.
         ConstElementPtr sequence = request_json->getJsonElement("sequence");
         if (!sequence) {
-            return(createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
+            return (createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
         }
 
         // Create the response.
@@ -167,7 +171,9 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param server_port listener port of the server.
+    /// @param server_port port upon with the server is listening. This
+    /// value will be included in responses such that each response
+    /// can be attributed to a specific server.
     TestHttpResponseCreatorFactory(uint16_t server_port)
     : server_port_(server_port) {};
 
@@ -191,8 +197,8 @@ public:
     /// @brief Constructor.
     MtHttpClientTest()
         : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
-        test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
-        expected_requests_(0), num_in_progress_(0), num_finished_(0) {
+          test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
+          expected_requests_(0), num_in_progress_(0), num_finished_(0) {
         test_timer_.setup(std::bind(&MtHttpClientTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         MultiThreadingMgr::instance().setMode(true);
@@ -209,6 +215,8 @@ public:
         for (const auto& listener : listeners_) {
             listener->stop();
         }
+
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Callback function to invoke upon test timeout.
@@ -289,8 +297,8 @@ public:
         ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
                                                   request_json, response_json,
             [this, request_json, response_json](const boost::system::error_code& ec,
-                   const HttpResponsePtr&,
-                   const std::string&) {
+                                                const HttpResponsePtr&,
+                                                const std::string&) {
             // Bail on an error.
             ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
 
@@ -318,7 +326,7 @@ public:
 
             // Create the ClientRR.
             ClientRRPtr clientRR(new ClientRR());
-            clientRR->thread_id_ =  ss.str();
+            clientRR->thread_id_ = ss.str();
             clientRR->request_ = request_json;
             clientRR->response_ = response_json;
 
@@ -386,16 +394,16 @@ public:
         size_t effective_threads = (num_threads_ == 0 ? 1 : num_threads_);
 
         // Calculate the expected number of requests.
-        expected_requests_ = (num_batches_ * num_listeners_  * effective_threads);
+        expected_requests_ = (num_batches_ * num_listeners_ * effective_threads);
 
         for (auto i = 0; i < num_listeners_; ++i) {
             // Make a factory
-            HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT+i));
+            HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT + i));
             factories_.push_back(factory);
 
             // Need to create a Listener on
             HttpListenerPtr listener(new HttpListener(io_service_,
-                                                      IOAddress(SERVER_ADDRESS), SERVER_PORT+i,
+                                                      IOAddress(SERVER_ADDRESS), (SERVER_PORT + i),
                                                       TlsContextPtr(), factory,
                                                       HttpListener::RequestTimeout(10000),
                                                       HttpListener::IdleTimeout(10000)));
@@ -422,7 +430,7 @@ public:
         ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Start the requisite number of requests:
-        //   batch * listners * threads.
+        //   batch * listeners * threads.
         int sequence = 0;
         for (auto b = 0; b < num_batches; ++b) {
             for (auto l = 0; l < num_listeners_; ++l) {
@@ -509,7 +517,7 @@ public:
         }
 
         // Make sure that all client threads received responses.
-        ASSERT_EQ(responses_per_thread.size(), num_threads ? num_threads : 1);
+        ASSERT_EQ(responses_per_thread.size(), effective_threads);
 
         // Make sure that each client thread received the same number of responses.
         for (auto const& it : responses_per_thread) {
@@ -541,7 +549,10 @@ public:
     /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
 
+    /// @brief List of listeners.
     std::vector<HttpListenerPtr> listeners_;
+
+    /// @brief List of response factories.
     std::vector<HttpResponseCreatorFactoryPtr> factories_;
 
     /// @brief Asynchronous timer service to detect timeouts.
@@ -571,7 +582,7 @@ public:
     /// @brief Mutex for locking.
     std::mutex mutex_;
 
-    /// @brief Condition variable used make client threads wait
+    /// @brief Condition variable used to make client threads wait
     /// until number of in-progress requests reaches the number
     /// of client requests.
     std::condition_variable cv_;
@@ -648,7 +659,7 @@ TEST_F(MtHttpClientTest, zeroByThreeByOne) {
 TEST_F(MtHttpClientTest, zeroByThreeByThree) {
     size_t num_threads = 0; // Zero threads = ST mode.
     size_t num_batches = 3;
-    size_t num_listeners= 3;
+    size_t num_listeners = 3;
     threadRequestAndReceive(num_threads, num_batches, num_listeners);
 }
 

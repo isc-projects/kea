@@ -612,7 +612,7 @@ private:
             // Found it, look for an idle connection.
             connection = destination->getIdleConnection();
         } else {
-            // Doesn't exist yet so it's a new destination/
+            // Doesn't exist yet so it's a new destination.
             destination = addDestination(url);
         }
 
@@ -817,7 +817,7 @@ private:
         /// @return The connection or an empty pointer if no matching
         /// connection exists.
         ConnectionPtr findBySocketFd(int socket_fd) {
-            for (auto connection : connections_) {
+            for (auto const& connection : connections_) {
                 if (connection->isMySocket(socket_fd)) {
                     return (connection);
                 }
@@ -896,7 +896,7 @@ private:
         size_t max_connections_;
 
         /// @brief List of concurrent connections.
-        std::vector<ConnectionPtr> connections_;
+        std::list<ConnectionPtr> connections_;
 
         /// @brief Holds the queue of request for this destination.
         std::queue<RequestDescriptor> queue_;
@@ -923,6 +923,7 @@ private:
     ///
     /// @return pointer the desired destination, empty pointer
     /// if the destination does not exist.
+    /// @note Must be called from within a thread-safe context.
     DestinationPtr findDestination(const Url& url) const {
         auto it = destinations_.find(url);
         if (it != destinations_.end()) {
@@ -1646,7 +1647,7 @@ public:
             thread_io_service_->stop();
 
             // Shutdown the threads.
-            for(auto const& thread : threads_) {
+            for (auto const& thread : threads_) {
                 thread->join();
             }
 
@@ -1664,18 +1665,20 @@ public:
     ///
     /// @return A pointer to the IOService, or an empty pointer when
     /// in single-threaded mode.
-    asiolink::IOServicePtr getThreadIOService() { return (thread_io_service_); };
+    asiolink::IOServicePtr getThreadIOService() {
+        return (thread_io_service_);
+    };
 
     /// @brief Fetches the maximum size of the thread pool.
     ///
-    /// @return unit16_t containing the maximum size of the thread pool.
+    /// @return the maximum size of the thread pool.
     uint16_t getThreadPoolSize() {
         return (thread_pool_size_);
     }
 
     /// @brief Fetches the number of threads in the pool.
     ///
-    /// @return unit16_t containing the number of running threads.
+    /// @return the number of running threads.
     uint16_t getThreadCount() {
         return (threads_.size());
     }
