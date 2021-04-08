@@ -231,11 +231,12 @@ public:
     /// @brief Return a list of all paths that contain passwords or secrets.
     ///
     /// Used in @ref isc::process::Daemon::redactConfig to only make copies and
-    /// only redact configuration subtrees that contain passwords or secrets.
+    /// only redact configuration subtrees that contain passwords or secrets. To
+    /// be overridden by derived classes.
     ///
     /// @return the list of lists of sequential JSON map keys needed to reach
     /// the passwords and secrets.
-    static std::list<std::list<std::string>> jsonPathsToRedact();
+    virtual std::list<std::list<std::string>> jsonPathsToRedact() const;
 
     /// @brief Redact a configuration.
     ///
@@ -244,8 +245,7 @@ public:
     /// @param config the Element tree structure that describes the configuration.
     ///
     /// @return the redacted configuration
-    static isc::data::ConstElementPtr
-    redactConfig(isc::data::ConstElementPtr const& config);
+    isc::data::ConstElementPtr redactConfig(isc::data::ConstElementPtr const& config);
 
 protected:
 

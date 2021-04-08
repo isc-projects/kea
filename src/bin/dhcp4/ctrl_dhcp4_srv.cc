@@ -850,10 +850,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
 isc::data::ConstElementPtr
 ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
-
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
-        .arg(Dhcpv4Srv::redactConfig(config)->str());
-
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
     // Single stream instance used in all error clauses
@@ -863,6 +859,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         err << "Server object not initialized, can't process config.";
         return (isc::config::createAnswer(1, err.str()));
     }
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
+        .arg(srv->redactConfig(config)->str());
 
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
@@ -1030,7 +1029,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
-        .arg(Dhcpv4Srv::redactConfig(config)->str());
+        .arg(redactConfig(config)->str());
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 

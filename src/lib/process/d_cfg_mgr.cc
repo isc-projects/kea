@@ -67,8 +67,8 @@ DCfgMgrBase::redactConfig(ConstElementPtr const& config) const {
 }
 
 list<list<string>> DCfgMgrBase::jsonPathsToRedact() const {
-    static list<list<string>> _({});
-    return _;
+    static list<list<string>> const list;
+    return list;
 }
 
 isc::data::ConstElementPtr

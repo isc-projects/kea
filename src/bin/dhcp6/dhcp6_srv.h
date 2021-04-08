@@ -1132,6 +1132,13 @@ public:
     void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
                                  Pkt6Ptr& rsp);
 
+    /// @brief Return a list of all paths that contain passwords or secrets for
+    /// kea-dhcp6.
+    ///
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    std::list<std::list<std::string>> jsonPathsToRedact() const final override;
+
 protected:
 
     /// Server DUID (to be sent in server-identifier option)

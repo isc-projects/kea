@@ -1161,6 +1161,13 @@ public:
     /// @brief Returns the index for "lease4_decline" hook point
     /// @return the index for "lease4_decline" hook point
     static int getHookIndexLease4Decline();
+
+    /// @brief Return a list of all paths that contain passwords or secrets for
+    /// kea-dhcp4.
+    ///
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    std::list<std::list<std::string>> jsonPathsToRedact() const final override;
 };
 
 }  // namespace dhcp

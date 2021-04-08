@@ -4069,5 +4069,16 @@ void Dhcpv4Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
+std::list<std::list<std::string>> Dhcpv4Srv::jsonPathsToRedact() const {
+    static std::list<std::list<std::string>> const list({
+        {"config-control", "config-databases"},
+        {"hooks-libraries", "parameters"},
+        {"hosts-database"},
+        {"hosts-databases"},
+        {"lease-database"},
+    });
+    return list;
+}
+
 }  // namespace dhcp
 }  // namespace isc

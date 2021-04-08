@@ -8,8 +8,6 @@
 
 #include <process/redact_config.h>
 
-#include <boost/make_shared.hpp>
-
 using namespace isc::data;
 using namespace std;
 
@@ -26,7 +24,7 @@ redactConfig(ConstElementPtr const& element,
     ElementPtr result;
     if (element->getType() == Element::list) {
         // Redact lists.
-        result = boost::make_shared<ListElement>();
+        result = Element::createList();
         for (ConstElementPtr const& item : element->listValue()) {
             // add wants an ElementPtr so use a shallow copy.
             // We could hypothetically filter lists through JSON paths, but we
@@ -36,7 +34,7 @@ redactConfig(ConstElementPtr const& element,
         }
     } else if (element->getType() == Element::map) {
         // Redact maps.
-        result = boost::make_shared<MapElement>();
+        result = Element::createMap();
         for (auto kv : element->mapValue()) {
             std::string const& key(kv.first);
             ConstElementPtr const& value(kv.second);

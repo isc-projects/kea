@@ -247,16 +247,10 @@ Daemon::writeConfigFile(const std::string& config_file,
     return (bytes);
 }
 
-
-std::list<std::list<std::string>> Daemon::jsonPathsToRedact() {
-    static std::list<std::list<std::string>> _({
-        {"config-control", "config-databases"},
-        {"hooks-libraries", "parameters"},
-        {"hosts-database"},
-        {"hosts-databases"},
-        {"lease-database"},
-    });
-    return _;
+std::list<std::list<std::string>>
+Daemon::jsonPathsToRedact() const {
+    static std::list<std::list<std::string>> const list;
+    return list;
 }
 
 isc::data::ConstElementPtr

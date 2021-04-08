@@ -854,9 +854,6 @@ ControlledDhcpv6Srv::processCommand(const string& command,
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
-        .arg(Dhcpv6Srv::redactConfig(config)->str());
-
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     // Single stream instance used in all error clauses
@@ -866,6 +863,9 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         err << "Server object not initialized, can't process config.";
         return (isc::config::createAnswer(1, err.str()));
     }
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
+        .arg(srv->redactConfig(config)->str());
 
     ConstElementPtr answer = configureDhcp6Server(*srv, config);
 
@@ -1051,7 +1051,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
-        .arg(Dhcpv6Srv::redactConfig(config)->str());
+        .arg(redactConfig(config)->str());
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 

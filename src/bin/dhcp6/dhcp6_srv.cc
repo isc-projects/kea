@@ -4338,5 +4338,16 @@ Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
     }
 }
 
+std::list<std::list<std::string>> Dhcpv6Srv::jsonPathsToRedact()  const{
+    static std::list<std::list<std::string>> const list({
+        {"config-control", "config-databases"},
+        {"hooks-libraries", "parameters"},
+        {"hosts-database"},
+        {"hosts-databases"},
+        {"lease-database"},
+    });
+    return list;
+}
+
 }  // namespace dhcp
 }  // namespace isc
