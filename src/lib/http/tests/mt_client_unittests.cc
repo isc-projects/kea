@@ -466,7 +466,7 @@ public:
         std::string main_thread_id = ss.str();
 
         // Iterate over the client request/response pairs.
-        for (auto const& clientRR : clientRRs_ ) {
+        for (auto const& clientRR : clientRRs_) {
             // Make sure it's whole.
             ASSERT_FALSE(clientRR->thread_id_.empty());
             ASSERT_TRUE(clientRR->request_);

@@ -77,13 +77,18 @@ public:
 
     /// @brief Returns path.
     ///
+    /// #return URL path
     /// @throw InvalidOperation if URL is invalid.
     std::string getPath() const;
 
     /// @brief Returns textual representation of the URL.
+    ///
+    /// @return Text version of the URL.
     std::string toText() const;
 
-    /// @brief Returns the raw, unparsed url string.
+    /// @brief Returns the raw, unparsed URL string.
+    ///
+    /// @return Unparsed URL string.
     const std::string& rawUrl() const {
         return (url_);
     }

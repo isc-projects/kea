@@ -272,12 +272,12 @@ public:
 
     /// @brief Fetches the maximum size of the thread pool.
     ///
-    /// @return maximum size of the thread pool.
+    /// @return the maximum size of the thread pool.
     uint16_t getThreadPoolSize() const;
 
     /// @brief Fetches the number of threads in the pool.
     ///
-    /// @return number of running threads.
+    /// @return the number of running threads.
     uint16_t getThreadCount() const;
 
 private:
