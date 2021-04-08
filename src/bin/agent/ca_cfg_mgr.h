@@ -119,8 +119,8 @@ public:
 
     /// @brief Sets trust-anchor parameter
     ///
-    /// @param ca Trust anchor aka Certificate Authority (can be a file or
-    /// with OpenSSL a directory).
+    /// @param ca Trust anchor aka Certificate Authority (can be a file name
+    /// or a directory path).
     void setTrustAnchor(const std::string& ca) {
         trust_anchor_ = ca;
     }
@@ -225,8 +225,8 @@ private:
     /// TCP port the CA should listen on.
     uint16_t http_port_;
 
-    /// Trust anchor aka Certificate Authority (can be a file or with
-    /// OpenSSL a directory).
+    /// Trust anchor aka Certificate Authority (can be a file name or
+    /// a directory path).
     std::string trust_anchor_;
 
     /// Server certificate file name.

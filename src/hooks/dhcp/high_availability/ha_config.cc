@@ -8,6 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <asiolink/crypto_tls.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <exceptions/exceptions.h>
@@ -27,8 +28,8 @@ namespace isc {
 namespace ha {
 
 HAConfig::PeerConfig::PeerConfig()
-    : name_(), url_(""), role_(STANDBY), auto_failover_(false),
-      basic_auth_() {
+    : name_(), url_(""), trust_anchor_(), cert_file_(), key_file_(),
+      role_(STANDBY), auto_failover_(false), basic_auth_() {
 }
 
 void
@@ -165,6 +166,7 @@ HAConfig::HAConfig()
       max_ack_delay_(10000), max_unacked_clients_(10), wait_backup_ack_(false),
       enable_multi_threading_(false), http_dedicated_listener_(false),
       http_listener_threads_(0), http_client_threads_(0),
+      trust_anchor_(), cert_file_(), key_file_(),
       peers_(), state_machine_(new StateMachineConfig()) {
 }
 
@@ -296,12 +298,43 @@ HAConfig::validate() {
                       << " for server " << p->second->getName());
         }
 
-        // Refuse HTTPS scheme as TLS is not (yet) supported.
-        if (p->second->getUrl().getScheme() == Url::HTTPS) {
+        // Check TLS setup.
+        bool use_tls = false;
+        Optional<std::string> ca = p->second->getTrustAnchor();
+        Optional<std::string> cert = p->second->getCertFile();
+        Optional<std::string> key = p->second->getKeyFile();
+        // When not configured get the value from the global level.
+        if (ca.unspecified()) {
+            ca = trust_anchor_;
+        }
+        if (cert.unspecified()) {
+            cert = cert_file_;
+        }
+        if (key.unspecified()) {
+            key = key_file_;
+        }
+        if (!ca.unspecified() || !cert.unspecified() || !key.unspecified()) {
+            use_tls = true;
+            try {
+                TlsContextPtr tls_context;
+                TlsContext::configure(tls_context,
+                                      TlsRole::CLIENT,
+                                      ca.get(),
+                                      cert.get(),
+                                      key.get());
+            } catch (const isc::Exception& ex) {
+                isc_throw(HAConfigValidationError, "bad TLS config for server "
+                          << p->second->getName() << ": " << ex.what());
+            }
+        }
+
+        // Refuse HTTPS scheme when TLS is not enabled.
+        if (!use_tls && (p->second->getUrl().getScheme() == Url::HTTPS)) {
             isc_throw(HAConfigValidationError, "bad url '"
                       << p->second->getUrl().toText()
                       << "': https scheme is not supported"
-                      << " for server " << p->second->getName());
+                      << " for server " << p->second->getName()
+                      << " where TLS is disabled");
         }
 
         ++peers_cnt[p->second->getRole()];

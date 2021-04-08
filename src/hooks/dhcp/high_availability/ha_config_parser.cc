@@ -210,6 +210,24 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     threads = getAndValidateInteger<uint32_t>(mt_config, "http-client-threads");
     config_storage->setHttpClientThreads(threads);
 
+    // Get optional 'trust-anchor'.
+    ConstElementPtr ca = c->get("trust-anchor");
+    if (ca) {
+        config_storage->setTrustAnchor(getString(c, ("trust-anchor")));
+    }
+
+    // Get optional 'cert-file'.
+    ConstElementPtr cert = c->get("cert-file");
+    if (cert) {
+        config_storage->setCertFile(getString(c, ("cert-file")));
+    }
+
+    // Get optional 'key-file'.
+    ConstElementPtr key = c->get("key-file");
+    if (key) {
+        config_storage->setKeyFile(getString(c, ("key-file")));
+    }
+
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();
 
@@ -228,6 +246,21 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
 
         // URL.
         cfg->setUrl(Url(getString((*p), "url")));
+
+        // Optional trust anchor.
+        if ((*p)->contains("trust-anchor")) {
+            cfg->setTrustAnchor(getString(*p, ("trust-anchor")));
+        }
+
+        // Optional certificate file.
+        if ((*p)->contains("cert-file")) {
+            cfg->setCertFile(getString(*p, ("cert-file")));
+        }
+
+        // Optional private key file.
+        if ((*p)->contains("key-file")) {
+            cfg->setKeyFile(getString(*p, ("key-file")));
+        }
 
         // Role.
         cfg->setRole(getString(*p, "role"));

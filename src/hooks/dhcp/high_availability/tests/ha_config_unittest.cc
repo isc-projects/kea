@@ -676,7 +676,8 @@ TEST_F(HAConfigTest, badURLHttps) {
         "    }"
         "]",
         "bad url 'https://127.0.0.1:8080/': "
-        "https scheme is not supported for server server2");
+        "https scheme is not supported for server server2 "
+        "where TLS is disabled");
 }
 
 // Only certain roles are allowed.
