@@ -1441,6 +1441,67 @@ load-balancing and the hot-standby cases presented in previous sections.
 
 Since Kea version 1.9.0 the basic HTTP authentication is supported.
 
+.. _ha-mt-config:
+
+Multi-threaded Configuration (HA+MT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In a future release, it will be possible to configure HA to use multi-
+threaded communication between peers.  The following parameters have
+been added to HA configuration, in anticipation of this upcoming
+capability:
+
+-  ``enable-multi-threading`` - enables or disables HA+MT
+
+-  ``http-dedicated-listener`` - enables or disabled the creation of an dedicated HTTP
+   listener the server will use to receive HA messages from its peers.
+
+-  ``http-listener-threads`` - maximum number of threads the dedicated listener
+   should use.  A value 0 instructs the server to determine this value
+   automatically.
+
+-  ``http-client-threads`` - maximum number of threads that should be used
+   to send HA messages to its peers. A value 0 instructs the server to
+   determine this value automatically.
+
+They are grouped together under a map element, ``multi-threading``
+as illustrated below:
+
+::
+
+   "Dhcp4": {
+
+       ...
+
+       "hooks-libraries": [
+           {
+               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "parameters": { }
+           },
+           {
+               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "parameters": {
+                   "high-availability": [ {
+                       "this-server-name": "server1",
+                       ...
+                       "multi-threading": {
+                           "enable-multi-threading": false,
+                           "http-dedicated-listener": false,
+                           "http-listener-threads": 0,
+                           "http-client-threads": 0
+                       },
+                       ...
+                       "peers": [
+                       ...
+
+.. note::
+
+   Please note that currently Kea servers will parse these values
+   but they will have no effect on the servers' run time behavior.
+   They are optional and you are encouraged to ignore them at this
+   time.  These will be discussed in greater detail in future
+   releases.
+
 .. _ha-maintenance:
 
 Controlled Shutdown and Maintenance of DHCP servers
