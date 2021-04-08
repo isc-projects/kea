@@ -77,7 +77,7 @@ public:
 
     /// @brief Returns path.
     ///
-    /// #return URL path
+    /// @return URL path
     /// @throw InvalidOperation if URL is invalid.
     std::string getPath() const;
 
