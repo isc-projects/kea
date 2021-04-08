@@ -24,11 +24,13 @@ extern const isc::log::MessageID HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED = 
 extern const isc::log::MessageID HA_CONFIGURATION_FAILED = "HA_CONFIGURATION_FAILED";
 extern const isc::log::MessageID HA_CONFIGURATION_SUCCESSFUL = "HA_CONFIGURATION_SUCCESSFUL";
 extern const isc::log::MessageID HA_CONFIG_AUTO_FAILOVER_DISABLED = "HA_CONFIG_AUTO_FAILOVER_DISABLED";
+extern const isc::log::MessageID HA_CONFIG_DHCP_MT_DISABLED = "HA_CONFIG_DHCP_MT_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED = "HA_CONFIG_LEASE_SYNCING_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER = "HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER = "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED = "HA_CONFIG_LEASE_UPDATES_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER = "HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER";
+extern const isc::log::MessageID HA_CONFIG_SYSTEM_MT_UNSUPPORTED = "HA_CONFIG_SYSTEM_MT_UNSUPPORTED";
 extern const isc::log::MessageID HA_CONTINUE_HANDLER_FAILED = "HA_CONTINUE_HANDLER_FAILED";
 extern const isc::log::MessageID HA_DEINIT_OK = "HA_DEINIT_OK";
 extern const isc::log::MessageID HA_DHCP4_START_SERVICE_FAILED = "HA_DHCP4_START_SERVICE_FAILED";
@@ -121,11 +123,13 @@ const char* values[] = {
     "HA_CONFIGURATION_FAILED", "failed to configure High Availability hooks library: %1",
     "HA_CONFIGURATION_SUCCESSFUL", "HA hook library has been successfully configured",
     "HA_CONFIG_AUTO_FAILOVER_DISABLED", "auto-failover disabled for %1",
+    "HA_CONFIG_DHCP_MT_DISABLED", "HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled",
     "HA_CONFIG_LEASE_SYNCING_DISABLED", "lease database synchronization between HA servers is disabled",
     "HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER", "bypassing SYNCING state because lease database synchronization is administratively disabled",
     "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER", "unusual configuration where \"send-lease-updates\": %1 and \"sync-leases\": %2",
     "HA_CONFIG_LEASE_UPDATES_DISABLED", "lease updates will not be generated",
     "HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER", "lease updates are administratively disabled and will not be generated while in %1 state",
+    "HA_CONFIG_SYSTEM_MT_UNSUPPORTED", "HA multi-threading has been disabled, auto-detection of thread support reports 0",
     "HA_CONTINUE_HANDLER_FAILED", "ha-continue command failed: %1",
     "HA_DEINIT_OK", "unloading High Availability hooks library successful",
     "HA_DHCP4_START_SERVICE_FAILED", "failed to start DHCPv4 HA service in dhcp4_srv_configured callout: %1",

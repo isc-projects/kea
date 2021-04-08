@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
+#include <ha_log.h>
 #include <ha_config.h>
 #include <ha_service_states.h>
 #include <sstream>
@@ -412,10 +413,8 @@ HAConfig::validate() {
         CfgMultiThreading::extract(mcfg, dhcp_mt_enabled, dhcp_threads, dummy_queue_size);
 
         if (!dhcp_mt_enabled) {
-            // @todo replace with a WARNING log
-            std::cout << "HA multi-threading cannot be enabled when"
-                      << " Kea core multi-threading is disabled"
-                      << std::endl;
+            // HA+MT requires DHCP multi-threading.
+            LOG_INFO(ha_logger, HA_CONFIG_DHCP_MT_DISABLED);
             enable_multi_threading_ = false;
             return;
         }
@@ -425,8 +424,7 @@ HAConfig::validate() {
             dhcp_threads = MultiThreadingMgr::detectThreadCount();
             // If machine says it cannot support threads.
             if (!dhcp_threads) {
-                // @todo - this needs a WARNING log
-                std::cout << "DHCP threads is 0, but detectThreadCount returns 0" << std::endl;
+                LOG_INFO(ha_logger, HA_CONFIG_SYSTEM_MT_UNSUPPORTED);
                 enable_multi_threading_ = false;
                 return;
             }
