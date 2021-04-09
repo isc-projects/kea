@@ -184,6 +184,13 @@ CloseHATest::runPartners() {
         if (fcntl(accept_partner1, F_SETFL, O_NONBLOCK) < 0) {
             isc_throw(Unexpected, "fcntl1 " << strerror(errno));
         }
+
+        int reuse_addr = 1;
+        if (setsockopt(accept_partner1, SOL_SOCKET, SO_REUSEADDR,
+               (char *)&reuse_addr, sizeof(reuse_addr)) < 0) {
+            isc_throw(Unexpected, "partner1 setsocketopt SO_REUSEADDR failed: " << strerror(errno));
+        }
+
         partner.sin_port = htons(18124);
         if (::bind(accept_partner1, SA(&partner), slen) < 0) {
             isc_throw(Unexpected, "bind1 " << strerror(errno));
@@ -199,6 +206,12 @@ CloseHATest::runPartners() {
         if (fcntl(accept_partner2, F_SETFL, O_NONBLOCK) < 0) {
             isc_throw(Unexpected, "fcntl2 " << strerror(errno));
         }
+
+        if (setsockopt(accept_partner2, SOL_SOCKET, SO_REUSEADDR,
+               (char *)&reuse_addr, sizeof(reuse_addr)) < 0) {
+            isc_throw(Unexpected, "partner2 setsocketopt SO_REUSEADDR failed: " << strerror(errno));
+        }
+
         partner.sin_port = htons(18125);
         if (::bind(accept_partner2, SA(&partner), slen) < 0) {
             isc_throw(Unexpected, "bind2 " << strerror(errno));
