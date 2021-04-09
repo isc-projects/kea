@@ -299,7 +299,6 @@ HAConfig::validate() {
         }
 
         // Check TLS setup.
-        bool use_tls = false;
         Optional<std::string> ca = p->second->getTrustAnchor();
         Optional<std::string> cert = p->second->getCertFile();
         Optional<std::string> key = p->second->getKeyFile();
@@ -313,9 +312,28 @@ HAConfig::validate() {
         if (key.unspecified()) {
             key = key_file_;
         }
-        if (!ca.unspecified() || !cert.unspecified() || !key.unspecified()) {
-            use_tls = true;
+        bool have_ca = (!ca.unspecified() && !ca.get().empty());
+        bool have_cert = (!cert.unspecified() && !cert.get().empty());
+        bool have_key = (!key.unspecified() && !key.get().empty());
+        bool use_tls = (have_ca || have_cert || have_key);
+        if (use_tls) {
             try {
+                // TLS is used: all 3 parameters are required.
+                if (!have_ca) {
+                    isc_throw(HAConfigValidationError, "trust-anchor parameter"
+                              << " is missing or empty: all or none of"
+                              << " TLS parameters must be set");
+                }
+                if (!have_cert) {
+                    isc_throw(HAConfigValidationError, "cert-file parameter"
+                              << " is missing or empty: all or none of"
+                              << " TLS parameters must be set");
+                }
+                if (!have_key) {
+                    isc_throw(HAConfigValidationError, "key-file parameter"
+                              << " is missing or empty: all or none of"
+                              << " TLS parameters must be set");
+                }
                 TlsContextPtr tls_context;
                 TlsContext::configure(tls_context,
                                       TlsRole::CLIENT,
@@ -326,15 +344,15 @@ HAConfig::validate() {
                 isc_throw(HAConfigValidationError, "bad TLS config for server "
                           << p->second->getName() << ": " << ex.what());
             }
-        }
-
-        // Refuse HTTPS scheme when TLS is not enabled.
-        if (!use_tls && (p->second->getUrl().getScheme() == Url::HTTPS)) {
-            isc_throw(HAConfigValidationError, "bad url '"
-                      << p->second->getUrl().toText()
-                      << "': https scheme is not supported"
-                      << " for server " << p->second->getName()
-                      << " where TLS is disabled");
+        } else {
+            // Refuse HTTPS scheme when TLS is not enabled.
+            if (p->second->getUrl().getScheme() == Url::HTTPS) {
+                isc_throw(HAConfigValidationError, "bad url '"
+                          << p->second->getUrl().toText()
+                          << "': https scheme is not supported"
+                          << " for server " << p->second->getName()
+                          << " where TLS is disabled");
+            }
         }
 
         ++peers_cnt[p->second->getRole()];
