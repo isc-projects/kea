@@ -58,6 +58,29 @@ public:
                 " exception type";
         }
     }
+
+    /// @brief Replace a pattern in a configuration.
+    ///
+    /// @param config Configuration to patch.
+    /// @param from String to replace.
+    /// @param repl String which replaces all occurrences of from.
+    /// @result A copy of config where all occurrences of from were replaced
+    /// by repl.
+    std::string replaceInConfig(const std::string& config,
+                                const std::string& from,
+                                const std::string& repl) {
+        std::string result(config);
+        if (from.empty()) {
+            return (result);
+        }
+        for (;;) {
+            size_t where = result.find(from);
+            if (where == std::string::npos) {
+                return (result);
+            }
+            result.replace(where, from.size(), repl);
+        }
+    }
 };
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -1318,6 +1341,100 @@ TEST_F(HAConfigTest, passiveBackupDelayedUpdatesLimit) {
         "]",
         "'delayed-updates-limit' must be set to 0 in the passive backup configuration");
 }
+
+#ifndef WITH_BOTAN
+/// Test that TLS parameters are correctly inherited.
+TEST_F(HAConfigTest, tlsParameterInheritance) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"my-server\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"my-server\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"overwrite\","
+        "                \"trust-anchor\": \"!CA!\","
+        "                \"cert-file\": \"!CA!/kea-server.crt\","
+        "                \"key-file\": \"!CA!/kea-server.key\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            },"
+        "            {"
+        "                \"name\": \"disable\","
+        "                \"trust-anchor\": \"\","
+        "                \"cert-file\": \"\","
+        "                \"key-file\": \"\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"backup\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    HAImplPtr impl(new HAImpl());
+    ASSERT_NO_THROW(impl->configure(Element::fromJSON(patched)));
+
+    // Check the global parameters.
+    std::string expected;
+    EXPECT_FALSE(impl->getConfig()->getTrustAnchor().unspecified());
+    expected = TEST_CA_DIR;
+    expected += "/kea-ca.crt";
+    EXPECT_EQ(expected, impl->getConfig()->getTrustAnchor().get());
+    EXPECT_FALSE(impl->getConfig()->getCertFile().unspecified());
+    expected = TEST_CA_DIR;
+    expected += "/kea-client.crt";
+    EXPECT_EQ(expected, impl->getConfig()->getCertFile().get());
+    EXPECT_FALSE(impl->getConfig()->getKeyFile().unspecified());
+    expected = TEST_CA_DIR;
+    expected += "/kea-client.key";
+    EXPECT_EQ(expected, impl->getConfig()->getKeyFile().get());
+
+    // Check the first peer parameters: it inherits them from the global level.
+    HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_TRUE(cfg->getTlsContext());
+
+    // Check the second peer parameters: it overwrites them.
+    cfg = impl->getConfig()->getPeerConfig("overwrite");
+    ASSERT_TRUE(cfg);
+    EXPECT_FALSE(cfg->getTrustAnchor().unspecified());
+    expected = TEST_CA_DIR;
+    EXPECT_EQ(expected, cfg->getTrustAnchor().get());
+    EXPECT_FALSE(cfg->getCertFile().unspecified());
+    expected = TEST_CA_DIR;
+    expected += "/kea-server.crt";
+    EXPECT_EQ(expected, cfg->getCertFile().get());
+    EXPECT_FALSE(cfg->getKeyFile().unspecified());
+    expected = TEST_CA_DIR;
+    expected += "/kea-server.key";
+    EXPECT_EQ(expected, cfg->getKeyFile().get());
+    EXPECT_TRUE(cfg->getTlsContext());
+
+    // Check the last peer parameters: it disables TLS by setting them to "".
+    cfg = impl->getConfig()->getPeerConfig("disable");
+    ASSERT_TRUE(cfg);
+    EXPECT_FALSE(cfg->getTrustAnchor().unspecified());
+    EXPECT_EQ("", cfg->getTrustAnchor().get());
+    EXPECT_FALSE(cfg->getCertFile().unspecified());
+    EXPECT_EQ("", cfg->getCertFile().get());
+    EXPECT_FALSE(cfg->getKeyFile().unspecified());
+    EXPECT_EQ("", cfg->getKeyFile().get());
+    // The TLS context should be null.
+    EXPECT_FALSE(cfg->getTlsContext());
+}
+#endif
 
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {

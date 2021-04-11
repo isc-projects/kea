@@ -7,6 +7,7 @@
 #ifndef HA_CONFIG_H
 #define HA_CONFIG_H
 
+#include <asiolink/crypto_tls.h>
 #include <exceptions/exceptions.h>
 #include <http/basic_auth.h>
 #include <http/post_request_json.h>
@@ -135,6 +136,16 @@ public:
             key_file_ = key;
         }
 
+        /// @brief Return a pointer to the server's TLS context.
+        asiolink::TlsContextPtr getTlsContext() const {
+            return (tls_context_);
+        }
+
+        /// @brief Return a non-const pointer to the server's TLS context.
+        asiolink::TlsContextPtr& getTlsContextNonConst() {
+            return (tls_context_);
+        }
+
         /// @brief Returns a string identifying a server used in logging.
         ///
         /// The label is constructed from server name and server URL.
@@ -208,6 +219,7 @@ public:
         util::Optional<std::string> trust_anchor_;  ///< Server trust anchor.
         util::Optional<std::string> cert_file_;     ///< Server cert file.
         util::Optional<std::string> key_file_;      ///< Server key file.
+        asiolink::TlsContextPtr tls_context_;       ///< Server TLS context.
         Role role_;                                 ///< Server role.
         bool auto_failover_;                        ///< Auto failover state.
         http::BasicHttpAuthPtr basic_auth_;         ///< Basic HTTP authentication.
@@ -712,6 +724,8 @@ public:
     /// the number of DHCP threads
     /// 3. If http-client-threads is 0, it will be replaced with
     /// the number of DHCP threads
+    ///
+    /// As a side effect it fills the TLS context of peers when TLS is enabled.
     ///
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate();

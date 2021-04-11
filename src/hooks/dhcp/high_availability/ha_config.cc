@@ -29,7 +29,7 @@ namespace ha {
 
 HAConfig::PeerConfig::PeerConfig()
     : name_(), url_(""), trust_anchor_(), cert_file_(), key_file_(),
-      role_(STANDBY), auto_failover_(false), basic_auth_() {
+      tls_context_(), role_(STANDBY), auto_failover_(false), basic_auth_() {
 }
 
 void
@@ -334,8 +334,7 @@ HAConfig::validate() {
                               << " is missing or empty: all or none of"
                               << " TLS parameters must be set");
                 }
-                TlsContextPtr tls_context;
-                TlsContext::configure(tls_context,
+                TlsContext::configure(p->second->getTlsContextNonConst(),
                                       TlsRole::CLIENT,
                                       ca.get(),
                                       cert.get(),

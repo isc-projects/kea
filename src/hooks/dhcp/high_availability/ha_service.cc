@@ -1255,7 +1255,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     boost::weak_ptr<typename QueryPtrType::element_type> weak_query(query);
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+    client_.asyncSendRequest(config->getUrl(), config->getTlsContext(),
                              request, response,
         [this, weak_query, parking_lot, config]
             (const boost::system::error_code& ec,
@@ -1558,7 +1558,8 @@ HAService::asyncSendHeartbeat() {
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(partner_config->getUrl(), TlsContextPtr(),
+    client_.asyncSendRequest(partner_config->getUrl(),
+                             partner_config->getTlsContext(),
                              request, response,
         [this, partner_config]
             (const boost::system::error_code& ec,
@@ -1700,7 +1701,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+    http_client.asyncSendRequest(remote_config->getUrl(),
+                                 remote_config->getTlsContext(),
                                  request, response,
         [this, remote_config, post_request_action]
             (const boost::system::error_code& ec,
@@ -1775,7 +1777,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+    http_client.asyncSendRequest(remote_config->getUrl(),
+                                 remote_config->getTlsContext(),
                                  request, response,
         [this, remote_config, post_request_action]
             (const boost::system::error_code& ec,
@@ -1918,7 +1921,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(partner_config->getUrl(), TlsContextPtr(),
+    http_client.asyncSendRequest(partner_config->getUrl(),
+                                 partner_config->getTlsContext(),
                                  request, response,
         [this, partner_config, post_sync_action, &http_client, server_name,
          max_period, dhcp_disabled]
@@ -2205,7 +2209,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    http_client.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+    http_client.asyncSendRequest(config->getUrl(), config->getTlsContext(),
                                  request, response,
         [this, &http_client, config, post_request_action]
             (const boost::system::error_code& ec,
@@ -2305,7 +2309,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    http_client.asyncSendRequest(config->getUrl(), TlsContextPtr(),
+    http_client.asyncSendRequest(config->getUrl(), config->getTlsContext(),
                                  request, response,
         [this, config, post_request_action]
             (const boost::system::error_code& ec,
@@ -2450,7 +2454,8 @@ HAService::processMaintenanceStart() {
     int captured_rcode = 0;
 
     // Schedule asynchronous HTTP request.
-    client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+    client.asyncSendRequest(remote_config->getUrl(),
+                            remote_config->getTlsContext(),
                             request, response,
         [this, remote_config, &io_service, &captured_ec, &captured_error_message,
          &captured_rcode]
@@ -2571,7 +2576,8 @@ HAService::processMaintenanceCancel() {
     std::string error_message;
 
     // Schedule asynchronous HTTP request.
-    client.asyncSendRequest(remote_config->getUrl(), TlsContextPtr(),
+    client.asyncSendRequest(remote_config->getUrl(),
+                            remote_config->getTlsContext(),
                             request, response,
         [this, remote_config, &io_service, &error_message]
             (const boost::system::error_code& ec,
