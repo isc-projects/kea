@@ -197,6 +197,39 @@ clocks and restart the servers.
    the backup servers is not assessed because the active servers do
    not exchange heartbeat messages with the backup servers.
 
+.. _ha-https-support:
+
+HTTPS Support
+~~~~~~~~~~~~~
+
+Since version 1.9.7 HTTPS is supported by the High Availability hooks
+library using the TLS/HTTPS support described in :ref:`tls` where
+more details can be found.
+
+The HTTPS configuration parameters are:
+
+- the ``trust-anchor`` parameter specifies the name of a file or directory
+  where the certification authority (CA) certificate of a Control Agent can
+  be found.
+
+- the ``cert-file`` parameter specifies the name of the file containing
+  the end-entity certificate to use.
+
+- the ``key-file`` parameter specifies the private key of the end-entity
+  certificate to use.
+
+These parameters can be configured at the global level and at the peer
+level. When configured at both levels the peer value is used allowing
+to share common values with possible exceptions.
+
+The three parameters must be either all not specified (HTTPS disabled)
+or all specified (HTTPS enabled). Configure to the empty string is
+considered as not specified: this can be used for instance to disable
+HTTPS for a particular peer when it is enabled at the global level.
+
+As the High Availability hooks library is a HTTPS client there is no
+``cert-required`` parameter: it is configured at the Control Agent side.
+
 .. _ha-server-states:
 
 Server States
