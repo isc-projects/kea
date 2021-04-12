@@ -147,7 +147,7 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query4);
             return;
-        } 
+        }
     } catch (...) {
         // Make sure we dereference.
         parking_lot->dereference(query4);
@@ -261,7 +261,7 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query6);
             return;
-        } 
+        }
     } catch (...) {
         // Make sure we dereference.
         parking_lot->dereference(query6);

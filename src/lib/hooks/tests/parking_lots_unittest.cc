@@ -206,7 +206,7 @@ TEST(ParkingLotsTest, dereference) {
     StringPtr parked_object(new std::string("foo"));
 
     // Verify that an object that hasn't been parked, cannot be
-    // dererferenced.
+    // dereferenced.
     ASSERT_THROW(parking_lot_handle->dereference(parked_object),
                  InvalidOperation);
 

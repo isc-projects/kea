@@ -496,6 +496,7 @@ TEST_F(HAImplTest, leases6Committed) {
     // Park the packet.
     HooksManager::park("leases6_committed", query6, []{});
 
+    // Run the callout again.
     ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
 
     // This time the lease update should be generated and the status should
