@@ -5,7 +5,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/high_availability -I$(top_srcdir
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DLIBDHCP_HA_SO=\"$(abs_top_builddir)/src/hooks/dhcp/high_availability/.libs/libdhcp_ha.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
-TEST_CA_DIR = $(srcdir)/../../../../lib/asiolink/testutils/ca
+TEST_CA_DIR = $(abs_top_srcdir)/src/lib/asiolink/testutils/ca
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

@@ -67,7 +67,7 @@ TlsContextBase::configure(TlsContextPtr& context,
             context->loadKeyFile(key_file);
         } catch (const std::exception& ex) {
             isc_throw(isc::BadValue, "load of private key file '"
-                      << cert_file << "' failed: " << ex.what());
+                      << key_file << "' failed: " << ex.what());
         }
     } catch (...) {
         context.reset();

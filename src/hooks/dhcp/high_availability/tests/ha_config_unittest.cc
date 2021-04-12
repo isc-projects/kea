@@ -675,7 +675,7 @@ TEST_F(HAConfigTest, badURLName) {
         "Invalid argument for server server2");
 }
 
-// URL HTTPS scheme is not (yet) supported.
+// URL HTTPS scheme is not supported.
 TEST_F(HAConfigTest, badURLHttps) {
     testInvalidConfig(
         "["
@@ -1356,7 +1356,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
         "        \"peers\": ["
         "            {"
         "                \"name\": \"my-server\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"url\": \"https://127.0.0.1:8080/\","
         "                \"role\": \"primary\","
         "                \"auto-failover\": false"
         "            },"
@@ -1365,7 +1365,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
         "                \"trust-anchor\": \"!CA!\","
         "                \"cert-file\": \"!CA!/kea-server.crt\","
         "                \"key-file\": \"!CA!/kea-server.key\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"url\": \"https://127.0.0.1:8080/\","
         "                \"role\": \"secondary\","
         "                \"auto-failover\": true"
         "            },"
@@ -1433,6 +1433,216 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
     EXPECT_EQ("", cfg->getKeyFile().get());
     // The TLS context should be null.
     EXPECT_FALSE(cfg->getTlsContext());
+}
+
+// Test that a missing trust-anchor in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, missingTrustAnchor) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"trust-anchor\": \"\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server2: ";
+    expected += "trust-anchor parameter is missing or empty: ";
+    expected += "all or none of TLS parameters must be set";
+    testInvalidConfig(patched, expected);
+}
+
+// Test that a missing cert-file in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, missingCertFile) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"cert-file\": \"\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server2: ";
+    expected += "cert-file parameter is missing or empty: ";
+    expected += "all or none of TLS parameters must be set";
+    testInvalidConfig(patched, expected);
+}
+
+// Test that a missing key-file in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, missingKeyFile) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"key-file\": \"\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server2: ";
+    expected += "key-file parameter is missing or empty: ";
+    expected += "all or none of TLS parameters must be set";
+    testInvalidConfig(patched, expected);
+}
+
+// Test that a bad trust-anchor in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, badTrustAnchor) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"/this-file-does-not-exist\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server1: ";
+    expected += "load of CA file '/this-file-does-not-exist' failed: ";
+    // Backend dependent.
+    expected += "No such file or directory";
+    testInvalidConfig(patched, expected);
+}
+
+// Test that a bad cert-file in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, badCertFile) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"/this-file-does-not-exist\","
+        "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server1: ";
+    expected += "load of cert file '/this-file-does-not-exist' failed: ";
+    // Backend dependent.
+    expected += "No such file or directory";
+    testInvalidConfig(patched, expected);
+}
+
+// Test that a bad key-file in the HTTPS parameter set raise an error.
+TEST_F(HAConfigTest, badKeyFile) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "        \"cert-file\": \"!CA!/kea-client.crt\","
+        "        \"key-file\": \"/this-file-does-not-exist\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+    const std::string& patched = replaceInConfig(ha_config, "!CA!",
+                                                 TEST_CA_DIR);
+    std::string expected = "bad TLS config for server server1: ";
+    expected += "load of private key file '/this-file-does-not-exist' failed: ";
+    // Backend dependent.
+    expected += "No such file or directory";
+    testInvalidConfig(patched, expected);
 }
 #endif
 
