@@ -142,14 +142,20 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
     // e.g. when this server is in the partner-down state and there are no backup
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
-    if (service_->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
-        // Dereference the parked packet.  This releases our stake in it.
+    try {
+        if (service_->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
+            // Dereference the parked packet.  This releases our stake in it.
+            parking_lot->dereference(query4);
+            return;
+        } 
+    } catch (...) {
+        // Make sure we dereference.
         parking_lot->dereference(query4);
-        return;
+        throw;
     }
 
     // The callout returns this status code to indicate to the server that it
-    // should leave the packet parked.  It will be unparked until each hook
+    // should leave the packet parked.  It will be parked until each hook
     // library with a reference, unparks the packet.
     callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
 }
@@ -250,10 +256,16 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // e.g. when this server is in the partner-down state and there are no backup
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
-    if (service_->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
-        // Dereference the parked packet.  This releases our stake in it.
+    try {
+        if (service_->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
+            // Dereference the parked packet.  This releases our stake in it.
+            parking_lot->dereference(query6);
+            return;
+        } 
+    } catch (...) {
+        // Make sure we dereference.
         parking_lot->dereference(query6);
-        return;
+        throw;
     }
 
     // The callout returns this status code to indicate to the server that it

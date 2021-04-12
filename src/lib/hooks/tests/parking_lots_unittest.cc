@@ -97,8 +97,12 @@ TEST(ParkingLotsTest, unpark) {
 
     StringPtr parked_object(new std::string("foo"));
 
+    // Unparking should return false if the object isn't parked.
+    EXPECT_FALSE(parking_lot->unpark(parked_object));
+
     // This flag will indicate if the callback has been called.
     bool unparked = false;
+
     ASSERT_NO_THROW(parking_lot->park(parked_object, [&unparked] {
         unparked = true;
     }));
@@ -192,7 +196,7 @@ TEST(ParkingLotsTest, clear) {
     EXPECT_TRUE(weak_parked_object.expired());
 }
 
-// Verify that an object can be derefernced.
+// Verify that an object can be dereferenced.
 TEST(ParkingLotsTest, dereference) {
     ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
     ParkingLotHandlePtr parking_lot_handle =
@@ -232,7 +236,7 @@ TEST(ParkingLotsTest, dereference) {
     ASSERT_EQ(0, ref_count);
     EXPECT_FALSE(unparked);
 
-    // Try to dereference the object. It should -1.
+    // Try to dereference the object. It should decrement to -1
     // but not unpark the packet or invoke the callback.
     ASSERT_NO_THROW(ref_count = parking_lot_handle->dereference(parked_object));
     EXPECT_EQ(-1, ref_count);

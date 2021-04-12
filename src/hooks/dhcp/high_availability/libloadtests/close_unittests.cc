@@ -414,7 +414,7 @@ TEST_F(CloseHATest, close4) {
         ScopedCalloutHandleState handle_state(handle);
         handle->setArgument("query4", query);
 
-        // Park the packtet proactively as the server normally would.
+        // Park the packet proactively as the server normally would.
         HooksManager::park("leases4_committed", query, []{});
 
         // Invoke the callouts.
@@ -652,7 +652,7 @@ TEST_F(CloseHATest, close6) {
         ScopedCalloutHandleState handle_state(handle);
         handle->setArgument("query6", query);
 
-        // Park the packtet proactively as the server normally would.
+        // Park the packet proactively as the server normally would.
         HooksManager::park("leases6_committed", query, []{});
 
         // Invoke the callouts.

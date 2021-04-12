@@ -666,14 +666,14 @@ Dhcpv4Srv::~Dhcpv4Srv() {
 
     try {
         stopD2();
-    } catch(const std::exception& ex) {
+    } catch (const std::exception& ex) {
         // Highly unlikely, but lets Report it but go on
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_D2STOP_ERROR).arg(ex.what());
     }
 
     try {
         Dhcp4to6Ipc::instance().close();
-    } catch(const std::exception& ex) {
+    } catch (const std::exception& ex) {
         // Highly unlikely, but lets Report it but go on
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_DHCP4O6_ERROR).arg(ex.what());
     }
@@ -1369,7 +1369,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
             // Call all installed callouts
             HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
                                        *callout_handle);
-        } catch(...) {
+        } catch (...) {
             // Make sure we don't orphan a parked packet.
             if (allow_packet_park) {
                 HooksManager::drop("leases4_committed", query);

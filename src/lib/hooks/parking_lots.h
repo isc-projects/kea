@@ -90,7 +90,6 @@ public:
         // Add the object to the parking lot. At this point refcount = 0.
         ParkingInfo pinfo(parked_object, unpark_callback);
         parking_[makeKey(parked_object)] = pinfo;
-        return;
     }
 
     /// @brief Increases reference counter for the parked object.
@@ -133,7 +132,7 @@ public:
         }
 
         // Decrement and return the reference count.
-       return (--it->second.refcount_);
+        return (--it->second.refcount_);
     }
 
     /// @brief Signals that the object should be unparked.
@@ -260,7 +259,7 @@ private:
     std::string makeKey(T parked_object) {
         std::stringstream ss;
         ss << boost::any_cast<T>(parked_object);
-        return(ss.str());
+        return (ss.str());
     }
 
     /// @brief Search for the information about the parked object.
@@ -271,7 +270,7 @@ private:
     /// if no such object found.
     template<typename T>
     ParkingInfoListIterator find(T parked_object) {
-        return(parking_.find(makeKey(parked_object)));
+        return (parking_.find(makeKey(parked_object)));
     }
 
     /// @brief The mutex to protect parking lot internal state.
