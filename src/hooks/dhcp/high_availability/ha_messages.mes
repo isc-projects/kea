@@ -161,7 +161,7 @@ multi-threading while Kea global configuration has multi-threading disabled.
 % HA_CONFIG_SYSTEM_MT_UNSUPPORTED HA multi-threading has been disabled, auto-detection of thread support reports 0
 This informational message is issued when HA multi-threading configuration has
 specified auto-detection for the number of threads to use and the system
-reports the number of concurrent threads as 0. If you now your system can
+reports the number of concurrent threads as 0. If you know your system can
 support multiple threads, then you may override this condition by specifying
 explicit values for http-listener-threads and http-client-threads.
 

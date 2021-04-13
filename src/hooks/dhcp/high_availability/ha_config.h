@@ -543,7 +543,7 @@ public:
         return (http_dedicated_listener_);
     }
 
-    /// @brief Sets whether or not the server is configured  use its one HTTP
+    /// @brief Sets whether or not the server is configured to use its own HTTP
     /// listener.
     ///
     /// @param http_dedicated_listener flag that enables the use of a dedicated
@@ -554,28 +554,28 @@ public:
 
     /// @brief Fetches the number of threads the HTTP listener should use.
     ///
-    /// @return number of the listener is configured to use.
+    /// @return number of threads the listener is configured to use.
     uint32_t getHttpListenerThreads() {
         return (http_listener_threads_);
     }
 
     /// @brief Sets the number of threads the HTTP listener should use.
     ///
-    /// @return number of the listener should use.
+    /// @return number of threads the listener should use.
     void setHttpListenerThreads(uint32_t http_listener_threads) {
         http_listener_threads_ = http_listener_threads;
     }
 
     /// @brief Fetches the number of threads the HTTP Client should use.
     ///
-    /// @return number of the client is configured to use.
+    /// @return number of threads the client is configured to use.
     uint32_t getHttpClientThreads() {
         return (http_client_threads_);
     }
 
     /// @brief Sets the number of threads the HTTP client should use.
     ///
-    /// @return number of the client should use.
+    /// @return number of threads the client should use.
     void setHttpClientThreads(uint32_t http_client_threads) {
         http_client_threads_ = http_client_threads;
     }
@@ -630,9 +630,9 @@ public:
     /// @brief Validates configuration.
     ///
     /// In addition to sanity checking the configuration, it will
-    /// check HA+MTi configuration against Core multi-threading
+    /// check HA+MT configuration against Core multi-threading
     /// configuration add adjust HA+MT values as follows:
-    /// 1. if DHCP multi-threading is disabled, HA+MT will be disabled.
+    /// 1. If DHCP multi-threading is disabled, HA+MT will be disabled.
     /// 2. If http-listener-threads is 0, it will be replaced with
     /// the number of DHCP threads
     /// 3. If http-client-threads is 0, it will be replaced with

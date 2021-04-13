@@ -1453,7 +1453,7 @@ capability:
 
 -  ``enable-multi-threading`` - enables or disables HA+MT
 
--  ``http-dedicated-listener`` - enables or disabled the creation of an dedicated HTTP
+-  ``http-dedicated-listener`` - enables or disabled the creation of a dedicated HTTP
    listener the server will use to receive HA messages from its peers.
 
 -  ``http-listener-threads`` - maximum number of threads the dedicated listener

@@ -340,7 +340,7 @@ HATest::createQuery6(const std::string& duid_text) const {
     return (query6);
 }
 
-void 
+void
 HATest::setDHCPMultiThreadingConfig(bool enabled, uint32_t thread_pool_size,
                                     uint32_t packet_queue_size) {
     ElementPtr mt_config = Element::createMap();
@@ -357,16 +357,14 @@ HATest::makeHAMtJson(bool enable_multi_threading, bool http_dedicated_listener,
                      uint32_t http_listener_threads,  uint32_t http_client_threads) {
     std::stringstream ss;
     ss << "\"multi-threading\": {"
-       << " \"enable-multi-threading\": " 
+       << " \"enable-multi-threading\": "
        << (enable_multi_threading ? "true" : "false") << ","
-       << " \"http-dedicated-listener\": " 
+       << " \"http-dedicated-listener\": "
        << (http_dedicated_listener ? "true" : "false")  << ","
        << " \"http-listener-threads\": " << http_listener_threads  << ","
        << " \"http-client-threads\": " << http_client_threads << "}";
     return (ss.str());
 }
-
-
 
 } // end of namespace isc::ha::test
 } // end of namespace isc::ha

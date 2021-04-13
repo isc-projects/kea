@@ -225,9 +225,9 @@ public:
                                  const uint8_t duid_seed,
                                  const uint16_t elapsed_time) const;
 
-    /// @brief Sets the DHCP mulit-threading configuration in staging SrvConfig.
+    /// @brief Sets the DHCP multi-threading configuration in staging SrvConfig.
     ///
-    /// @param enable_multi_threading  value that maps to enable-multi-threading.
+    /// @param enable_multi_threading value that maps to enable-multi-threading.
     /// @param thread_pool_size value that maps to thread-pool-size.
     /// @param queue_size value that maps to queue-size.
     void setDHCPMultiThreadingConfig(bool enable_multi_threading,
@@ -241,7 +241,7 @@ public:
     /// ```
     /// "multi-threading" {
     ///     "enable-multi-threading": <bool>,
-    ///     "dedicated-http-listener":  <bool>,
+    ///     "dedicated-http-listener": <bool>,
     ///     "http-listener-threads": <int>,
     ///     "http-client-threads": <int>
     /// }"
