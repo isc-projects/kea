@@ -1379,7 +1379,7 @@ TEST_F(HAConfigTest, pausingToString) {
 
 }
 
-// Verifies permutaions of HA+MT configuration.
+// Verifies permutations of HA+MT configuration.
 TEST_F(HAConfigTest, multiThreadingPermutations) {
 
     // Structure describing a test scenario.
