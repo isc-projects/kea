@@ -276,12 +276,6 @@ TLSSocket<C>::TLSSocket(IOService& service, TlsContextPtr context) :
 
 template <typename C> void
 TLSSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
-    // If socket is open on this end but has been closed by the peer,
-    // we need to reconnect.
-    if (socket_.is_open() && !isUsable()) {
-        socket_.close();
-    }
-
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes when using asynchronous I/O.
     // Also allows us a treat a passed-in socket as a self-managed socket.

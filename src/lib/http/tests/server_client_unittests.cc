@@ -1443,13 +1443,16 @@ public:
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
 
+        // Specify the TLS context of the server.
+        TlsContextPtr tls_context;
+
         // Generate first request.
         PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
         HttpResponseJsonPtr response1(new HttpResponseJson());
 
         // Use very short timeout to make sure that it occurs before we actually
         // run the transaction.
-        ASSERT_NO_THROW(client.asyncSendRequest(url, TlsContextPtr(),
+        ASSERT_NO_THROW(client.asyncSendRequest(url, tls_context,
                                                 request1, response1,
             [](const boost::system::error_code& ec,
                const HttpResponsePtr& response,
@@ -1466,7 +1469,7 @@ public:
         if (queue_two_requests) {
             PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
             HttpResponseJsonPtr response2(new HttpResponseJson());
-            ASSERT_NO_THROW(client.asyncSendRequest(url, TlsContextPtr(),
+            ASSERT_NO_THROW(client.asyncSendRequest(url, tls_context,
                                                     request2, response2,
                 [](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
