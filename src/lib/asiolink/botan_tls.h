@@ -131,11 +131,6 @@ public:
         isc_throw(NotImplemented, "Botan TLS is not yet supported");
     }
 
-    /// @brief Clear the TLS state.
-    virtual void clear() {
-        isc_throw(NotImplemented, "Botan TLS is not yet supported");
-    }
-
     /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///

@@ -34,8 +34,6 @@ enum TlsRole { CLIENT, SERVER };
 class TlsContext;
 
 /// @brief The type of shared pointers to TlsContext objects.
-///
-/// @note Not clear we need shared pointers but they cover more use cases...
 typedef boost::shared_ptr<TlsContext> TlsContextPtr;
 
 /// @brief TLS context base class.
@@ -152,11 +150,6 @@ public:
     ///
     /// @param callback Callback object.
     virtual void shutdown(Callback& callback) = 0;
-
-    /// @brief Clear the TLS state.
-    ///
-    /// @note For some unit tests only.
-    virtual void clear() = 0;
 
     /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.

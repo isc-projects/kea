@@ -149,11 +149,6 @@ public:
         Base::async_shutdown(callback);
     }
 
-    /// @brief Clear the SSL object.
-    virtual void clear() {
-        static_cast<void>(::SSL_clear(this->native_handle()));
-    }
-
     /// @brief Return the commonName part of the subjectName of
     /// the peer certificate.
     ///

@@ -508,7 +508,6 @@ TLSSocket<C>::shutdown(C& callback) {
 
 template <typename C> void
 TLSSocket<C>::close() {
-    stream_.clear();
     if (socket_.is_open() && stream_ptr_) {
         socket_.close();
     }
