@@ -749,6 +749,7 @@ do
             ;;
         # Specify database password
         -p|--password)
+            password_parameter_passed=true
             # If there is at least one more parameter following...
             if test "${#}" -gt 1; then
                 # Then take it as password.
@@ -818,6 +819,14 @@ do
     esac
     shift
 done
+
+# After all the parameters have been parsed, check environment variables.
+if test -z "${password_parameter_passed+x}"; then
+    if test -n "${KEA_ADMIN_DB_PASSWORD+x}"; then
+        printf 'Using the value of KEA_ADMIN_DB_PASSWORD for authentication...\n'
+        db_password="${KEA_ADMIN_DB_PASSWORD}"
+    fi
+fi
 
 case ${command} in
     # Initialize the database

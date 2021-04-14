@@ -1,15 +1,11 @@
 1885.	[func]		andrei
 	kea-admin is now able to interactively ask for a password if no
 	parameter follows the -p or the --password parameters. This
-	requires the user to give it as the last parameter. If another
-	option starting with dash follows, that would be taken as the
-	actual password, would not be processed as it should have been
-	and all your parameters will be offset by one. Checking if the
-	word that follows starts with dash is also not possible because
-	that would not allow for passwords starting with dash. Feedback
-	of the password to the terminal is cut off to prevent
-	over-the-shoulder snooping and other social engineering
-	techniques.
+	requires the user to give it as the last parameter. The entered
+	password is not echoed back to the terminal in order to prevent
+	over-the-shoulder snooping or other social engineering
+	techniques. Alternatively, you can set the password via the
+	KEA_ADMIN_DB_PASSWORD environment variable.
 	(Gitlab #1675)
 
 1884.	[doc]		fdupont

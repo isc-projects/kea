@@ -72,7 +72,9 @@ Arguments
 ``-p|--password password``
    Specifies the password when connecting to a database.
    If only ``-p`` or ``--password`` is given, the user is prompted for a password.
-   If not specified at all, the default value of **keatest** is used.
+   If not specified at all, the **KEA_ADMIN_DB_PASSWORD** environment variable
+   is checked for a value and used if it exists.
+   Otherwise the default value of **keatest** is used.
 
 ``-n|--name database-name``
    Specifies the name of the database to connect to. If not specified, the
