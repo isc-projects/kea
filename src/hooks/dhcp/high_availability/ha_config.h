@@ -526,7 +526,7 @@ public:
 
     /// @brief Sets whether or not server is configured for multi-threaded operation.
     ///
-    /// @param http_enabled boolean flag that enables multi-threaded operation
+    /// @param enable_multi_threading boolean flag that enables multi-threaded operation
     /// when true.
     void setEnableMultiThreading(bool enable_multi_threading) {
         enable_multi_threading_ = enable_multi_threading;
@@ -561,12 +561,12 @@ public:
 
     /// @brief Sets the number of threads the HTTP listener should use.
     ///
-    /// @return number of threads the listener should use.
+    /// @param http_listener_threads number of threads the listener should use.
     void setHttpListenerThreads(uint32_t http_listener_threads) {
         http_listener_threads_ = http_listener_threads;
     }
 
-    /// @brief Fetches the number of threads the HTTP Client should use.
+    /// @brief Fetches the number of threads the HTTP client should use.
     ///
     /// @return number of threads the client is configured to use.
     uint32_t getHttpClientThreads() {
@@ -575,7 +575,7 @@ public:
 
     /// @brief Sets the number of threads the HTTP client should use.
     ///
-    /// @return number of threads the client should use.
+    /// @param http_client_threads number of threads the client should use.
     void setHttpClientThreads(uint32_t http_client_threads) {
         http_client_threads_ = http_client_threads;
     }
