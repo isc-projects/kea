@@ -339,7 +339,8 @@ public:
     }
 
     /// @brief Test that two consecutive requests can be sent over the same
-    /// connection.
+    /// connection (if persistent, if not persistent two connections will
+    /// be used).
     ///
     /// @param version HTTP version to be used.
     void testConsecutiveRequests(const HttpVersion& version) {
@@ -436,6 +437,70 @@ public:
         PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
         HttpResponseJsonPtr response2(new HttpResponseJson());
         ASSERT_NO_THROW(client.asyncSendRequest(url2, client_context_,
+                                                request2, response2,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
+        }));
+
+        // Actually trigger the requests.
+        ASSERT_NO_THROW(runIOService());
+
+        // Make sure we have received two different responses.
+        ASSERT_TRUE(response1);
+        ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+        ASSERT_TRUE(sequence1);
+
+        ASSERT_TRUE(response2);
+        ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+        ASSERT_TRUE(sequence2);
+
+        EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+    }
+
+    /// @brief Test that the client can communicate with the same destination
+    /// address and port but with different TLS contexts so
+    void testMultipleTlsContexts() {
+        // Start only one server.
+        ASSERT_NO_THROW(listener_->start());
+
+        // Create the client.
+        HttpClient client(io_service_);
+
+        // Create a second client context.
+        TlsContextPtr client_context2;
+        configClient(client_context2);
+
+        // Specify the URL on which the server is available.
+        Url url("http://127.0.0.1:18123");
+
+        // Create a request to the first server.
+        PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
+        HttpResponseJsonPtr response1(new HttpResponseJson());
+        unsigned resp_num = 0;
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
+                                                request1, response1,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            if (ec) {
+                ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+            }
+        }));
+
+        // Create a request with the second TLS context.
+        PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
+        HttpResponseJsonPtr response2(new HttpResponseJson());
+        ASSERT_NO_THROW(client.asyncSendRequest(url, client_context2,
                                                 request2, response2,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -1182,6 +1247,19 @@ TEST_F(HttpsClientTest, multipleDestinations) {
 TEST_F(HttpsClientTest, multipleDestinationsMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     ASSERT_NO_FATAL_FAILURE(testMultipleDestinations());
+}
+
+// Test that the client can use two different TLS contexts to the same
+// destination address and port simultaneously.
+TEST_F(HttpsClientTest, multipleTlsContexts) {
+    ASSERT_NO_FATAL_FAILURE(testMultipleTlsContexts());
+}
+
+// Test that the client can use two different TLS contexts to the same
+// destination address and port simultaneously.
+TEST_F(HttpsClientTest, multipleTlsContextsMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testMultipleTlsContexts());
 }
 
 // Test that idle connection can be resumed for second request.
