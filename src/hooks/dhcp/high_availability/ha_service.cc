@@ -14,6 +14,7 @@
 #include <cc/data.h>
 #include <config/timeouts.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <http/date_time.h>
@@ -52,7 +53,7 @@ const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
-      server_type_(server_type), client_(*io_service), communication_state_(),
+      server_type_(server_type), client_(), listener_(), communication_state_(),
       query_filter_(config), mutex_(), pending_requests_(),
       lease_update_backlog_(config->getDelayedUpdatesLimit()) {
 
@@ -67,12 +68,18 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
 
     startModel(HA_WAITING_ST);
 
+    // Start client and/or listener.
+    startClientAndListener();
+
     LOG_INFO(ha_logger, HA_SERVICE_STARTED)
         .arg(HAConfig::HAModeToString(config->getHAMode()))
         .arg(HAConfig::PeerConfig::roleToString(config->getThisServerConfig()->getRole()));
 }
 
 HAService::~HAService() {
+    // Stop client and/or listener.
+    stopClientAndListener();
+
     network_state_->reset(NetworkState::Origin::HA_COMMAND);
 }
 
@@ -989,7 +996,7 @@ HAService::adjustNetworkState() {
 
 bool
 HAService::shouldPartnerDown() const {
-    // Checking whether the communication with the partner is ok is the
+    // Checking whether the communication with the partner is OK is the
     // first step towards verifying if the server is up.
     if (communication_state_->isCommunicationInterrupted()) {
         // If the communication is interrupted, we also have to check
@@ -1336,7 +1343,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 }
             } else {
                 // This was a response from the backup server and we're configured to
-                // not wait for their ackowledgments, so there is nothing more to do.
+                // not wait for their acknowledgments, so there is nothing more to do.
                 return;
             }
 
@@ -1356,7 +1363,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     );
 
     // The number of pending requests is the number of requests for which we
-    // expect an acknowledgement prior to responding to the DHCP clients. If
+    // expect an acknowledgment prior to responding to the DHCP clients. If
     // we're configured to wait for the acks from the backups or it is not
     // a backup increase the number of pending requests.
     if (config_->amWaitingBackupAck() || (config->getRole() != HAConfig::PeerConfig::BACKUP)) {
@@ -1856,7 +1863,7 @@ HAService::asyncSyncLeases() {
         dhcp_disable_timeout = 1;
     }
 
-    asyncSyncLeases(client_, config_->getFailoverPeerConfig()->getName(),
+    asyncSyncLeases(*client_, config_->getFailoverPeerConfig()->getName(),
                     dhcp_disable_timeout, LeasePtr(), null_action);
 }
 
@@ -2404,7 +2411,7 @@ HAService::processMaintenanceNotify(const bool cancel) {
         // have a way to distinguish between the errors caused by the communication
         // issues and the cases when there is no communication error but the server
         // is not allowed to enter the in-maintenance state. In the former case, the
-        // parter would go to partner-down. In the case signaled by the special
+        // partner would go to partner-down. In the case signaled by the special
         // result code entering the maintenance state is not allowed.
         return (createAnswer(HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
                              "Unable to transition the server from the "
@@ -2704,7 +2711,7 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
 
-    // If things look ok register the socket with Interface Manager. Note
+    // If things look OK register the socket with Interface Manager. Note
     // we don't register if the FD is < 0 to avoid an exception throw.
     // It is unlikely that this will occur but we want to be liberal
     // and avoid issues.
@@ -2712,7 +2719,7 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
         && (tcp_native_fd >= 0)) {
         // External socket callback is a NOP. Ready events handlers are
         // run by an explicit call IOService ready in kea-dhcp<n> code.
-        // We are registerin the socket only to interrupt main-thread
+        // We are registering the socket only to interrupt main-thread
         // select().
         IfaceMgr::instance().addExternalSocket(tcp_native_fd,
             std::bind(&HAService::socketReadyHandler, this, ph::_1)
@@ -2732,7 +2739,7 @@ HAService::socketReadyHandler(int tcp_native_fd) {
     // ongoing transactions, we close it.  This will unregister it from
     // IfaceMgr and ensure the client starts over with a fresh connection
     // if it needs to do so.
-    client_.closeIfOutOfBand(tcp_native_fd);
+    client_->closeIfOutOfBand(tcp_native_fd);
 }
 
 void
@@ -2770,6 +2777,55 @@ HAService::getPendingRequestInternal(const QueryPtrType& query) {
         return (0);
     } else {
         return (pending_requests_[query]);
+    }
+}
+
+void
+HAService::startClientAndListener() {
+    // If we're not configured for multi-threading, then we start
+    // a client in ST mode and return.
+    if (!config_->getEnableMultiThreading()) {
+        client_.reset(new HttpClient(*io_service_, 0));
+        return;
+    }
+
+    // Start a client in MT mode.
+    client_.reset(new HttpClient(*io_service_, 
+                  config_->getHttpClientThreads()));
+
+    // If we're configured to use our own listener create and start it.
+    if (config_->getHttpDedicatedListener()) {
+        // Get the server address and port from this server's URL.
+        auto my_url = config_->getThisServerConfig()->getUrl();
+        IOAddress server_address(IOAddress::IPV4_ZERO_ADDRESS());
+        try {
+            // Since we do not currently support hostname resolution,
+            // we need to make sure we have an IP address here.
+            server_address = IOAddress(my_url.getStrippedHostname());
+        } catch (const std::exception& ex) {
+            isc_throw(Unexpected, "server Url:" << my_url.getStrippedHostname()
+                      << " is not a valid IP address");
+        }
+
+        // Fetch how many threads the listener will use.
+        uint32_t listener_threads = config_->getHttpListenerThreads();
+
+        // Instantiate the listener.
+        listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
+                                            listener_threads));
+        // Start the listener listening.
+        listener_->start();
+    }
+}
+
+void
+HAService::stopClientAndListener() {
+    if (client_) {
+        client_->stop();
+    }
+
+    if (listener_) {
+        listener_->stop();
     }
 }
 

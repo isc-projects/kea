@@ -16,6 +16,18 @@
 namespace isc {
 namespace config {
 
+/// @brief A multi-threaded HTTP listener that can process API commands
+/// requests.
+///
+/// This class will listen for Command API client requests on a given
+/// IP address and port.  It uses its own IOService instance to drive
+/// a thread-pool which can service multiple connections concurrently.  
+/// The number of concurrent connections is currently limited to the
+/// configured thread pool size.
+///
+/// @note This class is NOT compatible with Kea core single-threading.
+/// It is incumbant upon the owner to ensure the Kea core multi-threading
+/// is (or will be) enabled when creating instances of this class.
 class CmdHttpListener {
 public:
     /// @brief Constructor

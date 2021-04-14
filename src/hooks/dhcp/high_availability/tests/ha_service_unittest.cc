@@ -22,6 +22,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -37,6 +38,7 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
@@ -58,6 +60,10 @@ using namespace isc::ha::test;
 using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::util;
+
+/// @file The tests herein were created prior to HA+MT but are very valuable
+/// for testing HA single-threaded operation and overall HA behavior.
+/// HA+MT testing is done elsewhere.
 
 namespace {
 
@@ -171,7 +177,7 @@ public:
     void asyncDisableDHCPService(const std::string& server_name,
                                  const unsigned int max_period,
                                  const PostRequestCallback& post_request_action) {
-        HAService::asyncDisableDHCPService(client_, server_name, max_period,
+        HAService::asyncDisableDHCPService(*client_, server_name, max_period,
                                            post_request_action);
     }
 
@@ -186,7 +192,7 @@ public:
     /// the request is completed.
     void asyncEnableDHCPService(const std::string& server_name,
                                 const PostRequestCallback& post_request_action) {
-        HAService::asyncEnableDHCPService(client_, server_name, post_request_action);
+        HAService::asyncEnableDHCPService(*client_, server_name, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;
@@ -203,6 +209,8 @@ public:
     using HAService::communication_state_;
     using HAService::query_filter_;
     using HAService::lease_update_backlog_;
+    using HAService::client_;
+    using HAService::listener_;
 };
 
 /// @brief Pointer to the @c TestHAService.
@@ -626,6 +634,25 @@ public:
         io_service_->stop();
     }
 
+    /// @brief Creates a TestHAService instance with HA+MT disabled.
+    ///
+    /// @param network_state Object holding state of the DHCP service
+    /// (enabled/disabled).
+    /// @param config Parsed HA hook library configuration.
+    /// @param server_type server type, i.e. DHCPv4 or DHCPv6.
+    void createSTService(
+              const NetworkStatePtr& state,
+              const HAConfigPtr config,
+              const HAServerType& server_type = HAServerType::DHCPv4) {
+
+        ASSERT_FALSE(config->getEnableMultiThreading());
+        ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(io_service_, state,
+                                           config, server_type)));
+        ASSERT_TRUE(service_->client_);
+        ASSERT_FALSE(service_->client_->getThreadIOService());
+        ASSERT_FALSE(service_->listener_);
+    }
+
     /// @brief Generates IPv4 leases to be used by the tests.
     void generateTestLeases4() {
         generateTestLeases(leases4_);
@@ -820,7 +847,7 @@ public:
         state->modifyPokeTime(-30);
 
         // Create HA service and schedule lease updates.
-        service_.reset(new TestHAService(io_service_, network_state_, config_storage));
+        createSTService(network_state_, config_storage);
         service_->communication_state_ = state;
 
         service_->transition(my_state.state_, HAService::NOP_EVT);
@@ -922,8 +949,7 @@ public:
         state->modifyPokeTime(-30);
 
         // Create HA service and schedule lease updates.
-        service_.reset(new TestHAService(io_service_, network_state_, config_storage,
-                                         HAServerType::DHCPv6));
+        createSTService(network_state_, config_storage, HAServerType::DHCPv6);
         service_->communication_state_ = state;
 
         service_->transition(my_state.state_, HAService::NOP_EVT);
@@ -4763,7 +4789,7 @@ class HAServiceStateMachineTest : public HAServiceTest {
 public:
     /// @brief Constructor.
     HAServiceStateMachineTest()
-        : HAServiceTest(), service_(), state_(),
+        : HAServiceTest(), state_(),
           partner_(new HAPartner(listener2_, factory2_)) {
     }
 
@@ -4778,8 +4804,7 @@ public:
                       const HAServerType& server_type = HAServerType::DHCPv4) {
         config->setHeartbeatDelay(1);
         config->setSyncPageLimit(1000);
-        service_.reset(new TestHAService(io_service_, network_state_, config,
-                                         server_type));
+        createSTService(network_state_, config, server_type);
         // Replace default communication state with custom state which exposes
         // protected members and methods.
         state_.reset(new NakedCommunicationState4(io_service_, config));
@@ -5121,8 +5146,6 @@ public:
         return (isDoingHeartbeat());
     }
 
-    /// @brief Pointer to the HA service under test.
-    TestHAServicePtr service_;
     /// @brief Pointer to the communication state used in the tests.
     NakedCommunicationState4Ptr state_;
     /// @brief Pointer to the partner used in some tests.
@@ -7411,4 +7434,4 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesPassiveBackup) {
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_WAITING_ST), peer_config));
 }
 
-}
+} // end of anonymous namespace

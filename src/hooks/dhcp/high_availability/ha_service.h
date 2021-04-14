@@ -16,6 +16,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/tls_socket.h>
 #include <cc/data.h>
+#include <config/cmd_http_listener.h>
 #include <dhcp/pkt4.h>
 #include <http/response.h>
 #include <dhcpsrv/lease.h>
@@ -89,7 +90,8 @@ public:
     /// @brief Constructor.
     ///
     /// It clears the DHCP state using origin HA internal command and starts the
-    /// state model in waiting state.
+    /// state model in waiting state.  Creates and starts the client and the
+    /// listener (if one).
     ///
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param config Parsed HA hook library configuration.
@@ -103,7 +105,8 @@ public:
 
     /// @brief Destructor.
     ///
-    /// It clears the DHCP state using origin HA internal command.
+    /// Stops the client and listener (if one). It clears the DHCP
+    /// state using origin HA internal command.
     virtual ~HAService();
 
     /// @brief Returns HA server type used in object construction.
@@ -353,7 +356,7 @@ protected:
     /// @param state the new value to assign to the current state.
     void verboseTransition(const unsigned state);
 
-    /// @brief Returns normal operation state for the current configruation.
+    /// @brief Returns normal operation state for the current configuration.
     ///
     /// @return "load-balancing" for active servers in load balancing mode,
     /// "hot-standby" for active servers in hot-standby mode, "backup" for
@@ -895,7 +898,7 @@ protected:
     /// entering the load-balancing state. It ensures that all outstanding lease
     /// updates are sent to the partner before the server can continue normal
     /// operation in the load-balancing state. In order to prevent collisions
-    /// between new allocations and oustanding updates this method is synchronous.
+    /// between new allocations and outstanding updates this method is synchronous.
     ///
     /// This method creates its own instances of the HttpClient and IOService and
     /// invokes IOService::run().
@@ -944,12 +947,12 @@ public:
 
     /// @brief Processes ha-maintenance-notify command and returns a response.
     ///
-    /// This command attempts to tramsition the server to the in-maintenance state
+    /// This command attempts to transition the server to the in-maintenance state
     /// if the cancel flag is set to false. Such transition is not allowed if
     /// the server is currently in one of the following states:
     /// - backup: because maintenance is not supported for backup servers,
     /// - partner-in-maintenance: because only one server is in maintenance while
-    ///   the partner must be in parter-in-maintenance state,
+    ///   the partner must be in partner-in-maintenance state,
     /// - terminated: because the only way to resume HA service is by shutting
     ///   down the server, fixing the clock skew and restarting.
     ///
@@ -1000,6 +1003,9 @@ public:
     data::ConstElementPtr processMaintenanceCancel();
 
 protected:
+    void startClientAndListener();
+
+    void stopClientAndListener();
 
     /// @brief Checks if the response is valid or contains an error.
     ///
@@ -1020,7 +1026,7 @@ protected:
     ///
     /// @param ec Error status of the ASIO connect
     /// @param tcp_native_fd socket descriptor to register
-    /// @return always true. Registeration cannot fail, and if ec indicates a real
+    /// @return always true. Registration cannot fail, and if ec indicates a real
     /// error we want Connection logic to process it.
     bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
 
@@ -1073,8 +1079,12 @@ protected:
     /// @brief DHCP server type.
     HAServerType server_type_;
 
-    /// @brief HTTP client instance used to send lease updates.
-    http::HttpClient client_;
+    /// @brief HTTP client instance used to send HA commands and lease updates.
+    http::HttpClientPtr client_;
+
+    /// @brief HTTP listener instance used to receive and respond to HA commands
+    /// and lease updates.
+    config::CmdHttpListenerPtr listener_;
 
     /// @brief Holds communication state with a peer.
     CommunicationStatePtr communication_state_;
