@@ -403,9 +403,14 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
     # check if packages actually need to be installed
     if pkg_cache:
         pkgs_to_install = []
+        pkgs_installed = []
         for pkg in pkgs:
             if pkg not in pkg_cache or pkg_cache[pkg]['status'] != 'ii':
                 pkgs_to_install.append(pkg)
+            else:
+                pkgs_installed.append(pkg)
+        if pkgs_installed:
+            log.info('packages already installed: %s', ', '.join(pkgs_installed))
         pkgs = pkgs_to_install
 
     if not pkgs:
@@ -741,7 +746,7 @@ class VagrantEnv(object):
                                  nofeatures=self.nofeatures_arg,
                                  check_times='-i' if self.check_times else '',
                                  ccache='--ccache-dir /ccache' if self.ccache_enabled else '',
-                                 tarball='-t %s.tar.gz' % name_ver,
+                                 tarball='-t ~/%s.tar.gz' % name_ver,
                                  jobs='-j %d' % jobs,
                                  pkg_version='--pkg-version %s' % pkg_version,
                                  pkg_isc_version='--pkg-isc-version %s' % pkg_isc_version,
@@ -1720,6 +1725,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200318122047.fc31'
     elif system == 'fedora' and revision == '32':
         frc_version = 'isc20200511114306.fc32'
+    elif system == 'fedora' and revision == '33':
+        frc_version = 'isc20210415094816.fc33'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system == 'centos' and revision == '8':
