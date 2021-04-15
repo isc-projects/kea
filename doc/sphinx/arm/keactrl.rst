@@ -15,6 +15,10 @@ reconfiguration of the Kea servers (``kea-dhcp4``, ``kea-dhcp6``,
 provides the means for checking the current status of the servers and
 determining the configuration files in use.
 
+keactrl is available only when Kea is built from sources. When installing
+Kea using native packages, the native systemd scripts are provided. See
+:ref:`systemd` Section for details.
+
 .. _keactrl-usage:
 
 Command Line Options
@@ -322,3 +326,35 @@ The following keywords can be used with the ``-s`` command line option:
 -  ``netconf`` for ``kea-netconf``.
 
 -  ``all`` for all servers (default).
+
+.. _systemd:
+
+Native packages and systemd
+===========================
+
+``keactrl`` is a script that was developed to assist in managing Kea processes.
+However, all modern operating systems have their own process management scripts,
+such as ``systemd``. In general, the native scripts, such as ``systemd``, should be used
+if possible as they have several advantages. ``systemd`` scripts provide a uniform
+way of handling processes, so Kea is handled in a similar fashion to HTTP or mail
+server. Second, the more important reason is that ``systemd`` allow defining dependencies
+between services. For example, it's easy to specify that Kea server should not start
+until the network interfaces are operational. There are other benefits, too, such as
+an ability to enable or disable services using commands, temporary starting disabled
+service etc.
+
+As such, it is recommended to use ``systemctl`` commands if they are available. Native
+Kea packages do not provide keactrl and instead ``systemctl`` service definitions are
+provided instead. Consult documentation of your system for details. Briefly, here
+are example commands to checks status, start, stop and restart various Kea daemons:
+
+.. code-block:: console
+
+   # systemctl status isc-kea-ctrl-agent
+   # systemctl start isc-kea-dhcp4-server
+   # systemctl stop isc-kea-dhcp6-server
+   # systemctl restart isc-kea-dhcp-ddns-server
+
+Note the service names may be slightly different between Linux distributions. ISC tried
+to follow whatever naming convention was available in third party packages. In particular,
+some systems may not have the `isc-` prefix.
