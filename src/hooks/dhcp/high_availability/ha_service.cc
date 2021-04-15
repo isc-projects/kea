@@ -2711,6 +2711,12 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
 
+    // If client is running it's own IOService we do NOT want to
+    // register the socket with IfaceMgr.
+    if (client_->getThreadIOService()) {
+        return(true);
+    }
+
     // If things look OK register the socket with Interface Manager. Note
     // we don't register if the FD is < 0 to avoid an exception throw.
     // It is unlikely that this will occur but we want to be liberal
