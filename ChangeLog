@@ -1,3 +1,8 @@
+1886.	[doc]		tomek
+	Added a section in the ARM explaining the relationship between
+	keactrl and systemd scripts.
+	(Gitlab #1759)
+
 1885.	[func]		andrei
 	kea-admin is now able to interactively ask for a password if no
 	parameter follows the -p or the --password parameters. This
