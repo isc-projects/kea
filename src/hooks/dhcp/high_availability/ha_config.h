@@ -100,7 +100,7 @@ public:
             url_ = url;
         }
 
-        /// @brief Return server's trust-anchor.
+        /// @brief Returns server's trust-anchor.
         util::Optional<std::string> getTrustAnchor() const {
             return (trust_anchor_);
         }
@@ -112,7 +112,7 @@ public:
             trust_anchor_ = ca;
         }
 
-        /// @brief Return server's cert-file.
+        /// @brief Returns server's cert-file.
         util::Optional<std::string> getCertFile() const {
             return (cert_file_);
         }
@@ -124,7 +124,7 @@ public:
             cert_file_ = cert;
         }
 
-        /// @brief Return server's key-file.
+        /// @brief Returns server's key-file.
         util::Optional<std::string> getKeyFile() const {
             return (key_file_);
         }
@@ -136,12 +136,12 @@ public:
             key_file_ = key;
         }
 
-        /// @brief Return a pointer to the server's TLS context.
+        /// @brief Returns a pointer to the server's TLS context.
         asiolink::TlsContextPtr getTlsContext() const {
             return (tls_context_);
         }
 
-        /// @brief Return a non-const pointer to the server's TLS context.
+        /// @brief Returns a non-const pointer to the server's TLS context.
         asiolink::TlsContextPtr& getTlsContextNonConst() {
             return (tls_context_);
         }
@@ -631,7 +631,7 @@ public:
     void setHttpClientThreads(uint32_t http_client_threads) {
         http_client_threads_ = http_client_threads;
 
-    /// @brief Return global trust-anchor.
+    /// @brief Returns global trust-anchor.
     util::Optional<std::string> getTrustAnchor() const {
         return (trust_anchor_);
     }
@@ -643,7 +643,7 @@ public:
         trust_anchor_ = ca;
     }
 
-    /// @brief Return global cert-file.
+    /// @brief Returns global cert-file.
     util::Optional<std::string> getCertFile() const {
         return (cert_file_);
     }
@@ -655,7 +655,7 @@ public:
         cert_file_ = cert;
     }
 
-    /// @brief Return global key-file.
+    /// @brief Returns global key-file.
     util::Optional<std::string> getKeyFile() const {
         return (key_file_);
     }
