@@ -1,6 +1,6 @@
 1887.	[build]		andrei, fdupont
-	Migrated autoconf macros, which became warningly deprecated since
-	autoconf 2.70, to supported macros.
+	Migrated autoconf macros, which became warningly deprecated
+	since autoconf 2.70, to supported macros.
 	(Gitlab #1632, #1651)
 
 1886.	[doc]		tomek
