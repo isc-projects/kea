@@ -1033,6 +1033,9 @@ def _configure_pgsql(system, features):
         execute('sudo sysrc postgresql_enable="yes"')
         execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
 
+    # Change auth-method to 'trust' on local connections.
+    execute("sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' $(find /etc/postgresql -name pg_hba.conf -type f)")
+
     if system == 'freebsd':
         # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
         # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
@@ -1042,19 +1045,22 @@ def _configure_pgsql(system, features):
         execute('sudo /etc/init.d/postgresql restart')
     else:
         execute('sudo systemctl enable postgresql.service')
-        execute('sudo systemctl start postgresql.service')
+        execute('sudo systemctl restart postgresql.service')
 
-    cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
-    cmd += "DROP DATABASE IF EXISTS keatest;\n"
-    cmd += "DROP USER IF EXISTS keatest;\n"
-    cmd += "DROP USER IF EXISTS keatest_readonly;\n"
-    cmd += "CREATE USER keatest WITH PASSWORD 'keatest';\n"
-    cmd += "CREATE USER keatest_readonly WITH PASSWORD 'keatest';\n"
-    cmd += "CREATE DATABASE keatest;\n"
-    cmd += "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;\n"
-    cmd += "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;\n"
-    cmd += "EOF\n\""
+    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
+        DROP DATABASE IF EXISTS keatest;
+        DROP USER IF EXISTS keatest;
+        DROP USER IF EXISTS keatest_readonly;
+        CREATE USER keatest WITH PASSWORD 'keatest';
+        CREATE USER keatest_readonly WITH PASSWORD 'keatest';
+        CREATE DATABASE keatest;
+        GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
+    cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
+
+    cmd = '''printf 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly' \
+            | psql -U keatest keatest'''
+    execute(cmd, cwd='/tmp', env={'PGPASSWORD': 'keatest'})  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
     if 'forge' in features:
         cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
