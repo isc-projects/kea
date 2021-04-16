@@ -91,7 +91,7 @@ typedef boost::shared_ptr<ConnectionPool> ConnectionPoolPtr;
 ///
 /// Each connection is established with a unique destination identified by the
 /// specified URL and TLS context. Multiple requests to the same destination
-/// can be sent overthe same connection, if the connection is persistent.
+/// can be sent over the same connection, if the connection is persistent.
 /// If the server closes the TCP connection (e.g. after sending a response),
 /// the connection is closed.
 ///
