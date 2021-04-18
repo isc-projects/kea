@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,8 @@
 
 #include <config.h>
 
+#include <http/auth_log.h>
 #include <http/basic_auth_config.h>
-#include <http/http_log.h>
 #include <util/strutil.h>
 
 using namespace isc;
@@ -226,17 +226,17 @@ BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
         // Verify the credential is in the list.
         const auto it = credentials.find(value);
         if (it != credentials.end()) {
-            LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
+            LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);
             authentic = true;
         } else {
-            LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);
+            LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);
             authentic = false;
         }
     } catch (const HttpMessageNonExistingHeader&) {
-        LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_NO_AUTH_HEADER);
+        LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_NO_AUTH_HEADER);
     } catch (const BadValue& ex) {
-        LOG_INFO(http_logger, HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER)
+        LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER)
             .arg(ex.what());
     }
     if (authentic) {

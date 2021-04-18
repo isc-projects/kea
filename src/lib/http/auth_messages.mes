@@ -1,0 +1,24 @@
+# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::http
+
+% HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request authorized for '%1'
+This information message is issued when the server receives with a matching
+authentication header. The argument provides the user id.
+
+% HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER received HTTP request with malformed authentication header: %1
+This information message is issued when the server receives a request with
+a malformed authentication header. The argument explains the problem.
+
+% HTTP_CLIENT_REQUEST_NOT_AUTHORIZED received HTTP request with not matching authentication header
+This information message is issued when the server receives a request with
+authentication header carrying not recognized credential: the user
+provided incorrect user id and/or password.
+
+% HTTP_CLIENT_REQUEST_NO_AUTH_HEADER received HTTP request without required authentication header
+This information message is issued when the server receives a request without
+a required authentication header.

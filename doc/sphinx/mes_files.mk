@@ -10,6 +10,7 @@ mes_files += $(top_srcdir)/src/lib/hooks/hooks_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
+mes_files += $(top_srcdir)/src/lib/http/auth_messages.mes
 mes_files += $(top_srcdir)/src/lib/http/http_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 mes_files += $(top_srcdir)/src/lib/database/db_messages.mes

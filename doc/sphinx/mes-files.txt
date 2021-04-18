@@ -10,6 +10,7 @@ src/lib/hooks/hooks_messages.mes
 src/lib/dhcpsrv/dhcpsrv_messages.mes
 src/lib/dhcpsrv/alloc_engine_messages.mes
 src/lib/dhcpsrv/hosts_messages.mes
+src/lib/http/auth_messages.mes
 src/lib/http/http_messages.mes
 src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 src/lib/database/db_messages.mes

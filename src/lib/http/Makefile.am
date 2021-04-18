@@ -38,9 +38,11 @@ libkea_http_la_SOURCES += response_creator.cc response_creator.h
 libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 libkea_http_la_SOURCES += url.cc url.h
-libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
 libkea_http_la_SOURCES += auth_config.h
+libkea_http_la_SOURCES += auth_log.cc auth_log.h
+libkea_http_la_SOURCES += auth_messages.cc auth_messages.h
 libkea_http_la_SOURCES += basic_auth_config.cc basic_auth_config.h
+libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -63,6 +65,7 @@ libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(CRYPTO_LIBS)
 # is required.  To make it easy to rebuild messages without going through
 # reconfigure, a new target messages-clean has been added.
 maintainer-clean-local:
+	rm -f auth_messages.cc auth_messages.h
 	rm -f http_messages.h http_messages.cc
 
 # To regenerate messages files, one can do:
@@ -76,8 +79,11 @@ messages-clean: maintainer-clean-local
 if GENERATE_MESSAGES
 
 # Define rule to build logging source files from message file
-messages: http_messages.h http_messages.cc
+messages: auth_messages.cc auth_messages.h http_messages.h http_messages.cc
 	@echo Message files regenerated
+
+auth_messages.cc auth_messages.h: auth_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/auth_messages.mes
 
 http_messages.h http_messages.cc: http_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
@@ -93,6 +99,8 @@ endif
 libkea_http_includedir = $(pkgincludedir)/http
 libkea_http_include_HEADERS = \
 	auth_config.h \
+	auth_log.h \
+	auth_messages.h \
 	basic_auth.h \
 	basic_auth_config.h \
 	client.h \
