@@ -1830,6 +1830,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200319090824'
     elif system == 'ubuntu' and revision == '20.04':
         frc_version = 'isc20200511114306'
+    elif system == 'ubuntu' and revision == '20.10':
+        frc_version = 'isc20210419151920'
     else:
         frc_version = 'isc20200318122047'
     install_pkgs('libfreeradius-client=1.1.7-{0} libfreeradius-client-dev=1.1.7-{0}'.format(frc_version),
