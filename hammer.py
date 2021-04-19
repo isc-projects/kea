@@ -289,7 +289,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             while p.poll() is None and (timeout is None or t1 - t0 < timeout):
                 line = p.stdout.readline()
                 if line:
-                    line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
+                    line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip()
                     if not quiet:
                         print(line_decoded)
                     if capture:
@@ -959,6 +959,26 @@ def _install_gtest_sources():
         os.unlink('/tmp/gtest.tar.gz')
 
 
+def _local_timezone():
+    _, output = execute('''
+      # timedatectl
+      if command -v timedatectl > /dev/null 2>&1; then
+        timedatectl | grep 'Time zone' | cut -d ':' -f 2 | cut -d '(' -f 1 | xargs
+        exit ${?}
+      fi
+
+      # brute force
+      for i in $(find /usr/share/zoneinfo | cut -d '/' -f 5- | grep -E '^[A-Z][a-z]+/[A-Z][a-z]+$' | sort -uV); do
+        unset TZ
+        if test "$(date)" = "$(TZ="${i}" date)"; then
+          printf '%s\n' "${i}"
+          break
+        fi
+      done
+    ''', capture=True, quiet=True)
+    return output
+
+
 def _configure_mysql(system, revision, features):
     """Configure MySQL database."""
     if system in ['fedora', 'centos']:
@@ -1055,6 +1075,7 @@ def _configure_pgsql(system, features):
         CREATE USER keatest_readonly WITH PASSWORD 'keatest';
         CREATE DATABASE keatest;
         GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
+        ALTER DATABASE keatest SET TIMEZONE='""" + _local_timezone() + "';\n"
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
