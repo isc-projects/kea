@@ -7,7 +7,7 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 EXTRA_DIST = http.dox
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST += http_messages.mes
+EXTRA_DIST += auth_messages.mes http_messages.mes
 
 CLEANFILES = *.gcno *.gcda
 
