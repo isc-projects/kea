@@ -100,9 +100,7 @@ public:
     /// @brief Returns last known state of the partner.
     ///
     /// @return Partner's state if it is known, or a negative value otherwise.
-    int getPartnerState() const {
-        return (partner_state_);
-    }
+    int getPartnerState() const;
 
     /// @brief Sets partner state.
     ///
@@ -111,18 +109,32 @@ public:
     /// @throw BadValue if unsupported state value was provided.
     void setPartnerState(const std::string& state);
 
+protected:
+    /// @brief Sets partner state.
+    ///
+    /// @param state new partner's state in a textual form. Supported values are
+    /// those returned in response to a ha-heartbeat command.
+    /// @throw BadValue if unsupported state value was provided.
+    void setPartnerStateInternal(const std::string& state);
+
+public:
     /// @brief Returns scopes served by the partner server.
     ///
     /// @return A set of scopes served by the partner.
-    std::set<std::string> getPartnerScopes() const {
-        return (partner_scopes_);
-    }
+    std::set<std::string> getPartnerScopes() const;
 
     /// @brief Sets partner scopes.
     ///
     /// @param new_scopes Partner scopes enclosed in a JSON list.
     void setPartnerScopes(data::ConstElementPtr new_scopes);
 
+protected:
+    /// @brief Sets partner scopes.
+    ///
+    /// @param new_scopes Partner scopes enclosed in a JSON list.
+    void setPartnerScopesInternal(data::ConstElementPtr new_scopes);
+
+public:
     /// @brief Starts recurring heartbeat (public interface).
     ///
     /// @param interval heartbeat interval in milliseconds.
@@ -152,9 +164,7 @@ public:
     /// @brief Checks if recurring heartbeat is running.
     ///
     /// @return true if heartbeat is running, false otherwise.
-    bool isHeartbeatRunning() const {
-        return (static_cast<bool>(timer_));
-    }
+    bool isHeartbeatRunning() const;
 
     /// @brief Pokes the communication state.
     ///
@@ -163,6 +173,15 @@ public:
     /// to the next heartbeat).
     void poke();
 
+protected:
+    /// @brief Pokes the communication state.
+    ///
+    /// Sets the last poke time to current time. If the heartbeat timer
+    /// has been scheduled, it is reset (starts over measuring the time
+    /// to the next heartbeat).
+    void pokeInternal();
+
+public:
     /// @brief Returns duration between the poke time and current time.
     ///
     /// @return Duration between the poke time and current time.
@@ -296,6 +315,32 @@ public:
     /// skew exceeding a warning threshold.
     bool clockSkewShouldWarn();
 
+protected:
+    /// @brief Indicates whether the HA service should issue a warning about
+    /// high clock skew between the active servers.
+    ///
+    /// The HA service monitors the clock skew between the active servers. The
+    /// clock skew is calculated from the local time and the time returned by
+    /// the partner in response to a heartbeat. When clock skew exceeds a certain
+    /// threshold the HA service starts issuing a warning message. This method
+    /// returns true if the HA service should issue this message.
+    ///
+    /// Currently, the warning threshold for the clock skew is hardcoded to
+    /// 30 seconds.  In the future it may become configurable.
+    ///
+    /// This method is called for each heartbeat. If we issue a warning for each
+    /// heartbeat it may flood logs with those messages. This method provides
+    /// a gating mechanism which prevents the HA service from logging the
+    /// warning more often than every 60 seconds. If the last warning was issued
+    /// less than 60 seconds ago this method will return false even if the clock
+    /// skew exceeds the 30 seconds threshold. The correction of the clock skew
+    /// will reset the gating counter.
+    ///
+    /// @return true if the warning message should be logged because of the clock
+    /// skew exceeding a warning threshold.
+    bool clockSkewShouldWarnInternal();
+
+public:
     /// @brief Indicates whether the HA service should enter "terminated"
     /// state as a result of the clock skew exceeding maximum value.
     ///
@@ -339,9 +384,29 @@ public:
     /// precision.
     void setPartnerTime(const std::string& time_text);
 
+protected:
+    /// @brief Provide partner's notion of time so the new clock skew can be
+    /// calculated.
+    ///
+    /// @param time_text Partner's time received in response to a heartbeat. The
+    /// time must be provided in the RFC 1123 format.  It stores the current
+    /// time, partner's time, and the difference (skew) between them.
+    ///
+    /// @throw isc::http::HttpTimeConversionError if the time format is invalid.
+    ///
+    /// @todo Consider some other time formats which include millisecond
+    /// precision.
+    void setPartnerTimeInternal(const std::string& time_text);
+
+public:
     /// @brief Returns current clock skew value in the logger friendly format.
     std::string logFormatClockSkew() const;
 
+protected:
+    /// @brief Returns current clock skew value in the logger friendly format.
+    std::string logFormatClockSkewInternal() const;
+
+public:
     /// @brief Returns the report about current communication state.
     ///
     /// This function returns a JSON map describing the state of communication

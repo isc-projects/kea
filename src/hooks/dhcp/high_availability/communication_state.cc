@@ -76,19 +76,58 @@ CommunicationState::modifyPokeTime(const long secs) {
     }
 }
 
+int
+CommunicationState::getPartnerState() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (partner_state_);
+    } else {
+        return (partner_state_);
+    }
+}
+
 void
 CommunicationState::setPartnerState(const std::string& state) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerStateInternal(state);
+    } else {
+        setPartnerStateInternal(state);
+    }
+}
+
+void
+CommunicationState::setPartnerStateInternal(const std::string& state) {
     try {
         partner_state_ = stringToState(state);
-
     } catch (...) {
         isc_throw(BadValue, "unsupported HA partner state returned "
                   << state);
     }
 }
 
+std::set<std::string>
+CommunicationState::getPartnerScopes() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (partner_scopes_);
+    } else {
+        return (partner_scopes_);
+    }
+}
+
 void
 CommunicationState::setPartnerScopes(ConstElementPtr new_scopes) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerScopesInternal(new_scopes);
+    } else {
+        setPartnerScopesInternal(new_scopes);
+    }
+}
+
+void
+CommunicationState::setPartnerScopesInternal(ConstElementPtr new_scopes) {
     if (!new_scopes || (new_scopes->getType() != Element::list)) {
         isc_throw(BadValue, "unable to record partner's HA scopes because"
                   " the received value is not a valid JSON list");
@@ -181,6 +220,16 @@ CommunicationState::stopHeartbeatInternal() {
     }
 }
 
+bool
+CommunicationState::isHeartbeatRunning() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (static_cast<bool>(timer_));
+    } else {
+        return (static_cast<bool>(timer_));
+    }
+}
+
 boost::posix_time::time_duration
 CommunicationState::updatePokeTime() {
     if (MultiThreadingMgr::instance().getMode()) {
@@ -202,8 +251,18 @@ CommunicationState::updatePokeTimeInternal() {
 
 void
 CommunicationState::poke() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        pokeInternal();
+    } else {
+        pokeInternal();
+    }
+}
+
+void
+CommunicationState::pokeInternal() {
     // Update poke time and compute duration.
-    boost::posix_time::time_duration duration_since_poke = updatePokeTime();
+    boost::posix_time::time_duration duration_since_poke = updatePokeTimeInternal();
 
     // If we have been tracking the DHCP messages directed to the partner,
     // we need to clear any gathered information because the connection
@@ -256,6 +315,16 @@ CommunicationState::getAnalyzedMessagesCount() const {
 
 bool
 CommunicationState::clockSkewShouldWarn() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return(clockSkewShouldWarnInternal());
+    } else {
+        return(clockSkewShouldWarnInternal());
+    }
+}
+
+bool
+CommunicationState::clockSkewShouldWarnInternal() {
     // First check if the clock skew is beyond the threshold.
     if (isClockSkewGreater(WARN_CLOCK_SKEW)) {
 
@@ -283,18 +352,33 @@ CommunicationState::clockSkewShouldWarn() {
 
 bool
 CommunicationState::clockSkewShouldTerminate() const {
-    // Issue a warning if the clock skew is greater than 60s.
-    return (isClockSkewGreater(TERM_CLOCK_SKEW));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        // Issue a warning if the clock skew is greater than 60s.
+        return (isClockSkewGreater(TERM_CLOCK_SKEW));
+    } else {
+        return (isClockSkewGreater(TERM_CLOCK_SKEW));
+    }
 }
 
 bool
 CommunicationState::isClockSkewGreater(const long seconds) const {
     return ((clock_skew_.total_seconds() > seconds) ||
-            (clock_skew_.total_seconds() < -seconds));
+             (clock_skew_.total_seconds() < -seconds));
 }
 
 void
 CommunicationState::setPartnerTime(const std::string& time_text) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerTimeInternal(time_text);
+    } else {
+        setPartnerTimeInternal(time_text);
+    }
+}
+
+void
+CommunicationState::setPartnerTimeInternal(const std::string& time_text) {
     partner_time_at_skew_ = HttpDateTime().fromRfc1123(time_text).getPtime();
     my_time_at_skew_ = HttpDateTime().getPtime();
     clock_skew_ = partner_time_at_skew_ - my_time_at_skew_;
@@ -302,6 +386,16 @@ CommunicationState::setPartnerTime(const std::string& time_text) {
 
 std::string
 CommunicationState::logFormatClockSkew() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return(logFormatClockSkewInternal());
+    } else {
+        return(logFormatClockSkewInternal());
+    }
+}
+
+std::string
+CommunicationState::logFormatClockSkewInternal() const {
     std::ostringstream os;
 
     if ((my_time_at_skew_.is_not_a_date_time()) ||
@@ -501,12 +595,7 @@ CommunicationState4::getUnackedClientsCount() const {
 
 void
 CommunicationState4::clearConnectingClients() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        connecting_clients_.clear();
-    } else {
-        connecting_clients_.clear();
-    }
+    connecting_clients_.clear();
 }
 
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
@@ -632,12 +721,7 @@ CommunicationState6::getUnackedClientsCount() const {
 
 void
 CommunicationState6::clearConnectingClients() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        connecting_clients_.clear();
-    } else {
-        connecting_clients_.clear();
-    }
+    connecting_clients_.clear();
 }
 
 } // end of namespace isc::ha
