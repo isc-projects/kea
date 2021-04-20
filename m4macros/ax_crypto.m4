@@ -387,7 +387,8 @@ then
          AC_COMPILE_IFELSE(
              [AC_LANG_PROGRAM([#include <botan/asio_stream.h>],
                               [#ifndef BOTAN_TLS_SERVER_H_
-                               #error botan/tls_server.h is not included by botan/asio_stream.h])],
+                               #error botan/tls_server.h is not included by botan/asio_stream.h
+                               #endif])],
               [AC_MSG_RESULT(yes)
                BOTAN_BOOST="yes"
                AC_DEFINE([WITH_BOTAN_BOOST], [1],
