@@ -334,7 +334,7 @@ HAConfig::validate() {
                               << " is missing or empty: all or none of"
                               << " TLS parameters must be set");
                 }
-                TlsContext::configure(p->second->getTlsContextNonConst(),
+                TlsContext::configure(p->second->tls_context_,
                                       TlsRole::CLIENT,
                                       ca.get(),
                                       cert.get(),

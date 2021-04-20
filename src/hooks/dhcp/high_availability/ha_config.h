@@ -141,11 +141,6 @@ public:
             return (tls_context_);
         }
 
-        /// @brief Returns a non-const pointer to the server's TLS context.
-        asiolink::TlsContextPtr& getTlsContextNonConst() {
-            return (tls_context_);
-        }
-
         /// @brief Returns a string identifying a server used in logging.
         ///
         /// The label is constructed from server name and server URL.
@@ -212,6 +207,12 @@ public:
         /// when credentials are specified.
         void addBasicAuthHttpHeader(http::PostHttpRequestJsonPtr request) const;
 
+        /// @brief Server TLS context.
+        ///
+        /// @note: if you make it protected or private please make
+        /// @ref validate a friend so it may configure it.
+        asiolink::TlsContextPtr tls_context_;
+
     private:
 
         std::string name_;                          ///< Server name.
@@ -219,7 +220,6 @@ public:
         util::Optional<std::string> trust_anchor_;  ///< Server trust anchor.
         util::Optional<std::string> cert_file_;     ///< Server cert file.
         util::Optional<std::string> key_file_;      ///< Server key file.
-        asiolink::TlsContextPtr tls_context_;       ///< Server TLS context.
         Role role_;                                 ///< Server role.
         bool auto_failover_;                        ///< Auto failover state.
         http::BasicHttpAuthPtr basic_auth_;         ///< Basic HTTP authentication.
