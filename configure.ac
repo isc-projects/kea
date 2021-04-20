@@ -1253,13 +1253,11 @@ if test $enable_gtest != "no"; then
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
-#
 # ASIO: we extensively use it as the C++ event management module.
 #
 # Use our 'coroutine' header from ext
-# CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir) -I\$(top_builddir)"
 
-#
 # Doesn't seem to be required?
 #CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
