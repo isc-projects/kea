@@ -1038,6 +1038,19 @@ def _configure_mysql(system, revision, features):
         execute(cmd)
 
 
+def _enable_and_restart_postgresql(system):
+    if system == 'freebsd':
+        # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
+        # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
+        execute('sudo service postgresql restart > /dev/null')
+    elif system == 'alpine':
+        execute('sudo rc-update add postgresql')
+        execute('sudo /etc/init.d/postgresql restart')
+    else:
+        execute('sudo systemctl enable postgresql.service')
+        execute('sudo systemctl restart postgresql.service')
+
+
 def _configure_pgsql(system, features):
     """ Configure PostgreSQL DB """
     if system in ['fedora', 'centos']:
@@ -1053,19 +1066,14 @@ def _configure_pgsql(system, features):
         execute('sudo sysrc postgresql_enable="yes"')
         execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
 
-    # Change auth-method to 'trust' on local connections.
-    execute("sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' $(find /etc/postgresql -name pg_hba.conf -type f)")
+    _enable_and_restart_postgresql(system)
 
-    if system == 'freebsd':
-        # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
-        # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
-        execute('sudo service postgresql restart > /dev/null')
-    elif system == 'alpine':
-        execute('sudo rc-update add postgresql')
-        execute('sudo /etc/init.d/postgresql restart')
-    else:
-        execute('sudo systemctl enable postgresql.service')
-        execute('sudo systemctl restart postgresql.service')
+    # Change auth-method to 'trust' on local connections.
+    _, output = execute("printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs", capture=True)
+    hba_file = output.rstrip()
+    execute("sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' '{}'".format(hba_file))
+
+    _enable_and_restart_postgresql(system)
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
         DROP DATABASE IF EXISTS keatest;
