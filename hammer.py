@@ -266,6 +266,12 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     if dry_run:
         return 0
 
+    # Start with OS environment and add to it.
+    if env:
+        os_env = os.environ.copy()
+        os_env.update(env)
+        env = os_env
+
     if 'sudo' in cmd and env:
         # if sudo is used and env is overridden then to preserve env add -E to sudo
         cmd = cmd.replace('sudo', 'sudo -E')
@@ -1069,9 +1075,11 @@ def _configure_pgsql(system, features):
     _enable_and_restart_postgresql(system)
 
     # Change auth-method to 'trust' on local connections.
-    _, output = execute("printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs", capture=True)
+    cmd = "printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs"
+    _, output = execute(cmd, capture=True, cwd='/tmp') # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
     hba_file = output.rstrip()
-    execute("sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' '{}'".format(hba_file))
+    cmd = "sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' '{}'".format(hba_file)
+    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
     _enable_and_restart_postgresql(system)
 
@@ -1087,8 +1095,9 @@ def _configure_pgsql(system, features):
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
-    cmd = '''printf 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly' \
-            | psql -U keatest keatest'''
+    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
+    cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp', env={'PGPASSWORD': 'keatest'})  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
     if 'forge' in features:
