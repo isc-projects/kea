@@ -59,15 +59,15 @@ TLS/HTTPS support is available with either the OpenSSL or the Botan cryptographi
 - Botan 1.x versions are obsolete and should not be used.
   Kea TLS support was not tested and is not supported with these versions.
 
-- Botan 2.x versions were tested and are supported. Note the TLS support
-  requires the four asio header files which are included in Botan
+- Botan versions >= 2.14.0 were tested and are supported. Note the TLS
+  support requires the four asio header files which are included in Botan
   packages / installation only when Botan was configured with the
   ``--with-boost`` option. It is still possible to take these files
   from the corresponding Botan distribution and to install them manually
   in the Botan include directory but of course this should be a last
-  resort procedure. Note that without these header files Kea can still
-  build but the TLS support is disabled: any attempt to use it will fail
-  with a fatal error.
+  resort procedure. Note that without these header files or with a
+  Botan version older than 2.14.0 Kea can still build but the TLS support
+  is disabled: any attempt to use it will fail with a fatal error.
 
 - Very old boost versions provide SSL support (based on OpenSSL) without offering
   a choice of the TLS version: Kea can still use them but they are not

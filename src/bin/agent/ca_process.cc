@@ -56,9 +56,11 @@ CtrlAgentProcess::run() {
             // Remove unused listeners within the main loop because new listeners
             // are created in within a callback method. This avoids removal the
             // listeners within a callback.
-            garbageCollectListeners();
+            garbageCollectListeners(1);
             runIO();
         }
+        // Done so removing all listeners.
+        garbageCollectListeners(0);
         stopIOService();
     } catch (const std::exception& ex) {
         LOG_FATAL(agent_logger, CTRL_AGENT_FAILED).arg(ex.what());
@@ -192,13 +194,14 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 }
 
 void
-CtrlAgentProcess::garbageCollectListeners() {
+CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
     // We expect only one active listener. If there are more (most likely 2),
     // it means we have just reconfigured the server and need to shut down all
     // listeners execept the most recently added.
-    if (http_listeners_.size() > 1) {
+    if (http_listeners_.size() > leaving) {
         // Stop no longer used listeners.
-        for (auto l = http_listeners_.begin(); l != http_listeners_.end() - 1;
+        for (auto l = http_listeners_.begin();
+             l != http_listeners_.end() - leaving;
              ++l) {
             (*l)->stop();
         }
@@ -207,7 +210,7 @@ CtrlAgentProcess::garbageCollectListeners() {
         getIoService()->get_io_service().poll();
         // Finally, we're ready to remove no longer used listeners.
         http_listeners_.erase(http_listeners_.begin(),
-                              http_listeners_.end() - 1);
+                              http_listeners_.end() - leaving);
     }
 }
 

@@ -285,6 +285,21 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
         "  }"
         "}";
 
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // Check that the HTTP listener still exists after reconfiguration.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        EXPECT_TRUE(process->isListening());
+
+        // The listener should have been reconfigured to use new address and port.
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8080, listener->getLocalPort());
+    };
+
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
@@ -292,7 +307,9 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
 
     // Start the server.
     time_duration elapsed_time;
-    runWithConfig(valid_agent_config, 500, elapsed_time);
+    runWithConfig(valid_agent_config, 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
 
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
@@ -305,17 +322,12 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
     testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
 
+    // After the shutdown the HTTP listener no longer exists.
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
-
-    // Check that the HTTP listener still exists after reconfiguration.
     ConstHttpListenerPtr listener = process->getHttpListener();
-    ASSERT_TRUE(listener);
-    EXPECT_TRUE(process->isListening());
-
-    // The listener should have been reconfigured to use new address and port.
-    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
-    EXPECT_EQ(8080, listener->getLocalPort());
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
 }
 
 // Tests that the server continues to use an old configuration when the listener
@@ -339,6 +351,20 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
         "  }"
         "}";
 
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // We should still be using an original listener.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        EXPECT_TRUE(process->isListening());
+
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8081, listener->getLocalPort());
+    };
+
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
@@ -346,7 +372,9 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
 
     // Start the server.
     time_duration elapsed_time;
-    runWithConfig(valid_agent_config, 500, elapsed_time);
+    runWithConfig(valid_agent_config, 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
 
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
@@ -360,16 +388,12 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
     testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
     testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
 
+    // After the shutdown the HTTP listener no longer exists.
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
-
-    // We should still be using an original listener.
     ConstHttpListenerPtr listener = process->getHttpListener();
-    ASSERT_TRUE(listener);
-    EXPECT_TRUE(process->isListening());
-
-    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
-    EXPECT_EQ(8081, listener->getLocalPort());
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
 }
 
 // Tests that it is possible to update the configuration in such a way that the
@@ -393,6 +417,20 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         "  }"
         "}";
 
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // Check that the HTTP listener still exists after reconfiguration.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        EXPECT_TRUE(process->isListening());
+
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8081, listener->getLocalPort());
+    };
+
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
@@ -400,7 +438,9 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
 
     // Start the server.
     time_duration elapsed_time;
-    runWithConfig(valid_agent_config, 500, elapsed_time);
+    runWithConfig(valid_agent_config, 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
 
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
@@ -415,14 +455,9 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
-
-    // The listener should keep listening.
     ConstHttpListenerPtr listener = process->getHttpListener();
-    ASSERT_TRUE(listener);
-    EXPECT_TRUE(process->isListening());
-
-    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
-    EXPECT_EQ(8081, listener->getLocalPort());
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
 }
 
 // Tests that registerCommands actually registers anything.

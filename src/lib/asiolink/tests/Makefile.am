@@ -45,6 +45,11 @@ run_unittests_SOURCES += tls_unittest.cc
 run_unittests_SOURCES += tls_acceptor_unittest.cc
 run_unittests_SOURCES += tls_socket_unittest.cc
 endif
+if HAVE_BOTAN_BOOST
+run_unittests_SOURCES += tls_unittest.cc
+run_unittests_SOURCES += tls_acceptor_unittest.cc
+run_unittests_SOURCES += tls_socket_unittest.cc
+endif
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

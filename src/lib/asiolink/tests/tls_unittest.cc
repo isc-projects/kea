@@ -89,7 +89,17 @@ public:
     ///
     /// Used to shared pointer to state to allow the callback object to
     /// be copied keeping the state member values.
-    TestCallback() : state_(new State()) {
+    TestCallback()
+        : state_(new State()), tcpp_(0) {
+    }
+
+    /// @brief Close on error constructor.
+    ///
+    /// An overload which takes the stream to close on error.
+    ///
+    /// @param tcpp Pointer to the stream to close on error.
+    TestCallback(TlsStream<TestCallback>::lowest_layer_type* tcpp)
+        : state_(new State()), tcpp_(tcpp) {
     }
 
     /// @brief Destructor.
@@ -102,6 +112,9 @@ public:
     void operator()(const boost::system::error_code& ec) {
         state_->called_ = true;
         state_->error_code_ = ec;
+        if (ec && tcpp_) {
+            tcpp_->close();
+        }
     }
 
     /// @brief Callback function (two arguments).
@@ -110,6 +123,9 @@ public:
     void operator()(const boost::system::error_code& ec, size_t) {
         state_->called_ = true;
         state_->error_code_ = ec;
+        if (ec && tcpp_) {
+            tcpp_->close();
+        }
     }
 
     /// @brief Get called value.
@@ -125,6 +141,9 @@ public:
 protected:
     /// @brief Pointer to state.
     boost::shared_ptr<State> state_;
+
+    /// @brief Pointer to the stream to close on error.
+    TlsStream<TestCallback>::lowest_layer_type* tcpp_;
 };
 
 /// @brief The type of a test to be run.
@@ -135,7 +154,7 @@ typedef function<void()> Test;
 /// Some TLS tests can not use the standard GTEST macros because they
 /// show different behaviors depending on the crypto backend and the
 /// boost library versions. Worse in some cases the behavior can not
-/// be deduced from them so #ifdef macros do not work...
+/// be deduced from them so #ifdef's do not work...
 ///
 /// Until this is adopted / widespread the policy is to use these flexible
 /// expected behavior tests ONLY when needed.
@@ -409,7 +428,6 @@ TEST(TLSTest, serverContext) {
 TEST(TLSTest, certRequired) {
     auto check = [] (TlsContext& ctx) -> bool {
 #ifdef WITH_BOTAN
-        /// @todo: Implement it
         return (ctx.getCertRequired());
 #else // WITH_OPENSSL
         ::SSL_CTX* ssl_ctx = ctx.getNativeContext();
@@ -677,7 +695,7 @@ TEST(TLSTest, configureError) {
         string key = string(TEST_CA_DIR) + "/kea-client.key";
         TlsContext::configure(ctx1, TlsRole::CLIENT,
                               ca, cert, key, true);
-        // The context is reset on errors.
+        // The context is reseted on errors.
         EXPECT_FALSE(ctx1);
     });
     if (Expecteds::displayErrMsg()) {
@@ -1340,6 +1358,554 @@ TEST(TLSTest, selfSigned) {
 }
 
 ////////////////////////////////////////////////////////////////////////
+//                  Close on error handshake failures                 //
+////////////////////////////////////////////////////////////////////////
+
+// Investigate what happens when a peer closes its streams when the
+// handshake callback returns an error. In particular does still
+// the other peer timeout?
+
+// Test what happens when handshake is forgotten.
+TEST(TLSTest, noHandshakeCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer1(service);
+    bool timeout = false;
+    timer1.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Send on the client.
+    char send_buf[] = "some text...";
+    TestCallback send_cb(&client.lowest_layer());
+    async_write(client, boost::asio::buffer(send_buf), send_cb);
+    while (!timeout && !send_cb.getCalled()) {
+        service.run_one();
+    }
+    timer1.cancel();
+
+    Expecteds exps;
+    // Botan error.
+    exps.addError("InvalidObjectState");
+    // OpenSSL error.
+    exps.addError("uninitialized");
+    exps.checkAsync("send", send_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "send: " << exps.getErrMsg() << "\n";
+    }
+
+    // Setup a second timeout.
+    IntervalTimer timer2(service);
+    timeout = false;
+    timer2.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Receive on the server.
+    vector<char> receive_buf(64);
+    TestCallback receive_cb;
+    server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
+    while (!timeout && !receive_cb.getCalled()) {
+        service.run_one();
+    }
+    timer2.cancel();
+
+    exps.clear();
+    // Botan and some OpenSSL.
+    exps.addError("stream truncated");
+    // OpenSSL error,
+    exps.addError("uninitialized");
+    exps.checkAsync("receive", receive_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "receive: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the server was not configured.
+TEST(TLSTest, serverNotConfiguredCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
+    // Skip config.
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.handshake(server_cb);
+    TestCallback client_cb;
+    client.handshake(client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    Expecteds exps;
+    // Botan error.
+    exps.addError("handshake_failure");
+    // LibreSSL error.
+    exps.addError("no shared cipher");
+    // OpenSSL error.
+    exps.addError("sslv3 alert handshake failure");
+    exps.checkAsync("server", server_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
+
+    exps.clear();
+    // Botan and some OpenSSL.
+    exps.addError("stream truncated");
+    // OpenSSL error.
+    exps.addError("sslv3 alert handshake failure");
+    exps.checkAsync("client", client_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "client: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the client was not configured.
+TEST(TLSTest, clientNotConfiguredCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx(new TlsContext(TlsRole::CLIENT));
+    // Skip config.
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb;
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb(&client.lowest_layer());
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    Expecteds exps;
+    // Botan and some OpenSSL.
+    exps.addError("stream truncated");
+    // OpenSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    exps.checkAsync("server", server_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
+
+    exps.clear();
+    // Botan error (unfortunately a bit generic).
+    exps.addError("bad_certificate");
+    // LibreSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    // OpenSSL error.
+    exps.addError("certificate verify failed");
+    // The client should not hang.
+    exps.checkAsync("client", client_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "client: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the client is HTTP (vs HTTPS).
+TEST(TLSTest, clientHTTPnoSCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    tcp::socket client(service.get_io_service());
+
+    // Connect to.
+    client.open(tcp::v4());
+    TestCallback connect_cb;
+    client.async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform server TLS handshake.
+    TestCallback server_cb;
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+
+    // Client sending a HTTP GET.
+    char send_buf[] = "GET / HTTP/1.1\r\n";
+    TestCallback client_cb;
+    client.async_send(boost::asio::buffer(send_buf), client_cb);
+
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    Expecteds exps;
+    // Botan server still hangs.
+    // Reading the Botan code it really expects a TLS record and is fooled
+    // by the input and just want more... To summary it is a little naive.
+    exps.addTimeout();
+    // LibreSSL error.
+    exps.addError("tlsv1 alert protocol version");
+    // OpenSSL error (OpenSSL recognizes HTTP).
+    exps.addError("http request");
+    // Another OpenSSL error (not all OpenSSL recognizes HTTP).
+    exps.addError("wrong version number");
+    exps.checkAsync("server", server_cb);
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "server timeout\n";
+        } else {
+            std::cout << "server: " << exps.getErrMsg() << "\n";
+        }
+    }
+
+    // No error at the client.
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the client uses a certificate from another CA.
+TEST(TLSTest, anotherClientCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part using a certificate signed by another CA.
+    TlsContextPtr client_ctx;
+    test::configOther(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb;
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    Expecteds exps;
+    // Botan error.
+    exps.addError("bad_certificate");
+    // LibreSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    // OpenSSL error.
+    // Full error is:
+    // error 20 at 0 depth lookup:unable to get local issuer certificate
+    exps.addError("certificate verify failed");
+    exps.checkAsync("server", server_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
+
+    exps.clear();
+    // Botan and some OpenSSL.
+    exps.addError("stream truncated");
+    // LibreSSL and recent OpenSSL do not fail.
+    exps.addNoError();
+    // Old OpenSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    exps.checkAsync("client", client_cb);
+    if (Expecteds::displayErrMsg() && exps.hasErrMsg()) {
+        std::cout << "client: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the client uses a self-signed certificate.
+TEST(TLSTest, selfSignedCloseonError) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx;
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part using a self-signed certificate.
+    TlsContextPtr client_ctx;
+    test::configSelf(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.async_handshake(roleToImpl(TlsRole::SERVER), server_cb);
+    TestCallback client_cb;
+    client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    Expecteds exps;
+    // Botan error.
+    exps.addError("bad_certificate");
+    // LibreSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    // OpenSSL error.
+    // Full error is:
+    // error 18 at 0 depth lookup:self signed certificate
+    exps.addError("certificate verify failed");
+    exps.checkAsync("server", server_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "server: " << exps.getErrMsg() << "\n";
+    }
+
+    exps.clear();
+    // Botan and some OpenSSL.
+    exps.addError("stream truncated");
+    // LibreSSL and recent OpenSSL do not fail.
+    exps.addNoError();
+    // Old OpenSSL error.
+    exps.addError("tlsv1 alert unknown ca");
+    exps.checkAsync("client", client_cb);
+    if (Expecteds::displayErrMsg() && exps.hasErrMsg()) {
+        std::cout << "client: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+////////////////////////////////////////////////////////////////////////
 //                      TLS handshake corner case                     //
 ////////////////////////////////////////////////////////////////////////
 
@@ -1562,5 +2128,445 @@ TEST(TLSTest, trustedSelfSigned) {
     EXPECT_NO_THROW(server.lowest_layer().close());
 }
 #endif // WITH_OPENSSL
+
+////////////////////////////////////////////////////////////////////////
+//                              TLS shutdown                          //
+////////////////////////////////////////////////////////////////////////
+
+// Investigate the TLS shutdown processing.
+
+// Test what happens when the shutdown receiver is inactive.
+TEST(TLSTest, shutdownInactive) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.handshake(server_cb);
+    TestCallback client_cb;
+    client.handshake(client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // No problem is expected.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Setup a timeout for the shutdown.
+    IntervalTimer timer2(service);
+    timeout = false;
+    timer2.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Shutdown on the client leaving the server inactive.
+    TestCallback shutdown_cb;
+    client.shutdown(shutdown_cb);
+    while (!timeout && !shutdown_cb.getCalled()) {
+        service.run_one();
+    }
+    timer2.cancel();
+
+    Expecteds exps;
+    // Botan gets no error.
+    exps.addNoError();
+    // OpenSSL hangs.
+    exps.addTimeout();
+    exps.checkAsync("shutdown", shutdown_cb);
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "shutdown timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "shutdown: " << exps.getErrMsg() << "\n";
+        }
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the shutdown receiver is active.
+TEST(TLSTest, shutdownActive) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.handshake(server_cb);
+    TestCallback client_cb;
+    client.handshake(client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // No problem is expected.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Setup a timeout for the shutdown and receive.
+    IntervalTimer timer2(service);
+    timeout = false;
+    timer2.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Receive on the server.
+    vector<char> receive_buf(64);
+    TestCallback receive_cb;
+    server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
+
+    // Shutdown on the client.
+    TestCallback shutdown_cb;
+    client.shutdown(shutdown_cb);
+    while (!timeout && (!shutdown_cb.getCalled() || !receive_cb.getCalled())) {
+        service.run_one();
+    }
+    timer2.cancel();
+
+    Expecteds exps;
+    // Botan gets no error.
+    exps.addNoError();
+    // OpenSSL hangs.
+    exps.addTimeout();
+    exps.checkAsync("shutdown", shutdown_cb);
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "shutdown timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "shutdown: " << exps.getErrMsg() << "\n";
+        }
+    }
+
+    exps.clear();
+    // End of file on the receive side.
+    exps.addError("End of file");
+    exps.checkAsync("receive", receive_cb);
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "receive: " << exps.getErrMsg() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the shutdown receiver is inactive on shutdown
+// and immediate close.
+TEST(TLSTest, shutdownCloseInactive) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.handshake(server_cb);
+    TestCallback client_cb;
+    client.handshake(client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // No problem is expected.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Setup a timeout for the shutdown.
+    IntervalTimer timer2(service);
+    timeout = false;
+    timer2.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Shutdown on the client leaving the server inactive.
+    TestCallback shutdown_cb;
+    client.shutdown(shutdown_cb);
+
+    // Post a close which should be called after the shutdown.
+    service.post([&client] { client.lowest_layer().close(); });
+    while (!timeout && !shutdown_cb.getCalled()) {
+        service.run_one();
+    }
+    timer2.cancel();
+
+    Expecteds exps;
+    // Botan gets no error.
+    exps.addNoError();
+    // LibreSSL and some old OpenSSL gets Operation canceled.
+    exps.addError("Operation canceled");
+    // OpenSSL gets Bad file descriptor.
+    exps.addError("Bad file descriptor");
+    exps.checkAsync("shutdown", shutdown_cb);
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "shutdown timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "shutdown: " << exps.getErrMsg() << "\n";
+        }
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Test what happens when the shutdown receiver is active with an
+// immediate close.
+TEST(TLSTest, shutdownCloseActive) {
+    IOService service;
+
+    // Server part.
+    TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
+    test::configServer(server_ctx);
+    TlsStream<TestCallback> server(service, server_ctx);
+
+    // Accept a client.
+    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+                                          SERVER_PORT));
+    tcp::acceptor acceptor(service.get_io_service(), server_ep);
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    TestCallback accept_cb;
+    acceptor.async_accept(server.lowest_layer(), accept_cb);
+
+    // Client part.
+    TlsContextPtr client_ctx;
+    test::configClient(client_ctx);
+    TlsStream<TestCallback> client(service, client_ctx);
+
+    // Connect to.
+    client.lowest_layer().open(tcp::v4());
+    TestCallback connect_cb;
+    client.lowest_layer().async_connect(server_ep, connect_cb);
+
+    // Run accept and connect.
+    while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
+        service.run_one();
+    }
+
+    // Verify the error codes.
+    if (accept_cb.getCode()) {
+        FAIL() << "accept error " << accept_cb.getCode().value()
+               << " '" << accept_cb.getCode().message() << "'";
+    }
+    // Possible EINPROGRESS for the client.
+    if (connect_cb.getCode() &&
+        (connect_cb.getCode().value() != EINPROGRESS)) {
+        FAIL() << "connect error " << connect_cb.getCode().value()
+               << " '" << connect_cb.getCode().message() << "'";
+    }
+
+    // Setup a timeout.
+    IntervalTimer timer(service);
+    bool timeout = false;
+    timer.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Perform TLS handshakes.
+    TestCallback server_cb(&server.lowest_layer());
+    server.handshake(server_cb);
+    TestCallback client_cb;
+    client.handshake(client_cb);
+    while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
+        service.run_one();
+    }
+    timer.cancel();
+
+    // No problem is expected.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(server_cb.getCalled());
+    EXPECT_FALSE(server_cb.getCode());
+    EXPECT_TRUE(client_cb.getCalled());
+    EXPECT_FALSE(client_cb.getCode());
+
+    // Setup a timeout for the shutdown and receive.
+    IntervalTimer timer2(service);
+    timeout = false;
+    timer2.setup([&timeout] { timeout = true; }, 100, IntervalTimer::ONE_SHOT);
+
+    // Receive on the server.
+    vector<char> receive_buf(64);
+    TestCallback receive_cb;
+    server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
+
+    // Shutdown on the client.
+    TestCallback shutdown_cb;
+    client.shutdown(shutdown_cb);
+
+    // Post a close which should be called after the shutdown.
+    service.post([&client] { client.lowest_layer().close(); });
+    while (!timeout && (!shutdown_cb.getCalled() || !receive_cb.getCalled())) {
+        service.run_one();
+    }
+    timer2.cancel();
+
+    Expecteds exps;
+    // Botan gets no error.
+    exps.addNoError();
+    // LibreSSL and some old OpenSSL gets Operation canceled.
+    exps.addError("Operation canceled");
+    // OpenSSL gets Bad file descriptor.
+    exps.addError("Bad file descriptor");
+    exps.checkAsync("shutdown", shutdown_cb);
+    if (Expecteds::displayErrMsg()) {
+        if (timeout) {
+            std::cout << "shutdown timeout\n";
+        } else if (exps.hasErrMsg()) {
+            std::cout << "shutdown: " << exps.getErrMsg() << "\n";
+        }
+    }
+
+    // End of file on the receive side.
+    EXPECT_TRUE(receive_cb.getCalled());
+    EXPECT_TRUE(receive_cb.getCode());
+    EXPECT_EQ("End of file", receive_cb.getCode().message());
+    if (Expecteds::displayErrMsg()) {
+        std::cout << "receive: " << receive_cb.getCode().message() << "\n";
+    }
+
+    // Close client and server.
+    EXPECT_NO_THROW(client.lowest_layer().close());
+    EXPECT_NO_THROW(server.lowest_layer().close());
+}
+
+// Conclusion about the shutdown: do the close on completion (e.g. in the
+// handler) or on timeout (i.e. simulate an asynchronous shutdown with
+// timeout).
 
 } // end of anonymous namespace.

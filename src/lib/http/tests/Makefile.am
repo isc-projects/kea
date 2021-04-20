@@ -42,6 +42,10 @@ if HAVE_OPENSSL
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc
 endif
+if HAVE_BOTAN_BOOST
+libhttp_unittests_SOURCES += tls_server_unittests.cc
+libhttp_unittests_SOURCES += tls_client_unittests.cc
+endif
 libhttp_unittests_SOURCES += url_unittests.cc
 libhttp_unittests_SOURCES += test_http_client.h
 libhttp_unittests_SOURCES += mt_client_unittests.cc

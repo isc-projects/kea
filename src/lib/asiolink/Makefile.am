@@ -17,6 +17,7 @@ libkea_asiolink_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += asio_wrapper.h
 libkea_asiolink_la_SOURCES += addr_utilities.cc addr_utilities.h
+libkea_asiolink_la_SOURCES += botan_boost_tls.h botan_boost_wrapper.h
 libkea_asiolink_la_SOURCES += botan_tls.h
 libkea_asiolink_la_SOURCES += common_tls.cc common_tls.h
 libkea_asiolink_la_SOURCES += crypto_tls.h
@@ -44,7 +45,11 @@ libkea_asiolink_la_SOURCES += unix_domain_socket_acceptor.h
 libkea_asiolink_la_SOURCES += unix_domain_socket_endpoint.h
 
 if HAVE_BOTAN
+if HAVE_BOTAN_BOOST
+libkea_asiolink_la_SOURCES += botan_boost_tls.cc
+else
 libkea_asiolink_la_SOURCES += botan_tls.cc
+endif
 endif
 if HAVE_OPENSSL
 libkea_asiolink_la_SOURCES += openssl_tls.cc
@@ -63,6 +68,8 @@ libkea_asiolink_include_HEADERS = \
 	addr_utilities.h \
 	asio_wrapper.h \
 	asiolink.h \
+	botan_boost_tls.h \
+	botan_boost_wrapper.h \
 	botan_tls.h \
 	common_tls.h \
 	crypto_tls.h \

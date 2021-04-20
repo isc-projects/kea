@@ -80,6 +80,15 @@ certificates) and two new operations:
 no direct mapping between high level TLS operations and TCP I/O,
 e.g. a TLS read can involve a TCP write and the opposite.
 
+@note TLS introduces a new error code "stream_truncated" which is
+the TLS short read.
+
+To debug or extend the TLS support two tools are available:
+
+ - client and server samples for both OpenSSL and Botan.
+
+ - TLS unit tests (tls_unittest.cc file).
+
 @section asiolinkMTConsiderations Multi-Threading Consideration for Boost ASIO Utilities
 
 By default Boost ASIO utilities are not thread safe even if Boost ASIO tools

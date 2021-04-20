@@ -606,6 +606,7 @@ the Boost Software License, Version 1.0.  (See its accompanying file
 LICENSE_1_0.txt.)
 
 Sample TLS clients and servers are used for tests and are included in
-src/lib/asiolink/testutils. The files are distributed under Boost
-Software license 1.0 and are used for testing only. They're not part
-of Kea installation.
+src/lib/asiolink/testutils. The Botan version was ported for the
+OpenSSL one with the help of the Botan team.  The files are
+distributed under Boost Software license 1.0 and are used for testing
+only. They're not part of Kea installation.

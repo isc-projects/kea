@@ -529,6 +529,32 @@ public:
     void runWithConfig(const std::string& config, int run_time_ms,
                        time_duration& elapsed_time);
 
+    /// @brief Type of testing callbacks
+    typedef std::function<void()> TestCallback;
+
+    /// @brief Convenience method for invoking standard, valid launch
+    /// with a testing callback
+    ///
+    /// This method sets up a timed run of the DController::launch.  It does
+    /// the following:
+    /// - It creates command line argument variables argc/argv
+    /// - Invokes writeFile to create the config file with the given content
+    /// - Schedules a shutdown time timer to call DController::executeShutdown
+    /// after the interval
+    /// - Records the start time
+    /// - Invokes DController::launch() with the command line arguments
+    /// - After launch returns, it calculates the elapsed time and returns it
+    ///
+    /// @note the callback is called before the shutdown and MUST NOT throw
+    /// @param config configuration file content to write before calling launch
+    /// @param run_time_ms  maximum amount of time to allow runProcess() to
+    /// continue.
+    /// @param callback testing callback of TestCallback type
+    /// @param[out] elapsed_time the actual time in ms spent in launch().
+    void runWithConfig(const std::string& config, int run_time_ms,
+                       const TestCallback& callback,
+                       time_duration& elapsed_time);
+
     /// @brief Fetches the controller's process
     ///
     /// @return A pointer to the process which may be null if it has not yet

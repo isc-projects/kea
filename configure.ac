@@ -1425,12 +1425,15 @@ tls_support=no
 if test "x${CRYPTO_NAME}" = "xOpenSSL"; then
   tls_support=yes
 fi
+if test "x${CRYPTO_NAME}" = "xBotan" && test "x$BOTAN_BOOST" = "xyes"; then
+  tls_support=yes
+fi
 
 # Decide if the shell TLS test can work.
 ### This will be simpler when Python 2 support will be dropped.
 ca_tls_test=no
 if test "x$enable_shell" != "xno"; then
-  major=` echo $PYTHON_VERSION | cut -d '.' -f 1`
+  major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
   if test "x$major" = "x3"; then
     ca_tls_test="$tls_support"
   else

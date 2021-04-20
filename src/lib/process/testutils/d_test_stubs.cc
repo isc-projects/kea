@@ -227,6 +227,36 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     elapsed_time = microsec_clock::universal_time() - start;
 }
 
+void
+DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
+                               const TestCallback& callback,
+                               time_duration& elapsed_time) {
+    // Create the config file.
+    writeFile(config);
+
+    // Shutdown (without error) after runtime.
+    isc::asiolink::IntervalTimer timer(*getIOService());
+    timer.setup([&] { callback(); genShutdownCallback(); }, run_time_ms);
+
+    // Record start time, and invoke launch().
+    // We catch and rethrow to allow testing error scenarios.
+    ptime start = microsec_clock::universal_time();
+    try  {
+        // Set up valid command line arguments
+        char* argv[] = { const_cast<char*>("progName"),
+                         const_cast<char*>("-c"),
+                         const_cast<char*>(DControllerTest::CFG_TEST_FILE),
+                         const_cast<char*>("-d") };
+        launch(4, argv);
+    } catch (...) {
+        // calculate elapsed time, then rethrow it
+        elapsed_time = microsec_clock::universal_time() - start;
+        throw;
+    }
+
+    elapsed_time = microsec_clock::universal_time() - start;
+}
+
 DProcessBasePtr
 DControllerTest:: getProcess() {
     DProcessBasePtr p;
@@ -302,5 +332,5 @@ DStubCfgMgr::parse(isc::data::ConstElementPtr /*config*/, bool /*check_only*/) {
     return (isc::config::createAnswer(0, "It all went fine. I promise"));
 }
 
-}; // namespace isc::process
-}; // namespace isc
+} // namespace isc::process
+} // namespace isc

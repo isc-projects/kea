@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,7 +130,10 @@ private:
     /// (no longer used because the listening address and port has changed as
     // a result of the reconfiguration). If there are no listeners additional
     /// to the one that is currently in use, the method has no effect.
-    void garbageCollectListeners();
+    /// This method is reused to remove all listeners at shutdown time.
+    ///
+    /// @param leaving The number of listener to leave (default one).
+    void garbageCollectListeners(size_t leaving = 1);
 
     /// @brief Polls all ready handlers and then runs one handler if none
     /// handlers have been executed as a result of polling.

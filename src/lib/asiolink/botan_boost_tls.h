@@ -6,34 +6,54 @@
 
 // Do not include this header directly: use crypto_tls.h instead.
 
-#ifndef BOTAN_TLS_H
-#define BOTAN_TLS_H
+#ifndef BOTAN_BOOST_TLS_H
+#define BOTAN_BOOST_TLS_H
 
-/// @file botan_tls.h Botan fake implementation of the TLS API.
+/// @file botan_boost_tls.h Botan boost ASIO implementation of the TLS API.
 
-#if defined(WITH_BOTAN) && !defined(WITH_BOTAN_BOOST)
+#if defined(WITH_BOTAN) && defined(WITH_BOTAN_BOOST)
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_service.h>
 #include <asiolink/common_tls.h>
-
 #include <exceptions/exceptions.h>
+
+#include <asiolink/botan_boost_wrapper.h>
+#include <botan/asio_stream.h>
 
 namespace isc {
 namespace asiolink {
 
-/// @brief Botan TLS context.
+/// @brief Translate TLS role into implementation.
+inline Botan::TLS::Connection_Side roleToImpl(TlsRole role) {
+    if (role == TlsRole::SERVER) {
+        return (Botan::TLS::Connection_Side::SERVER);
+    } else {
+        return (Botan::TLS::Connection_Side::CLIENT);
+    }
+}
+
+/// @brief Forward declaration of Botan TLS context.
+class TlsContextImpl;
+
+/// @brief Botan boost ASIO TLS context.
 class TlsContext : public TlsContextBase {
 public:
 
     /// @brief Destructor.
-    virtual ~TlsContext() { }
+    ///
+    /// @note The destructor can't be defined here because  a unique
+    /// pointer to an incomplete type is used.
+    virtual ~TlsContext();
 
     /// @brief Create a fresh context.
     ///
     /// @param role The TLS role client or server.
     explicit TlsContext(TlsRole role);
+
+    /// @brief Return the underlying context.
+    Botan::TLS::Context& getContext();
 
     /// @brief Get the peer certificate requirement mode.
     ///
@@ -51,40 +71,32 @@ protected:
     /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_file The certificate file name.
-    /// @throw isc::cryptolink::LibraryError on various errors as
-    /// file not found, bad format, etc.
     virtual void loadCaFile(const std::string& ca_file);
 
     /// @brief Load the trust anchor aka certification authority.
     ///
     /// @param ca_path The certificate directory name.
-    /// @throw isc::cryptolink::LibraryError on various errors as
-    /// file not found, bad format, etc.
     virtual void loadCaPath(const std::string& ca_path);
 
     /// @brief Load the certificate file.
     ///
     /// @param cert_file The certificate file name.
-    /// @throw isc::cryptolink::LibraryError on various errors as
-    /// file not found, bad format, etc.
     virtual void loadCertFile(const std::string& cert_file);
 
     /// @brief Load the private key from a file.
     ///
     /// @param key_file The private key file name.
-    /// @throw isc::cryptolink::LibraryError on various errors as
-    /// file not found, bad format, etc.
     virtual void loadKeyFile(const std::string& key_file);
 
-    /// @brief Cached cert_required value.
-    bool cert_required_;
+    /// @brief Botan TLS context.
+    std::unique_ptr<TlsContextImpl> impl_;
 
     /// @brief Allow access to protected methods by the base class.
     friend class TlsContextBase;
 };
 
-/// @brief The type of Botan TLS streams (in fact pure TCP streams).
-typedef boost::asio::ip::tcp::socket TlsStreamImpl;
+/// @brief The type of underlying TLS streams.
+typedef Botan::TLS::Stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 
 /// @brief TlsStreamBase constructor.
 ///
@@ -96,14 +108,16 @@ typedef boost::asio::ip::tcp::socket TlsStreamImpl;
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
-    : TlsStreamImpl(service.get_io_service()), role_(context->getRole()) {
+    : TlsStreamImpl(service.get_io_service(), context->getContext()),
+      role_(context->getRole()) {
 }
 
-/// @brief Botan fake TLS stream.
+/// @brief Botan boost ASIO TLS stream.
 ///
 /// @tparam callback The callback.
 template <typename Callback>
-class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl> {
+class TlsStream : public TlsStreamBase<Callback, TlsStreamImpl>
+{
 public:
 
     /// @brief Type of the base.
@@ -122,18 +136,25 @@ public:
     virtual ~TlsStream() { }
 
     /// @brief TLS Handshake.
-    virtual void handshake(Callback&) {
-        isc_throw(NotImplemented, "Botan TLS is not yet supported");
+    ///
+    /// @param callback Callback object.
+    virtual void handshake(Callback& callback) {
+        Base::async_handshake(roleToImpl(Base::getRole()), callback);
     }
 
     /// @brief TLS shutdown.
-    virtual void shutdown(Callback&) {
-        isc_throw(NotImplemented, "Botan TLS is not yet supported");
+    ///
+    /// @param callback Callback object.
+    virtual void shutdown(Callback& callback) {
+        Base::async_shutdown(callback);
     }
 
-    /// @brief Clear the TLS state.
+    /// @brief Clear the TLS object.
+    ///
+    /// @note The idea to reuse a TCP connection for a fresh TLS is at
+    /// least arguable. Currently it does nothing so the socket is
+    /// **not** reusable.
     virtual void clear() {
-        isc_throw(NotImplemented, "Botan TLS is not yet supported");
     }
 
     /// @brief Return the commonName part of the subjectName of
@@ -144,10 +165,15 @@ public:
     /// to idea to give access to this come from the Role Based
     /// Access Control experiment.
     ///
-    ///
     /// @return The commonName part of the subjectName or the empty string.
-    std::string getSubject() {
-        return ("");
+    virtual std::string getSubject() {
+        const std::vector<Botan::X509_Certificate>& cert_chain =
+            Base::native_handle()->peer_cert_chain();
+        if (cert_chain.empty()) {
+            return ("");
+        }
+        const Botan::X509_DN& subject = cert_chain[0].subject_dn();
+        return (subject.get_first_attribute("CommonName"));
     }
 
     /// @brief Return the commonName part of the issuerName of
@@ -158,16 +184,24 @@ public:
     /// (the issue in PKIX terms). The idea is to encode a group as
     /// members of an intermediate certification authority.
     ///
-    ///
     /// @return The commonName part of the issuerName or the empty string.
-    std::string getIssuer() {
-        return ("");
+    virtual std::string getIssuer() {
+        const std::vector<Botan::X509_Certificate>& cert_chain =
+            Base::native_handle()->peer_cert_chain();
+        if (cert_chain.empty()) {
+            return ("");
+        }
+        const Botan::X509_DN& issuer = cert_chain[0].issuer_dn();
+        return (issuer.get_first_attribute("CommonName"));
     }
 };
+
+// Stream truncated error code.
+const int STREAM_TRUNCATED = Botan::TLS::StreamError::StreamTruncated;
 
 } // namespace asiolink
 } // namespace isc
 
-#endif // WITH_BOTAN && !WITH_BOTAN_BOOST
+#endif // WITH_BOTAN && WITH_BOTAN_BOOST
 
-#endif // BOTAN_TLS_H
+#endif // BOTAN_BOOST_TLS_H

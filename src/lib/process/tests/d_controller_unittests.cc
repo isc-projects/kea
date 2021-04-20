@@ -188,6 +188,23 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
                 elapsed_time.total_milliseconds() <= 2300);
 }
 
+/// @brief A variant of the launch and normal shutdown test using a callback.
+TEST_F(DStubControllerTest, launchNormalShutdownWithCallback) {
+    // Write the valid, empty, config and then run launch() for 1000 ms
+    // Access to the internal state.
+    auto callback = [&] { EXPECT_FALSE(getProcess()->shouldShutdown()); };
+    time_duration elapsed_time;
+    ASSERT_NO_THROW(runWithConfig("{}", 2000,
+                                  static_cast<const TestCallback&>(callback),
+                                  elapsed_time));
+
+    // Verify that duration of the run invocation is the same as the
+    // timer duration.  This demonstrates that the shutdown was driven
+    // by an io_service event and callback.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() >= 1900 &&
+                elapsed_time.total_milliseconds() <= 2300);
+}
+
 /// @brief Tests launch with an non-existing configuration file.
 TEST_F(DStubControllerTest, nonExistingConfigFile) {
     // command line to run standalone

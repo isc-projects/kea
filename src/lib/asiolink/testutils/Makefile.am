@@ -74,4 +74,20 @@ openssl_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
 openssl_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 openssl_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
 endif
+
+if HAVE_BOTAN_BOOST
+# Same samples ported to Botan boost ASIO.
+
+noinst_PROGRAMS = botan_boost_sample_client botan_boost_sample_server
+
+botan_boost_sample_client_SOURCES = botan_boost_sample_client.cc
+botan_boost_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
+botan_boost_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+botan_boost_sample_client_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
+
+botan_boost_sample_server_SOURCES = botan_boost_sample_server.cc
+botan_boost_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
+botan_boost_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+botan_boost_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
+endif
 endif
