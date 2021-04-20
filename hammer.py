@@ -266,12 +266,6 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     if dry_run:
         return 0
 
-    # Start with OS environment and add to it.
-    if env:
-        os_env = os.environ.copy()
-        os_env.update(env)
-        env = os_env
-
     if 'sudo' in cmd and env:
         # if sudo is used and env is overridden then to preserve env add -E to sudo
         cmd = cmd.replace('sudo', 'sudo -E')
@@ -1044,16 +1038,21 @@ def _configure_mysql(system, revision, features):
         execute(cmd)
 
 
-def _enable_and_restart_postgresql(system):
+def _enable_postgresql(system):
+    if system == 'alpine':
+        execute('sudo rc-update add postgresql')
+    else:
+        execute('sudo systemctl enable postgresql.service')
+
+
+def _restart_postgresql(system):
     if system == 'freebsd':
         # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
         # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
         execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
-        execute('sudo rc-update add postgresql')
         execute('sudo /etc/init.d/postgresql restart')
     else:
-        execute('sudo systemctl enable postgresql.service')
         execute('sudo systemctl restart postgresql.service')
 
 
@@ -1072,7 +1071,8 @@ def _configure_pgsql(system, features):
         execute('sudo sysrc postgresql_enable="yes"')
         execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
 
-    _enable_and_restart_postgresql(system)
+    _enable_postgresql(system)
+    _restart_postgresql(system)
 
     # Change auth-method to 'trust' on local connections.
     cmd = "printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs"
@@ -1081,7 +1081,7 @@ def _configure_pgsql(system, features):
     cmd = "sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' '{}'".format(hba_file)
     execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
-    _enable_and_restart_postgresql(system)
+    _restart_postgresql(system)
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
         DROP DATABASE IF EXISTS keatest;
@@ -1095,10 +1095,12 @@ def _configure_pgsql(system, features):
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
-    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
+    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
     cmd += 'EOF\n"'
-    execute(cmd, cwd='/tmp', env={'PGPASSWORD': 'keatest'})  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
+    env = os.environ.copy()
+    env['PGPASSWORD'] = 'keatest'
+    execute(cmd, cwd='/tmp', env=env)  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
 
     if 'forge' in features:
         cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
