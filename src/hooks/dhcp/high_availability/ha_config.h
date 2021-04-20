@@ -630,6 +630,7 @@ public:
     /// @param http_client_threads number of threads the client should use.
     void setHttpClientThreads(uint32_t http_client_threads) {
         http_client_threads_ = http_client_threads;
+    }
 
     /// @brief Returns global trust-anchor.
     util::Optional<std::string> getTrustAnchor() const {
