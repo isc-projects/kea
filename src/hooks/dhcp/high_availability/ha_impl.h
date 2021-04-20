@@ -54,6 +54,11 @@ public:
                       const dhcp::NetworkStatePtr& network_state,
                       const HAServerType& server_type);
 
+    /// @brief Destructor.
+    ~HAImpl();
+
+public:
+
     /// @brief Returns parsed configuration.
     HAConfigPtr getConfig() const {
         return (config_);

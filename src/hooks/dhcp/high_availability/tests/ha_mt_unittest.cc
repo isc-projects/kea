@@ -371,6 +371,8 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
         TestHAServicePtr service;
         ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
                                                             ha_config)));
+        ASSERT_NO_THROW(service->startClientAndListener());
+
         // Verify the configuration is as expected.
         if (!scenario.exp_ha_mt_enabled_) {
             // When HA+MT is disabled, client should be single-threaded.

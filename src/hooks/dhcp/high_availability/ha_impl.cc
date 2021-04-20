@@ -44,6 +44,17 @@ HAImpl::startService(const IOServicePtr& io_service,
     // Create the HA service and crank up the state machine.
     service_ = boost::make_shared<HAService>(io_service, network_state,
                                              config_, server_type);
+    // Schedule a start of the services. This ensures we begin after
+    // the dust has settled and Kea MT mode has been firmly established.
+    io_service->post([&]() { service_->startClientAndListener(); } );
+}
+
+HAImpl::~HAImpl() {
+    if (service_) {
+        // Shut down the services explicitly, we need finer control
+        // than relying on destruction order.
+        service_->stopClientAndListener();
+    }
 }
 
 void

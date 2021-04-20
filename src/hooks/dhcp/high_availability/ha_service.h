@@ -1002,10 +1002,24 @@ public:
     /// @return Pointer to the response to the ha-maintenance-cancel.
     data::ConstElementPtr processMaintenanceCancel();
 
-protected:
+    /// @brief Start the client and(or) listener instances.
+    ///
+    /// Starts the dedicated listener thread pool, if the listener exists.
+    /// Nothing is required for the client as it does not currently support
+    /// a discrete "start" method, rather it is "started" during its
+    /// construction.
     void startClientAndListener();
 
+    /// @brief Stop the client and(or) listener instances.
+    ///
+    /// Closing connections and stops the thread pools for the client
+    /// and listener, if they exist.
+    ///
+    /// @note Once stopped the service cannot be restarted, it must
+    /// be recreated.
     void stopClientAndListener();
+
+protected:
 
     /// @brief Checks if the response is valid or contains an error.
     ///

@@ -68,8 +68,37 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
 
     startModel(HA_WAITING_ST);
 
-    // Start client and/or listener.
-    startClientAndListener();
+    // Create the client and(or) listener as appropriate.
+    if (!config_->getEnableMultiThreading()) {
+        // Not configured for multi-threading, start a client in ST mode.
+        client_.reset(new HttpClient(*io_service_, 0));
+    } else {
+        // Start a client in MT mode.
+        client_.reset(new HttpClient(*io_service_,
+                      config_->getHttpClientThreads()));
+
+        // If we're configured to use our own listener create and start it.
+        if (config_->getHttpDedicatedListener()) {
+            // Get the server address and port from this server's URL.
+            auto my_url = config_->getThisServerConfig()->getUrl();
+            IOAddress server_address(IOAddress::IPV4_ZERO_ADDRESS());
+            try {
+                // Since we do not currently support hostname resolution,
+                // we need to make sure we have an IP address here.
+                server_address = IOAddress(my_url.getStrippedHostname());
+            } catch (const std::exception& ex) {
+                isc_throw(Unexpected, "server Url:" << my_url.getStrippedHostname()
+                          << " is not a valid IP address");
+            }
+
+            // Fetch how many threads the listener will use.
+            uint32_t listener_threads = config_->getHttpListenerThreads();
+
+            // Instantiate the listener.
+            listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
+                                            listener_threads));
+        }
+    }
 
     LOG_INFO(ha_logger, HA_SERVICE_STARTED)
         .arg(HAConfig::HAModeToString(config->getHAMode()))
@@ -2788,38 +2817,7 @@ HAService::getPendingRequestInternal(const QueryPtrType& query) {
 
 void
 HAService::startClientAndListener() {
-    // If we're not configured for multi-threading, then we start
-    // a client in ST mode and return.
-    if (!config_->getEnableMultiThreading()) {
-        client_.reset(new HttpClient(*io_service_, 0));
-        return;
-    }
-
-    // Start a client in MT mode.
-    client_.reset(new HttpClient(*io_service_, 
-                  config_->getHttpClientThreads()));
-
-    // If we're configured to use our own listener create and start it.
-    if (config_->getHttpDedicatedListener()) {
-        // Get the server address and port from this server's URL.
-        auto my_url = config_->getThisServerConfig()->getUrl();
-        IOAddress server_address(IOAddress::IPV4_ZERO_ADDRESS());
-        try {
-            // Since we do not currently support hostname resolution,
-            // we need to make sure we have an IP address here.
-            server_address = IOAddress(my_url.getStrippedHostname());
-        } catch (const std::exception& ex) {
-            isc_throw(Unexpected, "server Url:" << my_url.getStrippedHostname()
-                      << " is not a valid IP address");
-        }
-
-        // Fetch how many threads the listener will use.
-        uint32_t listener_threads = config_->getHttpListenerThreads();
-
-        // Instantiate the listener.
-        listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
-                                            listener_threads));
-        // Start the listener listening.
+    if (listener_) {
         listener_->start();
     }
 }
