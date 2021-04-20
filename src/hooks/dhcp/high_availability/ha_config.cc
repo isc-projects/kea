@@ -28,8 +28,8 @@ namespace isc {
 namespace ha {
 
 HAConfig::PeerConfig::PeerConfig()
-    : name_(), url_(""), trust_anchor_(), cert_file_(), key_file_(),
-      tls_context_(), role_(STANDBY), auto_failover_(false), basic_auth_() {
+    : tls_context_(), name_(), url_(""), trust_anchor_(), cert_file_(),
+      key_file_(), role_(STANDBY), auto_failover_(false), basic_auth_() {
 }
 
 void
