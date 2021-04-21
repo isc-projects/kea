@@ -1075,6 +1075,19 @@ kea_dhcp_config() {
         }
       ]
     },
+    "hooks-libraries": [
+      {
+        "library": "@abs_top_builddir@/src/bin/dhcp%s/tests/.libs/libco1.so",
+        "parameters": {
+          "password": "sensitive",
+          "user": "keatest",
+          "nested-map": {
+            "password": "sensitive",
+            "user": "keatest"
+          }
+        }
+      }
+    ],
     "hosts-database": {
       "password": "sensitive",
       "type": "mysql",
@@ -1095,5 +1108,5 @@ kea_dhcp_config() {
     }
   }
 }
-' "${1}"
+' "${1}" "${1}"
 }
