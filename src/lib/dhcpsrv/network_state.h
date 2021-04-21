@@ -9,8 +9,10 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/subnet_id.h>
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
+#include <mutex>
 #include <string>
 
 namespace isc {
@@ -193,6 +195,9 @@ private:
 
     /// @brief Pointer to the @c NetworkState implementation.
     boost::shared_ptr<NetworkStateImpl> impl_;
+
+    /// @brief The mutex used to protect internal state.
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief Pointer to the @c NetworkState object.

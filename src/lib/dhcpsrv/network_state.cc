@@ -9,9 +9,12 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
 #include <string>
+
+using namespace isc::util;
 
 namespace {
 
@@ -235,38 +238,68 @@ public:
 };
 
 NetworkState::NetworkState(const NetworkState::ServerType& server_type)
-    : impl_(new NetworkStateImpl(server_type)) {
+    : impl_(new NetworkStateImpl(server_type)), mutex_(new std::mutex()) {
 }
 
 void
 NetworkState::disableService(const Origin& origin) {
-    impl_->setDisableService(true, origin);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        impl_->setDisableService(true, origin);
+    } else {
+        impl_->setDisableService(true, origin);
+    }
 }
 
 void
 NetworkState::enableService(const Origin& origin) {
-    impl_->setDisableService(false, origin);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        impl_->setDisableService(false, origin);
+    } else {
+        impl_->setDisableService(false, origin);
+    }
 }
 
 void
 NetworkState::reset(const NetworkState::Origin& origin) {
-    impl_->reset(origin);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        impl_->reset(origin);
+    } else {
+        impl_->reset(origin);
+    }
 }
 
 void
 NetworkState::enableAll(const NetworkState::Origin& origin) {
-    impl_->enableAll(origin);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        impl_->enableAll(origin);
+    } else {
+        impl_->enableAll(origin);
+    }
 }
 
 void
 NetworkState::delayedEnableAll(const unsigned int seconds,
                                const NetworkState::Origin& origin) {
-    impl_->createTimer(seconds, origin);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        impl_->createTimer(seconds, origin);
+    } else {
+        impl_->createTimer(seconds, origin);
+    }
 }
 
 bool
 NetworkState::isServiceEnabled() const {
-    return (!impl_->globally_disabled_);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (!impl_->globally_disabled_);
+    } else {
+        return (!impl_->globally_disabled_);
+    }
 }
 
 bool
