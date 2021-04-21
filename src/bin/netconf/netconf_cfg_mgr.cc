@@ -164,5 +164,13 @@ NetconfConfig::toElement() const {
     return (result);
 }
 
+std::list<std::list<std::string>>
+NetconfCfgMgr::jsonPathsToRedact() const {
+    static std::list<std::list<std::string>> const list({
+        {"hooks-libraries", "parameters", "*"},
+    });
+    return list;
+}
+
 } // namespace isc::netconf
 } // namespace isc
