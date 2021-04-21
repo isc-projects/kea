@@ -29,7 +29,7 @@ namespace process {
 /// asterisks so it can be safely logged to an unprivileged place.
 isc::data::ConstElementPtr
 redactConfig(isc::data::ConstElementPtr const& element,
-             std::list<std::string> const& json_path = {});
+             std::list<std::string> const& json_path = {"*"});
 
 } // namespace process
 } // namespace isc

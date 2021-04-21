@@ -8,65 +8,90 @@
 
 #include <process/redact_config.h>
 
+#include <boost/algorithm/string.hpp>
+
+using namespace isc;
 using namespace isc::data;
 using namespace std;
+
+namespace {
+
+template <typename ElementPtrType>
+ElementPtrType
+redact(ElementPtrType const& element, list<string> json_path) {
+    if (!element) {
+        isc_throw(BadValue, "redact() got a null pointer");
+    }
+
+    string const next_key(json_path.empty() ? string() : json_path.front());
+    ElementPtr result;
+    if (element->getType() == Element::list) {
+        // If we are looking for a list...
+        if (next_key == "*" || next_key == "[]") {
+            // But if we are looking specifically for a list...
+            if (next_key == "[]") {
+                // Then advance in the path.
+                json_path.pop_front();
+            }
+            // Then redact all children.
+            result = Element::createList();
+            for (ElementPtr const& child : element->listValue()) {
+                result->add(redact(child, json_path));
+            }
+            return result;
+        }
+    } else if (element->getType() == Element::map) {
+        // If we are looking for anything or if we have reached the end of a
+        /// path...
+        if (next_key == "*" || json_path.empty()) {
+            // Then iterate through all the children.
+            result = Element::createMap();
+            for (auto kv : element->mapValue()) {
+                std::string const& key(kv.first);
+                ConstElementPtr const& value(kv.second);
+
+                if (boost::algorithm::ends_with(key, "password") ||
+                    boost::algorithm::ends_with(key, "secret")) {
+                    // Sensitive data
+                    result->set(key, Element::create(string("*****")));
+                } else if (key == "user-context") {
+                    // Skip user contexts.
+                    result->set(key, value);
+                } else {
+                    if (json_path.empty()) {
+                        // End of path means no sensitive data expected in this
+                        // subtree, so we stop here.
+                        result->set(key, value);
+                    } else {
+                        // We are looking for anything '*' so redact further.
+                        result->set(key, redact(value, json_path));
+                    }
+                }
+            }
+            return result;
+        } else {
+            ConstElementPtr child(element->get(next_key));
+            if (child) {
+                result = isc::data::copy(element, 1);
+                json_path.pop_front();
+                result->set(next_key, redact(child, json_path));
+                return result;
+            }
+        }
+    }
+
+    return element;
+}
+
+}  // namespace
 
 namespace isc {
 namespace process {
 
 ConstElementPtr
-redactConfig(ConstElementPtr const& element,
-             list<string> const& json_path) {
-    if (!element) {
-        isc_throw(BadValue, "redactConfig got a null pointer");
-    }
-
-    ElementPtr result;
-    if (element->getType() == Element::list) {
-        // Redact lists.
-        result = Element::createList();
-        for (ConstElementPtr const& item : element->listValue()) {
-            // add wants an ElementPtr so use a shallow copy.
-            // We could hypothetically filter lists through JSON paths, but we
-            // would have to dig inside the list's children to see if we have a
-            // match. So we always copy because it's faster.
-            result->add(data::copy(redactConfig(item, json_path), 0));
-        }
-    } else if (element->getType() == Element::map) {
-        // Redact maps.
-        result = Element::createMap();
-        for (auto kv : element->mapValue()) {
-            std::string const& key(kv.first);
-            ConstElementPtr const& value(kv.second);
-
-            if ((key == "password") || (key == "secret")) {
-                // Handle passwords.
-                result->set(key, Element::create(string("*****")));
-            } else if (key == "user-context") {
-                // Skip user contexts.
-                result->set(key, value);
-            } else if (json_path.empty()) {
-                // Passwords or secrets expected in this subtree.
-                result->set(key, isc::data::copy(
-                                     redactConfig(value, json_path)));
-            } else if (key == json_path.front()) {
-                // Passwords or secrets expected in this subtree.
-                auto it(json_path.begin());
-                std::advance(it, 1);
-                list<string> new_json_path(it, json_path.end());
-                result->set(key, isc::data::copy(
-                                     redactConfig(value, new_json_path)));
-            } else {
-                // No passwords or secrets expected in this subtree.
-                result->set(key, value);
-            }
-        }
-    } else {
-        return element;
-    }
-
-    return result;
+redactConfig(ConstElementPtr const& element, list<string> const& json_path) {
+    return redact(element, json_path);
 }
 
-} // namespace process
-} // namespace isc
+}  // namespace process
+}  // namespace isc

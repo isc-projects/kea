@@ -167,7 +167,7 @@ NetconfConfig::toElement() const {
 std::list<std::list<std::string>>
 NetconfCfgMgr::jsonPathsToRedact() const {
     static std::list<std::list<std::string>> const list({
-        {"hooks-libraries", "parameters", "*"},
+        {"hooks-libraries", "[]", "parameters", "*"},
     });
     return list;
 }
