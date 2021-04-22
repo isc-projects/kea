@@ -548,6 +548,8 @@ code, at the "configure" step (see :ref:`configure`), enter:
 
 .. include:: hammer.rst
 
+.. _non-root:
+
 Running Kea From a Non-root Account on Linux
 ============================================
 
