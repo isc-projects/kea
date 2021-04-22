@@ -64,7 +64,7 @@ public:
     /// @brief Verifies that the object is poked right after construction.
     void initialDurationTest();
 
-    /// @brief Verifies that  poking the state updates the returned duration.
+    /// @brief Verifies that poking the state updates the returned duration.
     void pokeTest();
 
     /// @brief Test that heartbeat function is triggered.

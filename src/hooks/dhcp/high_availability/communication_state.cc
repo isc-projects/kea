@@ -317,9 +317,9 @@ bool
 CommunicationState::clockSkewShouldWarn() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return(clockSkewShouldWarnInternal());
+        return (clockSkewShouldWarnInternal());
     } else {
-        return(clockSkewShouldWarnInternal());
+        return (clockSkewShouldWarnInternal());
     }
 }
 
@@ -342,6 +342,8 @@ CommunicationState::clockSkewShouldWarnInternal() {
         if (last_clock_skew_warn_.is_not_a_date_time() ||
             (since_warn_duration.total_seconds() > MIN_TIME_SINCE_CLOCK_SKEW_WARN)) {
             last_clock_skew_warn_ = now;
+            LOG_WARN(ha_logger, HA_HIGH_CLOCK_SKEW)
+                     .arg(logFormatClockSkewInternal());
             return (true);
         }
     }
@@ -355,16 +357,27 @@ CommunicationState::clockSkewShouldTerminate() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
         // Issue a warning if the clock skew is greater than 60s.
-        return (isClockSkewGreater(TERM_CLOCK_SKEW));
+        return (clockSkewShouldTerminateInternal());
     } else {
-        return (isClockSkewGreater(TERM_CLOCK_SKEW));
+        return (clockSkewShouldTerminateInternal());
     }
+}
+
+bool
+CommunicationState::clockSkewShouldTerminateInternal() const {
+    if (isClockSkewGreater(TERM_CLOCK_SKEW)) {
+        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION)
+                  .arg(logFormatClockSkewInternal());
+        return (true);
+    }
+
+    return (false);
 }
 
 bool
 CommunicationState::isClockSkewGreater(const long seconds) const {
     return ((clock_skew_.total_seconds() > seconds) ||
-             (clock_skew_.total_seconds() < -seconds));
+            (clock_skew_.total_seconds() < -seconds));
 }
 
 void
@@ -388,9 +401,9 @@ std::string
 CommunicationState::logFormatClockSkew() const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        return(logFormatClockSkewInternal());
+        return (logFormatClockSkewInternal());
     } else {
-        return(logFormatClockSkewInternal());
+        return (logFormatClockSkewInternal());
     }
 }
 

@@ -96,7 +96,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
 
             // Instantiate the listener.
             listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
-                                            listener_threads));
+                                                listener_threads));
         }
     }
 
@@ -1052,17 +1052,15 @@ HAService::shouldPartnerDown() const {
 
 bool
 HAService::shouldTerminate() const {
-    if (communication_state_->clockSkewShouldTerminate()) {
-        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION)
-            .arg(communication_state_->logFormatClockSkew());
-        return (true);
+    // Check if skew is fatally large.
+    bool should_terminate = communication_state_->clockSkewShouldTerminate();
 
-    } else if (communication_state_->clockSkewShouldWarn()) {
-        LOG_WARN(ha_logger, HA_HIGH_CLOCK_SKEW)
-            .arg(communication_state_->logFormatClockSkew());
+    // If not issue a warning if it's getting large.
+    if (!should_terminate) {
+        communication_state_->clockSkewShouldWarn();
     }
 
-    return (false);
+    return (should_terminate);
 }
 
 bool
@@ -2743,7 +2741,7 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
     // If client is running it's own IOService we do NOT want to
     // register the socket with IfaceMgr.
     if (client_->getThreadIOService()) {
-        return(true);
+        return (true);
     }
 
     // If things look OK register the socket with Interface Manager. Note

@@ -640,10 +640,9 @@ public:
     /// (enabled/disabled).
     /// @param config Parsed HA hook library configuration.
     /// @param server_type server type, i.e. DHCPv4 or DHCPv6.
-    void createSTService(
-              const NetworkStatePtr& state,
-              const HAConfigPtr config,
-              const HAServerType& server_type = HAServerType::DHCPv4) {
+    void createSTService(const NetworkStatePtr& state,
+                         const HAConfigPtr config,
+                         const HAServerType& server_type = HAServerType::DHCPv4) {
 
         ASSERT_FALSE(config->getEnableMultiThreading());
         ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(io_service_, state,

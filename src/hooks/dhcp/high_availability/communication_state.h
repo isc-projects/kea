@@ -109,7 +109,7 @@ public:
     /// @throw BadValue if unsupported state value was provided.
     void setPartnerState(const std::string& state);
 
-protected:
+private:
     /// @brief Sets partner state.
     ///
     /// @param state new partner's state in a textual form. Supported values are
@@ -128,7 +128,7 @@ public:
     /// @param new_scopes Partner scopes enclosed in a JSON list.
     void setPartnerScopes(data::ConstElementPtr new_scopes);
 
-protected:
+private:
     /// @brief Sets partner scopes.
     ///
     /// @param new_scopes Partner scopes enclosed in a JSON list.
@@ -146,8 +146,7 @@ public:
     /// @brief Stops recurring heartbeat.
     void stopHeartbeat();
 
-protected:
-
+private:
     /// @brief Starts recurring heartbeat.
     ///
     /// @param interval heartbeat interval in milliseconds.
@@ -160,7 +159,6 @@ protected:
     void stopHeartbeatInternal();
 
 public:
-
     /// @brief Checks if recurring heartbeat is running.
     ///
     /// @return true if heartbeat is running, false otherwise.
@@ -173,7 +171,7 @@ public:
     /// to the next heartbeat).
     void poke();
 
-protected:
+private:
     /// @brief Pokes the communication state.
     ///
     /// Sets the last poke time to current time. If the heartbeat timer
@@ -315,9 +313,9 @@ public:
     /// skew exceeding a warning threshold.
     bool clockSkewShouldWarn();
 
-protected:
-    /// @brief Indicates whether the HA service should issue a warning about
-    /// high clock skew between the active servers.
+private:
+    /// @brief Indicates whether the HA service and issues a warning about
+    /// high clock skew between the active servers if warranted.
     ///
     /// The HA service monitors the clock skew between the active servers. The
     /// clock skew is calculated from the local time and the time returned by
@@ -359,7 +357,26 @@ public:
     /// @return true if the HA service should enter "terminated" state.
     bool clockSkewShouldTerminate() const;
 
-protected:
+private:
+    /// @brief Indicates whether the HA service should enter "terminated"
+    /// state as a result of the clock skew exceeding maximum value.
+    ///
+    /// If the clocks on the active servers are not synchronized (perhaps as
+    /// a result of a warning message caused by @c clockSkewShouldWarn) and the
+    /// clocks further drift, the clock skew may exceed another threshold which
+    /// should cause the HA service to enter "terminated" state. In this state
+    /// the servers still respond to DHCP clients normally, but they will neither
+    /// send lease updates nor heartbeats. In this case, the administrator must
+    /// correct the problem (synchronize the clocks) and restart the service.
+    /// This method indicates whether the service should terminate or not.
+    ///
+    /// Currently, the terminal threshold for the clock skew is hardcoded to
+    /// 60 seconds.  In the future it may become configurable.
+    ///
+    /// @return true if the HA service should enter "terminated" state.
+    bool clockSkewShouldTerminateInternal() const;
+
+//protected:
 
     /// @brief Checks if the clock skew is greater than the specified number
     /// of seconds.
@@ -384,7 +401,7 @@ public:
     /// precision.
     void setPartnerTime(const std::string& time_text);
 
-protected:
+private:
     /// @brief Provide partner's notion of time so the new clock skew can be
     /// calculated.
     ///
@@ -402,7 +419,7 @@ public:
     /// @brief Returns current clock skew value in the logger friendly format.
     std::string logFormatClockSkew() const;
 
-protected:
+private:
     /// @brief Returns current clock skew value in the logger friendly format.
     std::string logFormatClockSkewInternal() const;
 
@@ -425,7 +442,7 @@ public:
     /// comparing to current value.
     void modifyPokeTime(const long secs);
 
-protected:
+private:
 
     /// @brief Returns duration between the poke time and current time.
     ///
@@ -434,11 +451,13 @@ protected:
     /// @return Duration between the poke time and current time.
     int64_t getDurationInMillisecsInternal() const;
 
+protected:
     /// @brief Update the poke time and compute the duration.
     ///
     /// @return The time elapsed.
     boost::posix_time::time_duration updatePokeTime();
 
+private:
     /// @brief Update the poke time and compute the duration.
     ///
     /// Should be called in a thread safe context.
@@ -446,6 +465,7 @@ protected:
     /// @return The time elapsed.
     boost::posix_time::time_duration updatePokeTimeInternal();
 
+protected:
     /// @brief Pointer to the common IO service instance.
     asiolink::IOServicePtr io_service_;
 

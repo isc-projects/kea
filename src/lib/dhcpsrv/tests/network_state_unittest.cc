@@ -43,11 +43,11 @@ public:
         MultiThreadingMgr::instance().setMode(false);
     }
 
-    /// @brief  This test verifies the default is enable state.
+    /// @brief This test verifies the default is enable state.
     void defaultTest();
 
-    // This test verifies that it is possible to disable and then enable DHCPv4
-    // service using 'user command' origin.
+    /// @brief This test verifies that it is possible to disable and then enable DHCPv4
+    /// service using 'user command' origin.
     void disableEnableService4UsingUserCommandOriginTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv4
@@ -55,17 +55,17 @@ public:
     void disableEnableService4UsingHACommandOriginTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv4
-    /// service using using 'DB connection' origin.
+    /// service using 'DB connection' origin.
     void disableEnableService4UsingDBConnectionOriginTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv4
     /// service using a combination of origins.
     /// 1. Disable using 'user command' origin 2 times (expect disabled state).
     /// 2. Disable using 'HA command' origin 2 times (expect disabled state).
-    /// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+    /// 3. Disable using 'DB connection' origin 2 times (expect disabled state).
     /// 4. Enable using 'user command' origin 1 time (expect disabled state).
     /// 5. Enable using 'HA command' origin 1 time (expect disabled state).
-    /// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+    /// 6. Enable using 'DB connection' origin 2 times (expect enabled state).
     void disableEnableService4UsingMultipleOriginsTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv6
@@ -77,53 +77,53 @@ public:
     void disableEnableService6UsingHACommandOriginTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv6
-    /// service using using 'DB connection' origin.
+    /// service using 'DB connection' origin.
     void disableEnableService6UsingDBConnectionOriginTest();
 
     /// @brief This test verifies that it is possible to disable and then enable DHCPv6
     /// service using a combination of origins.
     /// 1. Disable using 'user command' origin 2 times (expect disabled state).
     /// 2. Disable using 'HA command' origin 2 times (expect disabled state).
-    /// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+    /// 3. Disable using 'DB connection' origin 2 times (expect disabled state).
     /// 4. Enable using 'user command' origin 1 time (expect disabled state).
     /// 5. Enable using 'HA command' origin 1 time (expect disabled state).
-    /// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+    /// 6. Enable using 'DB connection' origin 2 times (expect enabled state).
     void disableEnableService6UsingMultipleOriginsTest();
 
     /// @brief This test verifies that reset works, so that internal state is reset after
     /// all managers are recreated.
     /// 1. Disable using 'user command' origin 3 times (expect disabled state).
     /// 2. Disable using 'HA command' origin 1 time (expect disabled state).
-    /// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+    /// 3. Disable using 'DB connection' origin 1 time (expect disabled state).
     /// 4. Reset using 'user command' origin (expect disabled state).
     /// 5. Enable using 'HA command' origin 1 time (expect disabled state).
-    /// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+    /// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
     /// 7. Disable using 'user command' origin 3 times (expect disabled state).
     /// 8. Reset using 'user command' origin (expect enabled state).
     void resetUsingUserCommandOriginTest();
 
-    /// This test verifies that reset works, so that internal state is reset after
+    /// @brief This test verifies that reset works, so that internal state is reset after
     /// all managers are recreated.
     /// 1. Disable using 'user command' origin 1 time (expect disabled state).
     /// 2. Disable using 'HA command' origin 3 times (expect disabled state).
-    /// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+    /// 3. Disable using 'DB connection' origin 1 time (expect disabled state).
     /// 4. Reset using 'HA command' origin (expect disabled state).
     /// 5. Enable using 'user command' origin 1 time (expect disabled state).
-    /// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+    /// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
     /// 7. Disable using 'HA command' origin 3 times (expect disabled state).
     /// 8. Reset using 'HA command' origin (expect enabled state).
     void resetUsingHACommandOriginTest();
 
-    /// @brief This test verifies that reset works, so that internal state is  reset after
+    /// @brief This test verifies that reset works, so that internal state is reset after
     /// all managers are recreated.
     /// 1. Disable using 'user command' origin 1 time (expect disabled state).
     /// 2. Disable using 'HA command' origin 1 time (expect disabled state).
-    /// 3. Disable using using 'DB connection' origin 3 time (expect disabled state).
-    /// 4. Reset using using 'DB connection' origin (expect disabled state).
+    /// 3. Disable using 'DB connection' origin 3 time (expect disabled state).
+    /// 4. Reset using 'DB connection' origin (expect disabled state).
     /// 5. Enable using 'user command' origin 1 time (expect disabled state).
-    /// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
-    /// 7. Disable using using 'DB connection' origin 3 times (expect disabled state).
-    /// 8. Reset using using 'DB connection' origin (expect enabled state).
+    /// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
+    /// 7. Disable using 'DB connection' origin 3 times (expect disabled state).
+    /// 8. Reset using 'DB connection' origin (expect enabled state).
     void resetUsingDBConnectionOriginTest();
 
     /// @brief This test verifies that enableAll() enables the service. This test will be
@@ -214,7 +214,7 @@ NetworkStateTest::disableEnableService4UsingHACommandOriginTest() {
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
-// service using using 'DB connection' origin.
+// service using 'DB connection' origin.
 void
 NetworkStateTest::disableEnableService4UsingDBConnectionOriginTest() {
     NetworkState state(NetworkState::DHCPv4);
@@ -225,7 +225,7 @@ NetworkStateTest::disableEnableService4UsingDBConnectionOriginTest() {
     state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using using 'DB connection' origin uses internal counter
+    // Test that using 'DB connection' origin uses internal counter
     state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::Origin::DB_CONNECTION);
@@ -244,10 +244,10 @@ NetworkStateTest::disableEnableService4UsingDBConnectionOriginTest() {
 // service using a combination of origins.
 // 1. Disable using 'user command' origin 2 times (expect disabled state).
 // 2. Disable using 'HA command' origin 2 times (expect disabled state).
-// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+// 3. Disable using 'DB connection' origin 2 times (expect disabled state).
 // 4. Enable using 'user command' origin 1 time (expect disabled state).
 // 5. Enable using 'HA command' origin 1 time (expect disabled state).
-// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+// 6. Enable using 'DB connection' origin 2 times (expect enabled state).
 void
 NetworkStateTest::disableEnableService4UsingMultipleOriginsTest() {
     NetworkState state(NetworkState::DHCPv4);
@@ -322,18 +322,18 @@ NetworkStateTest::disableEnableService6UsingHACommandOriginTest() {
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv6
-// service using using 'DB connection' origin.
+// service using 'DB connection' origin.
 void
 NetworkStateTest::disableEnableService6UsingDBConnectionOriginTest() {
     NetworkState state(NetworkState::DHCPv6);
 
-    // Test that enable/disable using using 'DB connection' origin works
+    // Test that enable/disable using 'DB connection' origin works
     state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_TRUE(state.isServiceEnabled());
 
-    // Test that using using 'DB connection' origin uses internal counter
+    // Test that using 'DB connection' origin uses internal counter
     state.disableService(NetworkState::Origin::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::Origin::DB_CONNECTION);
@@ -352,10 +352,10 @@ NetworkStateTest::disableEnableService6UsingDBConnectionOriginTest() {
 // service using a combination of origins.
 // 1. Disable using 'user command' origin 2 times (expect disabled state).
 // 2. Disable using 'HA command' origin 2 times (expect disabled state).
-// 3. Disable using using 'DB connection' origin 2 times (expect disabled state).
+// 3. Disable using 'DB connection' origin 2 times (expect disabled state).
 // 4. Enable using 'user command' origin 1 time (expect disabled state).
 // 5. Enable using 'HA command' origin 1 time (expect disabled state).
-// 6. Enable using using 'DB connection' origin 2 times (expect enabled state).
+// 6. Enable using 'DB connection' origin 2 times (expect enabled state).
 void
 NetworkStateTest::disableEnableService6UsingMultipleOriginsTest() {
     NetworkState state(NetworkState::DHCPv6);
@@ -387,10 +387,10 @@ NetworkStateTest::disableEnableService6UsingMultipleOriginsTest() {
 // all managers are recreated.
 // 1. Disable using 'user command' origin 3 times (expect disabled state).
 // 2. Disable using 'HA command' origin 1 time (expect disabled state).
-// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+// 3. Disable using 'DB connection' origin 1 time (expect disabled state).
 // 4. Reset using 'user command' origin (expect disabled state).
 // 5. Enable using 'HA command' origin 1 time (expect disabled state).
-// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
 // 7. Disable using 'user command' origin 3 times (expect disabled state).
 // 8. Reset using 'user command' origin (expect enabled state).
 void
@@ -430,10 +430,10 @@ NetworkStateTest::resetUsingUserCommandOriginTest() {
 // all managers are recreated.
 // 1. Disable using 'user command' origin 1 time (expect disabled state).
 // 2. Disable using 'HA command' origin 3 times (expect disabled state).
-// 3. Disable using using 'DB connection' origin 1 time (expect disabled state).
+// 3. Disable using 'DB connection' origin 1 time (expect disabled state).
 // 4. Reset using 'HA command' origin (expect disabled state).
 // 5. Enable using 'user command' origin 1 time (expect disabled state).
-// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
+// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
 // 7. Disable using 'HA command' origin 3 times (expect disabled state).
 // 8. Reset using 'HA command' origin (expect enabled state).
 void
@@ -473,12 +473,12 @@ NetworkStateTest::resetUsingHACommandOriginTest() {
 // all managers are recreated.
 // 1. Disable using 'user command' origin 1 time (expect disabled state).
 // 2. Disable using 'HA command' origin 1 time (expect disabled state).
-// 3. Disable using using 'DB connection' origin 3 time (expect disabled state).
-// 4. Reset using using 'DB connection' origin (expect disabled state).
+// 3. Disable using 'DB connection' origin 3 time (expect disabled state).
+// 4. Reset using 'DB connection' origin (expect disabled state).
 // 5. Enable using 'user command' origin 1 time (expect disabled state).
-// 6. Enable using using 'DB connection' origin 1 time (expect enabled state).
-// 7. Disable using using 'DB connection' origin 3 times (expect disabled state).
-// 8. Reset using using 'DB connection' origin (expect enabled state).
+// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
+// 7. Disable using 'DB connection' origin 3 times (expect disabled state).
+// 8. Reset using 'DB connection' origin (expect enabled state).
 void
 NetworkStateTest::resetUsingDBConnectionOriginTest() {
     NetworkState state(NetworkState::DHCPv4);
@@ -727,6 +727,14 @@ TEST_F(NetworkStateTest, resetUsingDBConnectionOriginTestMultiThreading) {
     resetUsingDBConnectionOriginTest();
 }
 
+TEST_F(NetworkStateTest, resetUsingHACommandOriginTest) {
+    resetUsingHACommandOriginTest();
+}
+
+TEST_F(NetworkStateTest, resetUsingHACommandOriginTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    resetUsingHACommandOriginTest();
+}
 
 TEST_F(NetworkStateTest, enableAllTest) {
     enableAllTest();
@@ -736,7 +744,6 @@ TEST_F(NetworkStateTest, enableAllTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     enableAllTest();
 }
-
 
 TEST_F(NetworkStateTest, delayedEnableAllTest) {
     delayedEnableAllTest();

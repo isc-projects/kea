@@ -303,8 +303,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
             makeHAMtJson(ha_mt, listener, 5, 6),
             dhcp_mt, 4,
             ha_mt, listener, 5, 6
-        }
-        ,
+        },
         {
             "7 explicit DHCP threads, zero thread values",
             makeHAMtJson(ha_mt, listener, 0, 0),
