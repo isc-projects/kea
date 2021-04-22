@@ -10,119 +10,22 @@
 #include <ha_test.h>
 #include <ha_config.h>
 #include <ha_service.h>
-#include <ha_service_states.h>
-#include <asiolink/interval_timer.h>
-#include <asiolink/io_address.h>
-#include <asiolink/io_service.h>
-#include <cc/command_interpreter.h>
-#include <cc/data.h>
-#include <dhcp/classify.h>
-#include <dhcp/dhcp4.h>
-#include <dhcp/dhcp6.h>
-#include <dhcp/duid.h>
-#include <dhcp/hwaddr.h>
-#include <dhcp/pkt4.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/lease.h>
-#include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/network_state.h>
-#include <dhcpsrv/subnet_id.h>
-#include <hooks/parking_lots.h>
-#include <http/basic_auth_config.h>
-#include <http/date_time.h>
-#include <http/http_types.h>
-#include <http/listener.h>
-#include <http/post_request_json.h>
-#include <http/response_creator.h>
-#include <http/response_creator_factory.h>
-#include <http/response_json.h>
+
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/pointer_cast.hpp>
-#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
-
-#include <functional>
-#include <sstream>
-#include <set>
-#include <string>
-#include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+
 using namespace isc::ha;
 using namespace isc::ha::test;
-using namespace isc::hooks;
-using namespace isc::http;
 using namespace isc::util;
 
 namespace {
-
-/// @brief IP address to which HTTP service is bound.
-const std::string SERVER_ADDRESS = "127.0.0.1";
-
-/// @brief Port number to which HTTP service is bound.
-const unsigned short SERVER_PORT = 18123;
-
-/// @brief Request Timeout used in most of the tests (ms).
-const long REQUEST_TIMEOUT = 10000;
-
-/// @brief Persistent connection idle timeout used in most of the tests (ms).
-const long IDLE_TIMEOUT = 10000;
-
-/// @brief Test timeout (ms).
-const long TEST_TIMEOUT = 10000;
-
-/// @brief Generates IPv4 leases to be used by the tests.
-///
-/// @param [out] leases reference to the container where leases are stored.
-void generateTestLeases(std::vector<Lease4Ptr>& leases) {
-    for (uint8_t i = 1; i <= 10; ++i) {
-        uint32_t lease_address = 0xC0000201 + 256 * i;
-        std::vector<uint8_t> hwaddr(6, i);
-        Lease4Ptr lease(new Lease4(IOAddress(lease_address),
-                                   HWAddrPtr(new HWAddr(hwaddr, HTYPE_ETHER)),
-                                   ClientIdPtr(),
-                                   60,
-                                   static_cast<time_t>(1000 + i),
-                                   SubnetID(i)));
-        leases.push_back(lease);
-    }
-}
-
-/// @brief Generates IPv6 leases to be used by the tests.
-///
-/// @param [out] leases reference to the container where leases are stored.
-void generateTestLeases(std::vector<Lease6Ptr>& leases) {
-    std::vector<uint8_t> address_bytes = IOAddress("2001:db8:1::1").toBytes();
-    for (uint8_t i = 1; i <= 10; ++i) {
-        DuidPtr duid(new DUID(std::vector<uint8_t>(10, i)));
-        address_bytes[6] += i;
-        Lease6Ptr lease(new Lease6(Lease::TYPE_NA,
-                                   IOAddress::fromBytes(AF_INET6, &address_bytes[0]),
-                                   duid, 1, 50, 60, SubnetID(i)));
-        leases.push_back(lease);
-    }
-}
-
-/// @brief Returns generated leases in JSON format.
-///
-/// @tparam LeasesVec vector of IPv4 or IPv6 lease pointers.
-/// @param leases reference to the container holding leases to be
-/// converted to JSON format.
-template<typename LeasesVec>
-ConstElementPtr getLeasesAsJson(const LeasesVec& leases) {
-    ElementPtr leases_json = Element::createList();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        leases_json->add((*l)->toElement());
-    }
-    return (leases_json);
-}
 
 /// @brief Derivation of the @c HAService which provides access to
 /// protected methods and members.
@@ -410,9 +313,6 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
         // change if we go to so some sort of dynamic thread instance management.
         EXPECT_EQ(service->listener_->getThreadCount(), scenario.exp_listener_threads_);
     }
-}
-
-TEST_F(HAMtServiceTest, twoServicesFun) {
 }
 
 } // end of anonymous namespace
