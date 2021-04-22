@@ -1059,8 +1059,10 @@ TEST(TLSTest, clientHTTPnoS) {
     timer.cancel();
 
     Expecteds exps;
-    // Botan server hangs.
+    // Botan server hangs before 2.18.
     exps.addTimeout();
+    // Botan error.
+    exps.addError("protocol_version");
     // LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL error (OpenSSL recognizes HTTP).
@@ -1147,8 +1149,9 @@ TEST(TLSTest, unknownClient) {
     timer.cancel();
 
     Expecteds exps;
-    // Botan error.
+    // Botan errors.
     exps.addError("record_overflow");
+    exps.addError("protocol_version");
     // LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // Old OpenSSL error.
@@ -1697,10 +1700,10 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     timer.cancel();
 
     Expecteds exps;
-    // Botan server still hangs.
-    // Reading the Botan code it really expects a TLS record and is fooled
-    // by the input and just want more... To summary it is a little naive.
+    // Botan server hangs before 2.18.
     exps.addTimeout();
+    // Botan behavior was reported and fixed.
+    exps.addError("protocol_version");
     // LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL error (OpenSSL recognizes HTTP).
