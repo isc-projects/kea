@@ -60,8 +60,8 @@ public:
 /// for strings and escape in strings are required. Note the processing
 /// of escapes is greatly simplified compared to ECMA 404 figure 5.
 ///
-/// Added support for '#' to end of line (old), '//' to end of line (new, C++)
-/// and '/*' to '*/' (new, C) comments both before JSON and inside JSON.
+/// Added support for '#' to end of line (bash), '//' to end of line (C++)
+/// and '/*' to '*/' (C) comments both before JSON and inside JSON.
 
 /// Note that this mechanism doesn't check if the JSON structure is well
 /// formed. It merely detects the end of the JSON structure if this structure
@@ -84,7 +84,7 @@ public:
     /// @brief Skipping an end-of-line comment before actual JSON.
     static const int EOL_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 3;
 
-    /// @brief Starting a slash comment before actual JSON.
+    /// @brief Starting one of the comments beginning with a slash before actual JSON.
     static const int START_COMMENT_BEFORE_JSON_ST = SM_DERIVED_STATE_MIN + 4;
 
     /// @brief Skipping a C style comment before actual JSON.
@@ -108,7 +108,7 @@ public:
     /// @brief Skipping an end-of-line comment.
     static const int EOL_COMMENT_ST = SM_DERIVED_STATE_MIN + 11;
 
-    /// @brief Starting a slash comment.
+    /// @brief Starting one of the comments beginning with a slash.
     static const int START_COMMENT_ST = SM_DERIVED_STATE_MIN + 12;
 
     /// @brief Skipping a C style comment.

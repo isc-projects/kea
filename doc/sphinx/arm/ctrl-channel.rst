@@ -176,6 +176,11 @@ that depends on the specific command.
    command to each service individually. Thus, the CA response to the
    controlling client contains an array of individual responses.
 
+.. note::
+
+   Since Kea 1.9.7 it is possible to put comments in the commands as
+   in the configuration file.
+
 .. _ctrl-channel-client:
 
 Using the Control Channel

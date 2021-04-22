@@ -130,7 +130,7 @@ public:
     /// string holds invalid data.
     ///
     /// @param input_json A string holding an input JSON structure.
-    /// @param err_msg A string holding an error message.
+    /// @param err_msg A string holding an expected error message.
     void testInvalidRead(const std::string& input_json,
                          const std::string& err_msg) {
         JSONFeed feed;
@@ -301,8 +301,8 @@ TEST_F(JSONFeedTest, multiLineCommentBefore) {
     testRead(json, expected);
 }
 
-// This test verifies that an error is signalled a slash does not begin
-// a C++ or C style comment before JSON.
+// This test verifies that an error is signalled when a slash does not
+// begin a C++ or C style comment before JSON.
 TEST_F(JSONFeedTest, badCommentBefore) {
     std::string json = "/# foo\n [ ]\n";
     std::string err_msg = "invalid characters /#";
@@ -318,7 +318,7 @@ TEST_F(JSONFeedTest, bashComments) {
 
 // This test verifies that C++ style comments are ignored.
 TEST_F(JSONFeedTest, cppComments) {
-    std::string json = "[ # ahah\n \"foo\", # value?\n \"bar\" ]";
+    std::string json = "[ // ahah\n \"foo\", /// value?\n \"bar\" ]";
     std::string expected = "[ \n \"foo\", \n \"bar\" ]";
     testRead(json, expected);
 }
