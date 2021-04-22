@@ -289,8 +289,8 @@ protected:
 
 public:
 
-    /// @brief Indicates whether the HA service should issue a warning about
-    /// high clock skew between the active servers.
+    /// @brief Issues a warning about high clock skew between the active
+    /// servers if one is warranted.
     ///
     /// The HA service monitors the clock skew between the active servers. The
     /// clock skew is calculated from the local time and the time returned by
@@ -314,8 +314,8 @@ public:
     bool clockSkewShouldWarn();
 
 private:
-    /// @brief Indicates whether the HA service and issues a warning about
-    /// high clock skew between the active servers if warranted.
+    /// @brief Issues a warning about high clock skew between the active
+    /// servers if one is warranted.
     ///
     /// The HA service monitors the clock skew between the active servers. The
     /// clock skew is calculated from the local time and the time returned by
@@ -375,8 +375,6 @@ private:
     ///
     /// @return true if the HA service should enter "terminated" state.
     bool clockSkewShouldTerminateInternal() const;
-
-//protected:
 
     /// @brief Checks if the clock skew is greater than the specified number
     /// of seconds.

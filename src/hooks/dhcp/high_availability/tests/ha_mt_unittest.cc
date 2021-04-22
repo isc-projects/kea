@@ -157,7 +157,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
         bool dhcp_mt_enabled_;          // True if DHCP multi-threading is enabled.
         uint32_t dhcp_threads_;         // Value of DHCP thread-pool-size.
         bool exp_ha_mt_enabled_;        // If HA+MT should be enabled
-        bool exp_listener_;             // if HA+MT should use dedicated listener.
+        bool exp_listener_;             // If HA+MT should use dedicated listener.
         uint32_t exp_listener_threads_; // Expected number of listener threads.
         uint32_t exp_client_threads_;   // Expected number of client threads.
     };
@@ -184,22 +184,22 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
             !ha_mt, !listener, 0, 0
         },
         {
-            "3 dhcp mt disabled, mt enabled",
+            "3 dhcp mt disabled, ha mt enabled",
             makeHAMtJson(ha_mt, listener, 0, 0),
             !dhcp_mt, 4,
             !ha_mt, !listener, 0, 0
         },
         {
-            "4 dhcp mt enabled, mt enabled, listener disabled",
+            "4 dhcp mt enabled, ha mt enabled, listener disabled",
             makeHAMtJson(ha_mt, !listener, 0, 0),
             dhcp_mt, 4,
             ha_mt, !listener, 4, 4
         },
         {
-            "5 dhcp mt enabled, mt enabled, listener enabled",
-            makeHAMtJson(ha_mt, !listener, 0, 0),
+            "5 dhcp mt enabled, ha mt enabled, listener enabled",
+            makeHAMtJson(ha_mt, listener, 0, 0),
             dhcp_mt, 4,
-            ha_mt, !listener, 4, 4
+            ha_mt, listener, 4, 4
         },
         {
             "6 explicit DHCP threads, explicit thread values",
