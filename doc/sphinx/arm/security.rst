@@ -173,50 +173,48 @@ have an impact on deployment security.
 Access permissions and root access
 ----------------------------------
 
-Kea uses the DHCPv4 and DHCPv6 protocols, which assume the server will open privileged
-UDP port 67 (DHCPv4) or 547 (DHCPv6). Under normal circumstances that requires
-root access. However, with the use of the capabilities mechanism on Linux systems,
-Kea can run from an unprivileged account. See :ref:`non-root` for details.
+Kea uses the DHCPv4 and DHCPv6 protocols, which assume the server will open privileged UDP port 67
+(DHCPv4) or 547 (DHCPv6). Under normal circumstances that requires root access. However, with the
+use of the capabilities mechanism on Linux systems, Kea can run from an unprivileged account. See
+:ref:`non-root` Section for details.
 
-CA (Control Agent) can accept incoming http or https connections. The default port is 8000,
-which doesn't require privileged access.
+CA (Control Agent) can accept incoming HTTP or HTTPS connections. The default port is 8000, which
+doesn't require privileged access.
 
 Kea Administrative access
 -------------------------
 
-The three primary Kea daemons (`kea-dhcp4`, `kea-dhcp6` and `kea-dhcp-ddns`) all support
-a control channel, which is implemented as a UNIX socket. The control channel is disabled
-by default, but most configuration examples have it enabled as it's a very popular feature.
-It opens a UNIX socket. To read from or write to this socket, generally root access is
-required, although if Kea is configured to run as non-root, the owner of the process can
-write to it. Access can be controlled using normal file access control on POSIX systems
-(owner, group, others, read/write).
+The three primary Kea daemons (`kea-dhcp4`, `kea-dhcp6` and `kea-dhcp-ddns`) all support a control
+channel, which is implemented as a UNIX socket. The control channel is disabled by default, but most
+configuration examples have it enabled as it's a very popular feature. It opens a UNIX socket. To
+read from or write to this socket, generally root access is required, although if Kea is configured
+to run as non-root, the owner of the process can write to it. Access can be controlled using normal
+file access control on POSIX systems (owner, group, others, read/write).
 
-Kea configuration is controlled by a JSON file on the Kea server. This file can be viewed
-or edited by anyone with file permissions (permissions controlled by the operating system).
-Note that passwords are stored in clear text in the configuration file, so anyone with access
-to read the configuration file can find this information. As a practical matter, anyone with
-permission to edit the configuration file has control over Kea.
+Kea configuration is controlled by a JSON file on the Kea server. This file can be viewed or edited
+by anyone with file permissions (permissions controlled by the operating system). Note that
+passwords are stored in clear text in the configuration file, so anyone with access to read the
+configuration file can find this information. As a practical matter, anyone with permission to edit
+the configuration file has control over Kea.
 
 Database connections
 --------------------
 
 Kea can optionally use an external MySQL, PostgreSQL or Cassandra database to store configuration,
-host reservations, leases or for forensic logging. The use of databases is a popular feature, but
-it is optional. It's also possible to store data in a flat file on disk.
+host reservations, leases or for forensic logging. The use of databases is a popular feature, but it
+is optional. It's also possible to store data in a flat file on disk.
 
 When using a database, Kea will store and use credentials in the form of username, password, host,
 port and database name in order to authenticate with the database. **These are stored in clear text
 in the configuration file.**
 
-Depending on the database configuration, it's also possible to check if the system user matches
-the database username. Consult MySQL or PostgreSQL manuals for details.
+Depending on the database configuration, it's also possible to check if the system user matches the
+database username. Consult MySQL or PostgreSQL manuals for details.
 
 Kea does not support SSL/TLS connection to databases yet. There is a community contributed patch
-available for [SSL support for MySQL](https://github.com/isc-projects/kea/pull/15) and
-[SSL support for Cassandra](https://github.com/isc-projects/kea/pull/118).
-If the communication channel to the database is a concern, the database can be run locally on the
-Kea server.
+available for `SSL support for MySQL <https://github.com/isc-projects/kea/pull/15>`_ and `SSL support
+for Cassandra <https://github.com/isc-projects/kea/pull/118>`_. If the communication channel to the
+database is a concern, the database can be run locally on the Kea server.
 
 Kea Logging
 -----------
@@ -244,10 +242,11 @@ The primary use cases for the cryptographic libraries are:
 - random number generation (but not for usage requiring a crypto grade generator).
 
 For OpenSSL and Botan, only low level crypto interface is used (e.g. libcrypto). Kea does not link
-with libssl. Some dependencies, for instance database client libraries, can also depend on a crypto library.
+with libssl. Some dependencies, for instance database client libraries, can also depend on a crypto
+library.
 
-One way to limit exposure for potential OpenSSL or Botan vulnerabilities is to not use the DDNS.
-The libraries would still be necessary to build and run Kea, but the code would never be used, so any
+One way to limit exposure for potential OpenSSL or Botan vulnerabilities is to not use the DDNS. The
+libraries would still be necessary to build and run Kea, but the code would never be used, so any
 potential bugs in the libraries would never had a chance to be exploited.
 
 TSIG signatures
@@ -262,122 +261,134 @@ Kea supports the following algorithms when signing DNS Updates with TSIG signatu
 - HMAC-SHA384
 - HMAC-SHA512
 
-See :ref:`d2-tsig-key-list-config` for an up to date list.
+See :ref:`d2-tsig-key-list-config` Section for an up to date list.
 
-Kea uses SHA256 to calculate DHCID records. This is irrelevant from the cryptography perspective,
-as the DHCID record is only used to generate unique identifiers for two devices that may have been
+Kea uses SHA256 to calculate DHCID records. This is irrelevant from the cryptography perspective, as
+the DHCID record is only used to generate unique identifiers for two devices that may have been
 assigned the same IP address at different times.
 
 Raw socket support
 ------------------
 
-In principle, Kea DHCPv4 uses raw sockets to receive traffic from clients. The difficulty is with receiving
-packets from devices that don't have an IPv4 address yet. When dealing with direct traffic (where both client
-and server are connected to the same link, not separated by relays), the kernel normally drops the packet as
-the source IP address is 0.0.0.0. Therefore Kea needs to open raw sockets to be able to receive this traffic.
+In principle, Kea DHCPv4 uses raw sockets to receive traffic from clients. The difficulty is with
+receiving packets from devices that don't have an IPv4 address yet. When dealing with direct traffic
+(where both client and server are connected to the same link, not separated by relays), the kernel
+normally drops the packet as the source IP address is 0.0.0.0. Therefore Kea needs to open raw
+sockets to be able to receive this traffic.
 
-However, this is not necessary if all the traffic is coming via relays, which is often the case in many networks.
-In that case normal UDP sockets can be used instead. There is a `dhcp-socket-type` parameter that controls that
-behavior.
+However, this is not necessary if all the traffic is coming via relays, which is often the case in
+many networks. In that case normal UDP sockets can be used instead. There is a `dhcp-socket-type`
+parameter that controls that behavior.
 
 The default is to permit raw socket usage, as it is most versatile.
 
-When using raw sockets, Kea is able to receive raw layer 2 packet, bypassing most firewalls (including iptables).
-This effectively means that when raw sockets are used, the iptables can't be used to block DHCP traffic. This is
-a design choice of the Linux kernel.
+When using raw sockets, Kea is able to receive raw layer 2 packet, bypassing most firewalls
+(including iptables). This effectively means that when raw sockets are used, the iptables can't be
+used to block DHCP traffic. This is a design choice of the Linux kernel.
 
-Kea can be switched to use UDP sockets. This will work when only relayed traffic (via relays) is received. It
-will not work for directly connected devices. While Kea is running with UDP sockets, iptables are working properly.
+Kea can be switched to use UDP sockets. This will work when only relayed traffic (via relays) is
+received. It will not work for directly connected devices. While Kea is running with UDP sockets,
+iptables are working properly.
 
 Remote Administrative Access
 ----------------------------
 
-Kea's Control Agent (CA) exposes a REST API over HTTP or HTTPS (HTTP over TLS). The CA is an optional feature that
-is disabled by default, but it is very popular. When enabled, it listens on loopback address (127.0.0.1 or ::1) by
-default, unless configured otherwise. See :ref:`tls` section about protecting the TLS traffic. Limiting the incoming
-connections with a firewall, such as iptables, is generally a good idea.
+Kea's Control Agent (CA) exposes a REST API over HTTP or HTTPS (HTTP over TLS). The CA is an
+optional feature that is disabled by default, but it is very popular. When enabled, it listens on
+loopback address (127.0.0.1 or ::1) by default, unless configured otherwise. See :ref:`tls` Section
+about protecting the TLS traffic. Limiting the incoming connections with a firewall, such as
+iptables, is generally a good idea.
 
-Note that in HA (High Availability) deployments, DHCP partners connect to each other using CA connection.
+Note that in HA (High Availability) deployments, DHCP partners connect to each other using CA
+connection.
 
 Authentication for REST API
 ---------------------------
 
-Kea 1.9.0 added support for basic HTTP authentication [RFC7617](https://tools.ietf.org/html/rfc7617) to control
-access for incoming REST commands over HTTP. The credentials (username, password) are stored in a local Kea
-configuration file on disk.  The username is logged with the API command so it is possible to determine which
-authenticated user performed each command. The basic HTTP authentication is weak on its own as there are known
-dictionary attacks, but those attacks require man-in-the-middle to get access to the HTTP traffic. That can be
-eliminated by using basic HTTP authentication only over TLS. In fact, if possible, using client cerificates for
-TLS is better than using basic HTTP authentication.
+Kea 1.9.0 added support for basic HTTP authentication `RFC 7617 <https://tools.ietf.org/html/rfc7617>`_
+to control access for incoming REST commands over HTTP. The credentials (username, password) are
+stored in a local Kea configuration file on disk. The username is logged with the API command so it
+is possible to determine which authenticated user performed each command. The basic HTTP
+authentication is weak on its own as there are known dictionary attacks, but those attacks require
+man-in-the-middle to get access to the HTTP traffic. That can be eliminated by using basic HTTP
+authentication only over TLS. In fact, if possible, using client certificates for TLS is better than
+using basic HTTP authentication.
 
-Kea 1.9.2 introduced a new `auth` hook point. With this new hook point it is now possible to develop an external
-hook library to extend the access controls, integrate with another authentication authority or add role-based
+Kea 1.9.2 introduced a new ``auth`` hook point. With this new hook point, it is possible to develop an external
+hook library to extend the access controls, integrate with another authentication authority, or add role-based
 access control to the Control Agent.
 
 Kea processes
 =============
 
-The following sections discuss various aspects of Kea as project and how the team handles vulnerabilities, testing
-and other related aspects.
+The following sections discuss various aspects of Kea as a project and how the team handles
+vulnerabilities, testing, and other related aspects.
 
 Vulnerability Handling
 ----------------------
 
-ISC is an experienced and active participant in the industry standard vulnerability disclosure process and
-maintains accurate documentation on our process and vulnerabilities in ISC software.  Any critical vulnerabilities
-(those that score >5.0 on CVSSv3) are publicly disclosed and documented and reported to Mitre/CERT.
+ISC is an experienced and active participant in the industry standard vulnerability disclosure
+process and maintains accurate documentation on our process and vulnerabilities in ISC software.
+Any critical vulnerabilities (those that score >5.0 on CVSSv3) are publicly disclosed and documented
+and reported to Mitre/CERT.
 
-In case of a security vulnerability in Kea, ISC will notify support customers ahead of the public disclosure, and
-will provide a patch and/or updated installer package that remediates the vulnerability.
+In case of a security vulnerability in Kea, ISC will notify support customers ahead of the public
+disclosure, and will provide a patch and/or updated installer package that remediates the
+vulnerability.
 
-When security update is published, both source code and the native (DEB, RPM and APK) packages are published on the
-same day. This helps taking leverage of the native Linux mechanisms (such as Debian's and Ubuntu's apt or RedHat's dnf)
-to update quickly.
+When security update is published, both source code and the native (DEB, RPM and APK) packages are
+published on the same day. This helps taking leverage of the native Linux mechanisms (such as
+Debian's and Ubuntu's apt or RedHat's dnf) to update quickly.
 
 Code quality and testing
 ------------------------
 
-Kea undergoes extensive tests during its development. The following is an excerpt from all the processes that are used
-to ensure adequate code quality:
+Kea undergoes extensive tests during its development. The following is an excerpt from all the
+processes that are used to ensure adequate code quality:
 
-- Each line of code goes through a formal review before it is accepted. The review process is documented and available
-  publicly.
-- Roughly 50% of the source code is dedicated to unit tests. As of Dec. 2020, there are over 6000 unit tests and the number
-  is growing with most completed tickets. There is a requirement that every new piece of code has to come with unit tests
-  before it is accepted.
-- There are around 1500 system tests available that test Kea. Those simulate correct and invalid situations, covering
-  network packets (mostly DHCP, but also DNS, HTTP, HTTPS and others), command-line usage, API calls, database interactions,
-  scripts and more.
-- There are performance tests with over 80 scenarios that test Kea overall performance and resiliency to various levels
-  of traffic, measuring various metrics (latency, leases per seconds, packets per seconds, CPU usage, memory utilization and
-  others).
-- Kea uses CI (Continuous Integration). This means that great majority of tests (all unit and system tests, and in some cases
-  also performance tests) are run for every commit. Many lighter tests are ran on branches, before the code is even accepted.
-- Negative testing. Many unit and system tests check for negative scenarios, such as incomplete, broken, truncated packets,
-  API commands, configuration files, incorrect sequences (such as sending packets in invalid order) and more.
-- Kea team uses many tools that perform automatic code quality checks, such as danger or our own internal sanity checkers.
-- Kea team uses static code analyzers: Coverity Scan, shellcheck, danger.
+- Each line of code goes through a formal review before it is accepted. The review process is
+  documented and available publicly.
+- Roughly 50% of the source code is dedicated to unit tests. As of Dec. 2020, there are over 6000
+  unit tests and the number is growing with most completed tickets. There is a requirement that
+  every new piece of code has to come with unit tests before it is accepted.
+- There are around 1500 system tests available that test Kea. Those simulate correct and invalid
+  situations, covering network packets (mostly DHCP, but also DNS, HTTP, HTTPS and others),
+  command-line usage, API calls, database interactions, scripts and more.
+- There are performance tests with over 80 scenarios that test Kea overall performance and
+  resiliency to various levels of traffic, measuring various metrics (latency, leases per seconds,
+  packets per seconds, CPU usage, memory utilization and others).
+- Kea uses CI (Continuous Integration). This means that great majority of tests (all unit and system
+  tests, and in some cases also performance tests) are run for every commit. Many lighter tests are
+  ran on branches, before the code is even accepted.
+- Negative testing. Many unit and system tests check for negative scenarios, such as incomplete,
+  broken, truncated packets, API commands, configuration files, incorrect sequences (such as sending
+  packets in invalid order) and more.
+- Kea team uses many tools that perform automatic code quality checks, such as danger or our own
+  internal sanity checkers. - Kea team uses static code analyzers: Coverity Scan, shellcheck, danger.
 - Kea team uses dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN).
 
 Fuzz testing
 ------------
 
-Kea team has a process for running fuzz testing, using [AFL](https://github.com/google/AFL). There are two modes which are run.
-First fuzzes incoming packets, effectively throwing millions of mostly broken packets at Kea per day. The second mode
-fuzzes configuration structures and forces Kea to attempt to load them. Those two modes are being run continuously since
-around 2018. The input seeds (the data being used to generate or "fuzz" other input) are changed every once in a while.
+Kea team has a process for running fuzz testing, using `AFL <https://github.com/google/AFL>`_. There
+are two modes which are run. First fuzzes incoming packets, effectively throwing millions of mostly
+broken packets at Kea per day. The second mode fuzzes configuration structures and forces Kea to
+attempt to load them. Those two modes are being run continuously since around 2018. The input seeds
+(the data being used to generate or "fuzz" other input) are changed every once in a while.
 
 Release integrity
 -----------------
 
-Software releases are signed with PGP, and distributed via the ISC web site, which is itself DNSSEC-signed, so you can be
-confident the software has not been tampered with.
+Software releases are signed with PGP, and distributed via the ISC web site, which is itself
+DNSSEC-signed, so you can be confident the software has not been tampered with.
 
 Bus Factor
 ----------
 
-According to [coreinfrastructure](https://bestpractices.coreinfrastructure.org/), a "bus factor" or a "truck factor" is the
-minimum number of project members that have to suddenly disappear from a project ("hit by a bus") before the project stalls due
-to lack of knowledgeable or competent personnel. It's hard to estimate precisely, but the bus factor for Kea is somewhere around
-5. As of 2021, there are 6 core developers and 2 QA engineers, with many more additional persons getting involved frequently
-(product manager, support team, IT, etc). The team is dispersed around the US and Europe.
+According to `Core Infrastructure project <https://bestpractices.coreinfrastructure.org/>`_, a "bus
+factor" or a "truck factor" is the minimum number of project members that have to suddenly disappear
+from a project ("hit by a bus") before the project stalls due to lack of knowledgeable or competent
+personnel. It's hard to estimate precisely, but the bus factor for Kea is somewhere around 5. As of
+2021, there are 6 core developers and 2 QA engineers, with many more additional persons getting
+involved frequently (product manager, support team, IT, etc). The team is dispersed around the US
+and Europe.
