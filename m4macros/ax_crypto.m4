@@ -395,10 +395,9 @@ then
                [Define to 1 if Botan boost TLS is available])],
               [AC_MSG_RESULT(no)
                BOTAN_BOOST="no"
-               AC_MSG_WARN([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS])])],
+               AC_MSG_WARN([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS support.])])],
         [BOTAN_BOOST="no"
-         AC_MSG_RESULT([Botan was not configured with boost support.])
-         AC_MSG_WARN([Botan cannot be used for TLS support.])])
+         AC_MSG_WARN([Botan cannot be used for TLS support, because it was compiled without boost support, so required headers are missing.])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 if test "x${CRYPTO_NAME}" = "xOpenSSL"

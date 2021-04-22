@@ -695,7 +695,7 @@ TEST(TLSTest, configureError) {
         string key = string(TEST_CA_DIR) + "/kea-client.key";
         TlsContext::configure(ctx1, TlsRole::CLIENT,
                               ca, cert, key, true);
-        // The context is reseted on errors.
+        // The context is reset on errors.
         EXPECT_FALSE(ctx1);
     });
     if (Expecteds::displayErrMsg()) {

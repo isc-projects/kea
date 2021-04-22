@@ -1,3 +1,8 @@
+1893.	[func]		fdupont
+	Botan 2.14 or later can now be used as a crypto library for
+	TLS/HTTPS support in Kea.
+	(Gitlab #1665)
+
 1892.	[func]		fdupont
 	Added + operator as an convenient alias to concat() function
 	in expressions.
