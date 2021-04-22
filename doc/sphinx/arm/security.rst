@@ -241,10 +241,14 @@ The primary use cases for the cryptographic libraries are:
 - TLS support for CA (Control Agent), introduced in Kea 1.9.6
 - TSIG signatures when sending DNS Updates
 - calculating DHCID records when sending DNS Updates.
+- random number generation (but not for usage requiring a crypto grade generator).
 
-One way to limit OpenSSL or Botan exposure is to choose to not use DDNS. The libraries would still be
-necessary to build Kea, but the code would never be used, so any potential bugs in the libraries would
-never had a chance to be exploited.
+For OpenSSL and Botan, only low level crypto interface is used (e.g. libcrypto). Kea does not link
+with libssl. Some dependencies, for instance database client libraries, can also depend on a crypto library.
+
+One way to limit exposure for potential OpenSSL or Botan vulnerabilities is to not use the DDNS.
+The libraries would still be necessary to build and run Kea, but the code would never be used, so any
+potential bugs in the libraries would never had a chance to be exploited.
 
 TSIG signatures
 ---------------
@@ -326,6 +330,10 @@ maintains accurate documentation on our process and vulnerabilities in ISC softw
 In case of a security vulnerability in Kea, ISC will notify support customers ahead of the public disclosure, and
 will provide a patch and/or updated installer package that remediates the vulnerability.
 
+When security update is published, both source code and the native (DEB, RPM and APK) packages are published on the
+same day. This helps taking leverage of the native Linux mechanisms (such as Debian's and Ubuntu's apt or RedHat's dnf)
+to update quickly.
+
 Code quality and testing
 ------------------------
 
@@ -338,13 +346,38 @@ to ensure adequate code quality:
   is growing with most completed tickets. There is a requirement that every new piece of code has to come with unit tests
   before it is accepted.
 - There are around 1500 system tests available that test Kea. Those simulate correct and invalid situations, covering
-  network packets (mostly DHCP, but also DNS and others), command-line usage, API calls, database interactions, scripts and more.
+  network packets (mostly DHCP, but also DNS, HTTP, HTTPS and others), command-line usage, API calls, database interactions,
+  scripts and more.
 - There are performance tests with over 80 scenarios that test Kea overall performance and resiliency to various levels
-  of traffic, measuring various metrics (latency, leases per seconds, packets per seconds and others).
+  of traffic, measuring various metrics (latency, leases per seconds, packets per seconds, CPU usage, memory utilization and
+  others).
 - Kea uses CI (Continuous Integration). This means that great majority of tests (all unit and system tests, and in some cases
   also performance tests) are run for every commit. Many lighter tests are ran on branches, before the code is even accepted.
 - Negative testing. Many unit and system tests check for negative scenarios, such as incomplete, broken, truncated packets,
   API commands, configuration files, incorrect sequences (such as sending packets in invalid order) and more.
-- We use many tools that perform automatic code quality checks.
-- We use static code analyzers: Coverity Scan, shellcheck, danger.
-- We use dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN).
+- Kea team uses many tools that perform automatic code quality checks, such as danger or our own internal sanity checkers.
+- Kea team uses static code analyzers: Coverity Scan, shellcheck, danger.
+- Kea team uses dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN).
+
+Fuzz testing
+------------
+
+Kea team has a process for running fuzz testing, using [AFL](https://github.com/google/AFL). There are two modes which are run.
+First fuzzes incoming packets, effectively throwing millions of mostly broken packets at Kea per day. The second mode
+fuzzes configuration structures and forces Kea to attempt to load them. Those two modes are being run continuously since
+around 2018. The input seeds (the data being used to generate or "fuzz" other input) are changed every once in a while.
+
+Release integrity
+-----------------
+
+Software releases are signed with PGP, and distributed via the ISC web site, which is itself DNSSEC-signed, so you can be
+confident the software has not been tampered with.
+
+Bus Factor
+----------
+
+According to [coreinfrastructure](https://bestpractices.coreinfrastructure.org/), a "bus factor" or a "truck factor" is the
+minimum number of project members that have to suddenly disappear from a project ("hit by a bus") before the project stalls due
+to lack of knowledgeable or competent personnel. It's hard to estimate precisely, but the bus factor for Kea is somewhere around
+5. As of 2021, there are 6 core developers and 2 QA engineers, with many more additional persons getting involved frequently
+(product manager, support team, IT, etc). The team is dispersed around the US and Europe.
