@@ -28,8 +28,13 @@ Some of those checks and updates can be made before actual freeze.
 
 The following steps may involve changing files in the repository.
 
-1. [ ] Create a Kea issue for code changes that will be made due to the following checks:
-1. Check User's Guide sections:
+1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) <br>
+   Example command: `GITLAB_KEA_TOKEN='...' GITLAB_KEA_PREMIUM_TOKEN='...' ./update-code-for-release.py 1.9.7 'Apr 28, 2021' ~/isc/repos/kea/` <br>
+   The script:
+   - creates a Kea issue and MR for release changes,
+   - runs several updating scripts
+   - pushes the changes to MR
+1. Check manually User's Guide sections:
    1. Chapter 1. Introduction
       1. [ ] On what platforms we are running tests using Jenkins? Update Supported Platforms in platforms.rst file.
       1. [ ] Did we add any additional 3rd party software? Update if needed
@@ -40,14 +45,11 @@ The following steps may involve changing files in the repository.
       1. [ ] Check installation hierarchy
       1. [ ] Check and update Build Requirements
       1. [ ] Check configure options against what `./configure -h` says
-1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whatspaces, etc.
+1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitspaces, etc.
 1. [ ] Check AUTHORS, INSTALL, README files in Kea main and premium.
    -  AUTHORS: update credits
    -  README: check "provides" with Release Notes, User Guide (1.3 Kea Software)
-1. [ ] Update information in sources about copyright dates, new version, etc, script: [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/blob/master/kea/build/prepare_kea_release.sh).
-1. [ ] Regenerate parsers using docs.isc.org, script: [regen-parsers.sh](https://gitlab.isc.org/isc-private/qa-dhcp/blob/master/kea/build/regen-parsers.sh).
-
-If changes were made, commit the change, push the branch to the main repository and request a review. Once the changes have been approved, merge the branch to master.
+1. [ ] If changes were made, commit the change, push the branch to the main repository and request a review. Once the changes have been approved, merge the MR to master.
 
 ## Build selection and upload package
 
