@@ -1289,7 +1289,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     boost::weak_ptr<typename QueryPtrType::element_type> weak_query(query);
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(config->getUrl(), config->getTlsContext(),
+    client_->asyncSendRequest(config->getUrl(), config->getTlsContext(),
                              request, response,
         [this, weak_query, parking_lot, config]
             (const boost::system::error_code& ec,
@@ -1592,7 +1592,7 @@ HAService::asyncSendHeartbeat() {
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    client_.asyncSendRequest(partner_config->getUrl(),
+    client_->asyncSendRequest(partner_config->getUrl(),
                              partner_config->getTlsContext(),
                              request, response,
         [this, partner_config]
