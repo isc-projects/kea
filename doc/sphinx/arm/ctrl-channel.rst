@@ -183,20 +183,17 @@ that depends on the specific command.
 
 ::
 
-       POST / HTTP/1.1\r\n
-       Content-Type: application/json\r\n
-       Content-Length: 147\r\n\r\n
-       {
-           "command": "foo",
-           // service is a list
-           "service": [ "dhcp4" ]
-           # command arguments are here.
-           "arguments": {
-               "param1": "value1"/*,
-               "param2": "value2",
-               ...*/
-           }
+   {
+       "command": "foo",
+       // service is a list
+       "service": [ "dhcp4" ]
+       # command arguments are here.
+       "arguments": {
+           "param1": "value1"/*,
+           "param2": "value2",
+           ...*/
        }
+   }
 
 .. _ctrl-channel-client:
 
