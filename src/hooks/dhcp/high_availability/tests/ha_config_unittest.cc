@@ -1342,7 +1342,7 @@ TEST_F(HAConfigTest, passiveBackupDelayedUpdatesLimit) {
         "'delayed-updates-limit' must be set to 0 in the passive backup configuration");
 }
 
-#ifndef WITH_BOTAN
+#if (defined(WITH_OPENSSL) || defined(WITH_BOTAN_BOOST))
 /// Test that TLS parameters are correctly inherited.
 TEST_F(HAConfigTest, tlsParameterInheritance) {
     const std::string ha_config =
@@ -1571,7 +1571,11 @@ TEST_F(HAConfigTest, badTrustAnchor) {
     std::string expected = "bad TLS config for server server1: ";
     expected += "load of CA file '/this-file-does-not-exist' failed: ";
     // Backend dependent.
+#ifdef WITH_OPENSSL
     expected += "No such file or directory";
+#else
+    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+#endif
     testInvalidConfig(patched, expected);
 }
 
@@ -1606,7 +1610,11 @@ TEST_F(HAConfigTest, badCertFile) {
     std::string expected = "bad TLS config for server server1: ";
     expected += "load of cert file '/this-file-does-not-exist' failed: ";
     // Backend dependent.
+#ifdef WITH_OPENSSL
     expected += "No such file or directory";
+#else
+    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+#endif
     testInvalidConfig(patched, expected);
 }
 
@@ -1641,10 +1649,14 @@ TEST_F(HAConfigTest, badKeyFile) {
     std::string expected = "bad TLS config for server server1: ";
     expected += "load of private key file '/this-file-does-not-exist' failed: ";
     // Backend dependent.
+#ifdef WITH_OPENSSL
     expected += "No such file or directory";
+#else
+    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+#endif
     testInvalidConfig(patched, expected);
 }
-#endif
+#endif // WITH_OPENSSL || WITH_BOTAN_BOOST
 
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {
