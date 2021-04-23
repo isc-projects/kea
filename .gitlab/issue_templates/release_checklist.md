@@ -9,7 +9,7 @@ This is thoroughly documented in [the Kea Release Process guide](https://wiki.is
 
 ## Pre-Release Preparation
 
-Some of those checks and updates can be made before actual freeze.
+Some of those checks and updates can be made before the actual freeze.
 
 1. Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
@@ -45,7 +45,7 @@ The following steps may involve changing files in the repository.
       1. [ ] Check installation hierarchy
       1. [ ] Check and update Build Requirements
       1. [ ] Check configure options against what `./configure -h` says
-1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitspaces, etc.
+1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitespaces, etc.
 1. [ ] Check AUTHORS, INSTALL, README files in Kea main and premium.
    -  AUTHORS: update credits
    -  README: check "provides" with Release Notes, User Guide (1.3 Kea Software)
@@ -55,16 +55,16 @@ The following steps may involve changing files in the repository.
 
 This is the last moment to freeze code! :snowflake:
 
-1. [ ] Go to [tarball-internal](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/) Jenkins job and pick last tarball built - it will be a release candidate.
+1. [ ] Go to [tarball-internal](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/) Jenkins job and pick the last tarball built - it will be a release candidate.
 1. [ ] Check tarball before requesting sanity checks from the development team.
    1. Download tarballs from picked Jenkins build
-   1. Check sizes - is new package reasonable?
-   1. Check installation tree, compare it with previous release
+   1. Check sizes - is the new package reasonable?
+   1. Check installation tree, compare it with the previous release
    1. Check installed lib versions
       1. which were updated? (save results)
       1. any of the lib from current release has lower number then corresponding lib from previous release? (!)
    1. Uninstall Kea, check what left (there should be just configuration files)
-   1. Check if all of installed binaries has man page
+   1. Check if all of the installed binaries has man page
       1. if not, is it in the tarball?
       1. are man page up-to-date?
    1. Check if documentation is properly formatted, has correct versions and dates.
@@ -75,21 +75,21 @@ This is the last moment to freeze code! :snowflake:
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick:
       1. rc1 if this is the first selected build for release, it will push selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
-      1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in error)
+      1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
       1. final if the last rc number was ok, this will push selected tarball to repo.isc.org, to a directory with no suffixes
-1. [ ] If none of the results force you to fix and rebuild package, send sanity checks request if not already triggered automatically by `release-tarball-upload-internal`.
+1. [ ] If none of the results forces you to fix and rebuild the package, then send sanity checks request if not already triggered automatically by `release-tarball-upload-internal`.
 
 ## Sanity Checks
 
 1. [ ] Create Sanity Checks announcement, put there:
    - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
-   - a link to an issue created in next step
+   - a link to an issue created in the next step
    - tarballs locations with SHA256 checksums
    - rpm/deb packages locations and versions
 1. [ ] Create a GitLab issue for sanity checks, put there the announcement
 1. [ ] Send the announcement to dhcp-team@isc.org
 
-## Releasing Tarballs
+## Releasing Tarballs and Packages
 
 1. [ ] Update Release Notes with ChangeLog entries
 1. [ ] Upload final tarballs to repo.isc.org
@@ -109,6 +109,10 @@ This is the last moment to freeze code! :snowflake:
    1. [ ] Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. [ ] Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
    1. [ ] For stable releases, change the default version to point to this stable release.
+1. Mark Jenkins jobs with release artifacts to be kept forever: <br>
+   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button: <br>
+   1. [ ] [tarball-internal job](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/)
+   1. [ ] [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
 
 
 ### On the Day of Public Release
@@ -119,8 +123,8 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Support)*** Write release email to *kea-announce*.
  - [ ] ***(Support)*** Write email to *kea-users* (if a major release).
  - [ ] ***(Support)*** Send eligible customers updated links to the Subscription software FTP site.
- - [ ] ***(Support)*** If it is a new major version, sweng will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
- - [ ] ***(Support)*** Update tickets in case of waiting support customers.
+ - [ ] ***(Support)*** If it is a new major version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
+ - [ ] ***(Support)*** Update tickets in case of waiting for support customers.
  - [ ] ***(QA)*** Inform Marketing of the release.
  - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
  - [ ] ***(Marketing)*** Announce on social media.
