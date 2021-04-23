@@ -1290,7 +1290,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
     // Schedule asynchronous HTTP request.
     client_->asyncSendRequest(config->getUrl(), config->getTlsContext(),
-                             request, response,
+                              request, response,
         [this, weak_query, parking_lot, config]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
@@ -1593,8 +1593,8 @@ HAService::asyncSendHeartbeat() {
 
     // Schedule asynchronous HTTP request.
     client_->asyncSendRequest(partner_config->getUrl(),
-                             partner_config->getTlsContext(),
-                             request, response,
+                              partner_config->getTlsContext(),
+                              request, response,
         [this, partner_config]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
