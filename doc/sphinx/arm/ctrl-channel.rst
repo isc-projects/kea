@@ -179,7 +179,24 @@ that depends on the specific command.
 .. note::
 
    Since Kea 1.9.7 it is possible to put comments in the commands as
-   in the configuration file.
+   in the configuration file, for instance:
+
+::
+
+       POST / HTTP/1.1\r\n
+       Content-Type: application/json\r\n
+       Content-Length: 147\r\n\r\n
+       {
+           "command": "foo",
+           // service is a list
+           "service": [ "dhcp4" ]
+           # command arguments are here.
+           "arguments": {
+               "param1": "value1"/*,
+               "param2": "value2",
+               ...*/
+           }
+       }
 
 .. _ctrl-channel-client:
 

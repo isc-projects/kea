@@ -1,3 +1,9 @@
+1889.	[func]		fdupont
+	Added support of comments (shell '#', C++ '//' and C
+	'/*...*/') in JSON commands sent via the control channel or
+	the Control Agent.
+	(Gitlab #1652)
+
 1888.	[func]		tmark
 	Added a new operational mode, HA+MT, to the HA hook library.
 	HA+MT provides direct, multi-threaded HTTP communication

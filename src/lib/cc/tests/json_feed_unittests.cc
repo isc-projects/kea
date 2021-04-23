@@ -153,7 +153,8 @@ public:
 
 };
 
-// This test verifies that toElement should not be called too soon.
+// This test verifies that toElement should not be called before
+// the feed detects the end of the data stream.
 TEST_F(JSONFeedTest, toElementTooSoon) {
     JSONFeed feed;
     ASSERT_NO_THROW(feed.initModel());
