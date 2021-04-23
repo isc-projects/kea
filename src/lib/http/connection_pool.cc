@@ -39,7 +39,13 @@ HttpConnectionPool::stop(const HttpConnectionPtr& connection) {
 
 void
 HttpConnectionPool::shutdown(const HttpConnectionPtr& connection) {
-    connections_.remove(connection);
+    if (util::MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        connections_.remove(connection);
+    } else {
+        connections_.remove(connection);
+    }
+
     connection->shutdown();
 }
 
