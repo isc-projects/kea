@@ -1479,23 +1479,50 @@ Since Kea version 1.9.0 the basic HTTP authentication is supported.
 Multi-threaded Configuration (HA+MT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In a future release, it will be possible to configure HA to use multi-
-threaded communication between peers.  The following parameters have
-been added to HA configuration, in anticipation of this upcoming
-capability:
+HA peer communication consists of specialized API commands sent between
+HA peers.  Prior to Kea 1.9.7, each peer must be paired with a local
+instance of kea-ctrl-agent in order to exchange commands. The agent receives
+HA commands via HTTP, communicates via Linux socket with the local peer to
+carry out the command, and then sends the response back to the requesting
+peer via HTTP.  To send HA commands, each peer opens its own HTTP client
+connection to the URL of each of its peers.
 
--  ``enable-multi-threading`` - enables or disables HA+MT
+As of Kea 1.9.7, it is possible to configure HA to use direct multi-
+threaded communication between peers. We refer to this mode as HA+MT.
+With HA+MT enabled each peer runs its own dedicated, internal HTTP listener
+(i.e. server) which receives and responds to commands directly, thus
+eliminating the need for an agent to carry out HA protocol between
+peers.  In addition, both the listener and client components use multi-
+threading to support multiple, concurrent connections between peers.  By
+eliminating the agent and executing multiple command exchanges in parallel,
+HA throughput between peers should improve considerably in most situations.
 
--  ``http-dedicated-listener`` - enables or disables the creation of a dedicated HTTP
-   listener the server will use to receive HA messages from its peers.
+The following parameters have been added to HA configuration, to support
+HA+MT operation:
+
+-  ``enable-multi-threading`` - enables or disables multi-threading HA
+   peer communication (HA+MT).  Please note that Kea core multi-threading
+   must be enabled in order for HA+MT to operate. When false (the default)
+   the server will operate as before, relying on kea-ctrl-agent and using
+   single-threaded HTTP client processing.
+
+-  ``http-dedicated-listener`` - enables or disables the creation of a
+   dedicated, internal HTTP listener through which the server receive HA
+   messages from its peers.  The internal listener replaces the role of
+   kea-ctrl-agent traffic, allowing peers to send their HA commands directly
+   to each other.  The listener will listen on the peer's ``url``.  When
+   false (the default) the server will rely on kea-ctrl-agent.  This parameter
+   has been provided largely for flexibility and testing, running HA+MT without
+   dedicated listeners enabled will substantially limit HA throughput.
 
 -  ``http-listener-threads`` - maximum number of threads the dedicated listener
-   should use.  A value 0 instructs the server to determine this value
-   automatically.
+   should use.  A value 0 instructs the server to use the same number of threads
+   as Kea core is using for DHCP multi-threading.  Defaults to 0.
 
 -  ``http-client-threads`` - maximum number of threads that should be used
-   to send HA messages to its peers. A value 0 instructs the server to
-   determine this value automatically.
+   to send HA messages to its peers. A value 0 instructs the server to use
+   the same number of threads as Kea core is using for DHCP multi-threading.
+   Defaults to 0.
 
 They are grouped together under a map element, ``multi-threading``
 as illustrated below:
@@ -1518,22 +1545,23 @@ as illustrated below:
                        "this-server-name": "server1",
                        ...
                        "multi-threading": {
-                           "enable-multi-threading": false,
-                           "http-dedicated-listener": false,
-                           "http-listener-threads": 0,
-                           "http-client-threads": 0
+                           "enable-multi-threading": true,
+                           "http-dedicated-listener": true,
+                           "http-listener-threads": 4,
+                           "http-client-threads": 4
                        },
                        ...
                        "peers": [
                        ...
 
-.. note::
 
-   Please note that currently Kea servers will parse these values
-   but they will have no effect on the servers' run time behavior.
-   They are optional and you are encouraged to ignore them at this
-   time.  These will be discussed in greater detail in future
-   releases.
+In the example above, HA+MT is enabled with four threads for the listener
+and four threads for the client.
+
+.. warning::
+
+   This feature is still under active development and should not
+   be used in production environments.  It is off by default.
 
 .. _ha-maintenance:
 
