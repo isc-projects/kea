@@ -868,6 +868,11 @@ private:
         /// @brief Removes closed connections.
         ///
         /// This method should be called before @ref getIdleConnection.
+        /// It detects idle connections closed at the peer side and
+        /// removes all closed connections so the previous case and
+        /// finished connections which can't be reused and which
+        /// posted a @ref processNextRequest
+        ///
         /// @note This should be called in a thread safe context.
         void garbageCollectConnections() {
             for (auto it = connections_.begin(); it != connections_.end();) {
@@ -1385,9 +1390,11 @@ Connection::terminateInternal(const boost::system::error_code& ec,
         } catch (...) {
         }
 
-        // If we're not requesting connection persistence or the connection has timed out,
-        // we should close the socket. We're going to reconnect for the next transaction.
-        if (!current_request_->isPersistent() || (ec == boost::asio::error::timed_out)) {
+        // If we're not requesting connection persistence or the
+        // connection has timed out, we should close the socket.
+        if (!closed_ &&
+            (!current_request_->isPersistent() ||
+             (ec == boost::asio::error::timed_out))) {
             closeInternal();
         }
 
