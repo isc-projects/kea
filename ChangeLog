@@ -1,5 +1,5 @@
 1889.	[func]		fdupont
-	Added support of comments (shell '#', C++ '//' and C
+	Added support for comments (shell '#', C++ '//' and C
 	'/*...*/') in JSON commands sent via the control channel or
 	the Control Agent.
 	(Gitlab #1652)
