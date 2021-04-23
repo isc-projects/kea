@@ -116,6 +116,7 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     if (!size) {
         return;
     }
+
     values.pop();
 
     if ((size != V4ADDRESS_LEN) && (size != V6ADDRESS_LEN)) {
@@ -143,12 +144,13 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(int8_t)) {
@@ -171,12 +173,13 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(int16_t)) {
@@ -201,12 +204,13 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(int32_t)) {
@@ -231,12 +235,13 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(uint8_t)) {
@@ -259,12 +264,13 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(uint16_t)) {
@@ -289,12 +295,13 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
 
-    size_t size;
     string op = values.top();
+    size_t size = op.size();
 
-    if (!(size = op.size())) {
+    if (!size) {
         return;
     }
+
     values.pop();
 
     if (size != sizeof(uint32_t)) {

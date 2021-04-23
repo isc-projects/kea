@@ -1,3 +1,9 @@
+1895.	[func]		razvan
+	Added additional evaluation tokens to extract and print data:
+	addrtotext, int8totext, int16totext, int32totext, uint8totext,
+	uint16totext, uint32totext.
+	(Gitlab #1680)
+
 1894.	[func]		fdupont
 	Implemented 'auth' logger, dedicated to logging access
 	control information, such as basic HTTP authentication.

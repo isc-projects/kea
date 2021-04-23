@@ -493,12 +493,12 @@ public:
     }
 
     /// @brief checks if the given token is a inttotext operator
-    template <typename IntegerType, typename TokenInteger>
+    template <typename IntegerType, typename TokenIntegerType>
     void checkTokenIntToText(const TokenPtr& token,
                              const std::string& expected) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenInteger> inttotext =
-            boost::dynamic_pointer_cast<TokenInteger>(token);
+        boost::shared_ptr<TokenIntegerType> inttotext =
+            boost::dynamic_pointer_cast<TokenIntegerType>(token);
         EXPECT_TRUE(inttotext);
 
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
