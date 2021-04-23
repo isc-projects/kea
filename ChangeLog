@@ -1,3 +1,8 @@
+1890.	[doc]		fdupont
+	Added a new section to the ARM, Kea Security, which describes
+	various security related topics and how to address them.
+	(Gitlab #1587)
+
 1889.	[func]		fdupont
 	Accept comments (shell '#', C++ '//' and C '/*...*/') in
 	JSON commands sent via the control channel or the Control
