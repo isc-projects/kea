@@ -470,7 +470,7 @@ public:
         EXPECT_TRUE(tohex);
     }
 
-    /// @brief checks if the given token is a addrtotext operator
+    /// @brief checks if the given token is an addrtotext operator
     void checkTokenIpAddressToText(const TokenPtr& token,
                                    const std::string& expected) {
         ASSERT_TRUE(token);
