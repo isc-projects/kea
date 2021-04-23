@@ -21,7 +21,7 @@
 /// higher-level hooks classes (LibraryManager, LibraryManagerCollection and
 /// HooksManager).  It
 ///
-/// - sets the the ServerHooks object with three hooks and stores their
+/// - sets the ServerHooks object with three hooks and stores their
 ///   indexes.
 /// - executes the callouts (which are assumed to perform a calculation)
 ///   and checks the results.

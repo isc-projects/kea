@@ -118,9 +118,9 @@ public:
     /// @param backup Flag to set this server as backup server.
     ConstElementPtr createValidJsonConfiguration(bool backup = false) const;
 
-    /// @brief Run parters.
+    /// @brief Run partners.
     ///
-    /// Simulate parters by accepting connections. The HA will send
+    /// Simulate partners by accepting connections. The HA will send
     /// lease updates and waits for answers so will own the query.
     void runPartners();
 

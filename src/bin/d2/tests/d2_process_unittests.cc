@@ -382,7 +382,7 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
     checkQueueStatus();
 
     // Verify that queue manager  failed to start, (i.e. is in INITTED state),
-    // and the the reconfigure flag is false.
+    // and the reconfigure flag is false.
     ASSERT_EQ(D2QueueMgr::INITTED, queue_mgr->getMgrState());
     ASSERT_FALSE(getReconfQueueFlag());
 

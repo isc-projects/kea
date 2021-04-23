@@ -147,7 +147,7 @@ public:
     }
 };
 
-// Verifies permuations of HA+MT configuration and start-up.
+// Verifies permutations of HA+MT configuration and start-up.
 TEST_F(HAMtServiceTest, multiThreadingStartup) {
 
     // Structure describing a test scenario.
@@ -269,7 +269,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
         HAConfigParser parser;
         ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
 
-        // Instanatiate the service.
+        // Instantiate the service.
         TestHAServicePtr service;
         ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
                                                             ha_config)));
@@ -305,7 +305,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
             continue;
         }
 
-        // We sould have a listening listener with the expected number of threads.
+        // We should have a listening listener with the expected number of threads.
         ASSERT_TRUE(service->listener_);
         EXPECT_TRUE(service->listener_->isListening());
         EXPECT_EQ(service->listener_->getThreadPoolSize(), scenario.exp_listener_threads_);

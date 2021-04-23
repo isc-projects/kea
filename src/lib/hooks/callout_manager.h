@@ -170,7 +170,7 @@ public:
 
     /// @brief De-Register a callout on a hook for the current library
     ///
-    /// Searches through the functions registered by the the current library
+    /// Searches through the functions registered by the current library
     /// with the named hook and removes all entries matching the
     /// callout.
     ///

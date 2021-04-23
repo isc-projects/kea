@@ -401,7 +401,7 @@ protected:
 
     /// @brief Returns a string version of the current response status and rcode
     ///
-    /// Renders a string containing the a text label current DNS update status
+    /// Renders a string containing the text label of current DNS update status
     /// and RCODE (if status is DNSClient::SUCCESS)
     ///
     /// @return std::string containing constructed text
@@ -438,7 +438,7 @@ public:
     /// The primary purpose of this function is to provide a consistent way
     /// to identify requests for logging purposes.
     ///
-    /// @return a string with the the request's request ID (currently DHCID)
+    /// @return a string with the request's request ID (currently DHCID)
     std::string getRequestId() const;
 
     /// @brief Fetches the NameChangeRequest status of the transaction.

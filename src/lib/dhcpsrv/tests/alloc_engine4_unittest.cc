@@ -1084,7 +1084,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkSimple) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 
-    // Make sure the lease is not in the the lease mgr (this is only
+    // Make sure the lease is not in the lease mgr (this is only
     // discover).
     ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
 }
@@ -1389,7 +1389,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkSimple) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 
-    // Make sure the lease is in the the lease mgr.
+    // Make sure the lease is in the lease mgr.
     ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease->addr_));
 }
 

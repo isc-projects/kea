@@ -54,7 +54,7 @@ typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 template<typename ValueType>
 class ValueStorage {
 public:
-    /// @brief  Stores the the parameter, its value and the position in the
+    /// @brief  Stores the parameter, its value and the position in the
     /// store.
     ///
     /// If the parameter does not exist in the store, then it will be added,

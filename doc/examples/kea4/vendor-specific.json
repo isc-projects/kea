@@ -74,7 +74,7 @@
         "interfaces-config": {
             "interfaces": ["ethX"]
         },
-// We need to specify the the database used to store leases.
+// We need to specify the database used to store leases.
         "lease-database": {
             "type": "memfile"
         },

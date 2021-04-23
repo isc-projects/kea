@@ -37,8 +37,8 @@ namespace hooks {
 /// particular hook point only have access to the parking lots dedicated to
 /// them.
 ///
-/// The parking lot object supports 5 actions: "park", "reference", "derefence",
-/// "unpark", and "drop".
+/// The parking lot object supports 5 actions: "park", "reference",
+/// "dereference", "unpark", and "drop".
 ///
 /// In the typical case, the server parks the object and the callouts reference
 /// and unpark the objects. Therefore, the @ref ParkingLot object is not passed
@@ -47,7 +47,7 @@ namespace hooks {
 /// and "unpark" operations.
 ///
 /// Parking an object is performed, proactively by the server, before callouts
-/// are invoked.  Referencing (and derefencing) an object is performed by the
+/// are invoked.  Referencing (and dereferencing) an object is performed by the
 /// callouts before the @c CalloutHandle::NEXT_STEP_PARK is returned to the
 /// server.
 ///

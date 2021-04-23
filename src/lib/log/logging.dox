@@ -55,7 +55,7 @@ a new zone has been created, etc.</dd>
 <dt>DEBUG</dt>
 <dd>Debug messages are output at this severity.  Each message also
 has a debug level associated with it, ranging from 0 (the default)
-for high-level messages and level 99 (the maximum) for the the lowest
+for high-level messages and level 99 (the maximum) for the lowest
 level.</dd>
 </dl>
 

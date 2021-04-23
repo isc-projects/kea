@@ -493,7 +493,7 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
     ifstream f(file.c_str());
     ASSERT_TRUE(f.good());
 
-    // Now that's some rough check that the the config written really contains
+    // Now that's some rough check that the config written really contains
     // something that looks like Control-agent configuration.
     ConstElementPtr from_file = Element::fromJSONFile(file, true);
     ASSERT_TRUE(from_file);

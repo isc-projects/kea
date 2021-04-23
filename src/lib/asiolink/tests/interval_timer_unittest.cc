@@ -312,7 +312,7 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
 
     // As long as service runs at least one event handler, loop until
     // we've hit our goals.  It won't return zero unless is out of
-    // work or the the service has been stopped by the test timer.
+    // work or the service has been stopped by the test timer.
     int cnt = 0;
     while (((cnt = io_service_.get_io_service().run_one()) > 0)
            && (repeater_count < 5)) {
@@ -362,7 +362,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // As long as service runs at least one event handler, loop until
     // we've hit our goals.  It won't return zero unless is out of
-    // work or the the service has been stopped by the test timer.
+    // work or the service has been stopped by the test timer.
     int cnt = 0;
     while ((cnt = io_service_.get_io_service().run_one())
             && (one_shot_count < 4)) {

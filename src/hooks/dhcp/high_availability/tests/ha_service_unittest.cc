@@ -4651,7 +4651,7 @@ TEST_F(HAServiceTest, processHAResetWaiting) {
 ///
 /// This is a wrapper class around @c HttpListener which simulates a
 /// partner server. It provides convenient methods to start, stop the
-/// parter (its listener) and to transition the partner between various
+/// partner (its listener) and to transition the partner between various
 /// HA states. Depending on the state and whether the partner is started
 /// or stopped, different answers are returned in response to the
 /// ha-heartbeat commands.

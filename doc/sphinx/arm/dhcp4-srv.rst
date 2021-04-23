@@ -2499,7 +2499,7 @@ Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 
 Also, Kea comes with several example configuration files. Some of them showcase
 how to configure the option 60 and 43. See ``doc/examples/kea4/vendor-specific.json``
-and ``doc/examples/kea6/vivso.json`` in the the Kea sources.
+and ``doc/examples/kea6/vivso.json`` in the Kea sources.
 
 .. note::
 

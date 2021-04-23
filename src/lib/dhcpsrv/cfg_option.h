@@ -428,7 +428,7 @@ public:
     /// @brief Re-create the option in each descriptor based on given definitions
     ///
     /// Invokes @c createDescriptorOption() on each option descriptor in
-    /// each option space, passing in the the given dictionary of option
+    /// each option space, passing in the given dictionary of option
     /// definitions.  If the descriptor's option is re-created, then the
     /// descriptor is updated by calling @c replace().
     ///

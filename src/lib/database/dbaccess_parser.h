@@ -60,7 +60,7 @@ public:
     ///
     /// @return Reference to the internal map of keyword/value pairs
     ///         representing database access information.  This is valid only
-    ///         for so long as the the parser remains in existence.
+    ///         for so long as the parser remains in existence.
     const DatabaseConnection::ParameterMap& getDbAccessParameters() const {
         return (values_);
     }

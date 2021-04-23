@@ -56,7 +56,7 @@ public:
 
     /// @brief Move parameters from pools to the subnet.
     ///
-    /// Move parameters from pool to its partent subnet. Currently the only
+    /// Move parameters from pool to its parent subnet. Currently the only
     /// supported model is ietf-dhcpv6-server. The parameters moved are
     /// valid-lifetime, preferred-lifetime, renew-timer, rebind-timer.
     ///

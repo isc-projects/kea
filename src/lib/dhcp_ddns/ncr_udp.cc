@@ -86,7 +86,7 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 
 void
 NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
-    // create our endpoint and bind the the low level socket to it.
+    // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.
@@ -220,7 +220,7 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 
 void
 NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
-    // create our endpoint and bind the the low level socket to it.
+    // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.

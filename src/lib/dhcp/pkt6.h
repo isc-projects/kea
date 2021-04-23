@@ -70,7 +70,7 @@ public:
     /// the received message and will be the first one to process
     /// server's response). RELAY_GET_FIRST will try to get option from
     /// the first relay only (closest to the client), RELAY_GET_LAST will
-    /// try to get option form the the last relay (closest to the server).
+    /// try to get option form the last relay (closest to the server).
     enum RelaySearchOrder {
         RELAY_SEARCH_FROM_CLIENT = 1,
         RELAY_SEARCH_FROM_SERVER = 2,

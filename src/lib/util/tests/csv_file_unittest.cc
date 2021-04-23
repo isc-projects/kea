@@ -370,7 +370,7 @@ TEST_F(CSVFileTest, openReadAllWrite) {
     ASSERT_NO_THROW(csv->flush());
     csv->close();
 
-    // Check the the file contents are correct.
+    // Check the file contents are correct.
     EXPECT_EQ("animal,age,color\n"
               "cat,10,white\n"
               "lion,15,yellow\n"

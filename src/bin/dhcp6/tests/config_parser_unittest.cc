@@ -2487,7 +2487,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     }
 }
 
-// Goal of this test is to verify the a whole prefix can be delegated and that
+// Goal of this test is to verify that a whole prefix can be delegated and that
 // a whole subnet can be delegated.
 TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
 

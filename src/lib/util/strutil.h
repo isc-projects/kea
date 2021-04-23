@@ -55,7 +55,7 @@ std::string trim(const std::string& instring);
 
 /// \brief Finds the "trimmed" end of a buffer
 ///
-/// Works backward from the the end of the buffer, looking for the first
+/// Works backward from the end of the buffer, looking for the first
 /// character not equal to the trim value, and returns an iterator
 /// pointing that that position.
 ///

@@ -163,7 +163,7 @@ VersionedCSVFile::next(CSVRow& row) {
         case NEEDS_DOWNGRADE:
             // The input header exceeded current schema so:
             // Rows may be as long as input header but not shorter than
-            // the the current schema
+            // the current schema
             if (row.getValuesCount() < getColumnCount()) {
                 columnCountError(row, "too few columns to downgrade");
             } else if (row.getValuesCount() > getInputHeaderCount()) {

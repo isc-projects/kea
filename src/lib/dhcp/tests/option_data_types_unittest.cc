@@ -352,7 +352,7 @@ TEST_F(OptionDataTypesTest, writeBool) {
     ASSERT_EQ(2, buf.size());
     // Check that the first value has not changed.
     EXPECT_EQ(buf[0], 1);
-    // Check the the second value is correct.
+    // Check the second value is correct.
     EXPECT_EQ(buf[1], 0);
 }
 

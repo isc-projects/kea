@@ -395,7 +395,7 @@ public:
 
     /// \brief Add an RDATA to the RRset (string version).
     ///
-    /// This method constructs an Rdata object from the the given
+    /// This method constructs an Rdata object from the given
     /// \c rdata_str in presentation format and adds it to the \c RRset.
     ///
     /// \param rdata_str RDATA string in presentation format.

@@ -293,7 +293,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     ASSERT_NO_THROW(csv->close());
 
 
-    // Check the the file contents are correct.
+    // Check the file contents are correct.
     EXPECT_EQ("animal\n"
               "cat\n"
               "lion\n"

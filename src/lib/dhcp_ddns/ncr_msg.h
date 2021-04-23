@@ -332,12 +332,12 @@ public:
     /// - change-type - indicates whether this request is to add or update
     ///   DNS entries or to remove them.  The value is an integer and is
     ///   0 for add/update and 1 for remove.
-    /// - forward-change - indicates whether the the forward (name to
+    /// - forward-change - indicates whether the forward (name to
     ///   address) DNS zone should be updated.  The value is a string
     ///   representing a boolean.  It is "true" if the zone should be updated
     ///   and "false" if not. (Unlike the keyword, the boolean value is
     ///   case-insensitive.)
-    /// - reverse-change - indicates whether the the reverse (address to
+    /// - reverse-change - indicates whether the reverse (address to
     ///   name) DNS zone should be updated.  The value is a string
     ///   representing a boolean.  It is "true" if the zone should be updated
     ///   and "false" if not. (Unlike the keyword, the boolean value is
@@ -591,7 +591,7 @@ public:
     /// primary purpose of this function is to provide a consistent way to identify
     /// requests for logging purposes.
     ///
-    /// @return a string with the the request's request ID (currently DHCID)
+    /// @return a string with the request's request ID (currently DHCID)
     std::string getRequestId() const {
         return (dhcid_.toStr());
     }
