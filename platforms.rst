@@ -18,15 +18,15 @@ offer support on a "best effort" basis for some.
 Regularly tested platforms
 --------------------------
 
-As of January, 2020, Kea is officially supported on Alpine, CentOS, Fedora,
-Ubuntu, Debian, and FreeBSD systems. Kea-|release| builds have been tested on:
+Kea is officially supported on Alpine, CentOS, Fedora, Ubuntu, Debian,
+and FreeBSD systems. Kea-|release| builds have been tested on:
 
 * Alpine - 3.12
 * CentOS — 7, 8
-* Fedora — 32
-* Ubuntu — 16.04, 18.04, 20.04
+* Fedora — 32, 33
+* Ubuntu — 18.04, 20.04, 20.10
 * Debian — 9, 10
-* FreeBSD — 12.2
+* FreeBSD — 12.1
 
 There are currently no plans to port Kea to Windows systems.
 
@@ -57,7 +57,7 @@ Platforms past their respective EOL dates, such as:
 
 * Alpine — 3.10 (1 May 2021)
 * CentOS — 6 (30 November 2020)
-* Fedora — 31 (30 November 2020)
+* Fedora — 31, 32
 * Ubuntu — 14.04, 18.10, 19.04, 19.10
 * Debian — 8 (30 June 2020)
 * FreeBSD — 10 (31 October 2018)
