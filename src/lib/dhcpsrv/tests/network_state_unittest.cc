@@ -190,7 +190,7 @@ NetworkStateTest::disableEnableService4UsingUserCommandOriginTest() {
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// @brief This test verifies that it is possible to disable and then enable DHCPv4
+// This test verifies that it is possible to disable and then enable DHCPv4
 // service using 'HA command' origin.
 void
 NetworkStateTest::disableEnableService4UsingHACommandOriginTest() {
