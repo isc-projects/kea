@@ -127,9 +127,9 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
 uint8_t
 EvalContext::convertUint8(const std::string& number,
                           const isc::eval::location& loc) {
-    int32_t n = 0;
+    int64_t n = 0;
     try {
-        n = boost::lexical_cast<int32_t>(number);
+        n = boost::lexical_cast<int64_t>(number);
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid integer value in " + number);
     }
@@ -144,9 +144,9 @@ EvalContext::convertUint8(const std::string& number,
 int8_t
 EvalContext::convertInt8(const std::string& number,
                          const isc::eval::location& loc) {
-    int32_t n = 0;
+    int64_t n = 0;
     try {
-        n = boost::lexical_cast<int32_t>(number);
+        n = boost::lexical_cast<int64_t>(number);
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid integer value in " + number);
     }

@@ -64,37 +64,37 @@ address.
 
 % EVAL_DEBUG_INT8TOTEXT Pushing Int8 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents an 8 bits integer.
+being pushed onto the value stack.  This represents an 8 bit integer.
 
 # For use with TokenInt16ToText
 
 % EVAL_DEBUG_INT16TOTEXT Pushing Int16 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents a 16 bits integer.
+being pushed onto the value stack.  This represents a 16 bit integer.
 
 # For use with TokenInt32ToText
 
 % EVAL_DEBUG_INT32TOTEXT Pushing Int32 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents a 32 bits integer.
+being pushed onto the value stack.  This represents a 32 bit integer.
 
 # For use with TokenUInt8ToText
 
 % EVAL_DEBUG_UINT8TOTEXT Pushing UInt8 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents an 8 bits unsigned integer.
+being pushed onto the value stack.  This represents an 8 bit unsigned integer.
 
 # For use with TokenUInt16ToText
 
 % EVAL_DEBUG_UINT16TOTEXT Pushing UInt16 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents a 16 bits unsigned integer.
+being pushed onto the value stack.  This represents a 16 bit unsigned integer.
 
 # For use with TokenUInt32ToText
 
 % EVAL_DEBUG_UINT32TOTEXT Pushing UInt32 %1
 This debug message indicates that the given address string representation is
-being pushed onto the value stack.  This represents a 32 bits unsigned integer.
+being pushed onto the value stack.  This represents a 32 bit unsigned integer.
 
 # For use with TokenMember
 

@@ -476,27 +476,27 @@ Notes:
    |                       |                           | IPv6 address in human  |
    |                       |                           | readable format        |
    +-----------------------+---------------------------+------------------------+
-   | Int8ToText            | int8totext (-1)           | Represents the 8 bits  |
+   | Int8ToText            | int8totext (-1)           | Represents the 8 bit   |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | Int16ToText           | int16totext (-1)          | Represents the 16 bits |
+   | Int16ToText           | int16totext (-1)          | Represents the 16 bit  |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | Int32ToText           | int32totext (-1)          | Represents the 32 bits |
+   | Int32ToText           | int32totext (-1)          | Represents the 32 bit  |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | UInt8ToText           | uint8totext (255)         | Represents the 8 bits  |
+   | UInt8ToText           | uint8totext (255)         | Represents the 8 bit   |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+
-   | UInt16ToText          | uint16totext (65535)      | Represents the 16 bits |
+   | UInt16ToText          | uint16totext (65535)      | Represents the 16 bit  |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+
-   | UInt32ToText          | uint32totext (4294967295) | Represents the 32 bits |
+   | UInt32ToText          | uint32totext (4294967295) | Represents the 32 bit  |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+

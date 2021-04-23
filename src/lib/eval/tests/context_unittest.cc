@@ -493,7 +493,7 @@ public:
     }
 
     /// @brief checks if the given token is a inttotext operator
-    template <typename Integer, typename TokenInteger>
+    template <typename IntegerType, typename TokenInteger>
     void checkTokenIntToText(const TokenPtr& token,
                              const std::string& expected) {
         ASSERT_TRUE(token);
@@ -504,13 +504,13 @@ public:
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
         ValueStack values;
 
-        Integer n;
+        IntegerType n;
 
         try {
-            if (is_signed<Integer>()) {
-                n = static_cast<Integer>(boost::lexical_cast<int32_t>(expected));
+            if (is_signed<IntegerType>()) {
+                n = static_cast<IntegerType>(boost::lexical_cast<int32_t>(expected));
             } else {
-                n = static_cast<Integer>(boost::lexical_cast<uint32_t>(expected));
+                n = static_cast<IntegerType>(boost::lexical_cast<uint32_t>(expected));
             }
         } catch (const boost::bad_lexical_cast& e) {
             FAIL() << "invalid value " << expected << " while expecting "
@@ -518,7 +518,7 @@ public:
                    << e.what();
         }
 
-        values.push(std::string(const_cast<const char*>(reinterpret_cast<char*>(&n)), sizeof(Integer)));
+        values.push(std::string(const_cast<const char*>(reinterpret_cast<char*>(&n)), sizeof(IntegerType)));
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
@@ -1512,7 +1512,7 @@ TEST_F(EvalContextTest, toHexString) {
     checkTokenToHexString(tmp3);
 }
 
-// Test the parsing of a addrtotext expression
+// Test the parsing of an addrtotext expression
 TEST_F(EvalContextTest, addressToText) {
     {
         EvalContext eval(Option::V4);
@@ -1943,27 +1943,27 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("addrtotext('192.100.1.1')",
                "<string>:1.26: syntax error, unexpected end of file, expecting ==");
 
-    // Int8totext requires string storing the binary representation of the 8 bits integer.
+    // Int8totext requires string storing the binary representation of the 8 bit integer.
     checkError("int8totext('0123')",
                "<string>:1.19: syntax error, unexpected end of file, expecting ==");
 
-    // Int16totext requires string storing the binary representation of the 16 bits integer.
+    // Int16totext requires string storing the binary representation of the 16 bit integer.
     checkError("int16totext('01')",
                "<string>:1.18: syntax error, unexpected end of file, expecting ==");
 
-    // Int32totext requires string storing the binary representation of the 32 bits integer.
+    // Int32totext requires string storing the binary representation of the 32 bit integer.
     checkError("int32totext('01')",
                "<string>:1.18: syntax error, unexpected end of file, expecting ==");
 
-    // Uint8totext requires string storing the binary representation of the 8 bits unsigned integer.
+    // Uint8totext requires string storing the binary representation of the 8 bit unsigned integer.
     checkError("uint8totext('0123')",
                "<string>:1.20: syntax error, unexpected end of file, expecting ==");
 
-    // Uint16totext requires string storing the binary representation of the 16 bits unsigned integer.
+    // Uint16totext requires string storing the binary representation of the 16 bit unsigned integer.
     checkError("uint16totext('01')",
                "<string>:1.19: syntax error, unexpected end of file, expecting ==");
 
-    // Uint32totext requires string storing the binary representation of the 32 bits unsigned integer.
+    // Uint32totext requires string storing the binary representation of the 32 bit unsigned integer.
     checkError("uint32totext('01')",
                "<string>:1.19: syntax error, unexpected end of file, expecting ==");
 }
