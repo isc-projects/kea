@@ -1206,8 +1206,10 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     # install freeradius dependencies
     if system in ['centos', 'rhel', 'fedora']:
         install_pkgs('nettle-devel', env=env, check_times=check_times)
-    elif system in ['debian', 'ubuntu']:
+    elif system in ['alpine', 'debian', 'ubuntu']:
         install_pkgs('nettle-dev', env=env, check_times=check_times)
+    elif system in ['freebsd']:
+        install_pkgs('nettle', env=env, check_times=check_times)
     else:
         raise NotImplementedError('no implementation for %s' % system)
 
@@ -1218,7 +1220,8 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     execute('./configure --with-nettle', cwd='freeradius-client', env=env, check_times=check_times)
     execute('make', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('sudo ldconfig', env=env, check_times=check_times)
+    if system != 'alpine':
+        execute('sudo ldconfig', env=env)  # TODO: this shouldn't be needed
     execute('rm -rf freeradius-client')
     log.info('freeradius just installed')
 
@@ -1455,11 +1458,7 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
         if 'docs' in features:
-            if revision.startswith('11.4') or revision.startswith('12.1'):
-                # revision 12.1-RELEASE; 11.4-RELEASE-p9
-                packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
-            else:
-                packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
+            packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()
