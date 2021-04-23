@@ -68,7 +68,7 @@ const char* values[] = {
     "HTTP_CONNECTION_STOP_FAILED", "stopping HTTP connection failed",
     "HTTP_DATA_RECEIVED", "received %1 bytes from %2",
     "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED", "closing persistent connection with %1 as a result of a timeout",
-    "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid_: %3",
+    "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3",
     "HTTP_REQUEST_RECEIVE_START", "start receiving request from %1 with timeout %2",
     "HTTP_SERVER_RESPONSE_RECEIVED", "received HTTP response from %1",
     "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about well-formed response received from %1:\n%2",

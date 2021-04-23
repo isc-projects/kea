@@ -120,6 +120,10 @@ automatically start serving partner's scope when the partner failure is detected
 The server administrator will need to enable this scope manually by
 sending appropriate ha-scopes command.
 
+% HA_CONFIG_DHCP_MT_DISABLED HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled
+This informational message is issued when HA configuration has enabled
+multi-threading while Kea global configuration has multi-threading disabled.
+
 % HA_CONFIG_LEASE_SYNCING_DISABLED lease database synchronization between HA servers is disabled
 This warning message is issued when the lease database synchronization is
 administratively disabled. This is valid configuration if the leases are
@@ -153,10 +157,6 @@ This informational message is issued as a reminder that the lease updates
 are administratively disabled and will not be issued in the HA state to
 which the server has transitioned. The sole argument specifies the state
 into which the server has transitioned.
-
-% HA_CONFIG_DHCP_MT_DISABLED HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled
-This informational message is issued when HA configuration has enabled
-multi-threading while Kea global configuration has multi-threading disabled.
 
 % HA_CONFIG_SYSTEM_MT_UNSUPPORTED HA multi-threading has been disabled, auto-detection of thread support reports 0
 This informational message is issued when HA multi-threading configuration has
