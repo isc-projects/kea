@@ -1,3 +1,8 @@
+1891.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.7 development
+	version.
+	(Gitlab #1820)
+
 1890.	[doc]		fdupont
 	Added a new section to the ARM, Kea Security, which describes
 	various security related topics and how to address them.
