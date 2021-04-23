@@ -117,13 +117,14 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
     values.pop();
 
-    if ((size != V4ADDRESS_LEN) && (size != V6ADDRESS_LEN)) {
+    if ((size != isc::asiolink::V4ADDRESS_LEN) &&
+        (size != isc::asiolink::V6ADDRESS_LEN)) {
         isc_throw(EvalTypeError, "Can not convert to valid address.");
     }
 
     std::vector<uint8_t> binary(op.begin(), op.end());
 
-    if (size == V4ADDRESS_LEN) {
+    if (size == isc::asiolink::V4ADDRESS_LEN) {
         op = asiolink::IOAddress::fromBytes(AF_INET, binary.data()).toText();
     } else {
         op = asiolink::IOAddress::fromBytes(AF_INET6, binary.data()).toText();
