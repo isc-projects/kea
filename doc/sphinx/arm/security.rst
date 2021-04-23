@@ -48,7 +48,7 @@ TLS/HTTPS support is available with either the OpenSSL or the Botan cryptographi
   so should not be considered except for these premium customers.
   Kea TLS support was tested but is not supported on this version.
 
-- OpenSSL versions >= 1.1.x were tested and are supported. Many 
+- OpenSSL versions >= 1.1.x were tested and are supported. Many
   recent operating system versions include TLS 1.3 support.
 
 - OpenSSL 3.x is not yet released and Kea does not build with it.
@@ -147,9 +147,9 @@ Below is a list of considerations should the administrator wish to improve Kea's
 Component-based design
 ----------------------
 
-The Kea architecture is modular, with separate daemons for separate tasks. 
+The Kea architecture is modular, with separate daemons for separate tasks.
 A Kea deployment could include DHCPv4, DHCPv6, and Dynamic DNS daemons, a control agent daemon run on each application server, the kea-lfc utility for doing periodic lease file cleanup, and MySQL and or PostgreSQL databases, run either locally on the application servers or accessed over the internal network, and a Stork monitoring system.
-This modular architecture allows the administrator to minimize the attack surface by minimizing the code that is loaded and running. 
+This modular architecture allows the administrator to minimize the attack surface by minimizing the code that is loaded and running.
 For example, kea-dhcp-ddns should not be run unless DNS updates are required. Similarly, kea-lfc will never be triggered (and can be safely removed or never installed) if memfile is not used.
 You can minimize potential Kea security issues by running only those processes required in your environment.
 
@@ -165,7 +165,7 @@ The CA (Control Agent) can accept incoming HTTP or HTTPS connections. The defaul
 doesn't require privileged access.
 
 Securing Kea administrative access
--------------------------
+----------------------------------
 
 The three primary Kea daemons (`kea-dhcp4`, `kea-dhcp6` and `kea-dhcp-ddns`) all support a control
 channel, which is implemented as a UNIX socket. The control channel is disabled by default, but most
@@ -178,11 +178,11 @@ Kea configuration is controlled by a JSON file on the Kea server. This file can 
 by anyone with file permissions (permissions controlled by the operating system). Note that
 passwords are stored in clear text in the configuration file, so anyone with access to read the
 configuration file can find this information. As a practical matter, anyone with permission to edit
-the configuration file has control over Kea. 
+the configuration file has control over Kea.
 Limiting user permission to read or write the Kea configuration file is an important security step.
 
 Securing database connections
---------------------
+-----------------------------
 
 Kea can optionally use an external MySQL, PostgreSQL or Cassandra database to store configuration,
 host reservations, leases or for forensic logging. The use of databases is a popular feature, but it
@@ -201,7 +201,7 @@ for Cassandra <https://github.com/isc-projects/kea/pull/118>`_. If the communica
 database is a concern, the database can be run locally on the Kea server.
 
 Information leakage through logging
------------
+-----------------------------------
 
 Kea can log a whole configuration with included passwords and secrets in it. This problem has been
 fixed in Kea 1.9.7 by replacing the value of all entries finishing by `password` or `secret` with
@@ -272,13 +272,13 @@ used to block DHCP traffic. This is a design choice of the Linux kernel.
 Kea can be switched to use UDP sockets. This is an option when all traffic is relayed. It will not work for directly connected devices. While Kea is limited to UDP sockets,
 iptables should work properly.
 
-If raw sockets are not required, disabling this access can improve security. 
+If raw sockets are not required, disabling this access can improve security.
 
 Remote Administrative Access
 ----------------------------
 
 Kea's Control Agent (CA) exposes a REST API over HTTP or HTTPS (HTTP over TLS). The CA is an
-optional feature that is disabled by default, but it is very popular. When enabled, it listens on the 
+optional feature that is disabled by default, but it is very popular. When enabled, it listens on the
 loopback address (127.0.0.1 or ::1) by default, unless configured otherwise. See :ref:`tls` Section
 about protecting the TLS traffic. Limiting the incoming connections with a firewall, such as
 iptables, is generally a good idea.
@@ -287,7 +287,7 @@ Note that in HA (High Availability) deployments, DHCP partners connect to each o
 connection.
 
 Authentication for Kea's REST API
----------------------------
+---------------------------------
 
 Kea 1.9.0 added support for basic HTTP authentication `RFC 7617 <https://tools.ietf.org/html/rfc7617>`_
 to control access for incoming REST commands over HTTP. The credentials (username, password) are
@@ -303,7 +303,7 @@ hook library to extend the access controls, integrate with another authenticatio
 access control to the Control Agent.
 
 Kea security processes
-=============
+======================
 
 The following sections discuss how the development team ensures code quality and handles vulnerabilities.
 
@@ -344,8 +344,8 @@ processes that are used to ensure adequate code quality:
 - Negative testing. Many unit and system tests check for negative scenarios, such as incomplete,
   broken, truncated packets, API commands, configuration files, incorrect sequences (such as sending
   packets in invalid order) and more.
-- The Kea development team uses many tools that perform automatic code quality checks, such as danger, as well as 
-  internally-developed sanity checkers. 
+- The Kea development team uses many tools that perform automatic code quality checks, such as danger, as well as
+  internally-developed sanity checkers.
 - The Kea team uses static code analyzers: Coverity Scan, shellcheck, danger.
 - The Kea team uses dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN).
 
