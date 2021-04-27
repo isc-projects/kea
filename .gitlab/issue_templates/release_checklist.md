@@ -78,10 +78,16 @@ This is the last moment to freeze code! :snowflake:
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
       1. final if the last rc number was ok, this will push the selected tarball to repo.isc.org, to a directory with no suffixes
    1. Submit the job that will automatically:
-      1. Upload the tarballs upload <br>
+      1. Upload the tarballs <br>
       and if this is not the final version:
       1. Create a GitLab issue for sanity checks, put there the announcement
-      1. Send Sanity Checks announcement via email to dhcp-team@isc.org and to DHCP channel on Mattermost.
+      1. Send Sanity Checks announcement via email to dhcp-team@isc.org and to DHCP channel on Mattermost.<br>
+      The announcement includes:
+         - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
+         - a link to the GitLab issue
+         - tarballs locations with SHA256 checksums
+         - rpm/deb packages locations and versions
+
 
 ## Releasing Tarballs and Packages
 
