@@ -42,7 +42,7 @@ The following steps may involve changing files in the repository.
    1. Chapter 2. Quick Start
       1. [ ] Has the default installation process changed (for kea and hooks)? If yes, are those changes documented and highlighted in the release notes?
    1. Chapter 3. Installation
-      1. [ ] Check installation hierarchy
+      1. [ ] Check installation hierarchy (this is also automatically checked at the end of [ut-extended job](https://jenkins.aws.isc.org/job/kea-dev/job/ut-extended/))
       1. [ ] Check and update Build Requirements
       1. [ ] Check configure options against what `./configure -h` says
 1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitespaces, etc.
@@ -51,7 +51,7 @@ The following steps may involve changing files in the repository.
    -  README: check "provides" with Release Notes, User Guide (1.3 Kea Software)
 1. [ ] If changes were made, commit the change, push the branch to the main repository and request a review. Once the changes have been approved, merge the MR to master.
 
-## Build selection and upload package
+## Build selection, tarballs upload and sanity checks
 
 This is the last moment to freeze code! :snowflake:
 
@@ -69,25 +69,19 @@ This is the last moment to freeze code! :snowflake:
       1. are man page up-to-date?
    1. Check if documentation is properly formatted, has correct versions and dates.
       1. it's advised to search for previous version numbers, some of them are statically added in statements that are no longer valid
-1. [ ] Upload tarballs to repo.isc.org using Jenkins
+1. [ ] Upload tarballs to repo.isc.org using Jenkins and send sanity checks request.
    1. Go to [release-tarball-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload-internal/) Jenkins job.
    1. Click "Build with Parameters"
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick:
-      1. rc1 if this is the first selected build for release, it will push selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
+      1. rc1 if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
-      1. final if the last rc number was ok, this will push selected tarball to repo.isc.org, to a directory with no suffixes
-1. [ ] If none of the results forces you to fix and rebuild the package, then send sanity checks request if not already triggered automatically by `release-tarball-upload-internal`.
-
-## Sanity Checks
-
-1. [ ] Create Sanity Checks announcement, put there:
-   - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
-   - a link to an issue created in the next step
-   - tarballs locations with SHA256 checksums
-   - rpm/deb packages locations and versions
-1. [ ] Create a GitLab issue for sanity checks, put there the announcement
-1. [ ] Send the announcement to dhcp-team@isc.org
+      1. final if the last rc number was ok, this will push the selected tarball to repo.isc.org, to a directory with no suffixes
+   1. Submit the job that will automatically:
+      1. Upload the tarballs upload <br>
+      and if this is not the final version:
+      1. Create a GitLab issue for sanity checks, put there the announcement
+      1. Send Sanity Checks announcement via email to dhcp-team@isc.org and to DHCP channel on Mattermost.
 
 ## Releasing Tarballs and Packages
 
