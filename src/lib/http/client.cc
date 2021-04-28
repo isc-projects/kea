@@ -868,10 +868,24 @@ private:
         /// @brief Removes closed connections.
         ///
         /// This method should be called before @ref getIdleConnection.
-        /// It detects idle connections closed at the peer side and
-        /// removes all closed connections so the previous case and
-        /// finished connections which can't be reused and which
-        /// posted a @ref processNextRequest
+        ///
+        /// In a first step it closed not usable idle connections
+        /// (idle means no current transaction and not closed,
+        /// usable means the peer side did not close it at that time).
+        /// In a second step it removes (collects) closed connections.
+        ///
+        /// @note a connection is closed when the transaction is finished
+        /// and the connection is persistent, or when the connection was
+        /// idle and the first step of the garbage collector detects was
+        /// closed by the peer side so is not usable.
+        ///
+        /// @note there are two races here:
+        ///  - the peer side closes the connection after the first step
+        ///  - a not persistent connection finishes its transaction and
+        ///    closes
+        /// The second race is avoided by setting the closed flag before
+        /// the started flag. And by unconditionally post a process next
+        /// request action.
         ///
         /// @note This should be called in a thread safe context.
         void garbageCollectConnections() {
@@ -891,10 +905,8 @@ private:
         /// first connection which is not currently in a transaction and
         /// is not closed.
         ///
-        /// @note @ref garbageCollectConnections should be called before
-        /// so the closed connections are not scanned (but as a connection
-        /// can have been closed since the garbage collection the flag
-        /// still has to be checked for).
+        /// @note @ref garbageCollectConnections should be called before.
+        /// This removes connections which were closed at that time.
         ///
         /// @return The first idle connection or an empty pointer if
         /// all connections are busy or closed.
@@ -1041,7 +1053,7 @@ private:
     /// discards all of its queued requests while removing
     /// the destination from the list of known destinations.
     ///
-    /// @todo not used: remove it?
+    /// @note not used yet.
     ///
     /// @param url URL of the destination to be removed.
     /// @param tls_context TLS context for the destination to be removed.
