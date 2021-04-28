@@ -576,8 +576,15 @@ available to ISC customers with a paid support contract.
 In many legal jurisdictions, companies, especially ISPs, must record
 information about the addresses they have leased to DHCP clients. This
 library is designed to help with that requirement. If the information
-that it records is sufficient, it may be used directly. If a
-jurisdiction requires that a different set of information be saved, users
+that it records is sufficient, it may be used directly.
+
+Since Kea 1.9.8, the library supports custom format for logging information
+that can be extracted either from the incoming packet or from the server
+response packet.
+
+To note that the custom format can not be used for command channel commands.
+
+If a jurisdiction requires that a different set of information be saved, users
 may use this library as a template or example to create their own custom logging
 hooks.
 
@@ -942,6 +949,23 @@ script and are configured by setting:
 
 -  portrotate - external executable or script called with the name of the file
    that had been opened (Kea will not wait for the process to finish)
+
+The ``request-parser-format`` and ``response-parser-format`` can be used to
+extract and log data from the incoming packet and server response packet
+respectively. The configured value is an evaluated parsed expression returning a
+string. A list of tokens is described in the server classification process.
+If any of them is configured, the default logging format is not used.
+If both of them are configured, the resulting log message is constructed by
+concatenating the logged data extracted from the request and the logged data
+extracted from the response.
+
+To note that some data might be available in the request or in the response only
+and that the same data might differ in the incoming packet from the one in the
+response packet.
+
+The lease client context can be printed using only the default format, as this
+information is not directly stored in the incoming packet or in the server
+response packet.
 
 Additional parameters for the database connection can be specified, e.g:
 
