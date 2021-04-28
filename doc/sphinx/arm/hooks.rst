@@ -585,14 +585,35 @@ updating the core code. In addition by using the hooks features, those
 users who do not need to log this information can leave it out and avoid
 any performance penalties.
 
+Since Kea 1.9.8, the library supports additional parameters to control the rotating
+log process.
+
 Log File Naming
 ~~~~~~~~~~~~~~~
 
 The names for the log files have the following form:
 
+Legal file names, if using ``day``, ``month`` or ``year`` as time unit:
+
 ::
 
    path/base-name.CCYYMMDD.txt
+
+where CC represents century, YY represents current year, MM represents current
+month and DD represents current day.
+
+Legal file names, if using ``second`` as time unit:
+
+::
+
+   path/base-name.TXXXXXXXXXXXXXXXXXXXX.txt
+
+where XXXXXXXXXXXXXXXXXXXX represents time in seconds since epoch.
+
+To note that when using ``second`` as time unit, the file will be rotated when
+the ``count`` number of seconds pass. In contrast, when using ``day``, ``month``
+or ``year`` as time unit, the file will be rotated whenever the ``count`` th day,
+month or year starts respectively.
 
 The "path" and "base-name" are supplied in the configuration as
 described below; see :ref:`forensic-log-configuration`. The next part of the name is the
@@ -899,6 +920,26 @@ Two hooks library parameters for text file are supported:
 -  base-name - an arbitrary value which is used in conjunction with the
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
+
+-  time-unit - configures the time unit used to rotate the log file. Valid
+   values are ``second``, ``day``, ``month`` or ``year``. It defaults to ``day``.
+
+-  count - configures the number of time units that need to pass until the log
+   file is rotated. It can be any positive number, or 0 which disabled log rotate.
+   It defaults to 1.
+
+To note that if log rotate is disabled, a new file will be created when the
+library is loaded and the new file name is different that any previous file name.
+
+Additional actions can be performed just before closing the old file and after
+opening the new file. These actions must point to an external executable or
+script and are configured by setting:
+
+-  prerotate - external executable or script called with the name of the file
+   that will be closed (Kea will not wait for the process to finish)
+
+-  portrotate - external executable or script called with the name of the file
+   that had been opened (Kea will not wait for the process to finish)
 
 Additional parameters for the database connection can be specified, e.g:
 
