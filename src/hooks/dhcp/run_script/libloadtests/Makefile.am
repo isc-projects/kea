@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/run_script -I$(top_srcdir)/src/hooks/dhcp/run_script
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DLIBRUN_SCRIPT_SO=\"$(abs_top_builddir)/src/hooks/dhcp/run_script/.libs/libdhcp_run_script.so\"
+AM_CPPFLAGS += -DRUN_SCRIPT_TEST_SH=\"$(abs_top_builddir)/src/hooks/dhcp/run_script/tests/run_script_test.sh\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

@@ -75,7 +75,7 @@ public:
 TEST_F(LibLoadTest, validLoad) {
     // Prepare parameters for the callout parameters library.
     ElementPtr params = Element::createMap();
-    ElementPtr name = Element::create("test_script.sh");
+    ElementPtr name = Element::create(RUN_SCRIPT_TEST_SH);
     params->set("name", name);
     ElementPtr sync = Element::create(false);
     params->set("sync", sync);
@@ -104,12 +104,16 @@ TEST_F(LibLoadTest, invalidLoad) {
     params->set("name", name);
     EXPECT_FALSE(loadLibs());
 
-    // Use valid name parameter type but use invalid sync parameter type.
+    // Use invalid name parameter.
     name = Element::create("script_name.sh");
+    params->set("name", name);
+    EXPECT_FALSE(loadLibs());
+
+    // Use valid name parameter type but use invalid sync parameter type.
+    name = Element::create(RUN_SCRIPT_TEST_SH);
     params->set("name", name);
     ElementPtr sync = Element::create("data");
     params->set("sync", sync);
-
     EXPECT_FALSE(loadLibs());
 }
 

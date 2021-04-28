@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <testutils/gtest_utils.h>
+
 namespace {
 
 using namespace isc;
@@ -341,6 +343,21 @@ TEST_F(ProcessSpawnTest, isRunning) {
 
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+}
+
+// This test verifies that the checkPermissions function throws if the file does
+// not exist and returns true or false if the file is or it is not executable.
+TEST_F(ProcessSpawnTest, checkPermissions) {
+    ProcessSpawn no_process(io_service_, "no-file");
+    EXPECT_THROW_MSG(no_process.checkPermissions(), ProcessSpawnError,
+                     "File not found: no-file");
+
+    std::string name = TEST_SCRIPT_SH;
+    name += ".in";
+    ProcessSpawn invalid_process(io_service_, name);
+    ASSERT_FALSE(invalid_process.checkPermissions());
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH);
+    ASSERT_TRUE(process.checkPermissions());
 }
 
 } // end of anonymous namespace

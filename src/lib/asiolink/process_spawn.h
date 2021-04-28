@@ -137,6 +137,12 @@ public:
     /// @param pid A process pid.
     void clearState(const pid_t pid);
 
+    /// @brief Check executable permissions.
+    ///
+    /// @return true if file has executable permissions, false otherwise.
+    /// @throw ProcessSpawnError if file does not exist.
+    bool checkPermissions() const;
+
 private:
 
     /// @brief A smart pointer to the implementation of this class.

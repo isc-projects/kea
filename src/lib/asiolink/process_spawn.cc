@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 using namespace std;
@@ -130,6 +131,12 @@ public:
     ///
     /// @param pid A process pid.
     void clearState(const pid_t pid);
+
+    /// @brief Check executable permissions.
+    ///
+    /// @return true if file has executable permissions, false otherwise.
+    /// @throw ProcessSpawnError if file does not exist.
+    bool checkPermissions() const;
 
 private:
 
@@ -357,6 +364,18 @@ ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
     : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
 }
 
+bool
+ProcessSpawnImpl::checkPermissions() const {
+    struct stat st;
+    if (stat(executable_.c_str(), &st)) {
+        isc_throw(ProcessSpawnError, "File not found: " << executable_);
+    }
+    if (st.st_mode & S_IEXEC) {
+        return (true);
+    }
+    return (false);
+}
+
 std::string
 ProcessSpawn::getCommandLine() const {
     return (impl_->getCommandLine());
@@ -385,6 +404,11 @@ ProcessSpawn::getExitStatus(const pid_t pid) const {
 void
 ProcessSpawn::clearState(const pid_t pid) {
     return (impl_->clearState(pid));
+}
+
+bool
+ProcessSpawn::checkPermissions() const {
+    return (impl_->checkPermissions());
 }
 
 } // namespace asiolink
