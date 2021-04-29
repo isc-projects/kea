@@ -427,7 +427,7 @@ TEST_F(FlexOptionTest, optionConfigBadAdd) {
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     string expected = "can't parse add expression [ifelse('a','b','c')] ";
     expected += "error: <string>:1.11: syntax error, ";
-    expected += "unexpected \",\", expecting ==";
+    expected += "unexpected \",\", expecting == or +";
     EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
@@ -531,7 +531,7 @@ TEST_F(FlexOptionTest, optionConfigBadSupersede) {
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     string expected = "can't parse supersede expression [ifelse('a','b','c')] ";
     expected += "error: <string>:1.11: syntax error, ";
-    expected += "unexpected \",\", expecting ==";
+    expected += "unexpected \",\", expecting == or +";
     EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
@@ -635,7 +635,7 @@ TEST_F(FlexOptionTest, optionConfigBadRemove) {
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     string expected = "can't parse remove expression ['abc'] error: ";
     expected += "<string>:1.6: syntax error, unexpected end of file, ";
-    expected += "expecting ==";
+    expected += "expecting == or +";
     EXPECT_EQ(expected,impl_->getErrMsg());
 }
 

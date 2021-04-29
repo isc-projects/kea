@@ -1408,6 +1408,34 @@ TEST_F(EvalContextTest, ifElse) {
     checkTokenIfElse(tmp4);
 }
 
+// Test the parsing of a plus operator and ifelse expression
+TEST_F(EvalContextTest, plusIfElse) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("'foo' + ifelse('a' == 'a', 'bar', '') == 'foobar'"));
+
+    ASSERT_EQ(10, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+    TokenPtr tmp5 = eval.expression.at(4);
+    TokenPtr tmp6 = eval.expression.at(5);
+    TokenPtr tmp7 = eval.expression.at(6);
+    TokenPtr tmp8 = eval.expression.at(7);
+
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "a");
+    checkTokenString(tmp3, "a");
+    checkTokenEq(tmp4);
+    checkTokenString(tmp5, "bar");
+    checkTokenString(tmp6, "");
+    checkTokenIfElse(tmp7);
+    checkTokenConcat(tmp8);
+}
+
 // Test the parsing of a hexstring expression
 TEST_F(EvalContextTest, toHexString) {
     EvalContext eval(Option::V4);
