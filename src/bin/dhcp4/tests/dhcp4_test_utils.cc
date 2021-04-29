@@ -730,8 +730,9 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
     bool drop = false;
-    Dhcpv4Exchange ex(srv_.alloc_engine_, query,
-                      srv_.selectSubnet(query, drop));
+    Subnet4Ptr subnet = srv_.selectSubnet(query, drop);
+    EXPECT_FALSE(drop);
+    Dhcpv4Exchange ex(srv_.alloc_engine_, query, subnet, drop);
     EXPECT_FALSE(drop);
     return (ex);
 }

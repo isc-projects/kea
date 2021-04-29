@@ -224,10 +224,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
             isc_throw(DhcpConfigError, "special class '" << name
                       << "' only-if-required flag must be false");
         }
-        if (depend_on_known) {
-            isc_throw(DhcpConfigError, "special class '" << name
-                      << "' must not depend on 'KNOWN'/'UNKNOWN' classes");
-        }
+        // depend_on_known is now allowed
     }
 
     // Add the client class definition

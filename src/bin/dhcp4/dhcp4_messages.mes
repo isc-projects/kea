@@ -589,6 +589,11 @@ processing is finished.
 Packet details and thread identifiers are included for both packets in
 this warning message.
 
+% DHCP4_PACKET_DROP_0013 dropped as member of the special class 'DROP' after host reservation lookup: %1
+This debug message is emitted when an incoming packet was classified
+after host reservation lookup into the special class 'DROP' and dropped.
+The packet details are displayed.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable

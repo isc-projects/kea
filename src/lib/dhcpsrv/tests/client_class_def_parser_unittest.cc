@@ -1258,8 +1258,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
 }
 
-// Verifies that the special DROP class can't be required or
-// dependent on KNOWN/UNKNOWN
+// Verifies that the special DROP class can't be required.
 TEST_F(ClientClassDefListParserTest, dropCheckError) {
     std::string cfg_text =
         "[ \n"
@@ -1281,6 +1280,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
 
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
 
+    // This constraint was relaxed in #1815.
     cfg_text =
         "[ \n"
         "   { \n"
@@ -1289,7 +1289,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
         "   } \n"
         "] \n";
 
-    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
 // Verify the ability to configure lease lifetime triplet.

@@ -73,8 +73,9 @@ public:
     /// used by the server.
     /// @param query Pointer to the client message.
     /// @param subnet Pointer to the subnet to which the client belongs.
+    /// @param drop if it is true the packet will be dropped.
     Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query,
-                   const Subnet4Ptr& subnet);
+                   const Subnet4Ptr& subnet, bool& drop);
 
     /// @brief Initializes the instance of the response message.
     ///

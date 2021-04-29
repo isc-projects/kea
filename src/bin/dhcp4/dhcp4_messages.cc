@@ -106,6 +106,7 @@ extern const isc::log::MessageID DHCP4_PACKET_DROP_0009 = "DHCP4_PACKET_DROP_000
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0010 = "DHCP4_PACKET_DROP_0010";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0011 = "DHCP4_PACKET_DROP_0011";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0012 = "DHCP4_PACKET_DROP_0012";
+extern const isc::log::MessageID DHCP4_PACKET_DROP_0013 = "DHCP4_PACKET_DROP_0013";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0001 = "DHCP4_PACKET_NAK_0001";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
@@ -259,6 +260,7 @@ const char* values[] = {
     "DHCP4_PACKET_DROP_0010", "dropped as member of the special class 'DROP': %1",
     "DHCP4_PACKET_DROP_0011", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4",
     "DHCP4_PACKET_DROP_0012", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4",
+    "DHCP4_PACKET_DROP_0013", "dropped as member of the special class 'DROP' after host reservation lookup: %1",
     "DHCP4_PACKET_NAK_0001", "%1: failed to select a subnet for incoming packet, src %2, type %3",
     "DHCP4_PACKET_NAK_0002", "%1: invalid address %2 requested by INIT-REBOOT",
     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",

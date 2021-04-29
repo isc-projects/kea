@@ -85,17 +85,22 @@ The classification process is conducted in several steps:
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
     possible to use KNOWN/UNKNOWN classes to select a shared network or
-    a subnet, nor to make DROP class dependent of KNOWN/UNKNOWN classes.
+    a subnet.
 
-9.  If needed, addresses and prefixes from pools are assigned, possibly
+9.  When the incoming packet belongs the special class, `DROP`, it is
+    dropped and an informational message is logged with the packet
+    information. Since Kea version 1.9.8 it is allowed to make DROP
+    class dependent of KNOWN/UNKNOWN classes.
+
+10. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
     class members.
 
-10. Classes marked as "required" are evaluated in the order in which
+11. Classes marked as "required" are evaluated in the order in which
     they are listed: first the shared network, then the subnet, and
     finally the pools that assigned resources belong to.
 
-11. Options are assigned, again possibly based on the class information
+12. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
     For DHCPv4 private and code 43 options, this includes class local
     option definitions.

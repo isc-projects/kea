@@ -146,7 +146,8 @@ namespace dhcp {
 
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query,
-                               const Subnet4Ptr& subnet)
+                               const Subnet4Ptr& subnet,
+                               bool& drop)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(new AllocEngine::ClientContext4()) {
 
@@ -254,6 +255,17 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             .arg(query_->getLabel())
             .arg(classes.toText());
     }
+
+    // Check the DROP special class.
+    if (query_->inClass("DROP")) {
+        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_PACKET_DROP_0013)
+            .arg(query_->toText());
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
+        drop = true;
+    }
+
+
 }
 
 void
@@ -2978,9 +2990,16 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     sanityCheck(discover, FORBIDDEN);
 
     bool drop = false;
-    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover, drop));
+    Subnet4Ptr subnet = selectSubnet(discover, drop);
 
     // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
+
+    Dhcpv4Exchange ex(alloc_engine_, discover, subnet, drop);
+
+    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
@@ -3042,9 +3061,16 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     sanityCheck(request, OPTIONAL);
 
     bool drop = false;
-    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request, drop));
+    Subnet4Ptr subnet = selectSubnet(request, drop);
 
     // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
+
+    Dhcpv4Exchange ex(alloc_engine_, request, subnet, drop);
+
+    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
@@ -3390,9 +3416,16 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     sanityCheck(inform, OPTIONAL);
 
     bool drop = false;
-    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform, drop));
+    Subnet4Ptr subnet = selectSubnet(inform, drop);
 
     // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
+
+    Dhcpv4Exchange ex(alloc_engine_, inform, subnet, drop);
+
+    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
