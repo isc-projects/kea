@@ -124,6 +124,7 @@ memfile_init_test() {
         fi
         export KEA_LOCKFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/lock_dir_${v}"
         export KEA_PIDFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/pid_dir_${v}"
+        export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
         mkdir -p "${KEA_LOCKFILE_DIR}"
         mkdir -p "${KEA_PIDFILE_DIR}"
         start_kea_dhcp "${v}"
