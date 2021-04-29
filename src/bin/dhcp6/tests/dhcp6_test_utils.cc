@@ -818,6 +818,7 @@ Dhcpv6SrvTest::configure(const std::string& config) {
 
 void
 Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
+    setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
     try {

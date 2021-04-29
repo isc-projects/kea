@@ -22,6 +22,8 @@ CFG_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test_config.json"
 LOG_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test.log"
 # Path to the Kea lease file.
 LEASE_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test_leases.csv"
+# Path to the Kea LFC application
+export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp6\":

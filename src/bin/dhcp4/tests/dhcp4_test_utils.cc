@@ -628,6 +628,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          NakedDhcpv4Srv& srv,
                          const bool commit,
                          const bool open_sockets) {
+    setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
     try {
