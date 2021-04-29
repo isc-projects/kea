@@ -73,6 +73,7 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  PLUS "+"
   IFELSE "ifelse"
   TOHEXSTRING "hexstring"
   PKT6 "pkt6"
@@ -105,6 +106,7 @@ using namespace isc::eval;
 %type <TokenPkt4::FieldType> pkt4_field
 %type <TokenPkt6::FieldType> pkt6_field
 
+%left PLUS
 %left OR
 %left AND
 %precedence NOT
@@ -352,6 +354,11 @@ string_expr : STRING
                       ctx.expression.push_back(sub);
                   }
             | CONCAT "(" string_expr "," string_expr ")"
+                  {
+                      TokenPtr conc(new TokenConcat());
+                      ctx.expression.push_back(conc);
+                  }
+            | string_expr PLUS string_expr
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);

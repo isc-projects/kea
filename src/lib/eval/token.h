@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -674,6 +674,7 @@ public:
 ///
 /// For example in the sub-expression "concat('foo','bar')" the result
 /// of the evaluation is "foobar"
+/// For user convenience the "'foo' + 'bar'" alternative does the same.
 class TokenConcat : public Token {
 public:
     /// @brief Constructor (does nothing)
@@ -1119,7 +1120,7 @@ protected:
     uint16_t sub_option_code_; ///< Code of the sub-option to be extracted
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif

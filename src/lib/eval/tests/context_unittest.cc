@@ -1324,6 +1324,47 @@ TEST_F(EvalContextTest, concat) {
     checkTokenConcat(tmp3);
 }
 
+// Test the parsing of a plus expression
+TEST_F(EvalContextTest, plus) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("'foo' + 'bar' == 'foobar'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(5, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "bar");
+    checkTokenConcat(tmp3);
+}
+
+// Test the parsing of plus expressions
+TEST_F(EvalContextTest, assocPlus) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("'a' + 'b' + 'c' == 'abc'"));
+
+    ASSERT_EQ(7, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+    TokenPtr tmp5 = eval.expression.at(4);
+
+    checkTokenString(tmp1, "a");
+    checkTokenString(tmp2, "b");
+    checkTokenConcat(tmp3);
+    checkTokenString(tmp4, "c");
+    checkTokenConcat(tmp5);
+}
+
 // Test the parsing of an ifelse expression
 TEST_F(EvalContextTest, ifElse) {
     EvalContext eval(Option::V4);
@@ -1523,6 +1564,12 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.26: syntax error, unexpected ), expecting \",\"");
     checkError("ifelse('foo'=='bar','foo','bar','')",
                "<string>:1.32: syntax error, unexpected \",\", expecting )");
+    checkError("+ 'a' = 'a'",
+               "to fill: pre plus");
+    checkError("'a' + == 'a'",
+               "to fill: post plus");
+    checkError("'a' ++ 'b' == 'ab'",
+               "to fill double plus");
 }
 
 // Tests some type error cases
@@ -1721,4 +1768,4 @@ TEST_F(EvalContextTest, integer1) {
     checkTokenInteger(tmp, 2);
 }
 
-};
+}

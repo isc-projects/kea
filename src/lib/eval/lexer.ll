@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -230,6 +230,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "]"            return isc::eval::EvalParser::make_RBRACKET(loc);
 ","            return isc::eval::EvalParser::make_COMA(loc);
 "*"            return isc::eval::EvalParser::make_ANY(loc);
+"+"            return isc::eval::EvalParser::make_PLUS(loc);
 .          driver.error (loc, "Invalid character: " + std::string(evaltext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
