@@ -582,7 +582,7 @@ Since Kea 1.9.8, the library supports custom format for logging information
 that can be extracted either from the incoming packet or from the server
 response packet.
 
-To note that the custom format can not be used for command channel commands.
+The custom format can not be used for control channel commands.
 
 If a jurisdiction requires that a different set of information be saved, users
 may use this library as a template or example to create their own custom logging
@@ -950,18 +950,20 @@ script and are configured by setting:
 -  portrotate - external executable or script called with the name of the file
    that had been opened (Kea will not wait for the process to finish)
 
-The ``request-parser-format`` and ``response-parser-format`` can be used to
-extract and log data from the incoming packet and server response packet
-respectively. The configured value is an evaluated parsed expression returning a
-string. A list of tokens is described in the server classification process.
-If any of them is configured, the default logging format is not used.
-If both of them are configured, the resulting log message is constructed by
-concatenating the logged data extracted from the request and the logged data
-extracted from the response.
+-  request-parser-format - evaluated parsed expression used to extract and log
+   data from the incoming packet
 
-To note that some data might be available in the request or in the response only
-and that the same data might differ in the incoming packet from the one in the
-response packet.
+-  response-parser-formatcan be used to - evaluated parsed expression used to
+   extract and log data from the server response packet
+
+See :ref:`_classification-using-expressions` for a list of expressions.
+If any of ``request-parser-format`` or ``response-parser-format`` is
+configured, the default logging format is not used. If both of them are
+configured, the resulting log message is constructed by concatenating the
+data extracted from the request and the data extracted from the response.
+
+Some data might be available in the request or in the response only and some
+data might differ in the incoming packet from the one in the response packet.
 
 The lease client context can be printed using only the default format, as this
 information is not directly stored in the incoming packet or in the server
