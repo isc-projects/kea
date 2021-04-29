@@ -261,27 +261,17 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed.
 TEST_F(ProcessSpawnTest, invalidExecutable) {
-    ProcessSpawn process(io_service_, "foo");
-    pid_t pid = 0;
-    ASSERT_NO_THROW(pid = process.spawn());
+    std::string expected = "File not found: foo";
+    ASSERT_THROW_MSG(ProcessSpawn process(io_service_, "foo"),
+                     ProcessSpawnError, expected);
 
-    // Set test fail safe.
-    setTestTime(1000);
+    std::string name = TEST_SCRIPT_SH;
+    name += ".in";
 
-    // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
-
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
-    io_service_->run_one();
-
-    // Polling once to be sure.
-    io_service_->poll();
-
-    ASSERT_EQ(1, processed_signals_.size());
-    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
-
-    EXPECT_EQ(EXIT_FAILURE, process.getExitStatus(pid));
+    expected = "File not executable: ";
+    expected += name;
+    ASSERT_THROW_MSG(ProcessSpawn process(io_service_, name),
+                     ProcessSpawnError, expected);
 }
 
 // This test verifies that the full command line for the process is
@@ -299,14 +289,16 @@ TEST_F(ProcessSpawnTest, getCommandLine) {
         args.push_back("-y");
         args.push_back("foo");
         args.push_back("bar");
-        ProcessSpawn process(io_service_, "myapp", args);
-        EXPECT_EQ("myapp -x -y foo bar", process.getCommandLine());
+        ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args);
+        std::string expected = TEST_SCRIPT_SH;
+        expected += " -x -y foo bar";
+        EXPECT_EQ(expected, process.getCommandLine());
     }
 
     {
         // Case 2: no arguments.
-        ProcessSpawn process(io_service_, "myapp");
-        EXPECT_EQ("myapp", process.getCommandLine());
+        ProcessSpawn process(io_service_, TEST_SCRIPT_SH);
+        EXPECT_EQ(TEST_SCRIPT_SH, process.getCommandLine());
     }
 }
 
@@ -343,21 +335,6 @@ TEST_F(ProcessSpawnTest, isRunning) {
 
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
-}
-
-// This test verifies that the checkPermissions function throws if the file does
-// not exist and returns true or false if the file is or it is not executable.
-TEST_F(ProcessSpawnTest, checkPermissions) {
-    ProcessSpawn no_process(io_service_, "no-file");
-    EXPECT_THROW_MSG(no_process.checkPermissions(), ProcessSpawnError,
-                     "File not found: no-file");
-
-    std::string name = TEST_SCRIPT_SH;
-    name += ".in";
-    ProcessSpawn invalid_process(io_service_, name);
-    ASSERT_FALSE(invalid_process.checkPermissions());
-    ProcessSpawn process(io_service_, TEST_SCRIPT_SH);
-    ASSERT_TRUE(process.checkPermissions());
 }
 
 } // end of anonymous namespace

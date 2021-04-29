@@ -132,12 +132,6 @@ public:
     /// @param pid A process pid.
     void clearState(const pid_t pid);
 
-    /// @brief Check executable permissions.
-    ///
-    /// @return true if file has executable permissions, false otherwise.
-    /// @throw ProcessSpawnError if file does not exist.
-    bool checkPermissions() const;
-
 private:
 
     /// @brief Copies the argument specified as a C++ string to the new
@@ -204,6 +198,16 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
       io_signal_set_(new IOSignalSet(io_service,
                                      std::bind(&ProcessSpawnImpl::waitForProcess,
                                                ph::_1))) {
+    struct stat st;
+
+    if (stat(executable_.c_str(), &st)) {
+        isc_throw(ProcessSpawnError, "File not found: " << executable_);
+    }
+
+    if (!(st.st_mode & S_IEXEC)) {
+        isc_throw(ProcessSpawnError, "File not executable: " << executable_);
+    }
+
     io_signal_set_->add(SIGCHLD);
 
     // Conversion of the arguments to the C-style array we start by setting
@@ -357,18 +361,6 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
     }
 }
 
-bool
-ProcessSpawnImpl::checkPermissions() const {
-    struct stat st;
-    if (stat(executable_.c_str(), &st)) {
-        isc_throw(ProcessSpawnError, "File not found: " << executable_);
-    }
-    if (st.st_mode & S_IEXEC) {
-        return (true);
-    }
-    return (false);
-}
-
 ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
                            const std::string& executable,
                            const ProcessArgs& args,
@@ -404,11 +396,6 @@ ProcessSpawn::getExitStatus(const pid_t pid) const {
 void
 ProcessSpawn::clearState(const pid_t pid) {
     return (impl_->clearState(pid));
-}
-
-bool
-ProcessSpawn::checkPermissions() const {
-    return (impl_->checkPermissions());
 }
 
 } // namespace asiolink

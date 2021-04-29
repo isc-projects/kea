@@ -35,9 +35,6 @@ RunScriptImpl::configure(LibraryHandle& handle) {
     IOServicePtr io_service(new asiolink::IOService());
     try {
         ProcessSpawn process(io_service, name->stringValue());
-        if (!process.checkPermissions()) {
-            isc_throw(InvalidParameter, "The 'name' parameter must point to an executable");
-        }
     } catch (const isc::Exception& ex) {
         isc_throw(InvalidParameter, "Invalid 'name' parameter: " << ex.what());
     }
