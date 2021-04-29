@@ -102,7 +102,10 @@ namespace {
 ///   - the following classes defined:
 ///     - allowed
 ///     - member('KNOWN') or member('UNKNOWN'), t
-///     not member('allowed') and member('t'), DROP
+///     - not member('allowed') and member('t'), DROP
+///     The function of the always true 't' class is to move the DROP
+///     evaluation to the classification point after the host reservation
+///     lookup, i.e. indirect KNOWN / UNKNOWN dependency.
 ///
 const char* CONFIGS[] = {
     // Configuration 0
