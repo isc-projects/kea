@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.5.
+// A Bison parser, made by GNU Bison 3.7.6.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -458,91 +458,91 @@ namespace isc { namespace eval {
         switch (yykind)
     {
       case symbol_kind::S_STRING: // "constant string"
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 464 "parser.cc"
         break;
 
       case symbol_kind::S_INTEGER: // "integer"
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 470 "parser.cc"
         break;
 
       case symbol_kind::S_HEXSTRING: // "constant hexstring"
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 476 "parser.cc"
         break;
 
       case symbol_kind::S_OPTION_NAME: // "option name"
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 482 "parser.cc"
         break;
 
       case symbol_kind::S_IP_ADDRESS: // "ip address"
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
 #line 488 "parser.cc"
         break;
 
       case symbol_kind::S_integer_expr: // integer_expr
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < uint32_t > (); }
 #line 494 "parser.cc"
         break;
 
       case symbol_kind::S_option_code: // option_code
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < uint16_t > (); }
 #line 500 "parser.cc"
         break;
 
       case symbol_kind::S_sub_option_code: // sub_option_code
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < uint16_t > (); }
 #line 506 "parser.cc"
         break;
 
       case symbol_kind::S_option_repr_type: // option_repr_type
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenOption::RepresentationType > (); }
 #line 512 "parser.cc"
         break;
 
       case symbol_kind::S_nest_level: // nest_level
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < int8_t > (); }
 #line 518 "parser.cc"
         break;
 
       case symbol_kind::S_pkt_metadata: // pkt_metadata
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt::MetadataType > (); }
 #line 524 "parser.cc"
         break;
 
       case symbol_kind::S_enterprise_id: // enterprise_id
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < uint32_t > (); }
 #line 530 "parser.cc"
         break;
 
       case symbol_kind::S_pkt4_field: // pkt4_field
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt4::FieldType > (); }
 #line 536 "parser.cc"
         break;
 
       case symbol_kind::S_pkt6_field: // pkt6_field
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenPkt6::FieldType > (); }
 #line 542 "parser.cc"
         break;
 
       case symbol_kind::S_relay6_field: // relay6_field
-#line 112 "parser.yy"
+#line 114 "parser.yy"
                  { yyoutput << yysym.value.template as < TokenRelay6Field::FieldType > (); }
 #line 548 "parser.cc"
         break;
@@ -837,7 +837,7 @@ namespace isc { namespace eval {
           switch (yyn)
             {
   case 6: // bool_expr: "not" bool_expr
-#line 132 "parser.yy"
+#line 134 "parser.yy"
                 {
                     TokenPtr neg(new TokenNot());
                     ctx.expression.push_back(neg);
@@ -846,7 +846,7 @@ namespace isc { namespace eval {
     break;
 
   case 7: // bool_expr: bool_expr "and" bool_expr
-#line 137 "parser.yy"
+#line 139 "parser.yy"
                 {
                     TokenPtr neg(new TokenAnd());
                     ctx.expression.push_back(neg);
@@ -855,7 +855,7 @@ namespace isc { namespace eval {
     break;
 
   case 8: // bool_expr: bool_expr "or" bool_expr
-#line 142 "parser.yy"
+#line 144 "parser.yy"
                 {
                     TokenPtr neg(new TokenOr());
                     ctx.expression.push_back(neg);
@@ -864,7 +864,7 @@ namespace isc { namespace eval {
     break;
 
   case 9: // bool_expr: string_expr "==" string_expr
-#line 147 "parser.yy"
+#line 149 "parser.yy"
                 {
                     TokenPtr eq(new TokenEqual());
                     ctx.expression.push_back(eq);
@@ -873,7 +873,7 @@ namespace isc { namespace eval {
     break;
 
   case 10: // bool_expr: "option" "[" option_code "]" "." "exists"
-#line 152 "parser.yy"
+#line 154 "parser.yy"
                 {
                     TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
@@ -882,7 +882,7 @@ namespace isc { namespace eval {
     break;
 
   case 11: // bool_expr: "option" "[" option_code "]" "." "option" "[" sub_option_code "]" "." "exists"
-#line 157 "parser.yy"
+#line 159 "parser.yy"
                 {
                     TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
@@ -891,7 +891,7 @@ namespace isc { namespace eval {
     break;
 
   case 12: // bool_expr: "relay4" "[" sub_option_code "]" "." "exists"
-#line 162 "parser.yy"
+#line 164 "parser.yy"
                 {
                    switch (ctx.getUniverse()) {
                    case Option::V4:
@@ -915,7 +915,7 @@ namespace isc { namespace eval {
     break;
 
   case 13: // bool_expr: "relay6" "[" nest_level "]" "." "option" "[" sub_option_code "]" "." "exists"
-#line 182 "parser.yy"
+#line 184 "parser.yy"
                 {
                     switch (ctx.getUniverse()) {
                     case Option::V6:
@@ -933,7 +933,7 @@ namespace isc { namespace eval {
     break;
 
   case 14: // bool_expr: "vendor-class" "[" enterprise_id "]" "." "exists"
-#line 196 "parser.yy"
+#line 198 "parser.yy"
               {
                   // Expression: vendor-class[1234].exists
                   //
@@ -946,7 +946,7 @@ namespace isc { namespace eval {
     break;
 
   case 15: // bool_expr: "vendor" "[" enterprise_id "]" "." "exists"
-#line 205 "parser.yy"
+#line 207 "parser.yy"
               {
                   // Expression: vendor[1234].exists
                   //
@@ -959,7 +959,7 @@ namespace isc { namespace eval {
     break;
 
   case 16: // bool_expr: "vendor" "[" enterprise_id "]" "." "option" "[" sub_option_code "]" "." "exists"
-#line 214 "parser.yy"
+#line 216 "parser.yy"
               {
                   // Expression vendor[1234].option[123].exists
                   //
@@ -973,7 +973,7 @@ namespace isc { namespace eval {
     break;
 
   case 17: // bool_expr: "member" "(" "constant string" ")"
-#line 224 "parser.yy"
+#line 226 "parser.yy"
               {
                   // Expression member('foo')
                   //
@@ -992,7 +992,7 @@ namespace isc { namespace eval {
     break;
 
   case 18: // string_expr: "constant string"
-#line 241 "parser.yy"
+#line 243 "parser.yy"
                   {
                       TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(str);
@@ -1001,7 +1001,7 @@ namespace isc { namespace eval {
     break;
 
   case 19: // string_expr: "constant hexstring"
-#line 246 "parser.yy"
+#line 248 "parser.yy"
                   {
                       TokenPtr hex(new TokenHexString(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(hex);
@@ -1010,7 +1010,7 @@ namespace isc { namespace eval {
     break;
 
   case 20: // string_expr: "ip address"
-#line 251 "parser.yy"
+#line 253 "parser.yy"
                   {
                       TokenPtr ip(new TokenIpAddress(yystack_[0].value.as < std::string > ()));
                       ctx.expression.push_back(ip);
@@ -1019,7 +1019,7 @@ namespace isc { namespace eval {
     break;
 
   case 21: // string_expr: "option" "[" option_code "]" "." option_repr_type
-#line 256 "parser.yy"
+#line 258 "parser.yy"
                   {
                       TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
                       ctx.expression.push_back(opt);
@@ -1028,7 +1028,7 @@ namespace isc { namespace eval {
     break;
 
   case 22: // string_expr: "option" "[" option_code "]" "." "option" "[" sub_option_code "]" "." option_repr_type
-#line 261 "parser.yy"
+#line 263 "parser.yy"
                   {
                       TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
                       ctx.expression.push_back(opt);
@@ -1037,7 +1037,7 @@ namespace isc { namespace eval {
     break;
 
   case 23: // string_expr: "relay4" "[" sub_option_code "]" "." option_repr_type
-#line 266 "parser.yy"
+#line 268 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
@@ -1061,7 +1061,7 @@ namespace isc { namespace eval {
     break;
 
   case 24: // string_expr: "relay6" "[" nest_level "]" "." "option" "[" sub_option_code "]" "." option_repr_type
-#line 287 "parser.yy"
+#line 289 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
@@ -1079,7 +1079,7 @@ namespace isc { namespace eval {
     break;
 
   case 25: // string_expr: "pkt" "." pkt_metadata
-#line 302 "parser.yy"
+#line 304 "parser.yy"
                   {
                       TokenPtr pkt_metadata(new TokenPkt(yystack_[0].value.as < TokenPkt::MetadataType > ()));
                       ctx.expression.push_back(pkt_metadata);
@@ -1088,7 +1088,7 @@ namespace isc { namespace eval {
     break;
 
   case 26: // string_expr: "pkt4" "." pkt4_field
-#line 307 "parser.yy"
+#line 309 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
@@ -1106,7 +1106,7 @@ namespace isc { namespace eval {
     break;
 
   case 27: // string_expr: "pkt6" "." pkt6_field
-#line 321 "parser.yy"
+#line 323 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
@@ -1124,7 +1124,7 @@ namespace isc { namespace eval {
     break;
 
   case 28: // string_expr: "relay6" "[" nest_level "]" "." relay6_field
-#line 335 "parser.yy"
+#line 337 "parser.yy"
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
@@ -1142,7 +1142,7 @@ namespace isc { namespace eval {
     break;
 
   case 29: // string_expr: "substring" "(" string_expr "," start_expr "," length_expr ")"
-#line 350 "parser.yy"
+#line 352 "parser.yy"
                   {
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
@@ -1151,7 +1151,7 @@ namespace isc { namespace eval {
     break;
 
   case 30: // string_expr: "concat" "(" string_expr "," string_expr ")"
-#line 355 "parser.yy"
+#line 357 "parser.yy"
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
@@ -1159,26 +1159,35 @@ namespace isc { namespace eval {
 #line 1160 "parser.cc"
     break;
 
-  case 31: // string_expr: "ifelse" "(" bool_expr "," string_expr "," string_expr ")"
-#line 360 "parser.yy"
+  case 31: // string_expr: string_expr "+" string_expr
+#line 362 "parser.yy"
                   {
-                      TokenPtr cond(new TokenIfElse());
-                      ctx.expression.push_back(cond);
+                      TokenPtr conc(new TokenConcat());
+                      ctx.expression.push_back(conc);
                   }
 #line 1169 "parser.cc"
     break;
 
-  case 32: // string_expr: "hexstring" "(" string_expr "," string_expr ")"
-#line 365 "parser.yy"
+  case 32: // string_expr: "ifelse" "(" bool_expr "," string_expr "," string_expr ")"
+#line 367 "parser.yy"
                   {
-                      TokenPtr tohex(new TokenToHexString());
-                      ctx.expression.push_back(tohex);
+                      TokenPtr cond(new TokenIfElse());
+                      ctx.expression.push_back(cond);
                   }
 #line 1178 "parser.cc"
     break;
 
-  case 33: // string_expr: "vendor" "." "enterprise"
-#line 370 "parser.yy"
+  case 33: // string_expr: "hexstring" "(" string_expr "," string_expr ")"
+#line 372 "parser.yy"
+                  {
+                      TokenPtr tohex(new TokenToHexString());
+                      ctx.expression.push_back(tohex);
+                  }
+#line 1187 "parser.cc"
+    break;
+
+  case 34: // string_expr: "vendor" "." "enterprise"
+#line 377 "parser.yy"
                 {
                     // expression: vendor.enterprise
                     //
@@ -1187,11 +1196,11 @@ namespace isc { namespace eval {
                     TokenPtr vendor(new TokenVendor(ctx.getUniverse(), 0, TokenVendor::ENTERPRISE_ID));
                     ctx.expression.push_back(vendor);
                 }
-#line 1191 "parser.cc"
+#line 1200 "parser.cc"
     break;
 
-  case 34: // string_expr: "vendor-class" "." "enterprise"
-#line 379 "parser.yy"
+  case 35: // string_expr: "vendor-class" "." "enterprise"
+#line 386 "parser.yy"
                 {
                     // expression: vendor-class.enterprise
                     //
@@ -1201,11 +1210,11 @@ namespace isc { namespace eval {
                                                          TokenVendor::ENTERPRISE_ID));
                     ctx.expression.push_back(vendor);
                 }
-#line 1205 "parser.cc"
+#line 1214 "parser.cc"
     break;
 
-  case 35: // string_expr: "vendor" "[" enterprise_id "]" "." "option" "[" sub_option_code "]" "." option_repr_type
-#line 389 "parser.yy"
+  case 36: // string_expr: "vendor" "[" enterprise_id "]" "." "option" "[" sub_option_code "]" "." option_repr_type
+#line 396 "parser.yy"
                 {
                     // This token will search for vendor option with
                     // specified enterprise-id.  If found, will search
@@ -1214,11 +1223,11 @@ namespace isc { namespace eval {
                     TokenPtr opt(new TokenVendor(ctx.getUniverse(), yystack_[8].value.as < uint32_t > (), yystack_[0].value.as < TokenOption::RepresentationType > (), yystack_[3].value.as < uint16_t > ()));
                     ctx.expression.push_back(opt);
                 }
-#line 1218 "parser.cc"
+#line 1227 "parser.cc"
     break;
 
-  case 36: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data"
-#line 398 "parser.yy"
+  case 37: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data"
+#line 405 "parser.yy"
                 {
                     // expression: vendor-class[1234].data
                     //
@@ -1231,11 +1240,11 @@ namespace isc { namespace eval {
                                                                TokenVendor::DATA, 0));
                     ctx.expression.push_back(vendor_class);
                 }
-#line 1235 "parser.cc"
+#line 1244 "parser.cc"
     break;
 
-  case 37: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data" "[" "integer" "]"
-#line 411 "parser.yy"
+  case 38: // string_expr: "vendor-class" "[" enterprise_id "]" "." "data" "[" "integer" "]"
+#line 418 "parser.yy"
                 {
                     // expression: vendor-class[1234].data[5]
                     //
@@ -1248,255 +1257,255 @@ namespace isc { namespace eval {
                                                                TokenVendor::DATA, index));
                     ctx.expression.push_back(vendor_class);
                 }
-#line 1252 "parser.cc"
+#line 1261 "parser.cc"
     break;
 
-  case 38: // string_expr: integer_expr
-#line 424 "parser.yy"
+  case 39: // string_expr: integer_expr
+#line 431 "parser.yy"
                 {
                     TokenPtr integer(new TokenInteger(yystack_[0].value.as < uint32_t > ()));
                     ctx.expression.push_back(integer);
                 }
-#line 1261 "parser.cc"
+#line 1270 "parser.cc"
     break;
 
-  case 39: // integer_expr: "integer"
-#line 431 "parser.yy"
+  case 40: // integer_expr: "integer"
+#line 438 "parser.yy"
                  {
                      yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1269 "parser.cc"
+#line 1278 "parser.cc"
     break;
 
-  case 40: // option_code: "integer"
-#line 437 "parser.yy"
+  case 41: // option_code: "integer"
+#line 444 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1277 "parser.cc"
+#line 1286 "parser.cc"
     break;
 
-  case 41: // option_code: "option name"
-#line 441 "parser.yy"
+  case 42: // option_code: "option name"
+#line 448 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionName(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1285 "parser.cc"
+#line 1294 "parser.cc"
     break;
 
-  case 42: // sub_option_code: "integer"
-#line 447 "parser.yy"
+  case 43: // sub_option_code: "integer"
+#line 454 "parser.yy"
                  {
                      yylhs.value.as < uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1293 "parser.cc"
+#line 1302 "parser.cc"
     break;
 
-  case 43: // option_repr_type: "text"
-#line 453 "parser.yy"
+  case 44: // option_repr_type: "text"
+#line 460 "parser.yy"
                       {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::TEXTUAL;
                       }
-#line 1301 "parser.cc"
+#line 1310 "parser.cc"
     break;
 
-  case 44: // option_repr_type: "hex"
-#line 457 "parser.yy"
+  case 45: // option_repr_type: "hex"
+#line 464 "parser.yy"
                       {
                           yylhs.value.as < TokenOption::RepresentationType > () = TokenOption::HEXADECIMAL;
                       }
-#line 1309 "parser.cc"
+#line 1318 "parser.cc"
     break;
 
-  case 45: // nest_level: "integer"
-#line 463 "parser.yy"
+  case 46: // nest_level: "integer"
+#line 470 "parser.yy"
                  {
                      yylhs.value.as < int8_t > () = ctx.convertNestLevelNumber(yystack_[0].value.as < std::string > (), yystack_[0].location);
                  }
-#line 1317 "parser.cc"
+#line 1326 "parser.cc"
     break;
 
-  case 46: // pkt_metadata: "iface"
-#line 472 "parser.yy"
+  case 47: // pkt_metadata: "iface"
+#line 479 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::IFACE;
                   }
-#line 1325 "parser.cc"
+#line 1334 "parser.cc"
     break;
 
-  case 47: // pkt_metadata: "src"
-#line 476 "parser.yy"
+  case 48: // pkt_metadata: "src"
+#line 483 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::SRC;
                   }
-#line 1333 "parser.cc"
+#line 1342 "parser.cc"
     break;
 
-  case 48: // pkt_metadata: "dst"
-#line 480 "parser.yy"
+  case 49: // pkt_metadata: "dst"
+#line 487 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::DST;
                   }
-#line 1341 "parser.cc"
+#line 1350 "parser.cc"
     break;
 
-  case 49: // pkt_metadata: "len"
-#line 484 "parser.yy"
+  case 50: // pkt_metadata: "len"
+#line 491 "parser.yy"
                   {
                       yylhs.value.as < TokenPkt::MetadataType > () = TokenPkt::LEN;
                   }
-#line 1349 "parser.cc"
+#line 1358 "parser.cc"
     break;
 
-  case 50: // enterprise_id: "integer"
-#line 490 "parser.yy"
+  case 51: // enterprise_id: "integer"
+#line 497 "parser.yy"
                    {
                        yylhs.value.as < uint32_t > () = ctx.convertUint32(yystack_[0].value.as < std::string > (), yystack_[0].location);
                    }
-#line 1357 "parser.cc"
+#line 1366 "parser.cc"
     break;
 
-  case 51: // enterprise_id: "*"
-#line 494 "parser.yy"
+  case 52: // enterprise_id: "*"
+#line 501 "parser.yy"
                    {
                        yylhs.value.as < uint32_t > () = 0;
                    }
-#line 1365 "parser.cc"
+#line 1374 "parser.cc"
     break;
 
-  case 52: // pkt4_field: "mac"
-#line 500 "parser.yy"
+  case 53: // pkt4_field: "mac"
+#line 507 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CHADDR;
                 }
-#line 1373 "parser.cc"
+#line 1382 "parser.cc"
     break;
 
-  case 53: // pkt4_field: "hlen"
-#line 504 "parser.yy"
+  case 54: // pkt4_field: "hlen"
+#line 511 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HLEN;
                 }
-#line 1381 "parser.cc"
+#line 1390 "parser.cc"
     break;
 
-  case 54: // pkt4_field: "htype"
-#line 508 "parser.yy"
+  case 55: // pkt4_field: "htype"
+#line 515 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::HTYPE;
                 }
-#line 1389 "parser.cc"
+#line 1398 "parser.cc"
     break;
 
-  case 55: // pkt4_field: "ciaddr"
-#line 512 "parser.yy"
+  case 56: // pkt4_field: "ciaddr"
+#line 519 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::CIADDR;
                 }
-#line 1397 "parser.cc"
+#line 1406 "parser.cc"
     break;
 
-  case 56: // pkt4_field: "giaddr"
-#line 516 "parser.yy"
+  case 57: // pkt4_field: "giaddr"
+#line 523 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::GIADDR;
                 }
-#line 1405 "parser.cc"
+#line 1414 "parser.cc"
     break;
 
-  case 57: // pkt4_field: "yiaddr"
-#line 520 "parser.yy"
+  case 58: // pkt4_field: "yiaddr"
+#line 527 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::YIADDR;
                 }
-#line 1413 "parser.cc"
+#line 1422 "parser.cc"
     break;
 
-  case 58: // pkt4_field: "siaddr"
-#line 524 "parser.yy"
+  case 59: // pkt4_field: "siaddr"
+#line 531 "parser.yy"
                 {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::SIADDR;
                 }
-#line 1421 "parser.cc"
+#line 1430 "parser.cc"
     break;
 
-  case 59: // pkt4_field: "msgtype"
-#line 528 "parser.yy"
+  case 60: // pkt4_field: "msgtype"
+#line 535 "parser.yy"
                  {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::MSGTYPE;
                  }
-#line 1429 "parser.cc"
+#line 1438 "parser.cc"
     break;
 
-  case 60: // pkt4_field: "transid"
-#line 532 "parser.yy"
+  case 61: // pkt4_field: "transid"
+#line 539 "parser.yy"
                  {
                     yylhs.value.as < TokenPkt4::FieldType > () = TokenPkt4::TRANSID;
                  }
-#line 1437 "parser.cc"
+#line 1446 "parser.cc"
     break;
 
-  case 61: // pkt6_field: "msgtype"
-#line 538 "parser.yy"
+  case 62: // pkt6_field: "msgtype"
+#line 545 "parser.yy"
                  {
                      yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::MSGTYPE;
                  }
-#line 1445 "parser.cc"
+#line 1454 "parser.cc"
     break;
 
-  case 62: // pkt6_field: "transid"
-#line 542 "parser.yy"
+  case 63: // pkt6_field: "transid"
+#line 549 "parser.yy"
                  {
                      yylhs.value.as < TokenPkt6::FieldType > () = TokenPkt6::TRANSID;
                  }
-#line 1453 "parser.cc"
+#line 1462 "parser.cc"
     break;
 
-  case 63: // relay6_field: "peeraddr"
-#line 548 "parser.yy"
+  case 64: // relay6_field: "peeraddr"
+#line 555 "parser.yy"
                    {
                        yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::PEERADDR;
                    }
-#line 1461 "parser.cc"
+#line 1470 "parser.cc"
     break;
 
-  case 64: // relay6_field: "linkaddr"
-#line 552 "parser.yy"
+  case 65: // relay6_field: "linkaddr"
+#line 559 "parser.yy"
                    {
                        yylhs.value.as < TokenRelay6Field::FieldType > () = TokenRelay6Field::LINKADDR;
                    }
-#line 1469 "parser.cc"
+#line 1478 "parser.cc"
     break;
 
-  case 65: // start_expr: "integer"
-#line 558 "parser.yy"
+  case 66: // start_expr: "integer"
+#line 565 "parser.yy"
                 {
                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
                     ctx.expression.push_back(str);
                 }
-#line 1478 "parser.cc"
-    break;
-
-  case 66: // length_expr: "integer"
-#line 565 "parser.yy"
-                 {
-                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                     ctx.expression.push_back(str);
-                 }
 #line 1487 "parser.cc"
     break;
 
-  case 67: // length_expr: "all"
-#line 570 "parser.yy"
+  case 67: // length_expr: "integer"
+#line 572 "parser.yy"
                  {
-                     TokenPtr str(new TokenString("all"));
+                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
                      ctx.expression.push_back(str);
                  }
 #line 1496 "parser.cc"
     break;
 
+  case 68: // length_expr: "all"
+#line 577 "parser.yy"
+                 {
+                     TokenPtr str(new TokenString("all"));
+                     ctx.expression.push_back(str);
+                 }
+#line 1505 "parser.cc"
+    break;
 
-#line 1500 "parser.cc"
+
+#line 1509 "parser.cc"
 
             default:
               break;
@@ -1845,33 +1854,33 @@ namespace isc { namespace eval {
   }
 
 
-  const signed char EvalParser::yypact_ninf_ = -120;
+  const signed char EvalParser::yypact_ninf_ = -122;
 
   const signed char EvalParser::yytable_ninf_ = -1;
 
   const short
   EvalParser::yypact_[] =
   {
-     -24,    80,   116,    21,    80,    80,    -5,    24,    46,    84,
-      85,    88,   118,   119,   125,   126,   121,    20,    67,  -120,
-    -120,  -120,  -120,  -120,    91,   127,  -120,   124,   128,   129,
-      71,    78,  -120,  -120,    56,  -120,    43,    82,    89,    86,
-      34,   -15,   116,   116,    80,   116,    74,    -9,    94,    -9,
-      99,    80,    80,   116,    43,    82,    89,    -9,    -9,  -120,
-    -120,  -120,   131,  -120,   132,  -120,   133,   147,  -120,  -120,
-    -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,
-    -120,  -120,  -120,   122,   135,    -3,   136,  -120,  -120,  -120,
-    -120,  -120,   141,  -120,   145,  -120,  -120,   146,  -120,   148,
-     149,   153,   157,   158,   159,   160,   161,  -120,   111,   116,
-     116,   116,   162,   163,   164,   165,   166,   167,   168,    10,
-      52,    35,  -120,   139,   182,   151,   184,   -12,     0,    13,
-      81,    41,   117,   180,   175,  -120,  -120,  -120,  -120,  -120,
-    -120,   176,  -120,  -120,  -120,   -28,  -120,   116,  -120,  -120,
-     177,   178,  -120,   179,   181,   183,    82,    82,  -120,  -120,
-     191,   193,   150,    82,    82,    82,    82,   186,   187,  -120,
-    -120,   188,   189,   190,   192,   194,   195,   196,  -120,   197,
-     198,   199,   200,    55,    58,    61,    81,    81,    81,  -120,
-    -120,  -120,  -120,  -120,  -120
+      32,     5,    82,    25,     5,     5,    40,    47,    71,     6,
+      87,    90,   114,   129,   153,   162,   149,    44,   103,  -122,
+    -122,  -122,  -122,  -122,   118,    -6,  -122,   152,   154,   155,
+     133,   134,    98,  -122,    14,  -122,   -24,   124,   125,   127,
+     106,    45,    82,    82,     5,    82,   119,     2,   131,     2,
+     132,     5,     5,    82,    82,   -24,   124,   125,     2,     2,
+    -122,  -122,  -122,   156,  -122,   157,  -122,   158,   164,  -122,
+    -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,
+    -122,  -122,  -122,  -122,   116,   117,    -1,   121,  -122,  -122,
+    -122,  -122,  -122,   159,  -122,   165,  -122,  -122,   176,    98,
+    -122,   167,   168,   169,   170,   171,   172,   173,   174,  -122,
+     136,    82,    82,    82,   175,   177,   178,   179,   180,   181,
+     182,    76,    80,    70,  -122,   135,     0,   122,     9,   -13,
+      13,    18,   145,    88,   146,   191,   186,  -122,  -122,  -122,
+    -122,  -122,  -122,   187,  -122,  -122,  -122,   -23,  -122,    82,
+    -122,  -122,   188,   189,  -122,   190,   192,   193,   124,   124,
+    -122,  -122,   202,    15,   160,   124,   124,   124,   124,   194,
+     195,  -122,  -122,   197,   198,   199,   200,   201,   203,   204,
+    -122,   205,   206,   207,   208,   120,   123,   126,   145,   145,
+     145,  -122,  -122,  -122,  -122,  -122,  -122
   };
 
   const signed char
@@ -1879,129 +1888,135 @@ namespace isc { namespace eval {
   {
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,    18,
-      39,    19,    20,     2,     4,     0,    38,     0,     0,     0,
+      40,    19,    20,     2,     4,     0,    39,     0,     0,     0,
        0,     0,     3,     1,     0,     6,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     5,
-      40,    41,     0,    42,     0,    45,     0,     0,    46,    47,
-      48,    49,    25,    52,    53,    54,    55,    56,    57,    58,
-      59,    60,    26,     0,     0,     0,     0,    61,    62,    27,
-      51,    50,     0,    34,     0,    33,     7,     8,     9,     0,
-       0,     0,     0,     0,     0,     0,     0,    17,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,    65,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    43,    44,    10,    21,    12,
-      23,     0,    63,    64,    28,     0,    30,     0,    32,    14,
-      36,     0,    15,     0,     0,     0,     0,     0,    67,    66,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    29,
-      31,     0,     0,     0,     0,     0,     0,     0,    37,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    11,
-      22,    13,    24,    16,    35
+       5,    41,    42,     0,    43,     0,    46,     0,     0,    47,
+      48,    49,    50,    25,    53,    54,    55,    56,    57,    58,
+      59,    60,    61,    26,     0,     0,     0,     0,    62,    63,
+      27,    52,    51,     0,    35,     0,    34,     7,     8,     9,
+      31,     0,     0,     0,     0,     0,     0,     0,     0,    17,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    66,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    44,    45,    10,
+      21,    12,    23,     0,    64,    65,    28,     0,    30,     0,
+      33,    14,    37,     0,    15,     0,     0,     0,     0,     0,
+      68,    67,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    29,    32,     0,     0,     0,     0,     0,     0,     0,
+      38,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    11,    22,    13,    24,    16,    36
   };
 
   const short
   EvalParser::yypgoto_[] =
   {
-    -120,  -120,  -120,     1,    -2,  -120,   155,   -53,  -119,   143,
-    -120,   -11,  -120,  -120,  -120,  -120,  -120
+    -122,  -122,  -122,    19,    -2,  -122,   163,   -53,  -121,   183,
+    -122,    31,  -122,  -122,  -122,  -122,  -122
   };
 
   const unsigned char
   EvalParser::yydefgoto_[] =
   {
-       0,     3,    23,    24,    25,    26,    62,    64,   138,    66,
-      72,    92,    82,    89,   144,   123,   160
+       0,     3,    23,    24,    25,    26,    63,    65,   140,    67,
+      73,    93,    83,    90,   146,   125,   162
   };
 
   const unsigned char
   EvalParser::yytable_[] =
   {
-      32,   140,   100,    51,    52,    34,    35,   158,   149,   151,
-      36,   140,    73,    74,    75,    76,    77,    78,    79,   134,
-     152,    33,   153,   159,     1,     2,    80,    81,   135,   136,
-     137,   135,   136,   110,   150,    47,    90,    48,    94,    37,
-      83,    84,    91,    86,   141,    85,   102,   103,   142,   143,
-     154,    98,    96,    97,   142,   143,    68,    69,    70,    71,
-      59,    38,    51,    52,   190,   192,   194,   190,   192,   194,
-     135,   136,   139,   135,   136,   189,   135,   136,   191,   135,
-     136,   193,    49,     4,    50,     5,    57,    39,    48,     6,
-       7,     8,     9,    58,    60,    50,    61,    51,    52,   135,
-     136,    10,    40,   167,   168,    41,    11,   124,   125,   126,
-     172,   173,   174,   175,    12,    87,    88,    13,    14,    15,
-      16,    42,    43,    17,    18,    27,    28,    29,    44,    45,
-      19,    20,    21,    63,    22,    53,    67,    10,    46,    54,
-      65,    93,    11,    55,    56,   161,    95,   104,   105,   106,
-      12,   107,    51,    13,    14,    15,    16,   112,   108,    30,
-      31,   113,   122,   150,   114,   115,    19,    20,    21,   116,
-      22,   109,   111,   117,   118,   145,   119,   120,   121,   127,
-     128,   129,   130,   131,   132,   133,   146,   147,   148,   155,
-     156,   157,   162,   163,   164,   169,   165,   170,   166,   101,
-       0,   171,   176,   177,   178,   179,   180,     0,   181,    99,
-     182,     0,   183,   184,   185,   186,   187,   188
+      32,   142,    53,   102,   148,    51,    52,   151,     4,    39,
+       5,   142,   160,   150,     6,     7,     8,     9,    60,   172,
+      51,    52,   153,    34,    35,    33,    10,   155,    61,   161,
+      62,    11,    54,   154,   152,   112,   137,   138,    54,    12,
+      84,    85,    13,    87,    14,    15,    16,    54,    91,    17,
+      18,    99,   100,    54,    92,    36,    19,    20,    21,    47,
+      22,    48,    37,    86,   192,   194,   196,   192,   194,   196,
+      97,    98,    74,    75,    76,    77,    78,    79,    80,   143,
+      95,     1,     2,   144,   145,   136,    38,    81,    82,   104,
+     105,    27,    28,    29,   137,   138,   139,   156,   137,   138,
+     141,   144,   145,    10,    40,   169,   170,    41,    11,   126,
+     127,   128,   174,   175,   176,   177,    12,    42,    49,    13,
+      50,    14,    15,    16,    51,    52,    30,    31,    69,    70,
+      71,    72,    43,    19,    20,    21,    54,    22,   137,   138,
+     191,   137,   138,   193,   137,   138,   195,   163,    58,    59,
+      48,    50,   110,   111,    54,    54,    44,   113,   149,    54,
+      54,    88,    89,   137,   138,    45,    46,    55,   109,    56,
+      57,   147,   106,   107,   108,   114,    64,    66,    68,    94,
+      96,   115,    51,   116,   117,   118,   119,   120,   124,   121,
+     122,   123,   129,   152,   130,   131,   132,   133,   134,   135,
+     157,   158,   159,   164,   165,   166,   171,   167,   168,     0,
+     178,   179,   173,   180,   181,   182,   183,   184,   101,     0,
+     185,   186,   187,   188,   189,   190,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+     103
   };
 
   const short
   EvalParser::yycheck_[] =
   {
-       2,   120,    55,     6,     7,     4,     5,    35,    20,     9,
-      15,   130,    27,    28,    29,    30,    31,    32,    33,     9,
-      20,     0,     9,    51,    48,    49,    41,    42,    18,    19,
-      20,    18,    19,    36,    46,    15,    45,    17,    49,    15,
-      42,    43,    51,    45,     9,    44,    57,    58,    13,    14,
-       9,    53,    51,    52,    13,    14,    22,    23,    24,    25,
-       4,    15,     6,     7,   183,   184,   185,   186,   187,   188,
-      18,    19,    20,    18,    19,    20,    18,    19,    20,    18,
-      19,    20,    15,     3,    17,     5,    15,     3,    17,     9,
-      10,    11,    12,    15,    51,    17,    53,     6,     7,    18,
-      19,    21,    17,   156,   157,    17,    26,   109,   110,   111,
-     163,   164,   165,   166,    34,    41,    42,    37,    38,    39,
-      40,     3,     3,    43,    44,     9,    10,    11,     3,     3,
-      50,    51,    52,    51,    54,     8,    50,    21,    17,    15,
-      51,    47,    26,    15,    15,   147,    47,    16,    16,    16,
-      34,     4,     6,    37,    38,    39,    40,    16,    36,    43,
-      44,    16,    51,    46,    16,    16,    50,    51,    52,    16,
-      54,    36,    36,    16,    16,    36,    17,    17,    17,    17,
-      17,    17,    17,    17,    17,    17,     4,    36,     4,     9,
-      15,    15,    15,    15,    15,     4,    15,     4,    15,    56,
-      -1,    51,    16,    16,    16,    16,    16,    -1,    16,    54,
-      16,    -1,    17,    17,    17,    17,    17,    17
+       2,   122,     8,    56,     4,     6,     7,    20,     3,     3,
+       5,   132,    35,     4,     9,    10,    11,    12,     4,     4,
+       6,     7,     9,     4,     5,     0,    21,     9,    52,    52,
+      54,    26,    38,    20,    47,    36,    18,    19,    38,    34,
+      42,    43,    37,    45,    39,    40,    41,    38,    46,    44,
+      45,    53,    54,    38,    52,    15,    51,    52,    53,    15,
+      55,    17,    15,    44,   185,   186,   187,   188,   189,   190,
+      51,    52,    27,    28,    29,    30,    31,    32,    33,     9,
+      49,    49,    50,    13,    14,     9,    15,    42,    43,    58,
+      59,     9,    10,    11,    18,    19,    20,     9,    18,    19,
+      20,    13,    14,    21,    17,   158,   159,    17,    26,   111,
+     112,   113,   165,   166,   167,   168,    34,     3,    15,    37,
+      17,    39,    40,    41,     6,     7,    44,    45,    22,    23,
+      24,    25,     3,    51,    52,    53,    38,    55,    18,    19,
+      20,    18,    19,    20,    18,    19,    20,   149,    15,    15,
+      17,    17,    36,    36,    38,    38,     3,    36,    36,    38,
+      38,    42,    43,    18,    19,     3,    17,    15,     4,    15,
+      15,    36,    16,    16,    16,    16,    52,    52,    51,    48,
+      48,    16,     6,    16,    16,    16,    16,    16,    52,    17,
+      17,    17,    17,    47,    17,    17,    17,    17,    17,    17,
+       9,    15,    15,    15,    15,    15,     4,    15,    15,    -1,
+      16,    16,    52,    16,    16,    16,    16,    16,    55,    -1,
+      17,    17,    17,    17,    17,    17,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      57
   };
 
   const signed char
   EvalParser::yystos_[] =
   {
-       0,    48,    49,    56,     3,     5,     9,    10,    11,    12,
-      21,    26,    34,    37,    38,    39,    40,    43,    44,    50,
-      51,    52,    54,    57,    58,    59,    60,     9,    10,    11,
-      43,    44,    59,     0,    58,    58,    15,    15,    15,     3,
+       0,    49,    50,    57,     3,     5,     9,    10,    11,    12,
+      21,    26,    34,    37,    39,    40,    41,    44,    45,    51,
+      52,    53,    55,    58,    59,    60,    61,     9,    10,    11,
+      44,    45,    60,     0,    59,    59,    15,    15,    15,     3,
       17,    17,     3,     3,     3,     3,    17,    15,    17,    15,
-      17,     6,     7,     8,    15,    15,    15,    15,    15,     4,
-      51,    53,    61,    51,    62,    51,    64,    50,    22,    23,
-      24,    25,    65,    27,    28,    29,    30,    31,    32,    33,
-      41,    42,    67,    59,    59,    58,    59,    41,    42,    68,
-      45,    51,    66,    47,    66,    47,    58,    58,    59,    61,
-      62,    64,    66,    66,    16,    16,    16,     4,    36,    36,
-      36,    36,    16,    16,    16,    16,    16,    16,    16,    17,
-      17,    17,    51,    70,    59,    59,    59,    17,    17,    17,
-      17,    17,    17,    17,     9,    18,    19,    20,    63,    20,
-      63,     9,    13,    14,    69,    36,     4,    36,     4,    20,
-      46,     9,    20,     9,     9,     9,    15,    15,    35,    51,
-      71,    59,    15,    15,    15,    15,    15,    62,    62,     4,
-       4,    51,    62,    62,    62,    62,    16,    16,    16,    16,
-      16,    16,    16,    17,    17,    17,    17,    17,    17,    20,
-      63,    20,    63,    20,    63
+      17,     6,     7,     8,    38,    15,    15,    15,    15,    15,
+       4,    52,    54,    62,    52,    63,    52,    65,    51,    22,
+      23,    24,    25,    66,    27,    28,    29,    30,    31,    32,
+      33,    42,    43,    68,    60,    60,    59,    60,    42,    43,
+      69,    46,    52,    67,    48,    67,    48,    59,    59,    60,
+      60,    62,    63,    65,    67,    67,    16,    16,    16,     4,
+      36,    36,    36,    36,    16,    16,    16,    16,    16,    16,
+      16,    17,    17,    17,    52,    71,    60,    60,    60,    17,
+      17,    17,    17,    17,    17,    17,     9,    18,    19,    20,
+      64,    20,    64,     9,    13,    14,    70,    36,     4,    36,
+       4,    20,    47,     9,    20,     9,     9,     9,    15,    15,
+      35,    52,    72,    60,    15,    15,    15,    15,    15,    63,
+      63,     4,     4,    52,    63,    63,    63,    63,    16,    16,
+      16,    16,    16,    16,    16,    17,    17,    17,    17,    17,
+      17,    20,    64,    20,    64,    20,    64
   };
 
   const signed char
   EvalParser::yyr1_[] =
   {
-       0,    55,    56,    56,    57,    58,    58,    58,    58,    58,
-      58,    58,    58,    58,    58,    58,    58,    58,    59,    59,
-      59,    59,    59,    59,    59,    59,    59,    59,    59,    59,
-      59,    59,    59,    59,    59,    59,    59,    59,    59,    60,
-      61,    61,    62,    63,    63,    64,    65,    65,    65,    65,
-      66,    66,    67,    67,    67,    67,    67,    67,    67,    67,
-      67,    68,    68,    69,    69,    70,    71,    71
+       0,    56,    57,    57,    58,    59,    59,    59,    59,    59,
+      59,    59,    59,    59,    59,    59,    59,    59,    60,    60,
+      60,    60,    60,    60,    60,    60,    60,    60,    60,    60,
+      60,    60,    60,    60,    60,    60,    60,    60,    60,    60,
+      61,    62,    62,    63,    64,    64,    65,    66,    66,    66,
+      66,    67,    67,    68,    68,    68,    68,    68,    68,    68,
+      68,    68,    69,    69,    70,    70,    71,    72,    72
   };
 
   const signed char
@@ -2010,10 +2025,10 @@ namespace isc { namespace eval {
        0,     2,     2,     2,     1,     3,     2,     3,     3,     3,
        6,    11,     6,    11,     6,     6,    11,     4,     1,     1,
        1,     6,    11,     6,    11,     3,     3,     3,     6,     8,
-       6,     8,     6,     3,     3,    11,     6,     9,     1,     1,
+       6,     3,     8,     6,     3,     3,    11,     6,     9,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1
+       1,     1,     1,     1,     1,     1,     1,     1,     1
   };
 
 
@@ -2029,7 +2044,7 @@ namespace isc { namespace eval {
   "\"]\"", "\".\"", "\"text\"", "\"hex\"", "\"exists\"", "\"pkt\"",
   "\"iface\"", "\"src\"", "\"dst\"", "\"len\"", "\"pkt4\"", "\"mac\"",
   "\"hlen\"", "\"htype\"", "\"ciaddr\"", "\"giaddr\"", "\"yiaddr\"",
-  "\"siaddr\"", "\"substring\"", "\"all\"", "\",\"", "\"concat\"",
+  "\"siaddr\"", "\"substring\"", "\"all\"", "\",\"", "\"concat\"", "\"+\"",
   "\"ifelse\"", "\"hexstring\"", "\"pkt6\"", "\"msgtype\"", "\"transid\"",
   "\"vendor-class\"", "\"vendor\"", "\"*\"", "\"data\"", "\"enterprise\"",
   "\"top-level bool\"", "\"top-level string\"", "\"constant string\"",
@@ -2046,13 +2061,13 @@ namespace isc { namespace eval {
   const short
   EvalParser::yyrline_[] =
   {
-       0,   121,   121,   122,   127,   130,   131,   136,   141,   146,
-     151,   156,   161,   181,   195,   204,   213,   223,   240,   245,
-     250,   255,   260,   265,   286,   301,   306,   320,   334,   349,
-     354,   359,   364,   369,   378,   388,   397,   410,   423,   430,
-     436,   440,   446,   452,   456,   462,   471,   475,   479,   483,
-     489,   493,   499,   503,   507,   511,   515,   519,   523,   527,
-     531,   537,   541,   547,   551,   557,   564,   569
+       0,   123,   123,   124,   129,   132,   133,   138,   143,   148,
+     153,   158,   163,   183,   197,   206,   215,   225,   242,   247,
+     252,   257,   262,   267,   288,   303,   308,   322,   336,   351,
+     356,   361,   366,   371,   376,   385,   395,   404,   417,   430,
+     437,   443,   447,   453,   459,   463,   469,   478,   482,   486,
+     490,   496,   500,   506,   510,   514,   518,   522,   526,   530,
+     534,   538,   544,   548,   554,   558,   564,   571,   576
   };
 
   void
@@ -2085,9 +2100,9 @@ namespace isc { namespace eval {
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2089 "parser.cc"
+#line 2104 "parser.cc"
 
-#line 576 "parser.yy"
+#line 583 "parser.yy"
 
 void
 isc::eval::EvalParser::error(const location_type& loc,

@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.5.
+// A Bison parser, made by GNU Bison 3.7.6.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -531,23 +531,24 @@ namespace isc { namespace eval {
     TOKEN_ALL = 290,               // "all"
     TOKEN_COMA = 291,              // ","
     TOKEN_CONCAT = 292,            // "concat"
-    TOKEN_IFELSE = 293,            // "ifelse"
-    TOKEN_TOHEXSTRING = 294,       // "hexstring"
-    TOKEN_PKT6 = 295,              // "pkt6"
-    TOKEN_MSGTYPE = 296,           // "msgtype"
-    TOKEN_TRANSID = 297,           // "transid"
-    TOKEN_VENDOR_CLASS = 298,      // "vendor-class"
-    TOKEN_VENDOR = 299,            // "vendor"
-    TOKEN_ANY = 300,               // "*"
-    TOKEN_DATA = 301,              // "data"
-    TOKEN_ENTERPRISE = 302,        // "enterprise"
-    TOKEN_TOPLEVEL_BOOL = 303,     // "top-level bool"
-    TOKEN_TOPLEVEL_STRING = 304,   // "top-level string"
-    TOKEN_STRING = 305,            // "constant string"
-    TOKEN_INTEGER = 306,           // "integer"
-    TOKEN_HEXSTRING = 307,         // "constant hexstring"
-    TOKEN_OPTION_NAME = 308,       // "option name"
-    TOKEN_IP_ADDRESS = 309         // "ip address"
+    TOKEN_PLUS = 293,              // "+"
+    TOKEN_IFELSE = 294,            // "ifelse"
+    TOKEN_TOHEXSTRING = 295,       // "hexstring"
+    TOKEN_PKT6 = 296,              // "pkt6"
+    TOKEN_MSGTYPE = 297,           // "msgtype"
+    TOKEN_TRANSID = 298,           // "transid"
+    TOKEN_VENDOR_CLASS = 299,      // "vendor-class"
+    TOKEN_VENDOR = 300,            // "vendor"
+    TOKEN_ANY = 301,               // "*"
+    TOKEN_DATA = 302,              // "data"
+    TOKEN_ENTERPRISE = 303,        // "enterprise"
+    TOKEN_TOPLEVEL_BOOL = 304,     // "top-level bool"
+    TOKEN_TOPLEVEL_STRING = 305,   // "top-level string"
+    TOKEN_STRING = 306,            // "constant string"
+    TOKEN_INTEGER = 307,           // "integer"
+    TOKEN_HEXSTRING = 308,         // "constant hexstring"
+    TOKEN_OPTION_NAME = 309,       // "option name"
+    TOKEN_IP_ADDRESS = 310         // "ip address"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -564,7 +565,7 @@ namespace isc { namespace eval {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 55, ///< Number of tokens.
+        YYNTOKENS = 56, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -604,40 +605,41 @@ namespace isc { namespace eval {
         S_ALL = 35,                              // "all"
         S_COMA = 36,                             // ","
         S_CONCAT = 37,                           // "concat"
-        S_IFELSE = 38,                           // "ifelse"
-        S_TOHEXSTRING = 39,                      // "hexstring"
-        S_PKT6 = 40,                             // "pkt6"
-        S_MSGTYPE = 41,                          // "msgtype"
-        S_TRANSID = 42,                          // "transid"
-        S_VENDOR_CLASS = 43,                     // "vendor-class"
-        S_VENDOR = 44,                           // "vendor"
-        S_ANY = 45,                              // "*"
-        S_DATA = 46,                             // "data"
-        S_ENTERPRISE = 47,                       // "enterprise"
-        S_TOPLEVEL_BOOL = 48,                    // "top-level bool"
-        S_TOPLEVEL_STRING = 49,                  // "top-level string"
-        S_STRING = 50,                           // "constant string"
-        S_INTEGER = 51,                          // "integer"
-        S_HEXSTRING = 52,                        // "constant hexstring"
-        S_OPTION_NAME = 53,                      // "option name"
-        S_IP_ADDRESS = 54,                       // "ip address"
-        S_YYACCEPT = 55,                         // $accept
-        S_start = 56,                            // start
-        S_expression = 57,                       // expression
-        S_bool_expr = 58,                        // bool_expr
-        S_string_expr = 59,                      // string_expr
-        S_integer_expr = 60,                     // integer_expr
-        S_option_code = 61,                      // option_code
-        S_sub_option_code = 62,                  // sub_option_code
-        S_option_repr_type = 63,                 // option_repr_type
-        S_nest_level = 64,                       // nest_level
-        S_pkt_metadata = 65,                     // pkt_metadata
-        S_enterprise_id = 66,                    // enterprise_id
-        S_pkt4_field = 67,                       // pkt4_field
-        S_pkt6_field = 68,                       // pkt6_field
-        S_relay6_field = 69,                     // relay6_field
-        S_start_expr = 70,                       // start_expr
-        S_length_expr = 71                       // length_expr
+        S_PLUS = 38,                             // "+"
+        S_IFELSE = 39,                           // "ifelse"
+        S_TOHEXSTRING = 40,                      // "hexstring"
+        S_PKT6 = 41,                             // "pkt6"
+        S_MSGTYPE = 42,                          // "msgtype"
+        S_TRANSID = 43,                          // "transid"
+        S_VENDOR_CLASS = 44,                     // "vendor-class"
+        S_VENDOR = 45,                           // "vendor"
+        S_ANY = 46,                              // "*"
+        S_DATA = 47,                             // "data"
+        S_ENTERPRISE = 48,                       // "enterprise"
+        S_TOPLEVEL_BOOL = 49,                    // "top-level bool"
+        S_TOPLEVEL_STRING = 50,                  // "top-level string"
+        S_STRING = 51,                           // "constant string"
+        S_INTEGER = 52,                          // "integer"
+        S_HEXSTRING = 53,                        // "constant hexstring"
+        S_OPTION_NAME = 54,                      // "option name"
+        S_IP_ADDRESS = 55,                       // "ip address"
+        S_YYACCEPT = 56,                         // $accept
+        S_start = 57,                            // start
+        S_expression = 58,                       // expression
+        S_bool_expr = 59,                        // bool_expr
+        S_string_expr = 60,                      // string_expr
+        S_integer_expr = 61,                     // integer_expr
+        S_option_code = 62,                      // option_code
+        S_sub_option_code = 63,                  // sub_option_code
+        S_option_repr_type = 64,                 // option_repr_type
+        S_nest_level = 65,                       // nest_level
+        S_pkt_metadata = 66,                     // pkt_metadata
+        S_enterprise_id = 67,                    // enterprise_id
+        S_pkt4_field = 68,                       // pkt4_field
+        S_pkt6_field = 69,                       // pkt6_field
+        S_relay6_field = 70,                     // relay6_field
+        S_start_expr = 71,                       // start_expr
+        S_length_expr = 72                       // length_expr
       };
     };
 
@@ -1657,6 +1659,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PLUS (location_type l)
+      {
+        return symbol_type (token::TOKEN_PLUS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PLUS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PLUS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_IFELSE (location_type l)
       {
         return symbol_type (token::TOKEN_IFELSE, std::move (l));
@@ -2239,7 +2256,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 217,     ///< Last index in yytable_.
+      yylast_ = 240,     ///< Last index in yytable_.
       yynnts_ = 17,  ///< Number of nonterminal symbols.
       yyfinal_ = 33 ///< Termination state number.
     };
@@ -2290,10 +2307,11 @@ switch (yykind)
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51,    52,    53,    54
+      45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
+      55
     };
     // Last valid token kind.
-    const int code_max = 309;
+    const int code_max = 310;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2488,7 +2506,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2492 "parser.h"
+#line 2510 "parser.h"
 
 
 
