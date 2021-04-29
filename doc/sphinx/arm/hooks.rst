@@ -923,10 +923,10 @@ To configure it for kea-dhcp6, the commands are:
 
 Two hooks library parameters for text file are supported:
 
--  path - the directory in which the forensic file(s) will be written.
+-  ``path`` - the directory in which the forensic file(s) will be written.
    The default value is ``[prefix]/var/lib/kea``. The directory must exist.
 
--  base-name - an arbitrary value which is used in conjunction with the
+-  ``base-name`` - an arbitrary value which is used in conjunction with the
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
 
@@ -950,13 +950,13 @@ script and are configured by setting:
 -  portrotate - external executable or script called with the name of the file
    that had been opened (Kea will not wait for the process to finish)
 
--  request-parser-format - evaluated parsed expression used to extract and log
-   data from the incoming packet
+-  ``request-parser-format`` - evaluated parsed expression used to extract and
+   log data from the incoming packet
 
--  response-parser-formatcan be used to - evaluated parsed expression used to
-   extract and log data from the server response packet
+-  ``response-parser-format`` - evaluated parsed expression used to extract and
+   log data from the server response packet
 
-See :ref:`_classification-using-expressions` for a list of expressions.
+See :ref:`classification-using-expressions` for a list of expressions.
 If any of ``request-parser-format`` or ``response-parser-format`` is
 configured, the default logging format is not used. If both of them are
 configured, the resulting log message is constructed by concatenating the
