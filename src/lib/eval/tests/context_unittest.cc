@@ -1347,6 +1347,7 @@ TEST_F(EvalContextTest, plus) {
 TEST_F(EvalContextTest, assocPlus) {
     EvalContext eval(Option::V4);
 
+    // Operator '+' is (left) associative
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'a' + 'b' + 'c' == 'abc'"));
 
@@ -1362,6 +1363,28 @@ TEST_F(EvalContextTest, assocPlus) {
     checkTokenString(tmp2, "b");
     checkTokenConcat(tmp3);
     checkTokenString(tmp4, "c");
+    checkTokenConcat(tmp5);
+}
+
+// Test the parsing of plus expressions with enforced associativity
+TEST_F(EvalContextTest, assocRightPlus) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("'a' + ('b' + 'c') == 'abc'"));
+
+    ASSERT_EQ(7, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+    TokenPtr tmp5 = eval.expression.at(4);
+
+    checkTokenString(tmp1, "a");
+    checkTokenString(tmp2, "b");
+    checkTokenString(tmp3, "c");
+    checkTokenConcat(tmp4);
     checkTokenConcat(tmp5);
 }
 
@@ -1433,10 +1456,11 @@ TEST_F(EvalContextTest, scanParseErrors) {
 
     // This one is a little bid odd. This is a truncated address, so it's not
     // recognized as an address. Instead, the first token (10) is recognized as
-    // an integer. The only thing we can do with integers right now is test
-    // for equality, so the only possible next token is ==. There's a dot
-    // instead, so an error is reported.
-    checkError("10.0.1", "<string>:1.3: syntax error, unexpected ., expecting ==");
+    // an integer. The only thing we can do with integers right now is to
+    // apply equality or concat operators, so the only possible next token
+    // are == and +. There's a dot instead, so an error is reported.
+    checkError("10.0.1", "<string>:1.3: syntax error, unexpected ., "
+               "expecting == or +");
 
     checkError("10.256.0.1",
                "<string>:1.1-10: Failed to convert 10.256.0.1 to "
@@ -1479,9 +1503,9 @@ TEST_F(EvalContextTest, scanParseErrors) {
 TEST_F(EvalContextTest, parseErrors) {
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
-               "expecting ==");
+               "expecting == or +");
     checkError("'foo' (",
-               "<string>:1.7: syntax error, unexpected (, expecting ==");
+               "<string>:1.7: syntax error, unexpected (, expecting == or +");
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
@@ -1495,30 +1519,32 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.4: syntax error, unexpected end of file");
     checkError("not 'foo'",
                "<string>:1.10: syntax error, unexpected end of file, "
-               "expecting ==");
+               "expecting == or +");
     checkError("not()",
                "<string>:1.5: syntax error, unexpected )");
     checkError("(not('foo' 'bar')",
                "<string>:1.12-16: syntax error, unexpected constant string, "
-               "expecting ==");
+               "expecting ) or == or +");
     checkError("and",
                "<string>:1.1-3: syntax error, unexpected and");
     checkError("'foo' and",
-               "<string>:1.7-9: syntax error, unexpected and, expecting ==");
+               "<string>:1.7-9: syntax error, unexpected and, "
+               "expecting == or +");
     checkError("'foo' == 'bar' and",
                "<string>:1.19: syntax error, unexpected end of file");
     checkError("'foo' == 'bar' and ''",
                "<string>:1.22: syntax error, unexpected end of file, "
-               "expecting ==");
+               "expecting == or +");
     checkError("or",
                "<string>:1.1-2: syntax error, unexpected or");
     checkError("'foo' or",
-               "<string>:1.7-8: syntax error, unexpected or, expecting ==");
+               "<string>:1.7-8: syntax error, unexpected or, "
+               "expecting == or +");
     checkError("'foo' == 'bar' or",
                "<string>:1.18: syntax error, unexpected end of file");
     checkError("'foo' == 'bar' or ''",
                "<string>:1.21: syntax error, unexpected end of file, "
-               "expecting ==");
+               "expecting == or +");
     checkError("option 'ab'",
                "<string>:1.8-11: syntax error, unexpected "
                "constant string, expecting [");
@@ -1541,7 +1567,8 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.19-20: syntax error, unexpected ==, "
                "expecting end of file");
     checkError("substring('foobar') == 'f'",
-               "<string>:1.19: syntax error, unexpected ), expecting \",\"");
+               "<string>:1.19: syntax error, unexpected ), "
+               "expecting \",\" or +");
     checkError("substring('foobar',3) == 'bar'",
                "<string>:1.21: syntax error, unexpected ), expecting \",\"");
     checkError("substring('foobar','3',3) == 'bar'",
@@ -1557,26 +1584,28 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError(long_text,
                "<string>:1.65568: Invalid character: '");
     checkError("concat('foobar') == 'f'",
-               "<string>:1.16: syntax error, unexpected ), expecting \",\"");
+               "<string>:1.16: syntax error, unexpected ), "
+               "expecting \",\" or +");
     checkError("concat('foo','bar','') == 'foobar'",
-               "<string>:1.19: syntax error, unexpected \",\", expecting )");
+               "<string>:1.19: syntax error, unexpected \",\", "
+               "expecting ) or +");
     checkError("ifelse('foo'=='bar','foo')",
-               "<string>:1.26: syntax error, unexpected ), expecting \",\"");
+               "<string>:1.26: syntax error, unexpected ), "
+               "expecting \",\" or +");
     checkError("ifelse('foo'=='bar','foo','bar','')",
-               "<string>:1.32: syntax error, unexpected \",\", expecting )");
-    checkError("+ 'a' = 'a'",
-               "to fill: pre plus");
-    checkError("'a' + == 'a'",
-               "to fill: post plus");
+               "<string>:1.32: syntax error, unexpected \",\", "
+               "expecting ) or +");
+    checkError("+ 'a' = 'a'", "<string>:1.1: syntax error, unexpected +");
+    checkError("'a' + == 'a'", "<string>:1.7-8: syntax error, unexpected ==");
     checkError("'a' ++ 'b' == 'ab'",
-               "to fill double plus");
+               "<string>:1.6: syntax error, unexpected +");
 }
 
 // Tests some type error cases
 TEST_F(EvalContextTest, typeErrors) {
     checkError("'foobar'",
                "<string>:1.9: syntax error, unexpected end of file, "
-               "expecting ==");
+               "expecting == or +");
     checkError("substring('foobar',all,1) == 'foo'",
                "<string>:1.20-22: syntax error, unexpected all, "
                "expecting integer");
@@ -1595,19 +1624,23 @@ TEST_F(EvalContextTest, typeErrors) {
                "expecting end of file");
     checkError("not 'true'",
                "<string>:1.11: syntax error, unexpected end of file, "
-               "expecting ==");
+               "expecting == or +");
     checkError("'true' and 'false'",
-               "<string>:1.8-10: syntax error, unexpected and, expecting ==");
+               "<string>:1.8-10: syntax error, unexpected and, "
+               "expecting == or +");
     checkError("'true' or 'false'",
-               "<string>:1.8-9: syntax error, unexpected or, expecting ==");
+               "<string>:1.8-9: syntax error, unexpected or, "
+               "expecting == or +");
     // Ifelse requires a boolean condition and string branches.
     checkError("ifelse('foobar','foo','bar')",
-               "<string>:1.16: syntax error, unexpected \",\", expecting ==");
+               "<string>:1.16: syntax error, unexpected \",\", "
+               "expecting == or +");
     checkError("ifelse('foo'=='bar','foo'=='foo','bar')",
                "<string>:1.26-27: syntax error, unexpected ==, "
-               "expecting \",\"");
+               "expecting \",\" or +");
     checkError("ifelse('foo'=='bar','foo','bar'=='bar')",
-               "<string>:1.32-33: syntax error, unexpected ==, expecting )");
+               "<string>:1.32-33: syntax error, unexpected ==, "
+               "expecting ) or +");
 
     // Member uses quotes around the client class name.
     checkError("member(foo)", "<string>:1.8: Invalid character: f");

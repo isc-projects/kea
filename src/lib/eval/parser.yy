@@ -432,6 +432,7 @@ string_expr : STRING
                     TokenPtr integer(new TokenInteger($1));
                     ctx.expression.push_back(integer);
                 }
+            | "(" string_expr ")"
             ;
 
 integer_expr : INTEGER
