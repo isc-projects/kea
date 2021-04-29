@@ -357,13 +357,6 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
     }
 }
 
-ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
-                           const std::string& executable,
-                           const ProcessArgs& args,
-                           const ProcessEnvVars& vars)
-    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
-}
-
 bool
 ProcessSpawnImpl::checkPermissions() const {
     struct stat st;
@@ -374,6 +367,13 @@ ProcessSpawnImpl::checkPermissions() const {
         return (true);
     }
     return (false);
+}
+
+ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
+                           const std::string& executable,
+                           const ProcessArgs& args,
+                           const ProcessEnvVars& vars)
+    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
 }
 
 std::string
