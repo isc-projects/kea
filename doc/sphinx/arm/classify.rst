@@ -452,6 +452,10 @@ Notes:
    |                       |                         | concatenation of the  |
    |                       |                         | strings               |
    +-----------------------+-------------------------+-----------------------+
+   | Concat (operator +)   | 'foo' + 'bar'           | Return the            |
+   |                       |                         | concatenation of the  |
+   |                       |                         | strings               |
+   +-----------------------+-------------------------+-----------------------+
    | Ifelse                | ifelse('foo' ==         | Return the branch     |
    |                       | 'bar','us','them')      | value according to    |
    |                       |                         | the condition         |
@@ -504,6 +508,26 @@ of its two arguments. For instance:
 
            concat('foo', 'bar') == 'foobar'
 
+For user convenience Kea version 1.9.8 added an associative operator
+version of the concat function. For instance:
+::
+
+           'abc' + 'def' + 'ghi' + 'jkl' + '...'
+
+is the same as:
+::
+
+           concat(concat(concat(concat('abc', 'def'), 'ghi'), 'jkl'), '...')
+
+or:
+::
+
+           concat('abc', concat('def', concat('ghi', concat('jkl', '...'))))
+
+or:
+::
+
+           'abcdefghijkl...'
 
 Ifelse
 ------
