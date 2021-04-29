@@ -96,6 +96,7 @@ extern const isc::log::MessageID DHCP6_OPEN_SOCKET;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS;
+extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS2;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DUPLICATE;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_PARSE_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH;

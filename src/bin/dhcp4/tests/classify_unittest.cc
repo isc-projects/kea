@@ -1278,7 +1278,7 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
-    configure(CONFIGS[6], *client.getServer());
+    configure(CONFIGS[7], *client.getServer());
 
     // Set the HW address to the reservation.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");

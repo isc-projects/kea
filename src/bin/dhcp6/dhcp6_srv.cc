@@ -497,6 +497,16 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
     // Perform second pass of classification.
     evaluateClasses(pkt, true);
+
+    // Check the DROP special class.
+    if (pkt->inClass("DROP")) {
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC,
+                  DHCP6_PACKET_DROP_DROP_CLASS2)
+            .arg(pkt->toText());
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        drop = true;
+    }
 }
 
 int Dhcpv6Srv::run() {

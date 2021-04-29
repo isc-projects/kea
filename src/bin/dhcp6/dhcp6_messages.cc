@@ -95,6 +95,7 @@ extern const isc::log::MessageID DHCP6_OPEN_SOCKET = "DHCP6_OPEN_SOCKET";
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL = "DHCP6_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED = "DHCP6_PACKET_DROP_DHCP_DISABLED";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS = "DHCP6_PACKET_DROP_DROP_CLASS";
+extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS2 = "DHCP6_PACKET_DROP_DROP_CLASS2";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DUPLICATE = "DHCP6_PACKET_DROP_DUPLICATE";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_PARSE_FAIL = "DHCP6_PACKET_DROP_PARSE_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH = "DHCP6_PACKET_DROP_SERVERID_MISMATCH";
@@ -249,6 +250,7 @@ const char* values[] = {
     "DHCP6_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP6_PACKET_DROP_DHCP_DISABLED", "%1: DHCP service is globally disabled",
     "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1",
+    "DHCP6_PACKET_DROP_DROP_CLASS2", "dropped as member of the special class 'DROP' after host reservation lookup: %1",
     "DHCP6_PACKET_DROP_DUPLICATE", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 by thread %2 as duplicate of %3 processed by %4",
     "DHCP6_PACKET_DROP_PARSE_FAIL", "failed to parse packet from %1 to %2, received over interface %3, reason: %4",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",

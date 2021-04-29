@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,26 @@ namespace {
 ///   - 1 subnet: 2001:db8:1::/48
 ///   - 2 pool: 2001:db8:1:1::/64
 ///   - the following class defined: option 1234 'foo', DROP
+///
+/// - Configuration 4:
+///   - Used for the DROP class and reservation existence
+///   - 1 subnet: 2001:db8:1::/48
+///   - 2 pool: 2001:db8:1:1::/64
+///   - the following class defined: not member('KNOWN'), DROP
+/// @note the reservation includes a hostname because raw reservations are
+/// not yet allowed
+///
+/// - Configuration 5:
+///   - Used for the DROP class and reservation class
+///   - 1 subnet: 2001:db8:1::/48
+///   - 2 pool: 2001:db8:1:1::/64
+///   - the following class defined:
+///     - allowed
+///     - member('KNOWN') or member('UNKNOWN'), t
+///     - not member('allowed') and member('t'), DROP
+///     The function of the always true 't' class is to move the DROP
+///     evaluation to the classification point after the host reservation
+///     lookup, i.e. indirect KNOWN / UNKNOWN dependency
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -286,6 +306,63 @@ const char* CONFIGS[] = {
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 4
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"DROP\","
+        "   \"test\": \"not member('KNOWN')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:04\","
+        "        \"hostname\": \"allowed\""
+        "    } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 5
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"allowed\""
+        "},"
+        "{"
+        "   \"name\": \"t\","
+        "   \"test\": \"member('KNOWN') or member('UNKNOWN')\""
+        "},"
+        "{"
+        "   \"name\": \"DROP\","
+        "   \"test\": \"not member('allowed') and member('t')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:04\","
+        "        \"client-classes\": [ \"allowed\" ]"
+        "    } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }"
 };
@@ -2116,6 +2193,82 @@ TEST_F(ClassifyTest, dropClass) {
     ASSERT_NO_THROW(client2.doSolicit(true));
 
     // Option, dropped.
+    EXPECT_FALSE(client2.getContext().response_);
+
+    // There should also be pkt6-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
+}
+
+// This test checks the handling for the DROP special class at the host
+// reservation classification point with KNOWN / UNKNOWN.
+TEST_F(ClassifyTest, dropClassUnknown) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+    client.setInterface("eth1");
+    client.requestAddress();
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(CONFIGS[4], *client.getServer()));
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // Reservation match: no drop.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with an option matching the DROP class.
+    Dhcp6Client client2;
+
+    // Retry with another DUID.
+    client2.setDUID("01:02:03:05");
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client2.doSolicit(true));
+
+    // No reservation, dropped.
+    EXPECT_FALSE(client2.getContext().response_);
+
+    // There should also be pkt6-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
+}
+
+// This test checks the handling for the DROP special class at the host
+// reservation classification point with a reserved class.
+TEST_F(ClassifyTest, dropClassReservedClass) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+    client.setInterface("eth1");
+    client.requestAddress();
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(CONFIGS[5], *client.getServer()));
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // Reservation match: no drop.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with an option matching the DROP class.
+    Dhcp6Client client2;
+
+    // Retry with another DUID.
+    client2.setDUID("01:02:03:05");
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client2.doSolicit(true));
+
+    // No reservation, dropped.
     EXPECT_FALSE(client2.getContext().response_);
 
     // There should also be pkt6-receive-drop stat bumped up.
