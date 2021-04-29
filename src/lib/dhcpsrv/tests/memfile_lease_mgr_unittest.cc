@@ -695,18 +695,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
     pmap["lfc-interval"] = "1";
-    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
-
-    // Try to run the lease file cleanup.
-    ASSERT_NO_THROW(lease_mgr->lfcCallback());
-
-    // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
-
-    // And make sure it has returned an error.
-    EXPECT_EQ(EXIT_FAILURE, lease_mgr->getLFCExitStatus())
-        << "Executing the LFC process failed: make sure that"
-        " the kea-lfc program has been compiled.";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)), ProcessSpawnError);
 }
 
 /// @brief This test checks that the callback function executing the cleanup of the
