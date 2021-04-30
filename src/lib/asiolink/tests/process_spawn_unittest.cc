@@ -265,8 +265,7 @@ TEST_F(ProcessSpawnTest, invalidExecutable) {
     ASSERT_THROW_MSG(ProcessSpawn process(io_service_, "foo"),
                      ProcessSpawnError, expected);
 
-    std::string name = TEST_SCRIPT_SH;
-    name += ".in";
+    std::string name = TEST_SCRIPT_SH_IN;
 
     expected = "File not executable: ";
     expected += name;

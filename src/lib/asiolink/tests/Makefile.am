@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_SCRIPT_SH=\"$(abs_top_builddir)/src/lib/asiolink/tests/process_spawn_app.sh\"
+AM_CPPFLAGS += -DTEST_SCRIPT_SH_IN=\"$(abs_top_srcdir)/src/lib/asiolink/tests/process_spawn_app.sh.in\"
 TEST_CA_DIR = $(abs_srcdir)/../testutils/ca
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
 
