@@ -1,3 +1,8 @@
+1892.	[func]		fdupont
+	Added + operator as an convenient alias to concat() function
+	in expressions.
+	(Gitlab #1824)
+
 Kea 1.9.7 (development) released on Apr 28, 2021
 
 1891.	[build]		razvan
