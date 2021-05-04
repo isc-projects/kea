@@ -948,7 +948,7 @@ script and are configured by setting:
 -  ``prerotate`` - external executable or script called with the name of the
    file that will be closed (Kea will not wait for the process to finish)
 
--  ``portrotate`` - external executable or script called with the name of the
+-  ``postrotate`` - external executable or script called with the name of the
    file that had been opened (Kea will not wait for the process to finish)
 
 -  ``request-parser-format`` - evaluated parsed expression used to extract and
