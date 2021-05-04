@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <http/listener.h>
+#include <http/http_thread_pool.h>
 #include <thread>
 #include <vector>
 
@@ -37,11 +38,19 @@ public:
     /// @brief Destructor
     virtual ~CmdHttpListener();
 
-    /// @brief Initiates the listener's worker thread.
+    /// @brief Starts running the listener's thread pool.
     void start();
 
-    /// @brief Stops the listener's worker thread.
+    /// @brief Pauses the listener's thread pool. 
+    void pause();
+
+    /// @brief Resumes running the listener's thread pool. 
+    void resume();
+
+    /// @brief Stops the listener's thread pool.
     void stop();
+
+    http::HttpThreadPool::RunState getRunState() const;
 
     /// @brief Checks if we are listening to the HTTP requests.
     ///
@@ -73,7 +82,11 @@ public:
     ///
     /// @return uint16_t containing the number of running threads.
     uint16_t getThreadCount() {
-        return (threads_.size());
+        if (!threads_) {
+            return (0);
+        }
+
+        return (threads_->getThreadCount());
     }
 
 private:
@@ -93,7 +106,7 @@ private:
     std::size_t thread_pool_size_;
 
     /// @brief The pool of threads that do IO work.
-    std::vector<boost::shared_ptr<std::thread> > threads_;
+    http::HttpThreadPoolPtr threads_;
 };
 
 /// @brief Defines a shared pointer to CmdHttpListener.

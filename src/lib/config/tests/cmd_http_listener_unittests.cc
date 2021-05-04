@@ -52,9 +52,9 @@ public:
     /// Starts test timer which detects timeouts, deregisters all commands
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
-        : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
+        : listener_(), io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
         clients_(), num_threads_(), num_clients_(), num_in_progress_(0), num_finished_(0),
-        chunk_size_(0) {
+        chunk_size_(0), paused_(false), pause_cnt_(0) {
         test_timer_.setup(std::bind(&CmdHttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
@@ -69,6 +69,9 @@ public:
     ///
     /// Removes HTTP clients, unregisters commands, disables MT.
     virtual ~CmdHttpListenerTest() {
+        // Wipe out the listener.
+        listener_.reset();
+
         // Destroy all remaining clients.
         for (auto const& client : clients_) {
             client->close();
@@ -175,27 +178,55 @@ public:
     /// because the test clients stop the io_service when they're
     /// through with a request.
     ///
-    /// @param timeout Optional value specifying for how long the io service
-    /// should be ran.
-    void runIOService() {
+    /// @param num_pauses Desired number of times the listener should be
+    /// paused during the test.
+    void runIOService(size_t num_pauses = 0) {
+        // Create a timer to use for invoking resume after pause.
+        IntervalTimer pause_timer_(io_service_);
+        paused_ = false;
+
         // Loop until the clients are done, an error occurs, or the time runs out.
-        bool keep_going = true;
-        while (keep_going) {
-            // Always call reset() before we call run();
-            io_service_.get_io_service().reset();
+        size_t num_done = 0;
+        while (num_done != clients_.size()) {
+            // Always call restart() before we call run();
+            io_service_.restart();
+
+            if (shouldPause(num_pauses, num_done)) {
+                // Pause the listener .
+                paused_ = true;
+                ++pause_cnt_;
+                listener_->pause();
+
+                // Set timer to resume listener.
+                pause_timer_.setup(
+                    [this]() {
+                        listener_->resume();
+                        paused_ = false;
+                    }, 10, IntervalTimer::ONE_SHOT);
+            }
 
             // Run until a client stops the service.
             io_service_.run();
 
             // If all the clients are done receiving, the test is done.
-            keep_going = false;
+            num_done = 0;
             for (auto const& client : clients_) {
-                if (!client->receiveDone()) {
-                    keep_going = true;
-                    break;
+                if (client->receiveDone()) {
+                    ++num_done;
                 }
             }
         }
+    }
+
+    /// @brief Determines if the listner should be paused.
+    ///
+    /// @param num_pauses desired number of pauses
+    /// @param num_done number of clients that have completed their requests.
+    ///
+    /// @return True if the listener should be paused.
+    bool shouldPause(size_t num_pauses, size_t num_done) {
+        // True if the number of clients done is a mulitple of the number of pauses.
+        return (!paused_ && num_pauses && num_done && !(num_done % num_pauses));
     }
 
     /// @brief Create an HttpResponse from a response string.
@@ -323,7 +354,10 @@ public:
     /// thread command.  Each client is used to carry out a single thread
     /// command request.  Must be greater than 0 and a multiple of num_threads
     /// if it is greater than num_threads.
-    void threadListenAndRespond(size_t num_threads, size_t num_clients) {
+    /// @param num_pauses Desired number of times the listener should be
+    /// paused during the test.
+    void threadListenAndRespond(size_t num_threads, size_t num_clients,
+                                size_t num_pauses = 0) {
         // First we makes sure the parameter rules apply.
         ASSERT_TRUE(num_threads > 0);
         ASSERT_TRUE(num_clients > 0);
@@ -343,15 +377,14 @@ public:
                                                          this, ph::_1, ph::_2));
 
         // Create a listener with prescribed number of threads.
-        CmdHttpListenerPtr listener;
-        ASSERT_NO_THROW_LOG(listener.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
+        ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
                                                                SERVER_PORT, num_threads)));
-        ASSERT_TRUE(listener);
+        ASSERT_TRUE(listener_);
 
         // Start it and verify it is listening.
-        ASSERT_NO_THROW_LOG(listener->start());
-        ASSERT_TRUE(listener->isListening());
-        EXPECT_EQ(listener->getThreadCount(), num_threads);
+        ASSERT_NO_THROW_LOG(listener_->start());
+        ASSERT_TRUE(listener_->isListening());
+        EXPECT_EQ(listener_->getThreadCount(), num_threads);
 
         // Maps the number of clients served by a given thread-id.
         std::map<std::string, int> clients_per_thread;
@@ -364,12 +397,12 @@ public:
 
         // Now we run the client-side IOService until all requests are done,
         // errors occur or the test times out.
-        ASSERT_NO_FATAL_FAILURE(runIOService());
+        ASSERT_NO_FATAL_FAILURE(runIOService(num_pauses));
 
         // Stop the listener and then verify it has stopped.
-        ASSERT_NO_THROW_LOG(listener->stop());
-        ASSERT_FALSE(listener->isListening());
-        EXPECT_EQ(listener->getThreadCount(), 0);
+        ASSERT_NO_THROW_LOG(listener_->stop());
+        ASSERT_FALSE(listener_->isListening());
+        EXPECT_EQ(listener_->getThreadCount(), 0);
 
         // Iterate over the clients, checking their outcomes.
         size_t total_responses = 0;
@@ -460,7 +493,22 @@ public:
                       << "thread-id: " << it.first
                       << ", clients: " << it.second << std::endl;
         }
+
+        // We should have had the expected number of pauses.
+        if (!num_pauses) {
+            ASSERT_EQ(pause_cnt_, 0);
+        } else {
+            // We allow a range on pauses of +-1.
+            ASSERT_TRUE((num_pauses - 1) <= pause_cnt_ &&
+                        (pause_cnt_ <= (num_pauses + 1)))
+                        << " num+_pauses: " << num_pauses
+                        << ", pause_cnt_" << pause_cnt_;
+        }
     }
+
+
+    /// @brief CmdHttpListener instance under test.
+    CmdHttpListenerPtr listener_;
 
     /// @brief IO service used in drive the test and test clients.
     IOService io_service_;
@@ -499,6 +547,12 @@ public:
 
     /// @brief Condition variable used to coordinate threads.
     std::condition_variable cv_;
+
+    /// @brief Indicates if client threads are currently "paused".
+    bool paused_;
+
+    /// @brief Number of times client has been paused during the test.
+    size_t pause_cnt_;
 };
 
 /// Verifies the construction, starting, stopping, and destruction
@@ -506,75 +560,74 @@ public:
 TEST_F(CmdHttpListenerTest, basics) {
     // Make sure multi-threading is off.
     MultiThreadingMgr::instance().setMode(false);
-    CmdHttpListenerPtr listener;
     asiolink::IOAddress address(SERVER_ADDRESS);
     uint16_t port = SERVER_PORT;
 
     // Make sure we can create one.
-    ASSERT_NO_THROW_LOG(listener.reset(new CmdHttpListener(address, port)));
-    ASSERT_TRUE(listener);
+    ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(address, port)));
+    ASSERT_TRUE(listener_);
 
     // Verify the getters do what we expect.
-    EXPECT_EQ(listener->getAddress(), address);
-    EXPECT_EQ(listener->getPort(), port);
-    EXPECT_EQ(listener->getThreadPoolSize(), 1);
+    EXPECT_EQ(listener_->getAddress(), address);
+    EXPECT_EQ(listener_->getPort(), port);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 1);
 
     // It should not be listening and have no threads.
-    EXPECT_FALSE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 0);
+    EXPECT_FALSE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
 
     // Verify that we cannot start it when multi-threading is disabled.
     ASSERT_FALSE(MultiThreadingMgr::instance().getMode());
-    ASSERT_THROW_MSG(listener->start(), InvalidOperation,
+    ASSERT_THROW_MSG(listener_->start(), InvalidOperation,
                      "CmdHttpListener cannot be started"
                      " when multi-threading is disabled");
 
     // It should still not be listening and have no threads.
-    EXPECT_FALSE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 0);
+    EXPECT_FALSE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
 
     // Enable multi-threading.
     MultiThreadingMgr::instance().setMode(true);
 
     // Make sure we can start it and it's listening with 1 thread.
-    ASSERT_NO_THROW_LOG(listener->start());
-    ASSERT_TRUE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 1);
+    ASSERT_NO_THROW_LOG(listener_->start());
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 1);
 
     // Trying to start it again should fail.
-    ASSERT_THROW_MSG(listener->start(), InvalidOperation,
+    ASSERT_THROW_MSG(listener_->start(), InvalidOperation,
                      "CmdHttpListener is already listening!");
 
     // Stop it and verify we're no longer listening.
-    ASSERT_NO_THROW_LOG(listener->stop());
-    ASSERT_FALSE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 0);
+    ASSERT_NO_THROW_LOG(listener_->stop());
+    ASSERT_FALSE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
 
     // Make sure we can call stop again without problems.
-    ASSERT_NO_THROW_LOG(listener->stop());
+    ASSERT_NO_THROW_LOG(listener_->stop());
 
     // We should be able to restart it.
-    ASSERT_NO_THROW_LOG(listener->start());
-    ASSERT_TRUE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 1);
+    ASSERT_NO_THROW_LOG(listener_->start());
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 1);
 
     // Destroying it should also stop it.
     // If the test timeouts we know it didn't!
-    ASSERT_NO_THROW_LOG(listener.reset());
+    ASSERT_NO_THROW_LOG(listener_.reset());
 
     // Verify we can construct with more than one thread.
-    ASSERT_NO_THROW_LOG(listener.reset(new CmdHttpListener(address, port, 4)));
-    ASSERT_NO_THROW_LOG(listener->start());
-    EXPECT_EQ(listener->getAddress(), address);
-    EXPECT_EQ(listener->getPort(), port);
-    EXPECT_EQ(listener->getThreadPoolSize(), 4);
-    ASSERT_TRUE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 4);
+    ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(address, port, 4)));
+    ASSERT_NO_THROW_LOG(listener_->start());
+    EXPECT_EQ(listener_->getAddress(), address);
+    EXPECT_EQ(listener_->getPort(), port);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 4);
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 4);
 
     // Stop it and verify we're no longer listening.
-    ASSERT_NO_THROW_LOG(listener->stop());
-    ASSERT_FALSE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 0);
+    ASSERT_NO_THROW_LOG(listener_->stop());
+    ASSERT_FALSE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
 }
 
 
@@ -583,19 +636,19 @@ TEST_F(CmdHttpListenerTest, basics) {
 TEST_F(CmdHttpListenerTest, basicListenAndRespond) {
 
     // Create a listener with 1 thread.
-    CmdHttpListenerPtr listener;
-    ASSERT_NO_THROW_LOG(listener.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
+    ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
                                                            SERVER_PORT)));
-    ASSERT_TRUE(listener);
+    ASSERT_TRUE(listener_);
 
     // Start the listener and verify it's listening with 1 thread.
-    ASSERT_NO_THROW_LOG(listener->start());
-    ASSERT_TRUE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 1);
+    ASSERT_NO_THROW_LOG(listener_->start());
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 1);
 
     // Now let's send a "foo" command.  This should create a client, connect
     // to our listener, post our request and retrieve our reply.
     ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ++num_clients_;
     ASSERT_EQ(1, clients_.size());
     ASSERT_NO_THROW(runIOService());
     TestHttpClientPtr client = clients_.front();
@@ -614,6 +667,7 @@ TEST_F(CmdHttpListenerTest, basicListenAndRespond) {
                                                       this, ph::_1, ph::_2));
     // Try posting the foo command again.
     ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ++num_clients_;
     ASSERT_EQ(2, clients_.size());
     ASSERT_NO_THROW(runIOService());
     client = clients_.back();
@@ -626,13 +680,13 @@ TEST_F(CmdHttpListenerTest, basicListenAndRespond) {
     EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
 
     // Make sure the listener is still listening.
-    ASSERT_TRUE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 1);
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 1);
 
     // Stop the listener then verify it has stopped.
-    ASSERT_NO_THROW_LOG(listener->stop());
-    ASSERT_FALSE(listener->isListening());
-    EXPECT_EQ(listener->getThreadCount(), 0);
+    ASSERT_NO_THROW_LOG(listener_->stop());
+    ASSERT_FALSE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
 }
 
 // Now we'll run some permutations of the number of listener threads
@@ -678,6 +732,14 @@ TEST_F(CmdHttpListenerTest, sixByEighteen) {
     size_t num_threads = 6;
     size_t num_clients = 18;
     threadListenAndRespond(num_threads, num_clients);
+}
+
+// Pauses and resumes during work.
+TEST_F(CmdHttpListenerTest, pauseAndResume) {
+    size_t num_threads = 6;
+    size_t num_clients = 18;
+    size_t num_pauses = 3;
+    threadListenAndRespond(num_threads, num_clients, num_pauses);
 }
 
 } // end of anonymous namespace

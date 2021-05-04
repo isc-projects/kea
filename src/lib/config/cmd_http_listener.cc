@@ -66,12 +66,8 @@ CmdHttpListener::start() {
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
-        // Create a pool of threads, each calls run on our IOService_service instance.
-        for (std::size_t i = 0; i < thread_pool_size_; ++i) {
-            boost::shared_ptr<std::thread> thread(new std::thread(
-                std::bind(&IOService::run, io_service_)));
-            threads_.push_back(thread);
-        }
+        // Create the thread pool.
+        threads_.reset(new HttpThreadPool(io_service_, thread_pool_size_, false));
 
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
@@ -88,6 +84,20 @@ CmdHttpListener::start() {
 }
 
 void
+CmdHttpListener::pause() {
+    if (threads_) {
+        threads_->pause();
+    }
+}
+
+void
+CmdHttpListener::resume() {
+    if (threads_) {
+        threads_->resume();
+    }
+}
+
+void
 CmdHttpListener::stop() {
     // Nothing to do.
     if (!io_service_) {
@@ -98,15 +108,8 @@ CmdHttpListener::stop() {
               .arg(address_)
               .arg(port_);
 
-    // Stop the IOService first.
-    io_service_->stop();
-
-    // Stop the threads next.
-    for (auto const& thread : threads_) {
-        thread->join();
-    }
-
-    threads_.clear();
+    // Stop the thread pool.
+    threads_->stop();
 
     // Get rid of the listener.
     http_listener_.reset();
@@ -117,6 +120,16 @@ CmdHttpListener::stop() {
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STOPPED)
               .arg(address_)
               .arg(port_);
+}
+
+HttpThreadPool::RunState 
+CmdHttpListener::getRunState() const {
+    if (!threads_) {
+        isc_throw(InvalidOperation,
+                  "CmdHttpListener::getRunState - no thread pool!");
+    }
+
+    return (threads_->getRunState());
 }
 
 bool

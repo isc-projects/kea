@@ -13,6 +13,7 @@
 #include <http/url.h>
 #include <http/request.h>
 #include <http/response.h>
+#include <http/http_thread_pool.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
@@ -85,7 +86,6 @@ class HttpClientImpl;
 /// are returned via the 3rd parameter of the callback.
 class HttpClient {
 public:
-
     /// @brief HTTP request/response timeout value.
     struct RequestTimeout {
         /// @brief Constructor.
@@ -249,6 +249,7 @@ public:
     /// IOService.
     void stop();
 
+
     /// @brief Closes a connection if it has an out-of-band socket event
     ///
     /// If the  client owns a connection using the given socket and that
@@ -279,6 +280,10 @@ public:
     ///
     /// @return the number of running threads.
     uint16_t getThreadCount() const;
+
+    void pause();
+    void resume();
+    HttpThreadPool::RunState getRunState() const;
 
 private:
 

@@ -84,6 +84,18 @@ public:
     /// This will return the control to the caller of the \c run() method.
     void stop() { io_service_.stop();} ;
 
+    /// \brief Indicates if the IOService has been stopped.
+    ///
+    /// \return true if the IOService has been stopped, false otherwise.
+    bool stopped() const {
+        return (io_service_.stopped());
+    }
+
+    /// \brief Restarts the IOService in preparation for a subsequent \c run() invocation.
+    void restart() {
+        io_service_.reset();
+    }
+
     /// \brief Removes IO service work object to let it finish running
     /// when all handlers have been invoked.
     void stopWork() {
@@ -134,6 +146,16 @@ IOService::poll() {
 void
 IOService::stop() {
     io_impl_->stop();
+}
+
+bool
+IOService::stopped() const {
+    return (io_impl_->stopped());
+}
+
+void
+IOService::restart() {
+    io_impl_->restart();
 }
 
 void
