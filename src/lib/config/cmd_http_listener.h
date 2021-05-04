@@ -50,6 +50,9 @@ public:
     /// @brief Stops the listener's thread pool.
     void stop();
 
+    /// @brief Fetches the run state of the thread pool.
+    ///
+    /// @return Run state of the pool.
     http::HttpThreadPool::RunState getRunState() const;
 
     /// @brief Checks if we are listening to the HTTP requests.
@@ -60,33 +63,37 @@ public:
     /// @brief Fetches the IP address on which to listen.
     ///
     /// @return IOAddress containing the address on which to listen.
-    isc::asiolink::IOAddress& getAddress() {
+    isc::asiolink::IOAddress getAddress() const {
         return (address_);
     }
 
     /// @brief Fetches the port number on which to listen.
     ///
     /// @return uint16_t containing the port number on which to listen.
-    uint16_t getPort() {
+    uint16_t getPort() const {
         return (port_);
     }
 
     /// @brief Fetches the maximum size of the thread pool.
     ///
     /// @return uint16_t containing the maximum size of the thread pool.
-    uint16_t getThreadPoolSize() {
+    uint16_t getThreadPoolSize() const {
         return (thread_pool_size_);
     }
 
     /// @brief Fetches the number of threads in the pool.
     ///
     /// @return uint16_t containing the number of running threads.
-    uint16_t getThreadCount() {
+    uint16_t getThreadCount() const {
         if (!threads_) {
             return (0);
         }
 
         return (threads_->getThreadCount());
+    }
+
+    asiolink::IOServicePtr getIOService() const {
+        return(io_service_);
     }
 
 private:

@@ -1740,11 +1740,13 @@ public:
     /// threaded mode.  (Currently ignored in multi-threaded mode)
     /// @param thread_pool_size maximum number of concurrent threads
     /// Internally this also sets the maximum number concurrent connections
-    /// @param defer_thread_start if true, then the thread pool will be
-    /// created but started  Applicable only when thread-pool-size is
-    /// greater than zero. 
-    /// will not be startedfalse, then 
     /// per URL.
+    /// @param defer_thread_start When true, creation of the pool threads is
+    /// deferred until a subsequent call to @ref start(). In this case the
+    /// pool's operational state post-construction is STOPPED.  Otherwise,
+    /// the thread pool threads will be created and started, with the post-
+    /// construction state being RUN.  Applicable only when thread-pool size
+    /// is greater than zero.
     HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)
         : thread_pool_size_(thread_pool_size), threads_() {
@@ -1752,7 +1754,7 @@ public:
             // Create our own private IOService.
             thread_io_service_.reset(new IOService());
 
-            // Create the thread pool. 
+            // Create the thread pool.
             threads_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_,
                                               defer_thread_start));
 
@@ -1853,7 +1855,8 @@ private:
     HttpThreadPoolPtr threads_;
 };
 
-HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size) {
+HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
+                       bool defer_thread_start/* = false*/) {
     if (thread_pool_size > 0) {
         if (!MultiThreadingMgr::instance().getMode()) {
             isc_throw(InvalidOperation,
@@ -1862,7 +1865,8 @@ HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size) {
         }
     }
 
-    impl_.reset(new HttpClientImpl(io_service, thread_pool_size));
+    impl_.reset(new HttpClientImpl(io_service, thread_pool_size,
+                                   defer_thread_start));
 }
 
 HttpClient::~HttpClient() {
@@ -1907,6 +1911,11 @@ HttpClient::asyncSendRequest(const Url& url,
 void
 HttpClient::closeIfOutOfBand(int socket_fd)  {
     return (impl_->conn_pool_->closeIfOutOfBand(socket_fd));
+}
+
+void
+HttpClient::start() {
+    impl_->start();
 }
 
 void

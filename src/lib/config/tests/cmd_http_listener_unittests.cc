@@ -555,8 +555,8 @@ public:
     size_t pause_cnt_;
 };
 
-/// Verifies the construction, starting, stopping, and destruction
-/// of CmdHttpListener.
+/// Verifies the construction, starting, stopping, pausing, resuming,
+/// and destruction of CmdHttpListener.
 TEST_F(CmdHttpListenerTest, basics) {
     // Make sure multi-threading is off.
     MultiThreadingMgr::instance().setMode(false);
@@ -572,9 +572,13 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getPort(), port);
     EXPECT_EQ(listener_->getThreadPoolSize(), 1);
 
-    // It should not be listening and have no threads.
+    // It should not have an IOService, should not be listening
+    // should have no threads.
+    ASSERT_FALSE(listener_->getIOService());
     EXPECT_FALSE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 0);
+    ASSERT_THROW_MSG(listener_->getRunState(), InvalidOperation,
+                     "CmdHttpListener::getRunState - no thread pool!");
 
     // Verify that we cannot start it when multi-threading is disabled.
     ASSERT_FALSE(MultiThreadingMgr::instance().getMode());
@@ -593,6 +597,9 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->start());
     ASSERT_TRUE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 1);
+    ASSERT_TRUE(listener_->getIOService());
+    EXPECT_FALSE(listener_->getIOService()->stopped());
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::RUN);
 
     // Trying to start it again should fail.
     ASSERT_THROW_MSG(listener_->start(), InvalidOperation,
@@ -602,6 +609,8 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->stop());
     ASSERT_FALSE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 0);
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::STOPPED);
+    ASSERT_FALSE(listener_->getIOService());
 
     // Make sure we can call stop again without problems.
     ASSERT_NO_THROW_LOG(listener_->stop());
@@ -610,6 +619,9 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->start());
     ASSERT_TRUE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 1);
+    ASSERT_TRUE(listener_->getIOService());
+    EXPECT_FALSE(listener_->getIOService()->stopped());
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::RUN);
 
     // Destroying it should also stop it.
     // If the test timeouts we know it didn't!
@@ -622,14 +634,33 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getPort(), port);
     EXPECT_EQ(listener_->getThreadPoolSize(), 4);
     ASSERT_TRUE(listener_->isListening());
+    ASSERT_TRUE(listener_->getIOService());
+    EXPECT_FALSE(listener_->getIOService()->stopped());
+
+    // Verify we can pause it.  We should still be listening, threads intact,
+    // IOservice stopped, state set to PAUSED.
+    ASSERT_NO_THROW_LOG(listener_->pause());
+    ASSERT_TRUE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 4);
+    ASSERT_TRUE(listener_->getIOService());
+    EXPECT_TRUE(listener_->getIOService()->stopped());
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::PAUSED);
+
+    // Verify we can resume it.
+    ASSERT_NO_THROW_LOG(listener_->resume());
+    ASSERT_TRUE(listener_->isListening());
+    EXPECT_EQ(listener_->getThreadCount(), 4);
+    ASSERT_TRUE(listener_->getIOService());
+    EXPECT_FALSE(listener_->getIOService()->stopped());
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::RUN);
 
     // Stop it and verify we're no longer listening.
     ASSERT_NO_THROW_LOG(listener_->stop());
     ASSERT_FALSE(listener_->isListening());
     EXPECT_EQ(listener_->getThreadCount(), 0);
+    ASSERT_FALSE(listener_->getIOService());
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::STOPPED);
 }
-
 
 // This test verifies that an HTTP connection can be established and used to
 // transmit an HTTP request and receive the response.

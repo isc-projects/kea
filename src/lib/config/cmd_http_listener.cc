@@ -66,8 +66,8 @@ CmdHttpListener::start() {
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
-        // Create the thread pool.
-        threads_.reset(new HttpThreadPool(io_service_, thread_pool_size_, false));
+        // Create the thread pooli with immediate start.
+        threads_.reset(new HttpThreadPool(io_service_, thread_pool_size_));
 
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
@@ -134,8 +134,8 @@ CmdHttpListener::getRunState() const {
 
 bool
 CmdHttpListener::isListening() const {
-    // If we have a listener we're listening.
-    return (http_listener_ != 0);
+    return (threads_ && (threads_->getRunState() == HttpThreadPool::RunState::PAUSED 
+                         || threads_->getRunState() == HttpThreadPool::RunState::RUN));
 }
 
 } // namespace isc::config

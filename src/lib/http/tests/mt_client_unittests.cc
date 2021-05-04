@@ -858,6 +858,7 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 3);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
 
     // Verify stop doesn't throw.
     ASSERT_NO_THROW_LOG(client->stop());
@@ -876,6 +877,79 @@ TEST_F(MtHttpClientTest, basics) {
 
     // Create another multi-threaded instance.
     ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
+
+    // Make sure destruction doesn't throw.
+    ASSERT_NO_THROW_LOG(client.reset());
+}
+
+// Verifies we can construct with deferred start.
+TEST_F(MtHttpClientTest, deferredStart) {
+    MultiThreadingMgr::instance().setMode(true);
+    HttpClientPtr client;
+    size_t thread_pool_size = 3;
+
+    // Create MT client with deferred start.
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size, true)));
+    ASSERT_TRUE(client);
+
+    // Client should be STOPPED, with no threads.
+    ASSERT_TRUE(client->getThreadIOService());
+    ASSERT_EQ(client->getThreadPoolSize(), thread_pool_size);
+    ASSERT_EQ(client->getThreadCount(), 0);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::STOPPED);
+
+    // We should be able to start it.
+    ASSERT_NO_THROW(client->start());
+
+    // Verify we have threads and run state is RUN.
+    ASSERT_EQ(client->getThreadCount(), 3);
+    ASSERT_TRUE(client->getThreadIOService());
+    ASSERT_FALSE(client->getThreadIOService()->stopped());
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+
+    // Cannot start it twice.
+    ASSERT_THROW_MSG(client->start(), InvalidOperation,
+                     "HttpThreadPool::start already started!");
+
+    // Verify we didn't break it.
+    ASSERT_EQ(client->getThreadCount(), 3);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+
+    // Make sure destruction doesn't throw.
+    ASSERT_NO_THROW_LOG(client.reset());
+}
+
+// Verifies we can restart after stop.
+TEST_F(MtHttpClientTest, restartAfterStop) {
+    MultiThreadingMgr::instance().setMode(true);
+    HttpClientPtr client;
+    size_t thread_pool_size = 3;
+
+    // Create MT client with instant start.
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size)));
+    ASSERT_TRUE(client);
+
+    // Verify we're started.
+    ASSERT_EQ(client->getThreadCount(), 3);
+    ASSERT_TRUE(client->getThreadIOService());
+    ASSERT_FALSE(client->getThreadIOService()->stopped());
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+
+    // Stop should succeed.
+    ASSERT_NO_THROW_LOG(client->stop());
+
+    // Verify we're stopped.
+    ASSERT_EQ(client->getThreadCount(), 0);
+    ASSERT_TRUE(client->getThreadIOService());
+    ASSERT_TRUE(client->getThreadIOService()->stopped());
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::STOPPED);
+
+    // Starting again should succeed.
+    ASSERT_NO_THROW_LOG(client->start());
+    ASSERT_EQ(client->getThreadCount(), 3);
+    ASSERT_TRUE(client->getThreadIOService());
+    ASSERT_FALSE(client->getThreadIOService()->stopped());
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());

@@ -136,10 +136,20 @@ public:
     ///
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
+    /// @param defer_thread_start if true, then the thread pool will be
+    /// created but started  Applicable only when thread-pool-size is
+    /// greater than zero.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
     /// (default) enables single-threaded mode with one connection per URL.
-    explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0);
+    /// @param defer_thread_start When true, creation of the pool threads is
+    /// deferred until a subsequent call to @ref start(). In this case the
+    /// pool's operational state post-construction is STOPPED.  Otherwise,
+    /// the thread pool threads will be created and started, with the post-
+    /// construction state being RUN.  Applicable only when thread-pool size
+    /// is greater than zero.
+    explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0,
+                        bool defer_thread_start = false);
 
     /// @brief Destructor.
     ~HttpClient();
@@ -242,13 +252,15 @@ public:
                           const CloseHandler& close_callback =
                           CloseHandler());
 
+    /// @brief Starts client's thread pool, if mult-threaded.
+    void start();
+
     /// @brief Halts client-side IO activity.
     ///
     /// Closes all connections, discards any queued requests, and in
     /// multi-threaded mode discards the thread-pool and the internal
     /// IOService.
     void stop();
-
 
     /// @brief Closes a connection if it has an out-of-band socket event
     ///
