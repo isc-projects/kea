@@ -1846,47 +1846,47 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'a' ++ 'b' == 'ab'",
                "<string>:1.6: syntax error, unexpected +");
     checkError("addrtotext(10.0.0.1, 10.0.0.2)",
-               "<string>:1.20: syntax error, unexpected \",\", expecting )");
+               "<string>:1.20: syntax error, unexpected \",\", expecting ) or +");
     checkError("addrtotext('cafebabecafebabe')",
-               "<string>:1.31: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.31: syntax error, unexpected end of file, expecting == or +");
     checkError("addrtotext('')",
-               "<string>:1.15: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.15: syntax error, unexpected end of file, expecting == or +");
     checkError("int8totext('01', '01')",
-               "<string>:1.16: syntax error, unexpected \",\", expecting )");
+               "<string>:1.16: syntax error, unexpected \",\", expecting ) or +");
     checkError("int8totext('0123')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
     checkError("int8totext('')",
-               "<string>:1.15: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.15: syntax error, unexpected end of file, expecting == or +");
     checkError("int16totext('0123', '0123')",
-               "<string>:1.19: syntax error, unexpected \",\", expecting )");
+               "<string>:1.19: syntax error, unexpected \",\", expecting ) or +");
     checkError("int16totext('01')",
-               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.18: syntax error, unexpected end of file, expecting == or +");
     checkError("int16totext('')",
-               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.16: syntax error, unexpected end of file, expecting == or +");
     checkError("int32totext('01234567', '01234567')",
-               "<string>:1.23: syntax error, unexpected \",\", expecting )");
+               "<string>:1.23: syntax error, unexpected \",\", expecting ) or +");
     checkError("int32totext('01')",
-               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.18: syntax error, unexpected end of file, expecting == or +");
     checkError("int32totext('')",
-               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.16: syntax error, unexpected end of file, expecting == or +");
     checkError("uint8totext('01', '01')",
-               "<string>:1.17: syntax error, unexpected \",\", expecting )");
+               "<string>:1.17: syntax error, unexpected \",\", expecting ) or +");
     checkError("uint8totext('0123')",
-               "<string>:1.20: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.20: syntax error, unexpected end of file, expecting == or +");
     checkError("uint8totext('')",
-               "<string>:1.16: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.16: syntax error, unexpected end of file, expecting == or +");
     checkError("uint16totext('0123', '0123')",
-               "<string>:1.20: syntax error, unexpected \",\", expecting )");
+               "<string>:1.20: syntax error, unexpected \",\", expecting ) or +");
     checkError("uint16totext('01')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
     checkError("uint16totext('')",
-               "<string>:1.17: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.17: syntax error, unexpected end of file, expecting == or +");
     checkError("uint32totext('01234567', '01234567')",
-               "<string>:1.24: syntax error, unexpected \",\", expecting )");
+               "<string>:1.24: syntax error, unexpected \",\", expecting ) or +");
     checkError("uint32totext('01')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
     checkError("uint32totext('')",
-               "<string>:1.17: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.17: syntax error, unexpected end of file, expecting == or +");
 }
 
 // Tests some type error cases
@@ -1941,31 +1941,31 @@ TEST_F(EvalContextTest, typeErrors) {
 
     // Addrtotext requires string storing the binary representation of the address.
     checkError("addrtotext('192.100.1.1')",
-               "<string>:1.26: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.26: syntax error, unexpected end of file, expecting == or +");
 
     // Int8totext requires string storing the binary representation of the 8 bit integer.
     checkError("int8totext('0123')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
 
     // Int16totext requires string storing the binary representation of the 16 bit integer.
     checkError("int16totext('01')",
-               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.18: syntax error, unexpected end of file, expecting == or +");
 
     // Int32totext requires string storing the binary representation of the 32 bit integer.
     checkError("int32totext('01')",
-               "<string>:1.18: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.18: syntax error, unexpected end of file, expecting == or +");
 
     // Uint8totext requires string storing the binary representation of the 8 bit unsigned integer.
     checkError("uint8totext('0123')",
-               "<string>:1.20: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.20: syntax error, unexpected end of file, expecting == or +");
 
     // Uint16totext requires string storing the binary representation of the 16 bit unsigned integer.
     checkError("uint16totext('01')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
 
     // Uint32totext requires string storing the binary representation of the 32 bit unsigned integer.
     checkError("uint32totext('01')",
-               "<string>:1.19: syntax error, unexpected end of file, expecting ==");
+               "<string>:1.19: syntax error, unexpected end of file, expecting == or +");
 }
 
 TEST_F(EvalContextTest, vendor4SpecificVendorExists) {
