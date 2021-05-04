@@ -930,25 +930,26 @@ Two hooks library parameters for text file are supported:
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
 
--  time-unit - configures the time unit used to rotate the log file. Valid
-   values are ``second``, ``day``, ``month`` or ``year``. It defaults to ``day``.
+-  ``time-unit`` - configures the time unit used to rotate the log file. Valid
+   values are ``second``, ``day``, ``month`` or ``year``. It defaults to
+   ``day``.
 
--  count - configures the number of time units that need to pass until the log
-   file is rotated. It can be any positive number, or 0 which disabled log rotate.
-   It defaults to 1.
+-  ``count`` - configures the number of time units that need to pass until the
+   log file is rotated. It can be any positive number, or 0 which disabled log
+   rotate. It defaults to 1.
 
-To note that if log rotate is disabled, a new file will be created when the
-library is loaded and the new file name is different that any previous file name.
+If log rotate is disabled, a new file will be created when the library is
+loaded and the new file name is different that any previous file name.
 
 Additional actions can be performed just before closing the old file and after
 opening the new file. These actions must point to an external executable or
 script and are configured by setting:
 
--  prerotate - external executable or script called with the name of the file
-   that will be closed (Kea will not wait for the process to finish)
+-  ``prerotate`` - external executable or script called with the name of the
+   file that will be closed (Kea will not wait for the process to finish)
 
--  portrotate - external executable or script called with the name of the file
-   that had been opened (Kea will not wait for the process to finish)
+-  ``portrotate`` - external executable or script called with the name of the
+   file that had been opened (Kea will not wait for the process to finish)
 
 -  ``request-parser-format`` - evaluated parsed expression used to extract and
    log data from the incoming packet

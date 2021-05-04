@@ -163,7 +163,7 @@ instantiated with the appropriate value and put onto the expression vector.
    concatenate two other tokens.
  - isc::dhcp::TokenIfElse -- represents the ifelse(cond, iftrue, ifelse) operator.
  - isc::dhcp::TokenToHexString -- represents the hexstring operator which
-   converts a binary value to its hexadecimal string representation. 
+   converts a binary value to its hexadecimal string representation.
  - isc::dhcp::TokenInt8ToText -- represents the signed 8 bit integer in string
    representation.
  - isc::dhcp::TokenInt16ToText -- represents the signed 16 bit integer in string
