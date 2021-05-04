@@ -1042,6 +1042,8 @@ def _configure_mysql(system, revision, features):
 def _enable_postgresql(system):
     if system == 'alpine':
         execute('sudo rc-update add postgresql')
+    elif system == 'freebsd':
+        execute('sudo sysrc postgresql_enable="yes"')
     else:
         execute('sudo systemctl enable postgresql.service')
 
@@ -1068,9 +1070,11 @@ def _configure_pgsql(system, features):
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
-        # pgsql must be enabled before running initdb
-        execute('sudo sysrc postgresql_enable="yes"')
-        execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql initdb || true')
+        execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true')
+        # if the file '/var/db/postgres/data11/postmaster.opts' does not exist the 'restart' of postgresql will fail with error:
+        #    pg_ctl: could not read file "/var/db/postgres/data11/postmaster.opts"
+        # the initial start of the postgresql will create the 'postmaster.opts' file
+        execute('sudo [ ! -f /var/db/postgres/data11/postmaster.opts ] && sudo service postgresql onestart > /dev/null')
 
     _enable_postgresql(system)
     _restart_postgresql(system)
