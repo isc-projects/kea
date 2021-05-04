@@ -60,6 +60,7 @@ SYSTEMS = {
                '9',
                '10'],
     'freebsd': ['11.2',
+                '11.4',
                 '12.0',
                 '12.1'],
     'alpine': [
@@ -1453,8 +1454,8 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
         if 'docs' in features:
-            if revision.startswith('12.1'):
-                # revision 12.1-RELEASE
+            if revision.startswith('11.4') or revision.startswith('12.1'):
+                # revision 12.1-RELEASE; 11.4-RELEASE-p9
                 packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
             else:
                 packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
