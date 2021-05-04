@@ -321,7 +321,7 @@ loaded by the correct process per the table below.
    |                 |               |sufficient it may be used directly. If your jurisdiction    |
    |                 |               |requires that you save a different set of information, you  |
    |                 |               |may use it as a template or example and create your own     |
-   |                 |               |custom logging hooks. In Kea 1.9.7 additional parameters    |
+   |                 |               |custom logging hooks. In Kea 1.9.8 additional parameters    |
    |                 |               |have been added to give users more flexibility regarding    |
    |                 |               |what information should be logged.                          |
    +-----------------+---------------+------------------------------------------------------------+
