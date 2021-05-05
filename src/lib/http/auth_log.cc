@@ -14,8 +14,7 @@ namespace isc {
 namespace http {
 
 /// @brief Defines the logger used by the HTTP authentication.
-isc::log::Logger auth_logger("http-auth");
+isc::log::Logger auth_logger("auth");
 
 } // namespace http
 } // namespace isc
-
