@@ -301,7 +301,8 @@ Authentication for Kea's REST API
 Kea 1.9.0 added support for basic HTTP authentication `RFC 7617 <https://tools.ietf.org/html/rfc7617>`_
 to control access for incoming REST commands over HTTP. The credentials (username, password) are
 stored in a local Kea configuration file on disk. The username is logged with the API command so it
-is possible to determine which authenticated user performed each command. Basic HTTP
+is possible to determine which authenticated user performed each command. The access control details
+are logged using a dedicated ``auth`` logger. Basic HTTP
 authentication is weak on its own as there are known dictionary attacks, but those attacks require
 man-in-the-middle to get access to the HTTP traffic. That can be eliminated by using basic HTTP
 authentication exclusively over TLS. In fact, if possible, using client certificates for TLS is better than

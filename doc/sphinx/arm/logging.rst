@@ -140,6 +140,11 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | inherit the settings           |
    |                                  |                        | from this logger.              |
    +----------------------------------+------------------------+--------------------------------+
+   | ``kea-ctrl-agent.auth``          | core                   | A logger which covers          |
+   |                                  |                        | access control details, such as|
+   |                                  |                        | a result of the basic HTTP     |
+   |                                  |                        | authentication.                |
+   +----------------------------------+------------------------+--------------------------------+
    | ``kea-ctrl-agent.http``          | core                   | A logger which                 |
    |                                  |                        | outputs log messages           |
    |                                  |                        | related to receiving,          |
