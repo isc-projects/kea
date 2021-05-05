@@ -1,3 +1,8 @@
+1894.	[func]		fdupont
+	Implemented 'auth' logger, dedicated to logging access
+	control information, such as basic HTTP authentication.
+	(Gitlab #1590)
+
 1893.	[func]		fdupont
 	Botan 2.14 or later can now be used as a crypto library for
 	the TLS/HTTPS support in Kea.
