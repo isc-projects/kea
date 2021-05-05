@@ -129,7 +129,7 @@ first section of the output should look something like this:
      OS Family:        Linux
      Using GNU sed:    yes
      Premium package:  yes
-     Included Hooks:   forensic_log flex_id host_cmds
+     Included Hooks:   forensic_log flex_id host_cmds subnet_cmds radius host_cache class_cmds cb_cmds lease_query
 
 The last line indicates which specific hooks were detected. Note that
 some hooks may require their own dedicated switches, e.g. the RADIUS hook
@@ -580,7 +580,7 @@ that it records is sufficient, it may be used directly.
 
 Since Kea 1.9.8, the library supports custom format for logging information
 that can be extracted either from the incoming packet or from the server
-response packet.
+response packet. Use with caution as this might affect server performance.
 
 The custom format can not be used for control channel commands.
 
@@ -753,6 +753,78 @@ Examples:
 
    2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 
+The ``request-parser-format`` and ``response-parser-format`` can be used to
+extract and log data from the incoming packet and server response packet
+respectively. The configured value is an evaluated parsed expression returning a
+string. A list of tokens is described in the server classification process.
+Use with caution as this might affect server performance.
+If any of them is configured, the default logging format is not used.
+If both of them are configured, the resulting log message is constructed by
+concatenating the logged data extracted from the request and the logged data
+extracted from the response.
+
+Some data might be available in the request or in the response only and some
+data might differ in the incoming packet from the one in the response packet.
+
+Examples:
+
+::
+   "request-parser-format":
+       "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
+            'Address: ' + addrtotext(pkt4.yiaddr) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
+                ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                    ifelse(option[82].exists and option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
+            '')",
+   ...
+   "response-parser-format":
+       "ifelse(pkt4.msgtype == 5,
+            'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
+                ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                    ifelse(option[82].exists and option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
+            '')",
+   ...
+
+
+This will log the following data on request and renew:
+::
+   Address: 192.2.1.100 has been assigned for 6735 seconds to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
+
+
+This will log the following data on release and decline:
+::
+   Address: 192.2.1.100 has been released from a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
+
+
+Similar result can be obtained if configuring ``request-parser-format`` only.
+
+Examples:
+
+::
+   "request-parser-format":
+       "ifelse(pkt4.msgtype == 3,
+            'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
+                ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                    ifelse(option[82].exists and option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
+                    ifelse(option[82].exists and option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
+            ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
+                'Address: ' + addrtotext(pkt4.yiaddr) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                    ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
+                    ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                        ifelse(option[82].exists and option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
+                        ifelse(option[82].exists and option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
+                        ifelse(option[82].exists and option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
+                ''))",
+   ...
+
+
 DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
@@ -873,6 +945,112 @@ Examples:
    2018-01-06 01:02:03 PST Administrator deleted the lease for address: 2001:db8::3
 
    2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
+
+The ``request-parser-format`` and ``response-parser-format`` can be used to
+extract and log data from the incoming packet and server response packet
+respectively. The configured value is an evaluated parsed expression returning a
+string. A list of tokens is described in the server classification process.
+Use with caution as this might affect server performance.
+If any of them is configured, the default logging format is not used.
+If both of them are configured, the resulting log message is constructed by
+concatenating the logged data extracted from the request and the logged data
+extracted from the response.
+
+Some data might be available in the request or in the response only and some
+data might differ in the incoming packet from the one in the response packet.
+
+Examples:
+
+::
+   "request-parser-format":
+       "ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9,
+            ifelse(option[3].exists and option[3].option[5].exists,
+                'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') +
+                    ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                        ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                        ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                        ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') +
+                ifelse(option[25].exists and option[25].option[26].exists,
+                    'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') +
+                        ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                            ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                            ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                            ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
+            '')",
+   ...
+   "response-parser-format":
+       "ifelse(pkt6.msgtype == 7,
+            ifelse(option[3].exists and option[3].option[5].exists,
+                'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been assigned for ' + uint32totext(substring(option[3].option[5].hex, 20, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') +
+                    ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                        ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                        ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                        ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') +
+                ifelse(option[25].exists and option[25].option[26].exists,
+                    'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been assigned for ' + uint32totext(substring(option[25].option[26].hex, 4, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') +
+                        ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                            ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                            ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                            ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
+            '')",
+   ...
+
+
+This will log the following data on request, renew and rebind for NA:
+::
+   Address: 2001:db8:1:: has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
+
+
+This will log the following data on request, renew and rebind for PD:
+::
+   Prefix: 2001:db8:1::/64 has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
+
+
+This will log the following data on release and decline for NA:
+::
+   Address: 2001:db8:1:: has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
+
+
+This will log the following data on release and decline for PD:
+::
+   Prefix: 2001:db8:1::/64 has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
+
+
+Similar result can be obtained if configuring ``request-parser-format`` only.
+
+Examples:
+
+::
+   "request-parser-format":
+       "ifelse(pkt6.msgtype == 3 or pkt6.msgtype == 5 or pkt6.msgtype == 6,
+            ifelse(option[3].exists and option[3].option[5].exists,
+                'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been assigned for ' + uint32totext(substring(option[3].option[5].hex, 20, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') +
+                    ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                        ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                        ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                        ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') +
+                ifelse(option[25].exists and option[25].option[26].exists,
+                    'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been assigned for ' + uint32totext(substring(option[25].option[26].hex, 4, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') +
+                        ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                            ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                            ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                            ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
+            ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9,
+                ifelse(option[3].exists and option[3].option[5].exists,
+                    'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') +
+                        ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                            ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                            ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                            ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') +
+                    ifelse(option[25].exists and option[25].option[26].exists,
+                        'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') +
+                            ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) +
+                                ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
+                                ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
+                                ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
+                ''))",
+   ...
+
 
 .. _forensic-log-configuration:
 
