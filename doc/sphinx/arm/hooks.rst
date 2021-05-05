@@ -769,6 +769,7 @@ data might differ in the incoming packet from the one in the response packet.
 Examples:
 
 ::
+
    "request-parser-format":
        "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
             'Address: ' + addrtotext(pkt4.yiaddr) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
@@ -792,12 +793,16 @@ Examples:
 
 
 This will log the following data on request and renew:
+
 ::
+
    Address: 192.2.1.100 has been assigned for 6735 seconds to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
 
 
 This will log the following data on release and decline:
+
 ::
+
    Address: 192.2.1.100 has been released from a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
 
 
@@ -806,6 +811,7 @@ Similar result can be obtained if configuring ``request-parser-format`` only.
 Examples:
 
 ::
+
    "request-parser-format":
        "ifelse(pkt4.msgtype == 3,
             'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
@@ -962,6 +968,7 @@ data might differ in the incoming packet from the one in the response packet.
 Examples:
 
 ::
+
    "request-parser-format":
        "ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9,
             ifelse(option[3].option[5].exists,
@@ -997,22 +1004,30 @@ Examples:
 
 
 This will log the following data on request, renew and rebind for NA:
+
 ::
+
    Address: 2001:db8:1:: has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
 
 This will log the following data on request, renew and rebind for PD:
+
 ::
+
    Prefix: 2001:db8:1::/64 has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
 
 This will log the following data on release and decline for NA:
+
 ::
+
    Address: 2001:db8:1:: has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
 
 This will log the following data on release and decline for PD:
+
 ::
+
    Prefix: 2001:db8:1::/64 has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
 
@@ -1021,6 +1036,7 @@ Similar result can be obtained if configuring ``request-parser-format`` only.
 Examples:
 
 ::
+
    "request-parser-format":
        "ifelse(pkt6.msgtype == 3 or pkt6.msgtype == 5 or pkt6.msgtype == 6,
             ifelse(option[3].option[5].exists,
