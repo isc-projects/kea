@@ -948,7 +948,7 @@ TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6MultiThreading) {
 
 /// @brief Test fixture class for validating @c LeaseMgr using
 /// MySQL as back end and MySQL connectivity loss.
-class MySQLLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
+class MySqlLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
         destroyMySQLSchema();
@@ -969,61 +969,61 @@ public:
 };
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);
     testNoCallbackOnOpenFailure();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
     MultiThreadingTest mt(true);
     testNoCallbackOnOpenFailure();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedAfterTimeoutCallback();
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
-TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+TEST_F(MySqlLeaseMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedAfterTimeoutCallback();
 }

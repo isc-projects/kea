@@ -754,6 +754,15 @@ TEST_F(NetworkStateTest, delayedEnableAllTestMultiThreading) {
     delayedEnableAllTest();
 }
 
+TEST_F(NetworkStateTest, earlyEnableAllTest) {
+    earlyEnableAllTest();
+}
+
+TEST_F(NetworkStateTest, earlyEnableAllTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    earlyEnableAllTest();
+}
+
 TEST_F(NetworkStateTest, multipleDelayedEnableAllTest) {
     multipleDelayedEnableAllTest();
 }
