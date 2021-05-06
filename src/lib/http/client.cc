@@ -1784,6 +1784,7 @@ public:
         // Close all the connections.
         conn_pool_->closeAll();
 
+        // Stop the thread pool.
         if (threads_) {
             threads_->stop();
         }
@@ -1794,6 +1795,7 @@ public:
             isc_throw(InvalidOperation, "HttpClient::pause - no thread pool");
         }
 
+        // Pause the thread pool.
         threads_->pause();
     }
 
@@ -1803,6 +1805,7 @@ public:
             isc_throw(InvalidOperation, "HttpClient::resume - no thread pool");
         }
 
+        // Resume the thread pool.
         threads_->resume();
     }
 
@@ -1952,7 +1955,6 @@ HttpThreadPool::RunState
 HttpClient::getRunState() const {
     return (impl_->getRunState());
 }
-
 
 } // end of namespace isc::http
 } // end of namespace isc

@@ -199,7 +199,7 @@ public:
         : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
           test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
           expected_requests_(0), num_in_progress_(0), num_finished_(0), paused_(false),
-          pause_cnt_(0) {
+          pause_cnt_(0), shutdown_(false) {
         test_timer_.setup(std::bind(&MtHttpClientTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         MultiThreadingMgr::instance().setMode(true);
@@ -209,7 +209,7 @@ public:
     ~MtHttpClientTest() {
         // Stop the client.
         if (client_) {
-            client_->stop();
+            stopTestClient();
         }
 
         // Stop all listeners.
@@ -314,7 +314,7 @@ public:
                 } else {
                     // I'm ready but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_in_progress_ == num_threads_); });
+                                            [&]() { return (num_in_progress_ == num_threads_ || shutdown_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to start work";
                     }
@@ -345,63 +345,12 @@ public:
                 } else {
                     // I'm done but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_finished_ == num_threads_); });
+                                            [&]() { return (num_finished_ == num_threads_ || shutdown_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to finish work";
                     }
                 }
             }
-        }));
-    }
-
-    /// @brief Initiates a single HTTP request.
-    ///
-    /// Constructs an HTTP post whose body is a JSON map containing a
-    /// single integer element, "sequence".
-    ///
-    /// The request completion handler simply constructs the response,
-    /// and adds it the list of completed request/responses. If the
-    /// number of completed requests has reached the expected number
-    /// it stops the test IOService.
-    ///
-    /// @param sequence value for the integer element, "sequence",
-    /// to send in the request.
-    void startRequestSimple(int sequence, int port_offset = 0) {
-        // Create the URL on which the server can be reached.
-        std::stringstream ss;
-        ss << "http://" << SERVER_ADDRESS << ":" << (SERVER_PORT + port_offset);
-        Url url(ss.str());
-
-        // Initiate request to the server.
-        PostHttpRequestJsonPtr request_json = createRequest("sequence", sequence);
-        HttpResponseJsonPtr response_json = boost::make_shared<HttpResponseJson>();
-        ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
-                                                  request_json, response_json,
-            [this, request_json, response_json](const boost::system::error_code& ec,
-                                                const HttpResponsePtr&,
-                                                const std::string&) {
-            // Bail on an error.
-            ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
-
-            // Get stringified thread-id.
-            std::stringstream ss;
-            ss << std::this_thread::get_id();
-
-            // Create the ClientRR.
-            ClientRRPtr clientRR(new ClientRR());
-            clientRR->thread_id_ = ss.str();
-            clientRR->request_ = request_json;
-            clientRR->response_ = response_json;
-
-            {
-                std::unique_lock<std::mutex> lck(test_mutex_);
-                clientRRs_.push_back(clientRR);
-                ++num_finished_;
-                if ((num_finished_ >= expected_requests_) && !io_service_.stopped()) {
-                    io_service_.stop();
-                }
-            }
-
         }));
     }
 
@@ -528,7 +477,7 @@ public:
         }
 
         // Client should stop without issue.
-        ASSERT_NO_THROW(client_->stop());
+        stopTestClient();
 
         // Listeners should stop without issue.
         for (const auto& listener : listeners_) {
@@ -657,6 +606,19 @@ public:
         return (rr_count >= next_stop);
     }
 
+    /// @brief Stops the test client.
+    ///
+    /// Sets the shutdown flag and pings the test condition variable,
+    /// and then stops the thread pool.
+    void stopTestClient() {
+        // Set shutdown_ flag and notify any handles that may be waiting.
+        shutdown_ = true;
+        test_cv_.notify_all();
+
+        // Client should stop without issue.
+        ASSERT_NO_THROW(client_->stop());
+    }
+
     /// @brief Verifies the client can be puased and shutdown while doing work.
     ///
     /// @param num_threads number of threads the HttpClient should use.
@@ -721,7 +683,7 @@ public:
         for (auto b = 0; b < num_batches; ++b) {
             for (auto l = 0; l < num_listeners_; ++l) {
                 for (auto t = 0; t < effective_threads; ++t) {
-                    startRequestSimple(++sequence, l);
+                    startRequest(++sequence, l);
                 }
             }
         }
@@ -750,7 +712,7 @@ public:
         ASSERT_LT(getRRCount(), maximum_requests);
 
         // Client should stop without issue.
-        ASSERT_NO_THROW(client_->stop());
+        stopTestClient();
 
         // Listeners should stop without issue.
         for (const auto& listener : listeners_) {
@@ -821,6 +783,8 @@ public:
 
     /// @brief Number of times client has been paused during the test.
     size_t pause_cnt_;
+
+    bool shutdown_;
 };
 
 // Verifies we can construct and destruct, in both single

@@ -118,6 +118,10 @@ HttpThreadPool::stop() {
 
     // Stop our IOService.
     if (!io_service_->stopped()) {
+        // Flush cancelled (and ready) handlers.
+        io_service_->poll();
+
+        // Stop the service
         io_service_->stop();
     }
 
@@ -140,8 +144,6 @@ HttpThreadPool::pause() {
         return;
     }
 
-    /// @todo TKM - Take this out
-    std::cout << "HttpThreadPool pausing" << std::endl;
     setRunState(RunState::PAUSED);
     io_service_->stop();
 }
@@ -149,12 +151,10 @@ HttpThreadPool::pause() {
 void
 HttpThreadPool::resume() {
     if (getRunState() !=  RunState::PAUSED) {
-        // Not PAUSED, can't resume.
+        // Not paused, can't resume.
         return;
     }
 
-    /// @todo TKM - Take this out
-    std::cout << "HttpThreadPool resuming" << std::endl;
     io_service_->restart();
     setRunState(RunState::RUN);
 }
