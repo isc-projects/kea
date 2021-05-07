@@ -1004,19 +1004,28 @@ public:
 
     /// @brief Start the client and(or) listener instances.
     ///
-    /// Starts the dedicated listener thread pool, if the listener exists.
-    /// Nothing is required for the client as it does not currently support
-    /// a discrete "start" method, rather it is "started" during its
-    /// construction.
+    /// When HA+Mt is enabled it starts the client's thread pool
+    /// and the dedicated listener thread pool, if the listener exists.
     void startClientAndListener();
+
+    /// @brief Pauses client and(or) listener thread pool operations.
+    ///
+    /// Suspends the client and listener thread pool event processing.
+    /// Has no effect in single-threaded mode or if thread pools are
+    /// not currently running.
+    void pauseClientAndListener();
+
+    /// @brief Resumes client and(or) listener thread pool operations.
+    ///
+    /// Resumes the client and listener thread pool event processing.
+    /// Has no effect in single-threaded mode or if thread pools are
+    /// not currently paused.
+    void resumeClientAndListener();
 
     /// @brief Stop the client and(or) listener instances.
     ///
-    /// Closing connections and stops the thread pools for the client
+    /// Closes all connections and stops the thread pools for the client
     /// and listener, if they exist.
-    ///
-    /// @note Once stopped the service cannot be restarted, it must
-    /// be recreated.
     void stopClientAndListener();
 
 protected:

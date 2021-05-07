@@ -28,7 +28,7 @@ namespace config {
 
 CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
                                  const uint16_t thread_pool_size /* = 1 */)
-    : address_(address), port_(port), io_service_(), http_listener_(),
+    : address_(address), port_(port), thread_io_service_(), http_listener_(),
       thread_pool_size_(thread_pool_size), threads_() {
 }
 
@@ -44,14 +44,14 @@ CmdHttpListener::start() {
                   " when multi-threading is disabled");
     }
 
-    // Punt if we're already listening.
-    if (isListening()) {
-        isc_throw(InvalidOperation, "CmdHttpListener is already listening!");
+    // Punt if we're already started.
+    if (!isStopped()) {
+        isc_throw(InvalidOperation, "CmdHttpListener already started!");
     }
 
     try {
         // Create a new IOService.
-        io_service_.reset(new IOService());
+        thread_io_service_.reset(new IOService());
 
         // Create the response creator factory first. It will be used to
         // generate response creators. Each response creator will be
@@ -61,13 +61,13 @@ CmdHttpListener::start() {
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.
         TlsContextPtr tls_context;
-        http_listener_.reset(new HttpListener(*io_service_, address_, port_,
+        http_listener_.reset(new HttpListener(*thread_io_service_, address_, port_,
                                               tls_context, rcf,
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
-        // Create the thread pooli with immediate start.
-        threads_.reset(new HttpThreadPool(io_service_, thread_pool_size_));
+        // Create the thread pooi with immediate start.
+        threads_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_));
 
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
@@ -100,7 +100,7 @@ CmdHttpListener::resume() {
 void
 CmdHttpListener::stop() {
     // Nothing to do.
-    if (!io_service_) {
+    if (!thread_io_service_) {
         return;
     }
 
@@ -115,7 +115,7 @@ CmdHttpListener::stop() {
     http_listener_.reset();
 
     // Ditch the IOService.
-    io_service_.reset();
+    thread_io_service_.reset();
 
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STOPPED)
               .arg(address_)
@@ -132,10 +132,31 @@ CmdHttpListener::getRunState() const {
     return (threads_->getRunState());
 }
 
-bool
-CmdHttpListener::isListening() const {
-    return (threads_ && (threads_->getRunState() == HttpThreadPool::RunState::PAUSED 
-                         || threads_->getRunState() == HttpThreadPool::RunState::RUN));
+bool 
+CmdHttpListener::isRunning() {
+    if (threads_) {
+        return (threads_->getRunState() == HttpThreadPool::RunState::RUN);
+    }
+
+    return (false);
+}
+
+bool 
+CmdHttpListener::isStopped() {
+    if (threads_) {
+        return (threads_->getRunState() == HttpThreadPool::RunState::STOPPED);
+    }
+
+    return (true);
+}
+
+bool 
+CmdHttpListener::isPaused() {
+    if (threads_) {
+        return (threads_->getRunState() == HttpThreadPool::RunState::PAUSED);
+    }
+
+    return (false);
 }
 
 } // namespace isc::config

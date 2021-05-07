@@ -665,6 +665,11 @@ public:
         ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
         ASSERT_TRUE(client_);
 
+        // Check convenience functions.
+        ASSERT_TRUE(client_->isRunning());
+        ASSERT_FALSE(client_->isPaused());
+        ASSERT_FALSE(client_->isStopped());
+
         if (num_threads_ == 0) {
             // If we single-threaded client should not have it's own IOService.
             ASSERT_FALSE(client_->getThreadIOService());
@@ -704,6 +709,11 @@ public:
             // Pause the client.
             ASSERT_NO_THROW(client_->pause());
             ASSERT_EQ(HttpThreadPool::RunState::PAUSED, client_->getRunState());
+
+            // Check convenience functions.
+            ASSERT_FALSE(client_->isRunning());
+            ASSERT_TRUE(client_->isPaused());
+            ASSERT_FALSE(client_->isStopped());
         }
 
         // We should have completed at least the expected number of requests
@@ -824,6 +834,11 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
 
+    // Check convenience functions.
+    ASSERT_TRUE(client->isRunning());
+    ASSERT_FALSE(client->isPaused());
+    ASSERT_FALSE(client->isStopped());
+
     // Verify stop doesn't throw.
     ASSERT_NO_THROW_LOG(client->stop());
 
@@ -832,6 +847,11 @@ TEST_F(MtHttpClientTest, basics) {
     EXPECT_TRUE(client->getThreadIOService()->stopped());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 0);
+
+    // Check convenience functions.
+    ASSERT_FALSE(client->isRunning());
+    ASSERT_FALSE(client->isPaused());
+    ASSERT_TRUE(client->isStopped());
 
     // Verify a second call to stop() doesn't throw.
     ASSERT_NO_THROW_LOG(client->stop());
@@ -862,6 +882,11 @@ TEST_F(MtHttpClientTest, deferredStart) {
     ASSERT_EQ(client->getThreadCount(), 0);
     ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::STOPPED);
 
+    // Check convenience functions.
+    ASSERT_FALSE(client->isRunning());
+    ASSERT_FALSE(client->isPaused());
+    ASSERT_TRUE(client->isStopped());
+
     // We should be able to start it.
     ASSERT_NO_THROW(client->start());
 
@@ -870,6 +895,11 @@ TEST_F(MtHttpClientTest, deferredStart) {
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
     ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+
+    // Check convenience functions.
+    ASSERT_TRUE(client->isRunning());
+    ASSERT_FALSE(client->isPaused());
+    ASSERT_FALSE(client->isStopped());
 
     // Cannot start it twice.
     ASSERT_THROW_MSG(client->start(), InvalidOperation,
@@ -975,7 +1005,7 @@ TEST_F(MtHttpClientTest, fourByFourByTwo) {
 }
 
 // Verifies that we can cleanly work, pause, and resume repeatedly.
-TEST_F(MtHttpClientTest, workPauseResumee) {
+TEST_F(MtHttpClientTest, workPauseResume) {
     size_t num_threads = 12;
     size_t num_batches = 12;
     size_t num_listeners = 12;

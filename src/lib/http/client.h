@@ -293,9 +293,41 @@ public:
     /// @return the number of running threads.
     uint16_t getThreadCount() const;
 
+    /// @brief Pauses the thread pool operation.
+    ///
+    /// Suspends thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
     void pause();
+
+    /// @brief Resumes the thread pool operation.
+    ///
+    /// Resumes thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
     void resume();
+
+    /// @brief Fetches the thread pool's operational state.
+    ///
+    /// @return Operational state of the thread pool.
+    /// @throw InvalidOperation if the thread pool does not exist.
     HttpThreadPool::RunState getRunState() const;
+
+    /// @brief Indicates if the thread pool processing is running.
+    ///
+    /// @return True if the thread pool exists and is in the RUN state,
+    /// false otherwise.
+    bool isRunning();
+
+    /// @brief Indicates if the thread pool is stopped.
+    ///
+    /// @return True if the thread pool exists and is in the STOPPED state,
+    /// false otherwise.
+    bool isStopped();
+
+    /// @brief Indicates if the thread pool processing is running.
+    ///
+    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// false otherwise.
+    bool isPaused();
 
 private:
 

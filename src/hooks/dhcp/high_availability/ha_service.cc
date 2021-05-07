@@ -73,9 +73,9 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
         // Not configured for multi-threading, start a client in ST mode.
         client_.reset(new HttpClient(*io_service_, 0));
     } else {
-        // Start a client in MT mode.
+        // Create an MT-mode client.
         client_.reset(new HttpClient(*io_service_,
-                      config_->getHttpClientThreads()));
+                      config_->getHttpClientThreads(), true));
 
         // If we're configured to use our own listener create and start it.
         if (config_->getHttpDedicatedListener()) {
@@ -2815,8 +2815,34 @@ HAService::getPendingRequestInternal(const QueryPtrType& query) {
 
 void
 HAService::startClientAndListener() {
+    if (client_) {
+        client_->start();
+    }
+
     if (listener_) {
         listener_->start();
+    }
+}
+
+void
+HAService::pauseClientAndListener() {
+    if (client_) {
+        client_->pause();
+    }
+
+    if (listener_) {
+        listener_->pause();
+    }
+}
+
+void
+HAService::resumeClientAndListener() {
+    if (client_) {
+        client_->resume();
+    }
+
+    if (listener_) {
+        listener_->resume();
     }
 }
 

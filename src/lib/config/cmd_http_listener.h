@@ -55,10 +55,23 @@ public:
     /// @return Run state of the pool.
     http::HttpThreadPool::RunState getRunState() const;
 
-    /// @brief Checks if we are listening to the HTTP requests.
+    /// @brief Indicates if the thread pool processing is running.
     ///
-    /// @return true if we are listening.
-    bool isListening() const;
+    /// @return True if the thread pool exists and is in the RUN state,
+    /// false otherwise.
+    bool isRunning();
+
+    /// @brief Indicates if the thread pool is stopped.
+    ///
+    /// @return True if the thread pool does not exist or it 
+    /// is in the STOPPED state, False otherwise.
+    bool isStopped();
+
+    /// @brief Indicates if the thread pool processing is running.
+    ///
+    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// false otherwise.
+    bool isPaused();
 
     /// @brief Fetches the IP address on which to listen.
     ///
@@ -92,8 +105,8 @@ public:
         return (threads_->getThreadCount());
     }
 
-    asiolink::IOServicePtr getIOService() const {
-        return(io_service_);
+    asiolink::IOServicePtr getThreadIOService() const {
+        return(thread_io_service_);
     }
 
 private:
@@ -104,7 +117,7 @@ private:
     uint16_t port_;
 
     /// @brief IOService instance that drives our IO.
-    isc::asiolink::IOServicePtr io_service_;
+    isc::asiolink::IOServicePtr thread_io_service_;
 
     /// @brief The HttpListener instance
     http::HttpListenerPtr http_listener_;

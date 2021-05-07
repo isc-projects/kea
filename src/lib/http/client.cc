@@ -1790,6 +1790,9 @@ public:
         }
     }
 
+    /// @brief Pauses the thread pool operation.
+    ///
+    /// Suspends thread pool event processing.
     void pause() {
         if (!threads_) {
             isc_throw(InvalidOperation, "HttpClient::pause - no thread pool");
@@ -1799,7 +1802,9 @@ public:
         threads_->pause();
     }
 
-    /// @brief Pauses the thread pool's worker threads.
+    /// @brief Resumes the thread pool operation.
+    ///
+    /// Resumes thread pool event processing.
     void resume() {
         if (!threads_) {
             isc_throw(InvalidOperation, "HttpClient::resume - no thread pool");
@@ -1809,12 +1814,51 @@ public:
         threads_->resume();
     }
 
+    /// @brief Fetches the thread pool's operational state.
+    ///
+    /// @return Operational state of the thread pool.
     HttpThreadPool::RunState getRunState() const {
         if (!threads_) {
             isc_throw(InvalidOperation, "HttpClient::getRunState - no thread pool");
         }
 
         return (threads_->getRunState());
+    }
+
+    /// @brief Indicates if the thread pool processing is running.
+    ///
+    /// @return True if the thread pool exists and is in the RUN state,
+    /// false otherwise.
+    bool isRunning() {
+        if (threads_) {
+            return (threads_->getRunState() == HttpThreadPool::RunState::RUN);
+        }
+
+        return (false);
+    }
+
+    /// @brief Indicates if the thread pool is stopped.
+    ///
+    /// @return True if the thread pool exists and is in the STOPPED state,
+    /// false otherwise
+    bool isStopped() {
+        if (threads_) {
+            return (threads_->getRunState() == HttpThreadPool::RunState::STOPPED);
+        }
+
+        return (false);
+    }
+
+    /// @brief Indicates if the thread pool processing is running.
+    ///
+    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// false otherwise.
+    bool isPaused() {
+        if (threads_) {
+            return (threads_->getRunState() == HttpThreadPool::RunState::PAUSED);
+        }
+
+        return (false);
     }
 
     /// @brief Fetches the internal IOService used in multi-threaded mode.
@@ -1954,6 +1998,21 @@ HttpClient::getThreadCount() const {
 HttpThreadPool::RunState
 HttpClient::getRunState() const {
     return (impl_->getRunState());
+}
+
+bool
+HttpClient::isRunning() {
+    return (impl_->isRunning());
+}
+
+bool
+HttpClient::isStopped() {
+    return (impl_->isStopped());
+}
+
+bool
+HttpClient::isPaused() {
+    return (impl_->isPaused());
 }
 
 } // end of namespace isc::http

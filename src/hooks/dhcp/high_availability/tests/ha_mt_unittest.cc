@@ -10,6 +10,7 @@
 #include <ha_test.h>
 #include <ha_config.h>
 #include <ha_service.h>
+#include <http/http_thread_pool.h>
 
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
@@ -23,6 +24,7 @@ using namespace isc::dhcp;
 
 using namespace isc::ha;
 using namespace isc::ha::test;
+using namespace isc::http;
 using namespace isc::util;
 
 namespace {
@@ -147,8 +149,112 @@ public:
     }
 };
 
+// Verifies HA+MT start, pause, resume, and stop.
+TEST_F(HAMtServiceTest, multiThreadingBasics) {
+
+    // Build the HA JSON configuration.
+    std::stringstream ss;
+    ss <<
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"wait-backup-ack\": true,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"backup\""
+        "            }"
+        "        ]";
+
+    // Enable MT, listener, and 3 threads for both client and listener.
+    ss << "," << makeHAMtJson(true, true, 3, 3) << "}]";
+    ConstElementPtr config_json;
+    ASSERT_NO_THROW_LOG(config_json = Element::fromJSON(ss.str()));
+
+    // Enable DHCP multi-threading configuration in CfgMgr with 3 threads.
+    setDHCPMultiThreadingConfig(true, 3);
+
+    /// @todo this is a hack... we have chicken-egg...  CmdHttpListener won't
+    /// start if MT is not enabled BUT that happens after config hook point
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Create the HA configuration
+    HAConfigPtr ha_config(new HAConfig());
+    HAConfigParser parser;
+    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+
+    // Instantiate the service.
+    TestHAServicePtr service;
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
+                                                        ha_config)));
+    // Multi-threading should be enabled.
+    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+
+    // Now we'll start, pause, resume and stop a few times.
+    for (int i = 0; i < 3; ++i) {
+        // Verify we're stopped.
+        // Client should exist but be stopped.
+        ASSERT_TRUE(service->client_);
+        ASSERT_TRUE(service->client_->isStopped());
+
+        // Listener should exist but not be stopped..
+        ASSERT_TRUE(service->listener_);
+        ASSERT_TRUE(service->client_->isStopped());
+
+        // Start client and listener.
+        ASSERT_NO_THROW_LOG(service->startClientAndListener());
+
+        // Verify we've started.
+        // Client should be running.
+        ASSERT_TRUE(service->client_->isRunning());
+        ASSERT_TRUE(service->client_->getThreadIOService());
+        EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+        EXPECT_EQ(service->client_->getThreadPoolSize(), 3);
+        EXPECT_EQ(service->client_->getThreadCount(), 3);
+
+        // Listener should be running.
+        ASSERT_TRUE(service->listener_->isRunning());
+        ASSERT_TRUE(service->listener_->getThreadIOService());
+        EXPECT_FALSE(service->listener_->getThreadIOService()->stopped());
+        EXPECT_EQ(service->listener_->getThreadPoolSize(), 3);
+        EXPECT_EQ(service->listener_->getThreadCount(), 3);
+
+        // Pause client and listener.
+        ASSERT_NO_THROW_LOG(service->pauseClientAndListener());
+
+        // Client should be paused.
+        ASSERT_TRUE(service->client_->isPaused());
+        EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+
+        // Listener should be paused.
+        ASSERT_TRUE(service->listener_->isPaused());
+        EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
+
+        // Now resume client and listener.
+        ASSERT_NO_THROW_LOG(service->resumeClientAndListener());
+
+        // Client should be running.
+        ASSERT_TRUE(service->client_->isRunning());
+        EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+
+        // Listener should be running.
+        ASSERT_TRUE(service->listener_->isRunning());
+        EXPECT_FALSE(service->listener_->getThreadIOService()->stopped());
+
+        // Stop should succeed.
+        ASSERT_NO_THROW_LOG(service->stopClientAndListener());
+    }
+}
+
 // Verifies permutations of HA+MT configuration and start-up.
-TEST_F(HAMtServiceTest, multiThreadingStartup) {
+TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
 
     // Structure describing a test scenario.
     struct Scenario {
@@ -273,7 +379,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
         TestHAServicePtr service;
         ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
                                                             ha_config)));
-        ASSERT_NO_THROW(service->startClientAndListener());
+        ASSERT_NO_THROW_LOG(service->startClientAndListener());
 
         // Verify the configuration is as expected.
         if (!scenario.exp_ha_mt_enabled_) {
@@ -293,6 +399,7 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
 
         // When HA+MT is enabled, client should be multi-threaded.
         ASSERT_TRUE(service->client_);
+        EXPECT_TRUE(service->client_->isRunning());
         EXPECT_TRUE(service->client_->getThreadIOService());
         EXPECT_EQ(service->client_->getThreadPoolSize(), scenario.exp_client_threads_);
         // Currently thread count should be the same as thread pool size.  This might
@@ -305,13 +412,16 @@ TEST_F(HAMtServiceTest, multiThreadingStartup) {
             continue;
         }
 
-        // We should have a listening listener with the expected number of threads.
+        // We should have a running listener with the expected number of threads.
         ASSERT_TRUE(service->listener_);
-        EXPECT_TRUE(service->listener_->isListening());
+        EXPECT_TRUE(service->listener_->isRunning());
         EXPECT_EQ(service->listener_->getThreadPoolSize(), scenario.exp_listener_threads_);
+
         // Currently thread count should be the same as thread pool size.  This might
         // change if we go to so some sort of dynamic thread instance management.
         EXPECT_EQ(service->listener_->getThreadCount(), scenario.exp_listener_threads_);
+
+        ASSERT_NO_THROW_LOG(service->stopClientAndListener());
     }
 }
 
