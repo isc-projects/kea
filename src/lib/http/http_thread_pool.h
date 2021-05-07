@@ -39,7 +39,7 @@ public:
     /// of threads is fixed at this value.
     /// @param defer_start If true, creation of the threads is deferred until a subsequent
     /// call to @ref start().  In this case the pool's operational state post construction
-    /// is STOPPED.  If false, the construtor will invoke start() which will create the
+    /// is STOPPED.  If false, the constructor will invoke start() which will create the
     /// threads, placing the pool in RUN state.
     HttpThreadPool(asiolink::IOServicePtr io_service, size_t pool_size, bool defer_start = false);
 
@@ -60,7 +60,7 @@ public:
     /// than STOPPED.
     void start();
 
-    /// @brief Tranisitions the pool to STOPPED state.
+    /// @brief Transitions the pool to STOPPED state.
     ///
     /// It stops the pool by doing the following:
     /// -# Sets the state to SHUTDOWN.

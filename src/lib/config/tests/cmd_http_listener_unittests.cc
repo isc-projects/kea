@@ -218,14 +218,14 @@ public:
         }
     }
 
-    /// @brief Determines if the listner should be paused.
+    /// @brief Determines if the listener should be paused.
     ///
     /// @param num_pauses desired number of pauses
     /// @param num_done number of clients that have completed their requests.
     ///
     /// @return True if the listener should be paused.
     bool shouldPause(size_t num_pauses, size_t num_done) {
-        // True if the number of clients done is a mulitple of the number of pauses.
+        // True if the number of clients done is a multiple of the number of pauses.
         return (!paused_ && num_pauses && num_done && !(num_done % num_pauses));
     }
 
@@ -637,7 +637,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_FALSE(listener_->getThreadIOService()->stopped());
 
     // Verify we can pause it.  We should still be listening, threads intact,
-    // IOservice stopped, state set to PAUSED.
+    // IOService stopped, state set to PAUSED.
     ASSERT_NO_THROW_LOG(listener_->pause());
     ASSERT_TRUE(listener_->isPaused());
     EXPECT_EQ(listener_->getThreadCount(), 4);

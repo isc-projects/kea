@@ -252,7 +252,7 @@ public:
                           const CloseHandler& close_callback =
                           CloseHandler());
 
-    /// @brief Starts client's thread pool, if mult-threaded.
+    /// @brief Starts client's thread pool, if multi-threaded.
     void start();
 
     /// @brief Halts client-side IO activity.

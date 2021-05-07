@@ -65,7 +65,7 @@ HttpThreadPool::start() {
     // Set state to RUN.
     setRunState(RunState::RUN);
 
-    // Prep IOservice for run() invocations.
+    // Prep IOService for run() invocations.
     io_service_->restart();
 
     // Create a pool of threads, each calls run() on our
@@ -118,7 +118,7 @@ HttpThreadPool::stop() {
 
     // Stop our IOService.
     if (!io_service_->stopped()) {
-        // Flush cancelled (and ready) handlers.
+        // Flush canceled (and ready) handlers.
         io_service_->poll();
 
         // Stop the service

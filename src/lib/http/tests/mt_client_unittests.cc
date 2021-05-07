@@ -619,7 +619,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
     }
 
-    /// @brief Verifies the client can be puased and shutdown while doing work.
+    /// @brief Verifies the client can be paused and shutdown while doing work.
     ///
     /// @param num_threads number of threads the HttpClient should use.
     /// A value of 0 puts the HttpClient in single-threaded mode.
@@ -693,7 +693,7 @@ public:
             }
         }
 
-        // Loop until the 1/2 the reuests are done, an error occurs,
+        // Loop until the 1/2 the requests are done, an error occurs,
         // or the time runs out.
         size_t rr_count = 0;
         while (rr_count < (expected_requests_)) {

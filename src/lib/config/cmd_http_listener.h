@@ -27,7 +27,7 @@ namespace config {
 /// configured thread pool size.
 ///
 /// @note This class is NOT compatible with Kea core single-threading.
-/// It is incumbant upon the owner to ensure the Kea core multi-threading
+/// It is incumbent upon the owner to ensure the Kea core multi-threading
 /// is (or will be) enabled when creating instances of this class.
 class CmdHttpListener {
 public:

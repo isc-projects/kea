@@ -66,7 +66,7 @@ CmdHttpListener::start() {
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
-        // Create the thread pooi with immediate start.
+        // Create the thread pool with immediate start.
         threads_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_));
 
         // Instruct the HTTP listener to actually open socket, install
