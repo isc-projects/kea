@@ -1814,6 +1814,19 @@ public:
         threads_->resume();
     }
 
+
+    /// @brief Close all connections, and if multi-threaded, stop internal IOService
+    /// and the thread pool.
+    void stop() {
+        // Stop the thread pool.
+        if (threads_) {
+            threads_->stop();
+        }
+
+        // Close all the connections.
+        conn_pool_->closeAll();
+    }
+
     /// @brief Fetches the thread pool's operational state.
     ///
     /// @return Operational state of the thread pool.
@@ -1966,11 +1979,6 @@ HttpClient::start() {
 }
 
 void
-HttpClient::stop() {
-    impl_->stop();
-}
-
-void
 HttpClient::pause() {
     impl_->pause();
 }
@@ -1978,6 +1986,11 @@ HttpClient::pause() {
 void
 HttpClient::resume() {
     impl_->resume();
+}
+
+void
+HttpClient::stop() {
+    impl_->stop();
 }
 
 const IOServicePtr

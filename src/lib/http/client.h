@@ -255,6 +255,18 @@ public:
     /// @brief Starts client's thread pool, if multi-threaded.
     void start();
 
+    /// @brief Pauses the thread pool operation.
+    ///
+    /// Suspends thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
+    void pause();
+
+    /// @brief Resumes the thread pool operation.
+    ///
+    /// Resumes thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
+    void resume();
+
     /// @brief Halts client-side IO activity.
     ///
     /// Closes all connections, discards any queued requests, and in
@@ -292,18 +304,6 @@ public:
     ///
     /// @return the number of running threads.
     uint16_t getThreadCount() const;
-
-    /// @brief Pauses the thread pool operation.
-    ///
-    /// Suspends thread pool event processing.
-    /// @throw InvalidOperation if the thread pool does not exist.
-    void pause();
-
-    /// @brief Resumes the thread pool operation.
-    ///
-    /// Resumes thread pool event processing.
-    /// @throw InvalidOperation if the thread pool does not exist.
-    void resume();
 
     /// @brief Fetches the thread pool's operational state.
     ///
