@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+else
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+fi
+
+VERSION=$(pgsql_version "$@")
+
+if [ "$VERSION" != "6.2" ]; then
+    printf 'This script upgrades 6.2 to 7.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+
+START TRANSACTION;
+
+-- Create table modification and insert values for modification types.
+CREATE TABLE modification (
+  id smallint NOT NULL,
+  modification_type varchar(32) NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO modification VALUES (0,'create'), (1,'update'), (2,'delete');
+
+-- Now create the table that holds different parameter data types.
+CREATE TABLE parameter_data_type (
+  id smallint NOT NULL,
+  name varchar(32) NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO parameter_data_type VALUES (0,'integer'),(1,'real'),(2,'boolean'),(4,'string');
+
+
+-- Update the schema version number
+UPDATE schema_version
+    SET version = '7', minor = '0';
+
+-- Schema 7.0 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
+EOF

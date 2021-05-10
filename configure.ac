@@ -1825,6 +1825,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.2_to_7.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_6.2_to_7.0.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])
