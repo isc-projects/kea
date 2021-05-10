@@ -81,14 +81,12 @@ HttpThreadPool::start() {
                         break;
                     case RunState::PAUSED:
                     {
-                        // We need to stop and wait to be released. We don't care how 
-                        // we exit, we'll do whatever the current state dictates.
+                        // We need to stop and wait to be released.
                         std::unique_lock<std::mutex> lck(mutex_);
-                        static_cast<void>(cv_.wait_for(lck, std::chrono::milliseconds(25),
+                        cv_.wait(lck,
                             [&]() {
                                 return (run_state_ != RunState::PAUSED);
-                            }));
-
+                            });
                         break;
                     }
                     case RunState::SHUTDOWN:
