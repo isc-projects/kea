@@ -2999,7 +2999,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     Dhcpv4Exchange ex(alloc_engine_, discover, subnet, drop);
 
-    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
+    // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
@@ -3070,7 +3070,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
     Dhcpv4Exchange ex(alloc_engine_, request, subnet, drop);
 
-    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
+    // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
@@ -3425,7 +3425,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     Dhcpv4Exchange ex(alloc_engine_, inform, subnet, drop);
 
-    // Stop here if Dhcpv4Exchange constructir decided to drop the packet
+    // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
         return (Pkt4Ptr());
     }
