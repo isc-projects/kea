@@ -1539,6 +1539,8 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     exps.clear();
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    // Alias on old OpenSSL.
+    exps.addError("short read");
     // OpenSSL error.
     exps.addError("sslv3 alert handshake failure");
     exps.checkAsync("client", client_cb);
@@ -1613,6 +1615,8 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     Expecteds exps;
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    // Alias on old OpenSSL.
+    exps.addError("short read");
     // OpenSSL error.
     exps.addError("tlsv1 alert unknown ca");
     exps.checkAsync("server", server_cb);
@@ -1804,6 +1808,8 @@ TEST(TLSTest, anotherClientCloseonError) {
     exps.clear();
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    // Alias on old OpenSSL.
+    exps.addError("short read");
     // LibreSSL and recent OpenSSL do not fail.
     exps.addNoError();
     // Old OpenSSL error.
@@ -1894,6 +1900,8 @@ TEST(TLSTest, selfSignedCloseonError) {
     exps.clear();
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    // Alias on old OpenSSL.
+    exps.addError("short read");
     // LibreSSL and recent OpenSSL do not fail.
     exps.addNoError();
     // Old OpenSSL error.
