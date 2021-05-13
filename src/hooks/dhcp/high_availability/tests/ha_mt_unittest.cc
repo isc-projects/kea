@@ -204,7 +204,7 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         ASSERT_TRUE(service->client_);
         ASSERT_TRUE(service->client_->isStopped());
 
-        // Listener should exist but not be stopped..
+        // Listener should exist but be stopped..
         ASSERT_TRUE(service->listener_);
         ASSERT_TRUE(service->client_->isStopped());
 

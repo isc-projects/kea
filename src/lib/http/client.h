@@ -136,9 +136,8 @@ public:
     ///
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
-    /// @param defer_thread_start if true, then the thread pool will be
-    /// created but started  Applicable only when thread-pool-size is
-    /// greater than zero.
+    /// @param defer_thread_start if true, the thread pool will be created but
+    /// started. Applicable only when thread-pool-size is greater than zero.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
     /// (default) enables single-threaded mode with one connection per URL.
@@ -305,7 +304,7 @@ public:
     /// @return the number of running threads.
     uint16_t getThreadCount() const;
 
-    /// @brief Fetches the thread pool's operational state.
+    /// @brief Fetches the thread pool's run state.
     ///
     /// @return Operational state of the thread pool.
     /// @throw InvalidOperation if the thread pool does not exist.

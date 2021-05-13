@@ -41,10 +41,10 @@ public:
     /// @brief Starts running the listener's thread pool.
     void start();
 
-    /// @brief Pauses the listener's thread pool. 
+    /// @brief Pauses the listener's thread pool.
     void pause();
 
-    /// @brief Resumes running the listener's thread pool. 
+    /// @brief Resumes running the listener's thread pool.
     void resume();
 
     /// @brief Stops the listener's thread pool.
@@ -63,8 +63,8 @@ public:
 
     /// @brief Indicates if the thread pool is stopped.
     ///
-    /// @return True if the thread pool does not exist or it 
-    /// is in the STOPPED state, False otherwise.
+    /// @return True if the thread pool does not exist or it
+    /// is in the STOPPED state, false otherwise.
     bool isStopped();
 
     /// @brief Indicates if the thread pool processing is running.
@@ -106,7 +106,7 @@ public:
     }
 
     asiolink::IOServicePtr getThreadIOService() const {
-        return(thread_io_service_);
+        return (thread_io_service_);
     }
 
 private:

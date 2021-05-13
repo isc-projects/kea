@@ -1827,7 +1827,7 @@ public:
         conn_pool_->closeAll();
     }
 
-    /// @brief Fetches the thread pool's operational state.
+    /// @brief Fetches the thread pool's run state.
     ///
     /// @return Operational state of the thread pool.
     HttpThreadPool::RunState getRunState() const {
@@ -1916,7 +1916,7 @@ private:
 };
 
 HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
-                       bool defer_thread_start/* = false*/) {
+                       bool defer_thread_start /* = false */) {
     if (thread_pool_size > 0) {
         if (!MultiThreadingMgr::instance().getMode()) {
             isc_throw(InvalidOperation,
