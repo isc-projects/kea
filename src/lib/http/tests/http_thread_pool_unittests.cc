@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
 #include <http/http_thread_pool.h>
@@ -20,15 +21,23 @@ using namespace isc::http;
 
 namespace {
 
+/// @brief Test timeout (ms).
+const long TEST_TIMEOUT = 10000;
+
+/// @brief Simple test fixture for testing HttpThreadPool.
 class HttpThreadPoolTest : public ::testing::Test {
 public:
-    HttpThreadPoolTest() : io_service_(new IOService()) {
+    /// @brief Constructor.
+    HttpThreadPoolTest()
+        : io_service_(new IOService()) {
     }
 
-    ~HttpThreadPoolTest() {
+    /// @brief Destructor.
+    virtual ~HttpThreadPoolTest() {
         io_service_->stop();
     }
 
+    /// @brief IOService instance used by thread pools.
     IOServicePtr io_service_;
 };
 
@@ -41,138 +50,212 @@ TEST_F(HttpThreadPoolTest, invalidConstruction) {
                      "HttpThreadPool::ctor pool_size must be > 0");
 }
 
+// Verifies that a pool can be created without starting it.
 TEST_F(HttpThreadPoolTest, deferredStartConstruction) {
     HttpThreadPoolPtr pool;
 
     ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, true)));
 
+    // State should be stopped.
     // Pool size should be 3
-    // State should be stopped. 
     // IOService should be there.
-    // IOService is new, so it should not stopped,
+    // IOService is new, so it should not be stopped,
     // No threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
     EXPECT_EQ(pool->getPoolSize(), 3);
     ASSERT_TRUE(pool->getIOService());
     EXPECT_FALSE(pool->getIOService()->stopped());
-    EXPECT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
-    EXPECT_EQ(pool->getThreadCount(), 0);
-
-    // Stop should not throw.
-    ASSERT_NO_THROW_LOG(pool->stop());
-
-    // Nothing should have changed.
-    EXPECT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
-    EXPECT_FALSE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 0);
-
-    // Start should not throw.
-    ASSERT_NO_THROW_LOG(pool->start());
-
-    // State should be RUN, IOService should not be stopped, 
-    // and there should be 3 threads in the pool.
-    EXPECT_EQ(pool->getPoolSize(), 3);
-    EXPECT_EQ(HttpThreadPool::RunState::RUN, pool->getRunState());
-    EXPECT_FALSE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 3);
-
-    // Stopping should not throw.
-    ASSERT_NO_THROW_LOG(pool->stop());
-
-    // State should be stopped, IOService should be stopped, and 
-    // there should be no threads in the pool.
-    EXPECT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
-    EXPECT_TRUE(pool->getIOService()->stopped());
     EXPECT_EQ(pool->getThreadCount(), 0);
 
     // Destructor should not throw.
     ASSERT_NO_THROW_LOG(pool.reset());
 }
 
+// Verifies that a pool can be started within the constructor.
 TEST_F(HttpThreadPoolTest, startDuringConstruction) {
     HttpThreadPoolPtr pool;
 
     ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3)));
 
-    // Pool size should be 3, state should be RUN, IOService should
+    // Pool size should be 3, state should be RUNNING, IOService should
     // set but not stopped, and we should have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
     EXPECT_EQ(pool->getPoolSize(), 3);
-    EXPECT_EQ(HttpThreadPool::RunState::RUN, pool->getRunState());
     ASSERT_TRUE(pool->getIOService());
     EXPECT_FALSE(pool->getIOService()->stopped());
     EXPECT_EQ(pool->getThreadCount(), 3);
-
-    // Starting again should throw.
-    ASSERT_THROW_MSG(pool->start(), InvalidOperation,
-                     "HttpThreadPool::start already started!");
-
-    // Stop should not throw.
-    ASSERT_NO_THROW_LOG(pool->stop());
-
-    // Pool size should be 3, state should STOPPED, IOService should
-    // be stopped, and there should be no threads in the pool.
-    EXPECT_EQ(pool->getPoolSize(), 3);
-    EXPECT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
-    EXPECT_TRUE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 0);
 
     // Destructor should not throw.
     ASSERT_NO_THROW_LOG(pool.reset());
 }
 
-TEST_F(HttpThreadPoolTest, pauseAndResume) {
+// Verifies that pool can move from STOPPED to RUNNING.
+TEST_F(HttpThreadPoolTest, stoppedToRunning) {
     HttpThreadPoolPtr pool;
 
-    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3)));
+    // Create a stopped pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, true)));
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
 
-    // State should be RUN, IOService not stopped, 3 threads in the pool.
-    EXPECT_EQ(HttpThreadPool::RunState::RUN, pool->getRunState());
+    // Call run from STOPPED.
+    ASSERT_NO_THROW_LOG(pool->run());
+
+    // State should be RUNNING, IOService should not be stopped, we should
+    // have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
     EXPECT_FALSE(pool->getIOService()->stopped());
     EXPECT_EQ(pool->getThreadCount(), 3);
 
-    // Pause should not throw.
-    ASSERT_NO_THROW_LOG(pool->pause());
+    // Calling run again should be harmless.
+    ASSERT_NO_THROW_LOG(pool->run());
 
-    // State should be PAUSED, IOService should be stopped, we should
-    // still have 3 threads in the pool.
-    EXPECT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
-    EXPECT_TRUE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 3);
-
-    // Pausing again should be harmless.
-    ASSERT_NO_THROW_LOG(pool->pause());
-
-    // Nothing should have changed.
-    EXPECT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
-    EXPECT_TRUE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 3);
-
-    // Resume should not throw.
-    ASSERT_NO_THROW_LOG(pool->resume());
-
-    // State should be PAUSED, IOService should be stopped, we should
-    // still have 3 threads in the pool.
-    EXPECT_EQ(HttpThreadPool::RunState::RUN, pool->getRunState());
+    // State should be RUNNING, IOService should not be stopped, we should
+    // have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
     EXPECT_FALSE(pool->getIOService()->stopped());
     EXPECT_EQ(pool->getThreadCount(), 3);
 
-    // Resuming again should be harmless.
-    ASSERT_NO_THROW_LOG(pool->resume());
+    // Destroying the pool should be fine.
+    ASSERT_NO_THROW_LOG(pool.reset());
+}
 
-    // Nothing should have changed.
-    EXPECT_EQ(HttpThreadPool::RunState::RUN, pool->getRunState());
-    EXPECT_FALSE(pool->getIOService()->stopped());
-    EXPECT_EQ(pool->getThreadCount(), 3);
+// Verifies that pool can move from RUNNING to STOPPED.
+TEST_F(HttpThreadPoolTest, runningToStopped) {
+    HttpThreadPoolPtr pool;
 
-    // Stop should not throw.
+    // Create a running pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, false)));
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
+
+    // Call stop.
     ASSERT_NO_THROW_LOG(pool->stop());
 
-    // State should STOPPED, IOService should be stopped,
-    // and there should be no threads in the pool.
-    EXPECT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+    // State should be STOPPED, IOService should be stopped, we should
+    // have 0 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
     EXPECT_TRUE(pool->getIOService()->stopped());
     EXPECT_EQ(pool->getThreadCount(), 0);
 
-    // Destructor should not throw.
+    // Calling stop again should be harmless.
+    ASSERT_NO_THROW_LOG(pool->stop());
+
+    // State should be STOPPED, IOService should be stopped, we should
+    // have 0 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+    EXPECT_TRUE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 0);
+
+    // Destroying the pool should be fine.
+    ASSERT_NO_THROW_LOG(pool.reset());
+}
+
+// Verifies that pool can move from RUNNING to PAUSED.
+TEST_F(HttpThreadPoolTest, runningToPaused) {
+    HttpThreadPoolPtr pool;
+
+    // Create a running pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, false)));
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
+
+    // Call pause from RUNNING.
+    ASSERT_NO_THROW_LOG(pool->pause());
+
+    // State should be PAUSED, IOService should be stopped, we should
+    // have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
+    EXPECT_TRUE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 3);
+
+    // Calling pause again should be harmless.
+    ASSERT_NO_THROW_LOG(pool->pause());
+
+    // State should be PAUSED, IOService should be stopped, we should
+    // have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
+    EXPECT_TRUE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 3);
+
+    // Destroying the pool should be fine.
+    ASSERT_NO_THROW_LOG(pool.reset());
+}
+
+// Verifies that pool can move from PAUSED to RUNNING.
+TEST_F(HttpThreadPoolTest, pausedToRunning) {
+    HttpThreadPoolPtr pool;
+
+    // Create a running pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, false)));
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
+
+    // Call pause from RUNNING.
+    ASSERT_NO_THROW_LOG(pool->pause());
+    ASSERT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
+
+    // Call run.
+    ASSERT_NO_THROW_LOG(pool->run());
+
+    // State should be RUNNING, IOService should not be stopped, we should
+    // have 3 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
+    EXPECT_FALSE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 3);
+
+    // Destroying the pool should be fine.
+    ASSERT_NO_THROW_LOG(pool.reset());
+}
+
+// Verifies that pool can move from PAUSED to STOPPED.
+TEST_F(HttpThreadPoolTest, pausedToStopped) {
+    HttpThreadPoolPtr pool;
+
+    // Create a running pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, false)));
+    ASSERT_EQ(HttpThreadPool::RunState::RUNNING, pool->getRunState());
+
+    // Call pause from RUNNING.
+    ASSERT_NO_THROW_LOG(pool->pause());
+    ASSERT_EQ(HttpThreadPool::RunState::PAUSED, pool->getRunState());
+
+    // Call stop.
+    ASSERT_NO_THROW_LOG(pool->stop());
+
+    // State should be STOPPED, IOService should be stopped, we should
+    // have 0 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+    EXPECT_TRUE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 0);
+
+    // Destroying the pool should be fine.
+    ASSERT_NO_THROW_LOG(pool.reset());
+}
+
+// Verifies that attempting to pause a STOPPED pool has no effect.
+TEST_F(HttpThreadPoolTest, stoppedToPaused) {
+    HttpThreadPoolPtr pool;
+
+    // Create a stopped pool.
+    ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, true)));
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+
+    // State should be STOPPED, IOService won't be stopped because it was
+    // never started. We should have 0 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+    EXPECT_FALSE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 0);
+
+    // Call pause from STOPPED.
+    ASSERT_NO_THROW_LOG(pool->pause());
+
+    // Should have no effect.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+
+    // State should be STOPPED, IOService won't be stopped because it was
+    // never started. We should have 0 threads in the pool.
+    ASSERT_EQ(HttpThreadPool::RunState::STOPPED, pool->getRunState());
+    EXPECT_FALSE(pool->getIOService()->stopped());
+    EXPECT_EQ(pool->getThreadCount(), 0);
+
+    // Destroying the pool should be fine.
     ASSERT_NO_THROW_LOG(pool.reset());
 }
 

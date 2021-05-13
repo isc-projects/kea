@@ -199,7 +199,7 @@ public:
         : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
           test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
           expected_requests_(0), num_in_progress_(0), num_finished_(0), paused_(false),
-          pause_cnt_(0), shutdown_(false) {
+          pause_cnt_(0) {
         test_timer_.setup(std::bind(&MtHttpClientTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         MultiThreadingMgr::instance().setMode(true);
@@ -209,7 +209,7 @@ public:
     ~MtHttpClientTest() {
         // Stop the client.
         if (client_) {
-            stopTestClient();
+            client_->stop();
         }
 
         // Stop all listeners.
@@ -234,11 +234,10 @@ public:
 
     /// @brief Runs the test's IOService until the desired number of requests
     /// have been carried out or the test fails.
-    void runIOService() {
-        // Loop until the clients are done, an error occurs, or the time runs out.
-        while (getRRCount() < expected_requests_) {
+    void runIOService(size_t request_limit) {
+        while (getRRCount() < request_limit) {
             // Always call reset() before we call run();
-            io_service_.get_io_service().reset();
+            io_service_.restart();
 
             // Run until a client stops the service.
             io_service_.run();
@@ -314,7 +313,7 @@ public:
                 } else {
                     // I'm ready but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_in_progress_ == num_threads_ || shutdown_); });
+                                            [&]() { return (num_in_progress_ == num_threads_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to start work";
                     }
@@ -345,12 +344,64 @@ public:
                 } else {
                     // I'm done but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_finished_ == num_threads_ || shutdown_); });
+                                            [&]() { return (num_finished_ == num_threads_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to finish work";
                     }
                 }
             }
+        }));
+    }
+
+
+    /// @brief Initiates a single HTTP request.
+    ///
+    /// Constructs an HTTP post whose body is a JSON map containing a
+    /// single integer element, "sequence".
+    ///
+    /// The request completion handler simply constructs the response,
+    /// and adds it the list of completed request/responses. If the
+    /// number of completed requests has reached the expected number
+    /// it stops the test IOService.
+    ///
+    /// @param sequence value for the integer element, "sequence",
+    /// to send in the request.
+    void startRequestSimple(int sequence, int port_offset = 0) {
+        // Create the URL on which the server can be reached.
+        std::stringstream ss;
+        ss << "http://" << SERVER_ADDRESS << ":" << (SERVER_PORT + port_offset);
+        Url url(ss.str());
+
+        // Initiate request to the server.
+        PostHttpRequestJsonPtr request_json = createRequest("sequence", sequence);
+        HttpResponseJsonPtr response_json = boost::make_shared<HttpResponseJson>();
+        ASSERT_NO_THROW(client_->asyncSendRequest(url, TlsContextPtr(),
+                                                  request_json, response_json,
+            [this, request_json, response_json](const boost::system::error_code& ec,
+                                                const HttpResponsePtr&,
+                                                const std::string&) {
+            // Bail on an error.
+            ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
+
+            // Get stringified thread-id.
+            std::stringstream ss;
+            ss << std::this_thread::get_id();
+
+            // Create the ClientRR.
+            ClientRRPtr clientRR(new ClientRR());
+            clientRR->thread_id_ = ss.str();
+            clientRR->request_ = request_json;
+            clientRR->response_ = response_json;
+
+            {
+                std::unique_lock<std::mutex> lck(test_mutex_);
+                clientRRs_.push_back(clientRR);
+                ++num_finished_;
+                if ((num_finished_ >= expected_requests_) && !io_service_.stopped()) {
+                    io_service_.stop();
+                }
+            }
+
         }));
     }
 
@@ -363,10 +414,7 @@ public:
     ///
     /// Then it iteratively runs the test's IOService until all
     /// the requests have been responded to, an error occurs, or the
-    /// test times out.  During each pass through the run loop, the
-    /// a call to shouldPause() is made to determine if the client
-    /// thread pool should be paused.  If so, the the pool is paused
-    /// and an timer begun which resumes the pool upon timeout.
+    /// test times out.
     ///
     /// Each request carries a single integer element, "sequence", which
     /// uniquely identifies the request. Each response is expected to
@@ -388,11 +436,8 @@ public:
     /// conducted.
     /// @param num_listeners number of HttpListeners to create. Defaults
     /// to 1.
-    /// @param num_pauses number of times to pause and resume the client
-    /// during the test.  Defaults to 0.
     void threadRequestAndReceive(size_t num_threads, size_t num_batches,
-                                 size_t num_listeners = 1,
-                                 size_t num_pauses = 0) {
+                                 size_t num_listeners = 1) {
         ASSERT_TRUE(num_batches);
         ASSERT_TRUE(num_listeners);
         num_threads_ = num_threads;
@@ -449,35 +494,17 @@ public:
             }
         }
 
-        // Create a timer to use for invoking resume after pause.
-        IntervalTimer pause_timer_(io_service_);
-        paused_ = false;
-
         // Loop until the clients are done, an error occurs, or the time runs out.
         while (getRRCount() < expected_requests_) {
             // Always call restart() before we call run();
             io_service_.restart();
-
-            if (shouldPause(num_pauses)) {
-                // Pause client.
-                paused_ = true;
-                ++pause_cnt_;
-                client_->pause();
-
-                // Set timer to resume client.
-                pause_timer_.setup(
-                    [this]() {
-                            client_->resume();
-                            paused_ = false;
-                    }, 10, IntervalTimer::ONE_SHOT);
-            }
 
             // Run until a client stops the service.
             io_service_.run();
         }
 
         // Client should stop without issue.
-        stopTestClient();
+        ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
         for (const auto& listener : listeners_) {
@@ -486,21 +513,6 @@ public:
 
         // We should have a response for each request.
         ASSERT_EQ(getRRCount(), expected_requests_);
-
-        // We should have had the expected number of pauses.
-        if (!num_pauses) {
-            ASSERT_EQ(pause_cnt_, 0);
-        } else {
-            // We allow a range on pauses of +-1.  Figuring
-            // out the exact intervals at which to pause was
-            // getting to be a pain.  We don't really care as
-            // long as we're close.  The primary thing is that
-            // we did in fact pause and resume.
-            ASSERT_TRUE((num_pauses - 1) <= pause_cnt_ &&
-                        (pause_cnt_ <= (num_pauses + 1)))
-                        << " num+_pauses: " << num_pauses
-                        << ", pause_cnt_" << pause_cnt_;
-        }
 
         // Create a map to track number of responses for each client thread.
         std::map<std::string, int> responses_per_thread;
@@ -585,65 +597,30 @@ public:
         }
     }
 
-    /// @brief Indicates if the test should pause.
-    ///
-    /// Returns true if the number of completed requests
-    /// has reached or exceeded the next pause interval.
-    /// The pause interval is given by expected number of
-    /// requests divided by the desired number of pauses.
-    ///
-    /// @param num_pauses Desired number of pauses.
-    ///
-    /// @return True if the client should be paused.
-    bool shouldPause(size_t num_pauses) {
-        size_t rr_count = getRRCount();
-        if (paused_ || !num_pauses || !rr_count) {
-            return false;
-        }
-
-        size_t interval = expected_requests_ / num_pauses;
-        size_t next_stop = interval * (pause_cnt_ + 1);
-        return (rr_count >= next_stop);
-    }
-
-    /// @brief Stops the test client.
-    ///
-    /// Sets the shutdown flag and pings the test condition variable,
-    /// and then stops the thread pool.
-    void stopTestClient() {
-        // Set shutdown_ flag and notify any handles that may be waiting.
-        shutdown_ = true;
-        test_cv_.notify_all();
-
-        // Client should stop without issue.
-        ASSERT_NO_THROW(client_->stop());
-    }
-
-    /// @brief Verifies the client can be paused and shutdown while doing work.
+    /// @brief Verifies the client can be paused and resumed repeatedly
+    /// while doing multi-threaded doing work.
     ///
     /// @param num_threads number of threads the HttpClient should use.
-    /// A value of 0 puts the HttpClient in single-threaded mode.
+    /// Must be greater than zero, this test does not make sense for a
+    /// single threaded client.
     /// @param num_batches number of batches of requests that should be
     /// conducted.
     /// @param num_listeners number of HttpListeners to create. Defaults
     /// to 1.
-    void workPauseShutdown(size_t num_threads, size_t num_batches,
-                           size_t num_listeners = 1, bool pause_first = true) {
+    /// @param num_pauses number of pauses to conduct.
+    void workPauseResumeShutdown(size_t num_threads, size_t num_batches,
+                                 size_t num_listeners, size_t num_pauses) {
+        ASSERT_TRUE(num_threads);
         ASSERT_TRUE(num_batches);
         ASSERT_TRUE(num_listeners);
         num_threads_ = num_threads;
         num_batches_ = num_batches;
         num_listeners_ = num_listeners;
 
-        // Client in ST is, in effect, 1 thread.
-        size_t effective_threads = (num_threads_ == 0 ? 1 : num_threads_);
+        // Calculate the total expected number of requests.
+        size_t total_requests = (num_batches_ * num_listeners_ * num_threads_);
 
-        // Calculate the maximum requests that could complete.
-        size_t maximum_requests = (num_batches_ * num_listeners_ * effective_threads);
-
-        // Calculate the expected number of requests.
-        expected_requests_ = maximum_requests / 2;
-
+        // Create the listeners.
         for (auto i = 0; i < num_listeners_; ++i) {
             // Make a factory
             HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT + i));
@@ -661,22 +638,14 @@ public:
             ASSERT_NO_THROW(listener->start());
         }
 
-        // Create an MT client with num_threads
+        // Create an instant start, MT client with num_threads
         ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
         ASSERT_TRUE(client_);
 
-        // Check convenience functions.
+        // Client shoudl be running. Check convenience functions.
         ASSERT_TRUE(client_->isRunning());
         ASSERT_FALSE(client_->isPaused());
         ASSERT_FALSE(client_->isStopped());
-
-        if (num_threads_ == 0) {
-            // If we single-threaded client should not have it's own IOService.
-            ASSERT_FALSE(client_->getThreadIOService());
-        } else {
-            // If we multi-threaded client should have it's own IOService.
-            ASSERT_TRUE(client_->getThreadIOService());
-        }
 
         // Verify the pool size and number of threads are as expected.
         ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
@@ -687,55 +656,65 @@ public:
         int sequence = 0;
         for (auto b = 0; b < num_batches; ++b) {
             for (auto l = 0; l < num_listeners_; ++l) {
-                for (auto t = 0; t < effective_threads; ++t) {
-                    startRequest(++sequence, l);
+                for (auto t = 0; t < num_threads_; ++t) {
+                    startRequestSimple(++sequence, l);
                 }
             }
         }
 
-        // Loop until the 1/2 the requests are done, an error occurs,
-        // or the time runs out.
         size_t rr_count = 0;
-        while (rr_count < (expected_requests_)) {
-            // Always call reset() before we call run();
-            io_service_.get_io_service().reset();
+        while (rr_count < total_requests) {
+            size_t request_limit = (pause_cnt_ < num_pauses ?
+                                    (rr_count + ((total_requests - rr_count) / num_pauses))
+                                    : total_requests);
 
-            // Run until a client stops the service.
-            io_service_.run();
-            rr_count = getRRCount();
-        }
+            // Run test IOService until we hit the limit.
+            runIOService(request_limit);
 
-        if (pause_first) {
+            // If we've done all our pauses we should be through.
+            if (pause_cnt_ == num_pauses) {
+                break;
+            }
+
             // Pause the client.
             ASSERT_NO_THROW(client_->pause());
-            ASSERT_EQ(HttpThreadPool::RunState::PAUSED, client_->getRunState());
-
-            // Check convenience functions.
-            ASSERT_FALSE(client_->isRunning());
             ASSERT_TRUE(client_->isPaused());
-            ASSERT_FALSE(client_->isStopped());
+            ++pause_cnt_;
+
+            // Check our progress.
+            rr_count = getRRCount();
+            ASSERT_GE(rr_count, request_limit);
+
+            // Resume the client.
+            ASSERT_NO_THROW(client_->resume());
+            ASSERT_TRUE(client_->isRunning());
         }
 
-        // We should have completed at least the expected number of requests
-        // but less than the maximum number of requests.
-        ASSERT_GE(getRRCount(), expected_requests_ );
-        ASSERT_LT(getRRCount(), maximum_requests);
-
         // Client should stop without issue.
-        stopTestClient();
+        ASSERT_NO_THROW(client_->stop());
+        ASSERT_TRUE(client_->isStopped());
+
+        // We should have finished all our requests.
+        ASSERT_EQ(getRRCount(), total_requests);
+
+        // Stopping again should be harmless.
+        ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
         for (const auto& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
+
+        // Destructor should work fine.
+        client_.reset();
     }
 
     /// @brief Fetch the number of completed requests.
     ///
     /// @return number of completed requests.
     size_t getRRCount() {
-        std::unique_lock<std::mutex> lck(test_mutex_);
-        return(clientRRs_.size());
+        std::lock_guard<std::mutex> lck(test_mutex_);
+        return (clientRRs_.size());
     }
 
     /// @brief IO service used in the tests.
@@ -832,7 +811,7 @@ TEST_F(MtHttpClientTest, basics) {
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 3);
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Check convenience functions.
     ASSERT_TRUE(client->isRunning());
@@ -890,24 +869,23 @@ TEST_F(MtHttpClientTest, deferredStart) {
     // We should be able to start it.
     ASSERT_NO_THROW(client->start());
 
-    // Verify we have threads and run state is RUN.
+    // Verify we have threads and run state is RUNNING.
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Check convenience functions.
     ASSERT_TRUE(client->isRunning());
     ASSERT_FALSE(client->isPaused());
     ASSERT_FALSE(client->isStopped());
 
-    // Cannot start it twice.
-    ASSERT_THROW_MSG(client->start(), InvalidOperation,
-                     "HttpThreadPool::start already started!");
+    // Second call to start should be harmless.
+    ASSERT_NO_THROW_LOG(client->start());
 
     // Verify we didn't break it.
     ASSERT_EQ(client->getThreadCount(), 3);
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
@@ -927,7 +905,7 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Stop should succeed.
     ASSERT_NO_THROW_LOG(client->stop());
@@ -943,7 +921,7 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUN);
+    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
@@ -1004,22 +982,14 @@ TEST_F(MtHttpClientTest, fourByFourByTwo) {
     threadRequestAndReceive(num_threads, num_batches, num_listeners);
 }
 
-// Verifies that we can cleanly work, pause, and resume repeatedly.
-TEST_F(MtHttpClientTest, workPauseResume) {
-    size_t num_threads = 12;
-    size_t num_batches = 12;
-    size_t num_listeners = 12;
-    size_t num_pauses = 7;
-    threadRequestAndReceive(num_threads, num_batches, num_listeners, num_pauses);
-}
-
-// Verifies that we can cleanly pause and shutdown while doing
+// Verifies that we can cleanly pause, resume, and shutdown while doing
 // multi-threaded work.
-TEST_F(MtHttpClientTest, workPauseShutdown) {
-    size_t num_threads = 8;
-    size_t num_batches = 8;
-    size_t num_listeners = 8;
-    workPauseShutdown(num_threads, num_batches, num_listeners);
+TEST_F(MtHttpClientTest, workPauseResumeShutdown) {
+    size_t num_threads = 4;
+    size_t num_batches = 4;
+    size_t num_listeners = 4;
+    size_t num_pauses = 3;
+    workPauseResumeShutdown(num_threads, num_batches, num_listeners, num_pauses);
 }
 
 } // end of anonymous namespace

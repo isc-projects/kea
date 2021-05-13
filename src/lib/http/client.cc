@@ -1810,8 +1810,8 @@ public:
             isc_throw(InvalidOperation, "HttpClient::resume - no thread pool");
         }
 
-        // Resume the thread pool.
-        threads_->resume();
+        // Resume running the thread pool.
+        threads_->run();
     }
 
 
@@ -1840,11 +1840,11 @@ public:
 
     /// @brief Indicates if the thread pool processing is running.
     ///
-    /// @return True if the thread pool exists and is in the RUN state,
+    /// @return True if the thread pool exists and is in the RUNNING state,
     /// false otherwise.
     bool isRunning() {
         if (threads_) {
-            return (threads_->getRunState() == HttpThreadPool::RunState::RUN);
+            return (threads_->getRunState() == HttpThreadPool::RunState::RUNNING);
         }
 
         return (false);

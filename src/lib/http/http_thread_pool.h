@@ -26,68 +26,50 @@ public:
     /// @brief Describes the possible operational state of the pool.
     enum class RunState {
         STOPPED,    /// Pool is not operational.
-        RUN,        /// Pool is populated with running threads.
-        PAUSED,     /// Pool is populated with threads which are paused.
-        SHUTDOWN,   /// Pool is transitioning from RUN or PAUSED to STOPPED.
+        RUNNING,    /// Pool is populated with running threads.
+        PAUSED,     /// Pool is populated with threads that are paused.
     };
 
     /// @brief Constructor
     ///
     /// @param io_service IOService that will drive the pool's IO. If empty, it
     /// create it's own instance.
-    /// @param pool_size Maximum number of threads in the pool.  Currently the number
-    /// of threads is fixed at this value.
-    /// @param defer_start If true, creation of the threads is deferred until a subsequent
-    /// call to @ref start().  In this case the pool's operational state post construction
-    /// is STOPPED.  If false, the constructor will invoke start() which will create the
-    /// threads, placing the pool in RUN state.
-    HttpThreadPool(asiolink::IOServicePtr io_service, size_t pool_size, bool defer_start = false);
+    /// @param pool_size Maximum number of threads in the pool.  Currently the
+    /// number of threads is fixed at this value.
+    /// @param defer_start If true, creation of the threads is deferred until
+    /// a subsequent call to @ref start().  In this case the pool's operational
+    /// state post construction is STOPPED.  If false, the constructor will
+    /// invoke run() to tranistion the pool into the RUNNING state.
+    HttpThreadPool(asiolink::IOServicePtr io_service, size_t pool_size,
+                   bool defer_start = false);
 
     /// @brief Destructor
     ///
     /// Ensures the pool is stopped prior to destruction.
     ~HttpThreadPool();
 
-    /// @brief Transitions the pool from STOPPED to RUN run state.
+    /// @brief Transitions the pool from STOPPED or PAUSED to RUNNING.
     ///
-    /// It starts the pool by doing the following:
-    /// -# Sets state to RUN
-    /// -# Restarts the IOService preparing it thread invocations of
-    ///    IOService::run()
-    /// -# Creates thread_pool_size_ threads, adding each to the pool.
-    ///
-    /// @throw InvalidOperation if called with the pool in any state other
-    /// than STOPPED.
-    void start();
+    /// When called from the STOPPED state, the pool threads are created
+    /// begin processing events.
+    /// When called from the PAUSED state, the pool threads are released
+    /// from PAUSED and resume processing event.s
+    /// Has no effect if the pool is already in the RUNNING state.
+    void run();
 
-    /// @brief Transitions the pool to STOPPED state.
+    /// @brief Transitions the pool from RUNNING to PAUSED state.
     ///
-    /// It stops the pool by doing the following:
-    /// -# Sets the state to SHUTDOWN.
-    /// =# Stops the IOService.
-    /// =# Joins the pool threads.
-    /// -# Empties the pool.
-    /// -# Sets the state to STOPPED.
-    void stop();
-
-    /// @brief Transitions the pool from RUN to PAUSED state.
-    ///
-    /// If the state is any state other than RUN it simply returns,
-    /// otherwise it does the following:
-    ///
-    /// -# Sets the state to PAUSED.
-    /// -# Stops the IOService.
+    /// Pool threads suspend event processing and pause until they
+    /// are released to either resume running or stop.
+    /// Has no effect if the pool is already in the PAUSED or STOPPED
+    /// state.
     void pause();
 
-    /// @brief Transitions the pool from PAUSED to RUN state.
+    /// @brief Transitions the pool to from RUNNING OR PAUSED to STOPPED.
     ///
-    /// If the state is any state other than PAUSED it simply returns,
-    /// otherwise it does the following:
-    ///
-    /// -# Restarts the IOService preparing it for thread invocations
-    ///    of IOService::run()
-    /// -# Sets the state to RUN.
-    void resume();
+    /// Stops thread event processing and then destroys the pool's threads
+    /// Has no effect if the pool is already in the STOPPED state.
+    void stop();
 
     /// @brief Thread-safe fetch of the pool's operational state.
     ///
@@ -95,14 +77,48 @@ public:
     RunState getRunState();
 
 private:
-    /// @brief Thread-safe set of the pool's operational state.
+    /// @brief Thread-safe change of the pool's operational state.
     ///
-    /// @note This method does not validate the state change.
+    /// Transitions a pool from one state to another:
+    ///
+    /// When moving from STOPPED or PAUSED to RUNNING:
+    /// -# Sets state to RUNNING.
+    /// -# Notifies threads of state change.
+    /// -# Restarts the IOService.
+    /// -# Creates the threads if they do not yet exist (true only
+    /// when transitioning from STOPPED).
+    /// -# Waits until threads are running.
+    /// -# Returns to caller.
+    ///
+    /// When moving from RUNNING or PAUSED to STOPPED:
+    /// -# Sets state to STOPPED
+    /// -# Notifies threads of state change.
+    /// -# Polls the IOService to flush handlers.
+    /// -# Stops the IOService.
+    /// -# Waits until all threads have exited the work function.
+    /// -# Joins and destroys the threads.
+    /// -# Returns to caller.
+    ///
+    /// When moving from RUNNING to PAUSED:
+    /// -# Sets state to PAUSED
+    /// -# Notifies threads of state change.
+    /// -# Polls the IOService to flush handlers.
+    /// -# Stops the IOService.
+    /// -# Waits until all threads have paused.
+    /// -# Returns to caller.
     ///
     /// @param state new state for the pool.
     void setRunState(RunState state);
 
+    /// @brief Validates whether the pool can change to a given state.
+    ///
+    /// @param state new state for the pool.
+    /// @return true if the changs is valid, false otherwise.
+    /// @note Must be called from a thread-safe context.
+    bool validateStateChange(RunState state) const;
+
 public:
+
     /// @brief Fetches the IOService that drives the pool.
     ///
     /// @return A pointer to the IOService.
@@ -131,12 +147,26 @@ private:
     /// @brief Mutex to protect the internal state.
     std::mutex mutex_;
 
-    /// @brief Condition variable for synchronization.
-    std::condition_variable cv_;
+    /// @brief Condition variable used by threads for synchronization.
+    std::condition_variable thread_cv_;
+
+    /// @brief Condition variable used by main thread to wait on threads
+    /// state transitions.
+    std::condition_variable main_cv_;
+
+    /// @brief Number of threads currently paused.
+    size_t paused_;
+
+    /// @brief Number of threads currently running.
+    size_t running_;
+
+    /// @brief Number of threads that have exited the work funcion.
+    size_t exited_;
 
     /// @brief Pool of threads used to service connections in multi-threaded
     /// mode.
     std::list<boost::shared_ptr<std::thread> > threads_;
+
 };
 
 /// @brief Defines a pointer to a thread pool.

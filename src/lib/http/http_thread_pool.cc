@@ -33,7 +33,8 @@ using namespace isc::util;
 HttpThreadPool::HttpThreadPool(IOServicePtr io_service, size_t pool_size,
                                bool defer_start /* = false */)
     : pool_size_(pool_size), io_service_(io_service),
-      run_state_(RunState::STOPPED), mutex_(), cv_()  {
+      run_state_(RunState::STOPPED), mutex_(), thread_cv_(),
+      main_cv_(), paused_(0), running_(0), exited_(0)  {
     if (!pool_size) {
         isc_throw(BadValue, "HttpThreadPool::ctor pool_size must be > 0");
     }
@@ -45,116 +46,27 @@ HttpThreadPool::HttpThreadPool(IOServicePtr io_service, size_t pool_size,
 
     // If we're not deferring the start, do it now.
     if (!defer_start) {
-        start();
+        run();
     }
 }
 
 HttpThreadPool::~HttpThreadPool() {
-    if (getRunState() != RunState::STOPPED) {
-        // Stop if we aren't already stopped
-        stop();
-    }
+    stop();
 }
 
 void
-HttpThreadPool::start() {
-    if (getRunState() != RunState::STOPPED) {
-        isc_throw(InvalidOperation, "HttpThreadPool::start already started!");
-    }
-
-    // Set state to RUN.
-    setRunState(RunState::RUN);
-
-    // Prep IOService for run() invocations.
-    io_service_->restart();
-
-    // Create a pool of threads, each calls run() on our
-    // io_service instance.
-    for (std::size_t i = 0; i < pool_size_; ++i) {
-        boost::shared_ptr<std::thread> thread(new std::thread(
-            [this]() {
-                bool done = false;
-                while (!done) {
-                    switch (getRunState()) {
-                    case RunState::RUN:
-                        io_service_->run();
-                        break;
-                    case RunState::PAUSED:
-                    {
-                        // We need to stop and wait to be released.
-                        std::unique_lock<std::mutex> lck(mutex_);
-                        cv_.wait(lck,
-                            [&]() {
-                                return (run_state_ != RunState::PAUSED);
-                            });
-                        break;
-                    }
-                    case RunState::SHUTDOWN:
-                        done = true;
-                        break;
-                    case RunState::STOPPED:
-                        // This should never happen.
-                        done = true;
-                        break;
-                    }
-                }
-            }));
-
-        threads_.push_back(thread);
-    }
-}
-
-void
-HttpThreadPool::stop() {
-    if (getRunState() == RunState::STOPPED) {
-        // Nothing to do.
-        return;
-    }
-
-    // Set the state to SHUTDOWN.
-    setRunState(RunState::SHUTDOWN);
-
-    // Stop our IOService.
-    if (!io_service_->stopped()) {
-        // Flush canceled (and ready) handlers.
-        io_service_->poll();
-
-        // Stop the service
-        io_service_->stop();
-    }
-
-    // Shutdown the threads.
-    for (auto const& thread : threads_) {
-        thread->join();
-    }
-
-    // Empty the thread pool.
-    threads_.clear();
-
-    // Set the state to STOPPED.
-    setRunState(RunState::STOPPED);
+HttpThreadPool::run() {
+    setRunState(RunState::RUNNING);
 }
 
 void
 HttpThreadPool::pause() {
-    if (getRunState() !=  RunState::RUN) {
-        // Not running, can't pause.
-        return;
-    }
-
     setRunState(RunState::PAUSED);
-    io_service_->stop();
 }
 
 void
-HttpThreadPool::resume() {
-    if (getRunState() !=  RunState::PAUSED) {
-        // Not paused, can't resume.
-        return;
-    }
-
-    io_service_->restart();
-    setRunState(RunState::RUN);
+HttpThreadPool::stop() {
+    setRunState(RunState::STOPPED);
 }
 
 HttpThreadPool::RunState
@@ -163,13 +75,153 @@ HttpThreadPool::getRunState() {
     return (run_state_);
 }
 
-void
-HttpThreadPool::setRunState(RunState state) {
-    {
-        std::lock_guard<std::mutex> lck(mutex_);
-        run_state_ = state;
+bool
+HttpThreadPool::validateStateChange(RunState new_state) const {
+    bool is_valid = false;
+    switch(run_state_) {
+    case RunState::STOPPED:
+        is_valid = (new_state == RunState::RUNNING);
+        break;
+    case RunState::RUNNING:
+        is_valid = (new_state != RunState::RUNNING);
+        break;
+    case RunState::PAUSED:
+        is_valid = (new_state != RunState::PAUSED);
+        break;
     }
-    cv_.notify_all();
+
+    return (is_valid);
+}
+
+void
+HttpThreadPool::setRunState (RunState new_state) {
+    std::unique_lock<std::mutex> main_lck(mutex_);
+
+    // Bail if the transition is invalid.
+    if (!validateStateChange(new_state)) {
+        return;
+    }
+
+    run_state_ = new_state;
+    // Notify threads of state change.
+    thread_cv_.notify_all();
+
+    switch(new_state) {
+    case RunState::RUNNING: {
+        // Restart the IOSerivce.
+        io_service_->restart();
+
+        // While we have fewer threads than we should, make more.
+        while (threads_.size() < pool_size_) {
+            boost::shared_ptr<std::thread> thread(new std::thread(
+            [this]() {
+                bool done = false;
+                while (!done) {
+                    switch (getRunState()) {
+                    case RunState::RUNNING: {
+                        {
+                            std::unique_lock<std::mutex> lck(mutex_);
+                            running_++;
+
+                            // If We're all running notify main thread.
+                            if (running_ == pool_size_) {
+                                main_cv_.notify_all();
+                            }
+                         }
+
+                         // Run the IOService.
+                         io_service_->run();
+
+                         {
+                            std::unique_lock<std::mutex> lck(mutex_);
+                            running_--;
+                         }
+
+                        break;
+                    }
+
+                    case RunState::PAUSED: {
+                        std::unique_lock<std::mutex> lck(mutex_);
+                        paused_++;
+
+                        // If we're all paused notify main.
+                        if (paused_ == threads_.size()) {
+                            main_cv_.notify_all();
+                        }
+
+                        // Wait here till I'm released.
+                        thread_cv_.wait(lck,
+                            [&]() {
+                                return (run_state_ != RunState::PAUSED);
+                            });
+
+                        paused_--;
+                        break;
+                    }
+
+                    case RunState::STOPPED: {
+                        done = true;
+                        break;
+                    }}
+                }
+
+                std::unique_lock<std::mutex> lck(mutex_);
+                exited_++;
+                if (exited_ == threads_.size()) {
+                    main_cv_.notify_all();
+                }
+            }));
+
+            // Add thread to the pool.
+            threads_.push_back(thread);
+        }
+
+        // Main thread waits here until all threads are running.
+        main_cv_.wait(main_lck,
+            [&]() {
+                return (running_ == threads_.size());
+            });
+
+        exited_ = 0;
+        break;
+    }
+
+    case RunState::PAUSED: {
+        // Stop IOService.
+        if (!io_service_->stopped()) {
+            io_service_->poll();
+            io_service_->stop();
+        }
+
+        // Main thread waits here until all threads are paused.
+        main_cv_.wait(main_lck,
+            [&]() {
+                return (paused_ == threads_.size());
+            });
+
+        break;
+    }
+
+    case RunState::STOPPED: {
+        // Stop IOService.
+        if (!io_service_->stopped()) {
+            io_service_->poll();
+            io_service_->stop();
+        }
+
+        // Main thread waits here until all threads have exited.
+        main_cv_.wait(main_lck,
+            [&]() {
+                return (exited_ == threads_.size());
+            });
+
+        for (auto const& thread : threads_) {
+            thread->join();
+        }
+
+        threads_.clear();
+        break;
+    }}
 }
 
 IOServicePtr

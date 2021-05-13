@@ -93,7 +93,7 @@ CmdHttpListener::pause() {
 void
 CmdHttpListener::resume() {
     if (threads_) {
-        threads_->resume();
+        threads_->run();
     }
 }
 
@@ -122,7 +122,7 @@ CmdHttpListener::stop() {
               .arg(port_);
 }
 
-HttpThreadPool::RunState 
+HttpThreadPool::RunState
 CmdHttpListener::getRunState() const {
     if (!threads_) {
         isc_throw(InvalidOperation,
@@ -132,16 +132,16 @@ CmdHttpListener::getRunState() const {
     return (threads_->getRunState());
 }
 
-bool 
+bool
 CmdHttpListener::isRunning() {
     if (threads_) {
-        return (threads_->getRunState() == HttpThreadPool::RunState::RUN);
+        return (threads_->getRunState() == HttpThreadPool::RunState::RUNNING);
     }
 
     return (false);
 }
 
-bool 
+bool
 CmdHttpListener::isStopped() {
     if (threads_) {
         return (threads_->getRunState() == HttpThreadPool::RunState::STOPPED);
@@ -150,7 +150,7 @@ CmdHttpListener::isStopped() {
     return (true);
 }
 
-bool 
+bool
 CmdHttpListener::isPaused() {
     if (threads_) {
         return (threads_->getRunState() == HttpThreadPool::RunState::PAUSED);

@@ -180,30 +180,20 @@ public:
     ///
     /// @param num_pauses Desired number of times the listener should be
     /// paused during the test.
-    void runIOService(size_t num_pauses = 0) {
+    void runIOService(size_t request_limit = 0) {
         // Create a timer to use for invoking resume after pause.
         IntervalTimer pause_timer_(io_service_);
         paused_ = false;
 
+        if (!request_limit) {
+            request_limit = clients_.size();
+        }
+
         // Loop until the clients are done, an error occurs, or the time runs out.
         size_t num_done = 0;
-        while (num_done != clients_.size()) {
+        while (num_done != request_limit) {
             // Always call restart() before we call run();
             io_service_.restart();
-
-            if (shouldPause(num_pauses, num_done)) {
-                // Pause the listener .
-                paused_ = true;
-                ++pause_cnt_;
-                listener_->pause();
-
-                // Set timer to resume listener.
-                pause_timer_.setup(
-                    [this]() {
-                        listener_->resume();
-                        paused_ = false;
-                    }, 10, IntervalTimer::ONE_SHOT);
-            }
 
             // Run until a client stops the service.
             io_service_.run();
@@ -225,8 +215,10 @@ public:
     ///
     /// @return True if the listener should be paused.
     bool shouldPause(size_t num_pauses, size_t num_done) {
-        // True if the number of clients done is a multiple of the number of pauses.
-        return (!paused_ && num_pauses && num_done && !(num_done % num_pauses));
+        size_t request_limit = (pause_cnt_ < num_pauses ?
+                               (num_done + ((clients_.size() - num_done) / num_pauses))
+                                    : clients_.size());
+        return (request_limit);
     }
 
     /// @brief Create an HttpResponse from a response string.
@@ -277,7 +269,7 @@ public:
     ///
     /// @return Returns response with map of arguments containing
     /// a string value 'thread-id': <thread id>
-    ConstElementPtr threadCommandHandler(const std::string& /*command_name*/,
+    ConstElementPtr synchronizedCommandHandler(const std::string& /*command_name*/,
                                          const ConstElementPtr& command_arguments) {
         // If the number of in progress commands is less than the number
         // of threads, then wait here until we're notified.  Otherwise,
@@ -335,6 +327,36 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
+    /// @brief Handler for the 'thread' command.
+    ///
+    /// @param command_name Command name, i.e. 'thread'.
+    /// @param command_arguments Command arguments should contain
+    /// one string element, "client-ptr", whose value is the stringified
+    /// pointer to the client that issued the command.
+    ///
+    /// @return Returns response with map of arguments containing
+    /// a string value 'thread-id': <thread id>
+    ConstElementPtr simpleCommandHandler(const std::string& /*command_name*/,
+                                         const ConstElementPtr& command_arguments) {
+        // Create the map of response arguments.
+        ElementPtr arguments = Element::createMap();
+        // First we echo the client-ptr command argument.
+        ConstElementPtr client_ptr = command_arguments->get("client-ptr");
+        if (!client_ptr) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "missing client-ptr"));
+        }
+
+        arguments->set("client-ptr", client_ptr);
+
+        // Now we add the thread-id.
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        arguments->set("thread-id", Element::create(ss.str()));
+
+        // We're done, ship it!
+        return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
+    }
+
     /// @brief Submits one or more thread commands to a CmdHttpListener.
     ///
     /// This function command will creates a CmdHttpListener
@@ -354,10 +376,7 @@ public:
     /// thread command.  Each client is used to carry out a single thread
     /// command request.  Must be greater than 0 and a multiple of num_threads
     /// if it is greater than num_threads.
-    /// @param num_pauses Desired number of times the listener should be
-    /// paused during the test.
-    void threadListenAndRespond(size_t num_threads, size_t num_clients,
-                                size_t num_pauses = 0) {
+    void threadListenAndRespond(size_t num_threads, size_t num_clients) {
         // First we makes sure the parameter rules apply.
         ASSERT_TRUE(num_threads > 0);
         ASSERT_TRUE(num_clients > 0);
@@ -373,7 +392,7 @@ public:
         // Register the thread command handler.
         CommandMgr::instance().registerCommand("thread",
                                                std::bind(&CmdHttpListenerTest
-                                                         ::threadCommandHandler,
+                                                         ::synchronizedCommandHandler,
                                                          this, ph::_1, ph::_2));
 
         // Create a listener with prescribed number of threads.
@@ -397,7 +416,7 @@ public:
 
         // Now we run the client-side IOService until all requests are done,
         // errors occur or the test times out.
-        ASSERT_NO_FATAL_FAILURE(runIOService(num_pauses));
+        ASSERT_NO_FATAL_FAILURE(runIOService());
 
         // Stop the listener and then verify it has stopped.
         ASSERT_NO_THROW_LOG(listener_->stop());
@@ -493,6 +512,176 @@ public:
                       << "thread-id: " << it.first
                       << ", clients: " << it.second << std::endl;
         }
+    }
+
+    /// @brief Pauses and resumes a CmdHttpListener while it processes command
+    /// requests.
+    ///
+    /// This function command will creates a CmdHttpListener
+    /// with the given number of threads, initiates the given
+    /// number of clients, each requesting the "thread" command,
+    /// and then iteratively runs the test's IOService until all
+    /// the clients have received their responses or an error occurs.
+    /// It will pause and resume the listener at intervals governed
+    /// by the given number of pauses.
+    ///
+    /// @param num_threads - the number of threads the CmdHttpListener
+    /// should use. Must be greater than 0.
+    /// @param num_clients - the number of clients that should issue the
+    /// thread command.  Each client is used to carry out a single thread
+    /// command request.  Must be greater than 0.
+    /// @param num_pauses Desired number of times the listener should be
+    /// paused during the test. Must be greated than 0.
+    void workPauseAndResume(size_t num_threads, size_t num_clients,
+                            size_t num_pauses) {
+        // First we makes sure the parameter rules apply.
+        ASSERT_TRUE(num_threads);
+        ASSERT_TRUE(num_clients);
+        ASSERT_TRUE(num_pauses);
+        num_threads_ = num_threads;
+        num_clients_ = num_clients;
+
+        // Register the thread command handler.
+        CommandMgr::instance().registerCommand("thread",
+                                               std::bind(&CmdHttpListenerTest
+                                                         ::simpleCommandHandler,
+                                                         this, ph::_1, ph::_2));
+
+        // Create a listener with prescribed number of threads.
+        ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
+                                                               SERVER_PORT, num_threads)));
+        ASSERT_TRUE(listener_);
+
+        // Start it and verify it is running.
+        ASSERT_NO_THROW_LOG(listener_->start());
+        ASSERT_TRUE(listener_->isRunning());
+        EXPECT_EQ(listener_->getThreadCount(), num_threads);
+
+        // Maps the number of clients served by a given thread-id.
+        std::map<std::string, int> clients_per_thread;
+
+        // Initiate the prescribed number of command requests.
+        num_in_progress_ = 0;
+        for (auto i = 0; clients_.size() < num_clients; ++i) {
+            ASSERT_NO_THROW_LOG(startThreadCommand());
+        }
+
+        // Now we run the client-side IOService until all requests are done,
+        // errors occur or the test times out.  We'll pause and resume the
+        // given the number of pauses
+        size_t num_done = 0;
+        size_t total_requests = clients_.size();
+        while (num_done < total_requests) {
+            // Calculate how many more requests to process before we pause again.
+            // We divide the number of oustanding requests by the number of pauses
+            // and stop after we've done at least that many more.
+            size_t request_limit = (pause_cnt_ < num_pauses ?
+                                    (num_done + ((total_requests - num_done) / num_pauses))
+                                    : total_requests);
+
+            // Run test IOService until we hit the limit.
+            runIOService(request_limit);
+
+            // If we've done all our pauses we should be through.
+            if (pause_cnt_ == num_pauses) {
+                break;
+            }
+
+            // Pause the client.
+            ASSERT_NO_THROW(listener_->pause());
+            ASSERT_TRUE(listener_->isPaused());
+            ++pause_cnt_;
+
+            // Check our progress.
+            num_done = 0;
+            for (auto const& client : clients_) {
+                if (client->receiveDone()) {
+                    ++num_done;
+                }
+            }
+
+            // We should completed at least as many as our
+            // target limit.
+            ASSERT_GE(num_done, request_limit);
+
+            // Resume the listener.
+            ASSERT_NO_THROW(listener_->resume());
+            ASSERT_TRUE(listener_->isRunning());
+        }
+
+        // Stop the listener and then verify it has stopped.
+        ASSERT_NO_THROW_LOG(listener_->stop());
+        ASSERT_TRUE(listener_->isStopped());
+        EXPECT_EQ(listener_->getThreadCount(), 0);
+
+        // Iterate over the clients, checking their outcomes.
+        size_t total_responses = 0;
+        for (auto const& client : clients_) {
+            // Client should have completed its receive successfully.
+            ASSERT_TRUE(client->receiveDone());
+
+            // Client response should not be empty.
+            HttpResponsePtr hr;
+            std::string response_str = client->getResponse();
+            ASSERT_FALSE(response_str.empty());
+
+            // Parse the response into an HttpResponse.
+            ASSERT_NO_THROW_LOG(hr = parseResponse(client->getResponse()));
+
+            // Now we walk the element tree to get the response data.  It should look
+            // this:
+            //
+            //  [ {
+            //       "arguments": { "client-ptr": "xxxxx",
+            //                      "thread-id": "zzzzz" },
+            //       "result": 0
+            //  } ]
+            //
+            // First we turn it into an Element tree.
+            std::string body_str = hr->getBody();
+            ConstElementPtr body;
+            ASSERT_NO_THROW_LOG(body = Element::fromJSON(hr->getBody()));
+
+            // Outermost is a list, since we're emulating agent responses.
+            ASSERT_EQ(body->getType(), Element::list);
+            ASSERT_EQ(body->size(), 1);
+
+            // Answer should be a map containing "arguments" and "results".
+            ConstElementPtr answer = body->get(0);
+            ASSERT_EQ(answer->getType(), Element::map);
+
+            // "result" should be 0.
+            ConstElementPtr result = answer->get("result");
+            ASSERT_TRUE(result);
+            ASSERT_EQ(result->getType(), Element::integer);
+            ASSERT_EQ(result->intValue(), 0);
+
+            // "arguments" is a map containing "client-ptr" and "thread-id".
+            ConstElementPtr arguments = answer->get("arguments");
+            ASSERT_TRUE(arguments);
+            ASSERT_EQ(arguments->getType(), Element::map);
+
+            // "client-ptr" is a string.
+            ConstElementPtr client_ptr = arguments->get("client-ptr");
+            ASSERT_TRUE(client_ptr);
+            ASSERT_EQ(client_ptr->getType(), Element::string);
+
+            // "thread-id" is a string.
+            ConstElementPtr thread_id = arguments->get("thread-id");
+            ASSERT_TRUE(thread_id);
+            ASSERT_EQ(thread_id->getType(), Element::string);
+            std::string thread_id_str = thread_id->stringValue();
+
+            // Make sure the response received was for this client.
+            std::stringstream ss;
+            ss << client;
+            ASSERT_EQ(client_ptr->stringValue(), ss.str());
+
+            ++total_responses;
+        }
+
+        // We should have responses for all our clients.
+        EXPECT_EQ(total_responses, num_clients);
 
         // We should have had the expected number of pauses.
         if (!num_pauses) {
@@ -599,7 +788,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getThreadCount(), 1);
     ASSERT_TRUE(listener_->getThreadIOService());
     EXPECT_FALSE(listener_->getThreadIOService()->stopped());
-    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::RUN);
+    EXPECT_EQ(listener_->getRunState(),  HttpThreadPool::RunState::RUNNING);
 
     // Trying to start it again should fail.
     ASSERT_THROW_MSG(listener_->start(), InvalidOperation,
@@ -762,12 +951,13 @@ TEST_F(CmdHttpListenerTest, sixByEighteen) {
     threadListenAndRespond(num_threads, num_clients);
 }
 
-// Pauses and resumes during work.
+// Pauses and resumes the listener while it is processing
+// requests.
 TEST_F(CmdHttpListenerTest, pauseAndResume) {
     size_t num_threads = 6;
     size_t num_clients = 18;
     size_t num_pauses = 3;
-    threadListenAndRespond(num_threads, num_clients, num_pauses);
+    workPauseAndResume(num_threads, num_clients, num_pauses);
 }
 
 } // end of anonymous namespace
