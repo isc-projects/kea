@@ -1419,27 +1419,38 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
     uint32_t vendor_id = 0;
 
-    // Try to get the vendor option from a client. This is the usual way.
-    boost::shared_ptr<OptionVendor> vendor_req =
-        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(D6O_VENDOR_OPTS));
-    if (vendor_req) {
-        vendor_id = vendor_req->getVendorId();
-    }
-
-    /// @todo: We could get the vendor-id from vendor-class option (16).
-
-    // The alternative is that the server could have provided the option in some
-    // other way, either using client classification or hooks. If there's a
-    // vendor info option in the response already, use that.
-    boost::shared_ptr<OptionVendor> vendor_rsp =
-        boost::dynamic_pointer_cast<OptionVendor>(answer->getOption(D6O_VENDOR_OPTS));
+    // The server could have provided the option using client classification or
+    // hooks. If there's a vendor info option in the response already, use that.
+    OptionVendorPtr vendor_rsp(boost::dynamic_pointer_cast<OptionVendor>(
+        answer->getOption(D6O_VENDOR_OPTS)));
     if (vendor_rsp) {
         vendor_id = vendor_rsp->getVendorId();
     }
 
+    // Otherwise, get the vendor-id from vendor-specific information option
+    // (17).
+    OptionVendorPtr vendor_req;
+    if (vendor_id == 0) {
+        vendor_req = boost::dynamic_pointer_cast<OptionVendor>(
+            question->getOption(D6O_VENDOR_OPTS));
+        if (vendor_req) {
+            vendor_id = vendor_req->getVendorId();
+        }
+    }
+
+    // Optionally, get the vendor-id from vendor-class option (16).
+    if (vendor_id == 0) {
+        OptionVendorClassPtr vendor_class(
+            boost::dynamic_pointer_cast<OptionVendorClass>(
+                question->getOption(D6O_VENDOR_CLASS)));
+        if (vendor_class) {
+            vendor_id = vendor_class->getVendorId();
+        }
+    }
+
     // If there's no vendor option in either request or response, then there's no way
     // to figure out what the vendor-id value is and we give up.
-    if (!vendor_req && !vendor_rsp) {
+    if (vendor_id == 0) {
         return;
     }
 
