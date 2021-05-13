@@ -28,7 +28,11 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option_string.h>
 #include <cc/command_interpreter.h>
+
 #include <gtest/gtest.h>
+
+#include <string>
+#include <vector>
 
 using namespace isc;
 using namespace isc::config;
@@ -37,13 +41,141 @@ using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 
 /// @brief Class dedicated to testing vendor options in DHCPv6
-///
-/// For the time being it does not provide any additional functionality, but it
-/// groups all vendor related tests under a single name. There were too many
-/// tests in Dhcpv4SrvTest class anyway.
 class VendorOptsTest : public Dhcpv6SrvTest {
+public:
+    /// @brief Test what options a client can use to request vendor options.
+    void testRequestingOfVendorOptions(vector<int8_t> const& client_options) {
+        IfaceMgrTestConfig test_config(true);
+        IfaceMgr::instance().openSockets6();
+        Dhcp6Client client;
 
+        EXPECT_NO_THROW(configure(config_, *client.getServer()));
+
+        bool should_yield_response(false);
+        for (int8_t const i : client_options) {
+            OptionPtr vendor_option;
+
+            if (i == D6O_USER_CLASS) {
+                // An option that should not trigger a response containing
+                // vendor options.
+                vendor_option = boost::make_shared<OptionString>(Option::V6,
+                                                                 D6O_USER_CLASS,
+                                                                 "hello");
+            } else if (i == D6O_VENDOR_CLASS) {
+                vendor_option =
+                    boost::make_shared<OptionVendorClass>(Option::V6,
+                                                          vendor_id_);
+                should_yield_response = true;
+            } else if (i == D6O_VENDOR_OPTS) {
+                vendor_option = boost::make_shared<OptionVendor>(Option::V6,
+                                                                 vendor_id_);
+                should_yield_response = true;
+            } else {
+                continue;
+            }
+            client.addExtraOption(vendor_option);
+        }
+
+        // Let's check whether the server is not able to process this packet
+        // and include vivso with appropriate sub-options
+        EXPECT_NO_THROW(client.doSolicit());
+        ASSERT_TRUE(client.getContext().response_);
+
+        // Check there's a response if an option was properly requested.
+        // Otherwise check that a response has not been provided and stop here.
+        OptionPtr response(
+            client.getContext().response_->getOption(D6O_VENDOR_OPTS));
+        if (should_yield_response) {
+            ASSERT_TRUE(response);
+        } else {
+            ASSERT_FALSE(response);
+            return;
+        }
+
+        // Check that it includes vendor opts with the right vendor ID.
+        OptionVendorPtr response_vendor_options(
+            boost::dynamic_pointer_cast<OptionVendor>(response));
+        ASSERT_TRUE(response_vendor_options);
+        EXPECT_EQ(vendor_id_, response_vendor_options->getVendorId());
+
+        // Now check that it contains requested option with the appropriate
+        // content.
+        OptionPtr suboption(
+            response_vendor_options->getOption(option_));
+        ASSERT_TRUE(suboption);
+        vector<uint8_t> binary_suboption = suboption->toBinary(false);
+        string text(binary_suboption.begin(), binary_suboption.end());
+        EXPECT_EQ("2001:db8::1234:5678", text);
+    }
+
+private:
+    /// @brief Configured option data
+    string data_ = "2001:db8::1234:5678";
+
+    /// @brief Configured option code
+    int32_t option_ = 32;
+
+    /// @brief Configured and requested vendor ID
+    int32_t vendor_id_ = 32768;
+
+    /// @brief Server configuration
+    string config_ = R"(
+    {
+      "option-data": [
+        {
+          "always-send": true,
+          "code": )" + to_string(option_) + R"(,
+          "data": ")" + data_ + R"(",
+          "name": "tftp-address",
+          "space": "vendor-)" + to_string(vendor_id_) + R"("
+        }
+      ],
+      "option-def": [
+        {
+          "code": )" + to_string(option_) + R"(,
+          "name": "tftp-address",
+          "space": "vendor-)" + to_string(vendor_id_) + R"(",
+          "type": "string"
+        }
+      ],
+      "subnet6": [
+        {
+          "interface": "eth0",
+          "pools": [
+            {
+              "pool": "2001:db8::/64"
+            }
+          ],
+          "subnet": "2001:db8::/64"
+        }
+      ]
+    }
+    )";
 };
+
+TEST_F(VendorOptsTest, dontRequestVendorID) {
+    testRequestingOfVendorOptions({});
+}
+
+TEST_F(VendorOptsTest, negativeTestRequestVendorIDWithOption15) {
+    testRequestingOfVendorOptions({D6O_USER_CLASS});
+}
+
+TEST_F(VendorOptsTest, requestVendorIDWithOption16) {
+    testRequestingOfVendorOptions({D6O_VENDOR_CLASS});
+}
+
+TEST_F(VendorOptsTest, requestVendorIDWithOption17) {
+    testRequestingOfVendorOptions({D6O_VENDOR_OPTS});
+}
+
+TEST_F(VendorOptsTest, requestVendorIDWithOptions16And17) {
+    testRequestingOfVendorOptions({D6O_VENDOR_CLASS, D6O_VENDOR_OPTS});
+}
+
+TEST_F(VendorOptsTest, requestVendorIDWithOptions17And16) {
+    testRequestingOfVendorOptions({D6O_VENDOR_OPTS, D6O_VENDOR_CLASS});
+}
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
 TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
@@ -436,7 +568,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
 
     EXPECT_NO_THROW(configure(config, *client.getServer()));
 
-    // A a vendor-class identifier (this matches what Genexis hardware sends)
+    // A vendor-class identifier (this matches what Genexis hardware sends)
     OptionPtr vopt(new OptionString(Option::V6, D6O_USER_CLASS,
                                     "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
     client.addExtraOption(vopt);
