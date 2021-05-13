@@ -841,15 +841,15 @@ TEST_F(CommandOptionsTest, LoadMacsFromFile) {
     EXPECT_EQ(4, m.size());
 }
 
-TEST_F(CommandOptionsTest, LoadGiaddrFromFile) {
+TEST_F(CommandOptionsTest, LoadRelayAddrFromFile) {
     CommandOptions opt;
-    std::string giaddr_list_full_path = getFullPath("giaddr-list.txt");
+    std::string relay_addr_list_full_path = getFullPath("relay-addr-list.txt");
     std::ostringstream cmd;
-    cmd << "perfdhcp -J " << giaddr_list_full_path << " abc";
+    cmd << "perfdhcp -J " << relay_addr_list_full_path << " abc";
     EXPECT_NO_THROW(process(opt, cmd.str()));
-    EXPECT_EQ(giaddr_list_full_path, opt.getGiaddrListFile());
+    EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
-    EXPECT_EQ(5, opt.getGiaddrList().size());
+    EXPECT_EQ(7, opt.getRelayAddrList().size());
 }
 
 TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {

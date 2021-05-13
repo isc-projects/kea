@@ -126,8 +126,8 @@ CommandOptions::reset() {
     addr_unique_ = false;
     mac_list_file_.clear();
     mac_list_.clear();
-    giaddr_list_file_.clear();
-    giaddr_list_.clear();
+    relay_addr_list_file_.clear();
+    relay_addr_list_.clear();
     multi_subnet_ = false;
     num_request_.clear();
     exit_wait_time_ = 0;
@@ -390,8 +390,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'J':
             check(num_subnet_list_files >= 1, "only one -J option can be specified");
             num_subnet_list_files++;
-            giaddr_list_file_ = std::string(optarg);
-            loadGiaddr();
+            relay_addr_list_file_ = std::string(optarg);
+            loadRelayAddr();
             break;
 
         case 'l':
@@ -856,14 +856,14 @@ bool CommandOptions::validateIP(const std::string& line) {
     } catch (const isc::asiolink::IOError& e) {
         return (true);
     }
-    giaddr_list_.push_back(line);
+    relay_addr_list_.push_back(line);
     multi_subnet_ = true;
     return (false);
 }
 
-void CommandOptions::loadGiaddr() {
+void CommandOptions::loadRelayAddr() {
     std::string line;
-    std::ifstream infile(giaddr_list_file_.c_str());
+    std::ifstream infile(relay_addr_list_file_.c_str());
     size_t cnt = 0;
     while (std::getline(infile, line)) {
         cnt++;
@@ -871,6 +871,7 @@ void CommandOptions::loadGiaddr() {
         tmp << "invalid address in line: "<< cnt;
         check(validateIP(line), tmp.str());
     }
+    check(cnt == 0, "file with addresses is empty!");
 }
 
 void CommandOptions::loadMacs() {

@@ -392,20 +392,20 @@ public:
     /// \return server name.
     std::string getServerName() const { return server_name_; }
 
-    /// \brief Returns giaddr file location.
+    /// \brief Returns file location with set of relay addresses.
     ///
-    /// \return giaddr list file location.
-    std::string getGiaddrListFile() const { return giaddr_list_file_; }
+    /// \return relay addresses list file location.
+    std::string getRelayAddrListFile() const { return relay_addr_list_file_; }
 
-    /// \brief Returns list of giaddr addresses.
+    /// \brief Returns list of relay addresses.
     ///
-    /// \return list of giaddr.
-    std::vector<std::string> getGiaddrList() const { return giaddr_list_; }
+    /// \return list of relay addresses.
+    std::vector<std::string> getRelayAddrList() const { return relay_addr_list_; }
 
-    /// \brief Returns random giaddr.
+    /// \brief Returns random relay address.
     ///
-    /// \return single string containing giaddr.
-    std::string getRandGiaddr() { return giaddr_list_[rand() % giaddr_list_.size()]; }
+    /// \return single string containing relay address.
+    std::string getRandRelayAddr() { return relay_addr_list_[rand() % relay_addr_list_.size()]; }
 
     /// \brief Check if multi subnet mode is enabled.
     ///
@@ -566,10 +566,10 @@ private:
     bool decodeMacString(const std::string& line);
 
     /// \brief Opens the text file containing list of addresses (one per line).
-    void loadGiaddr();
+    void loadRelayAddr();
 
-    /// \brief Checks if loaded giaddr from text file are correct,
-    /// adds them to giaddr_list_.
+    /// \brief Checks if loaded relay addresses from text file are correct,
+    /// adds them to relay_addr_list_.
     ///
     /// \return true if address is incorrect.
     bool validateIP(const std::string& line);
@@ -706,10 +706,10 @@ private:
     std::vector<std::vector<uint8_t> > mac_list_;
 
     /// Location of a file containing a list of subnet addresses, one per line.
-    std::string giaddr_list_file_;
+    std::string relay_addr_list_file_;
 
     /// List of validated subnet addresses.
-    std::vector<std::string> giaddr_list_;
+    std::vector<std::string> relay_addr_list_;
 
     /// Flag to indicate multiple subnets testing.
     bool multi_subnet_;

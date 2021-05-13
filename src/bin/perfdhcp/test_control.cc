@@ -1770,7 +1770,7 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     if (!options_.checkMultiSubnet()) {
         pkt->setGiaddr(IOAddress(socket_.addr_));
     } else {
-        pkt->setGiaddr(IOAddress(options_.getRandGiaddr()));
+        pkt->setGiaddr(IOAddress(options_.getRandRelayAddr()));
     }
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
@@ -1805,8 +1805,12 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
     if (options_.isUseRelayedV6()) {
       Pkt6::RelayInfo relay_info;
       relay_info.msg_type_ = DHCPV6_RELAY_FORW;
-      relay_info.hop_count_ = 1;
-      relay_info.linkaddr_ = IOAddress(socket_.addr_);
+      relay_info.hop_count_ = 0;
+      if (options_.checkMultiSubnet()) {
+          relay_info.linkaddr_ = IOAddress(options_.getRandRelayAddr());
+      } else {
+          relay_info.linkaddr_ = IOAddress(socket_.addr_);
+      }
       relay_info.peeraddr_ = IOAddress(socket_.addr_);
       pkt->addRelayInfo(relay_info);
     }
