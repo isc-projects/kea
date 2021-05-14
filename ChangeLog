@@ -1,3 +1,7 @@
+1896.	[func]		wlodek
+	Perfdhcp extended to send v6 traffic from multiple networks.
+	(Gitlab #1416)
+
 1895.	[func]		razvan
 	Added additional evaluation tokens to extract and print data:
 	addrtotext, int8totext, int16totext, int32totext, uint8totext,
