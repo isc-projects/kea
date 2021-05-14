@@ -869,22 +869,22 @@ private:
         ///
         /// This method should be called before @ref getIdleConnection.
         ///
-        /// In a first step it closed not usable idle connections
+        /// In a first step it closes not usable idle connections
         /// (idle means no current transaction and not closed,
         /// usable means the peer side did not close it at that time).
         /// In a second step it removes (collects) closed connections.
         ///
         /// @note a connection is closed when the transaction is finished
         /// and the connection is persistent, or when the connection was
-        /// idle and the first step of the garbage collector detects was
-        /// closed by the peer side so is not usable.
+        /// idle and the first step of the garbage collector detects that
+        /// it was closed by peer, so is not usable.
         ///
         /// @note there are two races here:
         ///  - the peer side closes the connection after the first step
         ///  - a not persistent connection finishes its transaction and
         ///    closes
         /// The second race is avoided by setting the closed flag before
-        /// the started flag. And by unconditionally post a process next
+        /// the started flag and by unconditionally posting a process next
         /// request action.
         ///
         /// @note This should be called in a thread safe context.
