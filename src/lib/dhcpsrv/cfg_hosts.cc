@@ -24,6 +24,28 @@ namespace isc {
 namespace dhcp {
 
 ConstHostCollection
+CfgHosts::getAll() const {
+    ConstHostCollection collection;
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+        collection.push_back(*host);
+    }
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll() {
+    HostCollection collection;
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+        collection.push_back(*host);
+    }
+    return (collection);
+}
+
+ConstHostCollection
 CfgHosts::getAll(const Host::IdentifierType& identifier_type,
                  const uint8_t* identifier_begin,
                  const size_t identifier_len) const {

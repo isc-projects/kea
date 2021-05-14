@@ -41,6 +41,24 @@ public:
     /// @brief Destructor.
     virtual ~CfgHosts() { }
 
+    /// @brief Return all hosts
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in this configuration.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll() const;
+
+    /// @brief Non-const version of the @c getAll const method.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in this configuration.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getAll();
+
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
