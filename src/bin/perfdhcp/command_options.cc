@@ -850,9 +850,11 @@ CommandOptions::convertHexString(const std::string& text) const {
 
 bool CommandOptions::validateIP(const std::string& line) {
     try {
-        asiolink::IOAddress ip_address_ = isc::asiolink::IOAddress(line);
-        // let's silence not used warning
-        (void) ip_address_;
+        isc::asiolink::IOAddress ip_address(line);
+        if ((getIpVersion() == 4 && !ip_address.isV4()) ||
+            (getIpVersion() == 6 && !ip_address.isV6())) {
+            return (true);
+        }
     } catch (const isc::asiolink::IOError& e) {
         return (true);
     }
@@ -868,7 +870,7 @@ void CommandOptions::loadRelayAddr() {
     while (std::getline(infile, line)) {
         cnt++;
         stringstream tmp;
-        tmp << "invalid address in line: "<< cnt;
+        tmp << "invalid address or wrong address version in line: "<< cnt;
         check(validateIP(line), tmp.str());
     }
     check(cnt == 0, "file with addresses is empty!");
@@ -1238,7 +1240,7 @@ CommandOptions::usage() const {
         "    whether -6 is given.\n"
         "-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
         "    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
-        "-J<giaddr-list-file>: Text file that include multiple addresses.\n"
+        "-J<remote-address-list-file>: Text file that include multiple addresses.\n"
         "    If provided perfdhcp will choose randomly one of addresses for each\n"
         "    exchange.\n"
         "-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"

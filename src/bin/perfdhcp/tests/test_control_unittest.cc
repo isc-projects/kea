@@ -1484,7 +1484,7 @@ TEST_F(TestControlTest, Packet6Relayed) {
     EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
     // Packet should be relayed.
     EXPECT_EQ(pkt6->relay_info_.size(), 1);
-    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
+    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0);
     EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
     EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
     EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);

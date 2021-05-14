@@ -15,7 +15,7 @@ perfdhcp - DHCP benchmarking tool
 Synopsis
 ~~~~~~~~
 
-:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** giaddr-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
+:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** remote-address-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
 
 Description
 ~~~~~~~~~~~
@@ -117,11 +117,11 @@ number of simulated clients exceeds 65535, three bytes will be
 randomized, and so on.
 
 Perfdhcp can now simulate traffic from multiple subnets by enabling option
--J and passing path to file that contains v4 addresses that will be used as
-giaddr in generated messages. That enable testing of vast numbers of Kea shared
-networks. Kea should be started with KEA_TEST_SEND_RESPONSES_TO_SOURCE
-environment variable to force Kea to send generated messages to source
-address of incoming packet. Feature is not available in kea-dhcp6.
+-J and passing path to file that contains v4 or v6 addresses that will be
+used as relayin generated messages. That enable testing of vast numbers
+of Kea shared networks. While testing Kea v4 it should be started with
+KEA_TEST_SEND_RESPONSES_TO_SOURCE environment variable to force Kea
+to send generated messages to source address of incoming packet.
 
 Templates may currently be used to generate packets being sent to the
 server in 4-way exchanges, i.e. SOLICIT, REQUEST (DHCPv6) and DISCOVER,
@@ -197,6 +197,13 @@ Options
    ``-i`` is incompatible with the following options: ``-1``, ``-d``,
    ``-D``, ``-E``, ``-S``, ``-I`` and ``-F``. In addition, it cannot be
    used with multiple instances of ``-O``, ``-T`` and ``-X``.
+
+``-J remote-address-list-file``
+    Text file that include multiple addresses. If provided perfdhcp will choose
+    randomly one of addresses for each exchange. This is used to generate traffic
+    from multiple subnets. Designed to test shared-networks. While testing kea v4 it
+    should be started with KEA_TEST_SEND_RESPONSES_TO_SOURCE=ENABLE
+    env variable otherwise perfdhcp will not be able to receive responses.
 
 ``-l local-addr|interface``
    For DHCPv4 operation, specifies the local hostname/address to use when
@@ -323,13 +330,6 @@ The following options only apply for DHCPv4 (i.e. when ``-4`` is given).
 
 ``-B``
    Forces broadcast handling.
-
-``-J giaddr-list-file``
-    Text file that include multiple addresses. If provided perfdhcp will choose
-    randomly one of addresses for each exchange. This is used to generate traffic
-    from multiple subnets. Designed to test shared-networks in kea-dhcp4. Kea should
-    be started with KEA_TEST_SEND_RESPONSES_TO_SOURCE=ENABLE env variable otherwise
-    perfdhcp will not be able to receive responses.
 
 DHCPv6-Only Options
 ~~~~~~~~~~~~~~~~~~~

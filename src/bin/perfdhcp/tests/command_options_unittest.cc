@@ -841,16 +841,48 @@ TEST_F(CommandOptionsTest, LoadMacsFromFile) {
     EXPECT_EQ(4, m.size());
 }
 
-TEST_F(CommandOptionsTest, LoadRelayAddrFromFile) {
+TEST_F(CommandOptionsTest, LoadRelay4AddrFromFile) {
     CommandOptions opt;
-    std::string relay_addr_list_full_path = getFullPath("relay-addr-list.txt");
+    std::string relay_addr_list_full_path = getFullPath("relay4-list.txt");
     std::ostringstream cmd;
-    cmd << "perfdhcp -J " << relay_addr_list_full_path << " abc";
+    cmd << "perfdhcp -4 -J " << relay_addr_list_full_path << " abc";
     EXPECT_NO_THROW(process(opt, cmd.str()));
     EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
-    EXPECT_EQ(7, opt.getRelayAddrList().size());
+    EXPECT_EQ(5, opt.getRelayAddrList().size());
 }
+
+TEST_F(CommandOptionsTest, LoadRelay6AddrFromFile) {
+    CommandOptions opt;
+    std::string relay_addr_list_full_path = getFullPath("relay6-list.txt");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -6 -J " << relay_addr_list_full_path << " abc";
+    EXPECT_NO_THROW(process(opt, cmd.str()));
+    EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
+    EXPECT_TRUE(opt.checkMultiSubnet());
+    EXPECT_EQ(2, opt.getRelayAddrList().size());
+}
+
+TEST_F(CommandOptionsTest, RelayAddr6ForVersion4) {
+    CommandOptions opt;
+    std::string relay_addr_list_full_path = getFullPath("relay6-list.txt");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -4 -J " << relay_addr_list_full_path << " abc";
+    EXPECT_THROW(process(opt, cmd.str()), isc::InvalidParameter);
+    EXPECT_FALSE(opt.checkMultiSubnet());
+    EXPECT_EQ(0, opt.getRelayAddrList().size());
+}
+
+TEST_F(CommandOptionsTest, RelayAddr4ForVersion6) {
+    CommandOptions opt;
+    std::string relay_addr_list_full_path = getFullPath("relay4-list.txt");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -6 -J " << relay_addr_list_full_path << " abc";
+    EXPECT_THROW(process(opt, cmd.str()), isc::InvalidParameter);
+    EXPECT_FALSE(opt.checkMultiSubnet());
+    EXPECT_EQ(0, opt.getRelayAddrList().size());
+}
+
 
 TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {
     CommandOptions opt;
