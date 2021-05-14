@@ -39,7 +39,7 @@ public:
     /// @param defer_start If true, creation of the threads is deferred until
     /// a subsequent call to @ref start().  In this case the pool's operational
     /// state post construction is STOPPED.  If false, the constructor will
-    /// invoke run() to tranistion the pool into the RUNNING state.
+    /// invoke run() to transition the pool into the RUNNING state.
     HttpThreadPool(asiolink::IOServicePtr io_service, size_t pool_size,
                    bool defer_start = false);
 
@@ -77,9 +77,9 @@ public:
     RunState getRunState();
 
 private:
-    /// @brief Thread-safe change of the pool's operational state.
+    /// @brief Thread-safe change of the pool's run state.
     ///
-    /// Transitions a pool from one state to another:
+    /// Transitions a pool from one run state to another:
     ///
     /// When moving from STOPPED or PAUSED to RUNNING:
     /// -# Sets state to RUNNING.
@@ -88,6 +88,7 @@ private:
     /// -# Creates the threads if they do not yet exist (true only
     /// when transitioning from STOPPED).
     /// -# Waits until threads are running.
+    /// -# Sets the count of exited threads to 0.
     /// -# Returns to caller.
     ///
     /// When moving from RUNNING or PAUSED to STOPPED:
@@ -113,9 +114,40 @@ private:
     /// @brief Validates whether the pool can change to a given state.
     ///
     /// @param state new state for the pool.
-    /// @return true if the changs is valid, false otherwise.
+    /// @return true if the Chang's is valid, false otherwise.
     /// @note Must be called from a thread-safe context.
     bool validateStateChange(RunState state) const;
+
+    /// @brief Work function executed by each thread in the pool.
+    ///
+    /// Implements the run state responsibilities for a given thread.
+    /// It executes a run loop until the pool is stopped. At the top
+    /// of each iteration of the loop the pool's run state is checked
+    /// and when it is:
+    ///
+    /// RUNNING:
+    /// -# The count of threads running is incremented.
+    /// -# If the count has reached the number of threads in pool the
+    ///    main thread is notified.
+    /// -# IOService::run() is invoked.
+    /// -# When IOService::run() returns, the count of threads running
+    ///    is decremented.
+    ///
+    /// PAUSED:
+    /// -# The count of threads paused is incremented.
+    /// -# If the count has reached the number of threads in pool the
+    ///    main thread is notified.
+    /// -# Thread blocks until notified the pool's run state is no
+    ///    longer PAUSED.
+    /// -# The count of threads paused is decremented.
+    ///
+    /// STOPPED:
+    /// -# The run loop is exited.
+    /// -# The count of threads exited is incremented.
+    /// -# If the count has reached the number of threads in pool the
+    ///    main thread is notified.
+    /// -# function exits.
+    void threadWork();
 
 public:
 
@@ -160,7 +192,7 @@ private:
     /// @brief Number of threads currently running.
     size_t running_;
 
-    /// @brief Number of threads that have exited the work funcion.
+    /// @brief Number of threads that have exited the work function.
     size_t exited_;
 
     /// @brief Pool of threads used to service connections in multi-threaded

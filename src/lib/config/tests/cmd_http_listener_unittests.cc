@@ -208,19 +208,6 @@ public:
         }
     }
 
-    /// @brief Determines if the listener should be paused.
-    ///
-    /// @param num_pauses desired number of pauses
-    /// @param num_done number of clients that have completed their requests.
-    ///
-    /// @return True if the listener should be paused.
-    bool shouldPause(size_t num_pauses, size_t num_done) {
-        size_t request_limit = (pause_cnt_ < num_pauses ?
-                               (num_done + ((clients_.size() - num_done) / num_pauses))
-                                    : clients_.size());
-        return (request_limit);
-    }
-
     /// @brief Create an HttpResponse from a response string.
     ///
     /// @param response_str a string containing the whole HTTP
@@ -359,7 +346,7 @@ public:
 
     /// @brief Submits one or more thread commands to a CmdHttpListener.
     ///
-    /// This function command will creates a CmdHttpListener
+    /// This function command will create a CmdHttpListener
     /// with the given number of threads, initiates the given
     /// number of clients, each requesting the "thread" command,
     /// and then iteratively runs the test's IOService until all
@@ -517,7 +504,7 @@ public:
     /// @brief Pauses and resumes a CmdHttpListener while it processes command
     /// requests.
     ///
-    /// This function command will creates a CmdHttpListener
+    /// This function command will create a CmdHttpListener
     /// with the given number of threads, initiates the given
     /// number of clients, each requesting the "thread" command,
     /// and then iteratively runs the test's IOService until all
@@ -549,7 +536,7 @@ public:
 
         // Create a listener with prescribed number of threads.
         ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
-                                                               SERVER_PORT, num_threads)));
+                                                                SERVER_PORT, num_threads)));
         ASSERT_TRUE(listener_);
 
         // Start it and verify it is running.
@@ -568,16 +555,16 @@ public:
 
         // Now we run the client-side IOService until all requests are done,
         // errors occur or the test times out.  We'll pause and resume the
-        // given the number of pauses
+        // number of times given by num_pauses.
         size_t num_done = 0;
         size_t total_requests = clients_.size();
         while (num_done < total_requests) {
             // Calculate how many more requests to process before we pause again.
-            // We divide the number of oustanding requests by the number of pauses
-            // and stop after we've done at least that many more.
+            // We divide the number of outstanding requests by the number of pauses
+            // and stop after we've done at least that many more requests.
             size_t request_limit = (pause_cnt_ < num_pauses ?
                                     (num_done + ((total_requests - num_done) / num_pauses))
-                                    : total_requests);
+                                     : total_requests);
 
             // Run test IOService until we hit the limit.
             runIOService(request_limit);

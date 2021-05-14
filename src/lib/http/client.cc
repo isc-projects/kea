@@ -1745,7 +1745,7 @@ public:
     /// deferred until a subsequent call to @ref start(). In this case the
     /// pool's operational state post-construction is STOPPED.  Otherwise,
     /// the thread pool threads will be created and started, with the post-
-    /// construction state being RUN.  Applicable only when thread-pool size
+    /// construction state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
     HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)

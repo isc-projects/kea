@@ -108,69 +108,13 @@ HttpThreadPool::setRunState (RunState new_state) {
 
     switch(new_state) {
     case RunState::RUNNING: {
-        // Restart the IOSerivce.
+        // Restart the IOService.
         io_service_->restart();
 
         // While we have fewer threads than we should, make more.
         while (threads_.size() < pool_size_) {
             boost::shared_ptr<std::thread> thread(new std::thread(
-            [this]() {
-                bool done = false;
-                while (!done) {
-                    switch (getRunState()) {
-                    case RunState::RUNNING: {
-                        {
-                            std::unique_lock<std::mutex> lck(mutex_);
-                            running_++;
-
-                            // If We're all running notify main thread.
-                            if (running_ == pool_size_) {
-                                main_cv_.notify_all();
-                            }
-                         }
-
-                         // Run the IOService.
-                         io_service_->run();
-
-                         {
-                            std::unique_lock<std::mutex> lck(mutex_);
-                            running_--;
-                         }
-
-                        break;
-                    }
-
-                    case RunState::PAUSED: {
-                        std::unique_lock<std::mutex> lck(mutex_);
-                        paused_++;
-
-                        // If we're all paused notify main.
-                        if (paused_ == threads_.size()) {
-                            main_cv_.notify_all();
-                        }
-
-                        // Wait here till I'm released.
-                        thread_cv_.wait(lck,
-                            [&]() {
-                                return (run_state_ != RunState::PAUSED);
-                            });
-
-                        paused_--;
-                        break;
-                    }
-
-                    case RunState::STOPPED: {
-                        done = true;
-                        break;
-                    }}
-                }
-
-                std::unique_lock<std::mutex> lck(mutex_);
-                exited_++;
-                if (exited_ == threads_.size()) {
-                    main_cv_.notify_all();
-                }
-            }));
+                std::bind(&HttpThreadPool::threadWork, this)));
 
             // Add thread to the pool.
             threads_.push_back(thread);
@@ -222,6 +166,67 @@ HttpThreadPool::setRunState (RunState new_state) {
         threads_.clear();
         break;
     }}
+}
+
+void
+HttpThreadPool::threadWork() {
+    bool done = false;
+    while (!done) {
+        switch (getRunState()) {
+        case RunState::RUNNING: {
+            {
+                std::unique_lock<std::mutex> lck(mutex_);
+                running_++;
+
+                // If We're all running notify main thread.
+                if (running_ == pool_size_) {
+                    main_cv_.notify_all();
+                }
+            }
+
+            // Run the IOService.
+            io_service_->run();
+
+            {
+                std::unique_lock<std::mutex> lck(mutex_);
+                running_--;
+            }
+
+            break;
+        }
+
+        case RunState::PAUSED: {
+            std::unique_lock<std::mutex> lck(mutex_);
+            paused_++;
+
+            // If we're all paused notify main.
+            if (paused_ == threads_.size()) {
+                main_cv_.notify_all();
+            }
+
+            // Wait here till I'm released.
+            thread_cv_.wait(lck,
+                [&]() {
+                    return (run_state_ != RunState::PAUSED);
+                });
+
+            paused_--;
+            break;
+        }
+
+        case RunState::STOPPED: {
+            done = true;
+            break;
+        }}
+    }
+
+    std::unique_lock<std::mutex> lck(mutex_);
+    exited_++;
+
+    // If we've all exited, notify main.
+    if (exited_ == threads_.size()) {
+        main_cv_.notify_all();
+    }
 }
 
 IOServicePtr
