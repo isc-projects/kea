@@ -1778,6 +1778,13 @@ public:
         stop();
     }
 
+    /// @brief Starts client's thread pool, if multi-threaded.
+    void start() {
+        if (threads_) {
+            threads_->run();
+        }
+    }
+
     /// @brief Close all connections, and if multi-threaded, stops the
     /// thread pool.
     void stop() {
@@ -1812,19 +1819,6 @@ public:
 
         // Resume running the thread pool.
         threads_->run();
-    }
-
-
-    /// @brief Close all connections, and if multi-threaded, stop internal IOService
-    /// and the thread pool.
-    void stop() {
-        // Stop the thread pool.
-        if (threads_) {
-            threads_->stop();
-        }
-
-        // Close all the connections.
-        conn_pool_->closeAll();
     }
 
     /// @brief Fetches the thread pool's run state.
