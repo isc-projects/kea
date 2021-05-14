@@ -451,6 +451,9 @@ public:
     /// @return true if options are equal, false otherwise.
     virtual bool equals(const Option& other) const;
 
+    /// @brief Governs whether options should be parsed less strictly.
+    static bool lenient_parsing_;
+
 protected:
 
     /// @brief Copies this option and returns a pointer to the copy.

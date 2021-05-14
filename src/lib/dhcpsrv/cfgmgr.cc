@@ -88,8 +88,6 @@ CfgMgr::clear() {
 
 void
 CfgMgr::commit() {
-
-
     ensureCurrentAllocated();
 
     // First we need to remove statistics. The new configuration can have fewer
@@ -114,6 +112,8 @@ CfgMgr::commit() {
 
     // Now we need to set the statistics back.
     configuration_->updateStatistics();
+
+    configuration_->injectIntoDependencies();
 }
 
 void

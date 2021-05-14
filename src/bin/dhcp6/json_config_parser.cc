@@ -711,6 +711,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             parser.parse(srv_config, rsoo_list);
         }
 
+        ConstElementPtr compatibility = mutable_cfg->get("compatibility");
+        if (compatibility) {
+            for (auto kv : compatibility->mapValue()) {
+                if (kv.first == "lenient-option-parsing") {
+                    CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
+                        kv.second->boolValue());
+                }
+            }
+        }
+
         // Make parsers grouping.
         ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =

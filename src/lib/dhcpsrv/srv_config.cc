@@ -45,7 +45,8 @@ SrvConfig::SrvConfig()
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
-      cfg_consist_(new CfgConsistency()) {
+      cfg_consist_(new CfgConsistency()),
+      lenient_option_parsing_(false) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -888,6 +889,11 @@ SrvConfig::setIPReservationsUnique(const bool unique) {
     }
     getCfgHosts()->setIPReservationsUnique(unique);
     getCfgDbAccess()->setIPReservationsUnique(unique);
+}
+
+void
+SrvConfig::injectIntoDependencies() const {
+    Option::lenient_parsing_ = lenient_option_parsing_;
 }
 
 bool

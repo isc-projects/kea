@@ -402,5 +402,7 @@ Option::~Option() {
 
 }
 
+bool Option::lenient_parsing_;
+
 } // end of isc::dhcp namespace
 } // end of isc namespace

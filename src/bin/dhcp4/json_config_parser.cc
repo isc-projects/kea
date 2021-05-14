@@ -578,6 +578,16 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
         }
 
+        ConstElementPtr compatibility = mutable_cfg->get("compatibility");
+        if (compatibility) {
+            for (auto kv : compatibility->mapValue()) {
+                if (kv.first == "lenient-option-parsing") {
+                    CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
+                        kv.second->boolValue());
+                }
+            }
+        }
+
         // Make parsers grouping.
         ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =

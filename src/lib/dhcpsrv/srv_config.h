@@ -847,6 +847,28 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Set lenient option parsing compatibility flag.
+    ///
+    /// @param value the boolean value to be set when configuring lenient option
+    /// parsing
+    void setLenientOptionParsing(bool const value) {
+        lenient_option_parsing_ = value;
+    }
+
+    /// @brief Get lenient option parsing compatibility flag.
+    ///
+    /// @return the configured value for lenient option parsing
+    bool getLenientOptionParsing() const {
+        return lenient_option_parsing_;
+    }
+
+    /// @brief Convenience method to inject configuration parameters into
+    /// internal libraries that don't have access to the server's current
+    /// configuration
+    ///
+    /// Happen on configuration commit.
+    void injectIntoDependencies() const;
+
 private:
 
     /// @brief Merges the DHCPv4 configuration specified as a parameter into
@@ -998,6 +1020,11 @@ private:
 
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
+
+    /// @brief Compatibility flags
+    /// @{
+    bool lenient_option_parsing_;
+    /// @}
 };
 
 /// @name Pointers to the @c SrvConfig object.

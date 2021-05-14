@@ -7,8 +7,10 @@
 #ifndef OPAQUE_DATA_TUPLE_H
 #define OPAQUE_DATA_TUPLE_H
 
+#include <dhcp/option.h>
 #include <util/buffer.h>
 #include <util/io_utilities.h>
+
 #include <iostream>
 #include <iterator>
 #include <string>
@@ -78,8 +80,9 @@ public:
     /// @param end Iterator pointing to the end of the buffer holding wire data.
     /// @tparam InputIterator Type of the iterators passed to this function.
     /// @throw It may throw an exception if the @c unpack throws.
-    template<typename InputIterator>
-    OpaqueDataTuple(LengthFieldType length_field_type, InputIterator begin,
+    template <typename InputIterator>
+    OpaqueDataTuple(LengthFieldType length_field_type,
+                    InputIterator begin,
                     InputIterator end)
         : length_field_type_(length_field_type) {
         unpack(begin, end);
@@ -211,7 +214,6 @@ public:
     /// @tparam InputIterator Type of the iterators passed to this function.
     template<typename InputIterator>
     void unpack(InputIterator begin, InputIterator end) {
-        Buffer buf(begin, end);
         // The buffer must at least hold the size of the data.
         if (std::distance(begin, end) < getDataFieldSize()) {
             isc_throw(OpaqueDataTupleError,
@@ -226,12 +228,17 @@ public:
         // Now that we have the expected data size, let's check that the
         // reminder of the buffer is long enough.
         begin += getDataFieldSize();
+        // Attempt to parse as a length-value pair.
         if (std::distance(begin, end) < len) {
-            isc_throw(OpaqueDataTupleError,
-                      "unable to parse the opaque data tuple, the buffer"
-                      " length is " << std::distance(begin, end)
-                      << ", but the length of the tuple in the length field"
-                      " is " << len);
+            if (Option::lenient_parsing_) {
+                // Fallback to parsing the rest of the option as a single value.
+                len = std::distance(begin, end);
+            } else {
+                isc_throw(OpaqueDataTupleError,
+                          "unable to parse the opaque data tuple, "
+                          "the buffer length is " << std::distance(begin, end)
+                          << ", but the tuple length is " << len);
+            }
         }
         // The buffer length is long enough to read the desired amount of data.
         assign(begin, len);
@@ -277,6 +284,7 @@ private:
 
     /// @brief Buffer which holds the opaque tuple data.
     Buffer data_;
+
     /// @brief Holds a type of tuple size field (1 byte long or 2 bytes long).
     LengthFieldType length_field_type_;
 };
