@@ -100,6 +100,14 @@
             }
         ],
 
+        // Parameters for triggering behaviors compatible with broken or
+        // non-compliant clients, relays or other agents
+        "compatibility": {
+            // Parse options more leniently where fields can be deduced
+            // deterministically even if against RFC or common practice.
+            "lenient-option-parsing": true
+        },
+
         // Command control socket configuration parameters for Kea DHCPv4 server.
         "control-socket": {
             // Location of the unix domain socket file the DHCPv4 server uses
