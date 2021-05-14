@@ -228,6 +228,8 @@ Parser4Context::contextName()
         return ("config-control");
     case CONFIG_DATABASE:
         return ("config-database");
+    case COMPATIBILITY:
+        return ("compatibility");
     default:
         return ("__unknown__");
     }

@@ -2033,6 +2033,24 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"compatibility\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return  isc::dhcp::Dhcp6Parser::make_COMPATIBILITY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("compatibility", driver.loc_);
+    }
+}
+
+\"lenient-option-parsing\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp6Parser::make_LENIENT_OPTION_PARSING(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("lenient-option-parsing", driver.loc_);
+    }
+}
+
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.

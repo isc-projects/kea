@@ -606,7 +606,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 (config_pair.first == "subnet4") ||
                 (config_pair.first == "shared-networks") ||
                 (config_pair.first == "reservations") ||
-                (config_pair.first == "config-control")) {
+                (config_pair.first == "config-control") ||
+                (config_pair.first == "compatibility")) {
                 continue;
             }
 

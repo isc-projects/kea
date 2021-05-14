@@ -253,6 +253,9 @@ using namespace std;
   MAXVER "maxver"
   PATTERN "pattern"
 
+  COMPATIBILITY "compatibility"
+  LENIENT_OPTION_PARSING "lenient-option-parsing"
+
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
   TOPLEVEL_JSON
@@ -524,6 +527,7 @@ global_param: data_directory
             | statistic_default_sample_age
             | dhcp_multi_threading
             | ip_reservations_unique
+            | compatibility
             | unknown_map_entry
             ;
 
@@ -2816,6 +2820,31 @@ pattern: PATTERN {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
+};
+
+compatibility: COMPATIBILITY {
+    ctx.unique("compatibility", ctx.loc2pos(@1));
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("compatibility", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.COMPATIBILITY);
+} COLON LCURLY_BRACKET compatibility_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+compatibility_params: compatibility_param
+                    | compatibility_params COMMA compatibility_param
+                    ;
+
+compatibility_param: lenient_option_parsing
+                   | unknown_map_entry
+                   ;
+
+lenient_option_parsing: LENIENT_OPTION_PARSING COLON BOOLEAN {
+    ctx.unique("lenient-option-parsing", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("lenient-option-parsing", b);
 };
 
 %%

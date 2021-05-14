@@ -324,7 +324,10 @@ public:
         CONFIG_CONTROL,
 
         /// Used while parsing config-control/config-databases
-        CONFIG_DATABASE
+        CONFIG_DATABASE,
+
+        /// Used while parsing compatibility parmaeters
+        COMPATIBILITY,
 
     } ParserContext;
 
