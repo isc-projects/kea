@@ -23,8 +23,8 @@ namespace http {
 /// @brief Implements a pausable pool of IOService driven threads.
 class HttpThreadPool {
 public:
-    /// @brief Describes the possible operational state of the pool.
-    enum class RunState {
+    /// @brief Describes the possible operational state of the thread pool.
+    enum class State {
         STOPPED,    /// Pool is not operational.
         RUNNING,    /// Pool is populated with running threads.
         PAUSED,     /// Pool is populated with threads that are paused.
@@ -45,19 +45,19 @@ public:
 
     /// @brief Destructor
     ///
-    /// Ensures the pool is stopped prior to destruction.
+    /// Ensures the thread pool is stopped prior to destruction.
     ~HttpThreadPool();
 
     /// @brief Transitions the pool from STOPPED or PAUSED to RUNNING.
     ///
-    /// When called from the STOPPED state, the pool threads are created
+    /// When called from the STOPPED state, the pool threads are created and
     /// begin processing events.
     /// When called from the PAUSED state, the pool threads are released
-    /// from PAUSED and resume processing event.s
+    /// from PAUSED and resume processing events.
     /// Has no effect if the pool is already in the RUNNING state.
     void run();
 
-    /// @brief Transitions the pool from RUNNING to PAUSED state.
+    /// @brief Transitions the pool from RUNNING to PAUSED.
     ///
     /// Pool threads suspend event processing and pause until they
     /// are released to either resume running or stop.
@@ -71,10 +71,26 @@ public:
     /// Has no effect if the pool is already in the STOPPED state.
     void stop();
 
-    /// @brief Thread-safe fetch of the pool's operational state.
+    /// @brief Check if the thread pool is running.
     ///
-    /// @return Pool run state.
-    RunState getRunState();
+    /// @return True if the thread pool is running, false otherwise.
+    bool isRunning() {
+        return (getState() == State::RUNNING);
+    }
+
+    /// @brief Check if the thread pool is paused.
+    ///
+    /// @return True if the thread pool is paused, false otherwise.
+    bool isPaused() {
+        return (getState() == State::PAUSED);
+    }
+
+    /// @brief Check if the thread pool is stopped.
+    ///
+    /// @return True if the thread pool is stopped, false otherwise.
+    bool isStopped() {
+        return (getState() == State::STOPPED);
+    }
 
 private:
     /// @brief Thread-safe change of the pool's run state.
@@ -86,7 +102,7 @@ private:
     /// -# Notifies threads of state change.
     /// -# Restarts the IOService.
     /// -# Creates the threads if they do not yet exist (true only
-    /// when transitioning from STOPPED).
+    ///    when transitioning from STOPPED).
     /// -# Waits until threads are running.
     /// -# Sets the count of exited threads to 0.
     /// -# Returns to caller.
@@ -109,14 +125,19 @@ private:
     /// -# Returns to caller.
     ///
     /// @param state new state for the pool.
-    void setRunState(RunState state);
+    void setState(State state);
+
+    /// @brief Thread-safe fetch of the pool's operational state.
+    ///
+    /// @return Thread pool state.
+    State getState();
 
     /// @brief Validates whether the pool can change to a given state.
     ///
     /// @param state new state for the pool.
-    /// @return true if the Chang's is valid, false otherwise.
+    /// @return true if the change is valid, false otherwise.
     /// @note Must be called from a thread-safe context.
-    bool validateStateChange(RunState state) const;
+    bool validateStateChange(State state) const;
 
     /// @brief Work function executed by each thread in the pool.
     ///
@@ -174,7 +195,7 @@ private:
     asiolink::IOServicePtr io_service_;
 
     /// @brief Tracks the operational state of the pool.
-    RunState run_state_;
+    State run_state_;
 
     /// @brief Mutex to protect the internal state.
     std::mutex mutex_;
@@ -198,7 +219,6 @@ private:
     /// @brief Pool of threads used to service connections in multi-threaded
     /// mode.
     std::list<boost::shared_ptr<std::thread> > threads_;
-
 };
 
 /// @brief Defines a pointer to a thread pool.
@@ -208,4 +228,3 @@ typedef boost::shared_ptr<HttpThreadPool> HttpThreadPoolPtr;
 } // end of namespace isc
 
 #endif
-

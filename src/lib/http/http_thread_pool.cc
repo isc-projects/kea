@@ -33,7 +33,7 @@ using namespace isc::util;
 HttpThreadPool::HttpThreadPool(IOServicePtr io_service, size_t pool_size,
                                bool defer_start /* = false */)
     : pool_size_(pool_size), io_service_(io_service),
-      run_state_(RunState::STOPPED), mutex_(), thread_cv_(),
+      run_state_(State::STOPPED), mutex_(), thread_cv_(),
       main_cv_(), paused_(0), running_(0), exited_(0)  {
     if (!pool_size) {
         isc_throw(BadValue, "HttpThreadPool::ctor pool_size must be > 0");
@@ -56,37 +56,37 @@ HttpThreadPool::~HttpThreadPool() {
 
 void
 HttpThreadPool::run() {
-    setRunState(RunState::RUNNING);
+    setState(State::RUNNING);
 }
 
 void
 HttpThreadPool::pause() {
-    setRunState(RunState::PAUSED);
+    setState(State::PAUSED);
 }
 
 void
 HttpThreadPool::stop() {
-    setRunState(RunState::STOPPED);
+    setState(State::STOPPED);
 }
 
-HttpThreadPool::RunState
-HttpThreadPool::getRunState() {
+HttpThreadPool::State
+HttpThreadPool::getState() {
     std::lock_guard<std::mutex> lck(mutex_);
     return (run_state_);
 }
 
 bool
-HttpThreadPool::validateStateChange(RunState new_state) const {
+HttpThreadPool::validateStateChange(State new_state) const {
     bool is_valid = false;
     switch(run_state_) {
-    case RunState::STOPPED:
-        is_valid = (new_state == RunState::RUNNING);
+    case State::STOPPED:
+        is_valid = (new_state == State::RUNNING);
         break;
-    case RunState::RUNNING:
-        is_valid = (new_state != RunState::RUNNING);
+    case State::RUNNING:
+        is_valid = (new_state != State::RUNNING);
         break;
-    case RunState::PAUSED:
-        is_valid = (new_state != RunState::PAUSED);
+    case State::PAUSED:
+        is_valid = (new_state != State::PAUSED);
         break;
     }
 
@@ -94,7 +94,7 @@ HttpThreadPool::validateStateChange(RunState new_state) const {
 }
 
 void
-HttpThreadPool::setRunState (RunState new_state) {
+HttpThreadPool::setState(State new_state) {
     std::unique_lock<std::mutex> main_lck(mutex_);
 
     // Bail if the transition is invalid.
@@ -107,7 +107,7 @@ HttpThreadPool::setRunState (RunState new_state) {
     thread_cv_.notify_all();
 
     switch(new_state) {
-    case RunState::RUNNING: {
+    case State::RUNNING: {
         // Restart the IOService.
         io_service_->restart();
 
@@ -130,7 +130,7 @@ HttpThreadPool::setRunState (RunState new_state) {
         break;
     }
 
-    case RunState::PAUSED: {
+    case State::PAUSED: {
         // Stop IOService.
         if (!io_service_->stopped()) {
             io_service_->poll();
@@ -146,7 +146,7 @@ HttpThreadPool::setRunState (RunState new_state) {
         break;
     }
 
-    case RunState::STOPPED: {
+    case State::STOPPED: {
         // Stop IOService.
         if (!io_service_->stopped()) {
             io_service_->poll();
@@ -172,8 +172,8 @@ void
 HttpThreadPool::threadWork() {
     bool done = false;
     while (!done) {
-        switch (getRunState()) {
-        case RunState::RUNNING: {
+        switch (getState()) {
+        case State::RUNNING: {
             {
                 std::unique_lock<std::mutex> lck(mutex_);
                 running_++;
@@ -195,7 +195,7 @@ HttpThreadPool::threadWork() {
             break;
         }
 
-        case RunState::PAUSED: {
+        case State::PAUSED: {
             std::unique_lock<std::mutex> lck(mutex_);
             paused_++;
 
@@ -207,14 +207,14 @@ HttpThreadPool::threadWork() {
             // Wait here till I'm released.
             thread_cv_.wait(lck,
                 [&]() {
-                    return (run_state_ != RunState::PAUSED);
+                    return (run_state_ != State::PAUSED);
                 });
 
             paused_--;
             break;
         }
 
-        case RunState::STOPPED: {
+        case State::STOPPED: {
             done = true;
             break;
         }}

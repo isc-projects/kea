@@ -1749,14 +1749,14 @@ public:
     /// is greater than zero.
     HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)
-        : thread_pool_size_(thread_pool_size), threads_() {
+        : thread_pool_size_(thread_pool_size), thread_pool_() {
         if (thread_pool_size_ > 0) {
             // Create our own private IOService.
             thread_io_service_.reset(new IOService());
 
             // Create the thread pool.
-            threads_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_,
-                                              defer_thread_start));
+            thread_pool_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_,
+                                                  defer_thread_start));
 
             // Create the connection pool. Note that we use the thread_pool_size
             // as the maximum connections per URL value.
@@ -1780,8 +1780,8 @@ public:
 
     /// @brief Starts client's thread pool, if multi-threaded.
     void start() {
-        if (threads_) {
-            threads_->run();
+        if (thread_pool_) {
+            thread_pool_->run();
         }
     }
 
@@ -1792,8 +1792,8 @@ public:
         conn_pool_->closeAll();
 
         // Stop the thread pool.
-        if (threads_) {
-            threads_->stop();
+        if (thread_pool_) {
+            thread_pool_->stop();
         }
     }
 
@@ -1801,35 +1801,24 @@ public:
     ///
     /// Suspends thread pool event processing.
     void pause() {
-        if (!threads_) {
+        if (!thread_pool_) {
             isc_throw(InvalidOperation, "HttpClient::pause - no thread pool");
         }
 
         // Pause the thread pool.
-        threads_->pause();
+        thread_pool_->pause();
     }
 
     /// @brief Resumes the thread pool operation.
     ///
     /// Resumes thread pool event processing.
     void resume() {
-        if (!threads_) {
+        if (!thread_pool_) {
             isc_throw(InvalidOperation, "HttpClient::resume - no thread pool");
         }
 
         // Resume running the thread pool.
-        threads_->run();
-    }
-
-    /// @brief Fetches the thread pool's run state.
-    ///
-    /// @return Operational state of the thread pool.
-    HttpThreadPool::RunState getRunState() const {
-        if (!threads_) {
-            isc_throw(InvalidOperation, "HttpClient::getRunState - no thread pool");
-        }
-
-        return (threads_->getRunState());
+        thread_pool_->run();
     }
 
     /// @brief Indicates if the thread pool processing is running.
@@ -1837,8 +1826,8 @@ public:
     /// @return True if the thread pool exists and is in the RUNNING state,
     /// false otherwise.
     bool isRunning() {
-        if (threads_) {
-            return (threads_->getRunState() == HttpThreadPool::RunState::RUNNING);
+        if (thread_pool_) {
+            return (thread_pool_->isRunning());
         }
 
         return (false);
@@ -1849,8 +1838,8 @@ public:
     /// @return True if the thread pool exists and is in the STOPPED state,
     /// false otherwise
     bool isStopped() {
-        if (threads_) {
-            return (threads_->getRunState() == HttpThreadPool::RunState::STOPPED);
+        if (thread_pool_) {
+            return (thread_pool_->isStopped());
         }
 
         return (false);
@@ -1861,8 +1850,8 @@ public:
     /// @return True if the thread pool exists and is in the PAUSED state,
     /// false otherwise.
     bool isPaused() {
-        if (threads_) {
-            return (threads_->getRunState() == HttpThreadPool::RunState::PAUSED);
+        if (thread_pool_) {
+            return (thread_pool_->isPaused());
         }
 
         return (false);
@@ -1887,10 +1876,10 @@ public:
     ///
     /// @return the number of running threads.
     uint16_t getThreadCount() {
-        if (!threads_) {
+        if (!thread_pool_) {
             return (0);
         }
-        return (threads_->getThreadCount());
+        return (thread_pool_->getThreadCount());
     }
 
     /// @brief Holds a pointer to the connection pool.
@@ -1906,7 +1895,7 @@ private:
 
     /// @brief Pool of threads used to service connections in multi-threaded
     /// mode.
-    HttpThreadPoolPtr threads_;
+    HttpThreadPoolPtr thread_pool_;
 };
 
 HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
@@ -2000,11 +1989,6 @@ HttpClient::getThreadPoolSize() const {
 uint16_t
 HttpClient::getThreadCount() const {
     return (impl_->getThreadCount());
-}
-
-HttpThreadPool::RunState
-HttpClient::getRunState() const {
-    return (impl_->getRunState());
 }
 
 bool

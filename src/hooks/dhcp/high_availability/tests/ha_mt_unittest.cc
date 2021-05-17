@@ -203,10 +203,12 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         // Client should exist but be stopped.
         ASSERT_TRUE(service->client_);
         ASSERT_TRUE(service->client_->isStopped());
+        EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
 
-        // Listener should exist but be stopped..
+        // Listener should exist but be stopped.
         ASSERT_TRUE(service->listener_);
-        ASSERT_TRUE(service->client_->isStopped());
+        ASSERT_TRUE(service->listener_->isStopped());
+        EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
 
         // Start client and listener.
         ASSERT_NO_THROW_LOG(service->startClientAndListener());
@@ -402,6 +404,7 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         EXPECT_TRUE(service->client_->isRunning());
         EXPECT_TRUE(service->client_->getThreadIOService());
         EXPECT_EQ(service->client_->getThreadPoolSize(), scenario.exp_client_threads_);
+
         // Currently thread count should be the same as thread pool size.  This might
         // change if we go to so some sort of dynamic thread instance management.
         EXPECT_EQ(service->client_->getThreadCount(), scenario.exp_client_threads_);
@@ -415,6 +418,7 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         // We should have a running listener with the expected number of threads.
         ASSERT_TRUE(service->listener_);
         EXPECT_TRUE(service->listener_->isRunning());
+        ASSERT_TRUE(service->listener_->getThreadIOService());
         EXPECT_EQ(service->listener_->getThreadPoolSize(), scenario.exp_listener_threads_);
 
         // Currently thread count should be the same as thread pool size.  This might

@@ -50,14 +50,9 @@ public:
     /// @brief Stops the listener's thread pool.
     void stop();
 
-    /// @brief Fetches the run state of the thread pool.
+    /// @brief Indicates if the thread pool is running.
     ///
-    /// @return Run state of the pool.
-    http::HttpThreadPool::RunState getRunState() const;
-
-    /// @brief Indicates if the thread pool processing is running.
-    ///
-    /// @return True if the thread pool exists and is in the RUN state,
+    /// @return True if the thread pool exists and is in the RUNNING state,
     /// false otherwise.
     bool isRunning();
 
@@ -98,11 +93,11 @@ public:
     ///
     /// @return uint16_t containing the number of running threads.
     uint16_t getThreadCount() const {
-        if (!threads_) {
+        if (!thread_pool_) {
             return (0);
         }
 
-        return (threads_->getThreadCount());
+        return (thread_pool_->getThreadCount());
     }
 
     asiolink::IOServicePtr getThreadIOService() const {
@@ -126,7 +121,7 @@ private:
     std::size_t thread_pool_size_;
 
     /// @brief The pool of threads that do IO work.
-    http::HttpThreadPoolPtr threads_;
+    http::HttpThreadPoolPtr thread_pool_;
 };
 
 /// @brief Defines a shared pointer to CmdHttpListener.

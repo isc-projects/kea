@@ -809,9 +809,9 @@ TEST_F(MtHttpClientTest, basics) {
     // Verify that it has an internal IOService and that thread pool size
     // and thread count match.
     ASSERT_TRUE(client->getThreadIOService());
+    EXPECT_FALSE(client->getThreadIOService()->stopped());
     ASSERT_EQ(client->getThreadPoolSize(), 3);
     ASSERT_EQ(client->getThreadCount(), 3);
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Check convenience functions.
     ASSERT_TRUE(client->isRunning());
@@ -859,7 +859,6 @@ TEST_F(MtHttpClientTest, deferredStart) {
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_EQ(client->getThreadPoolSize(), thread_pool_size);
     ASSERT_EQ(client->getThreadCount(), 0);
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::STOPPED);
 
     // Check convenience functions.
     ASSERT_FALSE(client->isRunning());
@@ -873,7 +872,6 @@ TEST_F(MtHttpClientTest, deferredStart) {
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
 
     // Check convenience functions.
     ASSERT_TRUE(client->isRunning());
@@ -885,7 +883,7 @@ TEST_F(MtHttpClientTest, deferredStart) {
 
     // Verify we didn't break it.
     ASSERT_EQ(client->getThreadCount(), 3);
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
+    ASSERT_TRUE(client->isRunning());
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
@@ -905,7 +903,7 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
+    ASSERT_TRUE(client->isRunning());
 
     // Stop should succeed.
     ASSERT_NO_THROW_LOG(client->stop());
@@ -914,14 +912,14 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
     ASSERT_EQ(client->getThreadCount(), 0);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_TRUE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::STOPPED);
+    ASSERT_TRUE(client->isStopped());
 
     // Starting again should succeed.
     ASSERT_NO_THROW_LOG(client->start());
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());
-    ASSERT_EQ(client->getRunState(), HttpThreadPool::RunState::RUNNING);
+    ASSERT_TRUE(client->isRunning());
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());

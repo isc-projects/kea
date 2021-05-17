@@ -82,7 +82,9 @@ public:
     /// \brief Stop the underlying event loop.
     ///
     /// This will return the control to the caller of the \c run() method.
-    void stop() { io_service_.stop();} ;
+    void stop() {
+        io_service_.stop();
+    }
 
     /// \brief Indicates if the IOService has been stopped.
     ///
@@ -108,7 +110,9 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& get_io_service() { return io_service_; };
+    boost::asio::io_service& get_io_service() {
+        return (io_service_);
+    }
 
     /// \brief Post a callback on the IO service
     ///
@@ -117,6 +121,7 @@ public:
         const CallbackWrapper wrapper(callback);
         io_service_.post(wrapper);
     }
+
 private:
     boost::asio::io_service io_service_;
     boost::shared_ptr<boost::asio::io_service::work> work_;

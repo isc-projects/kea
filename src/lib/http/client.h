@@ -304,13 +304,7 @@ public:
     /// @return the number of running threads.
     uint16_t getThreadCount() const;
 
-    /// @brief Fetches the thread pool's run state.
-    ///
-    /// @return Operational state of the thread pool.
-    /// @throw InvalidOperation if the thread pool does not exist.
-    HttpThreadPool::RunState getRunState() const;
-
-    /// @brief Indicates if the thread pool processing is running.
+    /// @brief Indicates if the thread pool is running.
     ///
     /// @return True if the thread pool exists and is in the RUNNING state,
     /// false otherwise.

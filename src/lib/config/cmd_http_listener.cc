@@ -29,7 +29,7 @@ namespace config {
 CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
                                  const uint16_t thread_pool_size /* = 1 */)
     : address_(address), port_(port), thread_io_service_(), http_listener_(),
-      thread_pool_size_(thread_pool_size), threads_() {
+      thread_pool_size_(thread_pool_size), thread_pool_() {
 }
 
 CmdHttpListener::~CmdHttpListener() {
@@ -61,13 +61,12 @@ CmdHttpListener::start() {
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.
         TlsContextPtr tls_context;
-        http_listener_.reset(new HttpListener(*thread_io_service_, address_, port_,
-                                              tls_context, rcf,
+        http_listener_.reset(new HttpListener(*thread_io_service_, address_, port_, tls_context, rcf,
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
         // Create the thread pool with immediate start.
-        threads_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_));
+        thread_pool_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_));
 
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
@@ -85,15 +84,15 @@ CmdHttpListener::start() {
 
 void
 CmdHttpListener::pause() {
-    if (threads_) {
-        threads_->pause();
+    if (thread_pool_) {
+        thread_pool_->pause();
     }
 }
 
 void
 CmdHttpListener::resume() {
-    if (threads_) {
-        threads_->run();
+    if (thread_pool_) {
+        thread_pool_->run();
     }
 }
 
@@ -109,7 +108,7 @@ CmdHttpListener::stop() {
               .arg(port_);
 
     // Stop the thread pool.
-    threads_->stop();
+    thread_pool_->stop();
 
     // Get rid of the listener.
     http_listener_.reset();
@@ -122,20 +121,10 @@ CmdHttpListener::stop() {
               .arg(port_);
 }
 
-HttpThreadPool::RunState
-CmdHttpListener::getRunState() const {
-    if (!threads_) {
-        isc_throw(InvalidOperation,
-                  "CmdHttpListener::getRunState - no thread pool!");
-    }
-
-    return (threads_->getRunState());
-}
-
 bool
 CmdHttpListener::isRunning() {
-    if (threads_) {
-        return (threads_->getRunState() == HttpThreadPool::RunState::RUNNING);
+    if (thread_pool_) {
+        return (thread_pool_->isRunning());
     }
 
     return (false);
@@ -143,8 +132,8 @@ CmdHttpListener::isRunning() {
 
 bool
 CmdHttpListener::isStopped() {
-    if (threads_) {
-        return (threads_->getRunState() == HttpThreadPool::RunState::STOPPED);
+    if (thread_pool_) {
+        return (thread_pool_->isStopped());
     }
 
     return (true);
@@ -152,8 +141,8 @@ CmdHttpListener::isStopped() {
 
 bool
 CmdHttpListener::isPaused() {
-    if (threads_) {
-        return (threads_->getRunState() == HttpThreadPool::RunState::PAUSED);
+    if (thread_pool_) {
+        return (thread_pool_->isPaused());
     }
 
     return (false);
