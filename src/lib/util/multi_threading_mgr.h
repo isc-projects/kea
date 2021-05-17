@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define MULTI_THREADING_MGR_H
 
 #include <util/thread_pool.h>
+#include <util/named_callback.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -129,6 +130,27 @@ public:
     /// configured, 0 for unlimited size
     void apply(bool enabled, uint32_t thread_count, uint32_t queue_size);
 
+    /// @brief Adds a pair of callbacks to the list of CriticalSection callbacks.
+    ///
+    /// @param name Name of the set of callbacks. This value is used by the
+    /// callback owner to remove or replace them.Duplicates are not allowed.
+    /// @param entry_cb Callback to invoke upon CriticalSection entry.
+    /// @param exit_cb Callback to invoke upon CriticalSection exit.
+    void addCriticalSectionCallbacks(const std::string& name,
+                                     const NamedCallback::Callback& entry_cb,
+                                     const NamedCallback::Callback& exit_cb);
+
+    /// @brief Removes the set of callbacks associated with a given name
+    /// from the list of CriticalSection callbacks.
+    ///
+    /// If the name is not found in the list, it simply returns.
+    ///
+    /// @param name Name of the set of callbacks to remove.
+    void removeCriticalSectionCallbacks(const std::string& name);
+
+    /// @brief Removes all callbacks in the list of CriticalSection callbacks.
+    void removeAllCriticalSectionCallbacks();
+
 protected:
 
     /// @brief Constructor.
@@ -139,15 +161,19 @@ protected:
 
 private:
 
-    /// @brief Class method stopping and joining all threads of the pool.
+    /// @brief Class method stops non-critical processing.
     ///
-    /// Stop the dhcp thread pool if running.
-    void stopPktProcessing();
+    /// Stops the DHCP thread pool if it's running and invokes
+    /// all CriticalSection entry callbacks.  Has no effect
+    /// in single-threaded mode.
+    void stopProcessing();
 
-    /// @brief Class method (re)starting threads of the pool.
+    /// @brief Class method (re)starts non-critical processing.
     ///
-    /// Start the dhcp thread pool according to current configuration.
-    void startPktProcessing();
+    /// Starts the DHCP thread pool according to current configuration,
+    /// and invokes all CriticalSection exit callbacks. Has no effect
+    /// in single-threaded mode.
+    void startProcessing();
 
     /// @brief The current multi-threading mode.
     ///
@@ -168,6 +194,12 @@ private:
 
     /// @brief Packet processing thread pool.
     ThreadPool<std::function<void()>> thread_pool_;
+
+    /// @brief List of callbacks to invoke upon CriticalSection entry.
+    NamedCallbackList critical_entry_cbs_;
+
+    /// @brief List of callbacks to invoke upon CriticalSection exit.
+    NamedCallbackList critical_exit_cbs_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.

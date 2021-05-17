@@ -149,7 +149,9 @@ public:
     }
 };
 
-// Verifies HA+MT start, pause, resume, and stop.
+// Verifies HA+MT start, pause, resume, and stop. Note
+// that pause and resume are tested indirectly through
+// entry and exit of a critical section.
 TEST_F(HAMtServiceTest, multiThreadingBasics) {
 
     // Build the HA JSON configuration.
@@ -228,19 +230,22 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         EXPECT_EQ(service->listener_->getThreadPoolSize(), 3);
         EXPECT_EQ(service->listener_->getThreadCount(), 3);
 
-        // Pause client and listener.
-        ASSERT_NO_THROW_LOG(service->pauseClientAndListener());
+        {
+            // Entering a critical section should pause both client
+            // and listener.
+            MultiThreadingCriticalSection cs;
 
-        // Client should be paused.
-        ASSERT_TRUE(service->client_->isPaused());
-        EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+            // Client should be paused.
+            ASSERT_TRUE(service->client_->isPaused());
+            EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
 
-        // Listener should be paused.
-        ASSERT_TRUE(service->listener_->isPaused());
-        EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
+            // Listener should be paused.
+            ASSERT_TRUE(service->listener_->isPaused());
+            EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
+        }
 
-        // Now resume client and listener.
-        ASSERT_NO_THROW_LOG(service->resumeClientAndListener());
+        // Exiting critical section should resume both cllent
+        // and listener.
 
         // Client should be running.
         ASSERT_TRUE(service->client_->isRunning());

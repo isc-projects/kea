@@ -36,7 +36,7 @@ MultiThreadingMgr::setMode(bool enabled) {
 
 void
 MultiThreadingMgr::enterCriticalSection() {
-    stopPktProcessing();
+    stopProcessing();
     ++critical_section_count_;
 }
 
@@ -46,7 +46,7 @@ MultiThreadingMgr::exitCriticalSection() {
         isc_throw(InvalidOperation, "invalid negative value for override");
     }
     --critical_section_count_;
-    startPktProcessing();
+    startProcessing();
 }
 
 bool
@@ -110,6 +110,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
             thread_pool_.start(thread_count);
         }
     } else {
+        removeAllCriticalSectionCallbacks();
         thread_pool_.reset();
         setMode(false);
         setThreadPoolSize(thread_count);
@@ -118,17 +119,51 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 }
 
 void
-MultiThreadingMgr::stopPktProcessing() {
-    if (getMode() && getThreadPoolSize() && !isInCriticalSection()) {
-        thread_pool_.stop();
+MultiThreadingMgr::stopProcessing() {
+    if (getMode() && !isInCriticalSection()) {
+        if (getThreadPoolSize()) {
+            thread_pool_.stop();
+        }
+
+        for (auto cb : critical_entry_cbs_.getCallbacks() ) {
+            // @todo need to think about what we do with exceptions
+            (cb.callback_)();
+        }
     }
 }
 
 void
-MultiThreadingMgr::startPktProcessing() {
-    if (getMode() && getThreadPoolSize() && !isInCriticalSection()) {
-        thread_pool_.start(getThreadPoolSize());
+MultiThreadingMgr::startProcessing() {
+    if (getMode() && !isInCriticalSection()) {
+        if (getThreadPoolSize()) {
+            thread_pool_.start(getThreadPoolSize());
+        }
+
+        for (auto cb : critical_exit_cbs_.getCallbacks() ) {
+            // @todo need to think about what we do with exceptions
+            (cb.callback_)();
+        }
     }
+}
+
+void
+MultiThreadingMgr::addCriticalSectionCallbacks(const std::string& name,
+                                               const NamedCallback::Callback& entry_cb,
+                                               const NamedCallback::Callback& exit_cb) {
+    critical_entry_cbs_.addCallback(name, entry_cb);
+    critical_exit_cbs_.addCallback(name, exit_cb);
+}
+
+void
+MultiThreadingMgr::removeCriticalSectionCallbacks(const std::string& name) {
+    critical_entry_cbs_.removeCallback(name);
+    critical_exit_cbs_.removeCallback(name);
+}
+
+void
+MultiThreadingMgr::removeAllCriticalSectionCallbacks() {
+    critical_entry_cbs_.removeAll();
+    critical_exit_cbs_.removeAll();
 }
 
 MultiThreadingCriticalSection::MultiThreadingCriticalSection() {

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -321,4 +321,149 @@ TEST(MultiThreadingMgrTest, criticalSection) {
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
     // apply multi-threading configuration with 0 threads
     MultiThreadingMgr::instance().apply(false, 0, 0);
+}
+
+/// @brief Test fixture for exercised CriticalSection callbacks.
+class CriticalSectionCallbackTest : public ::testing::Test {
+public:
+    /// @Brief Constructor.
+    CriticalSectionCallbackTest() {};
+
+    /// @Brief A callback that adds the value, 1, to invocations lists.
+    void one() {
+        invocations_.push_back(1);
+    }
+
+    /// @Brief A callback that adds the value, 2, to invocations lists.
+    void two() {
+        invocations_.push_back(2);
+    }
+
+    /// @Brief A callback that adds the value, 3, to invocations lists.
+    void three() {
+        invocations_.push_back(3);
+    }
+
+    /// @Brief A callback that adds the value, 4, to invocations lists.
+    void four() {
+        invocations_.push_back(4);
+    }
+
+    /// @brief Indicates whether or not the DHCP thread pool is running.
+    ///
+    /// @return True if the pool is running, false otherwise.
+    bool isThreadPoolRunning() {
+        return (MultiThreadingMgr::instance().getThreadPool().size());
+    }
+
+    /// @brief Checks callback invocations over a series of nested
+    /// CriticalSecitons.
+    ///
+    /// @param entries A vector of the invocation values that should
+    /// be present after entry into the outermost CriticalSection.  The
+    /// expected  values should be in the order the callbacks were
+    /// added to the  MultiThreadingMgr's list of callbacks.
+    /// @param exits A vector of the invocation values that should
+    /// be present after exiting the CriticalSection.  The expected
+    /// values should be in the order the callbacks were added to the
+    /// MultiThreadingMgr's list of callbacks.
+    void runCriticalSections(std::vector<int> entries, std::vector<int>exits) {
+        // Pool must be running.
+        ASSERT_TRUE(isThreadPoolRunning());
+
+        // Clear the invocations list.
+        invocations_.clear();
+
+        // Use scope to create nested CriticalSections.
+        {
+            // Enter a critical section.
+            MultiThreadingCriticalSection cs;
+
+            // Thread pool should be stopped.
+            ASSERT_FALSE(isThreadPoolRunning());
+
+            if (entries.size()) {
+                // We expect entry invocations.
+                ASSERT_TRUE(invocations_ ==  entries);
+            } else {
+                // We do not expect entry invocations.
+                ASSERT_FALSE(invocations_.size());
+            }
+
+            // Clear the invocations list.
+            invocations_.clear();
+
+            {
+                // Enter another CriticalSection.
+                MultiThreadingCriticalSection inner_cs;
+
+                // thread pool should still be stopped
+                ASSERT_FALSE(isThreadPoolRunning());
+
+                // We should not have had any callback invocations.
+                ASSERT_FALSE(invocations_.size());
+            }
+
+            // After exiting inner setion, the thread pool should
+            // still be stopped
+            ASSERT_FALSE(isThreadPoolRunning());
+
+            // We should not have had more callback invocations.
+            ASSERT_FALSE(invocations_.size());
+        }
+
+        // After exiting the outer setion, the thread pool should
+        // match the thread count.
+        ASSERT_TRUE(isThreadPoolRunning());
+
+        if (exits.size()) {
+            // We expect exit invocations.
+            ASSERT_TRUE(invocations_ ==  exits);
+        } else {
+            // We do not expect exit invocations.
+            ASSERT_FALSE(invocations_.size());
+        }
+    }
+
+    /// @Brief A list of values set by callback invocations.
+    std::vector<int> invocations_;
+};
+
+/// @brief Verifies that the critical section callbacks work.
+TEST_F(CriticalSectionCallbackTest, basics) {
+    // get the thread pool instance
+    auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
+    // thread pool should be stopped
+    EXPECT_EQ(thread_pool.size(), 0);
+
+    // Add two sets of CriticalSection call backs.
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks("oneAndTwo",
+         std::bind(&CriticalSectionCallbackTest::one, this),
+         std::bind(&CriticalSectionCallbackTest::two, this));
+
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks("threeAndFour",
+         std::bind(&CriticalSectionCallbackTest::three, this),
+         std::bind(&CriticalSectionCallbackTest::four, this));
+
+    // Apply multi-threading configuration with 16 threads and queue size 256.
+    MultiThreadingMgr::instance().apply(true, 16, 256);
+
+    // Make three passes over nested CriticalSections to ensure
+    // callbacks execute at the appropriate times and we can do
+    // so repeatedly.
+    for (int i = 0; i < 3; ++i) {
+        runCriticalSections({1,3}, {2,4});
+    }
+
+    // Now remove the first set of callbacks.
+    MultiThreadingMgr::instance().removeCriticalSectionCallbacks("oneAndTwo");
+
+    // Retest CriticalSections.
+    runCriticalSections({3}, {4});
+
+    // Now remove the remaining callbacks.
+    MultiThreadingMgr::instance().removeAllCriticalSectionCallbacks();
+
+    // Retest CriticalSections.
+    runCriticalSections({}, {});
 }

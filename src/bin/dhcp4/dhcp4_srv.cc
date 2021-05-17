@@ -960,6 +960,9 @@ Dhcpv4Srv::run() {
         }
     }
 
+    // Stop everything before we change into single-threaded mode.
+    MultiThreadingCriticalSection cs;
+
     // destroying the thread pool
     MultiThreadingMgr::instance().apply(false, 0, 0);
 

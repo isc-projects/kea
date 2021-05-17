@@ -2815,6 +2815,11 @@ HAService::getPendingRequestInternal(const QueryPtrType& query) {
 
 void
 HAService::startClientAndListener() {
+    // Add critical section callbacks.
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks("HA_MT",
+        std::bind(&HAService::pauseClientAndListener, this),
+        std::bind(&HAService::resumeClientAndListener, this));
+
     if (client_) {
         client_->start();
     }
@@ -2848,6 +2853,9 @@ HAService::resumeClientAndListener() {
 
 void
 HAService::stopClientAndListener() {
+    // Remove critical section callbacks.
+    MultiThreadingMgr::instance().removeCriticalSectionCallbacks("HA_MT");
+
     if (client_) {
         client_->stop();
     }
