@@ -238,6 +238,6 @@ def run_generate_docs(_):
 
 # custom setup hook
 def setup(app):
-    app.add_stylesheet('kea.css')
+    app.add_css_file('kea.css')
 
     app.connect('builder-inited', run_generate_docs)
