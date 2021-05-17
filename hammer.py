@@ -766,7 +766,7 @@ class VagrantEnv(object):
             os.makedirs(pkgs_dir)
 
             # copy results of _build_native_pkg
-            execute('scp -F %s -r default:/tmp/pkg/* .' % ssh_cfg_path, cwd=pkgs_dir)
+            execute('scp -F %s -r default:~/kea-pkg/* .' % ssh_cfg_path, cwd=pkgs_dir)
 
             if upload:
                 repo_url = _get_full_repo_url(repository_url, self.system, self.revision, pkg_version)
@@ -1237,7 +1237,7 @@ def prepare_system_local(features, check_times):
                     'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv']
 
         if 'native-pkg' in features:
-            packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
+            packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
@@ -1277,13 +1277,10 @@ def prepare_system_local(features, check_times):
                     'log4cplus-devel', 'boost-devel', 'mariadb-devel', 'postgresql-devel']
 
         if 'native-pkg' in features:
-            packages.extend(['rpm-build', 'python2-devel'])
+            packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            if revision == '8':
-                packages.extend(['python3-virtualenv'])
-            else:
-                packages.extend(['python-virtualenv'])
+            packages.extend(['python3-virtualenv'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
