@@ -88,6 +88,59 @@ CREATE TRIGGER dhcp6_server_modification_ts_update
 
 
 
+-- This table doesn't exist in MySQL. However, it's nice to have an enum that explains what the values
+-- in ddns_replace_client_name field in the dhcp{4,6}_shared_network table means.
+CREATE TABLE ddns_replace_client_name_types (
+  type INT8 PRIMARY KEY NOT NULL,
+  name VARCHAR(32)
+);
+
+-- See enum ReplaceClientNameMode in src/lib/dhcpsrv/d2_client_cfg.h
+INSERT INTO ddns_replace_client_name_types (type, name) VALUES
+  (0, 'RCM_NEVER'),
+  (1, 'RCM_ALWAYS'),
+  (2, 'RCM_WHEN_PRESENT'),
+  (3, 'RCM_WHEN_NOT_PRESENT');
+
+
+
+CREATE TABLE dhcp6_shared_network (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  preferred_lifetime BIGINT DEFAULT NULL,
+  rapid_commit BOOLEAN DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context TEXT DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  interface_id BYTEA DEFAULT NULL, -- 128 bytes
+  min_preferred_lifetime BIGINT DEFAULT NULL,
+  max_preferred_lifetime BIGINT DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
 
 
 -- Update the schema version number
