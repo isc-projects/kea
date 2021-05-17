@@ -203,12 +203,16 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         // Client should exist but be stopped.
         ASSERT_TRUE(service->client_);
         ASSERT_TRUE(service->client_->isStopped());
-        EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+        if (i == 0) {
+            EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+        } else {
+            EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+        }
 
         // Listener should exist but be stopped.
         ASSERT_TRUE(service->listener_);
         ASSERT_TRUE(service->listener_->isStopped());
-        EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
+        EXPECT_FALSE(service->listener_->getThreadIOService());
 
         // Start client and listener.
         ASSERT_NO_THROW_LOG(service->startClientAndListener());

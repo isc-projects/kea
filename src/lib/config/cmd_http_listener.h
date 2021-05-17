@@ -52,19 +52,19 @@ public:
 
     /// @brief Indicates if the thread pool is running.
     ///
-    /// @return True if the thread pool exists and is in the RUNNING state,
+    /// @return True if the thread pool exists and it is in the RUNNING state,
     /// false otherwise.
     bool isRunning();
 
     /// @brief Indicates if the thread pool is stopped.
     ///
-    /// @return True if the thread pool does not exist or it
-    /// is in the STOPPED state, false otherwise.
+    /// @return True if the thread pool does not exist or it is in the STOPPED
+    /// state, false otherwise.
     bool isStopped();
 
-    /// @brief Indicates if the thread pool processing is running.
+    /// @brief Indicates if the thread pool is paused.
     ///
-    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// @return True if the thread pool exists and it is in the PAUSED state,
     /// false otherwise.
     bool isPaused();
 
@@ -100,6 +100,11 @@ public:
         return (thread_pool_->getThreadCount());
     }
 
+    /// @brief Fetches a pointer to the internal IOService used to
+    /// drive the thread-pool in multi-threaded mode.
+    ///
+    /// @return pointer to the IOService instance, or an empty pointer
+    /// in single-threaded mode.
     asiolink::IOServicePtr getThreadIOService() const {
         return (thread_io_service_);
     }

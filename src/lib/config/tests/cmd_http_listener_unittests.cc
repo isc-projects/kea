@@ -174,12 +174,12 @@ public:
     /// @brief Runs IO service with optional timeout.
     ///
     /// We iterate over calls to asio::io_service.run(), until
-    /// all the clients have completed their requests.  We do it this
+    /// all the clients have completed their requests.  We do it this way
     /// because the test clients stop the io_service when they're
     /// through with a request.
     ///
-    /// @param num_pauses Desired number of times the listener should be
-    /// paused during the test.
+    /// @param request_limit Desired number of requests the function should wait
+    /// to be processed before returning.
     void runIOService(size_t request_limit = 0) {
         // Create a timer to use for invoking resume after pause.
         IntervalTimer pause_timer_(io_service_);
@@ -257,7 +257,7 @@ public:
     /// @return Returns response with map of arguments containing
     /// a string value 'thread-id': <thread id>
     ConstElementPtr synchronizedCommandHandler(const std::string& /*command_name*/,
-                                         const ConstElementPtr& command_arguments) {
+                                               const ConstElementPtr& command_arguments) {
         // If the number of in progress commands is less than the number
         // of threads, then wait here until we're notified.  Otherwise,
         // notify everyone and finish.  The idea is to force each thread
@@ -365,8 +365,8 @@ public:
     /// if it is greater than num_threads.
     void threadListenAndRespond(size_t num_threads, size_t num_clients) {
         // First we makes sure the parameter rules apply.
-        ASSERT_TRUE(num_threads > 0);
-        ASSERT_TRUE(num_clients > 0);
+        ASSERT_TRUE(num_threads);
+        ASSERT_TRUE(num_clients);
         ASSERT_TRUE((num_clients < num_threads) || (num_clients % num_threads == 0));
 
         num_threads_ = num_threads;
@@ -384,7 +384,7 @@ public:
 
         // Create a listener with prescribed number of threads.
         ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(IOAddress(SERVER_ADDRESS),
-                                                               SERVER_PORT, num_threads)));
+                                                                SERVER_PORT, num_threads)));
         ASSERT_TRUE(listener_);
 
         // Start it and verify it is running.
@@ -518,7 +518,7 @@ public:
     /// thread command.  Each client is used to carry out a single thread
     /// command request.  Must be greater than 0.
     /// @param num_pauses Desired number of times the listener should be
-    /// paused during the test. Must be greated than 0.
+    /// paused during the test. Must be greater than 0.
     void workPauseAndResume(size_t num_threads, size_t num_clients,
                             size_t num_pauses) {
         // First we makes sure the parameter rules apply.
@@ -543,9 +543,6 @@ public:
         ASSERT_NO_THROW_LOG(listener_->start());
         ASSERT_TRUE(listener_->isRunning());
         EXPECT_EQ(listener_->getThreadCount(), num_threads);
-
-        // Maps the number of clients served by a given thread-id.
-        std::map<std::string, int> clients_per_thread;
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
@@ -677,11 +674,10 @@ public:
             // We allow a range on pauses of +-1.
             ASSERT_TRUE((num_pauses - 1) <= pause_cnt_ &&
                         (pause_cnt_ <= (num_pauses + 1)))
-                        << " num+_pauses: " << num_pauses
+                        << " num_pauses: " << num_pauses
                         << ", pause_cnt_" << pause_cnt_;
         }
     }
-
 
     /// @brief CmdHttpListener instance under test.
     CmdHttpListenerPtr listener_;
