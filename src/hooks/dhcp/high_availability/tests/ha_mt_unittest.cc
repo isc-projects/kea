@@ -181,10 +181,6 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     // Enable DHCP multi-threading configuration in CfgMgr with 3 threads.
     setDHCPMultiThreadingConfig(true, 3);
 
-    /// @todo this is a hack... we have chicken-egg...  CmdHttpListener won't
-    /// start if MT is not enabled BUT that happens after config hook point
-    MultiThreadingMgr::instance().setMode(true);
-
     // Create the HA configuration
     HAConfigPtr ha_config(new HAConfig());
     HAConfigParser parser;

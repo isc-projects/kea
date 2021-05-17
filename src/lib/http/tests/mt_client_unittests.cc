@@ -494,13 +494,7 @@ public:
         }
 
         // Loop until the clients are done, an error occurs, or the time runs out.
-        while (getRRCount() < expected_requests_) {
-            // Always call restart() before we call run();
-            io_service_.restart();
-
-            // Run until a client stops the service.
-            io_service_.run();
-        }
+        runIOService(expected_requests_);
 
         // Client should stop without issue.
         ASSERT_NO_THROW(client_->stop());
