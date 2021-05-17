@@ -45,6 +45,8 @@ CREATE TABLE modification (
 );
 INSERT INTO modification VALUES (0,'create'), (1,'update'), (2,'delete');
 
+
+
 -- Now create the table that holds different parameter data types.
 CREATE TABLE parameter_data_type (
   id smallint NOT NULL,
@@ -53,15 +55,6 @@ CREATE TABLE parameter_data_type (
 );
 INSERT INTO parameter_data_type VALUES (0,'integer'),(1,'real'),(2,'boolean'),(4,'string');
 
-
-DROP TABLE IF EXISTS `dhcp6_server`;
-CREATE TABLE dhcp6_server (
-  id SERIAL PRIMARY KEY NOT NULL,
-  tag varchar(256) UNIQUE NOT NULL,
-  description text DEFAULT NULL,
-  modification_ts timestamp NOT NULL DEFAULT Ccurrent_timestamp() ON UPDATE current_timestamp(),
-  KEY key_dhcp6_server_modification_ts (modification_ts)
-);
 
 
 DROP TABLE IF EXISTS dhcp6_server;
@@ -72,7 +65,6 @@ CREATE TABLE dhcp6_server (
   modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tag)
 );
-
 CREATE INDEX dhcp6_server_modification_ts ON dhcp6_server (modification_ts);
 
 -- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
@@ -90,7 +82,12 @@ CREATE OR REPLACE FUNCTION dhcp6_server_modification_ts_update()
 $dhcp6_server_modification_ts_update$ LANGUAGE plpgsql;
 
 -- Finally, we need to create a trigger that will kick off this function.
-CREATE TRIGGER dhcp6_server_modification_ts_update AFTER UPDATE ON dhcp6_server FOR EACH ROW EXECUTE PROCEDURE dhcp6_server_modification_ts_update();
+CREATE TRIGGER dhcp6_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE dhcp6_server_modification_ts_update();
+
+
+
 
 
 -- Update the schema version number
