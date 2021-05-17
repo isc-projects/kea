@@ -9,6 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -16,6 +17,20 @@ using namespace isc::dhcp;
 using namespace isc::util;
 
 namespace {
+
+struct OptionVendorClassLenientParsing : ::testing::Test {
+    OptionVendorClassLenientParsing() : previous_(Option::lenient_parsing_) {
+        // Enable lenient parsing.
+        Option::lenient_parsing_ = true;
+    }
+
+    ~OptionVendorClassLenientParsing() {
+        // Restore.
+        Option::lenient_parsing_ = previous_;
+    }
+
+    bool previous_;
+};
 
 // This test checks that the DHCPv4 option constructor sets the default
 // properties to the expected values. This constructor should add an
@@ -248,7 +263,7 @@ TEST(OptionVendorClass, unpack4) {
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 }
 
-// This function checks that the DHCPv4 option with two opaque data tuples
+// This function checks that the DHCPv6 option with two opaque data tuples
 // is parsed correctly.
 TEST(OptionVendorClass, unpack6) {
     // Prepare data to decode.
@@ -276,7 +291,7 @@ TEST(OptionVendorClass, unpack6) {
 }
 
 
-// This test checks that the DHCPv4 option with opaque data of size 0
+// This test checks that the DHCPv6 option with opaque data of size 0
 // is correctly parsed.
 TEST(OptionVendorClass, unpack4EmptyTuple) {
     // Prepare data to decode.
@@ -418,7 +433,7 @@ TEST(OptionVendorClass, toText4) {
               vendor_class.toText(3));
 }
 
-// Verifies correctness of the text representation of the DHCPv4 option.
+// Verifies correctness of the text representation of the DHCPv6 option.
 TEST(OptionVendorClass, toText6) {
     OptionVendorClass vendor_class(Option::V6, 1234);
     ASSERT_EQ(0, vendor_class.getTuplesNum());
@@ -443,5 +458,128 @@ TEST(OptionVendorClass, toText6) {
               vendor_class.toText(2));
 }
 
-} // end of anonymous namespace
+// Test that the DHCPv6 option with truncated or over-extending (depends on
+// perspective) buffers is parsed correctly when lenient mode is enabled.
+TEST_F(OptionVendorClassLenientParsing, unpack6) {
+    // Enable lenient parsing.
+    bool const previous(Option::lenient_parsing_);
+    Option::lenient_parsing_ = true;
 
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0,    0,    0x4,  0xD2,              // enterprise id 1234
+        0x00, 0x0B,                          // tuple length is 11
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20,  // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,        // world
+        0x00, 0x03,                          // tuple length is 3
+        0x66, 0x6F, 0x6F                     // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+
+    // Restore.
+    Option::lenient_parsing_ = previous;
+}
+
+// Test that the DHCPv6 option with truncated or over-extending (depends on
+// perspective) buffers is parsed correctly when lenient mode is enabled.
+TEST_F(OptionVendorClassLenientParsing, unpack6FirstLengthIsBad) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0,    0,    0x4,  0xD2,              // enterprise id 1234
+        0x00, 0x0C,                          // tuple length is 12 (should be 11)
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20,  // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,        // world
+        0x00, 0x03,                          // tuple length is 3
+        0x66, 0x6F, 0x6F                     // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    // The first value will have one extra byte.
+    EXPECT_EQ(std::string("Hello world") + '\0',
+              vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x03, 0x66} == 870,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "oo".
+    EXPECT_EQ("oo", vendor_class->getTuple(1).getText());
+}
+
+// Test that the DHCPv6 option with truncated or over-extending (depends on
+// perspective) buffers is parsed correctly when lenient mode is enabled.
+TEST_F(OptionVendorClassLenientParsing, unpack6SecondLengthIsBad) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0,    0,    0x4,  0xD2,              // enterprise id 1234
+        0x00, 0x0B,                          // tuple length is 11
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20,  // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,        // world
+        0x00, 0x04,                          // tuple length is 4 (should be 3)
+        0x66, 0x6F, 0x6F                     // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x00, 0x04} == 4,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "foo" just like normal.
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+}
+
+// Test that the DHCPv6 option with truncated or over-extending (depends on
+// perspective) buffers is parsed correctly when lenient mode is enabled.
+TEST_F(OptionVendorClassLenientParsing, unpack6BothLengthsAreBad) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0,    0,    0x4,  0xD2,              // enterprise id 1234
+        0x00, 0x0C,                          // tuple length is 12 (should be 11)
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20,  // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,        // world
+        0x00, 0x04,                          // tuple length is 4 (should be 3)
+        0x66, 0x6F, 0x6F                     // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    // The first value will have one extra byte.
+    EXPECT_EQ(std::string("Hello world") + '\0',
+              vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x04, 0x66} == 1126,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "oo".
+    EXPECT_EQ("oo", vendor_class->getTuple(1).getText());
+}
+
+} // end of anonymous namespace

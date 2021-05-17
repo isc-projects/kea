@@ -5,9 +5,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/opaque_data_tuple.h>
 #include <util/buffer.h>
+
 #include <gtest/gtest.h>
+
 #include <algorithm>
 #include <sstream>
 #include <vector>
@@ -17,6 +20,20 @@ using namespace isc::dhcp;
 using namespace isc::util;
 
 namespace {
+
+struct OpaqueDataTupleLenientParsing : ::testing::Test {
+    OpaqueDataTupleLenientParsing() : previous_(Option::lenient_parsing_) {
+        // Enable lenient parsing.
+        Option::lenient_parsing_ = true;
+    }
+
+    ~OpaqueDataTupleLenientParsing() {
+        // Restore.
+        Option::lenient_parsing_ = previous_;
+    }
+
+    bool previous_;
+};
 
 // This test checks that when the default constructor is called, the data buffer
 // is empty.
@@ -42,7 +59,6 @@ TEST(OpaqueDataTuple, constructorParse1Byte) {
 
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
-
 }
 
 // Test that the constructor which takes the buffer as argument parses the
@@ -59,7 +75,6 @@ TEST(OpaqueDataTuple, constructorParse2Bytes) {
 
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
-
 }
 
 
@@ -225,7 +240,6 @@ TEST(OpaqueDataTuple, operatorOutputStream) {
     EXPECT_NO_THROW(tuple = " and some other text");
     EXPECT_NO_THROW(s << tuple);
     EXPECT_EQ(s.str(), "Some text and some other text");
-
 }
 
 // This test verifies that the value of the tuple can be initialized from the
@@ -457,7 +471,7 @@ TEST(OpaqueDataTuple, unpack2ByteEmptyBuffer) {
     EXPECT_THROW(tuple.unpack(wire_data, wire_data), OpaqueDataTupleError);
 }
 
-// This test verifies that exception if thrown when parsing truncated buffer.
+// This test verifies that exception is thrown when parsing truncated buffer.
 TEST(OpaqueDataTuple, unpack2ByteTruncatedBuffer) {
    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
    // Specify the data with the length of 10, but limit the buffer size to
@@ -470,5 +484,15 @@ TEST(OpaqueDataTuple, unpack2ByteTruncatedBuffer) {
                 OpaqueDataTupleError);
 }
 
+// Test that an exception is not thrown when parsing in lenient mode.
+TEST_F(OpaqueDataTupleLenientParsing, unpack) {
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    // Specify the data with the length of 10, but limit the buffer size to 2.
+    const char wire_data[] = {
+        0, 10, 2, 3
+    };
+    EXPECT_NO_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)));
+    EXPECT_EQ(tuple.getData(), OpaqueDataTuple::Buffer({2, 3}));
+}
 
 } // anonymous namespace
