@@ -42,9 +42,13 @@ public:
     void start();
 
     /// @brief Pauses the listener's thread pool.
+    ///
+    /// Suspends thread pool event processing.
     void pause();
 
     /// @brief Resumes running the listener's thread pool.
+    ///
+    /// Resumes thread pool event processing.
     void resume();
 
     /// @brief Stops the listener's thread pool.

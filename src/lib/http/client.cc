@@ -1778,14 +1778,14 @@ public:
         stop();
     }
 
-    /// @brief Starts client's thread pool, if multi-threaded.
+    /// @brief Starts running the client's thread pool, if multi-threaded.
     void start() {
         if (thread_pool_) {
             thread_pool_->run();
         }
     }
 
-    /// @brief Close all connections, and if multi-threaded, stops the
+    /// @brief Close all connections, and if multi-threaded, stops the client's
     /// thread pool.
     void stop() {
         // Close all the connections.
@@ -1797,9 +1797,10 @@ public:
         }
     }
 
-    /// @brief Pauses the thread pool operation.
+    /// @brief Pauses the client's thread pool.
     ///
     /// Suspends thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
     void pause() {
         if (!thread_pool_) {
             isc_throw(InvalidOperation, "HttpClient::pause - no thread pool");
@@ -1809,9 +1810,10 @@ public:
         thread_pool_->pause();
     }
 
-    /// @brief Resumes the thread pool operation.
+    /// @brief Resumes running the client's thread pool.
     ///
     /// Resumes thread pool event processing.
+    /// @throw InvalidOperation if the thread pool does not exist.
     void resume() {
         if (!thread_pool_) {
             isc_throw(InvalidOperation, "HttpClient::resume - no thread pool");
@@ -1821,9 +1823,9 @@ public:
         thread_pool_->run();
     }
 
-    /// @brief Indicates if the thread pool processing is running.
+    /// @brief Indicates if the thread pool is running.
     ///
-    /// @return True if the thread pool exists and is in the RUNNING state,
+    /// @return True if the thread pool exists and it is in the RUNNING state,
     /// false otherwise.
     bool isRunning() {
         if (thread_pool_) {
@@ -1835,8 +1837,8 @@ public:
 
     /// @brief Indicates if the thread pool is stopped.
     ///
-    /// @return True if the thread pool exists and is in the STOPPED state,
-    /// false otherwise
+    /// @return True if the thread pool exists and it is in the STOPPED state,
+    /// false otherwise.
     bool isStopped() {
         if (thread_pool_) {
             return (thread_pool_->isStopped());
@@ -1845,9 +1847,9 @@ public:
         return (false);
     }
 
-    /// @brief Indicates if the thread pool processing is running.
+    /// @brief Indicates if the thread pool is paused.
     ///
-    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// @return True if the thread pool exists and it is in the PAUSED state,
     /// false otherwise.
     bool isPaused() {
         if (thread_pool_) {

@@ -313,7 +313,7 @@ public:
                 } else {
                     // I'm ready but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_in_progress_ == num_threads_); });
+                                                 [&]() { return (num_in_progress_ == num_threads_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to start work";
                     }
@@ -344,7 +344,7 @@ public:
                 } else {
                     // I'm done but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
-                                            [&]() { return (num_finished_ == num_threads_); });
+                                                 [&]() { return (num_finished_ == num_threads_); });
                     if (!ret) {
                         ADD_FAILURE() << "clients failed to finish work";
                     }
@@ -352,7 +352,6 @@ public:
             }
         }));
     }
-
 
     /// @brief Initiates a single HTTP request.
     ///
@@ -772,8 +771,6 @@ public:
 
     /// @brief Number of times client has been paused during the test.
     size_t pause_cnt_;
-
-    bool shutdown_;
 };
 
 // Verifies we can construct and destruct, in both single

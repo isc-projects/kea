@@ -137,15 +137,15 @@ public:
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
     /// @param defer_thread_start if true, the thread pool will be created but
-    /// started. Applicable only when thread-pool-size is greater than zero.
+    /// not started. Applicable only when thread-pool-size is greater than zero.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
     /// (default) enables single-threaded mode with one connection per URL.
-    /// @param defer_thread_start When true, creation of the pool threads is
+    /// @param defer_thread_start When true, starting of the pool threads is
     /// deferred until a subsequent call to @ref start(). In this case the
-    /// pool's operational state post-construction is STOPPED.  Otherwise,
-    /// the thread pool threads will be created and started, with the post-
-    /// construction state being RUNNING.  Applicable only when thread-pool size
+    /// pool's operational state after construction is STOPPED.  Otherwise,
+    /// the thread pool threads will be created and started, with the
+    /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
     explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0,
                         bool defer_thread_start = false);
@@ -251,16 +251,16 @@ public:
                           const CloseHandler& close_callback =
                           CloseHandler());
 
-    /// @brief Starts client's thread pool, if multi-threaded.
+    /// @brief Starts running the client's thread pool, if multi-threaded.
     void start();
 
-    /// @brief Pauses the thread pool operation.
+    /// @brief Pauses the client's thread pool.
     ///
     /// Suspends thread pool event processing.
     /// @throw InvalidOperation if the thread pool does not exist.
     void pause();
 
-    /// @brief Resumes the thread pool operation.
+    /// @brief Resumes running the client's thread pool.
     ///
     /// Resumes thread pool event processing.
     /// @throw InvalidOperation if the thread pool does not exist.
@@ -306,19 +306,19 @@ public:
 
     /// @brief Indicates if the thread pool is running.
     ///
-    /// @return True if the thread pool exists and is in the RUNNING state,
+    /// @return True if the thread pool exists and it is in the RUNNING state,
     /// false otherwise.
     bool isRunning();
 
     /// @brief Indicates if the thread pool is stopped.
     ///
-    /// @return True if the thread pool exists and is in the STOPPED state,
+    /// @return True if the thread pool exists and it is in the STOPPED state,
     /// false otherwise.
     bool isStopped();
 
-    /// @brief Indicates if the thread pool processing is running.
+    /// @brief Indicates if the thread pool is paused.
     ///
-    /// @return True if the thread pool exists and is in the PAUSED state,
+    /// @return True if the thread pool exists and it is in the PAUSED state,
     /// false otherwise.
     bool isPaused();
 

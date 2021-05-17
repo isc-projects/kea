@@ -77,20 +77,16 @@ HttpThreadPool::getState() {
 
 bool
 HttpThreadPool::validateStateChange(State new_state) const {
-    bool is_valid = false;
-    switch(run_state_) {
+    switch (run_state_) {
     case State::STOPPED:
-        is_valid = (new_state == State::RUNNING);
-        break;
+        return (new_state == State::RUNNING);
     case State::RUNNING:
-        is_valid = (new_state != State::RUNNING);
-        break;
+        return (new_state != State::RUNNING);
     case State::PAUSED:
-        is_valid = (new_state != State::PAUSED);
-        break;
+        return (new_state != State::PAUSED);
     }
 
-    return (is_valid);
+    return (false);
 }
 
 void
@@ -106,7 +102,7 @@ HttpThreadPool::setState(State new_state) {
     // Notify threads of state change.
     thread_cv_.notify_all();
 
-    switch(new_state) {
+    switch (new_state) {
     case State::RUNNING: {
         // Restart the IOService.
         io_service_->restart();

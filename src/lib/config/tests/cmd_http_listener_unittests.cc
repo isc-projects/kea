@@ -52,9 +52,10 @@ public:
     /// Starts test timer which detects timeouts, deregisters all commands
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
-        : listener_(), io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
-        clients_(), num_threads_(), num_clients_(), num_in_progress_(0), num_finished_(0),
-        chunk_size_(0), paused_(false), pause_cnt_(0) {
+        : listener_(), io_service_(), test_timer_(io_service_),
+          run_io_service_timer_(io_service_), clients_(), num_threads_(),
+          num_clients_(), num_in_progress_(0), num_finished_(0), chunk_size_(0),
+          pause_cnt_(0) {
         test_timer_.setup(std::bind(&CmdHttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
@@ -181,10 +182,6 @@ public:
     /// @param request_limit Desired number of requests the function should wait
     /// to be processed before returning.
     void runIOService(size_t request_limit = 0) {
-        // Create a timer to use for invoking resume after pause.
-        IntervalTimer pause_timer_(io_service_);
-        paused_ = false;
-
         if (!request_limit) {
             request_limit = clients_.size();
         }
@@ -720,9 +717,6 @@ public:
     /// @brief Condition variable used to coordinate threads.
     std::condition_variable cv_;
 
-    /// @brief Indicates if client threads are currently "paused".
-    bool paused_;
-
     /// @brief Number of times client has been paused during the test.
     size_t pause_cnt_;
 };
@@ -847,7 +841,7 @@ TEST_F(CmdHttpListenerTest, basicListenAndRespond) {
     // to our listener, post our request and retrieve our reply.
     ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
     ++num_clients_;
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(num_clients_, clients_.size());
     ASSERT_NO_THROW(runIOService());
     TestHttpClientPtr client = clients_.front();
     ASSERT_TRUE(client);
@@ -866,7 +860,7 @@ TEST_F(CmdHttpListenerTest, basicListenAndRespond) {
     // Try posting the foo command again.
     ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
     ++num_clients_;
-    ASSERT_EQ(2, clients_.size());
+    ASSERT_EQ(num_clients_, clients_.size());
     ASSERT_NO_THROW(runIOService());
     client = clients_.back();
     ASSERT_TRUE(client);

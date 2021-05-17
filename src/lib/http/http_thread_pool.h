@@ -65,7 +65,7 @@ public:
     /// state.
     void pause();
 
-    /// @brief Transitions the pool to from RUNNING OR PAUSED to STOPPED.
+    /// @brief Transitions the pool from RUNNING or PAUSED to STOPPED.
     ///
     /// Stops thread event processing and then destroys the pool's threads
     /// Has no effect if the pool is already in the STOPPED state.
@@ -103,7 +103,7 @@ private:
     /// -# Restarts the IOService.
     /// -# Creates the threads if they do not yet exist (true only
     ///    when transitioning from STOPPED).
-    /// -# Waits until threads are running.
+    /// -# Waits until all threads are running.
     /// -# Sets the count of exited threads to 0.
     /// -# Returns to caller.
     ///
@@ -167,14 +167,13 @@ private:
     /// -# The count of threads exited is incremented.
     /// -# If the count has reached the number of threads in pool the
     ///    main thread is notified.
-    /// -# function exits.
+    /// -# The function exits.
     void threadWork();
 
 public:
-
     /// @brief Fetches the IOService that drives the pool.
     ///
-    /// @return A pointer to the IOService.
+    /// @return the pointer to the IOService.
     asiolink::IOServicePtr getIOService() const;
 
     /// @brief Fetches the maximum size of the thread pool.
