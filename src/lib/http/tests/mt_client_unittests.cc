@@ -591,15 +591,14 @@ public:
     }
 
     /// @brief Verifies the client can be paused and resumed repeatedly
-    /// while doing multi-threaded doing work.
+    /// while doing multi-threaded work.
     ///
     /// @param num_threads number of threads the HttpClient should use.
     /// Must be greater than zero, this test does not make sense for a
     /// single threaded client.
     /// @param num_batches number of batches of requests that should be
     /// conducted.
-    /// @param num_listeners number of HttpListeners to create. Defaults
-    /// to 1.
+    /// @param num_listeners number of HttpListeners to create.
     /// @param num_pauses number of pauses to conduct.
     void workPauseResumeShutdown(size_t num_threads, size_t num_batches,
                                  size_t num_listeners, size_t num_pauses) {
@@ -698,8 +697,39 @@ public:
             ASSERT_NO_THROW(listener->stop());
         }
 
-        // Destructor should work fine.
-        client_.reset();
+        // Get the stringified thread-id of the test's main thread.
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        std::string main_thread_id = ss.str();
+
+        // Iterate over the client request/response pairs.
+        for (auto const& clientRR : clientRRs_) {
+            // Make sure it's whole.
+            ASSERT_FALSE(clientRR->thread_id_.empty());
+            ASSERT_TRUE(clientRR->request_);
+            ASSERT_TRUE(clientRR->response_);
+
+            // Request should contain an integer sequence number.
+            int request_sequence;
+            ConstElementPtr sequence = clientRR->request_->getJsonElement("sequence");
+            ASSERT_TRUE(sequence);
+            ASSERT_NO_THROW(request_sequence = sequence->intValue());
+
+            // Response should contain an integer sequence number.
+            int response_sequence;
+            sequence = clientRR->response_->getJsonElement("sequence");
+            ASSERT_TRUE(sequence);
+            ASSERT_NO_THROW(response_sequence = sequence->intValue());
+
+            // Request and Response sequence numbers should match.
+            ASSERT_EQ(request_sequence, response_sequence);
+
+            ConstElementPtr server_port_elem = clientRR->response_->getJsonElement("server-port");
+            ASSERT_TRUE(server_port_elem);
+
+            // For MT mode the thread id should never be the main thread.
+            ASSERT_NE(clientRR->thread_id_, main_thread_id);
+        }
     }
 
     /// @brief Fetch the number of completed requests.
