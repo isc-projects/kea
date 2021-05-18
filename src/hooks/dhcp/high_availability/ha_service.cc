@@ -2832,7 +2832,7 @@ HAService::startClientAndListener() {
 void
 HAService::pauseClientAndListener() {
     // Since we're used as CS callback we need to suppress
-    // any exceptions, unlikey though they may be.
+    // any exceptions, unlikely though they may be.
     try {
         if (client_) {
             client_->pause();
@@ -2850,7 +2850,7 @@ HAService::pauseClientAndListener() {
 void
 HAService::resumeClientAndListener() {
     // Since we're used as CS callback we need to suppress
-    // any exceptions, unlikey though they may be.
+    // any exceptions, unlikely though they may be.
     try {
         if (client_) {
             client_->resume();
