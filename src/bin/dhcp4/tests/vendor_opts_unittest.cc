@@ -48,7 +48,110 @@ using namespace isc::dhcp::test;
 /// groups all vendor related tests under a single name. There were too many
 /// tests in Dhcpv4SrvTest class anyway.
 class VendorOptsTest : public Dhcpv4SrvTest {
+public:
+    void testVendorOptionsORO(int vendor_id) {
+        IfaceMgrTestConfig test_config(true);
+        IfaceMgr::instance().openSockets4();
 
+        NakedDhcpv4Srv srv(0);
+
+        string config = R"(
+            {
+                "interfaces-config": {
+                    "interfaces": [ "*" ]
+                },
+                "option-data": [
+                    {
+                        "code": 2,
+                        "csv-format": true,
+                        "data": "192.0.2.1, 192.0.2.2",
+                        "name": "tftp-servers",
+                        "space": "vendor-4491"
+                    }
+                ],
+                "subnet4": [
+                    {
+                        "interface": "eth0",
+                        "pools": [
+                            {
+                                "pool": "192.0.2.0/25"
+                            }
+                        ],
+                        "subnet": "192.0.2.0/24"
+                    }
+                ]
+            }
+        )";
+
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP4(config));
+
+        ConstElementPtr x;
+        EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        CfgMgr::instance().commit();
+
+        boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+        // Set the giaddr and hops to non-zero address as if it was relayed.
+        dis->setGiaddr(IOAddress("192.0.2.1"));
+        dis->setHops(1);
+
+        OptionPtr clientid = generateClientId();
+        dis->addOption(clientid);
+        // Set interface. It is required by the server to generate server id.
+        dis->setIface("eth0");
+        dis->setIndex(ETH0_INDEX);
+
+        // Pass it to the server and get an advertise
+        Pkt4Ptr offer = srv.processDiscover(dis);
+
+        // check if we get response at all
+        ASSERT_TRUE(offer);
+
+        // We did not include any vendor opts in DISCOVER, so there should be none
+        // in OFFER.
+        ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+        // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+        // That suboption has code 1 and is a docsis ORO option.
+        boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                            DOCSIS3_V4_ORO));
+        vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+        OptionPtr vendor(new OptionVendor(Option::V4, vendor_id));
+        vendor->addOption(vendor_oro);
+        dis->addOption(vendor);
+
+        // Need to process SOLICIT again after requesting new option.
+        offer = srv.processDiscover(dis);
+        ASSERT_TRUE(offer);
+
+        // Check if there is (or not) a vendor option in the response.
+        OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+        if (vendor_id != VENDOR_ID_CABLE_LABS) {
+            EXPECT_FALSE(tmp);
+            return;
+        }
+        ASSERT_TRUE(tmp);
+
+        // The response should be OptionVendor object
+        boost::shared_ptr<OptionVendor> vendor_resp =
+            boost::dynamic_pointer_cast<OptionVendor>(tmp);
+        ASSERT_TRUE(vendor_resp);
+
+        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+        ASSERT_TRUE(docsis2);
+
+        Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+        ASSERT_TRUE(tftp_srvs);
+
+        Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+        ASSERT_EQ(2, addrs.size());
+        EXPECT_EQ("192.0.2.1", addrs[0].toText());
+        EXPECT_EQ("192.0.2.2", addrs[1].toText());
+    }
 };
 
 /// @todo Add more extensive vendor options tests, including multiple
@@ -184,92 +287,13 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsORO) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
+    testVendorOptionsORO(VENDOR_ID_CABLE_LABS);
+}
 
-    NakedDhcpv4Srv srv(0);
-
-    ConstElementPtr x;
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "    \"option-data\": [ {"
-        "          \"name\": \"tftp-servers\","
-        "          \"space\": \"vendor-4491\","
-        "          \"code\": 2,"
-        "          \"data\": \"192.0.2.1, 192.0.2.2\","
-        "          \"csv-format\": true"
-        "        }],"
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
-        "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"interface\": \"eth0\" "
-        " } ]"
-        "}";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-
-    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
-
-    CfgMgr::instance().commit();
-
-    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
-    // Set the giaddr and hops to non-zero address as if it was relayed.
-    dis->setGiaddr(IOAddress("192.0.2.1"));
-    dis->setHops(1);
-
-    OptionPtr clientid = generateClientId();
-    dis->addOption(clientid);
-    // Set interface. It is required by the server to generate server id.
-    dis->setIface("eth0");
-    dis->setIndex(ETH0_INDEX);
-
-    // Pass it to the server and get an advertise
-    Pkt4Ptr offer = srv.processDiscover(dis);
-
-    // check if we get response at all
-    ASSERT_TRUE(offer);
-
-    // We did not include any vendor opts in DISCOVER, so there should be none
-    // in OFFER.
-    ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
-
-    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
-    // That suboption has code 1 and is a docsis ORO option.
-    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
-                                                                        DOCSIS3_V4_ORO));
-    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
-    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
-    vendor->addOption(vendor_oro);
-    dis->addOption(vendor);
-
-    // Need to process SOLICIT again after requesting new option.
-    offer = srv.processDiscover(dis);
-    ASSERT_TRUE(offer);
-
-    // Check if there is a vendor option response
-    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(tmp);
-
-    // The response should be OptionVendor object
-    boost::shared_ptr<OptionVendor> vendor_resp =
-        boost::dynamic_pointer_cast<OptionVendor>(tmp);
-    ASSERT_TRUE(vendor_resp);
-
-    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
-    ASSERT_TRUE(docsis2);
-
-    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
-    ASSERT_TRUE(tftp_srvs);
-
-    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-    ASSERT_EQ(2, addrs.size());
-    EXPECT_EQ("192.0.2.1", addrs[0].toText());
-    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+// Same as vendorOptionsORO except a different vendor ID than Cable Labs is
+// provided and vendor options are expected to not be present in the response.
+TEST_F(VendorOptsTest, vendorOptionsORODifferentVendorID) {
+    testVendorOptionsORO(32768);
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)

@@ -43,6 +43,113 @@ using namespace isc::asiolink;
 /// @brief Class dedicated to testing vendor options in DHCPv6
 class VendorOptsTest : public Dhcpv6SrvTest {
 public:
+    void testVendorOptionsORO(int vendor_id) {
+        IfaceMgrTestConfig test_config(true);
+
+        string config = R"(
+            {
+            "interfaces-config": {
+                "interfaces": [ "*" ]
+            },
+            "option-data": [
+                {
+                    "data": "normal_erouter_v6.cm",
+                    "name": "config-file",
+                    "space": "vendor-4491"
+                }
+            ],
+            "option-def": [
+                {
+                    "code": 33,
+                    "name": "config-file",
+                    "space": "vendor-4491",
+                    "type": "string"
+                }
+            ],
+            "preferred-lifetime": 3000,
+            "rebind-timer": 2000,
+            "renew-timer": 1000,
+            "subnet6": [
+                {
+                    "interface": "eth0",
+                    "interface-id": "",
+                    "pools": [
+                        {
+                            "pool": "2001:db8:1::/64"
+                        }
+                    ],
+                    "preferred-lifetime": 3000,
+                    "rebind-timer": 1000,
+                    "renew-timer": 1000,
+                    "subnet": "2001:db8:1::/48",
+                    "valid-lifetime": 4000
+                }
+            ],
+            "valid-lifetime": 4000
+            }
+        )";
+
+        ASSERT_NO_THROW(configure(config));
+
+        Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+        sol->setRemoteAddr(IOAddress("fe80::abcd"));
+        sol->setIface("eth0");
+        sol->setIndex(ETH0_INDEX);
+        sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+        OptionPtr clientid = generateClientId();
+        sol->addOption(clientid);
+
+        // Pass it to the server and get an advertise
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        srv_.initContext(sol, ctx, drop);
+        ASSERT_FALSE(drop);
+        Pkt6Ptr adv = srv_.processSolicit(ctx);
+
+        // check if we get response at all
+        ASSERT_TRUE(adv);
+
+        // We did not include any vendor opts in SOLICIT, so there should be none
+        // in ADVERTISE.
+        ASSERT_FALSE(adv->getOption(D6O_VENDOR_OPTS));
+
+        // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+        // That suboption has code 1 and is a docsis ORO option.
+        boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
+                                                                            DOCSIS3_V6_ORO));
+        vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
+        OptionPtr vendor(new OptionVendor(Option::V6, vendor_id));
+        vendor->addOption(vendor_oro);
+        sol->addOption(vendor);
+
+        // Need to process SOLICIT again after requesting new option.
+        AllocEngine::ClientContext6 ctx2;
+        srv_.initContext(sol, ctx2, drop);
+        ASSERT_FALSE(drop);
+        adv = srv_.processSolicit(ctx2);
+        ASSERT_TRUE(adv);
+
+        // Check if there is (or not) a vendor option in the response.
+        OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
+        if (vendor_id != VENDOR_ID_CABLE_LABS) {
+            EXPECT_FALSE(tmp);
+            return;
+        }
+        ASSERT_TRUE(tmp);
+
+        // The response should be OptionVendor object
+        boost::shared_ptr<OptionVendor> vendor_resp =
+            boost::dynamic_pointer_cast<OptionVendor>(tmp);
+        ASSERT_TRUE(vendor_resp);
+
+        OptionPtr docsis33 = vendor_resp->getOption(33);
+        ASSERT_TRUE(docsis33);
+
+        OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
+        ASSERT_TRUE(config_file);
+        EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+    }
+
     /// @brief Test what options a client can use to request vendor options.
     void testRequestingOfVendorOptions(vector<int8_t> const& client_options) {
         IfaceMgrTestConfig test_config(true);
@@ -76,12 +183,12 @@ public:
             client.addExtraOption(vendor_option);
         }
 
-        // Let's check whether the server is not able to process this packet
-        // and include vivso with appropriate sub-options
+        // Let's check whether the server is able to process this packet
+        // and include the appropriate options.
         EXPECT_NO_THROW(client.doSolicit());
         ASSERT_TRUE(client.getContext().response_);
 
-        // Check there's a response if an option was properly requested.
+        // Check that there is a response if an option was properly requested.
         // Otherwise check that a response has not been provided and stop here.
         OptionPtr response(
             client.getContext().response_->getOption(D6O_VENDOR_OPTS));
@@ -98,9 +205,9 @@ public:
         ASSERT_TRUE(response_vendor_options);
         EXPECT_EQ(vendor_id_, response_vendor_options->getVendorId());
 
-        // Now check that it contains requested option with the appropriate
-        // content.
-        OptionPtr suboption(response_vendor_options->getOption(option_));
+        // Check that it contains requested option with the appropriate content.
+        OptionPtr suboption(
+            response_vendor_options->getOption(option_));
         ASSERT_TRUE(suboption);
         vector<uint8_t> binary_suboption = suboption->toBinary(false);
         string text(binary_suboption.begin(), binary_suboption.end());
@@ -235,93 +342,13 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsORO) {
+    testVendorOptionsORO(VENDOR_ID_CABLE_LABS);
+}
 
-    IfaceMgrTestConfig test_config(true);
-
-    string config = "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "    \"option-def\": [ {"
-        "        \"name\": \"config-file\","
-        "        \"code\": 33,"
-        "        \"type\": \"string\","
-        "        \"space\": \"vendor-4491\""
-        "     } ],"
-        "    \"option-data\": [ {"
-        "          \"name\": \"config-file\","
-        "          \"space\": \"vendor-4491\","
-        "          \"data\": \"normal_erouter_v6.cm\""
-        "        }],"
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"renew-timer\": 1000, "
-        "    \"rebind-timer\": 1000, "
-        "    \"preferred-lifetime\": 3000,"
-        "    \"valid-lifetime\": 4000,"
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-
-    ASSERT_NO_THROW(configure(config));
-
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    sol->setIface("eth0");
-    sol->setIndex(ETH0_INDEX);
-    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
-
-    // Pass it to the server and get an advertise
-    AllocEngine::ClientContext6 ctx;
-    bool drop = false;
-    srv_.initContext(sol, ctx, drop);
-    ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(ctx);
-
-    // check if we get response at all
-    ASSERT_TRUE(adv);
-
-    // We did not include any vendor opts in SOLICIT, so there should be none
-    // in ADVERTISE.
-    ASSERT_FALSE(adv->getOption(D6O_VENDOR_OPTS));
-
-    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
-    // That suboption has code 1 and is a docsis ORO option.
-    boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
-                                                                          DOCSIS3_V6_ORO));
-    vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
-    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
-    vendor->addOption(vendor_oro);
-    sol->addOption(vendor);
-
-    // Need to process SOLICIT again after requesting new option.
-    AllocEngine::ClientContext6 ctx2;
-    srv_.initContext(sol, ctx2, drop);
-    ASSERT_FALSE(drop);
-    adv = srv_.processSolicit(ctx2);
-    ASSERT_TRUE(adv);
-
-    // Check if there is vendor option response
-    OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
-    ASSERT_TRUE(tmp);
-
-    // The response should be OptionVendor object
-    boost::shared_ptr<OptionVendor> vendor_resp =
-        boost::dynamic_pointer_cast<OptionVendor>(tmp);
-    ASSERT_TRUE(vendor_resp);
-
-    OptionPtr docsis33 = vendor_resp->getOption(33);
-    ASSERT_TRUE(docsis33);
-
-    OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
-    ASSERT_TRUE(config_file);
-    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+// Same as vendorOptionsORO except a different vendor ID than Cable Labs is
+// provided and vendor options are expected to not be present in the response.
+TEST_F(VendorOptsTest, vendorOptionsORODifferentVendorID) {
+    testVendorOptionsORO(32768);
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
