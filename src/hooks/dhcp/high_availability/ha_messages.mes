@@ -481,6 +481,11 @@ This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
 
+% HA_PAUSE_CLIENT_LISTENER_FAILED Pausing mutli-threaded HTTP processing failed: %1
+This error message is emitted when an attempting to pause HA's HTTP client and
+the listener threads. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
 % HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
 This warning message indicates a problem with communication with a HA peer
 while sending the ha-reset command. The first argument specifies a remote
@@ -495,6 +500,11 @@ remote server name. The second argument specifies a reason for failure.
 This error message is issued to indicate that the ha-reset command handler
 failed while processing the command. The argument provides the reason for
 failure.
+
+% HA_RESUME_CLIENT_LISTENER_FAILED Resuming mutli-threaded HTTP processing failed: %1
+This error message is emitted when an attempting to resume HA's HTTP client and
+the listener threads.  This is unlikely to occur and indicates a programmatic
+issue that should be reported as a defect.
 
 % HA_SCOPES_HANDLER_FAILED ha-scopes command failed: %1
 This error message is issued to indicate that the ha-scopes command handler

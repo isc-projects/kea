@@ -1,3 +1,11 @@
+1899.	[func]		tmark,razvan
+	In HA+Mt mode, the HA hook library now pauses and resumes
+	its worker threads when Kea core enters and exits critical
+	sections, respectively.  This eliminates race conditions
+	during core processing such as reconfiguration, shutdown,
+	and certain RESTful API commands.
+	(Gitlab #1818)
+
 1898.	[func]		fdupont
 	The DROP class may now depend on the KNOWN or UNKNOWN classes
 	and may be used after the host reservation lookup.

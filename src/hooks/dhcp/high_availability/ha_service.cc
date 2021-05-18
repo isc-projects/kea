@@ -2831,23 +2831,37 @@ HAService::startClientAndListener() {
 
 void
 HAService::pauseClientAndListener() {
-    if (client_) {
-        client_->pause();
-    }
+    // Since we're used as CS callback we need to suppress
+    // any exceptions, unlikey though they may be.
+    try {
+        if (client_) {
+            client_->pause();
+        }
 
-    if (listener_) {
-        listener_->pause();
+        if (listener_) {
+            listener_->pause();
+        }
+    } catch (std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_FAILED)
+                  .arg(ex.what());
     }
 }
 
 void
 HAService::resumeClientAndListener() {
-    if (client_) {
-        client_->resume();
-    }
+    // Since we're used as CS callback we need to suppress
+    // any exceptions, unlikey though they may be.
+    try {
+        if (client_) {
+            client_->resume();
+        }
 
-    if (listener_) {
-        listener_->resume();
+        if (listener_) {
+            listener_->resume();
+        }
+    } catch (std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_RESUME_CLIENT_LISTENER_FAILED)
+                  .arg(ex.what());
     }
 }
 

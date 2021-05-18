@@ -39,7 +39,7 @@ struct NamedCallback {
 
 /// @brief Maintains list of unique NamedCallbacks.
 ///
-/// The list emphasizes iteration order and speed over 
+/// The list emphasizes iteration order and speed over
 /// retrieval by name. When iterating over the list of
 /// callbacks, they are returned in the order they were
 /// added, not by name.

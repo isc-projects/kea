@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -126,8 +126,13 @@ MultiThreadingMgr::stopProcessing() {
         }
 
         for (auto cb : critical_entry_cbs_.getCallbacks() ) {
-            // @todo need to think about what we do with exceptions
-            (cb.callback_)();
+            try {
+                (cb.callback_)();
+            } catch (...) {
+                // We can't log it and throwing could be chaos.
+                // We'll swallow it and tell people their callbacks
+                // must be exception-proof
+            }
         }
     }
 }
@@ -140,8 +145,13 @@ MultiThreadingMgr::startProcessing() {
         }
 
         for (auto cb : critical_exit_cbs_.getCallbacks() ) {
-            // @todo need to think about what we do with exceptions
-            (cb.callback_)();
+           try {
+                (cb.callback_)();
+            } catch (...) {
+                // We can't log it and throwing could be chaos.
+                // We'll swallow it and tell people their callbacks
+                // must be exception-proof
+            }
         }
     }
 }

@@ -132,10 +132,14 @@ public:
 
     /// @brief Adds a pair of callbacks to the list of CriticalSection callbacks.
     ///
+    /// @note Callbacks must be exception-safe, handling any errors themselves.
+    ///
     /// @param name Name of the set of callbacks. This value is used by the
-    /// callback owner to remove or replace them.Duplicates are not allowed.
-    /// @param entry_cb Callback to invoke upon CriticalSection entry.
-    /// @param exit_cb Callback to invoke upon CriticalSection exit.
+    /// callback owner to add and remove them. Duplicates are not allowed.
+    /// @param entry_cb Callback to invoke upon CriticalSection entry. Cannot be
+    /// empty.
+    /// @param exit_cb Callback to invoke upon CriticalSection exit. Cannot be
+    /// be empty.
     void addCriticalSectionCallbacks(const std::string& name,
                                      const NamedCallback::Callback& entry_cb,
                                      const NamedCallback::Callback& exit_cb);
@@ -143,7 +147,8 @@ public:
     /// @brief Removes the set of callbacks associated with a given name
     /// from the list of CriticalSection callbacks.
     ///
-    /// If the name is not found in the list, it simply returns.
+    /// If the name is not found in the list, it simply returns, otherwise
+    /// both callbacks registered under the name are removed.
     ///
     /// @param name Name of the set of callbacks to remove.
     void removeCriticalSectionCallbacks(const std::string& name);
@@ -166,6 +171,10 @@ private:
     /// Stops the DHCP thread pool if it's running and invokes
     /// all CriticalSection entry callbacks.  Has no effect
     /// in single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by exit
+    /// callbacks without logging to avoid breaking the CS
+    /// chain.
     void stopProcessing();
 
     /// @brief Class method (re)starts non-critical processing.
@@ -173,6 +182,10 @@ private:
     /// Starts the DHCP thread pool according to current configuration,
     /// and invokes all CriticalSection exit callbacks. Has no effect
     /// in single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by entry
+    /// callbacks without logging to avoid breaking the CS
+    /// chain.
     void startProcessing();
 
     /// @brief The current multi-threading mode.
