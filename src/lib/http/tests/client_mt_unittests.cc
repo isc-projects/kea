@@ -634,7 +634,7 @@ public:
         ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
         ASSERT_TRUE(client_);
 
-        // Client shoudl be running. Check convenience functions.
+        // Client should be running. Check convenience functions.
         ASSERT_TRUE(client_->isRunning());
         ASSERT_FALSE(client_->isPaused());
         ASSERT_FALSE(client_->isStopped());
