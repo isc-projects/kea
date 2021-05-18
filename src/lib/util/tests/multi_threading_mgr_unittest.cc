@@ -326,25 +326,25 @@ TEST(MultiThreadingMgrTest, criticalSection) {
 /// @brief Test fixture for exercised CriticalSection callbacks.
 class CriticalSectionCallbackTest : public ::testing::Test {
 public:
-    /// @Brief Constructor.
-    CriticalSectionCallbackTest() {};
+    /// @brief Constructor.
+    CriticalSectionCallbackTest() {}
 
-    /// @Brief A callback that adds the value, 1, to invocations lists.
+    /// @brief A callback that adds the value, 1, to invocations lists.
     void one() {
         invocations_.push_back(1);
     }
 
-    /// @Brief A callback that adds the value, 2, to invocations lists.
+    /// @brief A callback that adds the value, 2, to invocations lists.
     void two() {
         invocations_.push_back(2);
     }
 
-    /// @Brief A callback that adds the value, 3, to invocations lists.
+    /// @brief A callback that adds the value, 3, to invocations lists.
     void three() {
         invocations_.push_back(3);
     }
 
-    /// @Brief A callback that adds the value, 4, to invocations lists.
+    /// @brief A callback that adds the value, 4, to invocations lists.
     void four() {
         invocations_.push_back(4);
     }
@@ -357,16 +357,16 @@ public:
     }
 
     /// @brief Checks callback invocations over a series of nested
-    /// CriticalSecitons.
+    /// CriticalSections.
     ///
     /// @param entries A vector of the invocation values that should
     /// be present after entry into the outermost CriticalSection.  The
-    /// expected  values should be in the order the callbacks were
-    /// added to the  MultiThreadingMgr's list of callbacks.
+    /// expected values should be in the order the callbacks were added
+    /// to the MultiThreadingMgr's list of callbacks.
     /// @param exits A vector of the invocation values that should
-    /// be present after exiting the CriticalSection.  The expected
-    /// values should be in the order the callbacks were added to the
-    /// MultiThreadingMgr's list of callbacks.
+    /// be present after exiting the outermost CriticalSection.  The
+    /// expected values should be in the order the callbacks were added
+    /// to the MultiThreadingMgr's list of callbacks.
     void runCriticalSections(std::vector<int> entries, std::vector<int>exits) {
         // Pool must be running.
         ASSERT_TRUE(isThreadPoolRunning());
@@ -384,7 +384,7 @@ public:
 
             if (entries.size()) {
                 // We expect entry invocations.
-                ASSERT_TRUE(invocations_ ==  entries);
+                ASSERT_TRUE(invocations_ == entries);
             } else {
                 // We do not expect entry invocations.
                 ASSERT_FALSE(invocations_.size());
@@ -397,14 +397,14 @@ public:
                 // Enter another CriticalSection.
                 MultiThreadingCriticalSection inner_cs;
 
-                // thread pool should still be stopped
+                // Thread pool should still be stopped
                 ASSERT_FALSE(isThreadPoolRunning());
 
                 // We should not have had any callback invocations.
                 ASSERT_FALSE(invocations_.size());
             }
 
-            // After exiting inner setion, the thread pool should
+            // After exiting inner section, the thread pool should
             // still be stopped
             ASSERT_FALSE(isThreadPoolRunning());
 
@@ -412,20 +412,20 @@ public:
             ASSERT_FALSE(invocations_.size());
         }
 
-        // After exiting the outer setion, the thread pool should
+        // After exiting the outer section, the thread pool should
         // match the thread count.
         ASSERT_TRUE(isThreadPoolRunning());
 
         if (exits.size()) {
             // We expect exit invocations.
-            ASSERT_TRUE(invocations_ ==  exits);
+            ASSERT_TRUE(invocations_ == exits);
         } else {
             // We do not expect exit invocations.
             ASSERT_FALSE(invocations_.size());
         }
     }
 
-    /// @Brief A list of values set by callback invocations.
+    /// @brief A list of values set by callback invocations.
     std::vector<int> invocations_;
 };
 

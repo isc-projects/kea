@@ -937,6 +937,8 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
 
     // Starting again should succeed.
     ASSERT_NO_THROW_LOG(client->start());
+
+    // Verify we didn't break it.
     ASSERT_EQ(client->getThreadCount(), 3);
     ASSERT_TRUE(client->getThreadIOService());
     ASSERT_FALSE(client->getThreadIOService()->stopped());

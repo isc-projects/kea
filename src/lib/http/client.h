@@ -136,8 +136,6 @@ public:
     ///
     /// @param io_service IO service to be used by the HTTP client.
     /// @param thread_pool_size maximum number of threads in the thread pool.
-    /// @param defer_thread_start if true, the thread pool will be created but
-    /// not started. Applicable only when thread-pool-size is greater than zero.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
     /// (default) enables single-threaded mode with one connection per URL.

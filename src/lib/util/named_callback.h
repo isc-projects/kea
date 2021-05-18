@@ -27,13 +27,12 @@ struct NamedCallback {
     /// @param name Name by which the callback can be found.
     /// @param cb Callback associated with name.
     NamedCallback(const std::string& name, const Callback& cb)
-        : name_(name), callback_(cb) {
-    };
+        : name_(name), callback_(cb) {}
 
-    /// @Brief Name by which the callback can be found.
+    /// @brief Name by which the callback can be found.
     std::string name_;
 
-    /// @Brief Callback associated with name.
+    /// @brief Callback associated with name.
     Callback callback_;
 };
 
@@ -46,7 +45,7 @@ struct NamedCallback {
 class NamedCallbackList {
 public:
     /// @brief Constructor.
-    NamedCallbackList(){};
+    NamedCallbackList() {}
 
     /// @brief Adds a callback to the list.
     ///
@@ -70,7 +69,7 @@ public:
 
 private:
     /// @brief The list of callbacks.
-    std::list<NamedCallback>  callbacks_;
+    std::list<NamedCallback> callbacks_;
 };
 
 }  // namespace util

@@ -187,7 +187,7 @@ public:
     uint16_t getThreadCount() const;
 
 private:
-    /// @brief Maxim number of threads in the thread pool.
+    /// @brief Maximum number of threads in the thread pool.
     size_t pool_size_;
 
     /// @brief Pointer to private IOService used in multi-threaded mode.

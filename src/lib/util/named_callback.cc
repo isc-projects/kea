@@ -19,7 +19,7 @@ void
 NamedCallbackList::addCallback(const std::string& name, const NamedCallback::Callback& cb) {
     if (!cb) {
         isc_throw(BadValue, "NamedCallbackList - callback: " << name
-                      << ", cannot be empty");
+                  << ", cannot be empty");
     }
 
     for (auto const& callback : callbacks_) {
@@ -34,13 +34,11 @@ NamedCallbackList::addCallback(const std::string& name, const NamedCallback::Cal
 
 void
 NamedCallbackList::removeCallback(const std::string& name) {
-    for (auto it = callbacks_.begin(); it != callbacks_.end(); ) {
+    for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
         if ((*it).name_ == name) {
-            it = callbacks_.erase(it);
+            callbacks_.erase(it);
             break;
         }
-
-        ++it;
     }
 }
 

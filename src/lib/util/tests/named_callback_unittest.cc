@@ -20,28 +20,36 @@ namespace {
 
 class NamedCallbackListTest : public ::testing::Test {
 public:
-    NamedCallbackListTest() {};
+    /// @brief Constructor.
+    NamedCallbackListTest() {}
 
+    /// @brief A callback that adds the value, 1, to invocations lists.
     void one() {
         invocations_.push_back(1);
     }
 
+    /// @brief A callback that adds the value, 2, to invocations lists.
     void two() {
         invocations_.push_back(2);
     }
 
+    /// @brief A callback that adds the value, 3, to invocations lists.
     void three() {
         invocations_.push_back(3);
     }
 
+    /// @brief Run all callbacks.
     void runCallbacks() {
         invocations_.clear();
-        for (auto cb : cbs_.getCallbacks() ) {
+        for (const auto& cb : cbs_.getCallbacks()) {
             ASSERT_NO_THROW((cb.callback_)());
         }
     }
 
+    /// @brief A list of callbacks.
     NamedCallbackList cbs_;
+
+    /// @brief A list of values set by callback invocations.
     std::vector<int> invocations_;
 };
 
@@ -62,15 +70,6 @@ TEST_F(NamedCallbackListTest, basics) {
     ASSERT_THROW_MSG(cbs_.addCallback("one",
                                       std::bind(&NamedCallbackListTest::one, this)),
                      BadValue, "NamedCallbackList - callback: one, already exists");
-
-    for (auto cb : cbs_.getCallbacks() ) {
-        ASSERT_NO_THROW((cb.callback_)());
-    }
-
-    int i = 0;
-    for (auto invocation : invocations_) {
-        EXPECT_EQ(invocation, ++i);
-    }
 
     runCallbacks();
 

@@ -738,7 +738,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getPort(), port);
     EXPECT_EQ(listener_->getThreadPoolSize(), 1);
 
-    // It should not have an IOService, should not be listening
+    // It should not have an IOService, should not be listening and
     // should have no threads.
     ASSERT_FALSE(listener_->getThreadIOService());
     EXPECT_TRUE(listener_->isStopped());
@@ -763,7 +763,6 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getThreadCount(), 1);
     ASSERT_TRUE(listener_->getThreadIOService());
     EXPECT_FALSE(listener_->getThreadIOService()->stopped());
-    EXPECT_TRUE(listener_->isRunning());
 
     // Trying to start it again should fail.
     ASSERT_THROW_MSG(listener_->start(), InvalidOperation,
@@ -773,7 +772,6 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->stop());
     ASSERT_TRUE(listener_->isStopped());
     EXPECT_EQ(listener_->getThreadCount(), 0);
-    EXPECT_TRUE(listener_->isStopped());
     ASSERT_FALSE(listener_->getThreadIOService());
 
     // Make sure we can call stop again without problems.
@@ -795,6 +793,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->start());
     EXPECT_EQ(listener_->getAddress(), address);
     EXPECT_EQ(listener_->getPort(), port);
+    EXPECT_EQ(listener_->getThreadCount(), 4);
     EXPECT_EQ(listener_->getThreadPoolSize(), 4);
     ASSERT_TRUE(listener_->isRunning());
     ASSERT_TRUE(listener_->getThreadIOService());
@@ -805,6 +804,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->pause());
     ASSERT_TRUE(listener_->isPaused());
     EXPECT_EQ(listener_->getThreadCount(), 4);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 4);
     ASSERT_TRUE(listener_->getThreadIOService());
     EXPECT_TRUE(listener_->getThreadIOService()->stopped());
 
@@ -812,6 +812,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->resume());
     ASSERT_TRUE(listener_->isRunning());
     EXPECT_EQ(listener_->getThreadCount(), 4);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 4);
     ASSERT_TRUE(listener_->getThreadIOService());
     EXPECT_FALSE(listener_->getThreadIOService()->stopped());
 
@@ -819,6 +820,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     ASSERT_NO_THROW_LOG(listener_->stop());
     ASSERT_TRUE(listener_->isStopped());
     EXPECT_EQ(listener_->getThreadCount(), 0);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 4);
     ASSERT_FALSE(listener_->getThreadIOService());
     EXPECT_TRUE(listener_->isStopped());
 }

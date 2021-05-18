@@ -125,7 +125,7 @@ MultiThreadingMgr::stopProcessing() {
             thread_pool_.stop();
         }
 
-        for (auto cb : critical_entry_cbs_.getCallbacks() ) {
+        for (const auto& cb : critical_entry_cbs_.getCallbacks()) {
             try {
                 (cb.callback_)();
             } catch (...) {
@@ -144,8 +144,8 @@ MultiThreadingMgr::startProcessing() {
             thread_pool_.start(getThreadPoolSize());
         }
 
-        for (auto cb : critical_exit_cbs_.getCallbacks() ) {
-           try {
+        for (const auto& cb : critical_exit_cbs_.getCallbacks()) {
+            try {
                 (cb.callback_)();
             } catch (...) {
                 // We can't log it and throwing could be chaos.

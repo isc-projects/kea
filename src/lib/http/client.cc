@@ -1739,13 +1739,13 @@ public:
     /// @param io_service IOService that will drive connection IO in single
     /// threaded mode.  (Currently ignored in multi-threaded mode)
     /// @param thread_pool_size maximum number of concurrent threads
-    /// Internally this also sets the maximum number concurrent connections
+    /// Internally this also sets the maximum number of concurrent connections
     /// per URL.
-    /// @param defer_thread_start When true, creation of the pool threads is
+    /// @param defer_thread_start When true, starting of the pool threads is
     /// deferred until a subsequent call to @ref start(). In this case the
-    /// pool's operational state post-construction is STOPPED.  Otherwise,
-    /// the thread pool threads will be created and started, with the post-
-    /// construction state being RUNNING.  Applicable only when thread-pool size
+    /// pool's operational state after construction is STOPPED.  Otherwise,
+    /// the thread pool threads will be created and started, with the
+    /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
     HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)

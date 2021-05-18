@@ -57,9 +57,9 @@ TEST_F(HttpThreadPoolTest, deferredStartConstruction) {
     ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3, true)));
 
     // State should be stopped.
-    // Pool size should be 3
+    // Pool size should be 3.
     // IOService should be there.
-    // IOService is new, so it should not be stopped,
+    // IOService is new, so it should not be stopped.
     // No threads in the pool.
     ASSERT_TRUE(pool->isStopped());
     EXPECT_EQ(pool->getPoolSize(), 3);
@@ -77,8 +77,11 @@ TEST_F(HttpThreadPoolTest, startDuringConstruction) {
 
     ASSERT_NO_THROW_LOG(pool.reset(new HttpThreadPool(io_service_, 3)));
 
-    // Pool size should be 3, state should be RUNNING, IOService should
-    // set but not stopped, and we should have 3 threads in the pool.
+    // State should be running.
+    // Pool size should be 3.
+    // IOService should be there.
+    // IOService is new, so it should not be stopped.
+    // Should have 3 threads in the pool.
     ASSERT_TRUE(pool->isRunning());
     EXPECT_EQ(pool->getPoolSize(), 3);
     ASSERT_TRUE(pool->getIOService());

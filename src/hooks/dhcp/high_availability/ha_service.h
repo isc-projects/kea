@@ -1004,7 +1004,7 @@ public:
 
     /// @brief Start the client and(or) listener instances.
     ///
-    /// When HA+Mt is enabled it starts the client's thread pool
+    /// When HA+MT is enabled it starts the client's thread pool
     /// and the dedicated listener thread pool, if the listener exists.
     /// It registers pauseClientAndListener() and resumeClientAndListener()
     /// as the MultiThreading critical section entry and exit callbacks,
@@ -1030,7 +1030,7 @@ public:
     /// @brief Stop the client and(or) listener instances.
     ///
     /// It unregisters the MultiThreading critical section callbacks,
-    /// closes all connections, and the stops the thread pools for the client
+    /// closes all connections and stops the thread pools for the client
     /// and listener, if they exist.
     void stopClientAndListener();
 

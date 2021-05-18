@@ -139,7 +139,7 @@ public:
     /// @param entry_cb Callback to invoke upon CriticalSection entry. Cannot be
     /// empty.
     /// @param exit_cb Callback to invoke upon CriticalSection exit. Cannot be
-    /// be empty.
+    /// empty.
     void addCriticalSectionCallbacks(const std::string& name,
                                      const NamedCallback::Callback& entry_cb,
                                      const NamedCallback::Callback& exit_cb);
