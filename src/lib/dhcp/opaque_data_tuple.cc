@@ -113,5 +113,37 @@ std::istream& operator>>(std::istream& is, OpaqueDataTuple& tuple) {
     return (is);
 }
 
+void
+OpaqueDataTuple::unpack(OpaqueDataTuple::InputIterator begin, OpaqueDataTuple::InputIterator end) {
+    // The buffer must at least hold the size of the data.
+    if (std::distance(begin, end) < getDataFieldSize()) {
+        isc_throw(OpaqueDataTupleError,
+                    "unable to parse the opaque data tuple, the buffer"
+                    " length is " << std::distance(begin, end)
+                    << ", expected at least " << getDataFieldSize());
+    }
+    // Read the data length from the length field, depending on the
+    // size of the data field (1 or 2 bytes).
+    size_t len = getDataFieldSize() == 1 ? *begin :
+        isc::util::readUint16(&(*begin), std::distance(begin, end));
+    // Now that we have the expected data size, let's check that the
+    // reminder of the buffer is long enough.
+    begin += getDataFieldSize();
+    // Attempt to parse as a length-value pair.
+    if (std::distance(begin, end) < len) {
+        if (Option::lenient_parsing_) {
+            // Fallback to parsing the rest of the option as a single value.
+            len = std::distance(begin, end);
+        } else {
+            isc_throw(OpaqueDataTupleError,
+                        "unable to parse the opaque data tuple, "
+                        "the buffer length is " << std::distance(begin, end)
+                        << ", but the tuple length is " << len);
+        }
+    }
+    // The buffer length is long enough to read the desired amount of data.
+    assign(begin, len);
 }
-}
+
+}  // namespace dhcp
+}  // namespace isc

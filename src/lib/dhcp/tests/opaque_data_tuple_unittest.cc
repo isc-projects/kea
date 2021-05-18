@@ -48,14 +48,14 @@ TEST(OpaqueDataTuple, constructor) {
 // Test that the constructor which takes the buffer as argument parses the
 // wire data.
 TEST(OpaqueDataTuple, constructorParse1Byte) {
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         0x0B,                               // Length is 11
         0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
         0x77, 0x6F, 0x72, 0x6C, 0x64        // world
     };
 
-    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE, wire_data,
-                          wire_data + sizeof(wire_data));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE, wire_data.begin(),
+                          wire_data.end());
 
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
@@ -64,14 +64,14 @@ TEST(OpaqueDataTuple, constructorParse1Byte) {
 // Test that the constructor which takes the buffer as argument parses the
 // wire data.
 TEST(OpaqueDataTuple, constructorParse2Bytes) {
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         0x00, 0x0B,                         // Length is 11
         0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
         0x77, 0x6F, 0x72, 0x6C, 0x64        // world
     };
 
-    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES, wire_data,
-                          wire_data + sizeof(wire_data));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES, wire_data.begin(),
+                          wire_data.end());
 
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
@@ -85,24 +85,24 @@ TEST(OpaqueDataTuple, assignData) {
     OpaqueDataTuple::Buffer buf = tuple.getData();
     ASSERT_TRUE(buf.empty());
     // Prepare some input data and assign to the tuple.
-    const uint8_t data1[] = {
+    OpaqueDataTuple::Buffer data1 = {
         0xCA, 0xFE, 0xBE, 0xEF
     };
-    tuple.assign(data1, sizeof(data1));
+    tuple.assign(data1.begin(), data1.size());
     // Tuple should now hold the data we assigned.
-    ASSERT_EQ(sizeof(data1), tuple.getLength());
+    ASSERT_EQ(data1.size(), tuple.getLength());
     buf = tuple.getData();
-    EXPECT_TRUE(std::equal(buf.begin(), buf.end(), data1));
+    EXPECT_EQ(buf, data1);
 
     // Prepare the other set of data and assign to the tuple.
-    const uint8_t data2[] = {
+    OpaqueDataTuple::Buffer data2 = {
         1, 2, 3, 4, 5, 6
     };
-    tuple.assign(data2, sizeof(data2));
+    tuple.assign(data2.begin(), data2.size());
     // The new data should have replaced the old data.
-    ASSERT_EQ(sizeof(data2), tuple.getLength());
+    ASSERT_EQ(data2.size(), tuple.getLength());
     buf = tuple.getData();
-    EXPECT_TRUE(std::equal(buf.begin(), buf.end(), data2));
+    EXPECT_EQ(buf, data2);
 }
 
 // This test checks that it is possible to append the data to the tuple using
@@ -113,27 +113,27 @@ TEST(OpaqueDataTuple, appendData) {
     OpaqueDataTuple::Buffer buf = tuple.getData();
     ASSERT_TRUE(buf.empty());
     // Prepare some input data and append to the empty tuple.
-    const uint8_t data1[] = {
+    OpaqueDataTuple::Buffer data1 = {
         0xCA, 0xFE, 0xBE, 0xEF
     };
-    tuple.append(data1, sizeof(data1));
+    tuple.append(data1.begin(), data1.size());
     // The tuple should now hold only the data we appended.
-    ASSERT_EQ(sizeof(data1), tuple.getLength());
+    ASSERT_EQ(data1.size(), tuple.getLength());
     buf = tuple.getData();
-    EXPECT_TRUE(std::equal(buf.begin(), buf.end(), data1));
+    EXPECT_EQ(buf, data1);
     // Prepare the new set of data and append.
-    const uint8_t data2[] = {
+    OpaqueDataTuple::Buffer data2 = {
         1, 2, 3, 4, 5, 6
     };
-    tuple.append(data2, sizeof(data2));
+    tuple.append(data2.begin(), data2.size());
     // We expect that the tuple now has both sets of data we appended. In order
     // to verify that, we have to concatenate the input data1 and data2.
-    std::vector<uint8_t> data12(data1, data1 + sizeof(data1));
-    data12.insert(data12.end(), data2, data2 + sizeof(data2));
+    OpaqueDataTuple::Buffer data12(data1.begin(), data1.end());
+    data12.insert(data12.end(), data2.begin(), data2.end());
     // The size of the tuple should be a sum of data1 and data2 lengths.
-    ASSERT_EQ(sizeof(data1) + sizeof(data2), tuple.getLength());
+    ASSERT_EQ(data1.size() + data2.size(), tuple.getLength());
     buf = tuple.getData();
-    EXPECT_TRUE(std::equal(buf.begin(), buf.end(), data12.begin()));
+    EXPECT_EQ(buf, data12);
 }
 
 // This test checks that it is possible to assign the string to the tuple.
@@ -374,13 +374,13 @@ TEST(OpaqueDataTuple, pack2Bytes) {
 // This test verifies that the tuple is decoded from the wire format.
 TEST(OpaqueDataTuple, unpack1Byte) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         0x0B,                               // Length is 11
         0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
         0x77, 0x6F, 0x72, 0x6C, 0x64        // world
     };
 
-    ASSERT_NO_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)));
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
 }
@@ -392,10 +392,10 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
 
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         0
     };
-    ASSERT_NO_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)));
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
 
     EXPECT_EQ(0, tuple.getLength());
 }
@@ -404,26 +404,25 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
 // parsed.
 TEST(OpaqueDataTuple, unpack1ByteEmptyBuffer) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
-    const char wire_data[] = {
-        1, 2, 3
-    };
-    EXPECT_THROW(tuple.unpack(wire_data, wire_data), OpaqueDataTupleError);
+    OpaqueDataTuple::Buffer wire_data = {};
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
 }
 
 // This test verifies that exception is thrown when parsing truncated buffer.
 TEST(OpaqueDataTuple, unpack1ByteTruncatedBuffer) {
    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         10, 2, 3
     };
-    EXPECT_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)),
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
                  OpaqueDataTupleError);
 }
 
 // This test verifies that the tuple is decoded from the wire format.
 TEST(OpaqueDataTuple, unpack2Byte) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
-    std::vector<uint8_t> wire_data;
+    OpaqueDataTuple::Buffer wire_data;
     // Set tuple length to 400 (0x190).
     wire_data.push_back(1);
     wire_data.push_back(0x90);
@@ -448,11 +447,11 @@ TEST(OpaqueDataTuple, unpack2ByteZeroLength) {
     EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
     // The buffer holds just a length field with the value of 0.
-    const char wire_data[] = {
+    OpaqueDataTuple::Buffer wire_data = {
         0, 0
     };
     // The empty tuple should be successfully decoded.
-    ASSERT_NO_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)));
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     // The data should be replaced with an empty buffer.
     EXPECT_EQ(0, tuple.getLength());
 }
@@ -461,14 +460,11 @@ TEST(OpaqueDataTuple, unpack2ByteZeroLength) {
 // parsed.
 TEST(OpaqueDataTuple, unpack2ByteEmptyBuffer) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
-    //  Initialize the input buffer with some data, just to avoid initializing
-    // empty array.
-    const char wire_data[] = {
-        1, 2, 3
-    };
+    OpaqueDataTuple::Buffer wire_data = {};
     // Pass empty buffer (first iterator equal to second iterator).
     // This should not be accepted.
-    EXPECT_THROW(tuple.unpack(wire_data, wire_data), OpaqueDataTupleError);
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
 }
 
 // This test verifies that exception is thrown when parsing truncated buffer.
@@ -476,11 +472,11 @@ TEST(OpaqueDataTuple, unpack2ByteTruncatedBuffer) {
    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
    // Specify the data with the length of 10, but limit the buffer size to
    // 2 bytes.
-   const char wire_data[] = {
+   OpaqueDataTuple::Buffer wire_data = {
        0, 10, 2, 3
    };
    // This should fail because the buffer is truncated.
-   EXPECT_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)),
+   EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
                 OpaqueDataTupleError);
 }
 
@@ -488,10 +484,10 @@ TEST(OpaqueDataTuple, unpack2ByteTruncatedBuffer) {
 TEST_F(OpaqueDataTupleLenientParsing, unpack) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Specify the data with the length of 10, but limit the buffer size to 2.
-    const char wire_data[] = {
+   OpaqueDataTuple::Buffer wire_data = {
         0, 10, 2, 3
     };
-    EXPECT_NO_THROW(tuple.unpack(wire_data, wire_data + sizeof(wire_data)));
+    EXPECT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     EXPECT_EQ(tuple.getData(), OpaqueDataTuple::Buffer({2, 3}));
 }
 
