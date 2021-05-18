@@ -1457,13 +1457,17 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
     std::vector<uint16_t> requested_opts;
 
-    // Let's try to get ORO within that vendor-option
-    /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
-    /// may have different policies.
-    boost::shared_ptr<OptionUint16Array> oro;
-    if (vendor_req) {
+    // Let's try to get ORO within that vendor-option.
+    // This is specific to vendor-id=4491 (Cable Labs). Other vendors may have
+    // different policies.
+    OptionUint16ArrayPtr oro;
+    if (vendor_id == VENDOR_ID_CABLE_LABS && vendor_req) {
         OptionPtr oro_generic = vendor_req->getOption(DOCSIS3_V6_ORO);
         if (oro_generic) {
+            // Vendor ID 4491 makes Kea look at DOCSIS3_V6_OPTION_DEFINITIONS
+            // when parsing options. Based on that, oro_generic will have been
+            // created as an OptionUint16Array, but might not be for other
+            // vendor IDs.
             oro = boost::dynamic_pointer_cast<OptionUint16Array>(oro_generic);
             if (oro) {
                 requested_opts = oro->getValues();
