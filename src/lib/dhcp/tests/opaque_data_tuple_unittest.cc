@@ -22,12 +22,15 @@ using namespace isc::util;
 namespace {
 
 struct OpaqueDataTupleLenientParsing : ::testing::Test {
-    OpaqueDataTupleLenientParsing() : previous_(Option::lenient_parsing_) {
+    void SetUp() final override {
+        // Retain the current setting for future restoration.
+        previous_ = Option::lenient_parsing_;
+
         // Enable lenient parsing.
         Option::lenient_parsing_ = true;
     }
 
-    ~OpaqueDataTupleLenientParsing() {
+    void TearDown() final override {
         // Restore.
         Option::lenient_parsing_ = previous_;
     }

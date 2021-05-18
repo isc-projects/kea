@@ -19,12 +19,15 @@ using namespace isc::util;
 namespace {
 
 struct OptionVendorClassLenientParsing : ::testing::Test {
-    OptionVendorClassLenientParsing() : previous_(Option::lenient_parsing_) {
+    void SetUp() final override {
+        // Retain the current setting for future restoration.
+        previous_ = Option::lenient_parsing_;
+
         // Enable lenient parsing.
         Option::lenient_parsing_ = true;
     }
 
-    ~OptionVendorClassLenientParsing() {
+    void TearDown() final override {
         // Restore.
         Option::lenient_parsing_ = previous_;
     }
