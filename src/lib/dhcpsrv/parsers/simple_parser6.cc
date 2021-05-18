@@ -95,7 +95,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "cache-max-age",                  Element::integer },
     { "ip-reservations-unique",         Element::boolean },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "compatibility",                  Element::map },
 };
 
 /// @brief This table defines default global values for DHCPv6

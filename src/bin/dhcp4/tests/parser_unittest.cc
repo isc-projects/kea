@@ -294,7 +294,7 @@ TEST(ParserTest, file) {
     }
 }
 
-// This test loads the all-keys.json file and check global parameters.
+// This test loads the all-keys.json file and checks global parameters.
 TEST(ParserTest, globalParameters) {
     ConstElementPtr json;
     Parser4Context ctx;
