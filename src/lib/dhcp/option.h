@@ -452,6 +452,15 @@ public:
     virtual bool equals(const Option& other) const;
 
     /// @brief Governs whether options should be parsed less strictly.
+    ///
+    /// Populated on configuration commit.
+    ///
+    /// When enabled:
+    /// * Tuples are parsed as length-value pairs as usual, but if a length
+    /// surpasses the total option length, the rest of the option buffer is
+    /// parsed as the next value. This more commonly affects DHCPv6's vendor
+    /// class option (16), but it also affects custom options that are defined
+    /// with tuple fields.
     static bool lenient_parsing_;
 
 protected:

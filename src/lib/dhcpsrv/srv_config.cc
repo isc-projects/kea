@@ -892,7 +892,7 @@ SrvConfig::setIPReservationsUnique(const bool unique) {
 }
 
 void
-SrvConfig::injectIntoDependencies() const {
+SrvConfig::propagateParametersToLowerLevelLibraries() const {
     Option::lenient_parsing_ = lenient_option_parsing_;
 }
 

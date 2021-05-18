@@ -862,12 +862,14 @@ public:
         return lenient_option_parsing_;
     }
 
-    /// @brief Convenience method to inject configuration parameters into
-    /// internal libraries that don't have access to the server's current
-    /// configuration
+    /// @brief Convenience method to propagate configuration parameters through
+    /// inversion of control.
     ///
-    /// Happen on configuration commit.
-    void injectIntoDependencies() const;
+    /// To be used as a last resort when CfgMgr::instance().getCurrentCfg()
+    /// can't be easily called from where the configuration parameter is used,
+    /// usually because that particular library is lower in the dependency tree.
+    /// Happens on configuration commit.
+    void propagateParametersToLowerLevelLibraries() const;
 
 private:
 

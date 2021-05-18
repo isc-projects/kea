@@ -7029,3 +7029,45 @@ be loaded when the Kea server instance is to be used for managing the
 configuration in the database. See the :ref:`cb-cmds-library` section for
 details. Note that this hooks library is only available to ISC
 customers with a support contract.
+
+.. _dhcp4-compatibility:
+
+Kea DHCPv4 Compatibility Configuration Parameters
+=================================================
+
+By default, Kea aims to follow the RFC documents to promote better standards
+compliance. However, there are buggy implementations out there that cannot be
+easily fixed or upgraded. Therefore Kea provides an easy to use compatibility
+mode for broken or non-compliant clients. In that purpose, flags have to be
+enabled in order to enable uncommon practices:
+
+.. code-block:: json
+
+    {
+      "Dhcp4": {
+        "compatibility": {
+        }
+      }
+    }
+
+Lenient Option Parsing
+----------------------
+
+By default, tuple fields defined in custom options is parsed as a set of
+length-value pairs.
+
+With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
+the option's buffer, Kea no longer complains with the log message ``unable to
+parse the opaque data tuple, the buffer length is x, but the tuple length is y``
+with ``x < y``. Instead, the value is considered to be the rest of the buffer,
+or in terms of the log message above, the tuple length ``y`` becomes ``x``.
+
+.. code-block:: json
+
+    {
+      "Dhcp4": {
+        "compatibility": {
+          "lenient-option-parsing": true
+        }
+      }
+    }

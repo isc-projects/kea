@@ -320,7 +320,7 @@ public:
         /// Used while parsing config-control/config-databases
         CONFIG_DATABASE,
 
-        /// Used while parsing compatibility parmaeters
+        /// Used while parsing compatibility parameters
         COMPATIBILITY,
 
     } ParserContext;

@@ -1,9 +1,12 @@
 1897.	[func]		andrei
-	More lenient option parsing can now be configured in Kea.
-	For now, as part of it, in the process of parsing DHCPv6 option
-	16's vendor-class-data field as a set of length-value pairs, if
-	a length ever exceeds the rest of the option's buffer, the value
-	is considered to be the rest of the buffer.
+	Kea has a new configuration section called "compatibility" geared
+	towards non-compliant clients. The only boolean parameter added
+	for now called "lenient-option-parsing" changes the way DHCPv6
+	option 16's vendor-class-data field is parsed. When enabled,
+	instead of complaining that a length exceeds the rest of the
+	option's buffer, the value is considered to be the rest of the
+	buffer. This also applies to custom options defined with the
+	tuple type for both DHCPv4 and DHCPv6.
 
 1896.	[func]		wlodek
 	Perfdhcp extended to send v6 traffic from multiple networks.

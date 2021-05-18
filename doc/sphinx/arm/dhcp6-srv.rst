@@ -6949,18 +6949,43 @@ The configuration structure is almost identical to that of the DHCPv4 server
 Kea DHCPv6 Compatibility Configuration Parameters
 =================================================
 
-Kea is friendly towards broken or non-compliant clients. In that purpose, flags
-have to be enabled in order to keep Kea's default behavior of conforming to RFCs
-or to common practices.
+By default, Kea aims to follow the RFC documents to promote better standards
+compliance. However, there are buggy implementations out there that cannot be
+easily fixed or upgraded. Therefore Kea provides an easy to use compatibility
+mode for broken or non-compliant clients. In that purpose, flags have to be
+enabled in order to enable uncommon practices:
+
+.. code-block:: json
+
+    {
+      "Dhcp6": {
+        "compatibility": {
+        }
+      }
+    }
+
 
 Lenient Option Parsing
 ----------------------
 
 By default, DHCPv6 option 16's vendor-class-data field is parsed as a set of
-length-value pairs.
+length-value pairs. Same for tuple fields defined in custom options.
 
 With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
 the option's buffer, Kea no longer complains with the log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
 with ``x < y``. Instead, the value is considered to be the rest of the buffer,
 or in terms of the log message above, the tuple length ``y`` becomes ``x``.
+
+Enabling this flag is expected to improve compatibility with devices such as RAD
+MiNID.
+
+.. code-block:: json
+
+    {
+      "Dhcp6": {
+        "compatibility": {
+          "lenient-option-parsing": true
+        }
+      }
+    }
