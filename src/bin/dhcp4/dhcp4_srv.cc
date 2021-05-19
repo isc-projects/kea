@@ -264,8 +264,6 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                                   static_cast<int64_t>(1));
         drop = true;
     }
-
-
 }
 
 void
