@@ -8,7 +8,8 @@
 #define MULTI_THREADING_MGR_H
 
 #include <util/thread_pool.h>
-#include <util/named_callback.h>
+#include <functional>
+#include <list>
 
 #include <boost/noncopyable.hpp>
 
@@ -16,6 +17,77 @@
 
 namespace isc {
 namespace util {
+
+
+/// @brief Embodies a named pair of CriticalSection callbacks.
+///
+/// This class associates a pair of callbacks, one to be invoked
+/// upon CriticalSection entry and the other invoked upon
+/// CriticalSection exit, with name.  The name allows the pair
+/// to be uniquely identified such that they can be added and
+/// removed as needed.
+struct CSCallbackPair {
+    /// @brief Defines a callback as a simple void() functor.
+    typedef std::function<void()> Callback;
+
+    /// @brief Constructor
+    ///
+    /// @param name Name by which the callbacks can be found.
+    /// @param entry_cb Callback to invoke upon CriticalSection entry.
+    /// @param entry_cb Callback to invoke upon CriticalSection exit.
+    CSCallbackPair(const std::string& name, const Callback& entry_cb,
+                   const Callback& exit_cb)
+        : name_(name), entry_cb_(entry_cb), exit_cb_(exit_cb) {}
+
+    /// @brief Name by which the callback can be found.
+    std::string name_;
+
+    /// @brief Entry point callback associated with name.
+    Callback entry_cb_;
+
+    /// @brief Exit point callback associated with name.
+    Callback exit_cb_;
+};
+
+/// @brief Maintains list of unique CSCallbackPairs.
+///
+/// The list emphasizes iteration order and speed over
+/// retrieval by name. When iterating over the list of
+/// callback pairs, they are returned in the order they were
+/// added, not by name.
+class CSCallbackPairList {
+public:
+    /// @brief Constructor.
+    CSCallbackPairList() {}
+
+    /// @brief Adds a callback pair to the list.
+    ///
+    /// @param name Name of the callback to add.
+    /// @param entry_cb Callback to add.
+    /// @param exit_cb Callback to add.
+    ///
+    /// @throw BadValue if the name is already in the list,
+    /// the name is blank, or either callback is empty.
+    void addCallbackPair(const std::string& name,
+                         const CSCallbackPair::Callback& entry_cb,
+                         const CSCallbackPair::Callback& exit_cb);
+
+    /// @brief Removes a callback pair from the list.
+    ///
+    /// @param name Name of the callback to remove.
+    /// If no such callback exists, it simply returns.
+    void removeCallbackPair(const std::string& name);
+
+    /// @brief Removes all callbacks from the list.
+    void removeAll();
+
+    /// @brief Fetches the list of callbacks pairs.
+    const std::list<CSCallbackPair>& getCallbackPairs();
+
+private:
+    /// @brief The list of callback pairs.
+    std::list<CSCallbackPair> cb_pairs_;
+};
 
 /// @brief Multi Threading Manager.
 ///
@@ -141,8 +213,8 @@ public:
     /// @param exit_cb Callback to invoke upon CriticalSection exit. Cannot be
     /// empty.
     void addCriticalSectionCallbacks(const std::string& name,
-                                     const NamedCallback::Callback& entry_cb,
-                                     const NamedCallback::Callback& exit_cb);
+                                     const CSCallbackPair::Callback& entry_cb,
+                                     const CSCallbackPair::Callback& exit_cb);
 
     /// @brief Removes the set of callbacks associated with a given name
     /// from the list of CriticalSection callbacks.
@@ -208,11 +280,8 @@ private:
     /// @brief Packet processing thread pool.
     ThreadPool<std::function<void()>> thread_pool_;
 
-    /// @brief List of callbacks to invoke upon CriticalSection entry.
-    NamedCallbackList critical_entry_cbs_;
-
-    /// @brief List of callbacks to invoke upon CriticalSection exit.
-    NamedCallbackList critical_exit_cbs_;
+    /// @brief List of CriticalSection entry and exit callback pairs.
+    CSCallbackPairList cs_callbacks_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.

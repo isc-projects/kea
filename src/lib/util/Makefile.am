@@ -18,7 +18,6 @@ libkea_util_la_SOURCES += labeled_value.h labeled_value.cc
 libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 libkea_util_la_SOURCES += multi_threading_mgr.h multi_threading_mgr.cc
-libkea_util_la_SOURCES += named_callback.h named_callback.cc
 libkea_util_la_SOURCES += optional.h
 libkea_util_la_SOURCES += pid_file.h pid_file.cc
 libkea_util_la_SOURCES += pointer_util.h
@@ -67,7 +66,6 @@ libkea_util_include_HEADERS = \
 	memory_segment.h \
 	memory_segment_local.h \
 	multi_threading_mgr.h \
-	named_callback.h \
 	optional.h \
 	pid_file.h \
 	pointer_util.h \

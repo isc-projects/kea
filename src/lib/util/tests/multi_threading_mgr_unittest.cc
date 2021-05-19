@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -384,6 +385,12 @@ public:
 
             if (entries.size()) {
                 // We expect entry invocations.
+                ASSERT_EQ(invocations_.size(), entries.size());
+                for (auto val :invocations_) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+
                 ASSERT_TRUE(invocations_ == entries);
             } else {
                 // We do not expect entry invocations.
@@ -397,7 +404,7 @@ public:
                 // Enter another CriticalSection.
                 MultiThreadingCriticalSection inner_cs;
 
-                // Thread pool should still be stopped
+                // Thread pool should still be stopped.
                 ASSERT_FALSE(isThreadPoolRunning());
 
                 // We should not have had any callback invocations.
@@ -405,7 +412,7 @@ public:
             }
 
             // After exiting inner section, the thread pool should
-            // still be stopped
+            // still be stopped.
             ASSERT_FALSE(isThreadPoolRunning());
 
             // We should not have had more callback invocations.
@@ -429,8 +436,45 @@ public:
     std::vector<int> invocations_;
 };
 
+/// @brief Verifies that critical section callback maintenance.
+/// Catch invalid pairs, add pairs, remover pairs.
+TEST_F(CriticalSectionCallbackTest, addAndRemove) {
+    auto& mgr = MultiThreadingMgr::instance();
+
+    // Cannot add with a blank name.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("", [](){}, [](){}),
+                     BadValue, "CSCallbackPairList - name cannot be empty");
+
+    // Cannot add with an empty entry callback.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", nullptr, [](){}),
+                     BadValue, "CSCallbackPairList - entry callback for bad cannot be empty");
+
+    // Cannot add with an empty exit callback.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, nullptr),
+                     BadValue, "CSCallbackPairList - exit callback for bad cannot be empty");
+
+    // Should be able to add foo.
+    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}));
+
+    // Should not be able to add foo twice.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}),
+                     BadValue, "CSCallbackPairList - callbacks for foo already exist");
+
+    // Should be able to add bar.
+    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("bar", [](){}, [](){}));
+
+    // Should be able to remove foo.
+    ASSERT_NO_THROW_LOG(mgr.removeCriticalSectionCallbacks("foo"));
+
+    // Should be able to remove foo twice without issue.
+    ASSERT_NO_THROW_LOG(mgr.removeCriticalSectionCallbacks("foo"));
+
+    // Should be able to remove all without issue.
+    ASSERT_NO_THROW_LOG(mgr.removeAllCriticalSectionCallbacks());
+}
+
 /// @brief Verifies that the critical section callbacks work.
-TEST_F(CriticalSectionCallbackTest, basics) {
+TEST_F(CriticalSectionCallbackTest, invocations) {
     // get the thread pool instance
     auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
     // thread pool should be stopped
