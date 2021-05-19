@@ -702,6 +702,9 @@ public:
         ss << std::this_thread::get_id();
         std::string main_thread_id = ss.str();
 
+        // Tracks the number for requests fulfilled by main thread.
+        size_t worked_by_main = 0;
+
         // Iterate over the client request/response pairs.
         for (auto const& clientRR : clientRRs_) {
             // Make sure it's whole.
@@ -727,9 +730,18 @@ public:
             ConstElementPtr server_port_elem = clientRR->response_->getJsonElement("server-port");
             ASSERT_TRUE(server_port_elem);
 
-            // For MT mode the thread id should never be the main thread.
-            ASSERT_NE(clientRR->thread_id_, main_thread_id);
+            // Track how many requests were completed by the main thread.
+            // These can occur when pausing calls IOService::poll.
+            if (clientRR->thread_id_ == main_thread_id) {
+                ++worked_by_main;
+            }
         }
+
+        // Make sure the majority of the requests were worked by
+        // worker threads.  In theory, the number of calls to poll
+        // times the number of threads is the limit for responses
+        // built by the main thread.
+        ASSERT_LE(worked_by_main, num_pauses * num_threads);
     }
 
     /// @brief Fetch the number of completed requests.
