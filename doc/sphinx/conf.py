@@ -238,6 +238,9 @@ def run_generate_docs(_):
 
 # custom setup hook
 def setup(app):
-    app.add_css_file('kea.css')
+    if hasattr(app, 'add_css_file'):
+        app.add_css_file('kea.css')
+    else:
+        app.add_stylesheet('kea.css')
 
     app.connect('builder-inited', run_generate_docs)
