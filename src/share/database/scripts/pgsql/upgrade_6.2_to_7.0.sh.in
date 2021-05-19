@@ -53,7 +53,26 @@ CREATE TABLE parameter_data_type (
   name varchar(32) NOT NULL,
   PRIMARY KEY (id)
 );
-INSERT INTO parameter_data_type VALUES (0,'integer'),(1,'real'),(2,'boolean'),(4,'string');
+INSERT INTO parameter_data_type VALUES
+    (0,'integer'),
+    (1,'real'),
+    (2,'boolean'),
+    (4,'string');
+
+
+
+-- This table doesn't exist in MySQL. However, it's nice to have an enum that explains what the values
+-- in ddns_replace_client_name field in the dhcp{4,6}_shared_network table means.
+CREATE TABLE ddns_replace_client_name_types (
+  type INT8 PRIMARY KEY NOT NULL,
+  name VARCHAR(32)
+);
+-- See enum ReplaceClientNameMode in src/lib/dhcpsrv/d2_client_cfg.h
+INSERT INTO ddns_replace_client_name_types (type, name) VALUES
+  (0, 'RCM_NEVER'),
+  (1, 'RCM_ALWAYS'),
+  (2, 'RCM_WHEN_PRESENT'),
+  (3, 'RCM_WHEN_NOT_PRESENT');
 
 
 
@@ -67,40 +86,24 @@ CREATE TABLE dhcp6_server (
 );
 CREATE INDEX dhcp6_server_modification_ts ON dhcp6_server (modification_ts);
 
+
+
 -- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
 -- modification_ts timestamp NOT NULL DEFAULT Ccurrent_timestamp() ON UPDATE current_timestamp(),
 -- Sadly, Postgres has its own convoluted way of doing this:
 
 -- First, we need to define a function that will do the actual job.
-CREATE OR REPLACE FUNCTION dhcp6_server_modification_ts_update()
-  RETURNS trigger AS $dhcp6_server_modification_ts_update$
+-- This is used in:
+-- - dhcp6_shared_network
+-- - dhcp6_subnet
+CREATE OR REPLACE FUNCTION modification_ts_update()
+  RETURNS trigger AS $modification_ts_update$
   BEGIN
     new.modification_ts = CURRENT_TIMESTAMP;
   END;
 
 -- Second, we need to specify which language it was written in.
-$dhcp6_server_modification_ts_update$ LANGUAGE plpgsql;
-
--- Finally, we need to create a trigger that will kick off this function.
-CREATE TRIGGER dhcp6_server_modification_ts_update
-  AFTER UPDATE ON dhcp6_server
-  FOR EACH ROW EXECUTE PROCEDURE dhcp6_server_modification_ts_update();
-
-
-
--- This table doesn't exist in MySQL. However, it's nice to have an enum that explains what the values
--- in ddns_replace_client_name field in the dhcp{4,6}_shared_network table means.
-CREATE TABLE ddns_replace_client_name_types (
-  type INT8 PRIMARY KEY NOT NULL,
-  name VARCHAR(32)
-);
-
--- See enum ReplaceClientNameMode in src/lib/dhcpsrv/d2_client_cfg.h
-INSERT INTO ddns_replace_client_name_types (type, name) VALUES
-  (0, 'RCM_NEVER'),
-  (1, 'RCM_ALWAYS'),
-  (2, 'RCM_WHEN_PRESENT'),
-  (3, 'RCM_WHEN_NOT_PRESENT');
+$modification_ts_update$ LANGUAGE plpgsql;
 
 
 
@@ -140,8 +143,64 @@ CREATE TABLE dhcp6_shared_network (
 
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
+-- Finally, we need to create a trigger that will kick off this function.
+CREATE TRIGGER dhcp6_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+CREATE INDEX dhcp6_shared_network_name ON dhcp6_shared_network (name);
 
 
+CREATE TABLE dhcp6_subnet (
+  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_prefix varchar(64) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  preferred_lifetime BIGINT DEFAULT NULL,
+  rapid_commit BOOLEAN DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  shared_network_name varchar(128) DEFAULT NULL,
+  user_context TEXT DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  interface_id BYTEA DEFAULT NULL,
+  min_preferred_lifetime BIGINT DEFAULT NULL,
+  max_preferred_lifetime BIGINT DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+
+  CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name),
+
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+
+);
+
+CREATE TRIGGER dhcp6_subnet_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+CREATE INDEX dhcp6_subnet_modification_ts ON dhcp6_subnet (modification_ts);
+
+-- TODO: on delete set up dhcp6_subnet_shared_network to NULL
+--   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
+--   `dhcp6_shared_network` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
 
 -- Update the schema version number
 UPDATE schema_version
