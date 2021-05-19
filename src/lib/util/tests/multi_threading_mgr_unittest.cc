@@ -386,11 +386,6 @@ public:
             if (entries.size()) {
                 // We expect entry invocations.
                 ASSERT_EQ(invocations_.size(), entries.size());
-                for (auto val :invocations_) {
-                    std::cout << val << " ";
-                }
-                std::cout << std::endl;
-
                 ASSERT_TRUE(invocations_ == entries);
             } else {
                 // We do not expect entry invocations.
@@ -436,8 +431,8 @@ public:
     std::vector<int> invocations_;
 };
 
-/// @brief Verifies that critical section callback maintenance.
-/// Catch invalid pairs, add pairs, remover pairs.
+/// @brief Verifies critical section callback maintenance:
+/// catch invalid pairs, add pairs, remove pairs.
 TEST_F(CriticalSectionCallbackTest, addAndRemove) {
     auto& mgr = MultiThreadingMgr::instance();
 

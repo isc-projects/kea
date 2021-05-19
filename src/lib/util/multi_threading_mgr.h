@@ -81,7 +81,7 @@ public:
     /// @brief Removes all callbacks from the list.
     void removeAll();
 
-    /// @brief Fetches the list of callbacks pairs.
+    /// @brief Fetches the list of callback pairs.
     const std::list<CSCallbackPair>& getCallbackPairs();
 
 private:
