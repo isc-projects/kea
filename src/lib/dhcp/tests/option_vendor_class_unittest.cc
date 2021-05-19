@@ -461,8 +461,8 @@ TEST(OptionVendorClass, toText6) {
               vendor_class.toText(2));
 }
 
-// Test that the DHCPv6 option with truncated or over-extending (depends on
-// perspective) buffers is parsed correctly when lenient mode is enabled.
+// Test that a well formed DHCPv6 option with two opaque data tuples is parsed
+// correctly when lenient mode is enabled.
 TEST_F(OptionVendorClassLenientParsing, unpack6WellFormed) {
     // Enable lenient parsing.
     bool const previous(Option::lenient_parsing_);

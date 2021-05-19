@@ -113,7 +113,7 @@ CfgMgr::commit() {
     // Now we need to set the statistics back.
     configuration_->updateStatistics();
 
-    configuration_->propagateParametersToLowerLevelLibraries();
+    configuration_->configureLowerLevelLibraries();
 }
 
 void

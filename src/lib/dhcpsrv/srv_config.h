@@ -869,7 +869,7 @@ public:
     /// can't be easily called from where the configuration parameter is used,
     /// usually because that particular library is lower in the dependency tree.
     /// Happens on configuration commit.
-    void propagateParametersToLowerLevelLibraries() const;
+    void configureLowerLevelLibraries() const;
 
 private:
 
