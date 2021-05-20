@@ -105,7 +105,6 @@ public:
         }
 
         /// @brief specifies parameter types
-        /// (true = query by address, false = query by identifier-type, identifier)
         Type query_type;
 
         /// @brief Lease type (NA,TA or PD) used for v6 leases
