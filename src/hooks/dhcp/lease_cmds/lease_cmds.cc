@@ -104,8 +104,8 @@ public:
             }
         }
 
-        /// @brief specifies parameter types (true = query by address, false =
-        ///         query by identifier-type,identifier)
+        /// @brief specifies parameter types
+        /// (true = query by address, false = query by identifier-type, identifier)
         Type query_type;
 
         /// @brief Lease type (NA,TA or PD) used for v6 leases
@@ -119,8 +119,8 @@ public:
 
         /// @brief Default constructor.
         Parameters()
-            : addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
-              iaid(0), updateDDNS(false) {
+            : subnet_id(0), addr("::"), query_type(TYPE_ADDR),
+              lease_type(Lease::TYPE_NA), iaid(0), updateDDNS(false) {
         }
     };
 
