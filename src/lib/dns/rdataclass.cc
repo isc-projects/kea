@@ -582,6 +582,8 @@ TSIG::getOtherData() const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <string>
 
 #include <exceptions/exceptions.h>
@@ -647,6 +649,8 @@ A::compare(const Rdata&) const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <string>
 #include <sstream>
@@ -1282,6 +1286,8 @@ CNAME::getCname() const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <string>
 
 #include <util/buffer.h>
@@ -1855,6 +1861,8 @@ DNSKEY::getAlgorithm() const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <string>
 
 #include <util/buffer.h>
@@ -2101,6 +2109,8 @@ HINFO::toWireHelper(T& outputer) const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <string>
 #include <sstream>
@@ -3409,6 +3419,8 @@ NSEC3PARAM::getSalt() const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -3976,6 +3988,8 @@ PTR::getPTRName() const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <string>
 #include <sstream>
@@ -4690,6 +4704,8 @@ SOA::compare(const Rdata& other) const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -5480,6 +5496,8 @@ TLSA::getDataLength() const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -5577,6 +5595,8 @@ TXT::compare(const Rdata& other) const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <string>
 
 #include <exceptions/exceptions.h>
@@ -5642,6 +5662,8 @@ A::compare(const Rdata&) const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -5819,6 +5841,8 @@ A::compare(const Rdata& other) const {
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/exceptions.h>
@@ -5973,6 +5997,8 @@ AAAA::compare(const Rdata& other) const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -6136,6 +6162,8 @@ DHCID::getDigest() const {
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <iostream>
 #include <sstream>

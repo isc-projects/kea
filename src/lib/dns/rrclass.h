@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -285,11 +285,11 @@ public:
     { return (classcode_ < other.classcode_); }
 
     // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
-    static const RRClass& HS();
-    static const RRClass& NONE();
     static const RRClass& ANY();
     static const RRClass& CH();
+    static const RRClass& HS();
     static const RRClass& IN();
+    static const RRClass& NONE();
     // END_WELL_KNOWN_CLASS_DECLARATIONS
 
 private:
@@ -297,18 +297,6 @@ private:
 };
 
 // BEGIN_WELL_KNOWN_CLASS_DEFINITIONS
-inline const RRClass&
-RRClass::HS() {
-    static RRClass rrclass(4);
-    return (rrclass);
-}
-
-inline const RRClass&
-RRClass::NONE() {
-    static RRClass rrclass(254);
-    return (rrclass);
-}
-
 inline const RRClass&
 RRClass::ANY() {
     static RRClass rrclass(255);
@@ -322,8 +310,20 @@ RRClass::CH() {
 }
 
 inline const RRClass&
+RRClass::HS() {
+    static RRClass rrclass(4);
+    return (rrclass);
+}
+
+inline const RRClass&
 RRClass::IN() {
     static RRClass rrclass(1);
+    return (rrclass);
+}
+
+inline const RRClass&
+RRClass::NONE() {
+    static RRClass rrclass(254);
     return (rrclass);
 }
 

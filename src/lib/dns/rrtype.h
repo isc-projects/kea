@@ -259,71 +259,71 @@ public:
     //@}
 
     // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
-    static const RRType& L32();
-    static const RRType& NID();
-    static const RRType& LP();
-    static const RRType& L64();
-    static const RRType& UNSPEC();
-    static const RRType& IXFR();
     static const RRType& TSIG();
-    static const RRType& MAILB();
-    static const RRType& AXFR();
-    static const RRType& ANY();
-    static const RRType& MAILA();
+    static const RRType& A();
+    static const RRType& AFSDB();
     static const RRType& CAA();
-    static const RRType& URI();
-    static const RRType& KEY();
-    static const RRType& SIG();
-    static const RRType& GPOS();
-    static const RRType& PX();
-    static const RRType& RT();
-    static const RRType& ISDN();
-    static const RRType& NSAP_PTR();
-    static const RRType& NSAP();
-    static const RRType& LOC();
-    static const RRType& AAAA();
-    static const RRType& SPF();
-    static const RRType& MG();
-    static const RRType& SOA();
-    static const RRType& MF();
+    static const RRType& CNAME();
+    static const RRType& DLV();
+    static const RRType& DNAME();
+    static const RRType& DNSKEY();
+    static const RRType& DS();
+    static const RRType& HINFO();
+    static const RRType& MINFO();
+    static const RRType& MX();
+    static const RRType& NAPTR();
     static const RRType& NS();
     static const RRType& NSEC3();
     static const RRType& NSEC3PARAM();
-    static const RRType& TLSA();
-    static const RRType& AFSDB();
-    static const RRType& HIP();
-    static const RRType& MINFO();
-    static const RRType& MX();
-    static const RRType& TXT();
+    static const RRType& NSEC();
+    static const RRType& OPT();
+    static const RRType& PTR();
     static const RRType& RP();
+    static const RRType& RRSIG();
+    static const RRType& SOA();
+    static const RRType& SPF();
+    static const RRType& SSHFP();
+    static const RRType& TLSA();
+    static const RRType& TXT();
+    static const RRType& AAAA();
+    static const RRType& DHCID();
+    static const RRType& SRV();
+    static const RRType& IXFR();
+    static const RRType& AXFR();
+    static const RRType& ANY();
+    static const RRType& MD();
+    static const RRType& MF();
+    static const RRType& MB();
+    static const RRType& MG();
+    static const RRType& MR();
+    static const RRType& NXT();
+    static const RRType& A6();
+    static const RRType& MAILA();
     static const RRType& Null();
     static const RRType& WKS();
-    static const RRType& PTR();
-    static const RRType& HINFO();
-    static const RRType& DLV();
-    static const RRType& DS();
-    static const RRType& APL();
-    static const RRType& OPT();
-    static const RRType& NSEC();
-    static const RRType& RRSIG();
-    static const RRType& IPSECKEY();
-    static const RRType& SSHFP();
-    static const RRType& DHCID();
-    static const RRType& DNSKEY();
     static const RRType& X25();
-    static const RRType& TKEY();
-    static const RRType& MR();
-    static const RRType& MB();
-    static const RRType& CNAME();
-    static const RRType& MD();
-    static const RRType& A();
-    static const RRType& A6();
-    static const RRType& DNAME();
-    static const RRType& SRV();
-    static const RRType& NXT();
+    static const RRType& RT();
+    static const RRType& NSAP();
+    static const RRType& NSAP_PTR();
+    static const RRType& SIG();
+    static const RRType& ISDN();
+    static const RRType& KEY();
+    static const RRType& PX();
+    static const RRType& GPOS();
+    static const RRType& LOC();
     static const RRType& KX();
     static const RRType& CERT();
-    static const RRType& NAPTR();
+    static const RRType& APL();
+    static const RRType& IPSECKEY();
+    static const RRType& HIP();
+    static const RRType& UNSPEC();
+    static const RRType& NID();
+    static const RRType& L32();
+    static const RRType& L64();
+    static const RRType& LP();
+    static const RRType& TKEY();
+    static const RRType& MAILB();
+    static const RRType& URI();
     // END_WELL_KNOWN_TYPE_DECLARATIONS
 
 private:
@@ -332,68 +332,20 @@ private:
 
 // BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
 inline const RRType&
-RRType::L32() {
-    static RRType rrtype(105);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NID() {
-    static RRType rrtype(104);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::LP() {
-    static RRType rrtype(107);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::L64() {
-    static RRType rrtype(106);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::UNSPEC() {
-    static RRType rrtype(103);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::IXFR() {
-    static RRType rrtype(251);
-    return (rrtype);
-}
-
-inline const RRType&
 RRType::TSIG() {
     static RRType rrtype(250);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::MAILB() {
-    static RRType rrtype(253);
+RRType::A() {
+    static RRType rrtype(1);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::AXFR() {
-    static RRType rrtype(252);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::ANY() {
-    static RRType rrtype(255);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MAILA() {
-    static RRType rrtype(254);
+RRType::AFSDB() {
+    static RRType rrtype(18);
     return (rrtype);
 }
 
@@ -404,92 +356,56 @@ RRType::CAA() {
 }
 
 inline const RRType&
-RRType::URI() {
-    static RRType rrtype(256);
+RRType::CNAME() {
+    static RRType rrtype(5);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::KEY() {
-    static RRType rrtype(25);
+RRType::DLV() {
+    static RRType rrtype(32769);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::SIG() {
-    static RRType rrtype(24);
+RRType::DNAME() {
+    static RRType rrtype(39);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::GPOS() {
-    static RRType rrtype(27);
+RRType::DNSKEY() {
+    static RRType rrtype(48);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::PX() {
-    static RRType rrtype(26);
+RRType::DS() {
+    static RRType rrtype(43);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::RT() {
-    static RRType rrtype(21);
+RRType::HINFO() {
+    static RRType rrtype(13);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::ISDN() {
-    static RRType rrtype(20);
+RRType::MINFO() {
+    static RRType rrtype(14);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::NSAP_PTR() {
-    static RRType rrtype(23);
+RRType::MX() {
+    static RRType rrtype(15);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::NSAP() {
-    static RRType rrtype(22);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::LOC() {
-    static RRType rrtype(29);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::AAAA() {
-    static RRType rrtype(28);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SPF() {
-    static RRType rrtype(99);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MG() {
-    static RRType rrtype(8);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SOA() {
-    static RRType rrtype(6);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MF() {
-    static RRType rrtype(4);
+RRType::NAPTR() {
+    static RRType rrtype(35);
     return (rrtype);
 }
 
@@ -512,32 +428,56 @@ RRType::NSEC3PARAM() {
 }
 
 inline const RRType&
+RRType::NSEC() {
+    static RRType rrtype(47);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::OPT() {
+    static RRType rrtype(41);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::PTR() {
+    static RRType rrtype(12);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::RP() {
+    static RRType rrtype(17);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::RRSIG() {
+    static RRType rrtype(46);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::SOA() {
+    static RRType rrtype(6);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::SPF() {
+    static RRType rrtype(99);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::SSHFP() {
+    static RRType rrtype(44);
+    return (rrtype);
+}
+
+inline const RRType&
 RRType::TLSA() {
     static RRType rrtype(52);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::AFSDB() {
-    static RRType rrtype(18);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::HIP() {
-    static RRType rrtype(55);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MINFO() {
-    static RRType rrtype(14);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MX() {
-    static RRType rrtype(15);
     return (rrtype);
 }
 
@@ -548,8 +488,86 @@ RRType::TXT() {
 }
 
 inline const RRType&
-RRType::RP() {
-    static RRType rrtype(17);
+RRType::AAAA() {
+    static RRType rrtype(28);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::DHCID() {
+    static RRType rrtype(49);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::SRV() {
+    static RRType rrtype(33);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::IXFR() {
+    static RRType rrtype(251);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::AXFR() {
+    static RRType rrtype(252);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::ANY() {
+    static RRType rrtype(255);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MD() {
+    static RRType rrtype(3);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MF() {
+    static RRType rrtype(4);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MB() {
+    static RRType rrtype(7);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MG() {
+    static RRType rrtype(8);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MR() {
+    static RRType rrtype(9);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::NXT() {
+    static RRType rrtype(30);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::A6() {
+    static RRType rrtype(38);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MAILA() {
+    static RRType rrtype(254);
     return (rrtype);
 }
 
@@ -566,140 +584,62 @@ RRType::WKS() {
 }
 
 inline const RRType&
-RRType::PTR() {
-    static RRType rrtype(12);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::HINFO() {
-    static RRType rrtype(13);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DLV() {
-    static RRType rrtype(32769);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DS() {
-    static RRType rrtype(43);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::APL() {
-    static RRType rrtype(42);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::OPT() {
-    static RRType rrtype(41);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSEC() {
-    static RRType rrtype(47);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::RRSIG() {
-    static RRType rrtype(46);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::IPSECKEY() {
-    static RRType rrtype(45);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SSHFP() {
-    static RRType rrtype(44);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DHCID() {
-    static RRType rrtype(49);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DNSKEY() {
-    static RRType rrtype(48);
-    return (rrtype);
-}
-
-inline const RRType&
 RRType::X25() {
     static RRType rrtype(19);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::TKEY() {
-    static RRType rrtype(249);
+RRType::RT() {
+    static RRType rrtype(21);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::MR() {
-    static RRType rrtype(9);
+RRType::NSAP() {
+    static RRType rrtype(22);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::MB() {
-    static RRType rrtype(7);
+RRType::NSAP_PTR() {
+    static RRType rrtype(23);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::CNAME() {
-    static RRType rrtype(5);
+RRType::SIG() {
+    static RRType rrtype(24);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::MD() {
-    static RRType rrtype(3);
+RRType::ISDN() {
+    static RRType rrtype(20);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::A() {
-    static RRType rrtype(1);
+RRType::KEY() {
+    static RRType rrtype(25);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::A6() {
-    static RRType rrtype(38);
+RRType::PX() {
+    static RRType rrtype(26);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::DNAME() {
-    static RRType rrtype(39);
+RRType::GPOS() {
+    static RRType rrtype(27);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::SRV() {
-    static RRType rrtype(33);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NXT() {
-    static RRType rrtype(30);
+RRType::LOC() {
+    static RRType rrtype(29);
     return (rrtype);
 }
 
@@ -716,8 +656,68 @@ RRType::CERT() {
 }
 
 inline const RRType&
-RRType::NAPTR() {
-    static RRType rrtype(35);
+RRType::APL() {
+    static RRType rrtype(42);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::IPSECKEY() {
+    static RRType rrtype(45);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::HIP() {
+    static RRType rrtype(55);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::UNSPEC() {
+    static RRType rrtype(103);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::NID() {
+    static RRType rrtype(104);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::L32() {
+    static RRType rrtype(105);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::L64() {
+    static RRType rrtype(106);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::LP() {
+    static RRType rrtype(107);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::TKEY() {
+    static RRType rrtype(249);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MAILB() {
+    static RRType rrtype(253);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::URI() {
+    static RRType rrtype(256);
     return (rrtype);
 }
 
