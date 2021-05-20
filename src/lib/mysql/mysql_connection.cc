@@ -393,8 +393,8 @@ MySqlConnection::convertToDatabaseTime(const time_t input_time,
 
 void
 MySqlConnection::convertToDatabaseTime(const time_t cltt,
-                                     const uint32_t valid_lifetime,
-                                     MYSQL_TIME& expire) {
+                                       const uint32_t valid_lifetime,
+                                       MYSQL_TIME& expire) {
     MySqlBinding::convertToDatabaseTime(cltt, valid_lifetime, expire);
 }
 

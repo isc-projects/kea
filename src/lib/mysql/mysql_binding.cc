@@ -186,6 +186,9 @@ void
 MySqlBinding::convertToDatabaseTime(const time_t input_time,
                                     MYSQL_TIME& output_time) {
 
+    // Clear output data.
+    memset(&output_time, 0, sizeof(MYSQL_TIME));
+
     // Convert to broken-out time
     struct tm time_tm;
     (void) localtime_r(&input_time, &time_tm);
@@ -207,6 +210,9 @@ MySqlBinding::convertToDatabaseTime(const boost::posix_time::ptime& input_time,
     if (input_time.is_not_a_date_time()) {
         isc_throw(BadValue, "Time value is not a valid posix time");
     }
+
+    // Clear output data.
+    memset(&output_time, 0, sizeof(MYSQL_TIME));
 
     output_time.year = input_time.date().year();
     output_time.month = input_time.date().month();
@@ -238,6 +244,9 @@ MySqlBinding::convertToDatabaseTime(const time_t cltt,
         isc_throw(BadValue, "Time value is too large: " << expire_time_64);
     }
 
+    // Clear output data.
+    memset(&expire, 0, sizeof(MYSQL_TIME));
+
     const time_t expire_time = static_cast<time_t>(expire_time_64);
 
     // Convert to broken-out time
@@ -257,8 +266,8 @@ MySqlBinding::convertToDatabaseTime(const time_t cltt,
 
 void
 MySqlBinding::convertFromDatabaseTime(const MYSQL_TIME& expire,
-                                 uint32_t valid_lifetime,
-                                 time_t& cltt) {
+                                      uint32_t valid_lifetime,
+                                      time_t& cltt) {
     // Copy across fields from MYSQL_TIME structure.
     struct tm expire_tm;
     memset(&expire_tm, 0, sizeof(expire_tm));
