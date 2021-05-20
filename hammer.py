@@ -1303,7 +1303,7 @@ def prepare_system_local(features, check_times):
         if 'docs' in features:
             execute('virtualenv-3 ~/venv',
                     env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+            execute('~/venv/bin/pip install sphinx==3.5.4 sphinx-rtd-theme==0.5.2',
                     env=env, timeout=120, check_times=check_times)
 
         if 'unittest' in features:
