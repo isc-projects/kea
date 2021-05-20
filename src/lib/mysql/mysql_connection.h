@@ -347,7 +347,7 @@ public:
     /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
     static
     void convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime,
-            MYSQL_TIME& expire);
+                               MYSQL_TIME& expire);
 
     /// @brief Convert Database Time to Lease Times
     ///
@@ -368,7 +368,7 @@ public:
     ///        is put.
     static
     void convertFromDatabaseTime(const MYSQL_TIME& expire,
-            uint32_t valid_lifetime, time_t& cltt);
+                                 uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
     /// @brief Starts Transaction
