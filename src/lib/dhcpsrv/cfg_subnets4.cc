@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -231,21 +231,22 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
                 if (link_select_buf.size() == sizeof(uint32_t)) {
                     selector.option_select_ =
                         IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                    return (selector);
                 }
             }
         }
-    } else {
-        // Or Subnet Selection option
-        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
-        if (sbnsel) {
-            OptionCustomPtr oc =
-                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
-            if (oc) {
-                selector.option_select_ = oc->readAddress();
-            }
+    }
+    // The query does not include a RAI option or this option does
+    // not contain the link-selection sub-option. Try subnet-selection
+    // option.
+    OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+    if (sbnsel) {
+        OptionCustomPtr oc =
+            boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+        if (oc) {
+            selector.option_select_ = oc->readAddress();
         }
     }
-
     return (selector);
 }
 

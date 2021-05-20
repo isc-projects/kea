@@ -3980,16 +3980,25 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(sbnsel);
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
-    dis->delOption(DHO_SUBNET_SELECTION);
+
+    // But, when RAI exists without the link selection option, we should
+    // fall back to the subnet selection option.
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    dis->addOption(rai);
+    dis->setGiaddr(IOAddress("192.0.4.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Check client-classification still applies
     IOAddress addr_foo("192.0.4.2");
     ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
                          addr_foo.toBytes()));
-    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_SUBNET_SELECTION);
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
+
     // Note it shall fail (vs. try the next criterion).
     EXPECT_FALSE(srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);

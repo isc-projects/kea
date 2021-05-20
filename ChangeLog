@@ -1,3 +1,13 @@
+1901.	[bug]		marcin
+	Corrected a bug in DHCPv4 subnet selection. The server ignored
+	the Subnet Selection option supplied by a client if its query
+	contained a Relay Agent Information (RAI) option without a Link
+	Selection option. After this change, the server respects the
+	Subnet Selection option when RAI lacks the Link Selection
+	option. If RAI includes it, it takes precedence over the Subnet
+	Selection option.
+	(Gitlab #1816)
+
 1900.	[bug]		tmark
 	Fixed a sporadic failure caused by a wrong assertion in
 	unit test, testMtHttpClientTest.workPauseResumeShutdown,
