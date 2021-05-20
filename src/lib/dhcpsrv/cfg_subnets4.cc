@@ -236,7 +236,7 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
             }
         }
     }
-    // The query does not include a RAI option or this option does
+    // The query does not include a RAI option or that option does
     // not contain the link-selection sub-option. Try subnet-selection
     // option.
     OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
