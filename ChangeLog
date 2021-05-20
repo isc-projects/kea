@@ -1,3 +1,9 @@
+1900.	[bug]		tmark
+	Fixed a sporadic failure caused by a wrong assertion in
+	unit test, testMtHttpClientTest.workPauseResumeShutdown,
+	introduced by #1818.
+	(Gitlab #1876)
+
 1899.	[func]		tmark,razvan
 	In HA+Mt mode, the HA hook library now pauses and resumes
 	its worker threads when Kea core enters and exits critical
