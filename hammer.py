@@ -867,15 +867,15 @@ class VagrantEnv(object):
             self.nofeatures_arg = ''
 
         # install python3 for centos 8
-        if self.system == 'centos' and self.revision == '8':
-            self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
-            self.python = 'python3'
+        if self.system == 'centos':
+            if self.revision == '7':
+                self.execute("sudo yum remove -y python-devel")
+                self.execute("sudo yum install -y python36 rpm-build python3-virtualenv", attempts=3)
+            else:
+                self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
 
         # select proper python version for running Hammer inside Vagrant system
-        if (self.system == 'centos' and self.revision == '7' or
-            (self.system == 'debian' and self.revision == '8' and self.provider != 'lxc')):
-            self.python = 'python'
-        elif self.system == 'freebsd':
+        if self.system == 'freebsd':
             self.python = 'python3.6'
         else:
             self.python = 'python3'
@@ -1301,7 +1301,7 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
-            execute('virtualenv ~/venv',
+            execute('virtualenv-3 ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
