@@ -209,14 +209,19 @@ public:
 
     /// @brief Holds information about parked object.
     struct ParkingInfo {
-        boost::any parked_object_;               ///< parked object
-        std::function<void()> unpark_callback_;  ///< pointer to the callback
-        int refcount_;                           ///< current reference count
+        /// @brief The parked object.
+        boost::any parked_object_;
+
+        /// @brief The pointer to callback.
+        std::function<void()> unpark_callback_;
+
+        /// @brief The current reference count.
+        int refcount_;
 
         /// @brief Constructor.
         ///
         /// Default constructor.
-        ParkingInfo() {};
+        ParkingInfo() : refcount_(0) {};
 
         /// @brief Constructor.
         ///
