@@ -418,14 +418,14 @@ class BasicRdataIterator : public RdataIterator {
 public:
     /// @brief Constructor.
     BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
-        datavector_(datavector), it_(datavector_.begin()) {}
+        datavector_(&datavector), it_(datavector_->begin()) {}
 
     ///@brief Destructor.
     ~BasicRdataIterator() {}
 
     /// @brief Set iterator at first position.
     virtual void first() {
-        it_ = datavector_.begin();
+        it_ = datavector_->begin();
     }
 
     /// @brief Advance iterator.
@@ -444,12 +444,12 @@ public:
     ///
     /// @return true if iterator has reached the end, false otherwise.
     virtual bool isLast() const {
-        return (it_ == datavector_.end());
+        return (it_ == datavector_->end());
     }
 
 private:
     /// @brief Vector containing data.
-    const std::vector<rdata::ConstRdataPtr>& datavector_;
+    const std::vector<rdata::ConstRdataPtr>* datavector_;
 
     /// @brief Iterator used to retrieve data.
     std::vector<rdata::ConstRdataPtr>::const_iterator it_;
