@@ -221,7 +221,7 @@ public:
         /// @brief Constructor.
         ///
         /// Default constructor.
-        ParkingInfo() : refcount_(0) {};
+        ParkingInfo() : refcount_(0) {}
 
         /// @brief Constructor.
         ///
@@ -230,8 +230,7 @@ public:
         ParkingInfo(const boost::any& parked_object,
                     std::function<void()> callback = 0)
             : parked_object_(parked_object), unpark_callback_(callback),
-              refcount_(0) {
-        }
+              refcount_(0) {}
 
         /// @brief Update parking information.
         ///
