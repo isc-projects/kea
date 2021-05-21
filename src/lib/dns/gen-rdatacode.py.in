@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010-2016,2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@ meta_types = {
     '23': 'nsap-ptr', '24': 'sig', '20': 'isdn', '25': 'key', '26': 'px',
     '27': 'gpos', '29': 'loc', '36': 'kx', '37': 'cert', '42': 'apl',
     '45': 'ipseckey', '55': 'hip', '103': 'unspec',
-    '104': 'nid', '105': 'l32', '106': 'l64', '107': 'lp', '249':  'tkey',
+    '104': 'nid', '105': 'l32', '106': 'l64', '107': 'lp',
     '253': 'mailb', '256': 'uri'
     }
 # Classes that don't have any known types.  This is a dict from type code
