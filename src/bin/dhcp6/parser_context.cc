@@ -78,12 +78,12 @@ Parser6Context::error(const isc::dhcp::location& loc,
 }
 
 void
-Parser6Context::error (const std::string& what) {
+Parser6Context::error(const std::string& what) {
     isc_throw(Dhcp6ParseError, what);
 }
 
 void
-Parser6Context::fatal (const std::string& what) {
+Parser6Context::fatal(const std::string& what) {
     isc_throw(Dhcp6ParseError, what);
 }
 
