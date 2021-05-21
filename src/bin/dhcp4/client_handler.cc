@@ -20,7 +20,7 @@ namespace dhcp {
 
 ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
                               HWAddrPtr hwaddr)
-    : query_(query), thread_(this_thread::get_id()) {
+    : query_(query), htype_(HTYPE_ETHER), thread_(this_thread::get_id()) {
     // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler");
