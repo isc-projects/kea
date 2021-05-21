@@ -107,6 +107,7 @@ public:
           dhcp4_next_server_(0),
           dhcp4_server_hostname_length_(0),
           dhcp4_boot_file_name_length_(0),
+          auth_key_length_(0),
           dhcp4_subnet_id_null_(MLM_FALSE),
           dhcp6_subnet_id_null_(MLM_FALSE),
           ipv4_address_null_(MLM_FALSE), hostname_null_(MLM_FALSE),
@@ -777,7 +778,7 @@ private:
     unsigned long dhcp4_boot_file_name_length_;
 
     /// Authentication keys
-    char  auth_key_[TEXT_AUTH_KEY_LEN];
+    char auth_key_[TEXT_AUTH_KEY_LEN];
 
     /// The length of the string for holding keys
     unsigned long auth_key_length_;
