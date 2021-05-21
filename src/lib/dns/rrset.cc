@@ -434,11 +434,15 @@ public:
     }
 
     /// @brief Get value at current iterator position.
+    ///
+    /// @return The value at current iterator position.
     virtual const rdata::Rdata& getCurrent() const {
         return (**it_);
     }
 
     /// @brief Check if iterator has reached the end.
+    ///
+    /// @return true if iterator has reached the end, false otherwise.
     virtual bool isLast() const {
         return (it_ == datavector_.end());
     }
