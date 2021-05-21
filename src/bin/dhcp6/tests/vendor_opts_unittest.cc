@@ -100,8 +100,7 @@ public:
 
         // Now check that it contains requested option with the appropriate
         // content.
-        OptionPtr suboption(
-            response_vendor_options->getOption(option_));
+        OptionPtr suboption(response_vendor_options->getOption(option_));
         ASSERT_TRUE(suboption);
         vector<uint8_t> binary_suboption = suboption->toBinary(false);
         string text(binary_suboption.begin(), binary_suboption.end());
