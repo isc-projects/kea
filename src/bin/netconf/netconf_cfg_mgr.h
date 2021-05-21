@@ -146,6 +146,13 @@ public:
     /// @return Summary of the configuration in the textual format.
     virtual std::string getConfigSummary(const uint32_t selection);
 
+    /// @brief Return a list of all paths that contain passwords or secrets for
+    /// kea-netconf.
+    ///
+    /// @return the list of lists of sequential JSON map keys needed to reach
+    /// the passwords and secrets.
+    std::list<std::list<std::string>> jsonPathsToRedact() const;
+
 protected:
 
     /// @brief Parses configuration of Netconf.
