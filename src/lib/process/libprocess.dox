@@ -170,14 +170,22 @@ There are two tools to remove sensitive data as passwords or secrets from logs:
  - redactedAccessString for database access strings
  - redactConfig for full configurations
 
-The redactConfig method must be defined in derived classes following this
+The jsonPathsToRedact method must be defined in derived classes following this
 procedure:
- - take the grammar (bison input file with the .yy extension)
- - get the arcs between the start symbol and tokens handling sensitive
-   data i.e. passwords and secrets
- - get the arcs between the start symbol and tokens handling free JSON
-   values at the exception of user contexts e.g. hooks libraries parameters
- - give the set of keywords of these arcs to the redactConfig function
+ - Get all possible JSON paths from the root of the configuration to leaves that
+ fulfill the role of map keys and which contain "password" or "secret".
+ - For each of these paths, remove the root node and the leaf node.
+ - Include all the paths in the method. Duplicate subpaths are expected in the
+ case of common subpaths to different leaves.
+
+There are two special syntaxes:
+ - "[]" suggests that the searched element is a list. This is required for all
+ lists and is for performance gain.
+ - "*" as a last element in a JSON path tells the redacter to look in all
+ elements that follow for elements that contain "password" and "secret". This is
+ when the particular configuration that is targeted by the "*" does not have a
+ well defined structure, such as is the case for "parameters" in the
+ "hooks-libraries" map in "Dhcp4" and "Dhcp6".
 
 @section cplMTConsiderations Multi-Threading Consideration for Controllable Process Layer
 
