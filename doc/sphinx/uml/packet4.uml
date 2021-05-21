@@ -30,7 +30,7 @@ rectangle "Process Query on its Message Type" as process {
  agent "Process Inform" as processInform
 }
 
-agent "Callout lease4_committed" as lease4_committed
+agent "Callout leases4_committed" as leases4_committed
 note right : hook
 
 agent "Park" as park
@@ -65,19 +65,19 @@ drop_class ---> drop : query in DROP class
 same_client ---> process
 same_client ---> drop : queries from the same client possible race
 process ---> drop : unknown message type
-processDiscover --> lease4_committed
+processDiscover --> leases4_committed
 processDiscover ---> drop : on error
-processRequest --> lease4_committed
+processRequest --> leases4_committed
 processRequest ---> drop : on error
-processRelease --> lease4_committed
+processRelease --> leases4_committed
 processRelease ---> drop : on error
-processDecline --> lease4_committed
+processDecline --> leases4_committed
 processDecline ---> drop : on error
-processInform --> lease4_committed
+processInform --> leases4_committed
 processInform ---> drop : on error
-lease4_committed --> pkt4_send : CONTINUE
-lease4_committed ---> drop : DROP
-lease4_committed --> park : PARK
+leases4_committed --> pkt4_send : CONTINUE
+leases4_committed ---> drop : DROP
+leases4_committed --> park : PARK
 park -[dashed]-> pkt4_send : unpark
 pkt4_send --> pack : CONTINUE
 pkt4_send --> buffer4_send : SKIP

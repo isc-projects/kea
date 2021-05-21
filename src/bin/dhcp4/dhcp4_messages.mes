@@ -384,7 +384,7 @@ This debug message is printed when a callout installed on the leases4_committed
 hook point sets the next step to DROP.
 
 % DHCP4_HOOK_LEASES4_COMMITTED_PARK %1: packet is parked, because a callout set the next step to PARK
-This debug message is printed when a callout installed on the lease4_committed
+This debug message is printed when a callout installed on the leases4_committed
 hook point sets the next step to PARK.
 
 % DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP

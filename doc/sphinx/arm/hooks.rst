@@ -561,12 +561,12 @@ from scratch.
 legal_log: Forensic Logging Hooks
 =================================
 
-This section describes the forensic log hooks library. This library
-provides hooks that record a detailed log of lease assignments and
-renewals into a set of log files.
+This section describes the forensic log hooks library. This library provides
+hooks that record a detailed log of assignments, renewals, releases and other
+lease events into a set of log files.
 
-Currently this library is only
-available to ISC customers with a paid support contract.
+Currently this library is only available to ISC customers with a paid support
+contract.
 
 .. note::
 
@@ -578,24 +578,18 @@ information about the addresses they have leased to DHCP clients. This
 library is designed to help with that requirement. If the information
 that it records is sufficient, it may be used directly.
 
-Since Kea 1.9.8, the library supports custom format for logging information
-that can be extracted either from the incoming packet or from the server
-response packet. Use with caution as this might affect server performance.
-
-The custom format can not be used for control channel commands.
-
 If a jurisdiction requires that a different set of information be saved, users
-may use this library as a template or example to create their own custom logging
-hooks.
+may use the custom formatting capability to extract information from the inbound
+request packet, or from the outbound response packet. Use with caution as this
+might affect server performance.  The custom format can not be used for control
+channel commands.
 
-This logging is done as a set of hooks to allow it to be customized to
-any particular need. Modifying a hooks library is easier and safer than
-updating the core code. In addition by using the hooks features, those
-users who do not need to log this information can leave it out and avoid
+Alternatively, this library may be used as a template or an example for the
+user's own custom logging hook. The logging is done as a set of hooks to allow
+it to be customized to any particular need. Modifying a hooks library is easier
+and safer than updating the core code. In addition by using the hooks features,
+those users who do not need to log this information can leave it out and avoid
 any performance penalties.
-
-Since Kea 1.9.8, the library supports additional parameters to control the rotating
-log process.
 
 Log File Naming
 ~~~~~~~~~~~~~~~
@@ -608,8 +602,8 @@ Legal file names, if using ``day``, ``month`` or ``year`` as time unit:
 
    path/base-name.CCYYMMDD.txt
 
-where CC represents century, YY represents current year, MM represents current
-month and DD represents current day.
+where ``CC`` represents century, ``YY`` represents current year, MM represents
+current month and ``DD`` represents current day.
 
 Legal file names, if using ``second`` as time unit:
 
@@ -617,30 +611,208 @@ Legal file names, if using ``second`` as time unit:
 
    path/base-name.TXXXXXXXXXXXXXXXXXXXX.txt
 
-where XXXXXXXXXXXXXXXXXXXX represents time in seconds since epoch.
+where ``XXXXXXXXXXXXXXXXXXXX`` represents time in seconds since epoch.
 
-To note that when using ``second`` as time unit, the file will be rotated when
+When using ``second`` as the time unit, the file will be rotated when
 the ``count`` number of seconds pass. In contrast, when using ``day``, ``month``
 or ``year`` as time unit, the file will be rotated whenever the ``count`` th day,
 month or year starts respectively.
 
-The "path" and "base-name" are supplied in the configuration as
-described below; see :ref:`forensic-log-configuration`. The next part of the name is the
-date the log file was started, with four digits for year, two digits for
-month, and two digits for day. The file is rotated on a daily basis.
+The ``"path"`` and ``"base-name"`` are supplied in the configuration as
+described below; see :ref:`forensic-log-configuration`.
 
 .. note::
 
    When running Kea servers for both DHCPv4 and DHCPv6, the log names
    must be distinct. See the examples in :ref:`forensic-log-configuration`.
 
+.. _forensic-log-configuration:
+
+Configuring the Forensic Log Hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use this functionality, the hook library must be included in the
+configuration of the desired DHCP server modules. The legal_log library
+is able to save logs to a text file or to a database (created using
+``kea-admin`` see :ref:`mysql-database-create`, :ref:`pgsql-database-create`).
+The library is installed alongside the Kea libraries in
+``[kea-install-dir]/var/lib/kea`` where ``kea-install-dir`` is determined
+by the "--prefix" option of the configure script. It defaults to
+``/usr/local``. Assuming the default value, configuring kea-dhcp4 to load
+the legal_log library could be done with the following kea-dhcp4 configuration:
+
+.. code-block:: json
+
+    {
+        "Dhcp4": {
+            "hooks-libraries": [
+                {
+                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "parameters": {
+                        "path": "/var/lib/kea/log",
+                        "base-name": "kea-forensic4"
+                    }
+                }
+            ]
+        }
+    }
+
+To configure it for kea-dhcp6, the commands are:
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "hooks-libraries": [
+                {
+                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "parameters": {
+                        "path": "/var/lib/kea/log",
+                        "base-name": "kea-forensic6"
+                    }
+                }
+            ]
+        }
+    }
+
+The hook library parameters for the text file configuration are:
+
+-  ``path`` - the directory in which the forensic file(s) will be written.
+   The default value is ``[prefix]/var/lib/kea``. The directory must exist.
+
+-  ``base-name`` - an arbitrary value which is used in conjunction with the
+   current system date to form the current forensic file name. It
+   defaults to ``kea-legal``.
+
+-  ``time-unit`` - configures the time unit used to rotate the log file. Valid
+   values are ``second``, ``day``, ``month`` or ``year``. It defaults to
+   ``day``.
+
+-  ``count`` - configures the number of time units that need to pass until the
+   log file is rotated. It can be any positive number, or 0 which disables log
+   rotate. It defaults to 1.
+
+If log rotate is disabled, a new file will be created when the library is
+loaded and the new file name is different that any previous file name.
+
+Additional actions can be performed just before closing the old file and after
+opening the new file. These actions must point to an external executable or
+script and are configured by setting:
+
+-  ``prerotate`` - external executable or script called with the name of the
+   file that will be closed. Kea will not wait for the process to finish.
+
+-  ``postrotate`` - external executable or script called with the name of the
+   file that had been opened. Kea will not wait for the process to finish.
+
+Custom formatting can be enabled for logging information that can be extracted
+either from the client's request packet or from the server's response packet.
+Use with caution as this might affect server performance.
+The custom format can not be used for control channel commands.
+Two parameters can be used towards this goal, either combined or together:
+
+-  ``request-parser-format`` - evaluated parsed expression used to extract and
+   log data from the incoming packet
+
+-  ``response-parser-format`` - evaluated parsed expression used to extract and
+   log data from the server response packet
+
+See :ref:`classification-using-expressions` for a list of expressions.
+If any of ``request-parser-format`` or ``response-parser-format`` is
+configured, the default logging format is not used. If both of them are
+configured, the resulting log message is constructed by concatenating the
+data extracted from the request and the data extracted from the response.
+
+Some data might be available in the request or in the response only and some
+data might differ in the request packet from the one in the response packet.
+
+The lease client context can only be printed using the default format, as this
+information is not directly stored in the request packet or in the response
+packet.
+
+Additional parameters for the database connection can be specified, e.g:
+
+::
+
+    "Dhcp6": {
+       "hooks-libraries": [
+           {
+               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+               "parameters": {
+                   "name":"database-name",
+                   "password":"passwd",
+                   "type":"mysql",
+                   "user":"user-name"
+               }
+           },
+           ...
+       ]
+   }
+
+For more specific information about database related parameters please refer to
+:ref:`database-configuration6` and :ref:`database-configuration4`.
+
+If it is desired to restrict forensic logging to certain subnets, the
+"legal-logging" boolean parameter can be specified within a user context
+of these subnets. For example:
+
+::
+
+   "Dhcpv4" {
+       "subnet4": [
+           {
+               "subnet": "192.0.2.0/24",
+               "pools": [
+                   {
+                        "pool": "192.0.2.1 - 192.0.2.200"
+                   }
+               ],
+               "user-context": {
+                   "legal-logging": false
+               }
+           }
+       ]
+   }
+
+This configuration disables legal logging for the subnet "192.0.2.0/24". If the
+"legal-logging" parameter is not specified, it defaults to 'true', which
+enables legal logging for the subnet.
+
+The following example demonstrates how to selectively disable legal
+logging for an IPv6 subnet:
+
+::
+
+   "Dhcpv6": {
+       "subnet6": [
+           {
+               "subnet": "2001:db8:1::/64",
+               "pools": [
+                    {
+                        "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                    }
+               ],
+               "user-context": {
+                   "legal-logging": false
+               }
+           }
+       ]
+   }
+
+See :ref:`dhcp4-user-contexts` and :ref:`dhcp6-user-contexts` to
+learn more about user contexts in Kea configuration.
+
 DHCPv4 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
-For DHCPv4, the library creates entries based on DHCPREQUEST messages and
-corresponding DHCPv4 leases intercepted by the lease4_select (for new
-leases), the lease4_renew (for renewed leases), and beginning with Kea 1.9.1
-the lease4_release and the lease4_decline (for released leases) hooks.
+For DHCPv4, the library creates entries based on DHCPREQUEST, DHCPDECLINE,
+DHCPRELEASE messages et.al. and their responses. The resulting packets and
+leases are taken into account, intercepted through the following hook points:
+* pkt4_receive
+* leases4_committed
+* pkt4_send
+* lease4_release
+* lease4_decline
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -693,10 +865,10 @@ or for a release:
    identified by circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
-the hooks library also logs entries for the following lease management control channel
-commands: lease4-add, lease4-update, and lease4-del. Each entry is a
-single string with no embedded end-of-line markers, and it will
-typically have the following form:
+the hooks library also logs entries for the following lease management control
+channel commands: lease4-add, lease4-update, and lease4-del. These cannot have
+custom formatting. Each entry is a single string with no embedded end-of-line
+markers, and it will typically have the following form:
 
 ``lease4-add:``
 
@@ -779,7 +951,6 @@ Examples:
                     ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
                     ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
             '')",
-   ...
    "response-parser-format":
        "ifelse(pkt4.msgtype == 5,
             'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
@@ -788,8 +959,7 @@ Examples:
                     ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
                     ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
                     ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
-            '')",
-   ...
+            '')"
 
 
 This will log the following data on request and renew:
@@ -827,17 +997,20 @@ Examples:
                         ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
                         ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
                         ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
-                ''))",
-   ...
+                ''))"
 
 
 DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
-For DHCPv6 the library creates entries based on lease management actions
-intercepted by lease6_select (for new leases), lease6_renew and
-lease6_rebind (for renewed leases), and beginning with Kea 1.9.1
-lease6_release and lease6_decline (for released leases) hooks.
+For DHCPv6, the library creates entries based on REQUEST, RENEW, RELEASE,
+DECLINE messages et.al. and their responses. The resulting packets and leases
+are taken into account, intercepted through the following hook points:
+* pkt6_receive
+* leases6_committed
+* pkt6_send
+* lease6_release
+* lease6_decline
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -984,7 +1157,6 @@ Examples:
                             ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
                             ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
             '')",
-   ...
    "response-parser-format":
        "ifelse(pkt6.msgtype == 7,
             ifelse(option[3].option[5].exists,
@@ -999,8 +1171,7 @@ Examples:
                             ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
                             ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
                             ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
-            '')",
-   ...
+            '')"
 
 
 This will log the following data on request, renew and rebind for NA:
@@ -1064,177 +1235,7 @@ Examples:
                                 ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') +
                                 ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') +
                                 ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''),
-                ''))",
-   ...
-
-
-.. _forensic-log-configuration:
-
-Configuring the Forensic Log Hooks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To use this functionality, the hook library must be included in the
-configuration of the desired DHCP server modules. The legal_log library
-is able to save logs to a text file or a database (created using
-``kea-admin`` see :ref:`mysql-database-create`, :ref:`pgsql-database-create`).
-Library is installed alongside the Kea libraries in
-``[kea-install-dir]/var/lib/kea`` where ``kea-install-dir`` is determined
-by the "--prefix" option of the configure script. It defaults to
-``/usr/local``. Assuming the default value, configuring kea-dhcp4 to load
-the legal_log library could be done with the following Kea4 configuration:
-
-::
-
-   "Dhcp4": {
-       "hooks-libraries": [
-           {
-               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
-               "parameters": {
-                   "path": "/var/lib/kea/log",
-                   "base-name": "kea-forensic4"
-               }
-           },
-           ...
-       ]
-   }
-
-To configure it for kea-dhcp6, the commands are:
-
-::
-
-   "Dhcp6": {
-       "hooks-libraries": [
-           {
-               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
-               "parameters": {
-                   "path": "/var/lib/kea/log",
-                   "base-name": "kea-forensic6"
-               }
-           },
-           ...
-       ]
-   }
-
-Two hooks library parameters for text file are supported:
-
--  ``path`` - the directory in which the forensic file(s) will be written.
-   The default value is ``[prefix]/var/lib/kea``. The directory must exist.
-
--  ``base-name`` - an arbitrary value which is used in conjunction with the
-   current system date to form the current forensic file name. It
-   defaults to ``kea-legal``.
-
--  ``time-unit`` - configures the time unit used to rotate the log file. Valid
-   values are ``second``, ``day``, ``month`` or ``year``. It defaults to
-   ``day``.
-
--  ``count`` - configures the number of time units that need to pass until the
-   log file is rotated. It can be any positive number, or 0 which disabled log
-   rotate. It defaults to 1.
-
-If log rotate is disabled, a new file will be created when the library is
-loaded and the new file name is different that any previous file name.
-
-Additional actions can be performed just before closing the old file and after
-opening the new file. These actions must point to an external executable or
-script and are configured by setting:
-
--  ``prerotate`` - external executable or script called with the name of the
-   file that will be closed (Kea will not wait for the process to finish)
-
--  ``postrotate`` - external executable or script called with the name of the
-   file that had been opened (Kea will not wait for the process to finish)
-
--  ``request-parser-format`` - evaluated parsed expression used to extract and
-   log data from the incoming packet
-
--  ``response-parser-format`` - evaluated parsed expression used to extract and
-   log data from the server response packet
-
-See :ref:`classification-using-expressions` for a list of expressions.
-If any of ``request-parser-format`` or ``response-parser-format`` is
-configured, the default logging format is not used. If both of them are
-configured, the resulting log message is constructed by concatenating the
-data extracted from the request and the data extracted from the response.
-
-Some data might be available in the request or in the response only and some
-data might differ in the incoming packet from the one in the response packet.
-
-The lease client context can be printed using only the default format, as this
-information is not directly stored in the incoming packet or in the server
-response packet.
-
-Additional parameters for the database connection can be specified, e.g:
-
-::
-
-    "Dhcp6": {
-       "hooks-libraries": [
-           {
-               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
-               "parameters": {
-                   "name":"database-name",
-                   "password":"passwd",
-                   "type":"mysql",
-                   "user":"user-name"
-               }
-           },
-           ...
-       ]
-   }
-
-For more specific information about database related parameters please refer to
-:ref:`database-configuration6` and :ref:`database-configuration4`.
-
-If it is desired to restrict forensic logging to certain subnets, the
-"legal-logging" boolean parameter can be specified within a user context
-of these subnets. For example:
-
-::
-
-   "Dhcpv4" {
-       "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "pools": [
-                   {
-                        "pool": "192.0.2.1 - 192.0.2.200"
-                   }
-               ],
-               "user-context": {
-                   "legal-logging": false
-               }
-           }
-       ]
-   }
-
-This configuration disables legal logging for the subnet "192.0.2.0/24". If the
-"legal-logging" parameter is not specified, it defaults to 'true', which
-enables legal logging for the subnet.
-
-The following example demonstrates how to selectively disable legal
-logging for an IPv6 subnet:
-
-::
-
-   "Dhcpv6": {
-       "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "pools": [
-                    {
-                        "pool": "2001:db8:1::1-2001:db8:1::ffff"
-                    }
-               ],
-               "user-context": {
-                   "legal-logging": false
-               }
-           }
-       ]
-   }
-
-See :ref:`dhcp4-user-contexts` and :ref:`dhcp6-user-contexts` to
-learn more about user contexts in Kea configuration.
+                ''))"
 
 .. _forensic-log-database:
 
@@ -1270,7 +1271,16 @@ from a CQL database:
     2018-01-06 01:02:03.227000+0000 | Address: 192.2.1.100 has been renewed ...
     ...
    (12 rows)
-   $
+
+Like all the other database-centric features, forensic logging supports database
+connection recovery which can be enabled by setting the ``on-fail`` parameter.
+If not specified, the ``on-fail`` parameter defaults to ``serve-retry-continue``
+as opposed to the case of lease manager, host manager and config backend where
+it defaults to ``stop-retry-exit``. In this case, the server will continue serving clients and it will not shut down
+even if the recovery mechanism fails. If the ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
+the connection to the database backend is not restored according to the
+``max-reconnect-tries`` and ``reconnect-wait-time`` parameters, but it will
+continue serving clients while this mechanism is activated.
 
 .. _flex-id:
 
@@ -1508,7 +1518,7 @@ This library allows you to define an action to take, for a given option,
 based upon on the result of an expression.  These actions are carried
 out during the final stages of constructing a query response packet,
 just before it is sent to the client. The three actions currently
-supported are  ``add``, ``supersede``, and ``remove``.
+supported are ``add``, ``supersede``, and ``remove``.
 
 The syntax used for the action expressions is the same syntax used
 for client classification and the Flex Identifier hook library
