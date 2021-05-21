@@ -316,6 +316,7 @@ TEST_F(DStubCfgMgrTest, redactConfig) {
     EXPECT_EQ(expected, ret->str());
 }
 
+// Test that user context is not touched when configuration is redacted.
 TEST(RedactConfig, userContext) {
     ConstElementPtr const config(Element::fromJSON(R"(
         {
