@@ -283,6 +283,7 @@ public:
     static const RRType& SOA();
     static const RRType& SPF();
     static const RRType& SSHFP();
+    static const RRType& TKEY();
     static const RRType& TLSA();
     static const RRType& TXT();
     static const RRType& AAAA();
@@ -321,7 +322,6 @@ public:
     static const RRType& L32();
     static const RRType& L64();
     static const RRType& LP();
-    static const RRType& TKEY();
     static const RRType& MAILB();
     static const RRType& URI();
     // END_WELL_KNOWN_TYPE_DECLARATIONS
@@ -472,6 +472,12 @@ RRType::SPF() {
 inline const RRType&
 RRType::SSHFP() {
     static RRType rrtype(44);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::TKEY() {
+    static RRType rrtype(249);
     return (rrtype);
 }
 
@@ -700,12 +706,6 @@ RRType::L64() {
 inline const RRType&
 RRType::LP() {
     static RRType rrtype(107);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::TKEY() {
-    static RRType rrtype(249);
     return (rrtype);
 }
 

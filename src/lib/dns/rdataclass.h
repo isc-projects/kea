@@ -2063,6 +2063,154 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_SSHFP_44_H
 
+// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef GENERIC_TKEY_249_H
+#define GENERIC_TKEY_249_H 1
+
+#include <stdint.h>
+
+#include <string>
+
+#include <dns/name.h>
+#include <dns/rdata.h>
+
+namespace isc {
+namespace util {
+
+class InputBuffer;
+class OutputBuffer;
+}
+
+namespace dns {
+
+// BEGIN_COMMON_DECLARATIONS
+
+class AbstractMessageRenderer;
+
+// END_COMMON_DECLARATIONS
+
+namespace rdata {
+namespace generic {
+
+struct TKEYImpl;
+
+/// \brief \c rdata::TKEY class represents the TKEY RDATA as defined %in
+/// RFC2930.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// TKEY RDATA.
+class TKEY : public Rdata {
+public:
+    // BEGIN_COMMON_MEMBERS
+
+    explicit TKEY(const std::string& type_str);
+    TKEY(isc::util::InputBuffer& buffer, size_t rdata_len);
+    TKEY(const TKEY& other);
+    TKEY(
+        MasterLexer& lexer, const Name* name,
+        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
+    virtual std::string toText() const;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
+    virtual int compare(const Rdata& other) const;
+
+    // END_COMMON_MEMBERS
+
+    /// \brief Constructor from RDATA field parameters.
+    ///
+    /// The parameters are a straightforward mapping of %TKEY RDATA
+    /// fields as defined %in RFC2930.
+    ///
+    /// This RR is pretty close to the TSIG one with 32 bit timestamps.
+    ///
+    /// This constructor internally involves resource allocation, and if
+    /// it fails, a corresponding standard exception will be thrown.
+    TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
+         uint16_t mode, uint16_t error, uint16_t key_len,
+         const void* key, uint16_t other_len, const void* other_data);
+
+    /// \brief Assignment operator.
+    ///
+    /// It internally allocates a resource, and if it fails a corresponding
+    /// standard exception will be thrown.
+    /// This operator never throws an exception otherwise.
+    ///
+    /// This operator provides the strong exception guarantee: When an
+    /// exception is thrown the content of the assignment target will be
+    /// intact.
+    TKEY& operator=(const TKEY& source);
+
+    /// \brief The destructor.
+    ~TKEY();
+
+    /// \brief Return the algorithm name.
+    ///
+    /// This method never throws an exception.
+    const Name& getAlgorithm() const;
+
+    /// \brief Return the value of the Inception field.
+    ///
+    /// This method never throws an exception.
+    uint32_t getInception() const;
+
+    /// \brief Return the value of the Expire field.
+    ///
+    /// This method never throws an exception.
+    uint32_t getExpire() const;
+
+    /// \brief Return the value of the Mode field.
+    ///
+    /// This method never throws an exception.
+    uint16_t getMode() const;
+
+    /// \brief Return the value of the Error field.
+    ///
+    /// This method never throws an exception.
+    uint16_t getError() const;
+
+    /// \brief Return the value of the Key Len field.
+    ///
+    /// This method never throws an exception.
+    uint16_t getKeyLen() const;
+
+    /// \brief Return the value of the Key field.
+    ///
+    /// This method never throws an exception.
+    const void* getKey() const;
+
+    /// \brief Return the value of the Other Len field.
+    ///
+    /// This method never throws an exception.
+    uint16_t getOtherLen() const;
+
+    /// \brief Return the value of the Other Data field.
+    ///
+    /// The same note as \c getMAC() applies.
+    ///
+    /// This method never throws an exception.
+    const void* getOtherData() const;
+
+    /// \brief The GSS_API constant for the Mode field.
+    static const uint16_t GSS_API_MODE = 3;
+
+private:
+    TKEYImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+
+    TKEYImpl* impl_;
+};
+
+} // end of namespace "generic"
+} // end of namespace "rdata"
+} // end of namespace "dns"
+} // end of namespace "isc"
+#endif // GENERIC_TKEY_249_H
+
 // Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public

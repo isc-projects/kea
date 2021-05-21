@@ -239,6 +239,7 @@ RRParamRegistry::RRParamRegistry() {
         add("NSEC3PARAM", 51, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NSEC3PARAM>()));
         add("TLSA", 52, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TLSA>()));
         add("SPF", 99, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SPF>()));
+        add("TKEY", 249, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
         add("CAA", 257, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::CAA>()));
         add("DLV", 32769, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::DLV>()));
         add("A", 1, "CH", 3, RdataFactoryPtr(new RdataFactory<ch::A>()));
@@ -266,6 +267,7 @@ RRParamRegistry::RRParamRegistry() {
         add("NSEC3PARAM", 51, RdataFactoryPtr(new RdataFactory<generic::NSEC3PARAM>()));
         add("TLSA", 52, RdataFactoryPtr(new RdataFactory<generic::TLSA>()));
         add("SPF", 99, RdataFactoryPtr(new RdataFactory<generic::SPF>()));
+        add("TKEY", 249, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
         add("CAA", 257, RdataFactoryPtr(new RdataFactory<generic::CAA>()));
         add("DLV", 32769, RdataFactoryPtr(new RdataFactory<generic::DLV>()));
         // Meta and non-implemented RR types

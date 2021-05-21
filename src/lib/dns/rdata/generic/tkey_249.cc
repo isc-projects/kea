@@ -35,16 +35,16 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // straightforward representation of TKEY RDATA fields
 struct TKEYImpl {
     TKEYImpl(const Name& algorithm, uint32_t inception, uint32_t expire,
-	     uint16_t mode, uint16_t error, vector<uint8_t>& key,
+             uint16_t mode, uint16_t error, vector<uint8_t>& key,
              vector<uint8_t>& other_data) :
       algorithm_(algorithm), inception_(inception), expire_(expire),
       mode_(mode), error_(error), key_(key), other_data_(other_data)
     {}
     TKEYImpl(const Name& algorithm, uint32_t inception, uint32_t expire,
-	     uint16_t mode, uint16_t error, size_t key_len,
-	     const void* key, size_t other_len, const void* other_data) :
+             uint16_t mode, uint16_t error, size_t key_len,
+             const void* key, size_t other_len, const void* other_data) :
         algorithm_(algorithm), inception_(inception), expire_(expire),
-	mode_(mode), error_(error),
+        mode_(mode), error_(error),
         key_(static_cast<const uint8_t*>(key),
              static_cast<const uint8_t*>(key) + key_len),
         other_data_(static_cast<const uint8_t*>(other_data),
@@ -69,29 +69,29 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
 
     const uint32_t inception =
-	lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+
     const uint32_t expire =
-	lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
 
     const string& mode_txt =
-	lexer.getNextToken(MasterToken::STRING).getString();
+        lexer.getNextToken(MasterToken::STRING).getString();
     uint32_t mode = 0;
     if (mode_txt == "GSS-API") {
-	mode = GSS_API_MODE;
+        mode = GSS_API_MODE;
     } else {
-	/// we cast to uint32_t and range-check, because casting directly to
-	/// uint16_t will convert negative numbers to large positive numbers
-	try {
-	    mode = boost::lexical_cast<uint32_t>(mode_txt);
-	} catch (const boost::bad_lexical_cast&) {
-	    isc_throw(InvalidRdataText, "Invalid TKEY Mode");
-	    }
+        /// we cast to uint32_t and range-check, because casting directly to
+        /// uint16_t will convert negative numbers to large positive numbers
+        try {
+            mode = boost::lexical_cast<uint32_t>(mode_txt);
+        } catch (const boost::bad_lexical_cast&) {
+            isc_throw(InvalidRdataText, "Invalid TKEY Mode");
+            }
         if (mode > 0xffff) {
             isc_throw(InvalidRdataText, "TKEY Mode out of range");
-	}
+        }
     }
-    
+
     const string& error_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
     uint32_t error = 0;
@@ -100,19 +100,19 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     if (error_txt == "NOERROR") {
         error = Rcode::NOERROR_CODE;
     } else if (error_txt == "BADSIG") {
-        error = TKEYError::BAD_SIG_CODE;
+        error = TSIGError::BAD_SIG_CODE;
     } else if (error_txt == "BADKEY") {
-        error = TKEYError::BAD_KEY_CODE;
+        error = TSIGError::BAD_KEY_CODE;
     } else if (error_txt == "BADTIME") {
-        error = TKEYError::BAD_TIME_CODE;
+        error = TSIGError::BAD_TIME_CODE;
     } else if (error_txt == "BADMODE") {
-        error = TKEYError::BAD_MODE_CODE;
+        error = TSIGError::BAD_MODE_CODE;
     } else if (error_txt == "BADNAME") {
-        error = TKEYError::BAD_NAME_CODE;
+        error = TSIGError::BAD_NAME_CODE;
     } else if (error_txt == "BADALG") {
-        error = TKEYError::BAD_ALG_CODE;
+        error = TSIGError::BAD_ALG_CODE;
     } else if (error_txt == "BADTRUNC") {
-        error = TKEYError::BAD_TRUNC_CODE;
+        error = TSIGError::BAD_TRUNC_CODE;
     } else {
         /// we cast to uint32_t and range-check, because casting directly to
         /// uint16_t will convert negative numbers to large positive numbers
@@ -157,7 +157,7 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // However, we don't enforce that.
 
     return (new TKEYImpl(algorithm, inception, expire, mode, error,
-			 key_data, other_data));
+                         key_data, other_data));
 }
 
 /// \brief Constructor from string.
@@ -305,12 +305,12 @@ TKEY::TKEY(InputBuffer& buffer, size_t) :
     }
 
     impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
-			 key, other_data);
+                         key, other_data);
 }
 
 TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
-	   uint16_t mode, uint16_t error, uint16_t key_len,
-	   const void* key, uint16_t other_len, const void* other_data) :
+           uint16_t mode, uint16_t error, uint16_t key_len,
+           const void* key, uint16_t other_len, const void* other_data) :
     impl_(0)
 {
     if ((key_len == 0 && key != 0) || (key_len > 0 && key == 0)) {
@@ -321,8 +321,8 @@ TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
         isc_throw(InvalidParameter,
                   "TKEY Other data length and data inconsistent");
     }
-    impl_ = new TKEYImpl(algorithm, inception, expire, mode, erro,
-			 key_len, key, other_len, other_data);
+    impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
+                         key_len, key, other_len, other_data);
 }
 
 /// \brief The copy constructor.
@@ -364,17 +364,17 @@ TKEY::toText() const {
     string result;
 
     result += impl_->algorithm_.toText() + " " +
-	lexical_cast<string>(impl_->inception_) + " " +
-	lexical_cast<string>(impl_->expire_) + " ";
+        lexical_cast<string>(impl_->inception_) + " " +
+        lexical_cast<string>(impl_->expire_) + " ";
     if (impl_->mode_ == GSS_API_MODE) {
-	result += "GSS-API ";
+        result += "GSS-API ";
     } else {
-	result += lexical_cast<string>(impl_->mode_) + " ";
+        result += lexical_cast<string>(impl_->mode_) + " ";
     }
-    result += TKEYError(impl_->error_).toText() + " " +
-	lexical_cast<string>(impl_->key_.size()) + " ";
+    result += TSIGError(impl_->error_).toText() + " " +
+        lexical_cast<string>(impl_->key_.size()) + " ";
     if (!impl_->key_.empty()) {
-	result += encodeBase64(impl_->key_) + " ";
+        result += encodeBase64(impl_->key_) + " ";
     }
     result += lexical_cast<string>(impl_->other_data_.size());
     if (!impl_->other_data_.empty()) {
@@ -480,10 +480,10 @@ TKEY::compare(const Rdata& other) const {
     }
 
     if (impl_->inception_ != other_tkey.impl_->inception_) {
-	return (impl_->inception_ < other_tkey.impl_->inception_ ? -1 : 1);
+        return (impl_->inception_ < other_tkey.impl_->inception_ ? -1 : 1);
     }
     if (impl_->expire_ != other_tkey.impl_->expire_) {
-	return (impl_->expire_ < other_tkey.impl_->expire_ ? -1 : 1);
+        return (impl_->expire_ < other_tkey.impl_->expire_ ? -1 : 1);
     }
     if (impl_->mode_ != other_tkey.impl_->mode_) {
         return (impl_->mode_ < other_tkey.impl_->mode_ ? -1 : 1);

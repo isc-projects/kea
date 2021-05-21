@@ -43,8 +43,8 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
-	 uint16_t mode, uint16_t error, uint16_t key_len,
-	 const void* key, uint16_t other_len, const void* other_data);
+         uint16_t mode, uint16_t error, uint16_t key_len,
+         const void* key, uint16_t other_len, const void* other_data);
 
     /// \brief Assignment operator.
     ///
