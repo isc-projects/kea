@@ -420,7 +420,7 @@ public:
     BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
         datavector_(&datavector), it_(datavector_->begin()) {}
 
-    ///@brief Destructor.
+    /// @brief Destructor.
     ~BasicRdataIterator() {}
 
     /// @brief Set iterator at first position.
