@@ -142,7 +142,7 @@ CtrlAgentCfgMgr::parse(ConstElementPtr config_set, bool check_only) {
 std::list<std::list<std::string>>
 CtrlAgentCfgMgr::jsonPathsToRedact() const {
     static std::list<std::list<std::string>> const list({
-        {"authentication", "clients"},
+        {"authentication", "clients", "[]"},
         {"hooks-libraries", "[]", "parameters", "*"},
     });
     return list;
