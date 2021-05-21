@@ -312,7 +312,7 @@ D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
 std::list<std::list<std::string>>
 D2CfgMgr::jsonPathsToRedact() const {
     static std::list<std::list<std::string>> const list({
-        {"tsig-keys"},
+        {"tsig-keys", "[]"},
     });
     return list;
 }
