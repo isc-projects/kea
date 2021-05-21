@@ -1427,8 +1427,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         vendor_id = vendor_rsp->getVendorId();
     }
 
-    // Otherwise, get the vendor-id from vendor-specific information option
-    // (17).
+    // Otherwise, try to get the vendor-id from the client packet's
+    // vendor-specific information option (17).
     OptionVendorPtr vendor_req;
     if (vendor_id == 0) {
         vendor_req = boost::dynamic_pointer_cast<OptionVendor>(
@@ -1438,7 +1438,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         }
     }
 
-    // Optionally, get the vendor-id from vendor-class option (16).
+    // Finally, try to get the vendor-id from the client packet's vendor-class
+    // option (16).
     if (vendor_id == 0) {
         OptionVendorClassPtr vendor_class(
             boost::dynamic_pointer_cast<OptionVendorClass>(
