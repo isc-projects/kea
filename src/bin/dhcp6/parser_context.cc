@@ -18,17 +18,15 @@ namespace isc {
 namespace dhcp {
 
 Parser6Context::Parser6Context()
-  : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
-{
+    : sfile_(nullptr), ctx_(NO_KEYWORD), trace_scanning_(false),
+      trace_parsing_(false) {
 }
 
-Parser6Context::~Parser6Context()
-{
+Parser6Context::~Parser6Context() {
 }
 
 isc::data::ElementPtr
-Parser6Context::parseString(const std::string& str, ParserType parser_type)
-{
+Parser6Context::parseString(const std::string& str, ParserType parser_type) {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
@@ -71,8 +69,7 @@ Parser6Context::parseCommon() {
 void
 Parser6Context::error(const isc::dhcp::location& loc,
                       const std::string& what,
-                      size_t pos)
-{
+                      size_t pos) {
     if (pos == 0) {
         isc_throw(Dhcp6ParseError, loc << ": " << what);
     } else {
@@ -81,20 +78,17 @@ Parser6Context::error(const isc::dhcp::location& loc,
 }
 
 void
-Parser6Context::error (const std::string& what)
-{
+Parser6Context::error (const std::string& what) {
     isc_throw(Dhcp6ParseError, what);
 }
 
 void
-Parser6Context::fatal (const std::string& what)
-{
+Parser6Context::fatal (const std::string& what) {
     isc_throw(Dhcp6ParseError, what);
 }
 
 isc::data::Element::Position
-Parser6Context::loc2pos(isc::dhcp::location& loc)
-{
+Parser6Context::loc2pos(isc::dhcp::location& loc) {
     const std::string& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
@@ -104,8 +98,7 @@ Parser6Context::loc2pos(isc::dhcp::location& loc)
 void
 Parser6Context::require(const std::string& name,
                         isc::data::Element::Position open_loc,
-                        isc::data::Element::Position close_loc)
-{
+                        isc::data::Element::Position close_loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (!value) {
         isc_throw(Dhcp6ParseError,
@@ -118,8 +111,7 @@ Parser6Context::require(const std::string& name,
 
 void
 Parser6Context::unique(const std::string& name,
-                       isc::data::Element::Position loc)
-{
+                       isc::data::Element::Position loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
         if (ctx_ != NO_KEYWORD) {
@@ -135,15 +127,13 @@ Parser6Context::unique(const std::string& name,
 }
 
 void
-Parser6Context::enter(const ParserContext& ctx)
-{
+Parser6Context::enter(const ParserContext& ctx) {
     cstack_.push_back(ctx_);
     ctx_ = ctx;
 }
 
 void
-Parser6Context::leave()
-{
+Parser6Context::leave() {
 #if 1
     if (cstack_.empty()) {
         fatal("unbalanced syntactic context");
@@ -154,8 +144,7 @@ Parser6Context::leave()
 }
 
 const std::string
-Parser6Context::contextName()
-{
+Parser6Context::contextName() {
     switch (ctx_) {
     case NO_KEYWORD:
         return ("__no keyword__");

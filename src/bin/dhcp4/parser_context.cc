@@ -18,17 +18,15 @@ namespace isc {
 namespace dhcp {
 
 Parser4Context::Parser4Context()
-  : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
-{
+    : sfile_(nullptr), ctx_(NO_KEYWORD), trace_scanning_(false),
+      trace_parsing_(false) {
 }
 
-Parser4Context::~Parser4Context()
-{
+Parser4Context::~Parser4Context() {
 }
 
 isc::data::ElementPtr
-Parser4Context::parseString(const std::string& str, ParserType parser_type)
-{
+Parser4Context::parseString(const std::string& str, ParserType parser_type) {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
@@ -71,8 +69,7 @@ Parser4Context::parseCommon() {
 void
 Parser4Context::error(const isc::dhcp::location& loc,
                       const std::string& what,
-                      size_t pos)
-{
+                      size_t pos) {
     if (pos == 0) {
         isc_throw(Dhcp4ParseError, loc << ": " << what);
     } else {
@@ -81,20 +78,17 @@ Parser4Context::error(const isc::dhcp::location& loc,
 }
 
 void
-Parser4Context::error(const std::string& what)
-{
+Parser4Context::error(const std::string& what) {
     isc_throw(Dhcp4ParseError, what);
 }
 
 void
-Parser4Context::fatal(const std::string& what)
-{
+Parser4Context::fatal(const std::string& what) {
     isc_throw(Dhcp4ParseError, what);
 }
 
 isc::data::Element::Position
-Parser4Context::loc2pos(isc::dhcp::location& loc)
-{
+Parser4Context::loc2pos(isc::dhcp::location& loc) {
     const std::string& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
@@ -104,8 +98,7 @@ Parser4Context::loc2pos(isc::dhcp::location& loc)
 void
 Parser4Context::require(const std::string& name,
                         isc::data::Element::Position open_loc,
-                        isc::data::Element::Position close_loc)
-{
+                        isc::data::Element::Position close_loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (!value) {
         isc_throw(Dhcp4ParseError,
@@ -118,8 +111,7 @@ Parser4Context::require(const std::string& name,
 
 void
 Parser4Context::unique(const std::string& name,
-                       isc::data::Element::Position loc)
-{
+                       isc::data::Element::Position loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
         if (ctx_ != NO_KEYWORD) {
@@ -136,15 +128,13 @@ Parser4Context::unique(const std::string& name,
 }
 
 void
-Parser4Context::enter(const ParserContext& ctx)
-{
+Parser4Context::enter(const ParserContext& ctx) {
     cstack_.push_back(ctx_);
     ctx_ = ctx;
 }
 
 void
-Parser4Context::leave()
-{
+Parser4Context::leave() {
 #if 1
     if (cstack_.empty()) {
         fatal("unbalanced syntactic context");
@@ -155,8 +145,7 @@ Parser4Context::leave()
 }
 
 const std::string
-Parser4Context::contextName()
-{
+Parser4Context::contextName() {
     switch (ctx_) {
     case NO_KEYWORD:
         return ("__no keyword__");
