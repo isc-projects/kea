@@ -513,9 +513,7 @@ public:
                 n = static_cast<IntegerType>(boost::lexical_cast<uint32_t>(expected));
             }
         } catch (const boost::bad_lexical_cast& e) {
-            FAIL() << "invalid value " << expected << " while expecting "
-                   << boost::core::demangle(typeid(n).name()) << " error: "
-                   << e.what();
+            FAIL() << "invalid value " << expected << ", error: " << e.what();
         }
 
         values.push(std::string(const_cast<const char*>(reinterpret_cast<char*>(&n)), sizeof(IntegerType)));
