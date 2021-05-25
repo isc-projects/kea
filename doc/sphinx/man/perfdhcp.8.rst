@@ -306,6 +306,9 @@ Options
    **i**
       Prints the rate processing details.
 
+   **l**
+      Prints the received leases.
+
    **s**
       Prints the first server-ID.
 
@@ -340,7 +343,7 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    Adds a rapid-commit option (exchanges will be SOLICIT-ADVERTISE).
 
 ``-F release-rate``
-   Specifies the rate at which IPv6 RELEASE requests are sent to a server. This value
+   Specifies the rate at which RELEASE requests are sent to a server. This value
    is only valid when used in conjunction with the exchange rate (given
    by ``-r rate``). Furthermore, the sum of this value and the renew-rate
    (given by ``-f rate``) must be equal to or less than the exchange
