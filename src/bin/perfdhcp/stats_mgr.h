@@ -33,6 +33,7 @@ enum class ExchangeType {
     DO,  ///< DHCPv4 DISCOVER-OFFER
     RA,  ///< DHCPv4 REQUEST-ACK
     RNA, ///< DHCPv4 REQUEST-ACK (renewal)
+    RLA, ///< DHCPv4 RELEASE
     SA,  ///< DHCPv6 SOLICIT-ADVERTISE
     RR,  ///< DHCPv6 REQUEST-REPLY
     RN,  ///< DHCPv6 RENEW-REPLY

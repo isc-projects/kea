@@ -15,6 +15,7 @@
 #include <perfdhcp/perf_socket.h>
 
 #include <dhcp/iface_mgr.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -268,10 +269,13 @@ public:
 
     /// \brief Send number of DHCPREQUEST (renew) messages to a server.
     ///
+    /// \param msg_type A type of the messages to be sent (DHCPREQUEST or
+    /// DHCPRELEASE).
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleRequests(const uint64_t msg_num);
+    uint64_t sendMultipleMessages(const uint32_t msg_type,
+                                  const uint64_t msg_num);
 
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///
@@ -352,7 +356,8 @@ protected:
     /// create a new message.
     ///
     /// \return Pointer to the created message.
-    dhcp::Pkt4Ptr createRequestFromAck(const dhcp::Pkt4Ptr& ack);
+    dhcp::Pkt4Ptr createMessageFromAck(const uint16_t msg_type,
+                                       const dhcp::Pkt4Ptr& ack);
 
     /// \brief Creates DHCPv6 message from the Reply packet.
     ///
@@ -630,6 +635,7 @@ protected:
                 }
                 break;
             }
+            case ExchangeType::RLA:
             case ExchangeType::RL: {
                 removeUniqueAddr(current);
                 break;
@@ -794,8 +800,11 @@ protected:
 
     /// \brief Send DHCPv4 renew (DHCPREQUEST).
     ///
+    /// \param msg_type A type of the message to be sent (DHCPREQUEST or
+    /// DHCPRELEASE).
+    ///
     /// \return true if the message has been sent, false otherwise.
-    bool sendRequestFromAck();
+    bool sendMessageFromAck(const uint16_t msg_type);
 
     /// \brief Send DHCPv6 Renew or Release message.
     ///

@@ -161,15 +161,31 @@ TestControl::byte2Hex(const uint8_t b) {
 }
 
 Pkt4Ptr
-TestControl::createRequestFromAck(const dhcp::Pkt4Ptr& ack) {
-    if (!ack) {
-        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
-                  " null DHCPACK message");
-    } else if (ack->getYiaddr().isV4Zero()) {
-        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
-                  " DHCPACK message containing yiaddr of 0");
+TestControl::createMessageFromAck(const uint16_t msg_type,
+                                  const dhcp::Pkt4Ptr& ack) {
+    // Restrict messages to Release and Renew.
+    if (msg_type != DHCPREQUEST && msg_type != DHCPRELEASE) {
+        isc_throw(isc::BadValue, "invalid message type " << msg_type
+                  << " to be created from Reply, expected DHCPREQUEST or"
+                  " DHCPRELEASE");
     }
-    Pkt4Ptr msg(new Pkt4(DHCPREQUEST, generateTransid()));
+
+    // Get the string representation of the message - to be used for error
+    // logging purposes.
+    const char* msg_type_str = (msg_type == DHCPREQUEST ? "Request" :
+                                                          "Release");
+
+    if (!ack) {
+        isc_throw(isc::BadValue, "Unable to create "
+                                     << msg_type_str
+                                     << " from a null DHCPACK message");
+    } else if (ack->getYiaddr().isV4Zero()) {
+        isc_throw(isc::BadValue,
+                  "Unable to create "
+                      << msg_type_str
+                      << " from a DHCPACK message containing yiaddr of 0");
+    }
+    Pkt4Ptr msg(new Pkt4(msg_type, generateTransid()));
     msg->setCiaddr(ack->getYiaddr());
     msg->setHWAddr(ack->getHWAddr());
     msg->addOption(generateClientId(msg->getHWAddr()));
@@ -185,9 +201,11 @@ TestControl::createMessageFromReply(const uint16_t msg_type,
                   << " to be created from Reply, expected DHCPV6_RENEW or"
                   " DHCPV6_RELEASE");
     }
+
     // Get the string representation of the message - to be used for error
     // logging purposes.
     const char* msg_type_str = (msg_type == DHCPV6_RENEW ? "Renew" : "Release");
+
     // Reply message must be specified.
     if (!reply) {
         isc_throw(isc::BadValue, "Unable to create " << msg_type_str
@@ -535,9 +553,10 @@ TestControl::sendPackets(const uint64_t packets_num,
 }
 
 uint64_t
-TestControl::sendMultipleRequests(const uint64_t msg_num) {
+TestControl::sendMultipleMessages(const uint32_t msg_type,
+                                  const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
-        if (!sendRequestFromAck()) {
+        if (!sendMessageFromAck(msg_type)) {
             return (i);
         }
     }
@@ -786,10 +805,11 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
             // So, we may need to keep this DHCPACK in the storage if renews.
             // Note that, DHCPACK messages hold the information about
             // leases assigned. We use this information to renew.
-            if (stats_mgr_.hasExchangeStats(ExchangeType::RNA)) {
-                // Renew messages are sent, because StatsMgr has the
-                // specific exchange type specified. Let's append the DHCPACK.
-                // message to a storage
+            if (stats_mgr_.hasExchangeStats(ExchangeType::RNA) ||
+                stats_mgr_.hasExchangeStats(ExchangeType::RLA)) {
+                // Renew or release messages are sent, because StatsMgr has the
+                // specific exchange type specified. Let's append the DHCPACK
+                // message to a storage.
                 ack_storage_.append(pkt4);
             }
         // The DHCPACK message is not a server's response to the DHCPREQUEST
@@ -1247,7 +1267,16 @@ TestControl::sendDiscover4(const std::vector<uint8_t>& template_buf,
 }
 
 bool
-TestControl::sendRequestFromAck() {
+TestControl::sendMessageFromAck(const uint16_t msg_type) {
+    // We only permit Request or Release messages to be sent using this
+    // function.
+    if (msg_type != DHCPREQUEST && msg_type != DHCPRELEASE) {
+        isc_throw(isc::BadValue,
+                  "invalid message type "
+                      << msg_type
+                      << " to be sent, expected DHCPREQUEST or DHCPRELEASE");
+    }
+
     // Get one of the recorded DHCPACK messages.
     Pkt4Ptr ack = ack_storage_.getRandom();
     if (!ack) {
@@ -1255,7 +1284,7 @@ TestControl::sendRequestFromAck() {
     }
 
     // Create message of the specified type.
-    Pkt4Ptr msg = createRequestFromAck(ack);
+    Pkt4Ptr msg = createMessageFromAck(msg_type, ack);
     setDefaults4(msg);
 
     // Override relay address
@@ -1264,10 +1293,15 @@ TestControl::sendRequestFromAck() {
     // Add any extra options that user may have specified.
     addExtraOpts(msg);
 
+    // Pack it.
     msg->pack();
+
     // And send it.
     socket_.send(msg);
-    stats_mgr_.passSentPacket(ExchangeType::RNA, msg);
+    address4Uniqueness(msg, ExchangeType::RLA);
+    stats_mgr_.passSentPacket((msg_type == DHCPREQUEST ? ExchangeType::RNA :
+                                                         ExchangeType::RLA),
+                              msg);
     return (true);
 }
 
@@ -1279,6 +1313,8 @@ TestControl::sendMessageFromReply(const uint16_t msg_type) {
         isc_throw(isc::BadValue, "invalid message type " << msg_type
                   << " to be sent, expected DHCPV6_RENEW or DHCPV6_RELEASE");
     }
+
+    // Get one of the recorded DHCPV6_OFFER messages.
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
         return (false);
@@ -1290,7 +1326,9 @@ TestControl::sendMessageFromReply(const uint16_t msg_type) {
     // Add any extra options that user may have specified.
     addExtraOpts(msg);
 
+    // Pack it.
     msg->pack();
+
     // And send it.
     socket_.send(msg);
     address6Uniqueness(msg, ExchangeType::RL);

@@ -8,7 +8,6 @@
 
 #include <perfdhcp/basic_scen.h>
 
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
@@ -178,7 +177,7 @@ BasicScen::run() {
 
             // Send multiple renews to satisfy the desired rate.
             if (options_.getIpVersion() == 4) {
-                tc_.sendMultipleRequests(renew_packets_due);
+                tc_.sendMultipleMessages(DHCPREQUEST, renew_packets_due);
             } else {
                 tc_.sendMultipleMessages6(DHCPV6_RENEW, renew_packets_due);
             }
@@ -186,11 +185,16 @@ BasicScen::run() {
 
         // If -F<release-rate> option was specified we have to check how many
         // Release messages should be sent to catch up with a desired rate.
-        if ((options_.getIpVersion() == 6) && (options_.getReleaseRate() != 0)) {
+        if (options_.getReleaseRate() != 0) {
             uint64_t release_packets_due =
                 release_rate_control_.getOutboundMessageCount(!tc_.exit_time_.is_not_a_date_time());
             // Send Release messages.
-            tc_.sendMultipleMessages6(DHCPV6_RELEASE, release_packets_due);
+
+            if (options_.getIpVersion() == 4) {
+                tc_.sendMultipleMessages(DHCPRELEASE, release_packets_due);
+            } else {
+                tc_.sendMultipleMessages6(DHCPV6_RELEASE, release_packets_due);
+            }
         }
 
         // Report delay means that user requested printing number

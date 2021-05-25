@@ -34,6 +34,7 @@ int dhcpVersion(ExchangeType const exchange_type) {
     case ExchangeType::DO:
     case ExchangeType::RA:
     case ExchangeType::RNA:
+    case ExchangeType::RLA:
         return 4;
     case ExchangeType::SA:
     case ExchangeType::RR:
@@ -55,6 +56,8 @@ std::ostream& operator<<(std::ostream& os, ExchangeType xchg_type)
         return(os << "REQUEST-ACK");
     case ExchangeType::RNA:
         return(os << "REQUEST-ACK (renewal)");
+    case ExchangeType::RLA:
+        return(os << "RELEASE");
     case ExchangeType::SA:
         return(os << "SOLICIT-ADVERTISE");
     case ExchangeType::RR:
@@ -368,7 +371,9 @@ StatsMgr::StatsMgr(CommandOptions& options) :
         if (options.getRenewRate() != 0) {
             addExchangeStats(ExchangeType::RNA);
         }
-
+        if (options.getReleaseRate() != 0) {
+            addExchangeStats(ExchangeType::RLA);
+        }
     } else if (options.getIpVersion() == 6) {
         addExchangeStats(ExchangeType::SA, options.getDropTime()[0]);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {

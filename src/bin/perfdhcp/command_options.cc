@@ -920,8 +920,6 @@ CommandOptions::validate() {
           "-6 (IPv6) must be set to use -c");
     check(getIpVersion() == 4 && isUseRelayedV6(),
           "Can't use -4 with -A, it's a V6 only option.");
-    check((getIpVersion() != 6) && (getReleaseRate() != 0),
-          "-F<release-rate> may be used with -6 (IPv6) only");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
     check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS),
