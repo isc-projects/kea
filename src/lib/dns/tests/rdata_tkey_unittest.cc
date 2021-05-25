@@ -276,7 +276,7 @@ TEST_F(Rdata_TKEY_Test, badFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire7.wire"),
                  DNSMessageFORMERR);
-    // Key size is bogus:
+    // Key length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire8.wire"),
                  InvalidBufferPosition);
@@ -306,13 +306,13 @@ TEST_F(Rdata_TKEY_Test, createFromParams) {
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
                                   0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
     EXPECT_EQ(0, generic::TKEY(valid_text2).compare(
-                  generic::TKEY(Name("GSS_TSIG"), 1619870400, 1619874000,
-                                3, 0, 12, fake_data, 0, 0)));
+                  generic::TKEY(Name("GSS-TSIG"), 1619870400, 1619874000,
+                                3, 16, 12, fake_data, 0, 0)));
 
     const uint8_t fake_data2[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
     EXPECT_EQ(0, generic::TKEY(valid_text3).compare(
                   generic::TKEY(Name("gss.tsig"), 1619870400, 1619874000,
-                                3, 0, 12, fake_data, 6, fake_data2)));
+                                3, 16, 12, fake_data, 6, fake_data2)));
 
     EXPECT_THROW(generic::TKEY(Name("gss-tsig"), 0, 0, 0, 0, 0, fake_data, 0, 0),
                  isc::InvalidParameter);
@@ -383,7 +383,7 @@ TEST_F(Rdata_TKEY_Test, toWireRenderer) {
     expect_data.clear();
     renderer.clear();
     renderer.writeName(Name("gss-tsig"));
-    renderer.writeUint16(42); // RDLEN
+    renderer.writeUint16(26); // RDLEN
     rdata_tkey.toWire(renderer);
     UnitTestUtil::readWireData("rdata_tkey_toWire4.wire", expect_data);
     matchWireData(&expect_data[0], expect_data.size(),
@@ -392,7 +392,7 @@ TEST_F(Rdata_TKEY_Test, toWireRenderer) {
     // check algorithm can be used as a compression target.
     expect_data.clear();
     renderer.clear();
-    renderer.writeUint16(42);
+    renderer.writeUint16(26);
     rdata_tkey.toWire(renderer);
     renderer.writeName(Name("gss-tsig"));
     UnitTestUtil::readWireData("rdata_tkey_toWire5.wire", expect_data);
@@ -412,20 +412,30 @@ TEST_F(Rdata_TKEY_Test, compare) {
     // "AAAA" encoded in BASE64 corresponds to 0x000000, so it should be the
     // smallest data of the same length.
     vector<generic::TKEY> compare_set;
-    ///////////// TODO
-    compare_set.push_back(generic::TKEY("a.example 0 300 0 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 0 300 0 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 300 0 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 0 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 AAAA 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 FAKE 16020 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 FAKE 16021 0 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 FAKE 16021 1 0"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 FAKE 16021 1 3 AAAA"));
-    compare_set.push_back(generic::TKEY("example 1 600 3 FAKE 16021 1 3 FAKE"));
+    compare_set.push_back(generic::TKEY("a.example 20210501120000 "
+                                        "20210501130000 3 0 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120000 "
+                                        "20210501130000 3 0 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130000 3 0 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 3 0 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 0 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 1 0 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 1 3 AAAA 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 1 3 FAKE 0"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 1 3 FAKE 3 AAAA"));
+    compare_set.push_back(generic::TKEY("example 20210501120001 "
+                                        "20210501130001 4 1 3 FAKE 3 FAKE"));
 
-    EXPECT_EQ(0, compare_set[0].compare(
-                  generic::TKEY("A.EXAMPLE 0 300 0 16020 0 0")));
+    EXPECT_EQ(0,
+              compare_set[0].compare(generic::TKEY("A.EXAMPLE 20210501120000 "
+                                                   "20210501130000 3 0 0 0")));
 
     vector<generic::TKEY>::const_iterator it;
     vector<generic::TKEY>::const_iterator it_end = compare_set.end();

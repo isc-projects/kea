@@ -1,8 +1,8 @@
 #
-# TSIG-like RDATA but algorithm name is broken.
+# TKEY-like RDATA but algorithm name is broken.
 #
 [custom]
-sections: tsig
-[tsig]
+sections: tkey
+[tkey]
 algorithm: "01234567890123456789012345678901234567890123456789012345678901234"
-mac_size: 32
+key_len: 32

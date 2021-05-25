@@ -1,7 +1,7 @@
 #
-# TSIG-like RDATA but RDLEN is too long.
+# TKEY-like RDATA but RDLEN is too long.
 #
 [custom]
-sections: tsig
-[tsig]
-rdlen: 63
+sections: tkey
+[tkey]
+rdlen: 60
