@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1173,6 +1173,92 @@ class RRSIG(RR):
         f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
+class TKEY(RR):
+    '''Implements rendering TKEY RDATA in the test data format.
+
+    As a meta RR type TKEY uses some non common parameters.  This
+    class overrides some of the default attributes of the RR class
+    accordingly:
+    - rr_class is set to 'ANY'
+    - rr_ttl is set to 0
+    Like other derived classes these can be overridden via the spec
+    file.
+
+    Other configurable parameters are as follows (see the description
+    of the same name of attribute for the default value):
+    - algorithm (string): The Algorithm Name field.  The value is
+      generally interpreted as a domain name string, and will
+      typically be gss-tsig.
+    - inception (32-bit int): The Inception TTL field.
+    - expiration (32-bit int): The Expiration TTL field.
+    - mode (16-bit int): The Mode field.
+    - error (16-bit int): The Error field.
+    - key_len (int): The Key Len field.
+    - key (int or string): The Key field.  If specified as an integer,
+      the integer value is used as the Key, possibly with prepended
+      0's so that the total length will be key len.  If specified as a
+      string, it is converted to a sequence of ascii codes and its
+      hexadecimal representation will be used.  So, for example, if
+      "key" is set to 'abc', it will be converted to '616263'.  Note
+      that in this case the length of "key" may not be equal to
+      key_len.  If unspecified, the key_len number of '78' (ascii
+      code of 'x') will be used.
+    - other_len (int): The Other Len field.
+    - other_data (int or string): The Other Data field.  This is
+      interpreted just like "key" except that other_len is used
+      instead of key_len.  If unspecified this will be empty.
+    '''
+
+    algorithm = 'gss-tsig'
+    inception = int(time.mktime(datetime.strptime('20210501130000',
+                                                  dnssec_timefmt).timetuple()))
+    expiration = int(time.mktime(datetime.strptime('20210501130000',
+                                                   dnssec_timefmt).timetuple()))
+    mode = 3                 # GSS-API
+    error = 0
+    key_len = None
+    key = None               # use 'x' *
+    other_len = None
+    other_data = None        # same as key
+
+    # TKEY has some special defaults
+    def __init__(self):
+        super().__init__()
+        self.rr_class = 'ANY'
+        self.rr_ttl = 0
+
+    def dump(self, f):
+        name_wire = encode_name(self.algorithm)
+        key_len = self.key_len
+        if key_len is None:
+            key_len = 0
+        key = self.key
+        if key is None:
+            key = ''
+        else:
+            key = encode_string(self.key, key_len)
+        other_len = self.other_len
+        if other_len is None:
+            other_len = 0
+        other_data = self.other_data
+        if other_data is None:
+            other_data = encode_string(self.other_data, other_len)
+        if self.rdlen is None:
+            self.rdlen = int(len(name_wire) / 2 + 12 + len(mac) / 2 + \
+                                 len(other_data) / 2)
+        self.dump_header(f, self.rdlen)
+        f.write('# Algorithm=%s Inception=%d Expire=%d Mode=%d Error=%d\n' %
+                (self.algorithm, self.inception, self.expire,
+                 self.mode, self.error))
+        f.write('%s %08x %08x %04x %04x\n' %
+                (self.algorithm, self.inception, self.expire,
+                 self.mode, self.error))
+        f.write('# Key Len=%d Key=(see hex)\n' % key_len)
+        f.write('%04x%s\n' % (key_len, ' ' + key if len(key) > 0 else ''))
+        f.write('# Other-Len=%d Other-Data=(see hex)\n' % other_len)
+        f.write('%04x%s\n' % (other_len,
+                              ' ' + other_data if len(other_data) > 0 else ''))
+
 class TLSA(RR):
     '''Implements rendering TLSA RDATA in the test data format.
 
@@ -1339,6 +1425,7 @@ if __name__ == "__main__":
         else:
             raise ValueError('output file is not specified and input file is not in the form of "output_file.suffix"')
 
+    # DeprecationWarning: use ConfigParser directly
     config = configparser.SafeConfigParser()
     config.read(configfile)
 
