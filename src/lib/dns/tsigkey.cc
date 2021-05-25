@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -297,6 +297,12 @@ Name& TSIGKey::HMACSHA384_NAME() {
 const
 Name& TSIGKey::HMACSHA512_NAME() {
     static Name alg_name("hmac-sha512");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::GSSTSIG_NAME() {
+    static Name alg_name("gss-tsig");
     return (alg_name);
 }
 

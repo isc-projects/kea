@@ -1,0 +1,17 @@
+###
+### This data file was auto-generated from rdata_tkey_fromWire4.spec
+###
+
+# DNS Name: gss-tsig
+086773732d7473696700
+
+# TKEY RDATA, RDLEN=50
+0032
+# Algorithm=ptr=0
+c000
+# Inception=1619870400 Expire=1619874000 Mode=3 Error=0
+608d42c0 608d50d0 0003 0000
+# Key Len=32 Key=(see hex)
+0020 7878787878787878787878787878787878787878787878787878787878787878
+# Other-Len=0 Other-Data=(see hex)
+0000

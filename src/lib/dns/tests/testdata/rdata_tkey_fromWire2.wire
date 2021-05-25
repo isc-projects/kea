@@ -1,0 +1,14 @@
+###
+### This data file was auto-generated from rdata_tkey_fromWire2.spec
+###
+
+# TKEY RDATA, RDLEN=66
+0042
+# Algorithm=gss-tsig
+086773732d7473696700
+# Inception=1619870400 Expire=1619874000 Mode=3 Error=0
+608d42c0 608d50d0 0003 0000
+# Key Len=32 Key=(see hex)
+0020 7878787878787878787878787878787878787878787878787878787878787878
+# Other-Len=8 Other-Data=(see hex)
+0008 6162636430313233

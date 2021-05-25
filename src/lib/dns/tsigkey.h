@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -216,6 +216,7 @@ public:
     static const Name& HMACSHA224_NAME(); ///< HMAC-SHA256 (RFC4635)
     static const Name& HMACSHA384_NAME(); ///< HMAC-SHA256 (RFC4635)
     static const Name& HMACSHA512_NAME(); ///< HMAC-SHA256 (RFC4635)
+    static const Name& GSSTSIG_NAME();    ///< GSS-TSIG (RFC3645)
     //@}
 
 private:

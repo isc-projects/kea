@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,7 @@ TEST_F(TSIGKeyTest, algorithmNames) {
     EXPECT_EQ(Name("hmac-sha224"), TSIGKey::HMACSHA224_NAME());
     EXPECT_EQ(Name("hmac-sha384"), TSIGKey::HMACSHA384_NAME());
     EXPECT_EQ(Name("hmac-sha512"), TSIGKey::HMACSHA512_NAME());
+    EXPECT_EQ(Name("gss-tsig"), TSIGKey::GSSTSIG_NAME());
 
     // Also check conversion to cryptolink definitions
     EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
