@@ -1,6 +1,8 @@
 SUBDIRS = data .
 
-SHTESTS = memfile_tests.sh
+SHTESTS =
+SHTESTS += admin_tests.sh
+SHTESTS += memfile_tests.sh
 
 if HAVE_MYSQL
 SHTESTS += mysql_tests.sh

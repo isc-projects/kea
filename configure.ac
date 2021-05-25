@@ -1654,6 +1654,8 @@ AC_CONFIG_FILES([src/bin/admin/tests/Makefile])
 AC_CONFIG_FILES([src/bin/admin/tests/cql_tests.sh],
                 [chmod +x src/bin/admin/tests/cql_tests.sh])
 AC_CONFIG_FILES([src/bin/admin/tests/data/Makefile])
+AC_CONFIG_FILES([src/bin/admin/tests/admin_tests.sh],
+                [chmod +x src/bin/admin/tests/admin_tests.sh])
 AC_CONFIG_FILES([src/bin/admin/tests/memfile_tests.sh],
                 [chmod +x src/bin/admin/tests/memfile_tests.sh])
 AC_CONFIG_FILES([src/bin/admin/tests/mysql_tests.sh],

@@ -1,3 +1,4 @@
+/admin_tests.sh
 /memfile_tests.sh
 /mysql_tests.sh
 /pgsql_tests.sh

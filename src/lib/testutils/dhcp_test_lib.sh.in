@@ -21,6 +21,9 @@
 # shellcheck disable=SC2154
 # SC2154: bin_path is referenced but not assigned.
 
+# shellcheck disable=SC3043
+# SC3043: In POSIX sh, 'local' is undefined.
+
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -76,12 +79,12 @@ test_lib_info() {
 # formatting like this:
 #    "Expected that some value 1 %d is equal to some other value %d".
 assert_eq() {
-    val1=${1}         # Reference value
-    val2=${2}         # Tested value
-    detailed_err=${3} # Detailed error format string
+    val1=${1}           # Reference value
+    val2=${2}           # Tested value
+    detailed_err=${3-}  # Optional detailed error format string
     # If nothing found, present an error an exit.
     if [ "${val1}" -ne "${val2}" ]; then
-        printf "Assertion failure: %s != %s, for val1=%s, val2=%s\n" \
+        printf 'Assertion failure: %s != %s, expected %s, got %s\n' \
             "${val1}" "${val2}" "${val1}" "${val2}"
         # shellcheck disable=SC2059
         # SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo"
@@ -97,12 +100,12 @@ assert_eq() {
 # formatting like this:
 #    "Expected that some value 1 %d is equal to some other value %d".
 assert_str_eq() {
-    val1=${1}         # Reference value
-    val2=${2}         # Tested value
-    detailed_err=${3} # Detailed error format string
+    val1=${1}           # Reference value
+    val2=${2}           # Tested value
+    detailed_err=${3-}  # Optional detailed error format string
     # If nothing found, present an error an exit.
     if [ "${val1}" != "${val2}" ]; then
-        printf 'Assertion failure: %s != %s, for val1=%s, val2=%s\n' \
+        printf 'Assertion failure: %s != %s, expected "%s", got "%s"\n' \
             "${val1}" "${val2}" "${val1}" "${val2}"
         # shellcheck disable=SC2059
         # SC2059: SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo".

@@ -1454,6 +1454,30 @@ version_command_test() {
     test_finish 0
 }
 
+keactrl_error_reporting_tests() {
+  test_start 'keactrl_error_reporting_test'
+  run_command \
+    "${keactrl}"
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/keactrl: missing command' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'keactrl_error_reporting_test.start.c'
+  run_command \
+    "${keactrl}" start -c
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/keactrl: keactrl-config-file not specified' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'keactrl_error_reporting_test.start.s'
+  run_command \
+    "${keactrl}" start -s
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/keactrl: servers not specified' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+}
+
+
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
 # reason: bin and bin_path are used in version_test
@@ -1472,3 +1496,4 @@ late_start_v4_server_test
 late_start_v6_server_test
 stop_selected_server_test
 status_no_config_test
+keactrl_error_reporting_tests

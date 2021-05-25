@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Include common test library.
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
+
+# Include admin utilities
+. "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
+
+# Set location of the kea-admin.
+kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
+
+kea_admin_error_reporting_tests() {
+  test_start 'kea_admin_error_reporting_test.db_init'
+  run_command \
+    "${kea_admin}" db-init
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: missing backend' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.u'
+  run_command \
+    "${kea_admin}" db-init mysql -u
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -u or --user requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.user'
+  run_command \
+    "${kea_admin}" db-init mysql --user
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -u or --user requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.h'
+  run_command \
+    "${kea_admin}" db-init mysql -h
+  assert_str_eq 'ERROR/kea-admin: -h or --host requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  assert_eq 1 "${EXIT_CODE}"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.host'
+  run_command \
+    "${kea_admin}" db-init mysql --host
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -h or --host requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.n'
+  run_command \
+    "${kea_admin}" db-init mysql -n
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -n or --name requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.name'
+  run_command \
+    "${kea_admin}" db-init mysql --name
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -n or --name requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.d'
+  run_command \
+    "${kea_admin}" db-init mysql -d
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -d or --directory requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.directory'
+  run_command \
+    "${kea_admin}" db-init mysql --directory
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -d or --directory requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.o'
+  run_command \
+    "${kea_admin}" lease-dump mysql -o
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -o or --output requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_init.mysql.output'
+  run_command \
+    "${kea_admin}" lease-dump mysql --output
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -o or --output requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+}
+
+# Run tests.
+kea_admin_error_reporting_tests
