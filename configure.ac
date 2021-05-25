@@ -1617,6 +1617,9 @@ AC_LINK_IFELSE(
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 
+# GSS-API (from bind9)
+AX_GSS_API
+
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 # Autoconf 2.70 has runstatedir.
@@ -2159,6 +2162,15 @@ FreeRADIUS client:
   FREERADIUS_INCLUDE:    ${FREERADIUS_INCLUDE}
   FREERADIUS_LIB:        ${FREERADIUS_LIB}
   FREERADIUS_DICTIONARY: ${FREERADIUS_DICTIONARY}
+END
+fi
+
+if test "GSSAPI_LIBS" != ""; then
+cat >> config.report << END
+
+GSS-API support:
+  GSSAPI_CFLAGS:         ${GSSAPI_CFLAGS}
+  GSSAPI_LIBS:           ${GSSAPI_LIBS}
 END
 fi
 
