@@ -1,3 +1,7 @@
+1910.	[func]		andrei
+	Extended perfdhcp to send v4 DHCPRELEASE messages via -F flag.
+	(Gitlab #1119)
+
 1909.	[build]		fdupont
 	Experimental support for Heimdal implementation of GSS-API
 	with Kerberos 5 added.
