@@ -161,7 +161,6 @@ TEST_F(Rdata_TKEY_Test, badText) {
     // not enough fields
     checkFromText_LexerError("foo 20210501120000 20210501130000 0 BADKEY");
     // bad domain name
-    std::cerr << "checkFromText_TooLongLabel\n";
     checkFromText_TooLongLabel(
         "0123456789012345678901234567890123456789012345678901234567890123"
         " 20210501120000 20210501130000 0 0 0 0");
@@ -235,18 +234,13 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithOtherData) {
                                         "rdata_tkey_fromWire2.wire"));
     const generic::TKEY& tkey(dynamic_cast<generic::TKEY&>(*rdata));
 
-    ////
-#if 0
-    expect_data.resize(6);
-    expect_data[0] = (otherdata >> 40);
-    expect_data[1] = ((otherdata >> 32) & 0xff);
-    expect_data[2] = ((otherdata >> 24) & 0xff);
-    expect_data[3] = ((otherdata >> 16) & 0xff);
-    expect_data[4] = ((otherdata >> 8) & 0xff);
-    expect_data[5] = (otherdata & 0xff);
+    vector<uint8_t> expect_key(32, 'x');
+    matchWireData(&expect_key[0], expect_key.size(),
+                  tkey.getKey(), tkey.getKeyLen());
+
+    vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
     matchWireData(&expect_data[0], expect_data.size(),
                   tkey.getOtherData(), tkey.getOtherLen());
-#endif
 }
 
 TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
@@ -255,6 +249,10 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
     const generic::TKEY& tkey(dynamic_cast<generic::TKEY&>(*rdata));
     EXPECT_EQ(0, tkey.getKeyLen());
     EXPECT_EQ(static_cast<const void*>(0), tkey.getKey());
+
+    vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
+    matchWireData(&expect_data[0], expect_data.size(),
+                  tkey.getOtherData(), tkey.getOtherLen());
 }
 
 TEST_F(Rdata_TKEY_Test, createFromWireWithCompression) {
