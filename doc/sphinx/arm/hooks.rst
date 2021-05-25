@@ -602,8 +602,8 @@ Legal file names, if using ``day``, ``month`` or ``year`` as time unit:
 
    path/base-name.CCYYMMDD.txt
 
-where ``CC`` represents century, ``YY`` represents current year, MM represents
-current month and ``DD`` represents current day.
+where ``CC`` represents century, ``YY`` represents current year,
+``MM`` represents current month and ``DD`` represents current day.
 
 Legal file names, if using ``second`` as time unit:
 
@@ -657,7 +657,7 @@ the legal_log library could be done with the following kea-dhcp4 configuration:
         }
     }
 
-To configure it for kea-dhcp6, the commands are:
+For kea-dhcp6, the configuration is:
 
 .. code-block:: json
 
@@ -709,7 +709,7 @@ Custom formatting can be enabled for logging information that can be extracted
 either from the client's request packet or from the server's response packet.
 Use with caution as this might affect server performance.
 The custom format can not be used for control channel commands.
-Two parameters can be used towards this goal, either combined or together:
+Two parameters can be used towards this goal, either together or separately:
 
 -  ``request-parser-format`` - evaluated parsed expression used to extract and
    log data from the incoming packet
@@ -732,22 +732,23 @@ packet.
 
 Additional parameters for the database connection can be specified, e.g:
 
-::
+.. code-block:: json
 
-    "Dhcp6": {
-       "hooks-libraries": [
-           {
-               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
-               "parameters": {
-                   "name":"database-name",
-                   "password":"passwd",
-                   "type":"mysql",
-                   "user":"user-name"
-               }
-           },
-           ...
-       ]
-   }
+    {
+      "Dhcp6": {
+        "hooks-libraries": [
+          {
+            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "parameters": {
+              "name": "database-name",
+              "password": "passwd",
+              "type": "mysql",
+              "user": "user-name"
+            }
+          }
+        ]
+      }
+    }
 
 For more specific information about database related parameters please refer to
 :ref:`database-configuration6` and :ref:`database-configuration4`.
@@ -756,23 +757,25 @@ If it is desired to restrict forensic logging to certain subnets, the
 "legal-logging" boolean parameter can be specified within a user context
 of these subnets. For example:
 
-::
+.. code-block:: json
 
-   "Dhcpv4" {
-       "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "pools": [
-                   {
-                        "pool": "192.0.2.1 - 192.0.2.200"
-                   }
-               ],
-               "user-context": {
-                   "legal-logging": false
-               }
-           }
-       ]
-   }
+    {
+        "Dhcp4": {
+            "subnet4": [
+                {
+                    "subnet": "192.0.2.0/24",
+                    "pools": [
+                        {
+                            "pool": "192.0.2.1 - 192.0.2.200"
+                        }
+                    ],
+                    "user-context": {
+                        "legal-logging": false
+                    }
+                }
+            ]
+        }
+    }
 
 This configuration disables legal logging for the subnet "192.0.2.0/24". If the
 "legal-logging" parameter is not specified, it defaults to 'true', which
@@ -781,23 +784,26 @@ enables legal logging for the subnet.
 The following example demonstrates how to selectively disable legal
 logging for an IPv6 subnet:
 
-::
+.. code-block:: json
 
-   "Dhcpv6": {
-       "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "pools": [
-                    {
-                        "pool": "2001:db8:1::1-2001:db8:1::ffff"
+    {
+        "Dhcp6": {
+            "subnet6": [
+                {
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [
+                        {
+                            "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                        }
+                    ],
+                    "user-context": {
+                        "legal-logging": false
                     }
-               ],
-               "user-context": {
-                   "legal-logging": false
-               }
-           }
-       ]
-   }
+                }
+            ]
+        }
+    }
+
 
 See :ref:`dhcp4-user-contexts` and :ref:`dhcp6-user-contexts` to
 learn more about user contexts in Kea configuration.
@@ -841,8 +847,8 @@ Where:
    hex string. When its content is printable it is displayed.
 
 -  relay-info - for relayed packets the giaddr and the RAI circuit-id,
-   remote-id, and subscriber-id options (option 82 sub options: 1, 2 and
-   6) if present. The circuit id and remote id are presented as hex
+   remote-id, and subscriber-id options (option 82 sub options: 1, 2 and 6)
+   if present. The circuit id and remote id are presented as hex
    strings. When their content is printable it is displayed.
 
 -  user-context - the optional user context associated with the lease.
@@ -1276,8 +1282,9 @@ Like all the other database-centric features, forensic logging supports database
 connection recovery which can be enabled by setting the ``on-fail`` parameter.
 If not specified, the ``on-fail`` parameter defaults to ``serve-retry-continue``
 as opposed to the case of lease manager, host manager and config backend where
-it defaults to ``stop-retry-exit``. In this case, the server will continue serving clients and it will not shut down
-even if the recovery mechanism fails. If the ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
+it defaults to ``stop-retry-exit``. In this case, the server will continue
+serving clients and it will not shut down even if the recovery mechanism fails.
+If the ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
 the connection to the database backend is not restored according to the
 ``max-reconnect-tries`` and ``reconnect-wait-time`` parameters, but it will
 continue serving clients while this mechanism is activated.
@@ -1701,7 +1708,7 @@ value of zero (0) to add a global reservation, or the id of the subnet
 to which the reservation should be added. An example command can be as
 simple as:
 
-::
+.. code-block:: json
 
    {
        "command": "reservation-add",
@@ -1716,56 +1723,54 @@ simple as:
 
 but it can also take many more parameters, for example:
 
-::
+.. code-block:: json
 
    {
        "command": "reservation-add",
        "arguments": {
-           "reservation":
-               {
-                   "subnet-id":1,
-                   "client-id": "01:0a:0b:0c:0d:0e:0f",
-                   "ip-address": "192.0.2.205",
-                   "next-server": "192.0.2.1",
-                   "server-hostname": "hal9000",
-                   "boot-file-name": "/dev/null",
-                   "option-data": [
-                       {
-                           "name": "domain-name-servers",
-                           "data": "10.1.1.202,10.1.1.203"
-                       }
-                   ],
-                   "client-classes": [ "special_snowflake", "office" ]
-               }
+           "reservation": {
+               "subnet-id": 1,
+               "client-id": "01:0a:0b:0c:0d:0e:0f",
+               "ip-address": "192.0.2.205",
+               "next-server": "192.0.2.1",
+               "server-hostname": "hal9000",
+               "boot-file-name": "/dev/null",
+               "option-data": [
+                   {
+                       "name": "domain-name-servers",
+                       "data": "10.1.1.202,10.1.1.203"
+                   }
+               ],
+               "client-classes": [ "special_snowflake", "office" ]
+           }
        }
    }
 
 Here is an example of a complex IPv6 reservation:
 
-::
+.. code-block:: json
 
    {
        "command": "reservation-add",
        "arguments": {
-           "reservation":
-               {
-                   "subnet-id":1,
-                   "duid": "01:02:03:04:05:06:07:08:09:0A",
-                   "ip-addresses": [ "2001:db8:1:cafe::1" ],
-                   "prefixes": [ "2001:db8:2:abcd::/64" ],
-                   "hostname": "foo.example.com",
-                   "option-data": [
-                       {
-                           "name": "vendor-opts",
-                           "data": "4491"
-                       },
-                       {
-                           "name": "tftp-servers",
-                           "space": "vendor-4491",
-                           "data": "3000:1::234"
-                       }
-                   ]
-               }
+           "reservation": {
+               "subnet-id": 1,
+               "duid": "01:02:03:04:05:06:07:08:09:0A",
+               "ip-addresses": [ "2001:db8:1:cafe::1" ],
+               "prefixes": [ "2001:db8:2:abcd::/64" ],
+               "hostname": "foo.example.com",
+               "option-data": [
+                   {
+                       "name": "vendor-opts",
+                       "data": "4491"
+                   },
+                   {
+                       "name": "tftp-servers",
+                       "space": "vendor-4491",
+                       "data": "3000:1::234"
+                   }
+               ]
+           }
        }
    }
 
