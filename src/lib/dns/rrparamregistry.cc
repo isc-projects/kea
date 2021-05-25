@@ -304,7 +304,6 @@ RRParamRegistry::RRParamRegistry() {
         addType("L32", 105);
         addType("L64", 106);
         addType("LP", 107);
-        addType("TKEY", 249);
         addType("MAILB", 253);
         addType("URI", 256);
         // Meta classes

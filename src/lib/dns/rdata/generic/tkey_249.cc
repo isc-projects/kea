@@ -14,6 +14,7 @@
 
 #include <util/buffer.h>
 #include <util/encode/base64.h>
+#include <util/time_utilities.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -31,6 +32,8 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
+
+const uint16_t TKEY::GSS_API_MODE = 3;
 
 // straightforward representation of TKEY RDATA fields
 struct TKEYImpl {
@@ -69,10 +72,10 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
 
     const uint32_t inception =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
 
     const uint32_t expire =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
 
     const string& mode_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
@@ -197,7 +200,7 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// stream.
 ///
 /// An example of valid string is:
-/// \code "gss-tsig. 928321914 928321915 123 0 3 aabbcc 0" \endcode
+/// \code "gss-tsig. 20210501120000 20210501130000 0 3 aabbcc 0" \endcode
 /// In this example Other Data is missing because Other Len is 0.
 ///
 /// Note that RFC2930 does not define the standard presentation format
@@ -364,8 +367,8 @@ TKEY::toText() const {
     string result;
 
     result += impl_->algorithm_.toText() + " " +
-        lexical_cast<string>(impl_->inception_) + " " +
-        lexical_cast<string>(impl_->expire_) + " ";
+        timeToText32(impl_->inception_) + " " +
+        timeToText32(impl_->expire_) + " ";
     if (impl_->mode_ == GSS_API_MODE) {
         result += "GSS-API ";
     } else {
@@ -509,9 +512,19 @@ TKEY::getInception() const {
     return (impl_->inception_);
 }
 
+string
+TKEY::getInceptionDate() const {
+    return (timeToText32(impl_->inception_));
+}
+
 uint32_t
 TKEY::getExpire() const {
     return (impl_->expire_);
+}
+
+string
+TKEY::getExpireDate() const {
+    return (timeToText32(impl_->expire_));
 }
 
 uint16_t

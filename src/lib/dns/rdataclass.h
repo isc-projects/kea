@@ -2154,15 +2154,21 @@ public:
     /// This method never throws an exception.
     const Name& getAlgorithm() const;
 
-    /// \brief Return the value of the Inception field.
+    /// \brief Return the value of the Inception field as a number.
     ///
     /// This method never throws an exception.
     uint32_t getInception() const;
 
-    /// \brief Return the value of the Expire field.
+    /// \brief Return the value of the Inception field as a string.
+    std::string getInceptionDate() const;
+
+    /// \brief Return the value of the Expire field as a number.
     ///
     /// This method never throws an exception.
     uint32_t getExpire() const;
+
+    /// \brief Return the value of the Expire field as a string.
+    std::string getExpireDate() const;
 
     /// \brief Return the value of the Mode field.
     ///
@@ -2197,7 +2203,7 @@ public:
     const void* getOtherData() const;
 
     /// \brief The GSS_API constant for the Mode field.
-    static const uint16_t GSS_API_MODE = 3;
+    static const uint16_t GSS_API_MODE;
 
 private:
     TKEYImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
