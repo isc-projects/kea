@@ -572,9 +572,11 @@ TEST_F(StatsMgrTest, PrintStats) {
     CommandOptionsHelper::process(opt, "perfdhcp -4 -x l 127.0.0.1");
     stats_mgr.reset(new StatsMgr(opt));
     stats_mgr->addExchangeStats(ExchangeType::RNA);
+    stats_mgr->addExchangeStats(ExchangeType::RLA);
     ASSERT_TRUE(stats_mgr->hasExchangeStats(ExchangeType::DO));
     ASSERT_TRUE(stats_mgr->hasExchangeStats(ExchangeType::RA));
     ASSERT_TRUE(stats_mgr->hasExchangeStats(ExchangeType::RNA));
+    ASSERT_TRUE(stats_mgr->hasExchangeStats(ExchangeType::RLA));
 
     // Leases should now get printed because packets have been preserved.
     EXPECT_NO_THROW(stats_mgr->printLeases());

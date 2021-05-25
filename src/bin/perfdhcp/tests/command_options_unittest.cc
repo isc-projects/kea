@@ -411,14 +411,11 @@ TEST_F(CommandOptionsTest, ReleaseRate) {
     // be accepted.
     EXPECT_THROW(process(opt, "perfdhcp -6 -F 10 -l ethx all"),
                  isc::InvalidParameter);
-    // Currently the -F<release-rate> can be specified for IPv6 mode
-    // only.
-    EXPECT_THROW(process(opt, "perfdhcp -4 -r 10 -F 10 -l ethx all"),
-                 isc::InvalidParameter);
+    // -F<release-rate> should be usable in IPv6 mode.
+    EXPECT_NO_THROW(process(opt, "perfdhcp -4 -r 10 -F 10 -l ethx all"));
     // Release rate should be specified.
     EXPECT_THROW(process(opt, "perfdhcp -6 -r 10 -F -l ethx all"),
                  isc::InvalidParameter);
-
     // -F and -i are mutually exclusive
     EXPECT_THROW(process(opt, "perfdhcp -6 -r 10 -F 10 -l ethx -i all"),
                  isc::InvalidParameter);

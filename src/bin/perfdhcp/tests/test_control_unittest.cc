@@ -141,7 +141,7 @@ public:
     typedef boost::shared_ptr<IncrementalGenerator> IncrementalGeneratorPtr;
 
     using TestControl::createMessageFromReply;
-    using TestControl::createRequestFromAck;
+    using TestControl::createMessageFromAck;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
     using TestControl::factoryIana6;
@@ -160,7 +160,7 @@ public:
     using TestControl::sendDiscover4;
     using TestControl::sendRequest4;
     using TestControl::sendPackets;
-    using TestControl::sendMultipleRequests;
+    using TestControl::sendMultipleMessages;
     using TestControl::sendMultipleMessages6;
     using TestControl::sendRequest6;
     using TestControl::sendSolicit6;
@@ -175,7 +175,7 @@ public:
     using TestControl::template_packets_v4_;
     using TestControl::template_packets_v6_;
     using TestControl::ack_storage_;
-    using TestControl::sendRequestFromAck;
+    using TestControl::sendMessageFromAck;
     using TestControl::options_;
     using TestControl::stats_mgr_;
 
@@ -672,12 +672,16 @@ public:
     /// number of leases acquired (10). This function also checks that an
     /// attempt to send more renew messages than the number of leases acquired
     /// will fail.
-    void testSendRenew4() {
+    ///
+    /// \param msg_type A type of the message which is simulated to be sent
+    /// (DHCPREQUEST in renew state or DHCPRELEASE).
+    void testSendRenewRelease4(const uint16_t msg_type) {
         // Build a command line. Depending on the message type, we will use
         // -f<renew-rate> or -F<release-rate> parameter.
         CommandOptions opt;
         std::ostringstream s;
-        s << "perfdhcp -4 -l fake -r 10 -f";
+        s << "perfdhcp -4 -l fake -r 10 ";
+        s << (msg_type == DHCPREQUEST ? "-f" : "-F");
         s << " 10 -R 10 -L 10067 -n 10 127.0.0.1";
         processCmdLine(opt, s.str());
         // Create a test controller class.
@@ -722,31 +726,35 @@ public:
         // Try to send 5 messages. It should be successful because 10
         // DHCPREQUEST messages has been received. For each of them we
         // should be able to send renewal.
-        msg_num = tc.sendMultipleRequests(5);
+        msg_num = tc.sendMultipleMessages(msg_type, 5);
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which renews haven't been sent yet.
-        msg_num = tc.sendMultipleRequests(5);
+        msg_num = tc.sendMultipleMessages(msg_type, 5);
         EXPECT_EQ(5, msg_num);
 
         // We used all the DHCPACK packets (we sent renew or release for each of
         // them already). Therefore, no further renew messages should be sent
         // before we acquire new leases.
-        msg_num = tc.sendMultipleRequests(5);
+        msg_num = tc.sendMultipleMessages(msg_type, 5);
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
     }
 
     /// \brief Test that the DHCPREQUEST message is created correctly and
     /// comprises expected values.
-    void testCreateRequest() {
+    ///
+    /// \param msg_type A type of the message to be tested:
+    /// DHCPREQUEST in renew state or DHCPRELEASE.
+    void testCreateRenewRelease4(const uint16_t msg_type) {
         // This command line specifies that the Release/Renew messages should
         // be sent with the same rate as the Solicit messages.
         CommandOptions opt;
         std::ostringstream s;
-        s << "perfdhcp -4 -l lo -r 10 -f 10";
+        s << "perfdhcp -4 -l lo -r 10 ";
+        s << (msg_type == DHCPREQUEST ? "-F" : "-f") << " 10";
         s << " -R 10 -L 10067 -n 10 127.0.0.1";
         processCmdLine(opt, s.str());
         // Create a test controller class.
@@ -760,28 +768,28 @@ public:
         Pkt4Ptr ack = createAckPkt4(1);
 
         // Create DHCPREQUEST from DHCPACK.
-        Pkt4Ptr request;
-        request = tc.createRequestFromAck(ack);
+        Pkt4Ptr msg;
+        msg = tc.createMessageFromAck(msg_type, ack);
 
         // Make sure that the DHCPACK has been successfully created and that
         // it holds expected data.
-        ASSERT_TRUE(request);
-        EXPECT_EQ("127.0.0.1", request->getCiaddr().toText());
+        ASSERT_TRUE(msg);
+        EXPECT_EQ("127.0.0.1", msg->getCiaddr().toText());
 
         // HW address.
         HWAddrPtr hwaddr_ack = ack->getHWAddr();
         ASSERT_TRUE(hwaddr_ack);
-        HWAddrPtr hwaddr_req = request->getHWAddr();
+        HWAddrPtr hwaddr_req = msg->getHWAddr();
         ASSERT_TRUE(hwaddr_req);
         EXPECT_TRUE(hwaddr_ack->hwaddr_ == hwaddr_req->hwaddr_);
 
         // Creating message from null DHCPACK should fail.
-        EXPECT_THROW(tc.createRequestFromAck(Pkt4Ptr()), isc::BadValue);
+        EXPECT_THROW(tc.createMessageFromAck(msg_type, Pkt4Ptr()), isc::BadValue);
 
         // Creating message from DHCPACK holding zero yiaddr should fail.
         asiolink::IOAddress yiaddr = ack->getYiaddr();
         ack->setYiaddr(asiolink::IOAddress::IPV4_ZERO_ADDRESS());
-        EXPECT_THROW(tc.createRequestFromAck(ack), isc::BadValue);
+        EXPECT_THROW(tc.createMessageFromAck(msg_type, ack), isc::BadValue);
         ack->setYiaddr(yiaddr);
     }
 
@@ -790,7 +798,7 @@ public:
     ///
     /// \param msg_type A type of the message to be tested: DHCPV6_RELEASE
     /// or DHCPV6_RENEW.
-    void testCreateRenewRelease(const uint16_t msg_type) {
+    void testCreateRenewRelease6(const uint16_t msg_type) {
         // This command line specifies that the Release/Renew messages should
         // be sent with the same rate as the Solicit messages.
         CommandOptions opt;
@@ -864,7 +872,7 @@ public:
     ///
     /// \param msg_type A type of the message which is simulated to be sent
     /// (DHCPV6_RENEW or DHCPV6_RELEASE).
-    void testSendRenewRelease(const uint16_t msg_type) {
+    void testSendRenewRelease6(const uint16_t msg_type) {
         // Build a command line. Depending on the message type, we will use
         // -f<renew-rate> or -F<release-rate> parameter.
         CommandOptions opt;
@@ -1694,31 +1702,49 @@ TEST_F(TestControlTest, PacketTemplates) {
 // This test verifies that DHCPv4 renew (DHCPREQUEST) messages can be
 // sent for acquired leases.
 TEST_F(TestControlTest, processRenew4) {
-    testSendRenew4();
+    testSendRenewRelease4(DHCPREQUEST);
+}
+
+// This test verifies that DHCPv4 release (DHCPRELEASE) messages can be
+// sent for acquired leases.
+TEST_F(TestControlTest, processRelease4) {
+    testSendRenewRelease4(DHCPRELEASE);
 }
 
 // This test verifies that DHCPv6 Renew messages can be sent for acquired
 // leases.
 TEST_F(TestControlTest, processRenew6) {
-    testSendRenewRelease(DHCPV6_RENEW);
+    testSendRenewRelease6(DHCPV6_RENEW);
 }
 
 // This test verifies that DHCPv6 Release messages can be sent for acquired
 // leases.
 TEST_F(TestControlTest, processRelease6) {
-    testSendRenewRelease(DHCPV6_RELEASE);
+    testSendRenewRelease6(DHCPV6_RELEASE);
 }
 
 // This test verifies that DHCPREQUEST is created correctly from the
 // DHCPACK message.
-TEST_F(TestControlTest, createRequest) {
-    testCreateRequest();
+TEST_F(TestControlTest, createRenew4) {
+    testCreateRenewRelease4(DHCPREQUEST);
+}
+
+// This test verifies that DHCPRELEASE is created correctly from the
+// DHCPACK message.
+TEST_F(TestControlTest, createRelease4) {
+    testCreateRenewRelease4(DHCPRELEASE);
 }
 
 // This test verifies that the DHCPV6 Renew message is created correctly
 // and that it comprises all required options.
-TEST_F(TestControlTest, createRenew) {
-    testCreateRenewRelease(DHCPV6_RENEW);
+TEST_F(TestControlTest, createRenew6) {
+    testCreateRenewRelease6(DHCPV6_RENEW);
+}
+
+// This test verifies that the DHCPv6 Release message is created correctly
+// and that it comprises all required options.
+TEST_F(TestControlTest, createRelease6) {
+    testCreateRenewRelease6(DHCPV6_RELEASE);
 }
 
 // This test verifies that the counter of rejected leases in
@@ -1727,15 +1753,8 @@ TEST_F(TestControlTest, rejectedLeasesAdv) {
     testCountRejectedLeasesSolAdv();
 }
 
-// This test verifies that the DHCPv6 Release message is created correctly
-// and that it comprises all required options.
-TEST_F(TestControlTest, createRelease) {
-    testCreateRenewRelease(DHCPV6_RELEASE);
-}
-
 // Test checks if sendDiscover really includes custom options
 TEST_F(TestControlTest, sendDiscoverExtraOpts) {
-
     // Important parameters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
