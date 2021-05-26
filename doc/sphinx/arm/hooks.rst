@@ -950,7 +950,8 @@ Examples:
 
    "request-parser-format":
        "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
-            'Address: ' + addrtotext(pkt4.ciaddr) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+            'Address: ' +
+                ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
                 ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
                 ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
                     ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
@@ -990,14 +991,16 @@ Examples:
 
    "request-parser-format":
        "ifelse(pkt4.msgtype == 3,
-            'Address: ' + addrtotext(option[50].hex) + ' has been assigned to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+            'Address: ' +
+                ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
                 ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
                 ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
                     ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
                     ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') +
                     ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')),
             ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
-                'Address: ' + addrtotext(pkt4.ciaddr) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                'Address: ' +
+                    ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
                     ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') +
                     ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
                         ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') +
