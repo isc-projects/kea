@@ -1,3 +1,11 @@
+1905.	[build]		fdupont
+	Added an optional --with-gssapi switch to the configure
+	script. It checks for the presence and suitability of
+	packages pertinent to GSS-TSIG. This has been added in
+	anticipation of future work and does not add any
+	functionality to Kea.
+	(Gitlab #1884)
+
 Kea 1.9.8 (development) released on May 26, 2021
 
 1904.	[build]		wlodek
