@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,7 +69,10 @@ public:
         PARSER_DNS_SERVER,
 
         ///< Used for parsing a list of DNS servers.
-        PARSER_DNS_SERVERS
+        PARSER_DNS_SERVERS,
+
+        ///< Used for parsing content of hooks libraries.
+        PARSER_HOOKS_LIBRARY
     } ParserType;
 
     /// @brief Default constructor.
@@ -233,7 +236,10 @@ public:
         NCR_PROTOCOL,
 
         /// Used while parsing DhcpDdns/ncr-format
-        NCR_FORMAT
+        NCR_FORMAT,
+
+        /// Used while parsing DhcpDdns/hooks-libraries.
+        HOOKS_LIBRARIES
 
     } ParserContext;
 

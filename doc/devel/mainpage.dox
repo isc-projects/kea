@@ -52,6 +52,7 @@
  * - @subpage dhcpv4Hooks
  * - @subpage dhcpv6Hooks
  * - @subpage agentHooks
+ * - @subpage d2Hooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
  * - @subpage libdhcp_ha

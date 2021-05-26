@@ -1,0 +1,43 @@
+// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page d2Hooks The Hooks API for the DDNS Server
+
+@section d2HooksIntroduction Introduction
+The Kea DDNS Server features "Hooks" API that allows the user-written
+code to be integrated with the DDNS Server and handle some
+of the control commands. The hooks library can be either used to provide
+support for the new commands (not supported natively by the DDNS Server)
+or "override" implementation of the existing handlers. The hooks library
+signals to the DDNS Server that it has processed the given command by
+setting "next step status" value to SKIP.
+
+The hooks library can also be used to perform some additional tasks
+related to reception of the control command instead of handling it, e.g.
+logging or notifying some external service about reception of the
+command.
+
+@section d2HooksHookPoints Hooks in the DDNS Server
+
+ @subsection d2HooksD2SrvConfigured d2_srv_configured
+ - @b Arguments:
+   - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
+   - name: @b server_config, type: isc::d2::D2CfgContextPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has completed
+   its (re)configuration. The server provides received and parsed configuration
+   structures to the hook library. It also provides a pointer to the IOService
+   object which is used by the server to run asynchronous operations. The hooks
+   libraries can use this IOService object to schedule asynchronous tasks which
+   are triggered by the D2 server's main loop. The hook library should hold the
+   provided pointer until the library is unloaded.
+
+ - <b>Next step status</b>: Status codes returned by the callouts installed on
+   this hook point are ignored.
+
+*/

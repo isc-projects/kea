@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -126,6 +126,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
             return isc::d2::D2Parser::make_SUB_DDNS_DOMAINS(driver.loc_);
         case D2ParserContext::PARSER_DNS_SERVER:
             return isc::d2::D2Parser::make_SUB_DNS_SERVER(driver.loc_);
+        case D2ParserContext::PARSER_HOOKS_LIBRARY:
+            return isc::d2::D2Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
         }
     }
 %}
@@ -417,6 +419,33 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::d2::D2Parser::make_SOCKET_NAME(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("socket-name", driver.loc_);
+    }
+}
+
+\"hooks-libraries\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_HOOKS_LIBRARIES(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("hooks-libraries", driver.loc_);
+    }
+}
+
+\"parameters\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::HOOKS_LIBRARIES:
+        return isc::d2::D2Parser::make_PARAMETERS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("parameters", driver.loc_);
+    }
+}
+
+\"library\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::HOOKS_LIBRARIES:
+        return isc::d2::D2Parser::make_LIBRARY(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("library", driver.loc_);
     }
 }
 

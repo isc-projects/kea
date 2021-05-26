@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 #include <d2/d2_config.h>
 #include <d2/d2_simple_parser.h>
 #include <cc/data.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -196,7 +198,7 @@ D2SimpleParser::setManagerDefaults(ElementPtr global,
 
 void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                            const isc::data::ConstElementPtr& config,
-                           bool /*check_only*/) {
+                           bool check_only) {
     // TSIG keys need to parse before the Domains, so we can catch Domains
     // that specify undefined keys. Create the necessary parsing order now.
     // addToParseOrder("tsig-keys");
@@ -276,14 +278,32 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         ctx->setControlSocketInfo(socket);
     }
 
+    // Finally, let's get the hook libs!
+    using namespace isc::hooks;
+    HooksConfig& libraries = ctx->getHooksConfig();
+    ConstElementPtr hooks = config->get("hooks-libraries");
+    if (hooks) {
+        HooksLibrariesParser hooks_parser;
+        hooks_parser.parse(libraries, hooks);
+        libraries.verifyLibraries(hooks->getPosition());
+    }
+
     // Attempt to create the new client config. This ought to fly as
     // we already validated everything.
     D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
                                     ncr_protocol, ncr_format));
 
     ctx->getD2Params() = params;
+
+    if (!check_only) {
+        // This occurs last as if it succeeds, there is no easy way
+        // revert it.  As a result, the failure to commit a subsequent
+        // change causes problems when trying to roll back.
+        HooksManager::prepareUnloadLibraries();
+        static_cast<void>(HooksManager::unloadLibraries());
+        libraries.loadLibraries();
+    }
 }
 
-
-};
-};
+}
+}

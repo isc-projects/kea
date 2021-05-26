@@ -53,6 +53,8 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
     keys_ = rhs.keys_;
 
     control_socket_ = rhs.control_socket_;
+
+    hooks_config_ = rhs.hooks_config_;
 }
 
 D2CfgContext::~D2CfgContext() {
@@ -101,6 +103,8 @@ D2CfgContext::toElement() const {
     if (!isNull(control_socket_)) {
         d2->set("control-socket", UserContext::toElement(control_socket_));
     }
+    // Set hooks-librairies
+    d2->set("hooks-libraries", hooks_config_.toElement());
     // Set DhcpDdns
     ElementPtr result = Element::createMap();
     result->set("DhcpDdns", d2);
@@ -313,6 +317,7 @@ std::list<std::list<std::string>>
 D2CfgMgr::jsonPathsToRedact() const {
     static std::list<std::list<std::string>> const list({
         {"tsig-keys", "[]"},
+        {"hooks-libraries", "[]", "parameters", "*"},
     });
     return list;
 }

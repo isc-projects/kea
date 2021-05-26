@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <d2/d2_config.h>
+#include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
 
 #include <stdint.h>
@@ -102,6 +103,20 @@ public:
         control_socket_ = control_socket;
     }
 
+    /// @brief Returns non-const reference to configured hooks libraries.
+    ///
+    /// @return non-const reference to configured hooks libraries.
+    isc::hooks::HooksConfig& getHooksConfig() {
+        return (hooks_config_);
+    }
+
+    /// @brief Returns const reference to configured hooks libraries.
+    ///
+    /// @return const reference to configured hooks libraries.
+    const isc::hooks::HooksConfig& getHooksConfig() const {
+        return (hooks_config_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
@@ -129,12 +144,13 @@ private:
 
     /// @brief Pointer to the control-socket information.
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Configured hooks libraries.
+    isc::hooks::HooksConfig hooks_config_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.
 typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
-
-
 
 /// @brief DHCP-DDNS Configuration Manager
 ///

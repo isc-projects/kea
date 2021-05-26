@@ -75,6 +75,10 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
+  HOOKS_LIBRARIES "hooks-libraries"
+  LIBRARY "library"
+  PARAMETERS "parameters"
+
   LOGGERS "loggers"
   NAME "name"
   OUTPUT_OPTIONS "output_options"
@@ -97,6 +101,7 @@ using namespace std;
   SUB_DDNS_DOMAINS
   SUB_DNS_SERVER
   SUB_DNS_SERVERS
+  SUB_HOOKS_LIBRARY
 ;
 
 %token <std::string> STRING "constant string"
@@ -126,6 +131,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_DDNS_DOMAINS { ctx.ctx_ = ctx.DDNS_DOMAINS; } sub_ddns_domains
      | SUB_DNS_SERVER { ctx.ctx_ = ctx.DNS_SERVERS; } sub_dns_server
      | SUB_DNS_SERVERS { ctx.ctx_ = ctx.DNS_SERVERS; } sub_dns_servers
+     | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -259,6 +265,7 @@ dhcpddns_param: ip_address
               | reverse_ddns
               | tsig_keys
               | control_socket
+              | hooks_libraries
               | loggers
               | user_context
               | comment
@@ -713,6 +720,73 @@ control_socket_name: SOCKET_NAME {
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+};
+
+// --- hooks libraries -----------------------------------------
+
+hooks_libraries: HOOKS_LIBRARIES {
+    ctx.unique("hooks-libraries", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("hooks-libraries", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.HOOKS_LIBRARIES);
+} COLON LSQUARE_BRACKET hooks_libraries_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+hooks_libraries_list: %empty
+                    | not_empty_hooks_libraries_list
+                    ;
+
+not_empty_hooks_libraries_list: hooks_library
+    | not_empty_hooks_libraries_list COMMA hooks_library
+    ;
+
+hooks_library: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} hooks_params RCURLY_BRACKET {
+    // The library hooks parameter is required
+    ctx.require("library", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.stack_.pop_back();
+};
+
+sub_hooks_library: LCURLY_BRACKET {
+    // Parse the hooks-libraries list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} hooks_params RCURLY_BRACKET {
+    // The library hooks parameter is required
+    ctx.require("library", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    // parsing completed
+};
+
+hooks_params: hooks_param
+            | hooks_params COMMA hooks_param
+            | unknown_map_entry
+            ;
+
+hooks_param: library
+           | parameters
+           ;
+
+library: LIBRARY {
+    ctx.unique("library", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("library", lib);
+    ctx.leave();
+};
+
+parameters: PARAMETERS {
+    ctx.unique("parameters", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ctx.stack_.back()->set("parameters", $4);
     ctx.leave();
 };
 

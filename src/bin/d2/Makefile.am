@@ -12,7 +12,7 @@ endif
 
 CLEANFILES  = *.gcno *.gcda
 
-EXTRA_DIST = d2.dox
+EXTRA_DIST = d2.dox d2_hooks.dox
 EXTRA_DIST += d2_parser.yy
 
 EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
