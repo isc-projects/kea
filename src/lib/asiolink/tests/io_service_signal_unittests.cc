@@ -226,11 +226,10 @@ TEST_F(IOSignalTest, mixedSignals) {
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR1));
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR2));
 
-    // Stop the test after 21 signals.  Needs to be a multiple of 3.
     stop_at_count_ = 8;
 
-    // User a repeating TimedSignal so we should generate a signal every 1 ms
-    // until we hit our stop count.
+    // User a repeating TimedSignal so we should generate a signal every 3, 5
+    // and 7 ms until we hit our stop count.
     TimedSignal sig_1(*io_service_, SIGINT, 3,
                       asiolink::IntervalTimer::REPEATING);
     TimedSignal sig_2(*io_service_, SIGUSR1, 5,
