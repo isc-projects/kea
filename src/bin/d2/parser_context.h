@@ -78,6 +78,9 @@ public:
     /// @brief Default constructor.
     D2ParserContext();
 
+    /// @brief destructor.
+    virtual ~D2ParserContext();
+
     /// @brief JSON elements being parsed.
     std::vector<isc::data::ElementPtr> stack_;
 
@@ -167,6 +170,19 @@ public:
     /// @param loc location in bison format
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::d2::location& loc);
+
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter to check
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc location of the closing curly bracket
+    /// @throw D2ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
 
     /// @brief Check if a parameter is already present
     ///

@@ -1671,6 +1671,7 @@ AC_CONFIG_FILES([src/bin/d2/Makefile])
 AC_CONFIG_FILES([src/bin/d2/tests/Makefile])
 AC_CONFIG_FILES([src/bin/d2/tests/d2_process_tests.sh],
                 [chmod +x src/bin/d2/tests/d2_process_tests.sh])
+AC_CONFIG_FILES([src/bin/d2/tests/test_libraries.h])
 AC_CONFIG_FILES([src/bin/d2/tests/test_data_files_config.h])
 AC_CONFIG_FILES([src/bin/dhcp4/Makefile])
 AC_CONFIG_FILES([src/bin/dhcp4/tests/Makefile])

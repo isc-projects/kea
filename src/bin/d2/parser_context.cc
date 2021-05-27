@@ -22,6 +22,10 @@ D2ParserContext::D2ParserContext()
 {
 }
 
+D2ParserContext::~D2ParserContext()
+{
+}
+
 isc::data::ElementPtr
 D2ParserContext::parseString(const std::string& str, ParserType parser_type)
 {
@@ -95,6 +99,21 @@ D2ParserContext::loc2pos(isc::d2::location& loc)
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
     return (isc::data::Element::Position(file, line, pos));
+}
+
+void
+D2ParserContext::require(const std::string& name,
+                         isc::data::Element::Position open_loc,
+                         isc::data::Element::Position close_loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (!value) {
+        isc_throw(D2ParseError,
+                  "missing parameter '" << name << "' ("
+                  << stack_.back()->getPosition() << ") ["
+                  << contextName() << " map between "
+                  << open_loc << " and " << close_loc << "]");
+    }
 }
 
 void

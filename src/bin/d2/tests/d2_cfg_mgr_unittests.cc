@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <d2/d2_simple_parser.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
+#include <d2/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
@@ -23,6 +24,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
+using namespace isc::hooks;
 using namespace isc::process;
 
 namespace {
@@ -208,6 +210,16 @@ public:
         return ::testing::AssertionSuccess();
     }
 
+    /// @brief Replaces %LIBRARY% with specified library name
+    ///
+    /// @param config input config text (should contain "%LIBRARY%" string)
+    /// @param lib_name %LIBRARY% will be replaced with that name
+    /// @return configuration text with library name replaced
+    std::string pathReplacer(const char* config, const char* lib_name) {
+        string txt(config);
+        txt.replace(txt.find("%LIBRARY%"), strlen("%LIBRARY%"), string(lib_name));
+        return (txt);
+    }
 
     /// @brief Pointer the D2Params most recently parsed.
     D2ParamsPtr d2_params_;
@@ -471,6 +483,13 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         " \"socket-type\" : \"unix\" ,"
                         " \"socket-name\" : \"/tmp/d2-ctrl-channel\" "
                         "},"
+                        "\"hooks-libraries\": ["
+                        "{"
+                        "  \"library\": \"%LIBRARY%\" , "
+                        "  \"parameters\": "
+                        "  { \"param1\": \"foo\" } "
+                        "}"
+                        "],"
                         "\"tsig-keys\": ["
                         "{"
                         "  \"name\": \"d2_key.example.com\" , "
@@ -521,8 +540,10 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "  ] } "
                         "] } }";
 
+    // Replace the library path.
+    std::string pr_config = pathReplacer(config.c_str(), CALLOUT_LIBRARY);
     // Should parse without error.
-    RUN_CONFIG_OK(config);
+    RUN_CONFIG_OK(pr_config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -548,6 +569,13 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_EQ("\"unix\"", ctrl_sock->get("socket-type")->str());
     ASSERT_TRUE(ctrl_sock->get("socket-name"));
     EXPECT_EQ("\"/tmp/d2-ctrl-channel\"", ctrl_sock->get("socket-name")->str());
+
+    // Verify that the hooks libraries can be retrieved.
+    const HookLibsCollection libs = context->getHooksConfig().get();
+    ASSERT_EQ(1, libs.size());
+    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].first);
+    ASSERT_TRUE(libs[0].second);
+    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();

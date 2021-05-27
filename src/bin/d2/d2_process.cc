@@ -12,8 +12,32 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
+#include <hooks/hooks.h>
+#include <hooks/hooks_manager.h>
 
+using namespace isc::hooks;
 using namespace isc::process;
+
+namespace {
+
+/// Structure that holds registered hook indexes.
+struct D2ProcessHooks {
+    int hooks_index_d2_srv_configured_;
+
+    /// Constructor that registers hook points for the DHCPv4 server.
+    D2ProcessHooks() {
+        hooks_index_d2_srv_configured_ = HooksManager::registerHook("d2_srv_configured");
+    }
+
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+D2ProcessHooks Hooks;
+
+}
 
 namespace isc {
 namespace d2 {
@@ -242,6 +266,26 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // did some analysis to decide what if anything we need to do.)
     reconf_queue_flag_ = true;
 
+    // This hook point notifies hooks libraries that the configuration of the
+    // D2 server has completed. It provides the hook library with the pointer
+    // to the common IO service object, new server configuration in the JSON
+    // format and with the pointer to the configuration storage where the
+    // parsed configuration is stored.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_d2_srv_configured_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("io_context", getIoService());
+        callout_handle->setArgument("json_config", config_set);
+        callout_handle->setArgument("server_config",
+                                    getD2CfgMgr()->getD2CfgContext());
+
+        HooksManager::callCallouts(Hooks.hooks_index_d2_srv_configured_,
+                                   *callout_handle);
+
+        // Ignore status code as none of them would have an effect on further
+        // operation.
+    }
+
     // If we are here, configuration was valid, at least it parsed correctly
     // and therefore contained no invalid values.
     // Return the success answer from above.
@@ -439,5 +483,5 @@ D2Process::reconfigureCommandChannel() {
     current_control_socket_ = sock_cfg;
 }
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc

@@ -28,6 +28,7 @@ AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../d2_parser.yy\"
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
 DISTCLEANFILES = d2_process_tests.sh test_data_files_config.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -40,6 +41,8 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+
+noinst_LTLIBRARIES = libcallout.la
 
 TESTS += d2_unittests
 
@@ -99,6 +102,17 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 d2_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 d2_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
+
+# The basic callout library - contains standard callouts
+libcallout_la_SOURCES  = callout_library.cc
+libcallout_la_CXXFLAGS = $(AM_CXXFLAGS)
+libcallout_la_CPPFLAGS = $(AM_CPPFLAGS)
+libcallout_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libcallout_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libcallout_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libcallout_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+
+nodist_d2_unittests_SOURCES = test_data_files_config.h test_libraries.h
 
 endif
 

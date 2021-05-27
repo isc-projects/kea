@@ -40,6 +40,27 @@
     },
 
 //
+// ----------------- Hooks Libraries -----------------
+//
+
+    "hooks-libraries":
+    [
+        // Hook libraries list may contain more than one library.
+        {
+            // The only necessary parameter is the library filename.
+            "library": "/opt/local/control-agent-commands.so",
+
+            // Some libraries may support parameters. Make sure you
+            // type this section carefully, as the CA does not validate
+            // it (because the format is library specific).
+            "parameters":
+            {
+                "param1": "foo"
+            }
+        }
+    ],
+
+//
 // ----------------- Forward DDNS  ------------------
 //
 //   1. Zone - "four.example.com.

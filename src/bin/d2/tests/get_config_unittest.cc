@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include "test_data_files_config.h"
+#include "test_libraries.h"
 
 using namespace isc::config;
 using namespace isc::d2;
@@ -95,6 +96,17 @@ parseDHCPDDNS(const std::string& in,  bool verbose = false) {
     }
 }
 
+/// @brief Replace the library path
+void pathReplacer(ConstElementPtr d2_cfg) {
+    ConstElementPtr hooks_libs = d2_cfg->get("hooks-libraries");
+    if (!hooks_libs || hooks_libs->empty()) {
+        return;
+    }
+    ElementPtr first_lib = hooks_libs->getNonConst(0);
+    std::string lib_path(CALLOUT_LIBRARY);
+    first_lib->set("library", Element::create(lib_path));
+}
+
 }
 
 /// Test fixture class
@@ -153,6 +165,9 @@ public:
             return (false);
         }
 
+        // update hooks-libraries
+        pathReplacer(d2);
+
         // try DHCPDDNS configure
         ConstElementPtr status;
         try {
@@ -191,7 +206,7 @@ public:
     /// @brief Reset configuration database.
     ///
     /// This function resets configuration data base by
-    /// removing control sockets and domain lists. Reset must
+    /// removing control sockets, hooks, etc. Reset must
     /// be performed after each test to make sure that
     /// contents of the database do not affect result of
     /// subsequent tests.
@@ -250,6 +265,11 @@ TEST_F(D2GetConfigTest, sample1) {
         ASSERT_NO_THROW(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // replace the path by its actual value
+        ConstElementPtr d2;
+        ASSERT_NO_THROW(d2 = jsonj->get("DhcpDdns"));
+        ASSERT_TRUE(d2);
+        pathReplacer(d2);
         // check that unparsed and expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
         // check on pretty prints too

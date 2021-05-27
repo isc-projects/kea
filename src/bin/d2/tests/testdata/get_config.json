@@ -33,6 +33,14 @@
                 }
             ]
         },
+        "hooks-libraries": [
+            {
+                "library": "/tmp/k1897/src/bin/d2/tests/.libs/libcallout.so",
+                "parameters": {
+                    "param1": "foo"
+                }
+            }
+        ],
         "ip-address": "127.0.0.1",
         "loggers": [
             {
