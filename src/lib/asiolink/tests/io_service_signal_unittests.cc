@@ -227,15 +227,15 @@ TEST_F(IOSignalTest, mixedSignals) {
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR2));
 
     // Stop the test after 21 signals.  Needs to be a multiple of 3.
-    stop_at_count_ = 21;
+    stop_at_count_ = 8;
 
     // User a repeating TimedSignal so we should generate a signal every 1 ms
     // until we hit our stop count.
-    TimedSignal sig_1(*io_service_, SIGINT, 1,
+    TimedSignal sig_1(*io_service_, SIGINT, 3,
                       asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_2(*io_service_, SIGUSR1, 1,
+    TimedSignal sig_2(*io_service_, SIGUSR1, 5,
                       asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_3(*io_service_, SIGUSR2, 1,
+    TimedSignal sig_3(*io_service_, SIGUSR2, 7,
                       asiolink::IntervalTimer::REPEATING);
 
     // Start processing IO.  This should continue until we stop either by
@@ -271,9 +271,9 @@ TEST_F(IOSignalTest, mixedSignals) {
     }
 
     // See if our counts are correct.
-    EXPECT_EQ(sigint_cnt, (stop_at_count_/3));
-    EXPECT_EQ(sigusr1_cnt, (stop_at_count_/3));
-    EXPECT_EQ(sigusr2_cnt, (stop_at_count_/3));
+    EXPECT_EQ(sigint_cnt, 4);
+    EXPECT_EQ(sigusr1_cnt, 2);
+    EXPECT_EQ(sigusr2_cnt, 2);
 }
 
 } // namespace asiolink
