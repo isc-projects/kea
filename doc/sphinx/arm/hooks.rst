@@ -1079,7 +1079,7 @@ Examples:
                         ifelse(option[82].option[6].exists,
                             ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
                             '')),
-                ''))"
+                    ''))"
     }</pre>
     </details><br>
 
@@ -1412,7 +1412,7 @@ Examples:
                                 ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'),
                                 '')),
                         ''),
-                ''))"
+                    ''))"
     }</pre>
     </details><br>
 
