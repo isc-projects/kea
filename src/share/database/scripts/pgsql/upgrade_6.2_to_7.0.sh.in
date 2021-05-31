@@ -223,6 +223,29 @@ CREATE TRIGGER dhcp6_pool_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+-- And now the same, but for PD pools.
+CREATE TABLE dhcp6_pd_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  prefix varchar(45) NOT NULL,
+  prefix_length SMALLINT NOT NULL,
+  delegated_prefix_length SMALLINT NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  excluded_prefix varchar(45) DEFAULT NULL,
+  excluded_prefix_length SMALLINT NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context TEXT DEFAULT NULL,
+  CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet(subnet_id)
+);
+
+CREATE INDEX key_dhcp6_pd_pool_modification_ts on dhcp6_pd_pool (modification_ts);
+CREATE INDEX fk_dhcp6_pd_pool_subnet_id on dhcp6_pd_pool (subnet_id);
+CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
+  AFTER UPDATE ON dhcp6_pd_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
