@@ -371,6 +371,24 @@ CREATE INDEX dhcp6_options_server_server_id on dhcp6_options_server(server_id);
 CREATE INDEX dhcp6_options_server_modification_ts on dhcp6_options_server(modification_ts);
 
 
+
+-- This table is for storing IPv6 option definitions
+CREATE TABLE dhcp6_option_def (
+  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  code SMALLINT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  space VARCHAR(128) NOT NULL,
+  type SMALLINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_array BOOLEAN NOT NULL,
+  encapsulate VARCHAR(128) NOT NULL,
+  record_types VARCHAR DEFAULT NULL,
+  user_context JSON DEFAULT NULL
+);
+CREATE INDEX dhcp6_option_def_modification on dhcp6_option_def(modification_ts);
+CREATE INDEX dhcp6_option_def_code_space on dhcp6_option_def(code, space);
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
