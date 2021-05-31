@@ -389,6 +389,15 @@ CREATE INDEX dhcp6_option_def_modification on dhcp6_option_def(modification_ts);
 CREATE INDEX dhcp6_option_def_code_space on dhcp6_option_def(code, space);
 
 
+-- and another table for storing relationship between option definitions and servers.
+CREATE TABLE dhcp6_option_def_server (
+  option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  server_id BIGINT NOT NULL REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_def_id, server_id)
+);
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
