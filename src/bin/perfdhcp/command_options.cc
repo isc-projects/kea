@@ -1166,7 +1166,7 @@ CommandOptions::printCommandLine() const {
 }
 
 void
-CommandOptions::usage() const {
+CommandOptions::usage() {
     std::cout <<
         "perfdhcp [-huv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]\n"
         "         [-r<rate>] [-f<renew-rate>]\n"

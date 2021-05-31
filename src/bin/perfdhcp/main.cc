@@ -20,9 +20,11 @@ using namespace isc::perfdhcp;
 int
 main(int argc, char* argv[]) {
     int ret_code = 0;
+    std::string diags;
+    bool parsed = false;
     try {
         CommandOptions command_options;
-        std::string diags(command_options.getDiags());
+        diags = command_options.getDiags();
         // If parser returns true it means that user specified
         // 'h' or 'v' command line option. Program shows the
         // help or version message and exits here.
@@ -33,21 +35,9 @@ main(int argc, char* argv[]) {
         if (command_options.parse(argc, argv, true)) {
             return (ret_code);
         }
-    } catch (const isc::Exception& e) {
-        ret_code = 1;
-        command_options.usage();
-        std::cerr << "\nERROR: parsing command line options: "
-                  << e.what() << std::endl;
-        if (diags.find('e') != std::string::npos) {
-            std::cerr << "Fatal error" << std::endl;
-        }
-        return (ret_code);
-    } catch (...) {
-        ret_code = 1;
-        return (ret_code);
-    }
 
-    try {
+        parsed = true;
+
         auto scenario = command_options.getScenario();
         PerfSocket socket(command_options);
         if (scenario == Scenario::BASIC) {
@@ -59,12 +49,17 @@ main(int argc, char* argv[]) {
         }
     } catch (const std::exception& e) {
         ret_code = 1;
-        std::cerr << "\nERROR: running perfdhcp: " << e.what() << std::endl;
+        if (parsed) {
+            std::cerr << std::endl << "ERROR: running perfdhcp: "
+                      << e.what() << std::endl;
+        } else {
+            CommandOptions::usage();
+            std::cerr << std::endl << "ERROR: parsing command line options: "
+                      << e.what() << std::endl;
+        }
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }
-    } catch (...) {
-        ret_code = 1;
     }
     return (ret_code);
 }

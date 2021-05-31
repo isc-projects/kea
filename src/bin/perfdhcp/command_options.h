@@ -429,7 +429,7 @@ public:
     /// \brief Print usage.
     ///
     /// Prints perfdhcp usage.
-    void usage() const;
+    static void usage();
 
     /// \brief Print program version.
     ///
