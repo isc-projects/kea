@@ -202,6 +202,27 @@ CREATE INDEX dhcp6_subnet_modification_ts ON dhcp6_subnet (modification_ts);
 --   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
 --   `dhcp6_shared_network` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
 
+
+-- Create a table that holds all address pools in IPv6.
+CREATE TABLE dhcp6_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  start_address varchar(45) NOT NULL,
+  end_address varchar(45) NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context TEXT DEFAULT NULL,
+  CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
+);
+CREATE INDEX dhcp6_pool_modification_ts ON dhcp6_pool (modification_ts);
+CREATE INDEX fk_dhcp6_pool_subnet_id ON dhcp6_pool (subnet_id);
+
+CREATE TRIGGER dhcp6_pool_modification_ts_update
+  AFTER UPDATE ON dhcp6_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
