@@ -203,6 +203,9 @@ CREATE INDEX dhcp6_subnet_modification_ts ON dhcp6_subnet (modification_ts);
 --   `dhcp6_shared_network` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
 
 
+
+
+
 -- Create a table that holds all address pools in IPv6.
 CREATE TABLE dhcp6_pool (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -300,6 +303,19 @@ CREATE INDEX key_dhcp6_global_parameter_name on dhcp6_global_parameter(name);
 CREATE TRIGGER dhcp6_global_parameter_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+CREATE TABLE dhcp6_global_parameter_server (
+  parameter_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (parameter_id, server_id),
+  CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE  ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+);
+
+CREATE INDEX key_dhcp6_global_parameter_server_modification_ts on dhcp6_global_parameter_server(modification_ts);
+
 
 -- Update the schema version number
 UPDATE schema_version
