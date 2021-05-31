@@ -510,8 +510,7 @@ main(int argc, char* argv[]) {
         writeProgramFile(message_file, ns_components, dictionary,
                          output_directory);
 
-    }
-    catch (const MessageException& e) {
+    } catch (const MessageException& e) {
         // Create an error message from the ID and the text
         const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
         string text = e.id();
@@ -529,6 +528,8 @@ main(int argc, char* argv[]) {
 
         cerr << text << "\n";
 
+        return (1);
+    } catch (...) {
         return (1);
     }
 

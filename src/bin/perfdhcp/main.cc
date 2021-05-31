@@ -19,10 +19,10 @@ using namespace isc::perfdhcp;
 
 int
 main(int argc, char* argv[]) {
-    CommandOptions command_options;
-    std::string diags(command_options.getDiags());
     int ret_code = 0;
     try {
+        CommandOptions command_options;
+        std::string diags(command_options.getDiags());
         // If parser returns true it means that user specified
         // 'h' or 'v' command line option. Program shows the
         // help or version message and exits here.
@@ -42,8 +42,12 @@ main(int argc, char* argv[]) {
             std::cerr << "Fatal error" << std::endl;
         }
         return (ret_code);
+    } catch (...) {
+        ret_code = 1;
+        return (ret_code);
     }
-    try{
+
+    try {
         auto scenario = command_options.getScenario();
         PerfSocket socket(command_options);
         if (scenario == Scenario::BASIC) {
@@ -59,6 +63,8 @@ main(int argc, char* argv[]) {
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }
+    } catch (...) {
+        ret_code = 1;
     }
     return (ret_code);
 }

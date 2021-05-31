@@ -24,19 +24,20 @@ using namespace isc::lfc;
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
-    // Ask scheduling to not give too much resources to LFC.
-    // First parameter means to change only the process priority.
-    // Second parameter (0) means the calling process.
-    // Third parameter 4 is a bit below the default priority of 0 in
-    // a range of -20 (highest priority) and 19 or 20 (lowest priority).
-    static_cast<void>(setpriority(PRIO_PROCESS, 0, 4));
-
     int ret = EXIT_SUCCESS;
-    LFCController lfc_controller;
+    try {
+        // Ask scheduling to not give too much resources to LFC.
+        // First parameter means to change only the process priority.
+        // Second parameter (0) means the calling process.
+        // Third parameter 4 is a bit below the default priority of 0 in
+        // a range of -20 (highest priority) and 19 or 20 (lowest priority).
+        static_cast<void>(setpriority(PRIO_PROCESS, 0, 4));
 
-    // Launch the controller passing in command line arguments.
-    // Exit program with the controller's return code.
-    try  {
+        LFCController lfc_controller;
+
+        // Launch the controller passing in command line arguments.
+        // Exit program with the controller's return code.
+
         // 'false' value disables test mode.
         lfc_controller.launch(argc, argv, false);
 
@@ -46,6 +47,8 @@ int main(int argc, char* argv[]) {
 
     } catch (const std::exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (...) {
         ret = EXIT_FAILURE;
     }
 

@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
+    } catch (...) {
+        ret = EXIT_FAILURE;
     }
 
     return (ret);

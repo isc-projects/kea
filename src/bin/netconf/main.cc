@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
-    try  {
+    try {
         // Instantiate/fetch the application controller singleton.
         DControllerBasePtr& controller = NetconfController::instance();
 
@@ -37,6 +37,8 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (...) {
         ret = EXIT_FAILURE;
     }
 
