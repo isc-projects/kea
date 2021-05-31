@@ -421,6 +421,21 @@ CREATE TRIGGER dhcp6_audit_revision_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+-- ... and the DHCPv6 audit itself.
+CREATE TABLE dhcp6_audit (
+  id SERIAL UNIQUE NOT NULL,
+  object_type varchar(256) NOT NULL,
+  object_id BIGINT NOT NULL,
+  modification_type SMALLINT NOT NULL,
+  revision_id BIGINT NOT NULL,
+  CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type) REFERENCES modification (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_audit_revision FOREIGN KEY (revision_id) REFERENCES dhcp6_audit_revision (id) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+CREATE TRIGGER dhcp6_audit_modification_ts_update
+  AFTER UPDATE ON dhcp6_audit
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+CREATE INDEX fk_dhcp6_audit_modification_type on dhcp6_audit (modification_type);
+CREATE INDEX fk_dhcp6_audit_revision on dhcp6_audit (revision_id);
 
 
 -- Update the schema version number
