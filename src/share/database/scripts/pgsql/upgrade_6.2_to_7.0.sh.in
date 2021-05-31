@@ -143,14 +143,27 @@ CREATE TABLE dhcp6_shared_network (
 
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
--- Finally, we need to create a trigger that will kick off this function.
+CREATE INDEX dhcp6_shared_network_name ON dhcp6_shared_network (name);
 CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-CREATE INDEX dhcp6_shared_network_name ON dhcp6_shared_network (name);
 
 
+-- Now we need to create a relationship between defined shared networks and the servers
+CREATE TABLE dhcp6_shared_network_server (
+  shared_network_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (shared_network_id, server_id),
+  CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id) REFERENCES dhcp6_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
+);
+CREATE INDEX dhcp6_shared_network_server_modification ON dhcp6_shared_network_server (modification_ts);
+CREATE INDEX dhcp6_shared_network_server_server_id ON dhcp6_shared_network_server (server_id);
+
+
+-- Create a list of IPv6 subnets
 CREATE TABLE dhcp6_subnet (
   subnet_id SERIAL PRIMARY KEY NOT NULL,
   subnet_prefix varchar(64) UNIQUE NOT NULL,
