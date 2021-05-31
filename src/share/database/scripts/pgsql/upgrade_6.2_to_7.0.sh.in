@@ -246,6 +246,21 @@ CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+
+CREATE TABLE dhcp6_server (
+  id SERIAL PRIMARY KEY NOT NULL,
+  tag varchar(256) NOT NULL,
+  description text DEFAULT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX dhcp6_server_tag_unique on dhcp6_server(tag);
+
+CREATE INDEX key_dhcp6_server_modification_ts on dhcp6_server (modification_ts);
+
+CREATE TRIGGER dhcp6_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
