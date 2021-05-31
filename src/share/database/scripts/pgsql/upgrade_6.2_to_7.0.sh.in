@@ -317,6 +317,33 @@ CREATE TABLE dhcp6_global_parameter_server (
 CREATE INDEX key_dhcp6_global_parameter_server_modification_ts on dhcp6_global_parameter_server(modification_ts);
 
 
+CREATE TABLE dhcp6_options (
+  option_id SERIAL PRIMARY KEY NOT NULL,
+  code SMALLINT NOT NULL,
+  value BYTEA DEFAULT NULL,
+  formatted_value TEXT DEFAULT NULL,
+  space VARCHAR(128) DEFAULT NULL,
+  persistent BOOLEAN NOT NULL DEFAULT false,
+  dhcp_client_class VARCHAR(128) DEFAULT NULL,
+  dhcp6_subnet_id BIGINT DEFAULT NULL,
+  host_id BIGINT DEFAULT NULL,
+  scope_id SMALLINT NOT NULL,
+  user_context text DEFAULT NULL,
+  shared_network_name VARCHAR(128) DEFAULT NULL,
+  pool_id BIGINT DEFAULT NULL,
+  pd_pool_id BIGINT DEFAULT NULL,
+  modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_dhcp6_options_host FOREIGN KEY (host_id) REFERENCES hosts(host_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id) REFERENCES dhcp_option_scope(scope_id),
+  CONSTRAINT fk_dhcp6_options_pd_pool FOREIGN KEY (pd_pool_id) REFERENCES dhcp6_pd_pool(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_dhcp6_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_dhcp6_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_dhcp6_options_subnet FOREIGN KEY (dhcp6_subnet_id) REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_options_host FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+
+CREATE UNIQUE INDEX dhcp6_options_option_id_index on dhcp6_options(option_id);
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
