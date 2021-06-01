@@ -38,7 +38,8 @@ public:
     /// The parameters are a straightforward mapping of %TKEY RDATA
     /// fields as defined %in RFC2930.
     ///
-    /// This RR is pretty close to the TSIG one with 32 bit timestamps.
+    /// This RR is pretty close to the TSIG RR with 32 bit timestamps,
+    /// or the RRSIG RR with a second "other" data field.
     ///
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.

@@ -43,6 +43,7 @@ struct TKEYImpl {
       algorithm_(algorithm), inception_(inception), expire_(expire),
       mode_(mode), error_(error), key_(key), other_data_(other_data)
     {}
+
     TKEYImpl(const Name& algorithm, uint32_t inception, uint32_t expire,
              uint16_t mode, uint16_t error, size_t key_len,
              const void* key, size_t other_len, const void* other_data) :
@@ -53,6 +54,7 @@ struct TKEYImpl {
         other_data_(static_cast<const uint8_t*>(other_data),
                     static_cast<const uint8_t*>(other_data) + other_len)
     {}
+
     template <typename Output>
     void toWireCommon(Output& output) const;
 
@@ -77,6 +79,8 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const uint32_t expire =
         timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
 
+    /// The mode is either a mnemonic (only one is defined: GSS-API) or
+    /// a number.
     const string& mode_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
     uint32_t mode = 0;
@@ -89,7 +93,7 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
             mode = boost::lexical_cast<uint32_t>(mode_txt);
         } catch (const boost::bad_lexical_cast&) {
             isc_throw(InvalidRdataText, "Invalid TKEY Mode");
-            }
+        }
         if (mode > 0xffff) {
             isc_throw(InvalidRdataText, "TKEY Mode out of range");
         }
@@ -180,7 +184,7 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// fully qualified.
 ///
 /// The Mode field is an unsigned 16-bit decimal integer or a valid mnemonic
-/// as specified in RFC2920. Currently only "GSS-API" (case sensitive) is
+/// as specified in RFC2930. Currently only "GSS-API" (case sensitive) is
 /// supported ("Diffie-Hellman" is not).
 
 /// The Error field is an unsigned 16-bit decimal integer or a valid mnemonic
@@ -226,7 +230,7 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer, NULL));
+        impl_ptr.reset(constructFromLexer(lexer, 0));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -283,7 +287,7 @@ TKEY::TKEY(MasterLexer& lexer, const Name* origin,
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
 TKEY::TKEY(InputBuffer& buffer, size_t) :
-    impl_(NULL)
+    impl_(0)
 {
     Name algorithm(buffer);
 
@@ -561,7 +565,7 @@ TKEY::getOtherData() const {
     if (!impl_->other_data_.empty()) {
         return (&impl_->other_data_[0]);
     } else {
-        return (NULL);
+        return (0);
     }
 }
 
