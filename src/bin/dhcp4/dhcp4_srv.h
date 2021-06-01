@@ -383,7 +383,7 @@ public:
                                           bool allow_packet_park);
 
     /// @brief Instructs the server to shut down.
-    void shutdown();
+    void shutdown() override;
 
     ///
     /// @name Public accessors returning values required to (re)open sockets.

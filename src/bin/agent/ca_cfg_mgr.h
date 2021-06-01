@@ -273,7 +273,7 @@ public:
     /// to be returned. This parameter is ignored for the Control Agent.
     ///
     /// @return Summary of the configuration in the textual format.
-    virtual std::string getConfigSummary(const uint32_t selection);
+    virtual std::string getConfigSummary(const uint32_t selection) override;
 
 protected:
 
@@ -284,7 +284,7 @@ protected:
     /// only verify correctness of the provided configuration.
     /// @return Pointer to a result of configuration parsing.
     virtual isc::data::ConstElementPtr
-    parse(isc::data::ConstElementPtr config, bool check_only);
+    parse(isc::data::ConstElementPtr config, bool check_only) override;
 
     /// @brief Creates a new, blank CtrlAgentCfgContext context.
     ///
@@ -296,7 +296,7 @@ protected:
     /// error.
     ///
     /// @return Returns a ConfigPtr to the new context instance.
-    virtual process::ConfigPtr createNewContext();
+    virtual process::ConfigPtr createNewContext() override;
 
     /// @brief Return a list of all paths that contain passwords or secrets.
     ///

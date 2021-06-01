@@ -280,7 +280,7 @@ public:
     /// to be returned. This parameter is ignored for the D2.
     ///
     /// @return Summary of the configuration in the textual format.
-    virtual std::string getConfigSummary(const uint32_t selection);
+    virtual std::string getConfigSummary(const uint32_t selection) override;
 
     std::list<std::list<std::string>> jsonPathsToRedact() const final override;
 
@@ -292,7 +292,7 @@ protected:
     /// only verify correctness of the provided configuration.
     /// @return Pointer to a result of configuration parsing.
     virtual isc::data::ConstElementPtr
-    parse(isc::data::ConstElementPtr config, bool check_only);
+    parse(isc::data::ConstElementPtr config, bool check_only) override;
 
     /// @brief Adds default values to the given config
     ///
@@ -300,7 +300,7 @@ protected:
     /// method is invoked by @c DCfgMgrBase::parseConfig().
     ///
     /// @param mutable_config - configuration to which defaults should be added
-    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config) override;
 
     /// @brief Creates an new, blank D2CfgContext context
     ///
@@ -311,14 +311,13 @@ protected:
     /// error.
     ///
     /// @return Returns a ConfigPtr to the new context instance.
-    virtual process::ConfigPtr createNewContext();
+    virtual process::ConfigPtr createNewContext() override;
 };
 
 /// @brief Defines a shared pointer to D2CfgMgr.
 typedef boost::shared_ptr<D2CfgMgr> D2CfgMgrPtr;
 
-
-}; // end of isc::d2 namespace
-}; // end of isc namespace
+} // end of isc::d2 namespace
+} // end of isc namespace
 
 #endif // D2_CFG_MGR_H
