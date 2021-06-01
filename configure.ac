@@ -2166,7 +2166,7 @@ FreeRADIUS client:
 END
 fi
 
-if test "GSSAPI_LIBS" != ""; then
+if test "$ENABLE_GSSAPI" = "yes"; then
 cat >> config.report << END
 
 GSS-API support:

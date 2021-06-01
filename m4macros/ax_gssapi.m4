@@ -10,6 +10,7 @@ AC_ARG_WITH([gssapi],
 #
 # Check availability of gssapi, which will be used for unit tests.
 #
+ENABLE_GSSAPI=no
 GSSAPI_CFLAGS=
 GSSAPI_LIBS=
 
@@ -63,10 +64,11 @@ else
        [AC_MSG_RESULT([MIT])])
     CXXFLAGS="$CXXFLAGS_SAVED"
     LIBS="$LIBS_SAVED"
+    ENABLE_GSSAPI=yes
 fi
 
 AC_SUBST(GSSAPI_CFLAGS)
 AC_SUBST(GSSAPI_LIBS)
-AM_CONDITIONAL([HAVE_GSSAPI], [test x$GSSAPI_LIBS != "x"])
+AM_CONDITIONAL([HAVE_GSSAPI], [test $ENABLE_GSSAPI = "yes"])
 
 ])dnl AX_GSS_API
