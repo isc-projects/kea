@@ -43,6 +43,16 @@ public:
     ///
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
+    ///
+    /// \param algorithm The DNS name of the algorithm e.g. gss-tsig.
+    /// \param inception The inception time (in seconds since 1970).
+    /// \param expire The expire time (in seconds since 1970).
+    /// \param mode The mode e.g. Diffie-Hellman (2) or GSS-API (3).
+    /// \param error The error code (extended error space shared with TSIG).
+    /// \param key_len The key length (0 means no key).
+    /// \param key The key (can be 0).
+    /// \param other_len The other data length (0 means no other data).
+    /// \param other_data The other data (can be and usually is 0).
     TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
          uint16_t mode, uint16_t error, uint16_t key_len,
          const void* key, uint16_t other_len, const void* other_data);

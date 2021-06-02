@@ -37,6 +37,15 @@ const uint16_t TKEY::GSS_API_MODE = 3;
 
 // straightforward representation of TKEY RDATA fields
 struct TKEYImpl {
+    /// \brief Constructor from RDATA field parameters.
+    ///
+    /// \param algorithm The DNS name of the algorithm e.g. gss-tsig.
+    /// \param inception The inception time (in seconds since 1970).
+    /// \param expire The expire time (in seconds since 1970).
+    /// \param mode The mode e.g. Diffie-Hellman (2) or GSS-API (3).
+    /// \param error The error code (extended error space shared with TSIG).
+    /// \param key The key (can be empty).
+    /// \param other_data The other data (can be and usually is empty).
     TKEYImpl(const Name& algorithm, uint32_t inception, uint32_t expire,
              uint16_t mode, uint16_t error, vector<uint8_t>& key,
              vector<uint8_t>& other_data) :
@@ -44,6 +53,17 @@ struct TKEYImpl {
       mode_(mode), error_(error), key_(key), other_data_(other_data)
     {}
 
+    /// \brief Constructor from RDATA field parameters.
+    ///
+    /// \param algorithm The DNS name of the algorithm e.g. gss-tsig.
+    /// \param inception The inception time (in seconds since 1970).
+    /// \param expire The expire time (in seconds since 1970).
+    /// \param mode The mode e.g. Diffie-Hellman (2) or GSS-API (3).
+    /// \param error The error code (extended error space shared with TSIG).
+    /// \param key_len The key length (0 means no key).
+    /// \param key The key (can be 0).
+    /// \param other_len The other data length (0 means no other data).
+    /// \param other_data The other data (can be and usually is 0).
     TKEYImpl(const Name& algorithm, uint32_t inception, uint32_t expire,
              uint16_t mode, uint16_t error, size_t key_len,
              const void* key, size_t other_len, const void* other_data) :
@@ -55,15 +75,30 @@ struct TKEYImpl {
                     static_cast<const uint8_t*>(other_data) + other_len)
     {}
 
+    /// \brief Common part of toWire methods.
+    /// \tparam Output \c OutputBuffer or \c AbstractMessageRenderer.
     template <typename Output>
     void toWireCommon(Output& output) const;
 
+    /// \brief The DNS name of the algorithm e.g. gss-tsig.
     const Name algorithm_;
+
+    /// \brief The inception time (in seconds since 1970).
     const uint32_t inception_;
+
+    /// \brief The expire time (in seconds since 1970).
     const uint32_t expire_;
+
+    /// \brief The mode e.g. Diffie-Hellman (2) or GSS-API (3).
     const uint16_t mode_;
+
+    /// \brief The error code (extended error space shared with TSIG).
     const uint16_t error_;
+
+    /// \brief The key (can be empty).
     const vector<uint8_t> key_;
+
+    /// \brief The other data (can be and usually is empty).
     const vector<uint8_t> other_data_;
 };
 
@@ -183,10 +218,10 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// syntax", but it is not actually a domain name, it does not have to be
 /// fully qualified.
 ///
-/// The Mode field is an unsigned 16-bit decimal integer or a valid mnemonic
-/// as specified in RFC2930. Currently only "GSS-API" (case sensitive) is
-/// supported ("Diffie-Hellman" is not).
-
+/// The Mode field is an unsigned 16-bit decimal integer as specified
+/// in RFC2930 or a common mnemonic. Currently only "GSS-API" (case sensitive)
+/// is supported ("Diffie-Hellman" is not).
+///
 /// The Error field is an unsigned 16-bit decimal integer or a valid mnemonic
 /// as specified in RFC2845.  Currently, "NOERROR", "BADSIG", "BADKEY",
 /// "BADTIME", "BADMODE", "BADNAME", and "BADALG" are supported
