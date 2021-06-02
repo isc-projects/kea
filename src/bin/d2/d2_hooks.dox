@@ -5,37 +5,60 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
-@page d2Hooks The Hooks API for the DDNS Server
+ @page d2Hooks The Hooks API for the Kea DHCP DDNS (D2)
 
-@section d2HooksIntroduction Introduction
-The Kea DDNS Server features "Hooks" API that allows the user-written
-code to be integrated with the DDNS Server and handle some
-of the control commands. The hooks library can be either used to provide
-support for the new commands (not supported natively by the DDNS Server)
-or "override" implementation of the existing handlers. The hooks library
-signals to the DDNS Server that it has processed the given command by
-setting "next step status" value to SKIP.
+ @section d2HooksIntroduction Introduction
+ Kea features an API (the "Hooks" API) that allows user-written code to
+ be integrated into Kea and called at specific points in its processing.
+ An overview of the API and a tutorial for writing such code can be found in
+ the @ref hooksdgDevelopersGuide. It also includes information how hooks
+ framework can be used to implement additional control commands for
+ Kea DHCP DDNS. Information for Kea maintainers can be found in the
+ @ref hooksComponentDeveloperGuide.
 
-The hooks library can also be used to perform some additional tasks
-related to reception of the control command instead of handling it, e.g.
-logging or notifying some external service about reception of the
-command.
+ This manual is more specialized and is aimed at developers of hook
+ code for Kea DHCP DDNS. It describes each hook point, what the callouts
+ attached to the hook are able to do, and the arguments passed to the
+ callouts.  Each entry in this manual has the following information:
 
-@section d2HooksHookPoints Hooks in the DDNS Server
+ - Name of the hook point.
+ - Arguments for the callout.  As well as the argument name and data type, the
+   information includes the direction, which can be one of:
+   - @b in - the server passes values to the callout but ignored any data
+     returned.
+   - @b out - the callout is expected to set this value.
+   - <b>in/out</b> - the server passes a value to the callout and uses whatever
+     value the callout sends back.  Note that the callout may choose not to
+     do any modification, in which case the server will use whatever value
+     it sent to the callout.
+ - Description of the hook. This explains where in the processing the hook
+   is located, the possible actions a callout attached to this hook could take,
+   and a description of the data passed to the callouts.
+ - Next step status: the action taken by the server when a callout chooses to set
+    status to specified value. Actions not listed explicitly are not supported.
+   If a callout sets status to unsupported value, this specific value will be
+   ignored and treated as if the status was CONTINUE.
 
- @subsection d2HooksD2SrvConfigured d2_srv_configured
+@section d2HooksHookPoints Hooks in Kea DHCP DDNS
+
+The following list is roughly ordered by appearance of specific hook points during
+packet processing, but the exact order depends on the actual processing. Hook points
+that are not specific to packet processing (e.g. lease expiration) will be added
+to the end of this list.
+
+ @subsection d2HooksD2SrvConfigured dhcp2_srv_configured
  - @b Arguments:
    - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
    - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
-   - name: @b server_config, type: isc::d2::D2CfgContextPtr, direction: <b>in</b>
+   - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has completed
    its (re)configuration. The server provides received and parsed configuration
    structures to the hook library. It also provides a pointer to the IOService
    object which is used by the server to run asynchronous operations. The hooks
    libraries can use this IOService object to schedule asynchronous tasks which
-   are triggered by the D2 server's main loop. The hook library should hold the
-   provided pointer until the library is unloaded.
+   are triggered by the Kea DHCP DDNS's main loop. The hook library should hold
+   the provided pointer until the library is unloaded. 
 
  - <b>Next step status</b>: Status codes returned by the callouts installed on
    this hook point are ignored.

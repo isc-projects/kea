@@ -48,7 +48,7 @@
         // Hook libraries list may contain more than one library.
         {
             // The only necessary parameter is the library filename.
-            "library": "/opt/local/control-agent-commands.so",
+            "library": "/opt/local/ddns-server-commands.so",
 
             // Some libraries may support parameters. Make sure you
             // type this section carefully, as the CA does not validate

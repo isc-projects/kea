@@ -35,7 +35,7 @@
         },
         "hooks-libraries": [
             {
-                "library": "/tmp/k1897/src/bin/d2/tests/.libs/libcallout.so",
+                "library": "/opt/local/ddns-server-commands.so",
                 "parameters": {
                     "param1": "foo"
                 }
