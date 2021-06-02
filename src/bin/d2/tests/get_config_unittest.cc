@@ -273,10 +273,11 @@ TEST_F(D2GetConfigTest, sample1) {
         // check that unparsed and expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
         // check on pretty prints too
-        std::string current = prettyPrint(unparsed, 0, 4) + "\n";
-        EXPECT_EQ(expected, current);
-        if (expected != current) {
-            expected = current;
+        std::string current = prettyPrint(unparsed, 0, 4);
+        std::string expected2 = prettyPrint(jsonj, 0, 4);
+        EXPECT_EQ(expected2, current);
+        if (expected2 != current) {
+            expected = current + "\n";
         }
     }
 
