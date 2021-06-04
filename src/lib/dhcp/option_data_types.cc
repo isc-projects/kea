@@ -522,15 +522,13 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 
     // We need to check that the PSID value does not exceed the maximum value
     // for a specified PSID length. That means that all bits placed further than
-    // psid_len from the left must be set to 0. So, we create a bit mask
-    // by shifting a value of 0xFFFF to the left and right by psid_len. This
-    // leaves us with psid_len leftmost bits unset and the rest set. Next, we
-    // apply the mask on the PSID value from the buffer and make sure the result
-    // is 0. Otherwise, it means that there are some bits set in the PSID which
-    // aren't supposed to be set.
-    if ((psid_len > 0) &&
-        ((psid & static_cast<uint16_t>(static_cast<uint16_t>(0xFFFF << psid_len)
-                                       >> psid_len)) != 0)) {
+    // psid_len from the left must be set to 0. So, we create a bit mask by
+    // shifting a value of 0xFFFF to the right by psid_len. This leaves us with
+    // psid_len leftmost bits unset and the rest set. Next, we apply the mask on
+    // the PSID value from the buffer and make sure the result is 0. Otherwise,
+    // it means that there are some bits set in the PSID which aren't supposed
+    // to be set.
+    if ((psid_len > 0) && ((psid & (0xFFFFU >> psid_len)) != 0)) {
         isc_throw(BadDataTypeCast, "invalid PSID value " << psid
                   << " for a specified PSID length "
                   << static_cast<unsigned>(psid_len));
@@ -538,11 +536,11 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 
     // All is good, so we can convert the PSID value read from the buffer to
     // the port set number.
-    if (psid_len == sizeof(psid) * 8) {
+    if (psid_len == 0) {
         // Shift by 16 always gives zero (CID 1398333)
         psid = 0;
     } else {
-        psid = psid >> (sizeof(psid) * 8 - psid_len);
+        psid >>= (sizeof(psid) * 8 - psid_len);
     }
     return (std::make_pair(PSIDLen(psid_len), PSID(psid)));
 }
@@ -556,7 +554,7 @@ OptionDataTypeUtil::writePsid(const PSIDLen& psid_len, const PSID& psid,
                   << ", this value is expected to be in range of 0 to 16");
     }
 
-    if (psid_len.asUint8() > 0 &&
+    if ((psid_len.asUint8() > 0) &&
         (psid.asUint16() > (0xFFFF >> (sizeof(uint16_t) * 8 - psid_len.asUint8())))) {
         isc_throw(BadDataTypeCast, "invalid PSID value " << psid.asUint16()
                   << " for a specified PSID length "
@@ -569,7 +567,6 @@ OptionDataTypeUtil::writePsid(const PSIDLen& psid_len, const PSID& psid,
                            (psid.asUint16() << (sizeof(uint16_t) * 8 - psid_len.asUint8())),
                            &buf[buf.size() - 2], 2);
 }
-
 
 std::string
 OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {

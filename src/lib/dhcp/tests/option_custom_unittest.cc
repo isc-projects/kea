@@ -679,7 +679,7 @@ TEST_F(OptionCustomTest, psidData) {
 
     // The PSID comprises a PSID length and PSID value.
     EXPECT_EQ(4, psid.first.asUnsigned());
-    EXPECT_EQ(0x08, psid.second.asUint16());
+    EXPECT_EQ(0x8, psid.second.asUint16());
 
     // Parsed option should have one suboption.
     EXPECT_TRUE(hasV6Suboption(option.get()));
@@ -1058,17 +1058,17 @@ TEST_F(OptionCustomTest, psidDataArray) {
     ASSERT_NO_THROW(psid1 = option->readPsid(1));
     ASSERT_NO_THROW(psid2 = option->readPsid(2));
 
-    // PSID value is equal to '1000b' (8).
+    // PSID value is equal to '1000b' (0x8).
     EXPECT_EQ(4, psid0.first.asUnsigned());
-    EXPECT_EQ(0x08, psid0.second.asUint16());
+    EXPECT_EQ(0x8, psid0.second.asUint16());
 
-    // PSID value is equal to '110101b' (0x35)
+    // PSID value is equal to '110101b' (0x35).
     EXPECT_EQ(6, psid1.first.asUnsigned());
     EXPECT_EQ(0x35, psid1.second.asUint16());
 
-    // PSID value is equal to '1b' (1).
+    // PSID value is equal to '1b' (0x1).
     EXPECT_EQ(1, psid2.first.asUnsigned());
-    EXPECT_EQ(0x01, psid2.second.asUint16());
+    EXPECT_EQ(0x1, psid2.second.asUint16());
 }
 
 // The purpose of this test is to verify that the data from a buffer
@@ -1236,10 +1236,10 @@ TEST_F(OptionCustomTest, recordData) {
     writeAddress(IOAddress("192.168.0.1"), buf);
     // Initialize field 4 to IPv6 address.
     writeAddress(IOAddress("2001:db8:1::1"), buf);
-    // Initialize PSID len and PSID value.
+    // Initialize field 5 PSID len and PSID value.
     writeInt<uint8_t>(6, buf);
     writeInt<uint16_t>(0xD400, buf);
-    // Initialize field 5 to string value.
+    // Initialize field 6 to string value.
     writeString("ABCD", buf);
 
     boost::scoped_ptr<OptionCustom> option;
@@ -1321,7 +1321,7 @@ TEST_F(OptionCustomTest, recordArrayData) {
     writeAddress(IOAddress("192.168.0.1"), buf);
     // Initialize field 4 to IPv6 address.
     writeAddress(IOAddress("2001:db8:1::1"), buf);
-    // Initialize PSID len and PSID value.
+    // Initialize field 5 PSID len and PSID value.
     writeInt<uint8_t>(6, buf);
     writeInt<uint16_t>(0xD400, buf);
     // Initialize last field 6 to a pair of int 12345678 and 87654321.
@@ -1615,7 +1615,7 @@ TEST_F(OptionCustomTest, setPsidData) {
     PSIDTuple psid;
     ASSERT_NO_THROW(psid = option->readPsid());
     EXPECT_EQ(0, psid.first.asUnsigned());
-    EXPECT_EQ(0, psid.second.asUint16());
+    EXPECT_EQ(0x0, psid.second.asUint16());
 
     // Write PSID.
     ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8)));
@@ -1623,7 +1623,7 @@ TEST_F(OptionCustomTest, setPsidData) {
     // Read PSID back and make sure it is the one we just set.
     ASSERT_NO_THROW(psid = option->readPsid());
     EXPECT_EQ(4, psid.first.asUnsigned());
-    EXPECT_EQ(8, psid.second.asUint16());
+    EXPECT_EQ(0x8, psid.second.asUint16());
 }
 
 // The purpose of this test is to verify that an option comprising
@@ -1861,19 +1861,19 @@ TEST_F(OptionCustomTest, setPSIDPrefixArray) {
     ASSERT_NO_THROW({
          PSIDTuple psid0 = option->readPsid(0);
          EXPECT_EQ(4, psid0.first.asUnsigned());
-         EXPECT_EQ(1, psid0.second.asUint16());
+         EXPECT_EQ(0x1, psid0.second.asUint16());
     });
 
     ASSERT_NO_THROW({
          PSIDTuple psid1 = option->readPsid(1);
          EXPECT_EQ(0, psid1.first.asUnsigned());
-         EXPECT_EQ(0, psid1.second.asUint16());
+         EXPECT_EQ(0x0, psid1.second.asUint16());
     });
 
     ASSERT_NO_THROW({
          PSIDTuple psid2 = option->readPsid(2);
          EXPECT_EQ(1, psid2.first.asUnsigned());
-         EXPECT_EQ(1, psid2.second.asUint16());
+         EXPECT_EQ(0x1, psid2.second.asUint16());
     });
 }
 
@@ -2060,7 +2060,7 @@ TEST_F(OptionCustomTest, setRecordData) {
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(0, value5.first.asUnsigned());
-    EXPECT_EQ(0, value5.second.asUint16());
+    EXPECT_EQ(0x0, value5.second.asUint16());
     PrefixTuple value6(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(0, value6.first.asUnsigned());
@@ -2097,7 +2097,7 @@ TEST_F(OptionCustomTest, setRecordData) {
     EXPECT_EQ("2001:db8:1::100", value4.toText());
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(4, value5.first.asUnsigned());
-    EXPECT_EQ(8, value5.second.asUint16());
+    EXPECT_EQ(0x8, value5.second.asUint16());
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(48, value6.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", value6.second.toText());
@@ -2151,7 +2151,7 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(0, value5.first.asUnsigned());
-    EXPECT_EQ(0, value5.second.asUint16());
+    EXPECT_EQ(0x0, value5.second.asUint16());
     PrefixTuple value6(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(0, value6.first.asUnsigned());
@@ -2191,7 +2191,7 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     EXPECT_EQ("2001:db8:1::100", value4.toText());
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(4, value5.first.asUnsigned());
-    EXPECT_EQ(8, value5.second.asUint16());
+    EXPECT_EQ(0x8, value5.second.asUint16());
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(48, value6.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", value6.second.toText());

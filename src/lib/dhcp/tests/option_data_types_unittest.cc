@@ -750,6 +750,18 @@ TEST_F(OptionDataTypesTest, readPsid) {
 
     buf.clear();
 
+    // PSID length is 16 (bits)
+    writeInt<uint8_t>(16, buf);
+    // 0xF000 is represented as 1111000000000000b, which is equivalent
+    // of portset 0xF000.
+    writeInt<uint16_t>(0xF000, buf);
+
+    ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
+    EXPECT_EQ(16, psid.first.asUnsigned());
+    EXPECT_EQ(0xF000, psid.second.asUint16());
+
+    buf.clear();
+
     // PSID length is 0, in which case PSID should be ignored.
     writeInt<uint8_t>(0, buf);
     // Let's put some junk into the PSID field to make sure it will
