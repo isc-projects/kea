@@ -27,6 +27,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 #include <util/boost_time_utils.h>
+#include <util/multi_threading_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
@@ -2787,6 +2788,8 @@ public:
     /// configured reconnect parameters.
     /// @return true if connection has been recovered, false otherwise.
     static bool dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+        MultiThreadingCriticalSection cs;
+
         // Invoke application layer connection lost callback.
         if (!DatabaseConnection::invokeDbLostCallback(db_reconnect_ctl)) {
             return (false);
