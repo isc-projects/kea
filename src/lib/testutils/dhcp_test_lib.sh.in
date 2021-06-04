@@ -36,6 +36,11 @@ prefix="@prefix@"
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 
+# Kea environment variables for shell tests.
+# KEA_LOGGER_DESTINATION is set per test with set_logger.
+export KEA_LOCKFILE_DIR="@abs_top_builddir@"
+export KEA_PIDFILE_DIR="@abs_top_builddir@"
+
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 
@@ -414,19 +419,11 @@ set_logger() {
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
-# PID file path is by default <kea-install-dir>/var/run/kea, but can be
-# overridden by the environmental variable.
-PID_FILE_PATH="@runstatedir@/@PACKAGE@/"
-# Use ${var+x} to test if ${var} is defined.
-if test -n "${KEA_PIDFILE_DIR+x}" && test -n "${KEA_PIDFILE_DIR}"; then
-    PID_FILE_PATH="${KEA_PIDFILE_DIR}"
-fi
-
 # Checks if specified process is running.
 #
 # This function uses PID file to obtain the PID and then calls
 # 'kill -0 <pid>' to check if the process is alive.
-# The PID files are expected to be located in the ${PID_FILE_PATH},
+# The PID files are expected to be located in the ${KEA_PIDFILE_DIR},
 # and their names should match the following pattern:
 # <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
 # specified a 'test_config' is used by default.
@@ -453,7 +450,7 @@ get_pid() {
 
     # Get the absolute location of the PID file for the specified process
     # name.
-    abs_pidfile_path="${PID_FILE_PATH}/${cfg_file_name}.${proc_name}.pid"
+    abs_pidfile_path="${KEA_PIDFILE_DIR}/${cfg_file_name}.${proc_name}.pid"
     _GET_PID=0
     _GET_PIDS_NUM=0
 
@@ -871,7 +868,7 @@ verify_server_pid() {
     fi
 
     # Now we can build the name:
-    pid_file="$KEA_PIDFILE_DIR/$fname.$bin_name.pid"
+    pid_file="${KEA_PIDFILE_DIR}/${fname}.${bin_name}.pid"
 
     if [ ! -e "${pid_file}" ]; then
         printf "ERROR: PID file:[%s] does not exist\n" "${pid_file}"

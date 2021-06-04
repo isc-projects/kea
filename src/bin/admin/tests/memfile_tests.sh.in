@@ -122,11 +122,6 @@ memfile_init_test() {
             clean_up
             clean_exit 1
         fi
-        export KEA_LOCKFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/lock_dir_${v}"
-        export KEA_PIDFILE_DIR="@abs_top_builddir@/src/bin/admin/tests/pid_dir_${v}"
-        export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
-        mkdir -p "${KEA_LOCKFILE_DIR}"
-        mkdir -p "${KEA_PIDFILE_DIR}"
         start_kea_dhcp "${v}"
         # This assumes that the CSV creation + writing to CSV is atomic. Not
         # sure if it is, but if this ever fails on the comparison further below,
@@ -151,8 +146,6 @@ memfile_init_test() {
         fi
 
         clean_up
-        unset KEA_LOCKFILE_DIR
-        unset KEA_PIDFILE_DIR
     done
 
     test_finish 0
