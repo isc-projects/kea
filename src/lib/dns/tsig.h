@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -125,7 +125,7 @@ public:
 ///    message.fromWire(buffer);
 ///
 ///    const TSIGRecord* tsig = message.getTSIGRecord();
-///    if (tsig != NULL) {
+///    if (tsig) {
 ///        TSIGContext ctx(tsig->getName(), tsig->getRdata().getAlgorithm(),
 ///                        keyring);
 ///        ctx.verify(tsig, data, data_len);
@@ -180,7 +180,7 @@ public:
     /// directly.
     enum State {
         INIT,                   ///< Initial state
-        SENT_REQUEST, ///< Client sent a signed request, waiting response
+        SENT_REQUEST,            ///< Client sent a signed request, waiting response
         RECEIVED_REQUEST,       ///< Server received a signed request
         SENT_RESPONSE,          ///< Server sent a signed response
         VERIFIED_RESPONSE       ///< Client successfully verified a response
@@ -201,7 +201,7 @@ public:
                 const TSIGKeyRing& keyring);
 
     /// The destructor.
-    ~TSIGContext();
+    virtual ~TSIGContext();
     //@}
 
     /// Sign a DNS message.
@@ -238,7 +238,7 @@ public:
     /// \c TSIGRecordx object, even though this value should be stored in the
     /// first two octets (in wire format) of the given data.
     ///
-    /// \note This method still checks and rejects empty data (\c NULL pointer
+    /// \note This method still checks and rejects empty data (null pointer
     /// data or the specified data length is 0) in order to avoid catastrophic
     /// effect such as program crash.  Empty data is not necessarily invalid
     /// for HMAC computation, but obviously it doesn't make sense for a DNS
@@ -249,7 +249,7 @@ public:
     /// the \c TSIGContext won't be modified.
     ///
     /// \exception TSIGContextError Context already verified a response.
-    /// \exception InvalidParameter \c data is NULL or \c data_len is 0
+    /// \exception InvalidParameter \c data is 0 or \c data_len is 0
     /// \exception cryptolink::LibraryError Some unexpected error in the
     /// underlying crypto operation
     /// \exception std::bad_alloc Temporary resource allocation failure
@@ -260,8 +260,8 @@ public:
     /// \param data_len The length of \c data in bytes
     ///
     /// \return A TSIG record for the given data along with the context.
-    ConstTSIGRecordPtr sign(const uint16_t qid, const void* const data,
-                            const size_t data_len);
+    virtual ConstTSIGRecordPtr
+    sign(const uint16_t qid, const void* const data, const size_t data_len);
 
     /// Verify a DNS message.
     ///
@@ -306,11 +306,11 @@ public:
     /// accidental misuse, if this method is called after a "server" signs
     /// a response, an exception of class \c TSIGContextError will be thrown.
     ///
-    /// The \c record parameter can be NULL; in that case this method simply
+    /// The \c record parameter can be 0; in that case this method simply
     /// returns \c FORMERR as the case described in Section 4.6 of RFC2845,
     /// i.e., receiving an unsigned response to a signed request.  This way
     /// a client can transparently pass the result of
-    /// \c Message::getTSIGRecord() without checking whether it's non NULL
+    /// \c Message::getTSIGRecord() without checking whether it isn't 0
     /// and take an appropriate action based on the result of this method.
     ///
     /// This method handles the given data mostly as opaque.  It digests
@@ -320,7 +320,7 @@ public:
     /// assumption.  It's caller's responsibility to ensure the data is
     /// valid and consistent with \c record.  To avoid disruption, this
     /// method performs minimal validation on the given \c data and \c record:
-    /// \c data must not be NULL; \c data_len must not be smaller than the
+    /// \c data must not be 0; \c data_len must not be smaller than the
     /// sum of the DNS header length (fixed, 12 octets) and the length of
     /// the TSIG RR.  If this check fails it throws an \c InvalidParameter
     /// exception.
@@ -343,15 +343,15 @@ public:
     /// \todo Signature truncation support based on RFC4635
     ///
     /// \exception TSIGContextError Context already signed a response.
-    /// \exception InvalidParameter \c data is NULL or \c data_len is too small.
+    /// \exception InvalidParameter \c data is 0 or \c data_len is too small.
     ///
     /// \param record The \c TSIGRecord to be verified with \c data
     /// \param data Points to the wire-format data (exactly as received) to
     /// be verified
     /// \param data_len The length of \c data in bytes
     /// \return The \c TSIGError that indicates verification result
-    TSIGError verify(const TSIGRecord* const record, const void* const data,
-                     const size_t data_len);
+    virtual TSIGError
+    verify(const TSIGRecord* const record, const void* const data, const size_t data_len);
 
     /// \brief Check whether the last verified message was signed.
     ///
@@ -364,7 +364,7 @@ public:
     ///
     /// \return If the last message was signed or not.
     /// \exception TSIGContextError if no message was verified yet.
-    bool lastHadSignature() const;
+    virtual bool lastHadSignature() const;
 
     /// Return the expected length of TSIG RR after \c sign()
     ///
@@ -385,7 +385,7 @@ public:
     /// \exception None
     ///
     /// \return The expected TISG RR length in bytes
-    size_t getTSIGLength() const;
+    virtual size_t getTSIGLength() const;
 
     /// Return the current state of the context
     ///
@@ -394,7 +394,7 @@ public:
     /// Normal applications won't have to deal with them.
     ///
     /// \exception None
-    State getState() const;
+    virtual State getState() const;
 
     /// Return the TSIG error as a result of the latest verification
     ///
@@ -402,7 +402,7 @@ public:
     /// returned value is meaningless in that case.
     ///
     /// \exception None
-    TSIGError getError() const;
+    virtual TSIGError getError() const;
 
     /// \name Protocol constants and defaults
     ///
