@@ -384,7 +384,7 @@ public:
     ///
     /// \exception None
     ///
-    /// \return The expected TISG RR length in bytes
+    /// \return The expected TSIG RR length in bytes
     virtual size_t getTSIGLength() const;
 
     /// Return the current state of the context
