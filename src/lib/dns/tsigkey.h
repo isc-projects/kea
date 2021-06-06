@@ -154,7 +154,7 @@ public:
     TSIGKey& operator=(const TSIGKey& source);
 
     /// The destructor.
-    ~TSIGKey();
+    virtual ~TSIGKey();
     //@}
 
     ///
