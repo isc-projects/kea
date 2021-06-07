@@ -483,6 +483,52 @@ CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+-- Create a table for storing IPv4 shared networks
+CREATE TABLE dhcp4_shared_network (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  match_client_id BOOLEAN DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  authoritative BOOLEAN DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  boot_file_name VARCHAR(129) DEFAULT NULL, -- bootfile field is 128 bytes (plus \0 char)
+  next_server inet DEFAULT NULL,   -- let's use type inet
+  server_hostname varchar(65) DEFAULT NULL, -- sname is 64 bytes long (plus \0 char)
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
+CREATE UNIQUE INDEX dhcp4_shared_network_name ON dhcp4_shared_network (name);
+CREATE INDEX dhcp4_shared_network_modification_ts ON dhcp4_shared_network (modification_ts);
+
+CREATE TRIGGER dhcp4_shared_network_modification_ts_update
+  AFTER UPDATE ON dhcp4_shared_network
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
