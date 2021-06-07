@@ -184,6 +184,42 @@
         }
     ],
 
+    // Another thing possible here are hooks. Kea supports a powerful mechanism
+    // that allows loading external libraries that can extract information and
+    // even influence how the server processes packets. Those libraries include
+    // additional forensic logging capabilities, ability to reserve hosts in
+    // more flexible ways, and even add extra commands. For a list of available
+    // hook libraries, see https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
+    //"hooks-libraries": [
+    //  {
+    //      // Forensic Logging library generates forensic type of audit trail
+    //      // of all devices serviced by Kea, including their identifiers
+    //      // (like MAC address), their location in the network, times
+    //      // when they were active etc.
+    //      "library": "@libdir@/kea/hooks/libdhcp_legal_log.so",
+    //      "parameters": {
+    //          "path": "/var/lib/kea",
+    //          "base-name": "kea-forensic6"
+    //      }
+    //  },
+    //  {
+    //      // Flexible identifier (flex-id). Kea software provides a way to
+    //      // handle host reservations that include addresses, prefixes,
+    //      // options, client classes and other features. The reservation can
+    //      // be based on hardware address, DUID, circuit-id or client-id in
+    //      // DHCPv4 and using hardware address or DUID in DHCPv6. However,
+    //      // there are sometimes scenario where the reservation is more
+    //      // complex, e.g. uses other options that mentioned above, uses part
+    //      // of specific options or perhaps even a combination of several
+    //      // options and fields to uniquely identify a client. Those scenarios
+    //      // are addressed by the Flexible Identifiers hook application.
+    //      "library": "@libdir@/kea/hooks/libdhcp_flex_id.so",
+    //      "parameters": {
+    //          "identifier-expression": "relay6[0].option[37].hex)"
+    //      }
+    //  }
+    //],
+
     // Below an example of a simple IPv6 subnet declaration. Uncomment to enable
     // it. This is a list, denoted with [ ], of structures, each denoted with
     // { }. Each structure describes a single subnet and may have several
