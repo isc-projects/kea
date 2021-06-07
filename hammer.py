@@ -42,36 +42,50 @@ SYSTEMS = {
         #'27',  # EOLed
         #'28',  # EOLed
         #'29',  # EOLed
-        '30',   # EOLed
-        '31',
-        '32',
-        '33'],
-    'centos': ['7', '8'],
+        #'30',  # EOLed
+        #'31',  # EOLed
+        '32',   # EOLed
+        '33',
+        '34',
+    ],
+    'centos': [
+        '7',
+        '8',
+    ],
     'rhel': ['8'],
     'ubuntu': [
         #'16.04',
         '18.04',
         #'18.10',  # EOLed
         #'19.04',  # EOLed
-        '19.10',
+        #'19.10',  # EOLed
         '20.04',
-        '20.10'],
-    'debian': [#'8',
-               '9',
-               '10'],
-    'freebsd': ['11.2',
-                '11.4',
-                '12.0',
-                '12.1'],
+        '20.10',
+        '21.04',
+    ],
+    'debian': [
+        #'8',
+        '9',
+        '10',
+    ],
+    'freebsd': [
+        '11.2',
+        '11.4',
+        '12.0',
+        '12.1',
+        '13.0',
+    ],
     'alpine': [
-        '3.10',
+        #'3.10',   # EOLed
         '3.11',
-        '3.12'
+        '3.12',
+        '3.13',
     ]
 }
 
 # pylint: disable=C0326
 IMAGE_TEMPLATES = {
+    # fedora
     'fedora-27-lxc':           {'bare': 'lxc-fedora-27',               'kea': 'godfryd/kea-fedora-27'},
     'fedora-27-virtualbox':    {'bare': 'generic/fedora27',            'kea': 'godfryd/kea-fedora-27'},
     'fedora-28-lxc':           {'bare': 'godfryd/lxc-fedora-28',       'kea': 'godfryd/kea-fedora-28'},
@@ -84,11 +98,18 @@ IMAGE_TEMPLATES = {
     'fedora-31-virtualbox':    {'bare': 'isc/vbox-fedora-31',          'kea': 'isc/kea-fedora-31'},
     'fedora-32-lxc':           {'bare': 'isc/lxc-fedora-32',           'kea': 'isc/kea-fedora-32'},
     'fedora-33-lxc':           {'bare': 'isc/lxc-fedora-33',           'kea': 'isc/kea-fedora-33'},
+    'fedora-34-lxc':           {'bare': 'isc/lxc-fedora-34',           'kea': 'isc/kea-fedora-34'},
+
+    # centos
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'isc/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
     'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'isc/kea-centos-8'},
+
+    # rhel
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
+
+    # ubuntu
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-18.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.04',    'kea': 'godfryd/kea-ubuntu-18.04'},
@@ -101,17 +122,26 @@ IMAGE_TEMPLATES = {
     'ubuntu-19.10-virtualbox': {'bare': 'generic/ubuntu1910',          'kea': 'isc/kea-ubuntu-19.10'},
     'ubuntu-20.04-lxc':        {'bare': 'isc/lxc-ubuntu-20.04',        'kea': 'isc/kea-ubuntu-20.04'},
     'ubuntu-20.10-lxc':        {'bare': 'isc/lxc-ubuntu-20.10',        'kea': 'isc/kea-ubuntu-20.10'},
+    'ubuntu-21.04-lxc':        {'bare': 'isc/lxc-ubuntu-21.04',        'kea': 'isc/kea-ubuntu-21.04'},
+
+    # debian
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
     'debian-9-virtualbox':     {'bare': 'debian/stretch64',            'kea': 'godfryd/kea-debian-9'},
     'debian-10-lxc':           {'bare': 'godfryd/lxc-debian-10',       'kea': 'godfryd/kea-debian-10'},
     'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
+
+    # freebsd
     'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
     'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
+    'freebsd-13.0-virtualbox': {'bare': 'isc/vbox-freebsd-13.0',       'kea': 'isc/kea-freebsd-13.0'},
+
+    # alpine
     'alpine-3.10-lxc':         {'bare': 'godfryd/lxc-alpine-3.10',     'kea': 'godfryd/kea-alpine-3.10'},
     'alpine-3.11-lxc':         {'bare': 'isc/lxc-alpine-3.11',         'kea': 'isc/kea-alpine-3.11'},
     'alpine-3.12-lxc':         {'bare': 'isc/lxc-alpine-3.12',         'kea': 'isc/kea-alpine-3.12'},
+    'alpine-3.13-lxc':         {'bare': 'isc/lxc-alpine-3.13',         'kea': 'isc/kea-alpine-3.13'},
 }
 
 # NOTES
@@ -485,11 +515,6 @@ class VagrantEnv(object):
         self.nofeatures_arg = None
         self.python = None
 
-        if provider == "virtualbox":
-            vagrantfile_tpl = VBOX_VAGRANTFILE_TPL
-        elif provider == "lxc":
-            vagrantfile_tpl = LXC_VAGRANTFILE_TPL
-
         self.key = key = "%s-%s-%s" % (system, revision, provider)
         self.image_tpl = image_tpl = IMAGE_TEMPLATES[key][image_template_variant]
         self.repo_dir = os.getcwd()
@@ -500,28 +525,25 @@ class VagrantEnv(object):
         elif provider == "lxc":
             self.vagrant_dir = os.path.join(self.repo_dir, 'hammer', sys_dir, 'lxc')
 
-        if dry_run:
-            return
+        if ccache_dir is None:
+            self.ccache_dir = '/'
+            self.ccache_enabled = False
+        else:
+            self.ccache_dir = ccache_dir
+            self.ccache_enabled = True
 
+        self.init_files()
+
+    def init_files(self):
         if not os.path.exists(self.vagrant_dir):
             os.makedirs(self.vagrant_dir)
 
         vagrantfile_path = os.path.join(self.vagrant_dir, "Vagrantfile")
 
-        if os.path.exists(vagrantfile_path):
-            # TODO: destroy any existing VM
-            pass
-
         crc = binascii.crc32(self.vagrant_dir.encode())
-        self.name = "hmr-%s-%s-kea-srv-%08d" % (system, revision.replace('.', '-'), crc)
+        self.name = "hmr-%s-%s-kea-srv-%08d" % (self.system, self.revision.replace('.', '-'), crc)
 
-        if ccache_dir is None:
-            ccache_dir = '/'
-            self.ccache_enabled = False
-        else:
-            self.ccache_enabled = True
-
-        if '/' in image_tpl:
+        if '/' in self.image_tpl:
             self.latest_version = self._get_latest_cloud_version()
             box_version = 'config.vm.box_version = "%s"' % self.latest_version
         else:
@@ -529,14 +551,19 @@ class VagrantEnv(object):
             box_version = ""
 
         # alpine has a problem with setting hostname so skip it
-        if system == 'alpine':
+        if self.system == 'alpine':
             hostname = ''
         else:
             hostname = 'config.vm.hostname = "%s"' % self.name
 
-        vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
+        if self.provider == "virtualbox":
+            vagrantfile_tpl = VBOX_VAGRANTFILE_TPL
+        elif self.provider == "lxc":
+            vagrantfile_tpl = LXC_VAGRANTFILE_TPL
+
+        vagrantfile = vagrantfile_tpl.format(image_tpl=self.image_tpl,
                                              name=self.name,
-                                             ccache_dir=ccache_dir,
+                                             ccache_dir=self.ccache_dir,
                                              box_version=box_version,
                                              hostname=hostname)
 
@@ -612,6 +639,9 @@ class VagrantEnv(object):
 
         Status can be: 'not created', 'running', 'stopped', etc.
         """
+        if not os.path.exists(self.vagrant_dir):
+            return "not created"
+
         _, out = execute("vagrant status", cwd=self.vagrant_dir, timeout=15, capture=True, quiet=True)
         m = re.search('default\s+(.+)\(', out)
         if not m:
@@ -700,7 +730,7 @@ class VagrantEnv(object):
         latest_version = self._get_latest_cloud_version(image_tpl)
         new_version = latest_version + 1
 
-        cmd = "vagrant cloud publish -f -r %s %s %s %s"
+        cmd = "vagrant cloud publish --no-private -f -r %s %s %s %s"
         cmd = cmd % (image_tpl, new_version, self.provider, box_path)
 
         execute(cmd, cwd=self.vagrant_dir, timeout=60 * 60)
@@ -827,9 +857,10 @@ class VagrantEnv(object):
 
     def destroy(self):
         """Remove the VM completely."""
-        cmd = 'vagrant destroy --force'
-        execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
-        execute('rm -rf %s', self.vagrant_dir)
+        if os.path.exists(self.vagrant_dir):
+            cmd = 'vagrant destroy --force'
+            execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
+            execute('rm -rf %s' % self.vagrant_dir)
 
     def ssh(self):
         """Open interactive session to the VM."""
@@ -866,17 +897,23 @@ class VagrantEnv(object):
         else:
             self.nofeatures_arg = ''
 
-        # install python3 for centos 8
+        # install python3 on some systems
         if self.system == 'centos':
             if self.revision == '7':
                 self.execute("sudo yum remove -y python-devel")
                 self.execute("sudo yum install -y python36 rpm-build python3-virtualenv", attempts=3)
             else:
                 self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
+        elif self.system == 'freebsd':
+            if self.revision.startswith('13'):
+                self.execute("sudo pkg install -y python3", attempts=3)
 
         # select proper python version for running Hammer inside Vagrant system
         if self.system == 'freebsd':
-            self.python = 'python3.6'
+            if self.revision.startswith(('11', '12')):
+                self.python = 'python3.6'
+            else:
+                self.python = 'python3'
         else:
             self.python = 'python3'
 
@@ -922,29 +959,31 @@ class VagrantEnv(object):
         log.info('')
 
     def prepare_for_boxing(self):
-        if self.system not in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel']:
-            return
+        if self.system in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel']:
+            # setup a script that on first boot will set machine-id
+            cmd = 'bash -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
+            cmd += '[Unit]\n'
+            cmd += 'Description=Generate New Machine ID\n'
+            cmd += 'Documentation=man:systemd-firstboot(1)\n'
+            cmd += 'DefaultDependencies=no\n'
+            cmd += 'Conflicts=shutdown.target\n'
+            cmd += 'After=systemd-remount-fs.service\n'
+            cmd += 'Before=systemd-sysusers.service sysinit.target shutdown.target\n'
+            cmd += 'ConditionPathIsReadWrite=/etc\n'
+            cmd += 'ConditionFirstBoot=yes\n'
+            cmd += '[Service]\n'
+            cmd += 'Type=oneshot\n'
+            cmd += 'RemainAfterExit=yes\n'
+            cmd += 'ExecStart=/usr/bin/systemd-firstboot --setup-machine-id\n'
+            cmd += '[Install]\n'
+            cmd += 'WantedBy=sysinit.target\n'
+            cmd += "EOF\n\'"
+            self.execute(cmd)
+            self.execute('sudo systemctl enable systemd-firstboot.service')
 
-        # setup a script that on first boot will set machine-id
-        cmd = 'bash -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
-        cmd += '[Unit]\n'
-        cmd += 'Description=Generate New Machine ID\n'
-        cmd += 'Documentation=man:systemd-firstboot(1)\n'
-        cmd += 'DefaultDependencies=no\n'
-        cmd += 'Conflicts=shutdown.target\n'
-        cmd += 'After=systemd-remount-fs.service\n'
-        cmd += 'Before=systemd-sysusers.service sysinit.target shutdown.target\n'
-        cmd += 'ConditionPathIsReadWrite=/etc\n'
-        cmd += 'ConditionFirstBoot=yes\n'
-        cmd += '[Service]\n'
-        cmd += 'Type=oneshot\n'
-        cmd += 'RemainAfterExit=yes\n'
-        cmd += 'ExecStart=/usr/bin/systemd-firstboot --setup-machine-id\n'
-        cmd += '[Install]\n'
-        cmd += 'WantedBy=sysinit.target\n'
-        cmd += "EOF\n\'"
-        self.execute(cmd)
-        self.execute('sudo systemctl enable systemd-firstboot.service')
+        elif self.system == 'freebsd':
+            self.execute('sudo pkg clean -a -y')
+            self.execute('sudo rm -rf /usr/lib/debug')
 
 
 def _install_gtest_sources():
@@ -1455,19 +1494,25 @@ def prepare_system_local(features, check_times):
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
+        packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
-            packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
-
-        if 'unittest' in features:
-            _install_gtest_sources()
+            if revision.startswith('13'):
+                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
 
         if 'mysql' in features:
-            packages.extend(['mysql57-server', 'mysql57-client'])
+            if revision.startswith('13'):
+                packages.extend(['mysql80-server', 'mysql80-client'])
+            else:
+                packages.extend(['mysql57-server', 'mysql57-client'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql11-server', 'postgresql11-client'])
+            if revision.startswith('13'):
+                packages.extend(['postgresql14-server', 'postgresql14-client'])
+            else:
+                packages.extend(['postgresql11-server', 'postgresql11-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1477,10 +1522,16 @@ def prepare_system_local(features, check_times):
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
+        if 'unittest' in features:
+            _install_gtest_sources()
+
         if 'mysql' in features:
             execute('sudo sysrc mysql_enable="yes"', env=env, check_times=check_times)
             execute('sudo service mysql-server start', env=env, check_times=check_times,
                     raise_error=False)
+
+        execute('sudo pkg clean -a -y')
+        execute('sudo rm -rf /usr/lib/debug')
 
     # prepare alpine
     elif system == 'alpine':
@@ -1560,6 +1611,7 @@ def prepare_system_in_vagrant(provider, system, revision, features, dry_run, che
                     ccache_dir=ccache_dir)
     if clean_start:
         ve.destroy()
+        ve.init_files()
     ve.bring_up_latest_box()
     ve.prepare_system()
 
@@ -1609,8 +1661,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
-    if 'cql' in features and not (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '20.10']):
-        # debian 8, fedora 33, ubuntu 20.10 does not have all deps required
+    if 'cql' in features and not (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '34', '20.10']):
+        # debian 8, fedora 33/34, ubuntu 20.10 does not have all deps required
         # combinations in (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '20.10'])
         # will not generate errors
         cmd += ' --with-cql=/usr/bin/pkg-config'
@@ -1774,10 +1826,15 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200511114306.fc32'
     elif system == 'fedora' and revision == '33':
         frc_version = 'isc20210415094816.fc33'
+    elif system == 'fedora' and revision == '34':
+        frc_version = 'isc20210528132302.fc34'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system == 'centos' and revision == '8':
         frc_version = 'isc20200318134606.el8'
+    else:
+        raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
+
     frc.append('freeradius-client-1.1.7-%s' % frc_version)
     frc.append('freeradius-client-devel-1.1.7-%s' % frc_version)
     install_pkgs(frc, env=env, check_times=check_times)
@@ -1852,8 +1909,11 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200511114306'
     elif system == 'ubuntu' and revision == '20.10':
         frc_version = 'isc20210419151920'
+    elif system == 'ubuntu' and revision == '21.04':
+        frc_version = 'isc20210528123038'
     else:
-        frc_version = 'isc20200318122047'
+        raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
+
     install_pkgs('libfreeradius-client=1.1.7-{0} libfreeradius-client-dev=1.1.7-{0}'.format(frc_version),
                  env=env, check_times=check_times)
 
@@ -1902,17 +1962,23 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
         sys_suffix = ''
     execute('mv kea-%s/alpine%s/* kea-src' % (pkg_version, sys_suffix), check_times=check_times, dry_run=dry_run)
     execute('rm -rf kea-%s' % pkg_version, check_times=check_times, dry_run=dry_run)
-    cmd = 'cd /tmp/; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % pkg_version
+    tardir = os.path.dirname(tarball_path)
+    if not tardir:
+        tardir = '.'
+    cmd = 'cd %s; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % (tardir, pkg_version)
     execute(cmd, check_times=check_times, dry_run=dry_run)
     cmd = 'sed -i -e s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
-    cmd = 'sed -i -e s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version
+    cmd = 'sed -i -e s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version[3:]
     execute(cmd, check_times=check_times, dry_run=dry_run)
     log.info('Moving %s to kea-src folder', tarball_path)
     execute('mv %s kea-src' % tarball_path, check_times=check_times, dry_run=dry_run)
     execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
     execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
-    execute('cp ~/packages/pkg/x86_64/*.apk kea-pkg', check_times=check_times, dry_run=dry_run)
+
+    # copy packages to common place
+    src_dir = '~/packages/$USER/x86_64'
+    execute('cp %s/*.apk kea-pkg' % src_dir, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
@@ -2025,6 +2091,7 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
                         ccache_dir)
         if clean_start:
             ve.destroy()
+            ve.init_files()
         ve.bring_up_latest_box()
         ve.prepare_system()
         total, passed = ve.run_build_and_test(tarball_path, jobs, pkg_version, pkg_isc_version, upload, repository_url)
@@ -2058,6 +2125,7 @@ def package_box(provider, system, revision, features, dry_run, check_times, reus
     ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
     if not reuse:
         ve.destroy()
+        ve.init_files()
     ve.bring_up_latest_box()
     ve.prepare_system()
     ve.prepare_for_boxing()
@@ -2073,7 +2141,7 @@ def ssh(provider, system, revision):
     ve.ssh()
 
 
-def _install_vagrant(ver='2.2.14', upgrade=False):
+def _install_vagrant(ver='2.2.16', upgrade=False):
     system, _ = get_system_revision()
     if system in ['fedora', 'centos', 'rhel']:
         if upgrade:
@@ -2107,8 +2175,8 @@ def ensure_hammer_deps():
         m = re.search('Installed Version: ([\d\.]+)', out, re.I)
         ver = m.group(1)
         major, minor, patch = [int(v) for v in ver.split('.')]
-        # if ver < 2.2.14
-        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 14))):
+        # if ver < 2.2.16
+        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 16))):
             m = re.search('Latest Version: ([\d\.]+)', out, re.I)
             ver = m.group(1)
             _install_vagrant(ver, upgrade=True)
@@ -2360,9 +2428,10 @@ def _get_features(args):
         features.add('mysql')
         features.add('pgsql')
         features.add('radius')
-        # NOTE: unittest together with native-pkg caused problems in the past
-        # but let's try to resolve the issues and allow both requirements to be installed
-        # features.discard('unittest')
+        # in case of build command of native packages, unittest should not
+        # be run as they are not built
+        if args.command == 'build':
+            features.discard('unittest')
 
     return features
 
