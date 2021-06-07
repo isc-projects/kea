@@ -529,6 +529,57 @@ CREATE TRIGGER dhcp4_shared_network_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+-- Create a list of IPv4 subnets
+CREATE TABLE dhcp4_subnet (
+  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
+  interface_4o6 VARCHAR(128) DEFAULT NULL,
+  interface_id_4o6 VARCHAR(128) DEFAULT NULL,
+  subnet_4o6 VARCHAR(64) DEFAULT NULL,
+  boot_file_name varchar(129) DEFAULT NULL, -- note the field is 128 bytes long (plus extra \0 char to keep it in memory)
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  match_client_id BOOLEAN DEFAULT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  next_server inet DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  server_hostname varchar(65) DEFAULT NULL, -- sname is 64 bytes long (plus \0 char)
+  shared_network_name varchar(128) DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  authoritative BOOLEAN DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+  CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name),
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
+CREATE TRIGGER dhcp4_subnet_modification_ts_update
+  AFTER UPDATE ON dhcp4_subnet
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+CREATE INDEX dhcp4_subnet_modification_ts ON dhcp4_subnet (modification_ts);
+CREATE INDEX dhcp4_subnet_shared_network ON dhcp4_subnet (shared_network_name);
+
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
