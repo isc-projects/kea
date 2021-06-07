@@ -259,6 +259,10 @@ ProcessSpawnImpl::spawn(bool dismiss) {
         isc_throw(ProcessSpawnError, "unable to fork current process");
 
     } else if (pid == 0) {
+        // Reset masked signals for the child process.
+        sigset_t sset;
+        sigemptyset(&sset);
+        pthread_sigmask(SIG_SETMASK, &sset, 0);
         // Run the executable.
         execve(executable_.c_str(), args_.get(), vars_.get());
         // We may end up here if the execve failed, e.g. as a result
