@@ -37,6 +37,25 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
+-- modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+-- Sadly, Postgres has its own convoluted way of doing this. Luckily, the update pattern is
+-- the same in many tables, so we can define the trigger function once and the use it everywhere.
+
+-- First, we need to define a function that will do the actual job.
+-- This is used in:
+-- - dhcp6_shared_network
+-- - dhcp6_subnet
+CREATE OR REPLACE FUNCTION modification_ts_update()
+  RETURNS trigger AS $modification_ts_update$
+  BEGIN
+    new.modification_ts = CURRENT_TIMESTAMP;
+  END;
+
+-- Second, we need to specify which language it was written in.
+$modification_ts_update$ LANGUAGE plpgsql;
+
+
 -- Create table modification and insert values for modification types.
 CREATE TABLE modification (
   id smallint NOT NULL,
@@ -75,8 +94,7 @@ INSERT INTO ddns_replace_client_name_types (type, name) VALUES
   (3, 'RCM_WHEN_NOT_PRESENT');
 
 
-
-DROP TABLE IF EXISTS dhcp6_server;
+-- Create table for DHCPv6 servers
 CREATE TABLE dhcp6_server (
   id SERIAL PRIMARY KEY NOT NULL,
   tag varchar(256) NOT NULL,
@@ -85,25 +103,10 @@ CREATE TABLE dhcp6_server (
   UNIQUE(tag)
 );
 CREATE INDEX dhcp6_server_modification_ts ON dhcp6_server (modification_ts);
+CREATE TRIGGER dhcp6_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
-
--- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
--- modification_ts timestamp NOT NULL DEFAULT Ccurrent_timestamp() ON UPDATE current_timestamp(),
--- Sadly, Postgres has its own convoluted way of doing this:
-
--- First, we need to define a function that will do the actual job.
--- This is used in:
--- - dhcp6_shared_network
--- - dhcp6_subnet
-CREATE OR REPLACE FUNCTION modification_ts_update()
-  RETURNS trigger AS $modification_ts_update$
-  BEGIN
-    new.modification_ts = CURRENT_TIMESTAMP;
-  END;
-
--- Second, we need to specify which language it was written in.
-$modification_ts_update$ LANGUAGE plpgsql;
 
 
 -- Create a table for storing IPv6 shared networks
@@ -436,6 +439,51 @@ CREATE TRIGGER dhcp6_audit_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX fk_dhcp6_audit_modification_type on dhcp6_audit (modification_type);
 CREATE INDEX fk_dhcp6_audit_revision on dhcp6_audit (revision_id);
+
+
+-- Create table for DHCPv4 servers
+CREATE TABLE dhcp4_server (
+  id SERIAL PRIMARY KEY NOT NULL,
+  tag varchar(256) NOT NULL,
+  description text DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tag)
+);
+CREATE INDEX dhcp4_server_modification_ts ON dhcp6_server (modification_ts);
+CREATE TRIGGER dhcp4_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create table for storing global DHCPv4 parameters.
+CREATE TABLE dhcp4_global_parameter (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) NOT NULL,
+  value TEXT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parameter_type SMALLINT NOT NULL,
+  CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type) REFERENCES parameter_data_type(id)
+);
+CREATE INDEX key_dhcp4_global_parameter_modification_ts on dhcp4_global_parameter(modification_ts);
+CREATE INDEX key_dhcp4_global_parameter_name on dhcp4_global_parameter(name);
+
+CREATE TRIGGER dhcp4_global_parameter_modification_ts_update
+  AFTER UPDATE ON dhcp4_global_parameter
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+CREATE TABLE dhcp4_global_parameter_server (
+  parameter_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (parameter_id, server_id),
+  CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp4_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp4_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+);
+CREATE INDEX key_dhcp4_global_parameter_server_modification_ts ON dhcp4_global_parameter_server(modification_ts);
+CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_global_parameter_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
 -- Update the schema version number
