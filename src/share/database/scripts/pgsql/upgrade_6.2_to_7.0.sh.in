@@ -145,6 +145,7 @@ CREATE TABLE dhcp6_shared_network (
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
 CREATE INDEX dhcp6_shared_network_name ON dhcp6_shared_network (name);
+
 CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -208,6 +209,7 @@ CREATE TRIGGER dhcp6_subnet_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 CREATE INDEX dhcp6_subnet_modification_ts ON dhcp6_subnet (modification_ts);
+CREATE INDEX dhcp6_subnet_shared_network ON dhcp6_subnet (shared_network_name);
 
 -- TODO: on delete set up dhcp6_subnet_shared_network to NULL
 --   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
@@ -466,7 +468,7 @@ CREATE TRIGGER dhcp4_global_parameter_modification_ts_update
   AFTER UPDATE ON dhcp4_global_parameter
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
+-- and create mapping for the global DHCPv4 parameters mapping to servers
 CREATE TABLE dhcp4_global_parameter_server (
   parameter_id BIGINT NOT NULL,
   server_id BIGINT NOT NULL,
