@@ -43,9 +43,7 @@ START TRANSACTION;
 -- the same in many tables, so we can define the trigger function once and the use it everywhere.
 
 -- First, we need to define a function that will do the actual job.
--- This is used in:
--- - dhcp6_shared_network
--- - dhcp6_subnet
+-- This is used in many, many tables.
 CREATE OR REPLACE FUNCTION modification_ts_update()
   RETURNS trigger AS $modification_ts_update$
   BEGIN
@@ -122,7 +120,7 @@ CREATE TABLE dhcp6_shared_network (
   relay TEXT DEFAULT NULL,
   renew_timer BIGINT DEFAULT NULL,
   require_client_classes TEXT DEFAULT NULL,
-  user_context TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
   valid_lifetime BIGINT DEFAULT NULL,
   calculate_tee_times BOOLEAN DEFAULT NULL,
   t1_percent float DEFAULT NULL,
@@ -180,7 +178,7 @@ CREATE TABLE dhcp6_subnet (
   renew_timer BIGINT DEFAULT NULL,
   require_client_classes TEXT DEFAULT NULL,
   shared_network_name varchar(128) DEFAULT NULL,
-  user_context TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
   valid_lifetime BIGINT DEFAULT NULL,
   calculate_tee_times BOOLEAN DEFAULT NULL,
   t1_percent float DEFAULT NULL,
@@ -201,11 +199,8 @@ CREATE TABLE dhcp6_subnet (
   reservations_out_of_pool BOOLEAN DEFAULT NULL,
   cache_threshold float DEFAULT NULL,
   cache_max_age BIGINT DEFAULT NULL,
-
   CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name),
-
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
-
 );
 
 CREATE TRIGGER dhcp6_subnet_modification_ts_update
@@ -231,7 +226,7 @@ CREATE TABLE dhcp6_pool (
   modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   client_class varchar(128) DEFAULT NULL,
   require_client_classes TEXT DEFAULT NULL,
-  user_context TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
   CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
 );
 CREATE INDEX dhcp6_pool_modification_ts ON dhcp6_pool (modification_ts);
@@ -254,7 +249,7 @@ CREATE TABLE dhcp6_pd_pool (
   excluded_prefix_length SMALLINT NOT NULL,
   client_class varchar(128) DEFAULT NULL,
   require_client_classes TEXT DEFAULT NULL,
-  user_context TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
   CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet(subnet_id)
 );
 
@@ -347,7 +342,7 @@ CREATE TABLE dhcp6_options (
   dhcp6_subnet_id BIGINT DEFAULT NULL,
   host_id BIGINT DEFAULT NULL,
   scope_id SMALLINT NOT NULL,
-  user_context text DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
   shared_network_name VARCHAR(128) DEFAULT NULL,
   pool_id BIGINT DEFAULT NULL,
   pd_pool_id BIGINT DEFAULT NULL,
