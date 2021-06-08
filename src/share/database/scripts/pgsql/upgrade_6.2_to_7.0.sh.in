@@ -631,6 +631,37 @@ CREATE TRIGGER dhcp4_options_server_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+-- Now create two tables for audit revisions...
+CREATE TABLE dhcp4_audit_revision (
+  id SERIAL PRIMARY KEY NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  log_message text DEFAULT NULL,
+  server_id BIGINT DEFAULT NULL
+);
+CREATE TRIGGER dhcp4_audit_revision_modification_ts_update
+  AFTER UPDATE ON dhcp4_audit_revision
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- ... and the DHCPv4 audit itself.
+CREATE TABLE dhcp4_audit (
+  id SERIAL UNIQUE NOT NULL,
+  object_type varchar(256) NOT NULL,
+  object_id BIGINT NOT NULL,
+  modification_type SMALLINT NOT NULL,
+  revision_id BIGINT NOT NULL,
+  CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type) REFERENCES modification (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp4_audit_revision FOREIGN KEY (revision_id) REFERENCES dhcp4_audit_revision (id) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+CREATE TRIGGER dhcp4_audit_modification_ts_update
+  AFTER UPDATE ON dhcp6_audit
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+CREATE INDEX fk_dhcp4_audit_idx1 on dhcp4_audit (modification_type);
+CREATE INDEX fk_dhcp6_audit_idx2 on dhcp4_audit (revision_id);
+
+
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
