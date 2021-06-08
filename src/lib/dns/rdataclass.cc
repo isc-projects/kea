@@ -5217,10 +5217,15 @@ struct TKEYImpl {
              const void* key, size_t other_len, const void* other_data) :
         algorithm_(algorithm), inception_(inception), expire_(expire),
         mode_(mode), error_(error),
-        key_(static_cast<const uint8_t*>(key),
-             static_cast<const uint8_t*>(key) + key_len),
-        other_data_(static_cast<const uint8_t*>(other_data),
-                    static_cast<const uint8_t*>(other_data) + other_len)
+        key_(key_len > 0 ?
+             vector<uint8_t>(static_cast<const uint8_t*>(key),
+                             static_cast<const uint8_t*>(key) + key_len) :
+             vector<uint8_t>(key_len)),
+        other_data_(other_len > 0 ?
+                    vector<uint8_t>(static_cast<const uint8_t*>(other_data),
+                                    static_cast<const uint8_t*>(other_data) +
+                                    other_len) :
+                    vector<uint8_t>(other_len))
     {}
 
     /// \brief Common part of toWire methods.
