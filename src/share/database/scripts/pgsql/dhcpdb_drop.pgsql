@@ -30,36 +30,40 @@ DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
 DROP TABLE IF EXISTS logs CASCADE;
 
---
-DROP TABLE IF EXISTS dhcp6_audit;
-DROP TABLE IF EXISTS dhcp6_option_def_server;
-DROP TABLE IF EXISTS dhcp6_option_def;
-DROP TABLE IF EXISTS dhcp6_options_server;
-DROP TABLE IF EXISTS dhcp6_pool;
-DROP TABLE IF EXISTS dhcp6_pd_pool;
-DROP TABLE IF EXISTS dhcp6_subnet;
-DROP TABLE IF EXISTS dhcp6_shared_network_server;
-DROP TABLE IF EXISTS dhcp6_shared_network;
-DROP TABLE IF EXISTS dhcp6_global_parameter_server;
-DROP TABLE IF EXISTS dhcp6_global_parameter;
-DROP TABLE IF EXISTS dhcp6_server;
-DROP TABLE IF EXISTS dhcp6_audit_revision;
+-- config backend tables for DHCPv6
+DROP TABLE IF EXISTS dhcp6_audit CASCADE;
+DROP TABLE IF EXISTS dhcp6_option_def_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_option_def CASCADE;
+DROP TABLE IF EXISTS dhcp6_options_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_pool CASCADE;
+DROP TABLE IF EXISTS dhcp6_pd_pool CASCADE;
+DROP TABLE IF EXISTS dhcp6_subnet_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_subnet CASCADE;
+DROP TABLE IF EXISTS dhcp6_shared_network_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_shared_network CASCADE;
+DROP TABLE IF EXISTS dhcp6_global_parameter_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_global_parameter CASCADE;
+DROP TABLE IF EXISTS dhcp6_server CASCADE;
+DROP TABLE IF EXISTS dhcp6_audit_revision CASCADE;
 
-DROP TABLE IF EXISTS dhcp4_audit;
-DROP TABLE IF EXISTS dhcp4_option_def_server;
-DROP TABLE IF EXISTS dhcp4_option_def;
-DROP TABLE IF EXISTS dhcp4_options_server;
-DROP TABLE IF EXISTS dhcp4_pool;
-DROP TABLE IF EXISTS dhcp4_pd_pool;
-DROP TABLE IF EXISTS dhcp4_subnet;
-DROP TABLE IF EXISTS dhcp4_shared_network_server;
-DROP TABLE IF EXISTS dhcp4_shared_network;
-DROP TABLE IF EXISTS dhcp4_global_parameter_server;
-DROP TABLE IF EXISTS dhcp4_global_parameter;
-DROP TABLE IF EXISTS dhcp4_server;
-DROP TABLE IF EXISTS dhcp4_audit_revision;
+-- config backend tables for DHCPv4
+DROP TABLE IF EXISTS dhcp4_audit CASCADE;
+DROP TABLE IF EXISTS dhcp4_option_def_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_option_def CASCADE;
+DROP TABLE IF EXISTS dhcp4_options_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_pool CASCADE;
+DROP TABLE IF EXISTS dhcp4_pd_pool CASCADE;
+DROP TABLE IF EXISTS dhcp4_subnet_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_subnet CASCADE;
+DROP TABLE IF EXISTS dhcp4_shared_network_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_shared_network CASCADE;
+DROP TABLE IF EXISTS dhcp4_global_parameter_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_global_parameter CASCADE;
+DROP TABLE IF EXISTS dhcp4_server CASCADE;
+DROP TABLE IF EXISTS dhcp4_audit_revision CASCADE;
 
-DROP TABLE IF EXISTS modification;
-DROP TABLE IF EXISTS parameter_data_type;
-DROP TABLE IF EXISTS ddns_replace_client_name_types;
+-- common tables for config backend
+DROP TABLE IF EXISTS modification CASCADE;
+DROP TABLE IF EXISTS parameter_data_type CASCADE;
+DROP TABLE IF EXISTS ddns_replace_client_name_types CASCADE;
 DROP FUNCTION IF EXISTS modification_ts_update;
