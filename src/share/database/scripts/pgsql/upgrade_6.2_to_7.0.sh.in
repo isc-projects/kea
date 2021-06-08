@@ -100,8 +100,8 @@ CREATE TABLE dhcp6_server (
   modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tag)
 );
-CREATE INDEX dhcp6_server_modification_ts ON dhcp6_server (modification_ts);
-CREATE UNIQUE INDEX dhcp6_server_tag_unique on dhcp6_server(tag);
+CREATE INDEX dhcp6_server_idx1 ON dhcp6_server (modification_ts);
+CREATE UNIQUE INDEX dhcp6_server_idx2 on dhcp6_server(tag);
 CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -143,7 +143,7 @@ CREATE TABLE dhcp6_shared_network (
 
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
-CREATE INDEX dhcp6_shared_network_index1 ON dhcp6_shared_network (name);
+CREATE INDEX dhcp6_shared_network_idx1 ON dhcp6_shared_network (name);
 
 CREATE TRIGGER dhcp6_shared_network_modification_ts_update
   AFTER UPDATE ON dhcp6_shared_network
@@ -160,8 +160,8 @@ CREATE TABLE dhcp6_shared_network_server (
   CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id) REFERENCES dhcp6_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
-CREATE INDEX dhcp6_shared_network_server_index1 ON dhcp6_shared_network_server (modification_ts);
-CREATE INDEX dhcp6_shared_network_server_index2 ON dhcp6_shared_network_server (server_id);
+CREATE INDEX dhcp6_shared_network_server_idx1 ON dhcp6_shared_network_server (modification_ts);
+CREATE INDEX dhcp6_shared_network_server_idx2 ON dhcp6_shared_network_server (server_id);
 
 
 -- Create a list of IPv6 subnets
@@ -207,8 +207,8 @@ CREATE TRIGGER dhcp6_subnet_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-CREATE INDEX dhcp6_subnet_modification_ts ON dhcp6_subnet (modification_ts);
-CREATE INDEX dhcp6_subnet_shared_network ON dhcp6_subnet (shared_network_name);
+CREATE INDEX dhcp6_subnet_idx1 ON dhcp6_subnet (modification_ts);
+CREATE INDEX dhcp6_subnet_idx2 ON dhcp6_subnet (shared_network_name);
 
 -- TODO: on delete set up dhcp6_subnet_shared_network to NULL
 --   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
@@ -230,8 +230,8 @@ CREATE TABLE dhcp6_pool (
   user_context JSON DEFAULT NULL,
   CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
 );
-CREATE INDEX dhcp6_pool_modification_ts ON dhcp6_pool (modification_ts);
-CREATE INDEX fk_dhcp6_pool_subnet_id ON dhcp6_pool (subnet_id);
+CREATE INDEX dhcp6_pool_idx1 ON dhcp6_pool (modification_ts);
+CREATE INDEX dhcp6_pool_idx2 ON dhcp6_pool (subnet_id);
 
 CREATE TRIGGER dhcp6_pool_modification_ts_update
   AFTER UPDATE ON dhcp6_pool
@@ -254,8 +254,8 @@ CREATE TABLE dhcp6_pd_pool (
   CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet(subnet_id)
 );
 
-CREATE INDEX key_dhcp6_pd_pool_modification_ts on dhcp6_pd_pool (modification_ts);
-CREATE INDEX fk_dhcp6_pd_pool_subnet_id on dhcp6_pd_pool (subnet_id);
+CREATE INDEX dhcp6_pd_pool_idx1 on dhcp6_pd_pool (modification_ts);
+CREATE INDEX dhcp6_pd_pool_idx2 on dhcp6_pd_pool (subnet_id);
 CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
   AFTER UPDATE ON dhcp6_pd_pool
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -277,8 +277,8 @@ CREATE TABLE dhcp6_subnet_server (
   UNIQUE (subnet_id, server_id)
 );
 
-CREATE INDEX fk_dhcp6_subnet_server_server_id on dhcp6_subnet_server(server_id);
-CREATE INDEX key_dhcp6_subnet_server_modification_ts on dhcp6_subnet_server(modification_ts);
+CREATE INDEX dhcp6_subnet_server_idx1 on dhcp6_subnet_server(server_id);
+CREATE INDEX dhcp6_subnet_server_idx2 on dhcp6_subnet_server(modification_ts);
 CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
   AFTER UPDATE ON dhcp6_subnet_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -295,8 +295,8 @@ CREATE TABLE dhcp6_global_parameter (
   CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type) REFERENCES parameter_data_type(id)
 );
 
-CREATE INDEX key_dhcp6_global_parameter_modification_ts on dhcp6_global_parameter(modification_ts);
-CREATE INDEX key_dhcp6_global_parameter_name on dhcp6_global_parameter(name);
+CREATE INDEX key_dhcp6_global_parameter_idx1 on dhcp6_global_parameter(modification_ts);
+CREATE INDEX key_dhcp6_global_parameter_idx2 on dhcp6_global_parameter(name);
 
 CREATE TRIGGER dhcp6_global_parameter_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter
@@ -311,7 +311,7 @@ CREATE TABLE dhcp6_global_parameter_server (
   CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE  ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
 );
-CREATE INDEX key_dhcp6_global_parameter_server_modification_ts on dhcp6_global_parameter_server(modification_ts);
+CREATE INDEX key_dhcp6_global_parameter_server_idx1 on dhcp6_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -339,8 +339,8 @@ CREATE TABLE dhcp6_options_server (
   CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id) REFERENCES dhcp6_options (option_id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
-CREATE INDEX dhcp6_options_server_server_id on dhcp6_options_server(server_id);
-CREATE INDEX dhcp6_options_server_modification_ts on dhcp6_options_server(modification_ts);
+CREATE INDEX dhcp6_options_server_idx1 on dhcp6_options_server(server_id);
+CREATE INDEX dhcp6_options_server_idx2 on dhcp6_options_server(modification_ts);
 CREATE TRIGGER dhcp6_options_server_modification_ts_update
   AFTER UPDATE ON dhcp6_options_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -360,8 +360,8 @@ CREATE TABLE dhcp6_option_def (
   record_types VARCHAR DEFAULT NULL,
   user_context JSON DEFAULT NULL
 );
-CREATE INDEX dhcp6_option_def_modification on dhcp6_option_def(modification_ts);
-CREATE INDEX dhcp6_option_def_code_space on dhcp6_option_def(code, space);
+CREATE INDEX dhcp6_option_def_idx1 on dhcp6_option_def(modification_ts);
+CREATE INDEX dhcp6_option_def_idx2 on dhcp6_option_def(code, space);
 CREATE TRIGGER dhcp6_option_def_modification_ts_update
   AFTER UPDATE ON dhcp6_option_def
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -404,8 +404,8 @@ CREATE TABLE dhcp6_audit (
 CREATE TRIGGER dhcp6_audit_modification_ts_update
   AFTER UPDATE ON dhcp6_audit
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-CREATE INDEX fk_dhcp6_audit_modification_type on dhcp6_audit (modification_type);
-CREATE INDEX fk_dhcp6_audit_revision on dhcp6_audit (revision_id);
+CREATE INDEX dhcp6_audit_idx1 on dhcp6_audit (modification_type);
+CREATE INDEX dhcp6_audit_idx2 on dhcp6_audit (revision_id);
 
 
 -- Create table for DHCPv4 servers
@@ -431,8 +431,8 @@ CREATE TABLE dhcp4_global_parameter (
   parameter_type SMALLINT NOT NULL,
   CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type) REFERENCES parameter_data_type(id)
 );
-CREATE INDEX key_dhcp4_global_parameter_modification_ts on dhcp4_global_parameter(modification_ts);
-CREATE INDEX key_dhcp4_global_parameter_name on dhcp4_global_parameter(name);
+CREATE INDEX dhcp4_global_parameter_idx1 on dhcp4_global_parameter(modification_ts);
+CREATE INDEX dhcp4_global_parameter_idx2 on dhcp4_global_parameter(name);
 
 CREATE TRIGGER dhcp4_global_parameter_modification_ts_update
   AFTER UPDATE ON dhcp4_global_parameter
@@ -447,7 +447,7 @@ CREATE TABLE dhcp4_global_parameter_server (
   CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp4_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp4_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
 );
-CREATE INDEX key_dhcp4_global_parameter_server_modification_ts ON dhcp4_global_parameter_server(modification_ts);
+CREATE INDEX key_dhcp4_global_parameter_idx1 ON dhcp4_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
   AFTER UPDATE ON dhcp4_global_parameter_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
@@ -491,8 +491,8 @@ CREATE TABLE dhcp4_shared_network (
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
 
-CREATE UNIQUE INDEX dhcp4_shared_network_name ON dhcp4_shared_network (name);
-CREATE INDEX dhcp4_shared_network_modification_ts ON dhcp4_shared_network (modification_ts);
+CREATE UNIQUE INDEX dhcp4_shared_network_idx1 ON dhcp4_shared_network (name);
+CREATE INDEX dhcp4_shared_network_idx2 ON dhcp4_shared_network (modification_ts);
 
 CREATE TRIGGER dhcp4_shared_network_modification_ts_update
   AFTER UPDATE ON dhcp4_shared_network
@@ -545,8 +545,8 @@ CREATE TRIGGER dhcp4_subnet_modification_ts_update
   AFTER UPDATE ON dhcp4_subnet
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-CREATE INDEX dhcp4_subnet_modification_ts ON dhcp4_subnet (modification_ts);
-CREATE INDEX dhcp4_subnet_shared_network ON dhcp4_subnet (shared_network_name);
+CREATE INDEX dhcp4_subnet_idx1 ON dhcp4_subnet (modification_ts);
+CREATE INDEX dhcp4_subnet_idx2 ON dhcp4_subnet (shared_network_name);
 
 
 -- Create a table that holds all address pools in IPv4.
@@ -561,8 +561,8 @@ CREATE TABLE dhcp4_pool (
   user_context JSON DEFAULT NULL,
   CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id)
 );
-CREATE INDEX dhcp4_pool_modification_ts ON dhcp4_pool (modification_ts);
-CREATE INDEX fk_dhcp4_pool_subnet_id ON dhcp4_pool (subnet_id);
+CREATE INDEX dhcp4_pool_idx1 ON dhcp4_pool (modification_ts);
+CREATE INDEX dhcp4_pool_idx2 ON dhcp4_pool (subnet_id);
 
 CREATE TRIGGER dhcp4_pool_modification_ts_update
   AFTER UPDATE ON dhcp4_pool
@@ -656,8 +656,8 @@ CREATE TABLE dhcp4_audit (
 CREATE TRIGGER dhcp4_audit_modification_ts_update
   AFTER UPDATE ON dhcp6_audit
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-CREATE INDEX fk_dhcp4_audit_idx1 on dhcp4_audit (modification_type);
-CREATE INDEX fk_dhcp6_audit_idx2 on dhcp4_audit (revision_id);
+CREATE INDEX dhcp4_audit_idx1 on dhcp4_audit (modification_type);
+CREATE INDEX dhcp4_audit_idx2 on dhcp4_audit (revision_id);
 
 
 
