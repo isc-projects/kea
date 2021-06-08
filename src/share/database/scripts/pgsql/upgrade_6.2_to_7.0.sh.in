@@ -101,11 +101,10 @@ CREATE TABLE dhcp6_server (
   UNIQUE(tag)
 );
 CREATE INDEX dhcp6_server_modification_ts ON dhcp6_server (modification_ts);
+CREATE UNIQUE INDEX dhcp6_server_tag_unique on dhcp6_server(tag);
 CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- Create a table for storing IPv6 shared networks
 CREATE TABLE dhcp6_shared_network (
@@ -144,10 +143,10 @@ CREATE TABLE dhcp6_shared_network (
 
   CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
 );
-CREATE INDEX dhcp6_shared_network_name ON dhcp6_shared_network (name);
+CREATE INDEX dhcp6_shared_network_index1 ON dhcp6_shared_network (name);
 
-CREATE TRIGGER dhcp6_server_modification_ts_update
-  AFTER UPDATE ON dhcp6_server
+CREATE TRIGGER dhcp6_shared_network_modification_ts_update
+  AFTER UPDATE ON dhcp6_shared_network
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
@@ -161,8 +160,8 @@ CREATE TABLE dhcp6_shared_network_server (
   CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id) REFERENCES dhcp6_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
-CREATE INDEX dhcp6_shared_network_server_modification ON dhcp6_shared_network_server (modification_ts);
-CREATE INDEX dhcp6_shared_network_server_server_id ON dhcp6_shared_network_server (server_id);
+CREATE INDEX dhcp6_shared_network_server_index1 ON dhcp6_shared_network_server (modification_ts);
+CREATE INDEX dhcp6_shared_network_server_index2 ON dhcp6_shared_network_server (server_id);
 
 
 -- Create a list of IPv6 subnets
@@ -222,8 +221,8 @@ CREATE INDEX dhcp6_subnet_shared_network ON dhcp6_subnet (shared_network_name);
 -- Create a table that holds all address pools in IPv6.
 CREATE TABLE dhcp6_pool (
   id SERIAL PRIMARY KEY NOT NULL,
-  start_address varchar(45) NOT NULL,
-  end_address varchar(45) NOT NULL,
+  start_address inet NOT NULL,
+  end_address inet NOT NULL,
   subnet_id BIGINT NOT NULL,
   modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   client_class varchar(128) DEFAULT NULL,
@@ -263,20 +262,6 @@ CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
 
 
 
-CREATE TABLE dhcp6_server (
-  id SERIAL PRIMARY KEY NOT NULL,
-  tag varchar(256) NOT NULL,
-  description text DEFAULT NULL,
-  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX dhcp6_server_tag_unique on dhcp6_server(tag);
-
-CREATE INDEX key_dhcp6_server_modification_ts on dhcp6_server (modification_ts);
-
-CREATE TRIGGER dhcp6_server_modification_ts_update
-  AFTER UPDATE ON dhcp6_server
-  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
 
@@ -333,32 +318,13 @@ CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
 
 
 -- Create a table for storing DHCPv6 options.
-CREATE TABLE dhcp6_options (
-  option_id SERIAL PRIMARY KEY NOT NULL,
-  code SMALLINT NOT NULL,
-  value BYTEA DEFAULT NULL,
-  formatted_value TEXT DEFAULT NULL,
-  space VARCHAR(128) DEFAULT NULL,
-  persistent BOOLEAN NOT NULL DEFAULT false,
-  dhcp_client_class VARCHAR(128) DEFAULT NULL,
-  dhcp6_subnet_id BIGINT DEFAULT NULL,
-  host_id BIGINT DEFAULT NULL,
-  scope_id SMALLINT NOT NULL,
-  user_context JSON DEFAULT NULL,
-  shared_network_name VARCHAR(128) DEFAULT NULL,
-  pool_id BIGINT DEFAULT NULL,
-  pd_pool_id BIGINT DEFAULT NULL,
-  modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_dhcp6_options_host FOREIGN KEY (host_id) REFERENCES hosts(host_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id) REFERENCES dhcp_option_scope(scope_id),
-  CONSTRAINT fk_dhcp6_options_pd_pool FOREIGN KEY (pd_pool_id) REFERENCES dhcp6_pd_pool(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_dhcp6_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_dhcp6_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_dhcp6_options_subnet FOREIGN KEY (dhcp6_subnet_id) REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_options_host FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE NO ACTION ON UPDATE NO ACTION
-);
-CREATE UNIQUE INDEX dhcp6_options_option_id_index on dhcp6_options(option_id);
-
+ALTER TABLE dhcp6_options
+  ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+  ADD COLUMN pool_id BIGINT DEFAULT NULL,
+  ADD COLUMN pd_pool_id BIGINT DEFAULT NULL,
+  ADD CONSTRAINT fk_dhcp6_options_pd_pool FOREIGN KEY (pd_pool_id) REFERENCES dhcp6_pd_pool(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp6_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp6_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Now create a table for associating defined options with servers.
 CREATE TABLE dhcp6_options_server (
@@ -579,6 +545,33 @@ CREATE INDEX dhcp4_subnet_modification_ts ON dhcp4_subnet (modification_ts);
 CREATE INDEX dhcp4_subnet_shared_network ON dhcp4_subnet (shared_network_name);
 
 
+-- Create a table that holds all address pools in IPv4.
+CREATE TABLE dhcp4_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  start_address inet NOT NULL,
+  end_address inet NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id)
+);
+CREATE INDEX dhcp4_pool_modification_ts ON dhcp4_pool (modification_ts);
+CREATE INDEX fk_dhcp4_pool_subnet_id ON dhcp4_pool (subnet_id);
+
+CREATE TRIGGER dhcp4_pool_modification_ts_update
+  AFTER UPDATE ON dhcp4_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create a table for storing DHCPv4 options.
+ALTER TABLE dhcp4_options
+  ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+  ADD COLUMN pool_id BIGINT DEFAULT NULL,
+  ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD CONSTRAINT fk_dhcp4_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp4_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp4_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Update the schema version number
 UPDATE schema_version
