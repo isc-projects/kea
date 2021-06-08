@@ -134,6 +134,34 @@ public:
 
 private:
 
+    /// @brief Initializer class for the SIGCHLD signal handler.
+    class IOSignalSetInitializer {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// @param io_service The IOService which handles signal handlers.
+        IOSignalSetInitializer(IOServicePtr io_service) :
+            io_signal_set_(new IOSignalSet(io_service,
+                                           std::bind(&ProcessSpawnImpl::waitForProcess, ph::_1))) {
+            io_signal_set_->add(SIGCHLD);
+        }
+
+        /// @brief Destructor
+        ~IOSignalSetInitializer() {
+            io_signal_set_->remove(SIGCHLD);
+        }
+
+    private:
+        /// @brief ASIO signal set.
+        IOSignalSetPtr io_signal_set_;
+    };
+
+    /// @brief Initialize the SIGCHLD signal handler.
+    ///
+    /// @param io_service The IOService which handles signal handlers.
+    static void initIOSignalSet(IOServicePtr io_service);
+
     /// @brief Copies the argument specified as a C++ string to the new
     /// C string.
     ///
@@ -182,22 +210,24 @@ private:
     /// @brief Mutex to protect internal state.
     static std::mutex mutex_;
 
-    /// @brief ASIO signal set.
-    IOSignalSetPtr io_signal_set_;
+    /// @brief The IOService which handles IO operations.
+    IOServicePtr io_service_;
 };
 
 ProcessCollection ProcessSpawnImpl::process_collection_;
 std::mutex ProcessSpawnImpl::mutex_;
+
+void ProcessSpawnImpl::initIOSignalSet(IOServicePtr io_service) {
+    static IOSignalSetInitializer init(io_service);
+}
 
 ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
                                    const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars)
     : executable_(executable), args_(new char*[args.size() + 2]),
-      vars_(new char*[vars.size() + 1]), store_(false),
-      io_signal_set_(new IOSignalSet(io_service,
-                                     std::bind(&ProcessSpawnImpl::waitForProcess,
-                                               ph::_1))) {
+      vars_(new char*[vars.size() + 1]), store_(false), io_service_(io_service) {
+
     struct stat st;
 
     if (stat(executable_.c_str(), &st)) {
@@ -207,8 +237,6 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
     if (!(st.st_mode & S_IEXEC)) {
         isc_throw(ProcessSpawnError, "File not executable: " << executable_);
     }
-
-    io_signal_set_->add(SIGCHLD);
 
     // Conversion of the arguments to the C-style array we start by setting
     // all pointers within an array to NULL to indicate that they haven't
@@ -228,7 +256,6 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
 }
 
 ProcessSpawnImpl::~ProcessSpawnImpl() {
-    io_signal_set_->remove(SIGCHLD);
     if (store_) {
         lock_guard<std::mutex> lk(mutex_);
         process_collection_.erase(this);
@@ -253,6 +280,7 @@ ProcessSpawnImpl::getCommandLine() const {
 pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
     lock_guard<std::mutex> lk(mutex_);
+    initIOSignalSet(io_service_);
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
