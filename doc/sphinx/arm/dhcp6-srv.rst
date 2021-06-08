@@ -240,7 +240,7 @@ syntax would be used:
    ]
 
 Note that indentation is optional and is used for aesthetic purposes
-only. In some cases in may be preferable to use more compact notation.
+only. In some cases it may be preferable to use more compact notation.
 
 After all the parameters are specified, we have two contexts open: global
 and Dhcp6; thus, we need two closing curly brackets to close them.
@@ -1595,7 +1595,7 @@ returned by the Kea engine itself and in general should not be configured manual
    +==============+======+========================================================================+
    | client-id    | 1    | sent by the client and Kea uses it to distinguish between clients.     |
    +--------------+------+------------------------------------------------------------------------+
-   | server-id    | 2    | sent by clients to request action from specific server and by the      |
+   | server-id    | 2    | sent by clients to request action from a specific server and by the    |
    |              |      | server to identify itself. See :ref:`dhcp6-serverid` for details.      |
    +--------------+------+------------------------------------------------------------------------+
    | ia-na        | 3    | a container option that conveys IPv6 addresses (``iaddr`` options). Kea|
@@ -1643,7 +1643,7 @@ returned by the Kea engine itself and in general should not be configured manual
    |              |      | echo this option back, so the relay will know which interface to use to|
    |              |      | reach the client.                                                      |
    +--------------+------+------------------------------------------------------------------------+
-   | ia-pd        | 25   | a container for conveying PD (Prefix Delegation) that are being        |
+   | ia-pd        | 25   | a container for conveying PDs (Prefix Delegation) that are being       |
    |              |      | delegated to clients. See :ref:`dhcp6-prefix-config` for details.      |
    +--------------+------+------------------------------------------------------------------------+
    | iaprefix     | 26   | conveys IPv6 prefix in ``ia-pd`` option. See :ref:`dhcp6-prefix-config`|
@@ -2179,7 +2179,7 @@ specified:
 -  ``code`` - the server requires either an option name or an option code to
    identify an option. This parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option have a definition (either as a standard option or
+   particular option has a definition (either as a standard option or
    an administrator-created definition for the option using an
    'option-def' structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
@@ -2229,9 +2229,9 @@ single values to triplets with minimum, default and maximum values using:
 - ``max-valid-lifetime`` - specifies the maximum valid lifetime (optional).
 
 When the client does not specify lifetimes the default is used. When
-it specifies a lifetime using IAADDR or IAPREFIX sub option with not
-zero values these values are used when they are between configured
-minimum (lower values are round up) and maximal (larger values are
+it specifies a lifetime using IAADDR or IAPREFIX sub option with
+non-zero values, these values are used when they are between configured
+minimum (lower values are round up) and maximum (larger values are
 round down) bounds.
 
 To send specific, fixed values use the following two parameters:
@@ -2382,7 +2382,7 @@ The second mechanism is based on interface-id options. While forwarding
 a client's message, relays may insert an interface-id option into the
 message that identifies the interface on the relay that received the
 message. (Some relays allow configuration of that parameter, but it is
-sometimes hardcoded and may range from the very simple (e.g. "vlan100")
+sometimes hard-coded and may range from the very simple (e.g. "vlan100")
 to the very cryptic; one example seen on real hardware was
 "ISAM144|299|ipv6|nt:vp:1:110"). The server can use this information to
 select the appropriate subnet. The information is also returned to the
@@ -2513,7 +2513,7 @@ The process of classification is conducted in five steps. The first step
 is to assess an incoming packet and assign it to zero or more classes.
 The second step is to choose a subnet, possibly based on the class
 information. When the incoming packet is in the special class, "DROP,
-it is dropped and an debug message logged.
+it is dropped and a debug message logged.
 The next step is to evaluate class expressions depending on the built-in
 "KNOWN"/"UNKNOWN" classes after host reservation lookup, using them for
 pool/pd-pool selection and assigning classes from host reservations. The
@@ -2836,7 +2836,7 @@ conflict with existing entries owned by other DHCP6 clients.
 
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
-    always ensure leases changes are processed through Kea, whether they are
+    always ensure lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the lease-del6 command, prior to
     reassigning either FQDNs or IP addresses. Doing so causes kea-dhcp6
     to generate DNS removal requests to D2.
@@ -2846,9 +2846,9 @@ conflict with existing entries owned by other DHCP6 clients.
     The DNS entries Kea creates contain a value for TTL (time to live).  As of
     Kea 1.9.3, kea-dhcp6 calculates that value based on
     `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__
-    which suggests that the TTL value be 1/3 of the lease's life time with
+    which suggests that the TTL value be 1/3 of the lease's lifetime with
     a minimum value of 10 minutes.  Prior to this the server set the TTL value
-    equal to the lease's valid life time.  Future releases may add one or
+    equal to the lease's valid lifetime.  Future releases may add one or
     more parameters to customize this value.
 
 .. _dhcpv6-d2-io-config:
@@ -3724,7 +3724,7 @@ another.
    Beginning with Kea 1.9.1 reservation mode was replaced by three
    boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
    and ``"reservations-out-of-pool"`` which allow to configure host
-   reservations both global and in a subnet. In such case a subnet
+   reservations both global and in a subnet. In such a case a subnet
    host reservation has the preference on a global reservation
    when both exist for the same client.
 
@@ -3771,7 +3771,7 @@ reservation is made, the server will propose a different address.
 
 This recovery mechanism allows the server to fully recover from a case
 where reservations conflict with existing leases; however, this procedure
-will take roughly take as long as the value set for renew-timer. The
+will take roughly as long as the value set for renew-timer. The
 best way to avoid such recovery is not to define new reservations that
 conflict with existing leases. Another recommendation is to use
 out-of-pool reservations. If the reserved address does not belong to a
@@ -3965,7 +3965,7 @@ host reservation exists for a client within a given subnet, the "KNOWN"
 built-in class is assigned to the client. Conversely, when there is no
 static assignment for the client, the "UNKNOWN" class is assigned to the
 client. Class expressions within the Kea configuration file can
-refer to "KNOWN" or "UNKNOWN" classes using using the "member" operator.
+refer to "KNOWN" or "UNKNOWN" classes using the "member" operator.
 For example:
 
 ::
@@ -4425,7 +4425,7 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          # Use of IP address in global reservation is risky.
+          # Use of IP addresses in global reservation is risky.
           # If used outside of matching subnet, such as 3001::/64,
           # it will result in a broken configuration being handed
           # to the client.
@@ -4443,11 +4443,11 @@ following can be used:
            # "reservations-in-subnet" and "reservations-out-of-pool"
            # parameters.
            # "reservation-mode": "global",
-           # Specify if server should lookup global reservations.
+           # Specify if the server should lookup global reservations.
            "reservations-global": true,
-           # Specify if server should lookup in-subnet reservations.
+           # Specify if the server should lookup in-subnet reservations.
            "reservations-in-subnet": false,
-           # Specify if server can assume that all reserved addresses
+           # Specify if the server can assume that all reserved addresses
            # are out-of-pool.
            "reservations-out-of-pool": false,
            "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
@@ -4554,11 +4554,11 @@ following example:
         }],
         # It is replaced by the "reservations-global"
         # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
-        # Specify if server should lookup global reservations.
+        # Specify if the server should lookup global reservations.
         "reservations-global": true,
-        # Specify if server should lookup in-subnet reservations.
+        # Specify if the server should lookup in-subnet reservations.
         "reservations-in-subnet": false,
-        # Specify if server can assume that all reserved addresses
+        # Specify if the server can assume that all reserved addresses
         # are out-of-pool.
         "reservations-out-of-pool": false,
         "shared-networks": [{
@@ -4893,7 +4893,7 @@ However, care should be taken for each subnet to have the same value.
     There is an inherent ambiguity when using clients that send multiple IA
     options in a single request and shared-networks whose subnets have
     different values for options and configuration parameters.  The server
-    sequentially processes IA options in the order they are occur in the
+    sequentially processes IA options in the order that they occur in the
     client's query.  If the leases requested in the IA options end up being
     fulfilled from different subnets then which parameters and options should
     apply?  Currently, the code will use the values from the last subnet of
@@ -4974,7 +4974,7 @@ shown in the example below.
 In case of the relayed traffic, the subnets are typically selected using
 the relay agents' addresses. If the subnets are used independently (not
 grouped within a shared network) it is allowed to specify different relay
-address for each of these subnets. When multiple subnets belong to a
+addresses for each of these subnets. When multiple subnets belong to a
 shared network they must be selected via the same relay address and,
 similarly to the case of the local traffic described above, it is a
 configuration error to specify different relay addresses for the respective
@@ -5228,8 +5228,8 @@ shared network.
 While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
-autogenerated, i.e. it assigns increasing integer values starting from
-1. Thus, the autogenerated IDs are not stable across configuration
+auto generated, i.e. it assigns increasing integer values starting from
+1. Thus, the auto generated IDs are not stable across configuration
 changes.
 
 .. _dhcp6-serverid:
@@ -5592,8 +5592,8 @@ RELAY-FORW message) to select the appropriate subnet.
 However, that is not always the case. The relay address may not match
 the subnet in certain deployments. This usually means that there is more
 than one subnet allocated for a given link. The two most common examples
-where this is the case are long-lasting network renumbering (where both
-old and new address space is still being used) and a cable network. In a
+where this is the case are long-lasting network renumbering (where both the
+old and new address spaces are still being used) and a cable network. In a
 cable network, both cable modems and the devices behind them are
 physically connected to the same link, yet they use distinct addressing.
 In such a case, the DHCPv6 server needs additional information (like the
@@ -5793,7 +5793,7 @@ Supported methods are:
    vendor-id=4491. This vendor option is extracted from the original
    client's message, not from any relay options.
 
-Empty mac-sources is not allowed. Administrators who do not want to specify it
+Empty mac-sources are not allowed. Administrators who do not want to specify it
 should either simply omit the mac-sources definition or specify it with the
 "any" value, which is the default.
 
@@ -6153,7 +6153,7 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | (e.g. server           |
    |                                         |                       | receiving a REQUEST    |
    |                                         |                       | with server-id         |
-   |                                         |                       | matching other         |
+   |                                         |                       | matching another       |
    |                                         |                       | server), so do not     |
    |                                         |                       | worry if it is less    |
    |                                         |                       | than pkt6-received.    |
