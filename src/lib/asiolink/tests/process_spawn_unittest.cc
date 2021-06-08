@@ -34,6 +34,12 @@ public:
     /// @brief IOService instance to process IO.
     asiolink::IOServicePtr io_service_;
 
+    /// @brief Single instance of IOService.
+    static asiolink::IOServicePtr getIOService() {
+        static asiolink::IOServicePtr io_service(new asiolink::IOService());
+        return (io_service);
+    }
+
     /// @brief Failsafe timer to ensure test(s) do not hang.
     isc::asiolink::IntervalTimer test_timer_;
 
@@ -48,7 +54,7 @@ public:
 
     /// @brief Constructor.
     ProcessSpawnTest() :
-        io_service_(new asiolink::IOService()), test_timer_(*io_service_),
+        io_service_(getIOService()), test_timer_(*io_service_),
         test_time_ms_(0), io_signal_set_(), processed_signals_() {
 
         io_signal_set_.reset(new IOSignalSet(io_service_,
@@ -58,7 +64,9 @@ public:
     }
 
     /// @brief Destructor.
-    ~ProcessSpawnTest() {}
+    ~ProcessSpawnTest() {
+        io_signal_set_->remove(SIGCHLD);
+    }
 
     /// @brief Method used as the IOSignalSet handler.
     ///

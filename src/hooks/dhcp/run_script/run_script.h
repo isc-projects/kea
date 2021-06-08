@@ -37,6 +37,13 @@ public:
         io_service_ = io_service;
     }
 
+    /// @brief Gets IO service to be used by the @ref ProcessSpawn instance.
+    ///
+    /// @return The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
+    }
+
     /// @brief Extract boolean data and append to environment.
     ///
     /// @param value The value to be exported to target script environment.

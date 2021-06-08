@@ -32,9 +32,8 @@ RunScriptImpl::configure(LibraryHandle& handle) {
     if (name->getType() != Element::string) {
         isc_throw(InvalidParameter, "The 'name' parameter must be a string");
     }
-    IOServicePtr io_service(new asiolink::IOService());
     try {
-        ProcessSpawn process(io_service, name->stringValue());
+        ProcessSpawn process(IOServicePtr(), name->stringValue());
     } catch (const isc::Exception& ex) {
         isc_throw(InvalidParameter, "Invalid 'name' parameter: " << ex.what());
     }
@@ -50,7 +49,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 
 void
 RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
-    ProcessSpawn process(io_service_, name_, args, vars);
+    ProcessSpawn process(getIOService(), name_, args, vars);
     process.spawn(true);
 }
 

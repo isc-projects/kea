@@ -104,7 +104,7 @@ public:
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
-        io_service_(new IOService()),
+        io_service_(getIOService()),
         timer_mgr_(TimerMgr::instance()) {
 
         timer_mgr_->setIOService(io_service_);
@@ -253,6 +253,11 @@ public:
         return (!elapsed);
     }
 
+    /// @brief Single instance of IOService.
+    static asiolink::IOServicePtr getIOService() {
+        static asiolink::IOServicePtr io_service(new asiolink::IOService());
+        return (io_service);
+    }
 
     /// @brief Generates a DHCPv4 lease with random content.
     ///
