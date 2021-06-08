@@ -733,7 +733,7 @@ public:
 
     ///@brief Verify that NameChangeRequest holds valid values.
     ///
-    /// Pulls the NCR from the top of the send queue and checks it's content
+    /// Pulls the NCR from the top of the send queue and checks its content
     ///  against a number of expected parameters.
     ///
     /// @param type - expected NCR change type, CHG_ADD or CHG_REMOVE

@@ -105,7 +105,7 @@ private:
     static const int DHCP4_SERVER_HOSTNAME_COL = 11;
     static const int DHCP4_BOOT_FILE_NAME_COL = 12;
     static const int AUTH_KEY_COL = 13;
-    /// @brief Number of columns returned for SELECT queries send by this class.
+    /// @brief Number of columns returned for SELECT queries sent by this class.
     static const size_t HOST_COLUMNS = 14;
 
 public:

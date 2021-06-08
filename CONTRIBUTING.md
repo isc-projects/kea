@@ -57,7 +57,7 @@ guidelines above as close as possible. They are `.clang-format` and
 want to format code automatically, you will need to have at least one of these
 tools installed. Since by default, these tools look for the closest style file
 located in one of the parent directories or, otherwise, in a default location,
-there are a a couple of helpful scripts i.e. `./tools/clang-format.sh` and
+there are a couple of helpful scripts i.e. `./tools/clang-format.sh` and
 `./tools/uncrustify.sh` to assure you that the Kea-owned file is used. They
 accept any number of customized parameters that would be passed to the
 underlying tool followed by any number of files and/or directories. Passing

@@ -3090,7 +3090,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     // Let's get a simple SOLICIT...
     Pkt6Ptr pkt = PktCaptures::captureSimpleSolicit();
 
-    // And pretend it's packet is only 3 bytes long.
+    // And pretend its packet is only 3 bytes long.
     pkt->data_.resize(3);
 
     // Check that the tested statistics is initially set to 0

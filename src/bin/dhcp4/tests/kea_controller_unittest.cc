@@ -461,7 +461,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ("192.0.4.0", (*subnet)->get().first.toText());
     EXPECT_EQ(24, (*subnet)->get().second);
 
-    // ... and it's only pool.
+    // ... and its only pool.
     const PoolCollection& pools3 = (*subnet)->getPools(Lease::TYPE_V4);
     EXPECT_EQ("192.0.4.101", pools3.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.4.150", pools3.at(0)->getLastAddress().toText());

@@ -14,7 +14,7 @@
                 "code": 2,
                 "name": "vlanid",
 // In case of suboption of option 125 space has to start with prefix "vendor-"
-// in this case it's "vendor-" + vendor id from option 60 send by client
+// in this case it's "vendor-" + vendor id from option 60 sent by client
 // 339 is Siemens Industry Inc.
                 "space": "vendor-339",
                 "type": "uint32"

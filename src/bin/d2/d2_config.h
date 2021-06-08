@@ -522,7 +522,7 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 
 /// @brief Represents a DNS domain that is may be updated dynamically.
 /// This class specifies a DNS domain and the list of DNS servers that support
-/// it.  It's primary use is to map a domain to the DNS server(s) responsible
+/// it.  Its primary use is to map a domain to the DNS server(s) responsible
 /// for it.
 /// @todo Currently the name entry for a domain is just an std::string. It
 /// may be worthwhile to change this to a dns::Name for purposes of better

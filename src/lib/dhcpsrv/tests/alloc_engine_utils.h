@@ -416,7 +416,7 @@ public:
     /// can succeed. The invalid hint should be ignored completely.
     ///
     /// @param type Lease type
-    /// @param hint hint (as send by a client)
+    /// @param hint hint (as sent by a client)
     /// @param expected_pd_len (used in validation)
     void allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
                          uint8_t expected_pd_len);

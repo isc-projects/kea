@@ -118,7 +118,7 @@ randomized, and so on.
 
 Perfdhcp can now simulate traffic from multiple subnets by enabling option
 -J and passing path to file that contains v4 or v6 addresses that will be
-used as relayin generated messages. That enable testing of vast numbers
+used as relay in generated messages. That enable testing of vast numbers
 of Kea shared networks. While testing Kea v4 it should be started with
 KEA_TEST_SEND_RESPONSES_TO_SOURCE environment variable to force Kea
 to send generated messages to source address of incoming packet.

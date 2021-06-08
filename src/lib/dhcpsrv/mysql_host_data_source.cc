@@ -83,7 +83,7 @@ const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_T
 class MySqlHostExchange {
 private:
 
-    /// @brief Number of columns returned for SELECT queries send by this class.
+    /// @brief Number of columns returned for SELECT queries sent by this class.
     static const size_t HOST_COLUMNS = 14;
 
 public:

@@ -131,7 +131,7 @@ public:
     // Pointer to the CA certificate store.
     std::unique_ptr<Botan::Certificate_Store> store_;
 
-    // Use the CA ceertificate store flag.
+    // Use the CA certificate store flag.
     bool use_stores_;
 
     // The certificate chain.

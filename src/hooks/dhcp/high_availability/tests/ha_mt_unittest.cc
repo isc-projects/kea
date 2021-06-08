@@ -244,7 +244,7 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
             EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
         }
 
-        // Exiting critical section should resume both cllent
+        // Exiting critical section should resume both client
         // and listener.
 
         // Client should be running.

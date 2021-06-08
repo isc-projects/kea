@@ -35,7 +35,7 @@
         "interfaces": [ ]
     },
 
-    // Kea support control channel, which is a way to receive management commands
+    // Kea supports control channel, which is a way to receive management commands
     // while the server is running. This is a Unix domain socket that receives
     // commands formatted in JSON, e.g. config-set (which sets new configuration),
     // config-reload (which tells Kea to reload its configuration from file),
@@ -53,6 +53,8 @@
     // There are dedicated examples for each backend. See Section 8.2.2 "Lease
     // Storage" for details.
     "lease-database": {
+        // Memfile is the simplest and easiest backend to use. It's an in-memory
+        // C++ database that stores its state in CSV file.
         "type": "memfile",
         "lfc-interval": 3600
     },

@@ -33,7 +33,7 @@
     // There are dedicated examples for each backend. See Section 7.2.2 "Lease
     // Storage" for details.
     "lease-database": {
-        // Memfile is the simplest and easiest backend to use. It's a in-memory
+        // Memfile is the simplest and easiest backend to use. It's an in-memory
         "type": "memfile"
     },
 

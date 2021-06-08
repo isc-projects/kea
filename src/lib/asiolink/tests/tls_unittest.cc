@@ -1369,7 +1369,7 @@ TEST(TLSTest, selfSigned) {
 // the other peer timeout?
 
 // Test what happens when handshake is forgotten.
-TEST(TLSTest, noHandshakeCloseonError) {
+TEST(TLSTest, noHandshakeCloseOnError) {
     IOService service;
 
     // Server part.

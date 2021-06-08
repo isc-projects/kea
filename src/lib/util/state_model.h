@@ -383,7 +383,7 @@ protected:
     /// This method is used to construct the set of valid events. Each class
     /// within a StateModel derivation hierarchy uses this method to add any
     /// events it defines to the set.  Each derivation's implementation must
-    /// also call it's superclass's implementation.  This allows each class
+    /// also call its superclass's implementation.  This allows each class
     /// within the hierarchy to make contributions to the set of defined
     /// events. Implementations use the method, defineEvent(), to add event
     /// definitions.  An example of the derivation's implementation follows:
@@ -434,7 +434,7 @@ protected:
     /// event set is determined to be invalid this method should throw a
     /// StateModelError.  As with the defineEvents method, each class within
     /// a StateModel derivation hierarchy must supply an implementation
-    /// which calls it's superclass's implementation as well as verifying any
+    /// which calls its superclass's implementation as well as verifying any
     /// events added by the derivation.  Validating an event is accomplished
     /// by simply attempting to fetch an event by its value from the event set.
     /// An example of the derivation's implementation follows:
@@ -460,7 +460,7 @@ protected:
     /// This method is used to construct the set of valid states. Each class
     /// within a StateModel derivation hierarchy uses this method to add any
     /// states it defines to the set.  Each derivation's implementation must
-    /// also call it's superclass's implementation.  This allows each class
+    /// also call its superclass's implementation.  This allows each class
     /// within the hierarchy to make contributions to the set of defined
     /// states. Implementations use the method, defineState(), to add state
     /// definitions.  An example of the derivation's implementation follows:
@@ -515,7 +515,7 @@ protected:
     /// state set is determined to be invalid this method should throw a
     /// StateModelError.  As with the defineStates method, each class within
     /// a StateModel derivation hierarchy must supply an implementation
-    /// which calls it's superclass's implementation as well as verifying any
+    /// which calls its superclass's implementation as well as verifying any
     /// states added by the derivation.  Validating an state is accomplished
     /// by simply attempting to fetch the state by its value from the state set.
     /// An example of the derivation's implementation follows:

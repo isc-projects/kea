@@ -103,7 +103,7 @@ D2CfgContext::toElement() const {
     if (!isNull(control_socket_)) {
         d2->set("control-socket", UserContext::toElement(control_socket_));
     }
-    // Set hooks-librairies
+    // Set hooks-libraries
     d2->set("hooks-libraries", hooks_config_.toElement());
     // Set DhcpDdns
     ElementPtr result = Element::createMap();

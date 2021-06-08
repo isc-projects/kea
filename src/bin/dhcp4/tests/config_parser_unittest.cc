@@ -7328,7 +7328,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
 
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
 
-    // Subnet 100 should use it's own explicit values.
+    // Subnet 100 should use its own explicit values.
     ConstSubnet4Ptr subnet4 = subnets4->getBySubnetId(100);
     ASSERT_TRUE(subnet4);
     EXPECT_FALSE(subnet4->getCalculateTeeTimes());

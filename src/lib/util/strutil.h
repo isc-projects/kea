@@ -249,7 +249,7 @@ quotedStringToBinary(const std::string& quoted_string);
 /// an exception is thrown.
 ///
 /// \param hex_string Input string.
-/// \param sep character to use a a separator.
+/// \param sep character to use as a separator.
 /// \param binary Vector receiving converted string into binary.
 /// \throw isc::BadValue if the format of the input string is invalid.
 void

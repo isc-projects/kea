@@ -33,7 +33,7 @@ public:
     /// @brief Constructor
     ///
     /// @param io_service IOService that will drive the pool's IO. If empty, it
-    /// create it's own instance.
+    /// create its own instance.
     /// @param pool_size Maximum number of threads in the pool.  Currently the
     /// number of threads is fixed at this value.
     /// @param defer_start If true, creation of the threads is deferred until

@@ -1507,7 +1507,7 @@ HA+MT operation:
    single-threaded HTTP client processing.
 
 -  ``http-dedicated-listener`` - enables or disables the creation of a
-   dedicated, internal HTTP listener through which the server receive HA
+   dedicated, internal HTTP listener through which the server receives HA
    messages from its peers.  The internal listener replaces the role of
    kea-ctrl-agent traffic, allowing peers to send their HA commands directly
    to each other.  The listener will listen on the peer's ``url``.  When

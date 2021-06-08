@@ -870,7 +870,7 @@ void CommandOptions::loadRelayAddr() {
     while (std::getline(infile, line)) {
         cnt++;
         stringstream tmp;
-        tmp << "invalid address or wrong address version in line: "<< cnt;
+        tmp << "invalid address or wrong address version in line: " << cnt;
         check(validateIP(line), tmp.str());
     }
     check(cnt == 0, "file with addresses is empty!");

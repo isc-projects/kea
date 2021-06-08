@@ -750,7 +750,7 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     // Let's just use one of the actual captured packets that we have.
     Pkt4Ptr pkt = PktCaptures::captureRelayedDiscover();
 
-    // We just need to tweak it a it, to pretend that it's type is as desired.
+    // We just need to tweak it a it, to pretend that its type is as desired.
     // Note that when receiving a packet, its on-wire form is stored in data_
     // field. Most methods (including setType()) operates on option objects
     // (objects stored in options_ after unpack() is called). Finally, outgoing

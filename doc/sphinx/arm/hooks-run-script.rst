@@ -293,7 +293,7 @@ leases4_committed
    DELETED_LEASES4_SIZE
 
 If LEASES4_SIZE or DELETED_LEASES4_SIZE are non zero, then each lease
-will have it's own unique identifier as shown below. First index starts
+will have its own unique identifier as shown below. First index starts
 at 0.
 
 ::
@@ -516,7 +516,7 @@ leases6_committed
    DELETED_LEASES6_SIZE
 
 If LEASES6_SIZE or DELETED_LEASES6_SIZE are non zero, then each lease
-will have it's own unique identifier as shown below. First index starts
+will have its own unique identifier as shown below. First index starts
 at 0.
 
 ::

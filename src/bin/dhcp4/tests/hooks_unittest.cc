@@ -2828,7 +2828,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Verify that they load functions created the LOAD_MARKER_FILE
-    // and that it's contents are correct: "12" - the first library
+    // and that its contents are correct: "12" - the first library
     // appends "1" to the file, the second appends "2"). Also
     // check that the unload marker file does not yet exist.
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
