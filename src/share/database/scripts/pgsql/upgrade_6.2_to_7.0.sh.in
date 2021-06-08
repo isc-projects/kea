@@ -37,6 +37,9 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- This starts schema update to 7.0. It adds a lot (20+) of tables for the config backend.
+
+
 -- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
 -- modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 -- Sadly, Postgres has its own convoluted way of doing this. Luckily, the update pattern is

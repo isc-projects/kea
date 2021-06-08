@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1041,6 +1041,643 @@ UPDATE schema_version
 
 -- Commit the script transaction
 COMMIT;
+
+START TRANSACTION;
+
+-- This starts schema update to 7.0. It adds a lot (20+) of tables for the config backend.
+
+
+-- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
+-- modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+-- Sadly, Postgres has its own convoluted way of doing this. Luckily, the update pattern is
+-- the same in many tables, so we can define the trigger function once and the use it everywhere.
+
+-- First, we need to define a function that will do the actual job.
+-- This is used in many, many tables.
+CREATE OR REPLACE FUNCTION modification_ts_update()
+  RETURNS trigger AS $modification_ts_update$
+  BEGIN
+    new.modification_ts = CURRENT_TIMESTAMP;
+  END;
+
+-- Second, we need to specify which language it was written in.
+$modification_ts_update$ LANGUAGE plpgsql;
+
+
+-- Create table modification and insert values for modification types.
+CREATE TABLE modification (
+  id smallint NOT NULL,
+  modification_type varchar(32) NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO modification VALUES (0,'create'), (1,'update'), (2,'delete');
+
+
+
+-- Now create the table that holds different parameter data types.
+CREATE TABLE parameter_data_type (
+  id smallint NOT NULL,
+  name varchar(32) NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO parameter_data_type VALUES
+    (0,'integer'),
+    (1,'real'),
+    (2,'boolean'),
+    (4,'string');
+
+
+
+-- This table doesn't exist in MySQL. However, it's nice to have an enum that explains what the values
+-- in ddns_replace_client_name field in the dhcp{4,6}_shared_network table means.
+CREATE TABLE ddns_replace_client_name_types (
+  type INT8 PRIMARY KEY NOT NULL,
+  name VARCHAR(32)
+);
+-- See enum ReplaceClientNameMode in src/lib/dhcpsrv/d2_client_cfg.h
+INSERT INTO ddns_replace_client_name_types (type, name) VALUES
+  (0, 'RCM_NEVER'),
+  (1, 'RCM_ALWAYS'),
+  (2, 'RCM_WHEN_PRESENT'),
+  (3, 'RCM_WHEN_NOT_PRESENT');
+
+
+-- Create table for DHCPv6 servers
+CREATE TABLE dhcp6_server (
+  id SERIAL PRIMARY KEY NOT NULL,
+  tag varchar(256) NOT NULL,
+  description text DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tag)
+);
+CREATE INDEX dhcp6_server_idx1 ON dhcp6_server (modification_ts);
+CREATE UNIQUE INDEX dhcp6_server_idx2 on dhcp6_server(tag);
+CREATE TRIGGER dhcp6_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+-- Create a table for storing IPv6 shared networks
+CREATE TABLE dhcp6_shared_network (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  preferred_lifetime BIGINT DEFAULT NULL,
+  rapid_commit BOOLEAN DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  interface_id BYTEA DEFAULT NULL, -- 128 bytes
+  min_preferred_lifetime BIGINT DEFAULT NULL,
+  max_preferred_lifetime BIGINT DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+CREATE INDEX dhcp6_shared_network_idx1 ON dhcp6_shared_network (name);
+
+CREATE TRIGGER dhcp6_shared_network_modification_ts_update
+  AFTER UPDATE ON dhcp6_shared_network
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
+-- Now we need to create a relationship between defined shared networks and the servers
+CREATE TABLE dhcp6_shared_network_server (
+  shared_network_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (shared_network_id, server_id),
+  CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id) REFERENCES dhcp6_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
+);
+CREATE INDEX dhcp6_shared_network_server_idx1 ON dhcp6_shared_network_server (modification_ts);
+CREATE INDEX dhcp6_shared_network_server_idx2 ON dhcp6_shared_network_server (server_id);
+
+
+-- Create a list of IPv6 subnets
+CREATE TABLE dhcp6_subnet (
+  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_prefix varchar(64) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  preferred_lifetime BIGINT DEFAULT NULL,
+  rapid_commit BOOLEAN DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  shared_network_name varchar(128) DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  interface_id BYTEA DEFAULT NULL,
+  min_preferred_lifetime BIGINT DEFAULT NULL,
+  max_preferred_lifetime BIGINT DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+  CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name),
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
+CREATE TRIGGER dhcp6_subnet_modification_ts_update
+  AFTER UPDATE ON dhcp6_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+CREATE INDEX dhcp6_subnet_idx1 ON dhcp6_subnet (modification_ts);
+CREATE INDEX dhcp6_subnet_idx2 ON dhcp6_subnet (shared_network_name);
+
+-- TODO: on delete set up dhcp6_subnet_shared_network to NULL
+--   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
+--   `dhcp6_shared_network` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
+
+
+
+
+
+-- Create a table that holds all address pools in IPv6.
+CREATE TABLE dhcp6_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  start_address inet NOT NULL,
+  end_address inet NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
+);
+CREATE INDEX dhcp6_pool_idx1 ON dhcp6_pool (modification_ts);
+CREATE INDEX dhcp6_pool_idx2 ON dhcp6_pool (subnet_id);
+
+CREATE TRIGGER dhcp6_pool_modification_ts_update
+  AFTER UPDATE ON dhcp6_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- And now the same, but for PD pools.
+CREATE TABLE dhcp6_pd_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  prefix varchar(45) NOT NULL,
+  prefix_length SMALLINT NOT NULL,
+  delegated_prefix_length SMALLINT NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  excluded_prefix varchar(45) DEFAULT NULL,
+  excluded_prefix_length SMALLINT NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet(subnet_id)
+);
+
+CREATE INDEX dhcp6_pd_pool_idx1 on dhcp6_pd_pool (modification_ts);
+CREATE INDEX dhcp6_pd_pool_idx2 on dhcp6_pd_pool (subnet_id);
+CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
+  AFTER UPDATE ON dhcp6_pd_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
+
+
+
+
+
+CREATE TABLE dhcp6_subnet_server (
+  subnet_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (subnet_id, server_id),
+  CONSTRAINT fk_dhcp6_subnet_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id),
+  CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id),
+  UNIQUE (subnet_id, server_id)
+);
+
+CREATE INDEX dhcp6_subnet_server_idx1 on dhcp6_subnet_server(server_id);
+CREATE INDEX dhcp6_subnet_server_idx2 on dhcp6_subnet_server(modification_ts);
+CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_subnet_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
+-- Create table for storing global DHCPv6 parameters.
+CREATE TABLE dhcp6_global_parameter (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) NOT NULL,
+  value TEXT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parameter_type SMALLINT NOT NULL,
+  CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type) REFERENCES parameter_data_type(id)
+);
+
+CREATE INDEX key_dhcp6_global_parameter_idx1 on dhcp6_global_parameter(modification_ts);
+CREATE INDEX key_dhcp6_global_parameter_idx2 on dhcp6_global_parameter(name);
+
+CREATE TRIGGER dhcp6_global_parameter_modification_ts_update
+  AFTER UPDATE ON dhcp6_global_parameter
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+CREATE TABLE dhcp6_global_parameter_server (
+  parameter_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (parameter_id, server_id),
+  CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE  ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+);
+CREATE INDEX key_dhcp6_global_parameter_server_idx1 on dhcp6_global_parameter_server(modification_ts);
+CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_global_parameter_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create a table for storing DHCPv6 options.
+ALTER TABLE dhcp6_options
+  ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+  ADD COLUMN pool_id BIGINT DEFAULT NULL,
+  ADD COLUMN pd_pool_id BIGINT DEFAULT NULL,
+  ADD CONSTRAINT fk_dhcp6_options_pd_pool FOREIGN KEY (pd_pool_id) REFERENCES dhcp6_pd_pool(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp6_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp6_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TRIGGER dhcp6_options_modification_ts_update
+  AFTER UPDATE ON dhcp6_options
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+-- Now create a table for associating defined options with servers.
+CREATE TABLE dhcp6_options_server (
+  option_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_id, server_id),
+  CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id) REFERENCES dhcp6_options (option_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION
+);
+CREATE INDEX dhcp6_options_server_idx1 on dhcp6_options_server(server_id);
+CREATE INDEX dhcp6_options_server_idx2 on dhcp6_options_server(modification_ts);
+CREATE TRIGGER dhcp6_options_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_options_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
+-- This table is for storing IPv6 option definitions
+CREATE TABLE dhcp6_option_def (
+  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  code SMALLINT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  space VARCHAR(128) NOT NULL,
+  type SMALLINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_array BOOLEAN NOT NULL,
+  encapsulate VARCHAR(128) NOT NULL,
+  record_types VARCHAR DEFAULT NULL,
+  user_context JSON DEFAULT NULL
+);
+CREATE INDEX dhcp6_option_def_idx1 on dhcp6_option_def(modification_ts);
+CREATE INDEX dhcp6_option_def_idx2 on dhcp6_option_def(code, space);
+CREATE TRIGGER dhcp6_option_def_modification_ts_update
+  AFTER UPDATE ON dhcp6_option_def
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- and another table for storing relationship between option definitions and servers.
+CREATE TABLE dhcp6_option_def_server (
+  option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  server_id BIGINT NOT NULL REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_def_id, server_id)
+);
+CREATE TRIGGER dhcp6_option_def_server_modification_ts_update
+  AFTER UPDATE ON dhcp6_option_def_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Now create two tables for audit revisions...
+CREATE TABLE dhcp6_audit_revision (
+  id SERIAL PRIMARY KEY NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  log_message text DEFAULT NULL,
+  server_id BIGINT DEFAULT NULL
+);
+CREATE TRIGGER dhcp6_audit_revision_modification_ts_update
+  AFTER UPDATE ON dhcp6_audit_revision
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- ... and the DHCPv6 audit itself.
+CREATE TABLE dhcp6_audit (
+  id SERIAL UNIQUE NOT NULL,
+  object_type varchar(256) NOT NULL,
+  object_id BIGINT NOT NULL,
+  modification_type SMALLINT NOT NULL,
+  revision_id BIGINT NOT NULL,
+  CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type) REFERENCES modification (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_audit_revision FOREIGN KEY (revision_id) REFERENCES dhcp6_audit_revision (id) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+CREATE TRIGGER dhcp6_audit_modification_ts_update
+  AFTER UPDATE ON dhcp6_audit
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+CREATE INDEX dhcp6_audit_idx1 on dhcp6_audit (modification_type);
+CREATE INDEX dhcp6_audit_idx2 on dhcp6_audit (revision_id);
+
+
+-- Create table for DHCPv4 servers
+CREATE TABLE dhcp4_server (
+  id SERIAL PRIMARY KEY NOT NULL,
+  tag varchar(256) NOT NULL,
+  description text DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tag)
+);
+CREATE INDEX dhcp4_server_modification_ts ON dhcp6_server (modification_ts);
+CREATE TRIGGER dhcp4_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create table for storing global DHCPv4 parameters.
+CREATE TABLE dhcp4_global_parameter (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) NOT NULL,
+  value TEXT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parameter_type SMALLINT NOT NULL,
+  CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type) REFERENCES parameter_data_type(id)
+);
+CREATE INDEX dhcp4_global_parameter_idx1 on dhcp4_global_parameter(modification_ts);
+CREATE INDEX dhcp4_global_parameter_idx2 on dhcp4_global_parameter(name);
+
+CREATE TRIGGER dhcp4_global_parameter_modification_ts_update
+  AFTER UPDATE ON dhcp4_global_parameter
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+-- and create mapping for the global DHCPv4 parameters mapping to servers
+CREATE TABLE dhcp4_global_parameter_server (
+  parameter_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (parameter_id, server_id),
+  CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id) REFERENCES dhcp4_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp4_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+);
+CREATE INDEX key_dhcp4_global_parameter_idx1 ON dhcp4_global_parameter_server(modification_ts);
+CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_global_parameter_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create a table for storing IPv4 shared networks
+CREATE TABLE dhcp4_shared_network (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name varchar(128) UNIQUE NOT NULL,
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  match_client_id BOOLEAN DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  authoritative BOOLEAN DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  boot_file_name VARCHAR(129) DEFAULT NULL, -- bootfile field is 128 bytes (plus \0 char)
+  next_server inet DEFAULT NULL,   -- let's use type inet
+  server_hostname varchar(65) DEFAULT NULL, -- sname is 64 bytes long (plus \0 char)
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
+CREATE UNIQUE INDEX dhcp4_shared_network_idx1 ON dhcp4_shared_network (name);
+CREATE INDEX dhcp4_shared_network_idx2 ON dhcp4_shared_network (modification_ts);
+
+CREATE TRIGGER dhcp4_shared_network_modification_ts_update
+  AFTER UPDATE ON dhcp4_shared_network
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create a list of IPv4 subnets
+CREATE TABLE dhcp4_subnet (
+  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
+  interface_4o6 VARCHAR(128) DEFAULT NULL,
+  interface_id_4o6 VARCHAR(128) DEFAULT NULL,
+  subnet_4o6 VARCHAR(64) DEFAULT NULL,
+  boot_file_name varchar(129) DEFAULT NULL, -- note the field is 128 bytes long (plus extra \0 char to keep it in memory)
+  client_class varchar(128) DEFAULT NULL,
+  interface varchar(128) DEFAULT NULL,
+  match_client_id BOOLEAN DEFAULT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  next_server inet DEFAULT NULL,
+  rebind_timer BIGINT DEFAULT NULL,
+  relay TEXT DEFAULT NULL,
+  renew_timer BIGINT DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  server_hostname varchar(65) DEFAULT NULL, -- sname is 64 bytes long (plus \0 char)
+  shared_network_name varchar(128) DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  valid_lifetime BIGINT DEFAULT NULL,
+  authoritative BOOLEAN DEFAULT NULL,
+  calculate_tee_times BOOLEAN DEFAULT NULL,
+  t1_percent float DEFAULT NULL,
+  t2_percent float DEFAULT NULL,
+  min_valid_lifetime BIGINT DEFAULT NULL,
+  max_valid_lifetime BIGINT DEFAULT NULL,
+  ddns_send_updates BOOLEAN DEFAULT NULL,
+  ddns_override_no_update BOOLEAN DEFAULT NULL,
+  ddns_override_client_update BOOLEAN DEFAULT NULL,
+  ddns_replace_client_name INT8 DEFAULT NULL,
+  ddns_generated_prefix varchar(255) DEFAULT NULL,
+  ddns_qualifying_suffix varchar(255) DEFAULT NULL,
+  reservations_global BOOLEAN DEFAULT NULL,
+  reservations_in_subnet BOOLEAN DEFAULT NULL,
+  reservations_out_of_pool BOOLEAN DEFAULT NULL,
+  cache_threshold float DEFAULT NULL,
+  cache_max_age BIGINT DEFAULT NULL,
+  CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name),
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+);
+
+CREATE TRIGGER dhcp4_subnet_modification_ts_update
+  AFTER UPDATE ON dhcp4_subnet
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+CREATE INDEX dhcp4_subnet_idx1 ON dhcp4_subnet (modification_ts);
+CREATE INDEX dhcp4_subnet_idx2 ON dhcp4_subnet (shared_network_name);
+
+
+-- Create a table that holds all address pools in IPv4.
+CREATE TABLE dhcp4_pool (
+  id SERIAL PRIMARY KEY NOT NULL,
+  start_address inet NOT NULL,
+  end_address inet NOT NULL,
+  subnet_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  client_class varchar(128) DEFAULT NULL,
+  require_client_classes TEXT DEFAULT NULL,
+  user_context JSON DEFAULT NULL,
+  CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id)
+);
+CREATE INDEX dhcp4_pool_idx1 ON dhcp4_pool (modification_ts);
+CREATE INDEX dhcp4_pool_idx2 ON dhcp4_pool (subnet_id);
+
+CREATE TRIGGER dhcp4_pool_modification_ts_update
+  AFTER UPDATE ON dhcp4_pool
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Create a table for storing DHCPv4 options.
+ALTER TABLE dhcp4_options
+  ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+  ADD COLUMN pool_id BIGINT DEFAULT NULL,
+  ADD COLUMN modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD CONSTRAINT fk_dhcp4_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp4_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_dhcp4_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TRIGGER dhcp4_options_modification_ts_update
+  AFTER UPDATE ON dhcp4_options
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
+-- This table is for storing IPv4 option definitions
+CREATE TABLE dhcp4_option_def (
+  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  code SMALLINT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  space VARCHAR(128) NOT NULL,
+  type SMALLINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_array BOOLEAN NOT NULL,
+  encapsulate VARCHAR(128) NOT NULL,
+  record_types VARCHAR DEFAULT NULL,
+  user_context JSON DEFAULT NULL
+);
+CREATE INDEX dhcp4_option_def_idx1 on dhcp4_option_def(modification_ts);
+CREATE INDEX dhcp4_option_def_idx2 on dhcp4_option_def(code, space);
+CREATE TRIGGER dhcp4_option_def_modification_ts_update
+  AFTER UPDATE ON dhcp4_option_def
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- and another table for storing relationship between option definitions and servers.
+CREATE TABLE dhcp4_option_def_server (
+  option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  server_id BIGINT NOT NULL REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_def_id, server_id)
+);
+CREATE TRIGGER dhcp4_option_def_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_option_def_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Now create a table for associating defined options with servers.
+CREATE TABLE dhcp4_options_server (
+  option_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_id, server_id),
+  CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id) REFERENCES dhcp4_options (option_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE NO ACTION
+);
+CREATE INDEX dhcp4_options_server_idx1 on dhcp4_options_server(server_id);
+CREATE INDEX dhcp4_options_server_idx2 on dhcp4_options_server(modification_ts);
+CREATE TRIGGER dhcp4_options_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_options_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- Now create two tables for audit revisions...
+CREATE TABLE dhcp4_audit_revision (
+  id SERIAL PRIMARY KEY NOT NULL,
+  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  log_message text DEFAULT NULL,
+  server_id BIGINT DEFAULT NULL
+);
+CREATE TRIGGER dhcp4_audit_revision_modification_ts_update
+  AFTER UPDATE ON dhcp4_audit_revision
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+-- ... and the DHCPv4 audit itself.
+CREATE TABLE dhcp4_audit (
+  id SERIAL UNIQUE NOT NULL,
+  object_type varchar(256) NOT NULL,
+  object_id BIGINT NOT NULL,
+  modification_type SMALLINT NOT NULL,
+  revision_id BIGINT NOT NULL,
+  CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type) REFERENCES modification (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp4_audit_revision FOREIGN KEY (revision_id) REFERENCES dhcp4_audit_revision (id) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+CREATE TRIGGER dhcp4_audit_modification_ts_update
+  AFTER UPDATE ON dhcp6_audit
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+CREATE INDEX dhcp4_audit_idx1 on dhcp4_audit (modification_type);
+CREATE INDEX dhcp4_audit_idx2 on dhcp4_audit (revision_id);
+
+-- Update the schema version number
+UPDATE schema_version
+    SET version = '7', minor = '0';
+
+-- Schema 7.0 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
 
 -- Notes:
 
