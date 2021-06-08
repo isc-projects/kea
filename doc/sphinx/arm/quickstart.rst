@@ -59,8 +59,8 @@ Kea using native packages.
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__
    and choose Kea version and enter the repository.
 
-2. Use ``Set Me Up`` and follow instructions to add repository
-   on your system.
+2. Use ``Set Me Up`` and follow instructions to add the repository
+   to your system.
 
 3. Update system repositories. For example:
 

@@ -60,7 +60,7 @@ The contents of ``keactrl.conf`` are:
 
    # This is a configuration file for keactrl script which controls
    # the startup, shutdown, reconfiguration and gathering the status
-   # of the Kea's processes.
+   # of the Keas processes.
 
    # prefix holds the location where the Kea is installed.
    prefix=@prefix@
@@ -337,10 +337,10 @@ However, all modern operating systems have their own process management scripts,
 such as ``systemd``. In general, the native scripts, such as ``systemd``, should be used
 if possible as they have several advantages. ``systemd`` scripts provide a uniform
 way of handling processes, so Kea is handled in a similar fashion to HTTP or mail
-server. Second, the more important reason is that ``systemd`` allow defining dependencies
-between services. For example, it's easy to specify that Kea server should not start
-until the network interfaces are operational. There are other benefits, too, such as
-an ability to enable or disable services using commands, temporary starting disabled
+server. Secondly, a more important reason is that ``systemd`` allows defining dependencies
+between services. For example, it's easy to specify that the Kea server should not start
+until the network interfaces are operational. There are other benefits too, such as
+an ability to enable or disable services using commands, temporarily starting disabled
 service etc.
 
 As such, it is recommended to use ``systemctl`` commands if they are available. Native

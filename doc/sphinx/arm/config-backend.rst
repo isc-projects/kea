@@ -32,7 +32,7 @@ to support High Availability as described in
 (including the value of the ``server-tag`` parameter)
 are almost exactly the same. They may differ by the server identifier
 and designation of the server as a primary or standby (or secondary).
-They may also differ by the interfaces configuration. Typically, the
+They may also differ by their interfaces' configuration. Typically, the
 subnets, shared networks, option definitions, global parameters are the
 same for both servers and can be sourced from a single database instance
 to both Kea servers.
@@ -174,7 +174,7 @@ by "server tags". The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
 the DHCPv4 and the DHCPv6 server respectively. The value is configured
-using ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
+using the ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
 server-tag can be checked with the ``server-tag-get`` command.
 
 The server definition, which consists of the server tag and the server

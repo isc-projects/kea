@@ -31,7 +31,7 @@ The CA processes received commands according to the following algorithm:
 -  Pass command into any installed hooks (regardless of service
    value(s)). If the command is handled by a hook, return the response.
 
--  If the service specifies one more or services, forward the command to
+-  If the service specifies one or more services, forward the command to
    the specified services and return the accumulated responses.
 
 -  If the service is not specified or is an empty list, handle the
@@ -157,7 +157,7 @@ The authentication is described in the ``authentication`` block
 with the mandatory ``type`` parameter which selects the authentication.
 Currently only the basic HTTP authentication (type basic) is supported.
 
-The ``realm`` authentication parameter is used for error message when
+The ``realm`` authentication parameter is used for error messages when
 the basic HTTP authentication is required but the client is not
 authorized.
 
@@ -194,7 +194,7 @@ Secure Connections (version before 1.9.6)
 The Control Agent does not natively support secure HTTP connections like
 SSL or TLS before version 1.9.6.
 
-In order to setup a secure connection, please use one of the
+In order to set up a secure connection, please use one of the
 available third-party HTTP servers and configure it to run as a reverse
 proxy to the Control Agent. Kea has been tested with two major HTTP
 server implementations working as a reverse proxy: Apache2 and nginx.
@@ -271,7 +271,7 @@ server enables authentication of the clients using certificates.
            ssl_certificate /path/to/kea-proxy.crt;
            ssl_certificate_key /path/to/kea-proxy.key;
 
-           #   Certificate Authority. Client certificate must be signed by the CA.
+           #   Certificate Authority. Client certificates must be signed by the CA.
            ssl_client_certificate /path/to/ca.crt;
 
            # Enable verification of the client certificate.
@@ -334,7 +334,7 @@ Configuring only one or two string parameters raises an error.
 
 .. note::
 
-   No standard HTTP authentication scheme cryptographically bind  its end
+   No standard HTTP authentication scheme cryptographically binds its end
    entity with TLS. This means that the TLS client and server can be
    mutually authenticated but there is no proof they are the same as
    for the HTTP authentication.

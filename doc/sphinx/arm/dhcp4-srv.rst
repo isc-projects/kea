@@ -1193,7 +1193,7 @@ a single pool. Currently there is only one parameter, ``pool``, which
 gives the range of addresses in the pool.
 
 It is possible to define more than one pool in a subnet; continuing the
-previous example, further assume that 192.0.2.64/26 should be also be
+previous example, further assume that 192.0.2.64/26 should also be
 managed by the server. It could be written as 192.0.2.64 to 192.0.2.127.
 Alternatively, it can be expressed more simply as 192.0.2.64/26. Both
 formats are supported by Dhcp4 and can be mixed in the pool list. For
@@ -1368,7 +1368,7 @@ the above example can be simplified to:
 
 
 Defined options are added to the response when the client requests them
-at a few exceptions, which are always added. To enforce the addition of
+with a few exceptions, which are always added. To enforce the addition of
 a particular option, set the always-send flag to true as in:
 
 ::
@@ -1863,7 +1863,7 @@ returned by the Kea engine itself and in general should not be configured manual
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | dhcp-rebinding-time            | 59    | uint32                                | governed by ``rebind-timer`` parameter.                           |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | dhcp-client-identifier         | 61    | binary                                | send by client, echoed back with the value sent by the client.    |
+   | dhcp-client-identifier         | 61    | binary                                | sent by client, echoed back with the value sent by the client.    |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | fqdn                           | 81    | record (uint8, uint8, uint8, fqdn)    | it's part of the DDNS and D2 configuration.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
@@ -1987,7 +1987,7 @@ to be configured with those options as Kea only receives them.
    +--------------------+------+----------------------------------------------------------------------+
    | remote-id          | 2    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
-   | link selection     | 5    | If present, is used to select appropriate subnet.                    |
+   | link selection     | 5    | If present, is used to select the appropriate subnet.                |
    +--------------------+------+----------------------------------------------------------------------+
    | subscriber-id      | 6    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
@@ -1995,7 +1995,7 @@ to be configured with those options as Kea only receives them.
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
-and/or by flex-id to construct unique device identifier.
+and/or by flex-id to construct a unique device identifier.
 
 .. _dhcp4-custom-options:
 
@@ -2640,7 +2640,7 @@ specified:
 -  ``code`` - the server requires either an option name or an option code to
    identify an option. This parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option have a definition (either as a standard option
+   particular option has a definition (either as a standard option
    or an administrator-created definition for the option using an
    'option-def' structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
@@ -3143,7 +3143,7 @@ conflict with existing entries owned by other DHCP4 clients.
 
     Disabling conflict resolution should be done only after careful review of
     specific use cases.  The best way to avoid unwanted DNS entries is to
-    always ensure leases changes are processed through Kea, whether they are
+    always ensure lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the lease-del4 command, prior to
     reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp4
     to generate DNS removal requests to D2.
@@ -3154,9 +3154,9 @@ conflict with existing entries owned by other DHCP4 clients.
     The DNS entries Kea creates contain a value for TTL (time to live).  As of
     Kea 1.9.3, kea-dhcp4 calculates that value based on
     `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__
-    which suggests that the TTL value be 1/3 of the lease's life time with
+    which suggests that the TTL value be 1/3 of the lease's lifetime with
     a minimum value of 10 minutes.  Prior to this the server set the TTL value
-    equal to the lease's valid life time.  Future releases may add one or
+    equal to the lease's valid lifetime.  Future releases may add one or
     more parameters to customize this value.
 
 .. _dhcpv4-d2-io-config:
@@ -4007,7 +4007,7 @@ kea-dhcp4 are:
 -  ``thread-pool-size``: 8 when using ``postgresql``.
 
 Another very important parameter is ``packet-queue-size`` and in our tests we
-used it as multiplier of ``thread-pool-size``. So actual setting strongly depends
+used it as a multiplier of ``thread-pool-size``. So the actual setting strongly depends
 on ``thread-pool-size``.
 
 Our tests reported best results when:
@@ -4253,9 +4253,9 @@ another.
 
    Beginning with Kea 1.9.1 reservation mode was replaced by three
    boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
-   and ``"reservations-out-of-pool"`` which allow to configure host
-   reservations both global and in a subnet. In such case a subnet
-   host reservation has the preference on a global reservation
+   and ``"reservations-out-of-pool"`` which allows the configuration of
+   host reservations both globally and in a subnet. In such cases a subnet
+   host reservation has preference over a global reservation
    when both exist for the same client.
 
 .. _reservation4-conflict:
@@ -4550,7 +4550,7 @@ host reservation exists for a client within a given subnet, the "KNOWN"
 built-in class is assigned to the client. Conversely, when there is no
 static assignment for the client, the "UNKNOWN" class is assigned to the
 client. Class expressions within the Kea configuration file can
-refer to "KNOWN" or "UNKNOWN" classes using using the "member" operator.
+refer to "KNOWN" or "UNKNOWN" classes using the "member" operator.
 For example:
 
 ::
@@ -4784,9 +4784,9 @@ The meaning of the reservation flags are:
 - ``reservations-global``: fetch global reservations.
 
 - ``reservations-in-subnet``: fetch subnet reservations. For a shared network
-  this includes all subnets member of the shared network.
+  this includes all subnets members of the shared network.
 
-- ``reservations-out-of-pool``: the makes sense only when the
+- ``reservations-out-of-pool``: this makes sense only when the
   ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
   is true the server may assume that all host reservations are for addresses
   that do not belong to the dynamic pool. Therefore, it can skip the reservation
@@ -5006,8 +5006,8 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          # Use of IP address in global reservation is risky. If used outside of
-          # a matching subnet, such as 192.0.1.0/24, it will result in a broken
+          # Use of IP addresses in global reservation is risky. If used outside
+          # of a matching subnet, such as 192.0.1.0/24, it will result in a broken
           # configuration being handed to the client.
           "ip-address": "192.0.1.77"
        },
@@ -5031,11 +5031,11 @@ following can be used:
            # "reservations-in-subnet" and "reservations-out-of-pool"
            # parameters.
            # "reservation-mode": "global",
-           # Specify if server should lookup global reservations.
+           # Specify if the server should lookup global reservations.
            "reservations-global": true,
-           # Specify if server should lookup in-subnet reservations.
+           # Specify if the server should lookup in-subnet reservations.
            "reservations-in-subnet": false,
-           # Specify if server can assume that all reserved addresses
+           # Specify if the server can assume that all reserved addresses
            # are out-of-pool.
            "reservations-out-of-pool": false,
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
@@ -5142,11 +5142,11 @@ following example:
         }],
         # It is replaced by the "reservations-global"
         # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
-        # Specify if server should lookup global reservations.
+        # Specify if the server should lookup global reservations.
         "reservations-global": true,
-        # Specify if server should lookup in-subnet reservations.
+        # Specify if the server should lookup in-subnet reservations.
         "reservations-in-subnet": false,
-        # Specify if server can assume that all reserved addresses
+        # Specify if the server can assume that all reserved addresses
         # are out-of-pool.
         "reservations-out-of-pool": false,
         "shared-networks": [{
@@ -5364,7 +5364,7 @@ introduced:
 
                # The subnet selector can be specified at the shared network level.
                # Subnets from this shared network will be selected for directly
-               # connected clients sending requests to server's "eth0" interface.
+               # connected clients sending requests to the server's "eth0" interface.
                "interface": "eth0",
 
                # This starts a list of subnets in this shared network.
@@ -5542,7 +5542,7 @@ shown in the example below.
 
 In case of the relayed traffic, the subnets are typically selected using
 the relay agents' addresses. If the subnets are used independently (not
-grouped within a shared network) it is allowed to specify different relay
+grouped within a shared network) it is allowed to specify a different relay
 address for each of these subnets. When multiple subnets belong to a
 shared network they must be selected via the same relay address and,
 similarly to the case of the local traffic described above, it is a
@@ -5614,7 +5614,7 @@ host reservation in this subnet or simply the initially selected subnet has no
 more addresses available. Therefore, it is strongly recommended to always
 specify subnet selectors (interface or a relay address) at shared network
 level if the subnets belong to a shared network, as it is rarely useful to
-specify them at the subnet level and it may lead to the configurtion errors
+specify them at the subnet level and it may lead to the configuration errors
 described above.
 
 Client Classification in Shared Networks
@@ -5790,8 +5790,8 @@ shared network.
 While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
-autogenerated, i.e. Kea assigns increasing integer values starting from
-1. Thus, the autogenerated IDs are not stable across configuration
+auto generated, i.e. Kea assigns increasing integer values starting from
+1. Thus, the auto generated IDs are not stable across configuration
 changes.
 
 .. _dhcp4-serverid:
@@ -6346,7 +6346,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | (as a result of                    |
    |                                           |                | receiving a                        |
    |                                           |                | DHCPREQUEST message)               |
-   |                                           |                | and never decreased.               |
+   |                                           |                | and never decreases.               |
    |                                           |                | The *id* is the subnet-id          |
    |                                           |                | of the subnet. This                |
    |                                           |                | statistic is exposed               |
@@ -6364,7 +6364,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | (as a result of                    |
    |                                           |                | receiving a                        |
    |                                           |                | DHCPREQUEST message)               |
-   |                                           |                | and is decreased                   |
+   |                                           |                | and decreases                      |
    |                                           |                | every time a lease is              |
    |                                           |                | released (a                        |
    |                                           |                | DHCPRELEASE message                |
@@ -6726,8 +6726,8 @@ The following standards are currently supported:
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
    <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to
-   handle the Client FQDN option. Also, it is able to use
-   kea-dhcp-ddns component do initiate appropriate DNS Update
+   handle the Client FQDN option. Also, it is able to use the
+   kea-dhcp-ddns component to initiate appropriate DNS Update
    operations.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
@@ -6756,14 +6756,14 @@ Known RFC Violations
 In principle Kea seeks to be a reference implementation aiming to implement 100% of the RFC standards.
 However, in some cases there are practical aspects that make Kea not adhere completely to the text of the RFC documents.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming REQUEST packet there is no
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming REQUEST packet has no
   `requested IP address` option and `ciaddr` is not set, the server is supposed to respond with NAK. However, there
   are broken clients out there that will always send a REQUEST without those. As such, Kea accepts such REQUESTs,
   will assign an address and will respond with an ACK.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ table 5 says that a DECLINE message must have server-id set and
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ table 5 says that a DECLINE message must have the server-id set and
   should be dropped if that option is missing. However, ISC DHCP does not enforce this, presumably as a compatibility
-  effort for broken clients. Kea team decided to follow suit.
+  effort for broken clients. The Kea team decided to follow suit.
 
 .. _dhcp4-limit:
 
@@ -7002,7 +7002,7 @@ in seconds; it is the period between the time when the server
 completed last polling (and possibly the local configuration update) and
 the time when it will begin polling again. In the example above, this period
 is set to 20 seconds. This means that after adding a new configuration
-into the database (e.g. adding new subnet), it will take up to 20 seconds
+into the database (e.g. adding a new subnet), it will take up to 20 seconds
 (plus the time needed to fetch and apply the new configuration) before
 the server starts using this subnet. The lower the
 ``config-fetch-wait-time`` value, the shorter the time for the server to
@@ -7014,7 +7014,7 @@ default value of the ``config-fetch-wait-time`` is 30 seconds.
 
 The ``config-backend-pull`` command can be used to force the server to
 immediately poll the configuration changes from the database and avoid
-waiting for the next fetch cycle. The command was added in 1.7.1 Kea
+waiting for the next fetch cycle. The command was added in the 1.7.1 Kea
 release for DHCPv4 and DHCPv6 servers.
 
 Finally, in the configuration example above, two hooks libraries are
@@ -7053,7 +7053,7 @@ enabled in order to enable uncommon practices:
 Lenient Option Parsing
 ----------------------
 
-By default, tuple fields defined in custom options is parsed as a set of
+By default, tuple fields defined in custom options are parsed as a set of
 length-value pairs.
 
 With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of

@@ -337,7 +337,7 @@ earlier version. To perform an upgrade, issue the following command:
       | utf8_general_ci |
       +-----------------+
 
-    According to naming convention, when the name ends in ``_ci``,
+    According to mysql's naming convention, when the name ends in ``_ci``,
     the collation is case-insensitive.
 
 .. _mysql-performance:
@@ -641,5 +641,5 @@ database backends put a restriction on the maximum timestamp to be
 stored in the database, which is equal to the maximum signed 32-bit
 number. This effectively means that the current Kea version cannot store
 leases whose expiration time is later than 2147483647 seconds since the
-beginning of the epoch (around year 2038). This will be fixed when the
+beginning of the epoch (around the year 2038). This will be fixed when the
 database support for longer timestamps is available.

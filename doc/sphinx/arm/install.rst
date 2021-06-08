@@ -237,7 +237,7 @@ options. Some commonly used options are:
    python packages to be installed in the specified directory. This is
    mostly useful for Debian related distros. While most systems store
    python packages in ${prefix}/usr/lib/pythonX/site-packages, Debian
-   introduced separate directory for packages installed from DEB. Such
+   introduced a separate directory for packages installed from DEB. Such
    python packages are expected to be installed in
    /usr/lib/python3/dist-packages.
 
@@ -252,8 +252,8 @@ options. Some commonly used options are:
 
  - ``--with-freeradius-dictionary``
    Specify a non-standard location for a FreeRADIUS dictionary file. That
-   file contains list of supported RADIUS attributes. Available in subscriber
-   only version. This option requires subscription-only RADIUS hook.
+   file contains a list of supported RADIUS attributes. Available in subscriber
+   only version. This option requires the subscription-only RADIUS hook.
 
 If the RADIUS options are not available, ensure that the RADIUS hook sources are in
 the ``premium`` directory and rerun ``autoreconf -i``.
@@ -524,7 +524,7 @@ commands were used:
    $ cmake ..
    $ make
 
-As of January 2019, cpp-driver does not include cql_config script. Work
+As of January 2019, cpp-driver does not include the cql_config script. Work
 is in progress to contribute such a script to the cpp-driver project
 but, until that is complete, intermediate steps need to be conducted. A
 cql_config script is present in the tools/ directory of the Kea sources.
@@ -564,7 +564,7 @@ First, a regular user account must be created:
 
    useradd admin
 
-Then, change the binaries ownership and group to new user. Note that
+Then, change the binaries' ownership and group to the new user. Note that
 the specific path may be different. Please refer to the ``--prefix``
 parameter passed to the configure script.:
 
@@ -585,7 +585,7 @@ If using systemd, modify its service file
    User=admin
    Group=admin
 
-The most important step is to set capabilities of the binaries. Refer to `man capabilities` to get
+The most important step is to set the capabilities of the binaries. Refer to `man capabilities` to get
 more information.
 
 .. code-block:: console

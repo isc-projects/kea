@@ -149,7 +149,7 @@ example JSON comment looks like this:
        }]
    }
 
-However, the facts that the comment could only be a single line, and that it was not
+However, the fact that the comment could only be a single line, and that it was not
 possible to add any other information in a more structured form, were frustrating. One specific
 example was a request to add floor levels and building numbers to subnets. This
 was one of the reasons why the concept of user context has been introduced. It
@@ -188,7 +188,7 @@ JSON comments, but converts them to user context on the fly. The
 comments entries in user-context were converted back to JSON comments to
 keep backward compatibility, but that conversion went away in version 1.7.9.
 
-The is one side effect, however. If the configuration uses the old JSON
+There is one side effect, however. If the configuration uses the old JSON
 comment, the `config-get` command returns a slightly modified
 configuration. It is not uncommon for a call for `config-set` followed by a
 `config-get` to receive a slightly different structure.
