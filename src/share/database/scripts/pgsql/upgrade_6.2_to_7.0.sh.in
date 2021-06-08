@@ -602,6 +602,19 @@ CREATE TRIGGER dhcp4_option_def_modification_ts_update
   AFTER UPDATE ON dhcp4_option_def
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
+
+-- and another table for storing relationship between option definitions and servers.
+CREATE TABLE dhcp4_option_def_server (
+  option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  server_id BIGINT NOT NULL REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (option_def_id, server_id)
+);
+CREATE TRIGGER dhcp4_option_def_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_option_def_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
