@@ -581,6 +581,27 @@ CREATE TRIGGER dhcp4_options_modification_ts_update
   AFTER UPDATE ON dhcp4_options
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
+
+
+-- This table is for storing IPv4 option definitions
+CREATE TABLE dhcp4_option_def (
+  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  code SMALLINT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  space VARCHAR(128) NOT NULL,
+  type SMALLINT NOT NULL,
+  modification_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_array BOOLEAN NOT NULL,
+  encapsulate VARCHAR(128) NOT NULL,
+  record_types VARCHAR DEFAULT NULL,
+  user_context JSON DEFAULT NULL
+);
+CREATE INDEX dhcp4_option_def_idx1 on dhcp4_option_def(modification_ts);
+CREATE INDEX dhcp4_option_def_idx2 on dhcp4_option_def(code, space);
+CREATE TRIGGER dhcp4_option_def_modification_ts_update
+  AFTER UPDATE ON dhcp4_option_def
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '7', minor = '0';
