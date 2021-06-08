@@ -326,6 +326,10 @@ ALTER TABLE dhcp6_options
   ADD CONSTRAINT fk_dhcp6_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT fk_dhcp6_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
 
+CREATE TRIGGER dhcp6_options_modification_ts_update
+  AFTER UPDATE ON dhcp6_options
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
 -- Now create a table for associating defined options with servers.
 CREATE TABLE dhcp6_options_server (
   option_id BIGINT NOT NULL,
@@ -572,6 +576,10 @@ ALTER TABLE dhcp4_options
   ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ADD CONSTRAINT fk_dhcp4_options_pool FOREIGN KEY (pool_id) REFERENCES dhcp4_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT fk_dhcp4_options_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TRIGGER dhcp4_options_modification_ts_update
+  AFTER UPDATE ON dhcp4_options
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 -- Update the schema version number
 UPDATE schema_version
