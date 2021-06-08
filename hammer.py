@@ -1497,22 +1497,22 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
-            if revision.startswith('13'):
-                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
-            else:
+            if revision.startswith(('11', '12')):
                 packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
 
         if 'mysql' in features:
-            if revision.startswith('13'):
-                packages.extend(['mysql80-server', 'mysql80-client'])
-            else:
+            if revision.startswith(('11', '12')):
                 packages.extend(['mysql57-server', 'mysql57-client'])
+            else:
+                packages.extend(['mysql80-server', 'mysql80-client'])
 
         if 'pgsql' in features:
-            if revision.startswith('13'):
-                packages.extend(['postgresql14-server', 'postgresql14-client'])
-            else:
+            if revision.startswith(('11', '12')):
                 packages.extend(['postgresql11-server', 'postgresql11-client'])
+            else:
+                packages.extend(['postgresql14-server', 'postgresql14-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
