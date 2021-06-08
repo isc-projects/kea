@@ -313,7 +313,7 @@ invocation looks like this:
    }
 
 If the configuration file is incorrect reloading it can raise an error
-which leaves the server in unusable state.. Look at :ref:`command-config-set`
+which leaves the server in an unusable state.. Look at :ref:`command-config-set`
 what to do to recover a working server.
 
 .. _command-config-test:
@@ -644,7 +644,7 @@ The ``status-get`` command returns server's runtime information:
        processing).
 
      * remote: for the remote server the last known state, served
-       HA scopes and the role of the server in HA relationship.
+       HA scopes and the role of the server in the HA relationship.
 
  - multi-threading-enabled: flag indicating if multi-threading is enabled.
 
@@ -654,7 +654,7 @@ The ``status-get`` command returns server's runtime information:
    regardless of how many threads are running.
 
  - packet-queue-statistics: average queue size for last 10, 100 and 1000
-   packets. This statistic uses approach similar to Unix ``top`` command.
+   packets. Statistics using an approach similar to the Unix ``top`` command.
    The averaged queue size for the last 10 packets can be considered an
    instantaneous value, while average for the last 1000 packets shows
    longer term trend.

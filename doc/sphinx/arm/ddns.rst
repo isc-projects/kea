@@ -298,7 +298,7 @@ The D2 server supports the following operational commands:
 -  status-get
 -  version-get
 
-The ``shutdown`` command supports extra ``type`` argument which controls the
+The ``shutdown`` command supports the extra ``type`` argument which controls the
 way the D2 server cleans up on exit.
 The supported shutdown types are:
 
@@ -469,7 +469,7 @@ the following parameters:
    used in a first-to-last preference; in other words, when D2 begins to
    process a request for this domain, it will pick the first server in
    this list and attempt to communicate with it. If that attempt fails,
-   D2 will move to next one in the list and so on until either it
+   D2 will move to the next one in the list and so on until either it
    is successful or the list is exhausted.
 
 To create a new Forward DDNS Domain, add a new domain element and set

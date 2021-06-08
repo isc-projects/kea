@@ -5,7 +5,7 @@ BOOTP Support
 
 .. note::
 
-   This is library is still in experimental phase. Use with care!
+   This library is still in the experimental phase. Use with care!
 
 
 This hooks library adds support for BOOTP with vendor information extensions
@@ -20,7 +20,7 @@ the server's responses and responses shorter than the BOOTP minimum
 size (300 octets) are padded to this size.
 
 The library is available since Kea 1.7.2 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhcp4`` process.
+similar way to other hook libraries by the ``kea-dhcp4`` process.
 It takes no parameter.
 
 ::
@@ -46,7 +46,7 @@ It takes no parameter.
 .. _hooks-bootp-config:
 
 Incoming BOOTP packets are added to the BOOTP class. This can be used
-to segregate BOOTP clients to separate pool. For example you can do
+to segregate BOOTP clients to separate pools. For example you can do
 the following:
 
 ::

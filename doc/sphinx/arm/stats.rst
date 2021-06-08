@@ -93,7 +93,7 @@ There are several commands defined that can be used for accessing
 (-get), resetting to zero or a neutral value (-reset), or removing a
 statistic completely (-remove). We can change the statistics time based
 limit (-sample-age-set) and size based limit (-sample-count-set) which
-control how long or how many samples of the given statistic are retained.
+control how long or how many samples of a given statistic are retained.
 
 The difference between reset and remove is somewhat subtle.
 The reset command sets the value of the statistic to zero or a neutral value,
@@ -282,9 +282,9 @@ The statistic-sample-age-set Command
 ----------------------------------------
 
 The ``statistic-sample-age-set`` command sets time based limit
-for collecting samples for given statistic. It takes two parameters a string
-called ``name``, which specifies the statistic name and integer value called
-``duration``, which specifies the time limit for given statistic in seconds.
+for collecting samples for a given statistic. It takes two parameters a string
+called ``name``, which specifies the statistic name and an integer value called
+``duration``, which specifies the time limit for the given statistic in seconds.
 An example command may look like this:
 
 ::
@@ -311,7 +311,7 @@ The statistic-sample-age-set-all Command
 
 The ``statistic-sample-age-set-all`` command sets time based limits
 for collecting samples for all statistics. It takes single-integer parameter
-called ``duration``, which specifies the time limit for given statistic
+called ``duration``, which specifies the time limit for statistic
 in seconds. An example command may look like this:
 
 ::
@@ -335,7 +335,7 @@ The statistic-sample-count-set Command
 ------------------------------------------
 
 The ``statistic-sample-count-set`` command sets size based limit
-for collecting samples for given statistic. An example command may look
+for collecting samples for a given statistic. An example command may look
 like this:
 
 ::
@@ -395,7 +395,7 @@ points, perhaps to do some form of statistical analysis afterwards.
 
 
 Since Kea 1.6, by default, each statistic holds 20 data points. Setting such
-limit prevent unlimited memory consumption growth.
+a limit prevents unlimited memory growth.
 There are two ways to define the limts: time based (e.g. keep samples from
 the last 5 minutes) and size based. It's possible to change the size based
 limit by using one of two commands: ``statistic-sample-count-set``,
@@ -403,5 +403,5 @@ to set size limit for single statistic and ``statistic-sample-count-set-all``
 for setting size based limits for all statistics. To set time based
 limit for single statistic use ``statistic-sample-age-set``, and
 ``statistic-sample-age-set-all`` to set time based limits for all statistics.
-For given statistic only one type of limit can be active. It means that storage
+For a given statistic only one type of limit can be active. It means that storage
 is limited only by time based limit or size based, never by both of them.

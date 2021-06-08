@@ -59,7 +59,7 @@ The classification process is conducted in several steps:
     following its client class or global (or, for option 43, last
     resort) definition.
 
-5.  When the incoming packet belongs the special class, `DROP`, it is
+5.  When the incoming packet belongs to the special class, `DROP`, it is
     dropped and an informational message is logged with the packet
     information.
 
@@ -87,7 +87,7 @@ The classification process is conducted in several steps:
     possible to use KNOWN/UNKNOWN classes to select a shared network or
     a subnet.
 
-9.  When the incoming packet belongs the special class, `DROP`, it is
+9.  When the incoming packet belongs to the special class, `DROP`, it is
     dropped and an informational message is logged with the packet
     information. Since Kea version 1.9.8 it is allowed to make DROP
     class dependent of KNOWN/UNKNOWN classes.

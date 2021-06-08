@@ -37,7 +37,7 @@ There are 5 types of commands supported by this library:
 
 -  ``list`` - list all objects of the particular type in the database,
    e.g. ``remote-network4-list``; this class of commands returns brief
-   information about each object comparing to the output of ``get-all``.
+   information about each object compared to the output of ``get-all``.
 
 -  ``set`` - creates or replaces an object of the given type in the
    database, e.g. ``remote-option4-global-set``.
@@ -774,7 +774,7 @@ the selected shared network, use the `remote-network[46]-get` command.
 
 The example response above contains three shared networks. One of the
 shared networks is associated will all servers, so it is included in
-the list of shared networks to be used by the "server1" and "server2".
+the list of shared networks to be used by "server1" and "server2".
 The remaining two shared networks are returned because one of them
 is associated with the "server1" and another one is associated with
 the "server2".
@@ -907,7 +907,7 @@ code of 1 and belonging to the option space "isc". The default option spaces are
 "dhcp4" and "dhcp6" for the DHCPv4 and DHCPv6 top level options respectively. If
 there is no such option explicitly associated with the server1, no option is
 deleted. In order to delete an option belonging to "all" servers, the keyword
-"all" must be used as server tag. The `server-tags` list must contain exactly
+"all" must be used as the server tag. The `server-tags` list must contain exactly
 one tag. It must not include the `null` value.
 
 .. _command-remote-option-def4-get:
@@ -1240,8 +1240,8 @@ with the name of the shared network from which the option is to
 be deleted. If the option is not explicitly specified for this
 shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
-Such option instance is not affected by this command as this
-command merely deletes shared network level option. In order to
+Such an option instance is not affected by this command as this
+command merely deletes the shared network level option. In order to
 delete subnet level option the `remote-option[46]-subnet-del`
 command must be used instead.
 

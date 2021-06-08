@@ -206,7 +206,7 @@ The commands can take several additional optional parameters:
    true.
 
 -  ``fqdn-rev`` - specifies whether the lease should be marked as if
-   reverse DNS update were conducted. Note this only affects the the
+   reverse DNS update were conducted. Note this only affects the
    data stored in the lease database, and no DNS update will be
    performed.. If configured, a DNS update to remove the PTR record will
    be conducted when the lease is removed due to expiration or being
@@ -383,7 +383,7 @@ returned codes are the same as the results returned for the commands.
 In particular, the result of 1 indicates an error while processing the
 lease, e.g. a communication error with the database. The result of 3
 indicates that an attempt to delete the lease was unsuccessful because
-such lease doesn't exist (empty result).
+such a lease doesn't exist (empty result).
 
 .. _command-lease4-get:
 
@@ -755,7 +755,7 @@ An example of the ``lease6-get-by-hostname`` is:
     }
 
 The by key is the only parameter. The returned response contains a detailed
-list of leases in the same format than ``leaseX-get-all``. This list can be
+list of leases in the same format as ``leaseX-get-all``. This list can be
 empty and usually is never large.
 
 .. _command-lease4-del:
@@ -808,7 +808,7 @@ When true it instructs the server to queue a request to kea-dhcp-ddns to
 remove DNS entries after the lease is successfully deleted if:
 
 - DDNS updating is enabled. (i.e. "dhcp-ddns":{ "enable-updates": true })
-- The lease's hostname is not be empty.
+- The lease's hostname is not empty.
 - At least one of the lease's DNS direction flags (fdqn_fwd or fdqn_rev) is true.
 
 This parameter defaults to false. An example of its use is shown below:

@@ -679,7 +679,7 @@ That breaks down as like so:
   - ``%t``
     The thread ID. From the example log: ``12345``.
     Note the format of the thread ID is OS dependent: e.g. on some systems
-    it is an address so is displayed in hexadecimal.
+    it is an address so it is displayed in hexadecimal.
 
   - ``%m``
     The log message itself. Kea log messages all begin with a message identifier
@@ -748,7 +748,7 @@ console using standard output.
    }
 
 In this second example, we want to store debug log messages in a file
-that is at most 2MB and keep up to eight copies of old logfiles. Once the
+that is at most 2MB and keep up to eight copies of old log files. Once the
 logfile grows to 2MB, it will be renamed and a new file will be created.
 
 ::

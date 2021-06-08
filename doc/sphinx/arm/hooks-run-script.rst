@@ -38,7 +38,7 @@ the script (including next step) to be ignored.
 .. note::
 
    Currently the functionality underneath 'sync' parameter is not implemented
-   and enabling synchronous calls to external script is not supported.
+   and enabling synchronous calls to external scripts is not supported.
 
 .. _hooks-run-script-hook-points:
 
@@ -187,7 +187,7 @@ An example of a script implementing all hook points is presented below.
 
 .. _hooks-run-script-exported-environment-variables:
 
-Available parameters for each hook points are presented below.
+Available parameters for each hook point are presented below.
 
 DHCPv4:
 

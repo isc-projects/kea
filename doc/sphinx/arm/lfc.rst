@@ -14,7 +14,7 @@ the files used to provide persistent storage for the Memfile database
 backend. This service is written to run as a standalone process.
 
 While ``kea-lfc`` can be started externally, there is usually no need to
-do s. ``kea-lfc`` is run on a periodic basis by the Kea DHCP servers.
+do so. ``kea-lfc`` is run on a periodic basis by the Kea DHCP servers.
 
 The process operates on a set of files, using them to receive input and
 output of the lease entries and to indicate what stage the process is

@@ -48,4 +48,4 @@ connection is lost. It can have one of the following values:
 
 If connectivity to all backends is restored, the server returns to normal
 operations. If the connection can not be restored and the server is configured
-to exit, it issues a fatal error before shut down.
+to exit, it issues a fatal error before shutdown.

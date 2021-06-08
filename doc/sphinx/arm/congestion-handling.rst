@@ -66,7 +66,7 @@ figure varies widely depending on the specifics of an individual deployment.
 
 As there is no one algorithm that will best handle the dynamics of all
 sites, and because over time new approaches will evolve, the packet
-queue is implemented as a plug-in, which can replaced by a custom queue
+queue is implemented as a plug-in, which can be replaced by a custom queue
 implementation via a hook library. This should make it straightforward
 for interested parties to experiment with their own solutions.
 (Developers can refer to isc::dhcp::PacketQueue and

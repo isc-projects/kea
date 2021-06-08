@@ -52,8 +52,8 @@ on CentOS 7.0. Other systems may differ slightly.
 .. note::
 
    Starting with Kea 1.7.0, ISC now provides Kea software and hooks in convenient to use
-   native DEB and RPM packages. This includes RADIUS hook and the required patched version
-   of FreeRADIUS client library. The software compilation for RADIUS is complicated. unless
+   native DEB and RPM packages. This includes the RADIUS hook and the required patched version
+   of the FreeRADIUS client library. The software compilation for RADIUS is complicated. unless
    you have specific reasons to compile it yourself, you should seriously consider using
    native packages.
 

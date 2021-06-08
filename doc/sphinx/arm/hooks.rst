@@ -61,7 +61,7 @@ Installing Hook Packages
 .. note::
 
    For more details about installing the Kea Premium Hooks package, please read
-   `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
+   `this Knowledge Base article <https://kb.isc.org/docs/aa-01587>`__.
 
 Some hook packages are included in the base Kea sources. There is no
 need to do anything special to compile or install them, as they are covered
@@ -306,7 +306,7 @@ loaded by the correct process per the table below.
    +=================+===============+============================================================+
    | User Check      | Kea sources   |Reads known users list from a file. Unknown users will be   |
    |                 | (since 0.8)   |assigned a lease from the last subnet defined in the        |
-   |                 |               |configuration file, e.g. to redirect them a captive         |
+   |                 |               |configuration file, e.g. to redirect them to a captive      |
    |                 |               |portal. This demonstrates how an external source of         |
    |                 |               |information can be used to influence the Kea allocation     |
    |                 |               |engine. This hook is part of the Kea source code and is     |
@@ -390,19 +390,19 @@ loaded by the correct process per the table below.
    | Availability    | (since 1.4)   |by setting up a pair of the DHCP servers in a network.  Two |
    |                 |               |modes of operation are supported. The first one is called   |
    |                 |               |load balancing and is sometimes referred to as              |
-   |                 |               |active-active. Each server can handle selected group of     |
+   |                 |               |active-active. Each server can handle selected groups of    |
    |                 |               |clients in this network or all clients, if it detects that  |
    |                 |               |its partner has become unavailable. It is also possible to  |
    |                 |               |designate one server to serve all DHCP clients, and leave   |
    |                 |               |another server as "standby". This mode is called hot standby|
-   |                 |               |and is sometimes referenced to as active-passive. This      |
+   |                 |               |and is sometimes referred to as active-passive. This        |
    |                 |               |server will activate its DHCP function when it detects that |
    |                 |               |its partner is not available.  Such cooperation between the |
    |                 |               |DHCP servers requires that these servers constantly         |
    |                 |               |communicate with each other to send updates about allocated |
    |                 |               |leases and to periodically test whether their partners are  |
    |                 |               |still operational. The hook library also provides an ability|
-   |                 |               |to send lease updates to external backup server, making it  |
+   |                 |               |to send lease updates to external backup servers, making it |
    |                 |               |much easier to have a replacement that is almost up to      |
    |                 |               |date. The "libdhcp_ha" library provides such functionality  |
    |                 |               |for Kea DHCP servers.                                       |
@@ -425,7 +425,7 @@ loaded by the correct process per the table below.
    |                 |               |specific IPv4 or IPv6 addresses reserved by RADIUS,         |
    |                 |               |dynamically assigning addresses from designated pools chosen|
    |                 |               |by RADIUS or rejecting the client's messages altogether. The|
-   |                 |               |accounting mechanism allows RADIUS server to keep track of  |
+   |                 |               |accounting mechanism allows a RADIUS server to keep track of|
    |                 |               |device activity over time.                                  |
    +-----------------+---------------+------------------------------------------------------------+
    | Host Cache      | Support       |Some of the database backends, such as RADIUS, are          |
@@ -437,19 +437,19 @@ loaded by the correct process per the table below.
    |                 |               |includes negative caching, i.e. the ability to remember that|
    |                 |               |there is no client information in the database.             |
    +-----------------+---------------+------------------------------------------------------------+
-   | Class Commands  | Support       |This Class Cmds hooks library allows for adding, updating   |
+   | Class Commands  | Support       |This Class Cmds hooks library allows for adding, updating,  |
    |                 | customers     |deleting and fetching configured DHCP client classes without|
    |                 | (since 1.5)   |the need to restart the DHCP server.                        |
    +-----------------+---------------+------------------------------------------------------------+
    | MySQL           | Kea sources   |The MySQL CB hooks library is an implementation of the Kea  |
-   | Configuration   | (since 1.6)   |Configuration Backend for MySQL. It uses MySQL database as a|
-   | Backend         |               |repository for the Kea configuration information. The Kea   |
+   | Configuration   | (since 1.6)   |Configuration Backend for MySQL. It uses a MySQL database as|
+   | Backend         |               |a repository for the Kea configuration information. The Kea |
    |                 |               |servers use this library to fetch their configurations.     |
    +-----------------+---------------+------------------------------------------------------------+
    | Configuration   | Support       |The Configuration Backend Commands (CB Commands) hooks      |
    | Backend         | customers     |library implements a collection of commands to manage the   |
    | Commands        | (since 1.6)   |configuration information of the Kea servers in the         |
-   |                 |               |database. This library may only be used in conjuction with  |
+   |                 |               |database. This library may only be used in conjunction with |
    |                 |               |one of the supported configuration backend implementations. |
    +-----------------+---------------+------------------------------------------------------------+
    | BOOTP           | Kea sources   |The BOOTP hooks library adds BOOTP support, as defined in   |
@@ -1467,7 +1467,7 @@ continue serving clients while this mechanism is activated.
 flex_id: Flexible Identifiers for Host Reservations
 ===================================================
 
-This section describes a hook application dedicated to generate flexible
+This section describes a hook application dedicated to generating flexible
 identifiers for host reservations. The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
 classes, and other features. The reservation can be based on hardware
@@ -1757,7 +1757,7 @@ name followed by .boot for content.
 
 The flexible option library supports both DHCPv4 and DHCPv6.
 
-Since Kea 1.9.0, the add and supersede actions take an optional cvs-format
+Since Kea 1.9.0, the add and supersede actions take an optional csv-format
 boolean parameter. If not specified or configured to false, the option data is
 set using the raw value of the evaluated expression. When it is configured
 to true, this value is parsed using the option definition from the option data

@@ -66,7 +66,7 @@ that must be used:
   packages / installation only when Botan was configured with the
   ``--with-boost`` option.
 
-  Sadly, many packages provided by operating systens, such as Ubuntu 20.10,
+  Sadly, many packages provided by operating systems, such as Ubuntu 20.10,
   did not build Botan with boost support, therefore making those packages
   unusable directly for Kea.
 
@@ -75,7 +75,7 @@ that must be used:
   directory but of course this should be a last resort procedure.
 
   Note that without these header files or with a Botan version older
-  than 2.14.0 Kea can still build but the TLS/HHTPS support is disabled:
+  than 2.14.0 Kea can still build but the TLS/HTTPS support is disabled:
   any attempt to use it will fail with a fatal error.
 
 - Very old boost versions provide SSL support (based on OpenSSL)
@@ -362,7 +362,7 @@ processes that are used to ensure adequate code quality:
 Fuzz testing
 ------------
 
-Kea team has a process for running fuzz testing, using `AFL <https://github.com/google/AFL>`_. There
+The Kea team has a process for running fuzz testing, using `AFL <https://github.com/google/AFL>`_. There
 are two modes which are run. The first mode fuzzes incoming packets, effectively throwing millions of mostly
 broken packets at Kea per day. The second mode fuzzes configuration structures and forces Kea to
 attempt to load them. Kea has been fuzzed since around 2018 in both modes. The input seeds

@@ -1589,7 +1589,7 @@ one of them is responding to all DHCP queries and the other one is awaiting
 a shutdown.
 
 Suppose that the HA setup includes two active servers, e.g. ``server1``
-and ``server2`` and the latter needs to be shut down for the maintenance.
+and ``server2`` and the latter needs to be shut down for maintenance.
 The administrator should send the ``ha-maintenance-start`` to server1,
 as this is the server which is going to handle the DHCP traffic while the
 other one is offline. The server1 may respond with an error if its state
