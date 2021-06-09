@@ -7014,8 +7014,8 @@ default value of the ``config-fetch-wait-time`` is 30 seconds.
 
 The ``config-backend-pull`` command can be used to force the server to
 immediately poll the configuration changes from the database and avoid
-waiting for the next fetch cycle. The command was added in the 1.7.1 Kea
-release for DHCPv4 and DHCPv6 servers.
+waiting for the next fetch cycle. The command was added in Kea release
+1.7.1 for DHCPv4 and DHCPv6 servers.
 
 Finally, in the configuration example above, two hooks libraries are
 loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of

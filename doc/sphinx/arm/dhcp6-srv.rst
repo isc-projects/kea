@@ -2232,7 +2232,7 @@ When the client does not specify lifetimes the default is used. When
 it specifies a lifetime using IAADDR or IAPREFIX sub option with
 non-zero values, these values are used when they are between configured
 minimum (lower values are round up) and maximum (larger values are
-round down) bounds.
+rounded down) bounds.
 
 To send specific, fixed values use the following two parameters:
 
@@ -4425,7 +4425,7 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          # Use of IP addresses in global reservation is risky.
+          # Use of IP addresses in global reservations is risky.
           # If used outside of matching subnet, such as 3001::/64,
           # it will result in a broken configuration being handed
           # to the client.
