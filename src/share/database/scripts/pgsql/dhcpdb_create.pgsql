@@ -1117,7 +1117,7 @@ CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-INSERT INTO dhcp4_server VALUES (1,'all','special type: all servers');
+INSERT INTO dhcp6_server VALUES (1,'all','special type: all servers');
 
 
 
@@ -1252,7 +1252,6 @@ CREATE TRIGGER dhcp6_pool_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
-
 -- And now the same, but for PD pools.
 CREATE TABLE dhcp6_pd_pool (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1286,7 +1285,6 @@ CREATE TABLE dhcp6_subnet_server (
   CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id),
   UNIQUE (subnet_id, server_id)
 );
-
 CREATE INDEX dhcp6_subnet_server_idx1 on dhcp6_subnet_server(server_id);
 CREATE INDEX dhcp6_subnet_server_idx2 on dhcp6_subnet_server(modification_ts);
 CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
@@ -1660,23 +1658,6 @@ CREATE TRIGGER dhcp4_option_def_server_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
--- Now create a table for associating defined options with servers.
-CREATE TABLE dhcp4_options_server (
-  option_id BIGINT NOT NULL,
-  server_id BIGINT NOT NULL,
-  modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (option_id, server_id),
-  CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id)
-    REFERENCES dhcp4_options (option_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-  CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id)
-    REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE NO ACTION
-);
-CREATE INDEX dhcp4_options_server_idx1 on dhcp4_options_server(server_id);
-CREATE INDEX dhcp4_options_server_idx2 on dhcp4_options_server(modification_ts);
-CREATE TRIGGER dhcp4_options_server_modification_ts_update
-  AFTER UPDATE ON dhcp4_options_server
-  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
 
 -- Now create two tables for audit revisions...
 CREATE TABLE dhcp4_audit_revision (
@@ -1707,7 +1688,6 @@ CREATE TRIGGER dhcp4_audit_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX dhcp4_audit_idx1 on dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 on dhcp4_audit (revision_id);
-
 
 
 
