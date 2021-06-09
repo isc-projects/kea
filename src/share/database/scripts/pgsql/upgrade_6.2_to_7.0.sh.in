@@ -269,11 +269,6 @@ CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
 
 
 
-
-
-
-
-
 CREATE TABLE dhcp6_subnet_server (
   subnet_id BIGINT NOT NULL,
   server_id BIGINT NOT NULL,
@@ -283,7 +278,6 @@ CREATE TABLE dhcp6_subnet_server (
   CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id),
   UNIQUE (subnet_id, server_id)
 );
-
 CREATE INDEX dhcp6_subnet_server_idx1 on dhcp6_subnet_server(server_id);
 CREATE INDEX dhcp6_subnet_server_idx2 on dhcp6_subnet_server(modification_ts);
 CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
@@ -704,7 +698,6 @@ CREATE TRIGGER dhcp4_audit_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX dhcp4_audit_idx1 on dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 on dhcp4_audit (revision_id);
-
 
 
 
