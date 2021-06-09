@@ -504,6 +504,7 @@ public:
 /// @brief Test fixture class for http control sockets.
 class HttpControlSocketTest : public ThreadedTest {
 public:
+    /// @brief Constructor
     HttpControlSocketTest()
         : ThreadedTest(), io_service_() {
     }
@@ -597,12 +598,6 @@ public:
 
     /// @brief Pointer to listener.
     HttpListenerPtr listener_;
-
-    /// @brief Done flag (stopping thread).
-    bool done_;
-
-    /// @brief Finished flag (stopped thread).
-    bool finished_;
 };
 
 /// @brief Create the reflecting listener.

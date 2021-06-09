@@ -72,7 +72,8 @@ public:
     /// \param name name of the counter used in log file.
     CustomCounter(const std::string& name) :
         counter_(0),
-        name_(name) { };
+        name_(name) {
+    }
 
     /// \brief Increment operator.
     const CustomCounter& operator++() {
@@ -96,15 +97,19 @@ public:
     ///
     /// Method returns counter value.
     ///
-        /// \return counter value.
-    uint64_t getValue() const { return(counter_); }
+    /// \return counter value.
+    uint64_t getValue() const {
+        return (counter_);
+    }
 
     /// \brief Return counter name.
     ///
     /// Method returns counter name.
     ///
-        /// \return counter name.
-    const std::string& getName() const { return(name_); }
+    /// \return counter name.
+    const std::string& getName() const {
+        return (name_);
+    }
 
 private:
     /// \brief Default constructor.
@@ -112,7 +117,8 @@ private:
     /// Default constructor is private because we don't want client
     /// class to call it because we want client class to specify
     /// counter's name.
-    CustomCounter() { };
+    CustomCounter() : counter_(0) {
+    }
 
     uint64_t counter_;  ///< Counter's value.
     std::string name_;  ///< Counter's name.

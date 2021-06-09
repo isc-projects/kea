@@ -51,6 +51,12 @@ TEST(LoggingDestination, equals) {
 class LoggingInfoTest : public ::testing::Test {
 public:
 
+    /// @brief Constructor
+    LoggingInfoTest() = default;
+
+    /// @brief Destructor
+    virtual ~LoggingInfoTest() = default;
+
     /// @brief Setup the test.
     virtual void SetUp() {
         Daemon::setVerbose(false);

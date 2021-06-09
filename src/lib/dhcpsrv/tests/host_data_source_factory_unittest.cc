@@ -74,6 +74,13 @@ factory0(const DatabaseConnection::ParameterMap&) {
 
 // @brief Test fixture class
 class HostDataSourceFactoryTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    HostDataSourceFactoryTest() = default;
+
+    /// @brief Destructor
+    virtual ~HostDataSourceFactoryTest() = default;
+
 private:
     // @brief Prepares the class for a test.
     virtual void SetUp() {

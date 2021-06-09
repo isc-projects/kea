@@ -682,6 +682,14 @@ public:
 
 /// @brief Test fixture class for @c HostMgr class.
 class HostMgrTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor
+    HostMgrTest() = default;
+
+    /// @brief Destructor
+    virtual ~HostMgrTest() = default;
+
 protected:
 
     /// @brief Prepares the class for a test.

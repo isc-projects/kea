@@ -24,8 +24,12 @@ namespace test {
 class MemHostDataSource : public virtual BaseHostDataSource {
 public:
 
+    /// @brief Constructor.
+    MemHostDataSource() : next_host_id_(0) {
+    }
+
     /// @brief Destructor.
-    virtual ~MemHostDataSource() { }
+    virtual ~MemHostDataSource() = default;
 
     /// BaseHostDataSource methods.
 

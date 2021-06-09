@@ -39,7 +39,7 @@ public:
     /// @brief Destructor
     ///
     /// Removes any configuration that may have been added in CfgMgr.
-    ~LeaseFileLoaderTest();
+    virtual ~LeaseFileLoaderTest();
 
     /// @brief Prepends the absolute path to the file specified
     /// as an argument.

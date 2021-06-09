@@ -20,6 +20,13 @@ const char* TESTNAME = "pid_file.test";
 
 class PIDFileTest : public ::testing::Test {
 public:
+
+    /// @brief Constructor
+    PIDFileTest() = default;
+
+    /// @brief Destructor
+    virtual ~PIDFileTest() = default;
+
     /// @brief Prepends the absolute path to the file specified
     /// as an argument.
     ///

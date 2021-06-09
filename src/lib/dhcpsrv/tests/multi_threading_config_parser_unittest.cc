@@ -23,6 +23,14 @@ namespace {
 
 /// @brief Test fixture class for @c MultiThreadingConfigParser
 class MultiThreadingConfigParserTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor
+    MultiThreadingConfigParserTest() = default;
+
+    /// @brief Destructor
+    virtual ~MultiThreadingConfigParserTest() = default;
+
 protected:
 
     /// @brief Setup for each test.

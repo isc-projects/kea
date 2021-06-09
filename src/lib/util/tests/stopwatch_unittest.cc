@@ -101,6 +101,14 @@ StopwatchMock::getCurrentTime() const {
 
 /// @brief Test fixture class for testing @c StopwatchImpl.
 class StopwatchTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor
+    StopwatchTest() = default;
+
+    /// @brief Destructor
+    virtual ~StopwatchTest() = default;
+
 protected:
 
     /// @brief Set up the test.

@@ -24,19 +24,22 @@ namespace {
 const size_t TEST_DATA_SIZE = 8 * 1024 * 1024;
 
 class FDTest : public ::testing::Test {
-    public:
-        unsigned char *data, *buffer;
-        FDTest() :
-            // We do not care what is inside, we just need it to be the same
-            data(new unsigned char[TEST_DATA_SIZE]),
-            buffer(NULL)
-        {
-            memset(data, 0, TEST_DATA_SIZE);
-        }
-        ~ FDTest() {
-            delete[] data;
-            delete[] buffer;
-        }
+public:
+    unsigned char *data, *buffer;
+
+    /// @brief Constructor
+    FDTest() :
+        // We do not care what is inside, we just need it to be the same
+        data(new unsigned char[TEST_DATA_SIZE]),
+        buffer(NULL) {
+        memset(data, 0, TEST_DATA_SIZE);
+    }
+
+    /// @brief Destructor
+    ~FDTest() {
+        delete[] data;
+        delete[] buffer;
+    }
 };
 
 // Test we read what was sent

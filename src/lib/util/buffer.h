@@ -337,7 +337,7 @@ public:
     }
 
     /// \brief Destructor
-    ~ OutputBuffer() {
+    ~OutputBuffer() {
         free(buffer_);
     }
     //@}

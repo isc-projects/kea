@@ -23,8 +23,14 @@ namespace {
 
 /// @brief Test fixture class for @c DHCPQueueControlParser
 class DHCPQueueControlParserTest : public ::testing::Test {
-protected:
+public:
+    /// @brief Constructor
+    DHCPQueueControlParserTest() = default;
 
+    /// @brief Destructor
+    virtual ~DHCPQueueControlParserTest() = default;
+
+protected:
     /// @brief Setup for each test.
     ///
     /// Clears the configuration in the @c CfgMgr.
@@ -34,7 +40,6 @@ protected:
     ///
     /// Clears the configuration in the @c CfgMgr.
     virtual void TearDown();
-
 };
 
 void

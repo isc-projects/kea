@@ -116,9 +116,6 @@ public:
     static void logChanges(S_Session sess, const std::string& model);
 #endif
 
-    /// @brief Cancel flag.
-    bool cancel_;
-
 protected:
     /// @brief Get and display Kea server configuration.
     ///

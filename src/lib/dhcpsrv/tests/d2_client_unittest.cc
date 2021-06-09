@@ -340,6 +340,13 @@ TEST(D2ClientMgr, ipv6Config) {
 /// @brief Test class for execerising manager functions that are
 /// influenced by DDNS parameters.
 class D2ClientMgrParamsTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    D2ClientMgrParamsTest() = default;
+
+    /// @brief Destructor
+    virtual ~D2ClientMgrParamsTest() = default;
+
 private:
     /// @brief Prepares the class for a test.
     virtual void SetUp() {

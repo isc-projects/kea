@@ -49,6 +49,9 @@ public:
         : d2_mgr_(CfgMgr::instance().getD2ClientMgr()), lease_() {
     }
 
+    /// @brief Destructor
+    virtual ~NCRGeneratorTest() = default;
+
     /// @brief Initializes the lease pointer used by the tests and starts D2.
     ///
     /// This method initializes the pointer to the lease which will be used

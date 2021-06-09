@@ -76,7 +76,10 @@ const size_t INITIAL_BUFSIZE = 512;
 const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + MAX_DATASIZE) * 2;
 
 struct SocketSessionForwarder::ForwarderImpl {
-    ForwarderImpl() : fd_(-1), buf_(DEFAULT_HEADER_BUFLEN) {}
+    ForwarderImpl() : sock_un_len_(0), fd_(-1), buf_(DEFAULT_HEADER_BUFLEN) {
+        memset(&sock_un_, 0, sizeof(sock_un_));
+    }
+
     struct sockaddr_un sock_un_;
     socklen_t sock_un_len_;
     int fd_;

@@ -32,8 +32,14 @@ namespace {
 
 /// @brief Test fixture class for @c HostReservationsListParser.
 class HostReservationsListParserTest : public ::testing::Test {
-protected:
+public:
+    /// @brief Constructor
+    HostReservationsListParserTest() = default;
 
+    /// @brief Destructor
+    virtual ~HostReservationsListParserTest() = default;
+
+protected:
     /// @brief Setup for each test.
     ///
     /// Clears the configuration in the @c CfgMgr. It also initializes

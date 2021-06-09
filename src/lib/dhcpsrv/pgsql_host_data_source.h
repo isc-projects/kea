@@ -67,9 +67,10 @@ public:
     /// @throw isc::db::DbOpenError Error opening the database
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-   PgSqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
+    PgSqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
+    ///
     /// Frees database resources and closes the database connection through
     /// the destruction of member impl_.
     virtual ~PgSqlHostDataSource();

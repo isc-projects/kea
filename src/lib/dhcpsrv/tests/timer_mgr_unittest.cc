@@ -27,7 +27,16 @@ namespace {
 
 /// @brief Test fixture class for @c TimerMgr.
 class TimerMgrTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor
+    TimerMgrTest() = default;
+
+    /// @brief Destructor
+    virtual ~TimerMgrTest() = default;
+
 private:
+
     /// @brief Prepares the class for a test.
     virtual void SetUp();
 

@@ -80,6 +80,7 @@ public:
             }
             result.replace(where, from.size(), repl);
         }
+        return (result);
     }
 };
 

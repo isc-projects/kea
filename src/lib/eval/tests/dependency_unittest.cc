@@ -29,8 +29,13 @@ namespace {
 /// of the dependency of classification expressions.
 class DependencyTest : public ::testing::Test {
 public:
+    /// @brief Constructor
+    DependencyTest() : result_(true) {
+    }
 
-    /// @brief Reset expression and result.
+    /// @brief Destructor
+    ///
+    /// Reset expression and result.
     ~DependencyTest() {
         e_.reset();
         result_ = false;
