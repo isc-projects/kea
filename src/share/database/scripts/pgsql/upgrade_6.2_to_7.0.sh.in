@@ -206,8 +206,10 @@ CREATE TABLE dhcp6_subnet (
   reservations_out_of_pool BOOLEAN DEFAULT NULL,
   cache_threshold float DEFAULT NULL,
   cache_max_age BIGINT DEFAULT NULL,
-  CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp6_shared_network (name),
-  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+  CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
+    REFERENCES dhcp6_shared_network (name) ON DELETE SET NULL ON UPDATE NO ACTION,
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name)
+    REFERENCES ddns_replace_client_name_types (type)
 );
 
 CREATE TRIGGER dhcp6_subnet_modification_ts_update
@@ -216,12 +218,6 @@ CREATE TRIGGER dhcp6_subnet_modification_ts_update
 
 CREATE INDEX dhcp6_subnet_idx1 ON dhcp6_subnet (modification_ts);
 CREATE INDEX dhcp6_subnet_idx2 ON dhcp6_subnet (shared_network_name);
-
--- TODO: on delete set up dhcp6_subnet_shared_network to NULL
---   the MySQL equivalent is: CONSTRAINT `fk_dhcp6_subnet_shared_network` FOREIGN KEY (`shared_network_name`) REFERENCES
---   `dhcp6_shared_network` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
-
-
 
 
 
@@ -545,8 +541,10 @@ CREATE TABLE dhcp4_subnet (
   reservations_out_of_pool BOOLEAN DEFAULT NULL,
   cache_threshold float DEFAULT NULL,
   cache_max_age BIGINT DEFAULT NULL,
-  CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name) REFERENCES dhcp4_shared_network (name),
-  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name) REFERENCES ddns_replace_client_name_types (type)
+  CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
+    REFERENCES dhcp4_shared_network (name) ON DELETE SET NULL ON UPDATE NO ACTION,
+  CONSTRAINT fk_ddns_replace_client_name FOREIGN KEY (ddns_replace_client_name)
+    REFERENCES ddns_replace_client_name_types (type)
 );
 
 CREATE TRIGGER dhcp4_subnet_modification_ts_update
