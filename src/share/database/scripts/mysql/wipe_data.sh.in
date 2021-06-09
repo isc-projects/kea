@@ -32,6 +32,11 @@ else
 fi
 
 # First argument is must be the expected schema version <major>.<minor>
+# Check if it's passed at all.
+if [ "$#" -lt "1" ]; then
+    printf "Required at least one parameter: schema version number, e.g. 7.0\n"
+    exit 1
+fi
 exp_version="$1"
 shift
 
