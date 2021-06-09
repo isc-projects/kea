@@ -28,7 +28,7 @@ help:
 It will list available parameters.
 
 Hammer is able to set up various operating systems running either in LXC
-or in VirtualBox. To list of supported systems, use the
+or in VirtualBox. For a list of supported systems, use the
 ``supported-systems`` command:
 
 .. code-block:: console

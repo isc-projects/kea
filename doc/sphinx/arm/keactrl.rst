@@ -346,7 +346,7 @@ service etc.
 As such, it is recommended to use ``systemctl`` commands if they are available. Native
 Kea packages do not provide keactrl and instead ``systemctl`` service definitions are
 provided instead. Consult documentation of your system for details. Briefly, here
-are example commands to checks status, start, stop and restart various Kea daemons:
+are example commands to check status, start, stop and restart various Kea daemons:
 
 .. code-block:: console
 

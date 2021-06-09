@@ -111,11 +111,11 @@ of DHCP responses, because not only do active servers send lease updates
 to each other, but also to the backup servers. As of Kea 1.7.8 the active
 servers no longer expect the acknowledgments from the backup servers
 before responding to the DHCP clients, therefore the overhead of sending
-the lease updates to the backup servers is minimized comparing to the
+the lease updates to the backup servers is minimized compared to the
 earlier Kea versions.
 
 The last supported configuration, passive-backup, has been introduced
-in Kea 1.7.8 release. In this configuration there is only one active
+in Kea release 1.7.8. In this configuration there is only one active
 server and typically one or more backup servers. A passive-backup
 configuration with no backup servers is also accepted but it is no
 different than running a single server with no HA function at all.
@@ -131,7 +131,7 @@ servers should have accurate or nearly accurate information about the
 allocated leases. The major advantage of the passive-backup mode is that
 it provides some redundancy of the lease information but with better
 performance of the primary server responding to the DHCP queries. Since
-Kea 1.7.8 release, the primary server does not have to wait for the
+Kea release 1.7.8, the primary server does not have to wait for the
 acknowledgments to the lease updates from the backup servers before it
 sends a response to the DHCP client. This reduces the response time
 comparing to the load-balancing and hot-standby cases in which the
@@ -324,7 +324,7 @@ The following is the list of all possible server states:
    default, the primary server does not wait for the acknowledgments from
    the backup servers and responds to the DHCP query right after sending
    the lease updates to all backup servers. If any of the lease updates
-   fails, a backup server misses such lease update but the DHCP client
+   fail, a backup server misses the lease update but the DHCP client
    is still provisioned. This default configuration can be changed by
    setting the ``wait-backup-ack`` configuration parameter to ``true``,
    in which case the primary server always waits for the acknowledgements
@@ -523,7 +523,7 @@ with the only difference that ``this-server-name`` should be set to
    A server will only use the pool fragments owned by the partner when
    the partner is not running. See the notes in the
    :ref:`ha-supported-configurations` highlighting differences between
-   the ``load-balancing`` and ``hot-standby`` modes. The semantics of the pools
+   the ``load-balancing`` and ``hot-standby`` modes. The semantics of the pool
    partitioning is explained further in this section.
    The :ref:`ha-load-balancing-advanced-config` provides advanced pools
    partitioning examples.
@@ -647,7 +647,7 @@ behavior with respect to HA:
 -  ``delayed-updates-limit`` - specifies a maximum number of lease
    updates which can be queued while the server is in the
    ``communication-recovery`` state. This parameter was introduced in
-   Kea 1.9.4 release. The special value of 0 configures the server to
+   Kea release 1.9.4. The special value of 0 configures the server to
    never transition to the ``communication-recovery`` state and the
    server behaves as in earlier Kea versions. The default value of this
    parameter is 100.
@@ -720,7 +720,7 @@ state these problems are avoided.
 If a server in the ``communication-recovery`` state re-establishes
 communication with its partner, it will try to send the partner all
 of the outstanding lease updates the server has queued. This is done
-synchronously and may take considerable amount of time before the server
+synchronously and may take a considerable amount of time before the server
 transitions to the ``load-balancing`` state and resumes normal operation.
 The maximum number of lease updates which can be queued in the
 ``communication-recovery`` state is controlled by the ``delayed-updates-limit``.
@@ -989,7 +989,7 @@ In this mode, the non-primary active server is called ``standby`` and
 that is its role.
 
 Finally, because there is always one server responding to DHCP queries,
-there is only one scope - ``HA_server1`` - in use within pools
+there is only one scope - ``HA_server1`` - in use within pool
 definitions. In fact, the ``client-class`` parameter could be removed
 from this configuration without harm, because there can be no conflicts
 in lease allocations by different servers as they do not allocate leases
@@ -1598,24 +1598,24 @@ the maintenance is not supported for the backup server or the server being
 in the terminated state. Also, an error will be returned if the maintenance
 request was already sent to the other server.
 
-Upon receiving the ``ha-maintenance-start`` command, the server1 will
-send the ``ha-maintenance-notify`` command to the server2 to put this
-server in the ``in-maintenance`` state. If the server2 confirms, the server1
+Upon receiving the ``ha-maintenance-start`` command, server1 will
+send the ``ha-maintenance-notify`` command to server2 to put this
+server in the ``in-maintenance`` state. If server2 confirms, server1
 will transition to the ``partner-in-maintenance`` state. This is similar
 to the ``partner-down`` state, except that in the ``partner-in-maintenance``
-state the server1 continues to send lease updates to the server2 until
-the administrator shuts down the server2. The server1 now responds to all
+state server1 continues to send lease updates to server2 until
+the administrator shuts down server2. Server1 now responds to all
 DHCP queries.
 
-The administrator may safely shut down the server2 being in the
+The administrator may safely shut down server2 it being in the
 ``in-maintenance`` state and perform necessary maintenance actions. When
-the server2 is offline, the server1 will encounter communication issues
+server2 is offline, server1 will encounter communication issues
 with the partner and will immediately transition to the ``partner-down``
 state in which it will continue to respond to all DHCP queries but will
-no longer send lease updates to the server2. Starting the server2 after
+no longer send lease updates to server2. Starting server2 after
 the maintenance will trigger normal state negotiation, lease database
 synchronization and, ultimately, a transition to the load-balancing or
-hot-standby state. The maintenance can now be performed for the server1.
+hot-standby state. The maintenance can now be performed on server1.
 It should be initiated by sending the ``ha-maintenance-start`` to the
 server2.
 
@@ -1670,7 +1670,7 @@ trigger lease-database synchronization on demand. It may also be useful
 to manually set the HA scopes that are being served.
 
 Note that the backup server can sometimes be used to handle DHCP traffic
-if both active servers are down. The backup server does not perform
+if both active servers are down. The backup server does not perform the
 failover function automatically; thus, in order to use the backup server
 to respond to DHCP queries, the server administrator must enable this
 function manually.
@@ -2080,7 +2080,7 @@ This command causes the server to reset its High Availability state machine
 by transitioning it to the waiting state. A partner in the
 ``communication-recovery`` state may send this command to cause the server
 to synchronize its lease database. The database synchronization is required
-when the partner failed to send all lease database updates after
+when the partner has failed to send all lease database updates after
 re-establishing connection after a temporary connection failure. It is also
 required when the ``delayed-updates-limit`` is exceeded when the server is
 in the ``communication-recovery`` state.

@@ -656,8 +656,8 @@ The ``status-get`` command returns server's runtime information:
  - packet-queue-statistics: average queue size for last 10, 100 and 1000
    packets. Statistics using an approach similar to the Unix ``top`` command.
    The averaged queue size for the last 10 packets can be considered an
-   instantaneous value, while average for the last 1000 packets shows
-   longer term trend.
+   instantaneous value, while the average for the last 1000 packets shows
+   a longer term trend.
 
 The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers being in the HA setup. This parameter is

@@ -310,7 +310,7 @@ The statistic-sample-age-set-all Command
 --------------------------------------------
 
 The ``statistic-sample-age-set-all`` command sets time based limits
-for collecting samples for all statistics. It takes single-integer parameter
+for collecting samples for all statistics. It takes a single-integer parameter
 called ``duration``, which specifies the time limit for statistic
 in seconds. An example command may look like this:
 
@@ -396,12 +396,12 @@ points, perhaps to do some form of statistical analysis afterwards.
 
 Since Kea 1.6, by default, each statistic holds 20 data points. Setting such
 a limit prevents unlimited memory growth.
-There are two ways to define the limts: time based (e.g. keep samples from
+There are two ways to define the limits: time based (e.g. keep samples from
 the last 5 minutes) and size based. It's possible to change the size based
 limit by using one of two commands: ``statistic-sample-count-set``,
 to set size limit for single statistic and ``statistic-sample-count-set-all``
 for setting size based limits for all statistics. To set time based
-limit for single statistic use ``statistic-sample-age-set``, and
+limits for single statistic use ``statistic-sample-age-set``, and
 ``statistic-sample-age-set-all`` to set time based limits for all statistics.
 For a given statistic only one type of limit can be active. It means that storage
 is limited only by time based limit or size based, never by both of them.

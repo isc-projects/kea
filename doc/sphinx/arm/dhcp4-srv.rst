@@ -1347,7 +1347,7 @@ subnets.
    }
 
 
-Note that only one of name or code is required; there is no need to
+Note that either name or code is required; there is no need to
 specify both. Space has a default value of "dhcp4", so this can be skipped
 as well if a regular (not encapsulated) DHCPv4 option is defined.
 Finally, csv-format defaults to true, so it too can be skipped, unless
@@ -7038,7 +7038,7 @@ Kea DHCPv4 Compatibility Configuration Parameters
 By default, Kea aims to follow the RFC documents to promote better standards
 compliance. However, there are buggy implementations out there that cannot be
 easily fixed or upgraded. Therefore Kea provides an easy to use compatibility
-mode for broken or non-compliant clients. In that purpose, flags have to be
+mode for broken or non-compliant clients. For that purpose, flags have to be
 enabled in order to enable uncommon practices:
 
 .. code-block:: json

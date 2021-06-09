@@ -106,7 +106,7 @@ The TLS configuration parameters are:
   being configured.
 
 - the ``key-file`` string parameter specifies the private key of the
-  end-entity certificate of Kea instance being configured.
+  end-entity certificate of the Kea instance being configured.
   The file must not be encrypted and it is highly recommended to
   restrict its access.
 
@@ -350,7 +350,7 @@ processes that are used to ensure adequate code quality:
   packets per seconds, CPU usage, memory utilization and others).
 - Kea uses CI (Continuous Integration). This means that the great majority of tests (all unit and system
   tests, and in some cases also performance tests) are run for every commit. Many lighter tests are
-  ran on branches, before the code is even accepted.
+  run on branches, before the code is even accepted.
 - Negative testing. Many unit and system tests check for negative scenarios, such as incomplete,
   broken, truncated packets, API commands, configuration files, incorrect sequences (such as sending
   packets in invalid order) and more.

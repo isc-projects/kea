@@ -773,7 +773,7 @@ network name and the metadata. In order to fetch the detailed information about
 the selected shared network, use the `remote-network[46]-get` command.
 
 The example response above contains three shared networks. One of the
-shared networks is associated will all servers, so it is included in
+shared networks is associated with all servers, so it is included in
 the list of shared networks to be used by "server1" and "server2".
 The remaining two shared networks are returned because one of them
 is associated with the "server1" and another one is associated with
@@ -1242,7 +1242,7 @@ shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
 Such an option instance is not affected by this command as this
 command merely deletes the shared network level option. In order to
-delete subnet level option the `remote-option[46]-subnet-del`
+delete a subnet level option the `remote-option[46]-subnet-del`
 command must be used instead.
 
 The following command attempts to delete an option having the
@@ -1286,7 +1286,7 @@ an existing option in the database. The structure of the option information
 is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
 `options` list. Another list, `shared-networks`, contains a map with the
-name of the shared network for which the option is to be set. If such option
+name of the shared network for which the option is to be set. If such an option
 already exists for the shared network, it is replaced with the new instance.
 
 ::
@@ -1329,9 +1329,9 @@ and option space and these two parameters are passed within the
 prefix delegation pool prefix and length identifying the pool. If the
 option is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
-the specified pool. Such option instance is not affected by this
+the specified pool. Such an option instance is not affected by this
 command as this command merely deletes a prefix delegation pool level
-option. In order to delete subnet level option the
+option. In order to delete a subnet level option the
 `remote-option6-subnet-del` command must be used instead.
 
 ::
@@ -1468,8 +1468,8 @@ an existing option in the database. The structure of the option information
 is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
 `options` list. Another list, `pools`, contains a map with the IP address
-range or prefix identifying the pool. If such option already exists for the
-pool, it is replaced with the new instance.
+range or prefix identifying the pool. If such an option already exists for
+the pool, it is replaced with the new instance.
 
 For example:
 
@@ -1557,7 +1557,7 @@ option in the database. The structure of the option information is the same as
 in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
 `options` list. Another list, `subnets`, contains a map with the identifier of
-the subnet for which the option is to be set. If such option already exists
+the subnet for which the option is to be set. If such an option already exists
 for the subnet, it is replaced with the new instance.
 
 ::

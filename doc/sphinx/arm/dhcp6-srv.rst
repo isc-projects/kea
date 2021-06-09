@@ -4617,7 +4617,7 @@ in the database for the lease for which the new reservation is being added.
 Similar to DHCPv4 (see :ref:`multiple-reservations-same-ip4`), the DHCPv6
 server can also be configured to allow creating multiple reservations
 for the same IPv6 address and/or delegated prefix in a given subnet. This
-is supported beginning with Kea 1.9.1 release as optional mode of operation
+is supported beginning with Kea release 1.9.1 as an optional mode of operation
 enabled with the ``ip-reservations-unique`` global parameter.
 
 The ``ip-reservations-unique`` is a boolean parameter, which defaults to
@@ -4739,7 +4739,7 @@ or prefix) from any of the pools defined within the subnets belonging to
 the shared network. Internally, the server selects one of the subnets
 belonging to a shared network and tries to allocate a lease from this
 subnet. If the server is unable to allocate a lease from the selected
-subnet (e.g., due to pools exhaustion), it will use another subnet from
+subnet (e.g., due to pool exhaustion), it will use another subnet from
 the same shared network and will try to allocate a lease from this subnet,
 etc. Therefore, the server will typically allocate all leases
 available in a given subnet before it starts allocating leases from
@@ -4902,7 +4902,7 @@ However, care should be taken for each subnet to have the same value.
     We view this largely as a site configuration issue.  A shared-network
     generally means the same physical link, so services configured by options
     from subnet A should be as easily reachable from subnet B and vice versa.
-    There are number of ways to avoid this situation:
+    There are a number of ways to avoid this situation:
 
     - Use the same values for options and parameters for subnets within the shared-network.
     - Use subnet selectors or client class guards that ensure that for a single client's query, the same subnet will be used for all IA options in that query.

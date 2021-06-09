@@ -230,7 +230,7 @@ The commands can take several additional optional parameters:
 
 -  ``state`` - specify the state of added lease, can be 0 for ``default``,
    1 for ``declined`` and 2 for ``expired-reclaimed`` state. Any other
-   value will cause error. Note that using 1 for a "IA_PD" lease type is
+   value will cause an error. Note that using 1 for a "IA_PD" lease type is
    illegal and will be rejected.
 
 -  ``user-context`` - specifies the user context to be associated with
@@ -341,7 +341,7 @@ or update two other leases in the database:
        }
    }
 
-If any of the leases is malformed, no leases changes are applied
+If any of the leases are malformed, no lease changes are applied
 to the lease database. If the leases are well-formed but there is a
 failure to apply any of the lease changes to the database, the command
 continues to be processed for other leases. All the leases for which

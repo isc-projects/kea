@@ -555,7 +555,7 @@ output), ``stderr`` (messages are printed on stderr), ``syslog``
 (messages are logged to syslog using a specified name). Any other value is
 interpreted as a filename to which messages should be written.
 
-The flush (true of false) Option
+The flush (true or false) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Flush buffers after each log message. Doing this will reduce performance

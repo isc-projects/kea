@@ -1722,7 +1722,7 @@ true.
 The option to which an action applies may be specified by either its
 numeric code or its name.. At least the code or the name must be
 specified. The option space is the DHCPv4 or DHCPv6 spaces depending
-of the server where the hook library is loaded. Other spaces as vendor
+on the server where the hook library is loaded. Other spaces as vendor
 spaces could be supported in a further version.
 
 The library is available since Kea 1.7.1 and can be loaded in a
@@ -1860,7 +1860,7 @@ the reservation belongs. This is done via the ``subnet-id`` parameter.
 For global reservations, use a value of zero (0). For reservations
 scoped to a specific subnet, use that subnet's ID.
 
-At the opposite when the subnet id is not specified in the command
+On the other hand when the subnet id is not specified in the command
 parameters it is added to each host in responses. If the subnet id
 has the unused special value this means the host entry belongs only
 to the other IP version (i.e. IPv6 in DHCPv4 server or IPv4 in DHCPv6
@@ -3116,11 +3116,11 @@ An example response could look as follows:
                # It is replaced by the "reservations-global"
                # "reservations-in-subnet" and "reservations-out-of-pool"
                # parameters.
-               # Specify if server should lookup global reservations.
+               # Specify if the server should lookup global reservations.
                "reservations-global": false,
-               # Specify if server should lookup in-subnet reservations.
+               # Specify if the server should lookup in-subnet reservations.
                "reservations-in-subnet": true,
-               # Specify if server can assume that all reserved addresses
+               # Specify if the server can assume that all reserved addresses
                # are out-of-pool.
                "reservations-out-of-pool": false,
                "subnet4": [

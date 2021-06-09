@@ -90,7 +90,7 @@ The classification process is conducted in several steps:
 9.  When the incoming packet belongs to the special class, `DROP`, it is
     dropped and an informational message is logged with the packet
     information. Since Kea version 1.9.8 it is allowed to make DROP
-    class dependent of KNOWN/UNKNOWN classes.
+    class dependent on KNOWN/UNKNOWN classes.
 
 10. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
@@ -382,7 +382,7 @@ Notes:
    relay from which to extract the information, with a value of 0
    indicating the relay closest to the DHCPv6 server. Negative values
    allow specifying relays counted from the DHCPv6 client, -1 indicating
-   the relay closest to the client. In general, negative "nest" level is
+   the relay closest to the client. In general, a negative "nest" level is
    the same as the number of relays + "nest" level. If the requested
    encapsulation doesn't exist, an empty string "" is returned. This
    expression is allowed in DHCPv6 only.
