@@ -534,7 +534,7 @@ main(int argc, char* argv[]) {
 
         return (1);
     } catch (...) {
-        cerr << "Fatal error: Unknown error\n";
+        cerr << "Fatal error\n";
 
         return (1);
     }

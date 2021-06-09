@@ -293,7 +293,7 @@ main(int argc, char* argv[]) {
         }
         ret = EXIT_FAILURE;
     } catch (...) {
-        cerr << DHCP4_NAME << ": Fatal error during start up: Unknown error"
+        cerr << DHCP4_NAME << ": Fatal error during start up"
              << endl;
         ret = EXIT_FAILURE;
     }

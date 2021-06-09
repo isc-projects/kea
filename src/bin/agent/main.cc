@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "Service failed: Unknown error" << std::endl;
+        std::cerr << "Service failed" << std::endl;
         ret = EXIT_FAILURE;
     }
 

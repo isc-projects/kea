@@ -61,11 +61,11 @@ main(int argc, char* argv[]) {
     } catch (...) {
         ret_code = 1;
         if (!parser_error) {
-            std::cerr << std::endl << "ERROR: running perfdhcp: Unknown error"
+            std::cerr << std::endl << "ERROR: running perfdhcp"
                       << std::endl;
         } else {
             CommandOptions::usage();
-            std::cerr << std::endl << "ERROR: parsing command line options: Unknown error"
+            std::cerr << std::endl << "ERROR: parsing command line options"
                       << std::endl;
         }
         if (diags.find('e') != std::string::npos) {
