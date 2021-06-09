@@ -109,6 +109,10 @@ CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
+INSERT INTO dhcp4_server VALUES (1,'all','special type: all servers');
+
+
+
 -- Create a table for storing IPv6 shared networks
 CREATE TABLE dhcp6_shared_network (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -424,6 +428,7 @@ CREATE TRIGGER dhcp4_server_modification_ts_update
   AFTER UPDATE ON dhcp4_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
+INSERT INTO dhcp4_server VALUES (1,'all','special type: all servers');
 
 -- Create table for storing global DHCPv4 parameters.
 CREATE TABLE dhcp4_global_parameter (
