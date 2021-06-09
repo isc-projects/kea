@@ -18,9 +18,9 @@
 namespace isc {
 namespace db {
 
-/// @brief Define PostgreSQL backend version: 6.2
-const uint32_t PG_SCHEMA_VERSION_MAJOR = 6;
-const uint32_t PG_SCHEMA_VERSION_MINOR = 2;
+/// @brief Define PostgreSQL backend version: 7.0
+const uint32_t PG_SCHEMA_VERSION_MAJOR = 7;
+const uint32_t PG_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't
