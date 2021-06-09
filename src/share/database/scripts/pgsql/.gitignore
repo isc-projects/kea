@@ -9,4 +9,5 @@
 /upgrade_5.1_to_6.0.sh
 /upgrade_6.0_to_6.1.sh
 /upgrade_6.1_to_6.2.sh
+/upgrade_6.2_to_7.0.sh
 /wipe_data.sh
