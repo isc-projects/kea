@@ -1497,10 +1497,7 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
-            if revision.startswith(('11', '12')):
-                packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
-            else:
-                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
+            packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
@@ -1512,7 +1509,7 @@ def prepare_system_local(features, check_times):
             if revision.startswith(('11', '12')):
                 packages.extend(['postgresql11-server', 'postgresql11-client'])
             else:
-                packages.extend(['postgresql14-server', 'postgresql14-client'])
+                packages.extend(['postgresql13-server', 'postgresql13-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1903,7 +1900,9 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         if 'Bad header data' not in out:
             break
         time.sleep(4)
-    if system == 'ubuntu' and revision == '19.04':
+    if system == 'debian' or (system == 'ubuntu' and revision == '18.04'):
+        frc_version = 'isc20200318122047'
+    elif system == 'ubuntu' and revision == '19.04':
         frc_version = 'isc20200319090824'
     elif system == 'ubuntu' and revision == '20.04':
         frc_version = 'isc20200511114306'
@@ -1976,14 +1975,13 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
     execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
     execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
 
-    # copy packages to common place
-    src_dir = '~/packages/$USER/x86_64'
+    # copy packages from alpine specific dir with produced pkgs to common place
+    alpine_repo_dir = os.path.basename(os.getcwd())
+    src_dir = '~/packages/%s/x86_64' % alpine_repo_dir
     execute('cp %s/*.apk kea-pkg' % src_dir, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
-        # Destination dir for apk files is configured in APKBUILD
-        # ~/packages/pkg/x86_64/
         execute('sudo apk add *.apk', cwd='kea-pkg', check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
