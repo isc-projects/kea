@@ -292,6 +292,10 @@ main(int argc, char* argv[]) {
             // Already logged so ignore
         }
         ret = EXIT_FAILURE;
+    } catch (...) {
+        cerr << DHCP4_NAME << ": Fatal error during start up: Unknown error"
+             << endl;
+        ret = EXIT_FAILURE;
     }
 
     return (ret);

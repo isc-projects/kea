@@ -526,11 +526,15 @@ main(int argc, char* argv[]) {
             }
         }
 
-        cerr << text << std::endl;
+        cerr << text << "\n";
 
         return (1);
     } catch (const std::exception& ex) {
-        std::cerr << "Fatal error: " << ex.what() << std::endl;
+        cerr << "Fatal error: " << ex.what() << "\n";
+
+        return (1);
+    } catch (...) {
+        cerr << "Fatal error: Unknown error\n";
 
         return (1);
     }

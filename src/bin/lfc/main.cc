@@ -44,9 +44,11 @@ int main(int argc, char* argv[]) {
     } catch (const boost::exception& ex) {
         std::cerr << boost::diagnostic_information(ex) << std::endl;
         ret = EXIT_FAILURE;
-
     } catch (const std::exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (...) {
+        std::cerr << "Service failed: Unknown error" << std::endl;
         ret = EXIT_FAILURE;
     }
 

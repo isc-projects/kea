@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
-    try  {
+    try {
         // Instantiate/fetch the DHCP-DDNS application controller singleton.
         DControllerBasePtr& controller = D2Controller::instance();
 
@@ -46,6 +46,9 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     } catch (const std::exception& ex) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (...) {
+        std::cerr << "Service failed: Unknown error" << std::endl;
         ret = EXIT_FAILURE;
     }
 

@@ -21,7 +21,7 @@ int
 main(int argc, char* argv[]) {
     int ret_code = 0;
     std::string diags;
-    bool parsed = false;
+    bool parser_error = true;
     try {
         CommandOptions command_options;
         diags = command_options.getDiags();
@@ -35,9 +35,7 @@ main(int argc, char* argv[]) {
         if (command_options.parse(argc, argv, true)) {
             return (ret_code);
         }
-
-        parsed = true;
-
+        parser_error = false;
         auto scenario = command_options.getScenario();
         PerfSocket socket(command_options);
         if (scenario == Scenario::BASIC) {
@@ -49,13 +47,26 @@ main(int argc, char* argv[]) {
         }
     } catch (const std::exception& e) {
         ret_code = 1;
-        if (parsed) {
+        if (!parser_error) {
             std::cerr << std::endl << "ERROR: running perfdhcp: "
                       << e.what() << std::endl;
         } else {
             CommandOptions::usage();
             std::cerr << std::endl << "ERROR: parsing command line options: "
                       << e.what() << std::endl;
+        }
+        if (diags.find('e') != std::string::npos) {
+            std::cerr << "Fatal error" << std::endl;
+        }
+    } catch (...) {
+        ret_code = 1;
+        if (!parser_error) {
+            std::cerr << std::endl << "ERROR: running perfdhcp: Unknown error"
+                      << std::endl;
+        } else {
+            CommandOptions::usage();
+            std::cerr << std::endl << "ERROR: parsing command line options: Unknown error"
+                      << std::endl;
         }
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
