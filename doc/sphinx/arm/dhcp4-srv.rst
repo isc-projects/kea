@@ -4784,7 +4784,7 @@ The meaning of the reservation flags are:
 - ``reservations-global``: fetch global reservations.
 
 - ``reservations-in-subnet``: fetch subnet reservations. For a shared network
-  this includes all subnets members of the shared network.
+  this includes all subnet members of the shared network.
 
 - ``reservations-out-of-pool``: this makes sense only when the
   ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
@@ -5006,7 +5006,7 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          # Use of IP addresses in global reservation is risky. If used outside
+          # Use of IP addresses in global reservations is risky. If used outside
           # of a matching subnet, such as 192.0.1.0/24, it will result in a broken
           # configuration being handed to the client.
           "ip-address": "192.0.1.77"
