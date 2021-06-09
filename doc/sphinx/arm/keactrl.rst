@@ -60,7 +60,7 @@ The contents of ``keactrl.conf`` are:
 
    # This is a configuration file for keactrl script which controls
    # the startup, shutdown, reconfiguration and gathering the status
-   # of the Keas processes.
+   # of the Kea processes.
 
    # prefix holds the location where the Kea is installed.
    prefix=@prefix@
