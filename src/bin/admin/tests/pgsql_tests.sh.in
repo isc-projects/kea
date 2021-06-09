@@ -279,10 +279,10 @@ pgsql_upgrade_3_0_to_6_1() {
     assert_eq 0 "${EXIT_CODE}" "logs table is missing or broken. (expected status code %d, returned %d)"
 }
 
-pgsql_upgrade_6_1_to_6_2() {
+pgsql_upgrade_6_1_to_7_0() {
     # Verify upgraded schema reports version 6.2.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "6.2" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     insert_sql="\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010101', 'hex'), 0, 1, x'FFAF0002'::int);\
