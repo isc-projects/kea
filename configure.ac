@@ -1895,6 +1895,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.6_to_10.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_9.6_to_10.0.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
