@@ -1558,11 +1558,6 @@ as illustrated below:
 In the example above, HA+MT is enabled with four threads for the listener
 and four threads for the client.
 
-.. warning::
-
-   This feature is still under active development and should not
-   be used in production environments.  It is off by default.
-
 .. _ha-maintenance:
 
 Controlled Shutdown and Maintenance of DHCP servers
