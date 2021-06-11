@@ -20,6 +20,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+#include <boost/make_shared.hpp>
+
 using namespace std;
 namespace ph = std::placeholders;
 
@@ -135,15 +137,22 @@ public:
 private:
 
     /// @brief Initializer class for the SIGCHLD signal handler.
+    ///
+    /// This is a singleton class used to initialize the SIGCHLD signal handler
+    /// only on the first call of @ref initIOSignalSet which happens on each
+    /// call of @ref ProcessSpawn::spawn.
     class IOSignalSetInitializer {
-    public:
+    private:
 
         /// @brief Constructor
         ///
         /// @param io_service The IOService which handles signal handlers.
-        IOSignalSetInitializer(IOServicePtr io_service) :
-            io_signal_set_(new IOSignalSet(io_service,
-                                           std::bind(&ProcessSpawnImpl::waitForProcess, ph::_1))) {
+        IOSignalSetInitializer(IOServicePtr io_service) {
+            if (!io_service) {
+                isc_throw(ProcessSpawnError, "NULL IOService instance");
+            }
+            io_signal_set_ = boost::make_shared<IOSignalSet>(io_service,
+                    std::bind(&ProcessSpawnImpl::waitForProcess, ph::_1));
             io_signal_set_->add(SIGCHLD);
         }
 
@@ -152,15 +161,20 @@ private:
             io_signal_set_->remove(SIGCHLD);
         }
 
+    public:
+
+        /// @brief Initialize the SIGCHLD signal handler.
+        ///
+        /// It creates the single instance of @ref IOSignalSetInitializer.
+        ///
+        /// @param io_service The IOService which handles signal handlers.
+        static void initIOSignalSet(IOServicePtr io_service);
+
     private:
+
         /// @brief ASIO signal set.
         IOSignalSetPtr io_signal_set_;
     };
-
-    /// @brief Initialize the SIGCHLD signal handler.
-    ///
-    /// @param io_service The IOService which handles signal handlers.
-    static void initIOSignalSet(IOServicePtr io_service);
 
     /// @brief Copies the argument specified as a C++ string to the new
     /// C string.
@@ -217,7 +231,7 @@ private:
 ProcessCollection ProcessSpawnImpl::process_collection_;
 std::mutex ProcessSpawnImpl::mutex_;
 
-void ProcessSpawnImpl::initIOSignalSet(IOServicePtr io_service) {
+void ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(IOServicePtr io_service) {
     static IOSignalSetInitializer init(io_service);
 }
 
@@ -280,7 +294,7 @@ ProcessSpawnImpl::getCommandLine() const {
 pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
     lock_guard<std::mutex> lk(mutex_);
-    initIOSignalSet(io_service_);
+    ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(io_service_);
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
