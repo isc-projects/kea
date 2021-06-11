@@ -1763,7 +1763,7 @@ public:
             conn_pool_.reset(new ConnectionPool(*thread_io_service_, thread_pool_size_));
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC, HTTP_CLIENT_MT_STARTED)
-                     .arg(getThreadCount());
+                     .arg(thread_pool_size_);
         } else {
             // Single-threaded mode: use the caller's IOService,
             // one connection per URL.
