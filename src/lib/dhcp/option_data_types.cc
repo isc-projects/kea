@@ -522,13 +522,13 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 
     // We need to check that the PSID value does not exceed the maximum value
     // for a specified PSID length. That means that all bits placed further than
-    // psid_len from the left must be set to 0. So, we create a bit mask by
-    // shifting a value of 0xFFFF to the right by psid_len. This leaves us with
-    // psid_len leftmost bits unset and the rest set. Next, we apply the mask on
-    // the PSID value from the buffer and make sure the result is 0. Otherwise,
-    // it means that there are some bits set in the PSID which aren't supposed
-    // to be set.
-    if ((psid_len > 0) && ((psid & (0xFFFFU >> psid_len)) != 0)) {
+    // psid_len from the left must be set to 0.
+    std::vector<uint16_t> mask = { 0x8000, 0xc000, 0xe000,
+                           0xf000, 0xf800, 0xfc00, 0xfe00,
+                           0xff00, 0xff80, 0xffc0, 0xffe0,
+                           0xfff0, 0xfff8, 0xfffc, 0xfffe };
+    if ((psid_len > 0) && (psid_len < (sizeof(uint16_t) * 8)) &&
+        ((psid & static_cast<uint16_t>(~mask[psid_len - 1])) != 0)) {
         isc_throw(BadDataTypeCast, "invalid PSID value " << psid
                   << " for a specified PSID length "
                   << static_cast<unsigned>(psid_len));
