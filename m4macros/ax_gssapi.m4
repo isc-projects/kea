@@ -30,15 +30,19 @@ else
     else
         AC_MSG_ERROR([Unable to locate krb5-config.])
     fi
+    CXXFLAGS_SAVED="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS $GSSAPI_CFLAGS"
 
     # Checks
-    AC_CHECK_HEADERS([gssapi/gssapi.h gssapi/gssapi_krb5.h krb5/krb5.h],,
-        AC_MSG_ERROR([Missing required gss-api or krb5 header files]))
+    AC_CHECK_HEADERS([gssapi/gssapi.h gssapi/gssapi_krb5.h],,
+        AC_MSG_ERROR([Missing required gss-api header files]))
+
+    AC_CHECK_HEADERS([krb5/krb5.h],,
+        [AC_CHECK_HEADERS([krb5.h],,
+         AC_MSG_ERROR([Missing required krb5 header files]))])
 
     # Verify that GSS-API with Kerberos 5 is usable.
-    CXXFLAGS_SAVED="$CXXFLAGS"
     LIBS_SAVED="$LIBS"
-    CXXFLAGS="$CXXFLAGS $GSSAPI_CFLAGS"
     LIBS="$LIBS $GSSAPI_LIBS"
     if test $enable_static_link = yes; then
        LIBS="-static $LIBS"
@@ -53,17 +57,24 @@ else
              major = gss_delete_sec_context(&minor, &ctx, GSS_C_NO_BUFFER);]])],
        [AC_MSG_RESULT([yes])],
        [AC_MSG_RESULT([no])
-        AC_MSG_ERROR([failed to link with  GSS-API with Kerberos 5 libraries])])
-    AC_MSG_CHECKING([checking for MIT implementation vs Heimdal])
+        AC_MSG_ERROR([failed to link with GSS-API with Kerberos 5 libraries])])
+    AC_MSG_CHECKING([checking for gss_str_to_oid availability])
     AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [[#include <gssapi/gssapi_krb5.h>]],
-           [[return (krb5_cccol_last_change_time(0, 0, 0));]])],
-       [AC_MSG_RESULT([Heimdal])
-        AC_MSG_WARN([Heimdal is not supported, please switch to the MIT implementation])],
-       [AC_MSG_RESULT([MIT])])
+           [[#include <gssapi/gssapi.h>]],
+           [[return (gss_str_to_oid(0, 0, 0));]])],
+       [AC_MSG_RESULT([yes])
+        AC_DEFINE([HAVE_GSS_STR_TO_OID], [1], [gss_str_to_oid is available])],
+       [AC_MSG_RESULT([no])])
     CXXFLAGS="$CXXFLAGS_SAVED"
     LIBS="$LIBS_SAVED"
+    AC_MSG_CHECKING([checking for MIT implementation vs Heimdal])
+    if `${KRB5_CONFIG} --all | grep Vendor | grep -q Heimdal`; then
+        AC_MSG_RESULT([Heimdal])
+        AC_DEFINE([WITH_HEIMDAL], [1], [Heimdal GSS-API implementation])
+    else
+        AC_MSG_RESULT([MIT])
+    fi
     ENABLE_GSSAPI=yes
 fi
 
