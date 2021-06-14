@@ -12,6 +12,7 @@
 #include <database/database_connection.h>
 #include <database/server.h>
 #include <database/server_collection.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/testutils/test_config_backend.h>
 
@@ -215,6 +216,30 @@ public:
     getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                                  const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves a client class by name.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Client class name.
+    /// @return Pointer to the retrieved client class.
+    virtual ClientClassDefPtr
+    getClientClass4(const db::ServerSelector& selector, const std::string& name) const;
+
+    /// @brief Retrieves all client classes.
+    ///
+    /// @param selector Server selector.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getAllClientClasses4(const db::ServerSelector& selector) const;
+
+    /// @brief Retrieves client classes modified after specified time.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Modification time.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getModifiedClientClasses4(const db::ServerSelector& selector,
+                              const boost::posix_time::ptime& modification_time) const;
+
     /// @brief Retrieves the most recent audit entries.
     ///
     /// @param server_selector Server selector.
@@ -317,6 +342,19 @@ public:
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Client class to be added or updated.
+    /// @param follow_client_class name of the class after which the
+    /// new or updated class should be positioned. An empty value
+    /// causes the class to be appended at the end of the class
+    /// hierarchy.
+    virtual void
+    createUpdateClientClass4(const db::ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class,
+                             const std::string& follow_client_class);
 
     /// @brief Creates or updates a server.
     ///
@@ -459,6 +497,22 @@ public:
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
 
+    /// @brief Deletes DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Name of the class to be deleted.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteClientClass4(const db::ServerSelector& server_selector,
+                       const std::string& name);
+
+    /// @brief Deletes all client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteAllClientClasses4(const db::ServerSelector& server_selector);
+
     /// @brief Deletes a server from the backend.
     ///
     /// @param server_tag Tag of the server to be deleted.
@@ -480,6 +534,7 @@ public:
     OptionDefContainer option_defs_;
     OptionContainer options_;
     data::StampedValueCollection globals_;
+    ClientClassDictionary classes_;
     db::ServerCollection servers_;
 /// @}
 };

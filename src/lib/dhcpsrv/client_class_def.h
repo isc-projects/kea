@@ -8,6 +8,7 @@
 #define CLIENT_CLASS_DEF_H
 
 #include <cc/cfg_to_element.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
@@ -44,7 +45,9 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef : public data::UserContext, public isc::data::CfgToElement {
+class ClientClassDef : public data::UserContext,
+                       public data::CfgToElement,
+                       public data::StampedElement {
 public:
     /// @brief Constructor
     ///

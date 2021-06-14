@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -507,6 +507,100 @@ TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& 
         }
     }
     return (globals);
+}
+
+ClientClassDefPtr
+TestConfigBackendDHCPv4::getClientClass4(const db::ServerSelector& server_selector,
+                                         const std::string& name) const {
+    auto client_class = classes_.findClass(name);
+    if (!client_class) {
+        return (client_class);
+    }
+    if (server_selector.amUnassigned()) {
+        return (client_class->getServerTags().empty() ? client_class : ClientClassDefPtr());
+    }
+    auto tags = server_selector.getTags();
+    for (auto tag : tags) {
+        if (client_class->hasServerTag(ServerTag(tag))) {
+            return (client_class);
+        }
+    }
+    return (client_class->hasAllServerTag() ? client_class : ClientClassDefPtr());
+}
+
+ClientClassDictionary
+TestConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_selector) const {
+    auto tags = server_selector.getTags();
+    ClientClassDictionary all_classes;
+    for (auto client_class : *classes_.getClasses()) {
+        auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
+        if (server_selector.amAny()) {
+            all_classes.addClass(non_const_client_class);
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (client_class->getServerTags().empty()) {
+                all_classes.addClass(non_const_client_class);
+            }
+            continue;
+        }
+        bool got = false;
+        for (auto tag : tags) {
+            if (client_class->hasServerTag(ServerTag(tag))) {
+                all_classes.addClass(non_const_client_class);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (client_class->hasAllServerTag()) {
+            all_classes.addClass(non_const_client_class);
+        }
+    }
+    return (all_classes);
+}
+
+ClientClassDictionary
+TestConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& server_selector,
+                                                   const boost::posix_time::ptime& modification_time) const {
+    auto tags = server_selector.getTags();
+    ClientClassDictionary modified_classes;
+    for (auto client_class : *classes_.getClasses()) {
+        if (client_class->getModificationTime() >= modification_time) {
+            auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
+            bool got = false;
+            for (auto tag : tags) {
+                if (client_class->hasServerTag(ServerTag(tag))) {
+                    modified_classes.addClass(non_const_client_class);
+                    got = true;
+                    break;
+                }
+            }
+            if (got) {
+                continue;
+            }
+            if (client_class->hasAllServerTag()) {
+                modified_classes.addClass(non_const_client_class);
+            }
+        }
+    }
+    return (modified_classes);
+}
+
+void
+TestConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
+                                                  const ClientClassDefPtr& client_class,
+                                                  const std::string& follow_client_class) {
+    mergeServerTags(client_class, server_selector);
+
+    auto existing_class = classes_.findClass(client_class->getName());
+    if (existing_class) {
+        classes_.removeClass(client_class->getName());
+    }
+    auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
+    classes_.addClass(non_const_client_class);
 }
 
 AuditEntryCollection
@@ -1223,6 +1317,72 @@ TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& se
         }
     }
     return (cnt);
+}
+
+uint64_t
+TestConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_selector,
+                                            const std::string& name) {
+    auto existing_class = classes_.findClass(name);
+    if (!existing_class) {
+        return (0);
+    }
+    if ((server_selector.amUnassigned()) &&
+        !existing_class->getServerTags().empty()) {
+        return (0);
+    }
+    if (!server_selector.amAny()) {
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (existing_class->hasServerTag(ServerTag(tag))) {
+                got = true;
+                break;
+            }
+        }
+        if (!got && !existing_class->hasAllServerTag()) {
+            return (0);
+        }
+    }
+    classes_.removeClass(name);
+    return (1);
+}
+
+uint64_t
+TestConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& server_selector) {
+    std::list<std::string> class_names;
+    for (auto client_class : (*classes_.getClasses())) {
+        if (server_selector.amAny()) {
+            class_names.push_back(client_class->getName());
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (client_class->getServerTags().empty()) {
+                class_names.push_back(client_class->getName());
+            }
+            continue;
+        }
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (client_class->hasServerTag(ServerTag(tag))) {
+                class_names.push_back(client_class->getName());
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (client_class->hasAllServerTag()) {
+            class_names.push_back(client_class->getName());
+        }
+    }
+
+    // Erase client classes.
+    for (auto name : class_names) {
+        classes_.removeClass(name);
+    }
+    return (class_names.size());
 }
 
 uint64_t

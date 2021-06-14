@@ -3222,6 +3222,23 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
     return (parameters);
 }
 
+ClientClassDefPtr
+MySqlConfigBackendDHCPv4::getClientClientClass4(const db::ServerSelector& selector,
+                                                const std::string& name) const {
+    isc_throw(NotImplemented, "getClientClass4 is not implemented");
+}
+
+ClientClassDictionary
+MySqlConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& selector) const {
+    isc_throw(NotImplemented, "getAllClientClasses4 is not implemented");
+}
+
+ClientClassDictionary
+MySqlConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& selector,
+                                                    const boost::posix_time::ptime& modification_time) const {
+    isc_throw(NotImplemented, "getModifiedClientClasses4 is not implemented");
+}
+
 AuditEntryCollection
 MySqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time,
@@ -3325,6 +3342,13 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
         .arg(value->getName());
     impl_->createUpdateGlobalParameter4(server_selector, value);
 }
+
+void
+MySqlConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
+                                                   const ClientClassDefPtr& client_class) {
+    isc_throw(NotImplemented, "createUpdateClientClass4 is not implemented");
+}
+
 
 void
 MySqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& server) {
@@ -3544,6 +3568,17 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT)
         .arg(result);
     return (result);
+}
+
+uint64_t
+MySqlConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_selector,
+                                             const std::string& name) {
+    isc_throw(NotImplemented, "deleteClientClass4 is not implemented");
+}
+
+uint64_t
+MySqlConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& server_selector) {
+    isc_throw(NotImplemented, "deleteAllClientClasses4 is not implemented");
 }
 
 uint64_t

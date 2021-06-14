@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <mysql_cb_impl.h>
 #include <database/database_connection.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp4.h>
 #include <mysql_cb_log.h>
 #include <boost/shared_ptr.hpp>
@@ -225,6 +226,30 @@ public:
     getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                                  const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves a client class by name.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Client class name.
+    /// @return Pointer to the retrieved client class.
+    virtual ClientClassDefPtr
+    getClientClientClass4(const db::ServerSelector& selector, const std::string& name) const;
+
+    /// @brief Retrieves all client classes.
+    ///
+    /// @param selector Server selector.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getAllClientClasses4(const db::ServerSelector& selector) const;
+
+    /// @brief Retrieves client classes modified after specified time.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Modification time.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getModifiedClientClasses4(const db::ServerSelector& selector,
+                              const boost::posix_time::ptime& modification_time) const;
+
     /// @brief Retrieves the most recent audit entries.
     ///
     /// @param selector Server selector.
@@ -339,6 +364,14 @@ public:
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Client class to be added or updated.
+    virtual void
+    createUpdateClientClass4(const db::ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class);
 
     /// @brief Creates or updates a server.
     ///
@@ -494,6 +527,22 @@ public:
     /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
+
+    /// @brief Deletes DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Name of the class to be deleted.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteClientClass4(const db::ServerSelector& server_selector,
+                       const std::string& name);
+
+    /// @brief Deletes all client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteAllClientClasses4(const db::ServerSelector& server_selector);
 
     /// @brief Deletes a server from the backend.
     ///

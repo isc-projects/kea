@@ -21,9 +21,10 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), required_(false),
-      depend_on_known_(false), cfg_option_(cfg_option),
-      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()), valid_() {
+    : UserContext(), CfgToElement(), StampedElement(), name_(name),
+      match_expr_(match_expr), required_(false), depend_on_known_(false),
+      cfg_option_(cfg_option), next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
+      valid_() {
 
     // Name can't be blank
     if (name_.empty()) {
