@@ -511,7 +511,7 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
     uint8_t psid_len = buf[0];
 
     // PSID length must not be greater than 16 bits.
-    if (psid_len > sizeof(uint16_t) * 8) {
+    if (psid_len > (sizeof(uint16_t) * 8)) {
         isc_throw(BadDataTypeCast, "invalid PSID length value "
                   << static_cast<unsigned>(psid_len)
                   << ", this value is expected to be in range of 0 to 16");
@@ -523,10 +523,15 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
     // We need to check that the PSID value does not exceed the maximum value
     // for a specified PSID length. That means that all bits placed further than
     // psid_len from the left must be set to 0.
-    std::vector<uint16_t> mask = { 0x8000, 0xc000, 0xe000,
-                           0xf000, 0xf800, 0xfc00, 0xfe00,
-                           0xff00, 0xff80, 0xffc0, 0xffe0,
-                           0xfff0, 0xfff8, 0xfffc, 0xfffe };
+    // The value 0 is a special case because the RFC explicitly says that the
+    // PSID value should be ignored if psid_len is 0.
+    // The value 16 is a special case for the following check because there is
+    // no bit left that is not used (all bits are useful) and the check would
+    // always be done against ~(0xFFFF) which is 0 (the check is always true).
+    static std::vector<uint16_t> mask = { 0x8000, 0xc000, 0xe000,
+                                  0xf000, 0xf800, 0xfc00, 0xfe00,
+                                  0xff00, 0xff80, 0xffc0, 0xffe0,
+                                  0xfff0, 0xfff8, 0xfffc, 0xfffe };
     if ((psid_len > 0) && (psid_len < (sizeof(uint16_t) * 8)) &&
         ((psid & static_cast<uint16_t>(~mask[psid_len - 1])) != 0)) {
         isc_throw(BadDataTypeCast, "invalid PSID value " << psid
@@ -548,7 +553,7 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 void
 OptionDataTypeUtil::writePsid(const PSIDLen& psid_len, const PSID& psid,
                               std::vector<uint8_t>& buf) {
-    if (psid_len.asUint8() > sizeof(psid) * 8) {
+    if (psid_len.asUint8() > (sizeof(psid) * 8)) {
         isc_throw(BadDataTypeCast, "invalid PSID length value "
                   << psid_len.asUnsigned()
                   << ", this value is expected to be in range of 0 to 16");

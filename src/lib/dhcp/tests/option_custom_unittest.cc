@@ -679,7 +679,7 @@ TEST_F(OptionCustomTest, psidData) {
 
     // The PSID comprises a PSID length and PSID value.
     EXPECT_EQ(4, psid.first.asUnsigned());
-    EXPECT_EQ(8, psid.second.asUint16());
+    EXPECT_EQ(0x08, psid.second.asUint16());
 
     // Parsed option should have one suboption.
     EXPECT_TRUE(hasV6Suboption(option.get()));
@@ -1060,15 +1060,15 @@ TEST_F(OptionCustomTest, psidDataArray) {
 
     // PSID value is equal to '1000b' (8).
     EXPECT_EQ(4, psid0.first.asUnsigned());
-    EXPECT_EQ(8, psid0.second.asUint16());
+    EXPECT_EQ(0x08, psid0.second.asUint16());
 
-    // PSID value is equal to '110101b' (53).
+    // PSID value is equal to '110101b' (0x35).
     EXPECT_EQ(6, psid1.first.asUnsigned());
-    EXPECT_EQ(53, psid1.second.asUint16());
+    EXPECT_EQ(0x35, psid1.second.asUint16());
 
     // PSID value is equal to '1b' (1).
     EXPECT_EQ(1, psid2.first.asUnsigned());
-    EXPECT_EQ(1, psid2.second.asUint16());
+    EXPECT_EQ(0x01, psid2.second.asUint16());
 }
 
 // The purpose of this test is to verify that the data from a buffer
@@ -1280,7 +1280,7 @@ TEST_F(OptionCustomTest, recordData) {
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(6, value5.first.asUnsigned());
-    EXPECT_EQ(53, value5.second.asUint16());
+    EXPECT_EQ(0x35, value5.second.asUint16());
 
     // Verify value in the field 6.
     std::string value6;
@@ -1366,7 +1366,7 @@ TEST_F(OptionCustomTest, recordArrayData) {
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
     EXPECT_EQ(6, value5.first.asUnsigned());
-    EXPECT_EQ(53, value5.second.asUint16());
+    EXPECT_EQ(0x35, value5.second.asUint16());
 
     // Verify value in the field 6.
     uint32_t value6;

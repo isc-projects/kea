@@ -790,11 +790,21 @@ TEST_F(OptionDataTypesTest, readPsid) {
 
     buf.clear();
 
-    // Buffer is truncated -  2 bytes instead of 3.
+    // Buffer is truncated - 2 bytes instead of 3.
     writeInt<uint8_t>(4, buf);
     writeInt<uint8_t>(0xF0, buf);
     EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPsid(buf)),
                  BadDataTypeCast);
+
+    // Check for out of range values.
+    for (int i = 1; i < 16; ++i) {
+        buf.clear();
+        writeInt<uint8_t>(i, buf);
+        writeInt<uint16_t>(0xFFFF << (15 - i), buf);
+        EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPsid(buf)),
+                     BadDataTypeCast);
+    }
+
 }
 
 // The purpose of this test is to verify that the PSID-len/PSID
@@ -849,11 +859,11 @@ TEST_F(OptionDataTypesTest, writePsid) {
     EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(17), PSID(1), buf),
                  OutOfRange);
 
-    // PSID length is 1, which allows for coding up to two (2^1)
-    // port sets. These are namely port set 0 and port set 1. The
-    // value of 2 is out of that range.
-    EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(1), PSID(2), buf),
-                 BadDataTypeCast);
+    // Check for out of range values.
+    for (int i = 1; i < 16; ++i) {
+        EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(i), PSID(1 << i), buf),
+                     BadDataTypeCast);
+    }
 }
 
 // The purpose of this test is to verify that the string
