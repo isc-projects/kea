@@ -12,6 +12,9 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
@@ -84,6 +87,23 @@ generateHWAddr() {
 ClientIdPtr
 generateDUID() {
     return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+}
+
+/// @brief Generate a valid Option.
+///
+/// @param universe The option universe (V4 or V6).
+/// @param code The Option code to use.
+/// @return The generated Option.
+OptionPtr
+generateOption(Option::Universe universe, uint16_t code, OptionBuffer& data) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(universe == Option::V4 ?
+                                                    DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE,
+                                                    code);
+    if (def) {
+        return (OptionCustomPtr(new OptionCustom(*def, universe, data)));
+    }
+
+    return (OptionPtr());
 }
 
 /// @brief Generate a valid Option6IA.
@@ -218,6 +238,31 @@ generatePkt4() {
     pkt4->setHWAddr(generateHWAddr());
     pkt4->setLocalHWAddr(generateHWAddr());
     pkt4->setRemoteHWAddr(generateHWAddr());
+
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+
+    uint8_t circuit_id[] = { 0x68, 0x6F, 0x77, 0x64, 0x79 };
+    OptionPtr circuit_id_opt(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
+                                        OptionBuffer(circuit_id,
+                                        circuit_id + sizeof(circuit_id))));
+    rai->addOption(circuit_id_opt);
+
+    uint8_t subscriber_id[] = { 0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f };
+    OptionPtr subscriber_id_opt(new Option(Option::V4, RAI_OPTION_SUBSCRIBER_ID,
+                                           OptionBuffer(subscriber_id,
+                                           subscriber_id + sizeof(subscriber_id))));
+    rai->addOption(subscriber_id_opt);
+
+    uint8_t remote_id[] = { 0x87, 0xF6, 0x79, 0x77, 0xEF };
+    OptionPtr remote_id_opt(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
+                                       OptionBuffer(remote_id,
+                                       remote_id + sizeof(remote_id))));
+    rai->addOption(remote_id_opt);
+
+    pkt4->addOption(rai);
 
     return (pkt4);
 }
@@ -376,6 +421,45 @@ TEST(RunScript, extractDUID) {
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFFIX");
     ASSERT_EQ(1, vars.size());
     expected = "DUID_PREFIX_DUID_SUFFIX=00:01:02:03:04:05:06\n";
+    EXPECT_EQ(expected, join(vars));
+}
+
+/// @brief Tests the extractOption method works as expected.
+TEST(RunScript, extractOption) {
+    ProcessEnvVars vars;
+    OptionPtr option;
+    RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
+    ASSERT_EQ(1, vars.size());
+    string expected = "OPTION_PREFIX_OPTION_SUFFIX=\n";
+    EXPECT_EQ(expected, join(vars));
+    vars.clear();
+    OptionBuffer buffer = { 0xca, 0xfe, 0xba, 0xbe };
+    option = generateOption(Option::V4, DHO_USER_CLASS, buffer);
+    RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
+    ASSERT_EQ(1, vars.size());
+    expected = "OPTION_PREFIX_OPTION_SUFFIX=0xCAFEBABE\n";
+    EXPECT_EQ(expected, join(vars));
+}
+
+/// @brief Tests the extractSubOption method works as expected.
+TEST(RunScript, extractSubOption) {
+    ProcessEnvVars vars;
+    OptionPtr option;
+    RunScriptImpl::extractOption(vars, option, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
+    ASSERT_EQ(1, vars.size());
+    string expected = "OPTION_SUBOPTION_PREFIX_OPTION_SUBOPTION_SUFFIX=\n";
+    EXPECT_EQ(expected, join(vars));
+    vars.clear();
+    OptionBuffer data;
+    option = generateOption(Option::V4, DHO_DHCP_AGENT_OPTIONS, data);
+    uint8_t subscriber_id[] = { 0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f };
+    OptionPtr subscriber_id_opt(new Option(Option::V4, RAI_OPTION_SUBSCRIBER_ID,
+                                           OptionBuffer(subscriber_id,
+                                           subscriber_id + sizeof(subscriber_id))));
+    option->addOption(subscriber_id_opt);
+    RunScriptImpl::extractSubOption(vars, option, RAI_OPTION_SUBSCRIBER_ID, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
+    ASSERT_EQ(1, vars.size());
+    expected = "OPTION_SUBOPTION_PREFIX_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -602,7 +686,7 @@ TEST(RunScript, extractPkt4) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
-    ASSERT_EQ(22, vars.size());
+    ASSERT_EQ(25, vars.size());
     string expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_TXID_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=\n"
@@ -624,12 +708,15 @@ TEST(RunScript, extractPkt4) {
                       "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=\n"
-                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=\n";
+                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_RAI_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_RAI_CIRCUIT_ID_PKT4_SUFFIX=\n"
+                      "PKT4_PREFIX_RAI_REMOTE_ID_PKT4_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt4 = generatePkt4();
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
-    ASSERT_EQ(22, vars.size());
+    ASSERT_EQ(25, vars.size());
     expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=UNKNOWN\n"
                "PKT4_PREFIX_TXID_PKT4_SUFFIX=0\n"
                "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=0.0.0.0\n"
@@ -651,7 +738,10 @@ TEST(RunScript, extractPkt4) {
                "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
                "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=1\n"
                "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
-               "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=1\n";
+               "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=1\n"
+               "PKT4_PREFIX_RAI_PKT4_SUFFIX=0x0105686F776479020587F67977EF06061A2B3C4D5E6F\n"
+               "PKT4_PREFIX_RAI_CIRCUIT_ID_PKT4_SUFFIX=0x686F776479\n"
+               "PKT4_PREFIX_RAI_REMOTE_ID_PKT4_SUFFIX=0x87F67977EF\n";
     EXPECT_EQ(expected, join(vars));
 }
 

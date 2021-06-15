@@ -69,7 +69,7 @@ public:
 
     /// @brief Extract HWAddr data and append to environment.
     ///
-    /// @param value The hwaddr to be exported to target script environment.
+    /// @param hwaddr The hwaddr to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractHWAddr(isc::asiolink::ProcessEnvVars& vars,
@@ -79,7 +79,7 @@ public:
 
     /// @brief Extract DUID data and append to environment.
     ///
-    /// @param value The duid to be exported to target script environment.
+    /// @param duid The duid to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractDUID(isc::asiolink::ProcessEnvVars& vars,
@@ -87,9 +87,32 @@ public:
                             const std::string& prefix = "",
                             const std::string& suffix = "");
 
+    /// @brief Extract Option data and append to environment.
+    ///
+    /// @param option The option to be exported to target script environment.
+    /// @param prefix The prefix for the name of the environment variable.
+    /// @param suffix The suffix for the name of the environment variable.
+    static void extractOption(isc::asiolink::ProcessEnvVars& vars,
+                              const isc::dhcp::OptionPtr option,
+                              const std::string& prefix = "",
+                              const std::string& suffix = "");
+
+    /// @brief Extract Option SubOption data and append to environment.
+    ///
+    /// @param option The parent option of the suboption to be exported to
+    /// target script environment.
+    /// @param code The code of the suboption.
+    /// @param prefix The prefix for the name of the environment variable.
+    /// @param suffix The suffix for the name of the environment variable.
+    static void extractSubOption(isc::asiolink::ProcessEnvVars& vars,
+                                 const isc::dhcp::OptionPtr option,
+                                 uint16_t code,
+                                 const std::string& prefix = "",
+                                 const std::string& suffix = "");
+
     /// @brief Extract Option6IA data and append to environment.
     ///
-    /// @param value The option6IA to be exported to target script environment.
+    /// @param option6IA The option6IA to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractOptionIA(isc::asiolink::ProcessEnvVars& vars,
@@ -99,7 +122,7 @@ public:
 
     /// @brief Extract Subnet4 data and append to environment.
     ///
-    /// @param value The subnet4 to be exported to target script environment.
+    /// @param subnet4 The subnet4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractSubnet4(isc::asiolink::ProcessEnvVars& vars,
@@ -109,7 +132,7 @@ public:
 
     /// @brief Extract Subnet6 data and append to environment.
     ///
-    /// @param value The subnet6 to be exported to target script environment.
+    /// @param subnet6 The subnet6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractSubnet6(isc::asiolink::ProcessEnvVars& vars,
@@ -119,7 +142,7 @@ public:
 
     /// @brief Extract Lease4 data and append to environment.
     ///
-    /// @param value The lease4 to be exported to target script environment.
+    /// @param lease4 The lease4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractLease4(isc::asiolink::ProcessEnvVars& vars,
@@ -129,7 +152,7 @@ public:
 
     /// @brief Extract Lease6 data and append to environment.
     ///
-    /// @param value The lease6 to be exported to target script environment.
+    /// @param lease6 The lease6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractLease6(isc::asiolink::ProcessEnvVars& vars,
@@ -139,7 +162,7 @@ public:
 
     /// @brief Extract Lease4Collection data and append to environment.
     ///
-    /// @param value The leases4 to be exported to target script environment.
+    /// @param leases4 The leases4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractLeases4(isc::asiolink::ProcessEnvVars& vars,
@@ -149,7 +172,7 @@ public:
 
     /// @brief Extract Lease6Collection data and append to environment.
     ///
-    /// @param value The leases6 to be exported to target script environment.
+    /// @param leases6 The leases6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractLeases6(isc::asiolink::ProcessEnvVars& vars,
@@ -159,7 +182,7 @@ public:
 
     /// @brief Extract Pkt4 data and append to environment.
     ///
-    /// @param value The pkt4 to be exported to target script environment.
+    /// @param pkt4 The pkt4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractPkt4(isc::asiolink::ProcessEnvVars& vars,
@@ -169,7 +192,7 @@ public:
 
     /// @brief Extract Pkt6 data and append to environment.
     ///
-    /// @param value The pkt6 to be exported to target script environment.
+    /// @param pkt6 The pkt6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractPkt6(isc::asiolink::ProcessEnvVars& vars,
