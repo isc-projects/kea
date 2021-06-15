@@ -17,13 +17,12 @@
 using namespace isc::asiolink;
 
 namespace {
-/// @brief Mast used to compute PSID value
+/// @brief Bit mask used to compute PSID value.
 ///
-/// The mask represents the useful bits of the PSID. The value 0 is not used
-/// because the RFC explicitly specifies that PSID value should be ignored if
-/// psid_len is 0. The last entry corresponding to psid_len 16 (which translates
-/// to 'all bits are useful') is added so that an extra check can be omitted.
-std::vector<uint16_t> mask = { 0x0,
+/// The mask represents the useful bits of the PSID. The value 0 is a special
+/// case because the RFC explicitly specifies that PSID value should be ignored
+/// if psid_len is 0.
+std::vector<uint16_t> psid_bitmask = { 0xffff,
     0x8000, 0xc000, 0xe000, 0xf000,
     0xf800, 0xfc00, 0xfe00, 0xff00,
     0xff80, 0xffc0, 0xffe0, 0xfff0,
@@ -540,7 +539,7 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
     // psid_len from the left must be set to 0.
     // The value 0 is a special case because the RFC explicitly says that the
     // PSID value should be ignored if psid_len is 0.
-    if ((psid_len > 0) && ((psid & ~mask[psid_len]) != 0)) {
+    if ((psid & ~psid_bitmask[psid_len]) != 0) {
         isc_throw(BadDataTypeCast, "invalid PSID value " << psid
                   << " for a specified PSID length "
                   << static_cast<unsigned>(psid_len));
