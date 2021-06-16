@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,14 @@ constexpr unsigned long OPTION_RECORD_TYPES_BUF_LENGTH = 512;
 constexpr unsigned long GLOBAL_PARAMETER_NAME_BUF_LENGTH = 128;
 
 constexpr unsigned long GLOBAL_PARAMETER_VALUE_BUF_LENGTH = 65536;
+
+constexpr unsigned long CLIENT_CLASS_NAME_BUF_LENGTH = 128;
+
+constexpr unsigned long CLIENT_CLASS_TEST_BUF_LENGTH = 2048;
+
+constexpr unsigned long CLIENT_CLASS_SNAME_BUF_LENGTH = 128;
+
+constexpr unsigned long CLIENT_CLASS_FILENAME_BUF_LENGTH = 512;
 
 constexpr unsigned long AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH = 256;
 

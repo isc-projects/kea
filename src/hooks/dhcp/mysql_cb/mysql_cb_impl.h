@@ -421,6 +421,9 @@ public:
     /// @param create_audit_revision Statement creating audit revision.
     /// @param insert_option_def_server Statement associating option
     /// definition with a server.
+    /// @param client_class_name Optional client class name to which
+    /// the option definition belongs. If this value is not specified,
+    /// it is a global option definition.
     /// @throw NotImplemented if server selector is "unassigned".
     void createUpdateOptionDef(const db::ServerSelector& server_selector,
                                const OptionDefinitionPtr& option_def,
@@ -429,7 +432,8 @@ public:
                                const int& insert_option_def,
                                const int& update_option_def,
                                const int& create_audit_revision,
-                               const int& insert_option_def_server);
+                               const int& insert_option_def_server,
+                               const std::string& client_class_name = "");
 
     /// @brief Sends query to retrieve single global option by code and
     /// option space.
@@ -572,6 +576,27 @@ public:
     OptionDescriptorPtr
     processOptionRow(const Option::Universe& universe,
                      db::MySqlBindingCollection::iterator first_binding);
+
+    /// @brief Returns DHCP option definition instance from output bindings.
+    ///
+    /// The following is the expected order of columns specified in the SELECT
+    /// query:
+    /// - id,
+    /// - code,
+    /// - name,
+    /// - space,
+    /// - type,
+    /// - modification_ts,
+    /// - is_array,
+    /// - encapsulate,
+    /// - record_types,
+    /// - user_context
+    ///
+    /// @param first_binding Iterator of the output binding containing
+    /// option definition id.
+    /// @return Pointer to the option definition.
+    OptionDefinitionPtr
+    processOptionDefRow(db::MySqlBindingCollection::iterator first_binding);
 
     /// @brief Associates a configuration element with multiple servers.
     ///
@@ -832,9 +857,8 @@ protected:
 
 private:
 
-    /// @brief Boolean flag indicating if audit revision has been created
-    /// using @c ScopedAuditRevision object.
-    bool audit_revision_created_;
+    /// @brief Reference counter for @ScopedAuditRevision instances.
+    int audit_revision_ref_count_;
 
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;

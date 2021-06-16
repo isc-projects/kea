@@ -24,6 +24,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <util/buffer.h>
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
@@ -61,6 +62,7 @@ public:
     /// database.
     enum StatementIndex {
         CREATE_AUDIT_REVISION,
+        CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
         GET_GLOBAL_PARAMETER4,
         GET_ALL_GLOBAL_PARAMETERS4,
         GET_MODIFIED_GLOBAL_PARAMETERS4,
@@ -93,6 +95,11 @@ public:
         GET_OPTION4_SUBNET_ID_CODE_SPACE,
         GET_OPTION4_POOL_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
+        GET_CLIENT_CLASS4_NAME,
+        GET_ALL_CLIENT_CLASSES4,
+        GET_ALL_CLIENT_CLASSES4_UNASSIGNED,
+        GET_MODIFIED_CLIENT_CLASSES4,
+        GET_MODIFIED_CLIENT_CLASSES4_UNASSIGNED,
         GET_AUDIT_ENTRIES4_TIME,
         GET_SERVER4,
         GET_ALL_SERVERS4,
@@ -104,18 +111,25 @@ public:
         INSERT_SHARED_NETWORK4,
         INSERT_SHARED_NETWORK4_SERVER,
         INSERT_OPTION_DEF4,
+        INSERT_OPTION_DEF4_CLIENT_CLASS,
         INSERT_OPTION_DEF4_SERVER,
         INSERT_OPTION4,
         INSERT_OPTION4_SERVER,
+        INSERT_CLIENT_CLASS4,
+        INSERT_CLIENT_CLASS4_SERVER,
+        INSERT_CLIENT_CLASS4_DEPENDENCY,
         INSERT_SERVER4,
         UPDATE_GLOBAL_PARAMETER4,
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
         UPDATE_OPTION_DEF4,
+        UPDATE_OPTION_DEF4_CLIENT_CLASS,
         UPDATE_OPTION4,
         UPDATE_OPTION4_SUBNET_ID,
         UPDATE_OPTION4_POOL_ID,
         UPDATE_OPTION4_SHARED_NETWORK,
+        UPDATE_OPTION4_CLIENT_CLASS,
+        UPDATE_CLIENT_CLASS4,
         UPDATE_SERVER4,
         DELETE_GLOBAL_PARAMETER4,
         DELETE_ALL_GLOBAL_PARAMETERS4,
@@ -137,6 +151,7 @@ public:
         DELETE_OPTION_DEF4_CODE_NAME,
         DELETE_ALL_OPTION_DEFS4,
         DELETE_ALL_OPTION_DEFS4_UNASSIGNED,
+        DELETE_OPTION_DEFS4_CLIENT_CLASS,
         DELETE_OPTION4,
         DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
         DELETE_OPTION4_SUBNET_ID,
@@ -144,6 +159,13 @@ public:
         DELETE_OPTION4_SHARED_NETWORK,
         DELETE_OPTIONS4_SUBNET_ID_PREFIX,
         DELETE_OPTIONS4_SHARED_NETWORK,
+        DELETE_OPTIONS4_CLIENT_CLASS,
+        DELETE_CLIENT_CLASS4_DEPENDENCY,
+        DELETE_CLIENT_CLASS4_SERVER,
+        DELETE_ALL_CLIENT_CLASSES4,
+        DELETE_ALL_CLIENT_CLASSES4_UNASSIGNED,
+        DELETE_CLIENT_CLASS4,
+        DELETE_CLIENT_CLASS4_ANY,
         DELETE_SERVER4,
         DELETE_ALL_SERVERS4,
         NUM_STATEMENTS
@@ -1312,7 +1334,7 @@ public:
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
-            MySqlBinding::createTimestamp(), //option: modification_ts
+            MySqlBinding::createTimestamp(), // option: modification_ts
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
@@ -2050,6 +2072,55 @@ public:
         }
     }
 
+    /// @brief Sends query to insert or update DHCP option in a client class.
+    ///
+    /// @param selector Server selector.
+    /// @param client_class Pointer to the client_class the option belongs to.
+    /// @param option Pointer to the option descriptor encapsulating the option..
+    void createUpdateOption4(const ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class,
+                             const OptionDescriptorPtr& option) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
+            createOptionValueBinding(option),
+            MySqlBinding::condCreateString(option->formatted_value_),
+            MySqlBinding::condCreateString(option->space_name_),
+            MySqlBinding::createBool(option->persistent_),
+            MySqlBinding::createString(client_class->getName()),
+            MySqlBinding::createNull(),
+            MySqlBinding::createInteger<uint8_t>(2),
+            createInputContextBinding(option),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+            MySqlBinding::createTimestamp(option->getModificationTime()),
+            MySqlBinding::createString(client_class->getName()),
+            MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
+            MySqlBinding::condCreateString(option->space_name_)
+        };
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector, "client class specific option set",
+                           true);
+
+        if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::
+                                    UPDATE_OPTION4_CLIENT_CLASS,
+                                    in_bindings) == 0) {
+            // Remove the 3 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 3);
+            insertOption4(server_selector, in_bindings);
+        }
+    }
+
     /// @brief Sends query to insert or update option definition.
     ///
     /// @param server_selector Server selector.
@@ -2063,6 +2134,24 @@ public:
                               MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
                               MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                               MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER);
+    }
+
+    /// @brief Sends query to insert or update option definition
+    /// for a client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param option_def Pointer to the option definition to be inserted or updated.
+    /// @param client_class Client class name.
+    void createUpdateOptionDef4(const ServerSelector& server_selector,
+                                const OptionDefinitionPtr& option_def,
+                                const std::string& client_class_name) {
+        createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
+                              MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
+                              MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_CLIENT_CLASS,
+                              MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4_CLIENT_CLASS,
+                              MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                              MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
+                              client_class_name);
     }
 
     /// @brief Sends query to delete option definition by code and
@@ -2086,6 +2175,26 @@ public:
                                     "deleting option definition",
                                     "option definition deleted",
                                     false,
+                                    in_bindings));
+    }
+
+    /// @brief Sends query to delete option definitions for a client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Pointer to the client class for which option
+    /// definitions should be deleted.
+    /// @return Number of deleted option definitions.
+    uint64_t deleteOptionDefs4(const ServerSelector& server_selector,
+                               const ClientClassDefPtr& client_class) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(client_class->getName())
+        };
+
+        // Run DELETE.
+        return (deleteTransactional(DELETE_OPTION_DEFS4_CLIENT_CLASS, server_selector,
+                                    "deleting option definition for a client class",
+                                    "option definition deleted",
+                                    true,
                                     in_bindings));
     }
 
@@ -2236,6 +2345,412 @@ public:
                                     "shared network specific options deleted",
                                     true,
                                     in_bindings));
+    }
+
+    /// @brief Deletes options belonging to a client class from the database.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Pointer to the client class for which options
+    /// should be deleted.
+    /// @return Number of deleted options.
+    uint64_t deleteOptions4(const ServerSelector& server_selector,
+                            const ClientClassDefPtr& client_class) {
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(client_class->getName())
+        };
+
+        // Run DELETE.
+        return (deleteTransactional(DELETE_OPTIONS4_CLIENT_CLASS, server_selector,
+                                    "deleting options for a client class",
+                                    "client class specific options deleted",
+                                    true,
+                                    in_bindings));
+    }
+
+    /// @brief Common function to retrieve client classes.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] client_classes Reference to a container where fetched client
+    /// classes will be inserted.
+    void getClientClasses4(const StatementIndex& index,
+                           const ServerSelector& server_selector,
+                           const MySqlBindingCollection& in_bindings,
+                           ClientClassDictionary& client_classes) {
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint64_t>(), // id
+            MySqlBinding::createString(CLIENT_CLASS_NAME_BUF_LENGTH), // name
+            MySqlBinding::createString(CLIENT_CLASS_TEST_BUF_LENGTH), // test
+            MySqlBinding::createInteger<uint32_t>(), // next server
+            MySqlBinding::createString(CLIENT_CLASS_SNAME_BUF_LENGTH), // sname
+            MySqlBinding::createString(CLIENT_CLASS_FILENAME_BUF_LENGTH), // filename
+            MySqlBinding::createInteger<uint8_t>(), // required
+            MySqlBinding::createInteger<uint32_t>(), // valid lifetime
+            MySqlBinding::createInteger<uint32_t>(), // min valid lifetime
+            MySqlBinding::createInteger<uint32_t>(), // max valid lifetime
+            MySqlBinding::createInteger<uint8_t>(), // depend on known directly
+            MySqlBinding::createInteger<uint8_t>(), // depend on known indirectly
+            MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createInteger<uint64_t>(), // option def: id
+            MySqlBinding::createInteger<uint16_t>(), // option def: code
+            MySqlBinding::createString(OPTION_NAME_BUF_LENGTH), // option def: name
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option def: space
+            MySqlBinding::createInteger<uint8_t>(), // option def: type
+            MySqlBinding::createTimestamp(), // option def: modification_ts
+            MySqlBinding::createInteger<uint8_t>(), // option def: array
+            MySqlBinding::createString(OPTION_ENCAPSULATE_BUF_LENGTH), // option def: encapsulate
+            MySqlBinding::createString(OPTION_RECORD_TYPES_BUF_LENGTH), // option def: record_types
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option def: user_context
+            MySqlBinding::createInteger<uint64_t>(), // option: option_id
+            MySqlBinding::createInteger<uint8_t>(), // option: code
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
+            MySqlBinding::createInteger<uint8_t>(), // option: persistent
+            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
+            MySqlBinding::createInteger<uint8_t>(), // option: scope_id
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
+            MySqlBinding::createInteger<uint64_t>(), // option: pool_id
+            MySqlBinding::createTimestamp(), // option: modification_ts
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server tag
+        };
+
+        std::list<ClientClassDefPtr> class_list;
+        uint64_t last_option_id = 0;
+        uint64_t last_option_def_id = 0;
+        std::string last_tag;
+
+        conn_.selectQuery(index,
+                          in_bindings, out_bindings,
+                          [this, &class_list, &last_option_id, &last_option_def_id, &last_tag]
+                          (MySqlBindingCollection& out_bindings) {
+            ClientClassDefPtr last_client_class;
+            if (!class_list.empty()) {
+                last_client_class = *class_list.rbegin();
+            }
+
+            if (!last_client_class || (last_client_class->getId() != out_bindings[0]->getInteger<uint64_t>())) {
+
+                last_option_id = 0;
+                last_option_def_id = 0;
+                last_tag.clear();
+
+                auto options = boost::make_shared<CfgOption>();
+                auto option_defs = boost::make_shared<CfgOptionDef>();
+                auto expression = boost::make_shared<Expression>();
+
+                last_client_class = boost::make_shared<ClientClassDef>(out_bindings[1]->getString(), expression, options);
+                last_client_class->setCfgOptionDef(option_defs);
+
+                // id
+                last_client_class->setId(out_bindings[0]->getInteger<uint64_t>());
+
+                // name
+                last_client_class->setName(out_bindings[1]->getString());
+
+                // test
+                if (!out_bindings[2]->amNull()) {
+                    last_client_class->setTest(out_bindings[2]->getString());
+                }
+
+                // next server
+                if (!out_bindings[3]->amNull()) {
+                    last_client_class->setNextServer(IOAddress(out_bindings[3]->getInteger<uint32_t>()));
+                }
+
+                // sname
+                if (!out_bindings[4]->amNull()) {
+                    last_client_class->setSname(out_bindings[4]->getString());
+                }
+
+                // filename
+                if (!out_bindings[5]->amNull()) {
+                    last_client_class->setFilename(out_bindings[5]->getString());
+                }                
+
+                // required
+                if (!out_bindings[6]->amNull()) {
+                    last_client_class->setRequired(out_bindings[6]->getBool());
+                }
+
+                // valid lifetime: default, min, max
+                last_client_class->setValid(createTriplet(out_bindings[7], out_bindings[8], out_bindings[9]));
+
+                // depend on known directly or indirectly
+                last_client_class->setDependOnKnown(out_bindings[10]->getBool() || out_bindings[11]->getBool());
+
+                // modification_ts
+                last_client_class->setModificationTime(out_bindings[12]->getTimestamp());
+
+                class_list.push_back(last_client_class);
+            }
+
+            // server tag
+            if (!out_bindings[35]->amNull() &&
+                (last_tag != out_bindings[35]->getString())) {
+                last_tag = out_bindings[35]->getString();
+                if (!last_tag.empty() && !last_client_class->hasServerTag(ServerTag(last_tag))) {
+                    last_client_class->setServerTag(last_tag);
+                }
+            }
+
+            // Parse client class specific option definition from 13 to 22.
+            if (!out_bindings[13]->amNull() &&
+                (last_option_def_id < out_bindings[13]->getInteger<uint64_t>())) {
+                last_option_def_id = out_bindings[13]->getInteger<uint64_t>();
+
+                auto def = processOptionDefRow(out_bindings.begin() + 13);
+                if (def) {
+                    last_client_class->getCfgOptionDef()->add(def);
+                }
+            }
+
+            // Parse client class specific option from 23 to 34.
+            if (!out_bindings[23]->amNull() &&
+                (last_option_id < out_bindings[23]->getInteger<uint64_t>())) {
+                last_option_id = out_bindings[23]->getInteger<uint64_t>();
+
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 23);
+                if (desc) {
+                    last_client_class->getCfgOption()->add(*desc, desc->space_name_);
+                }
+            }
+        });
+
+        tossNonMatchingElements(server_selector, class_list);
+
+        for (auto c : class_list) {
+            client_classes.addClass(c);
+        }
+    }
+
+    /// @brief Sends query to retrieve a client class by name.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Name of the class to be retrieved.
+    /// @return Pointer to the client class or null if the class is not found.
+    ClientClassDefPtr getClientClass4(const ServerSelector& server_selector,
+                                      const std::string& name) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(name)
+        };
+        ClientClassDictionary client_classes;
+        getClientClasses4(MySqlConfigBackendDHCPv4Impl::GET_CLIENT_CLASS4_NAME,
+                          server_selector, in_bindings, client_classes);
+        return (client_classes.getClasses()->empty() ? ClientClassDefPtr() :
+                (*client_classes.getClasses()->begin()));
+    }
+
+    /// @brief Sends query to retrieve all client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @param [out] client_classes Reference to the client classes collection
+    /// where retrieved classes will be stored.
+    void getAllClientClasses4(const ServerSelector& server_selector,
+                              ClientClassDictionary& client_classes) {
+        MySqlBindingCollection in_bindings;
+        getClientClasses4(server_selector.amUnassigned() ?
+                          MySqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4_UNASSIGNED :
+                          MySqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4,
+                          server_selector, in_bindings, client_classes);
+    }
+
+    /// @brief Sends query to retrieve modified client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @param modification_ts Lower bound modification timestamp.
+    /// @param [out] client_classes Reference to the client classes collection
+    /// where retrieved classes will be stored.
+    void getModifiedClientClasses4(const ServerSelector& server_selector,
+                                   const boost::posix_time::ptime& modification_ts,
+                                   ClientClassDictionary& client_classes) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching modified client classes for ANY "
+                      "server is not supported");
+        }
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createTimestamp(modification_ts)
+        };
+        getClientClasses4(server_selector.amUnassigned() ?
+                          GET_MODIFIED_CLIENT_CLASSES4_UNASSIGNED :
+                          GET_MODIFIED_CLIENT_CLASSES4,
+                          server_selector,
+                          in_bindings,
+                          client_classes);
+    }
+
+
+    /// @brief Upserts client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Pointer to the upserted client class.
+    /// @param follow_client_class name of the class after which the
+    /// new or updated class should be positioned. An empty value
+    /// causes the class to be appended at the end of the class
+    /// hierarchy.
+    void createUpdateClientClass4(const ServerSelector& server_selector,
+                                  const ClientClassDefPtr& client_class,
+                                  const std::string& follow_client_class) {
+        // We need to evaluate class expression to see if it references any
+        // other classes (dependencies). As part of this evaluation we will
+        // also check if the client class depends on KNOWN/UNKNOWN built-in
+        // classes.
+        std::list<std::string> dependencies;
+        auto depend_on_known = false;
+        if (!client_class->getTest().empty()) {
+            ExpressionPtr expression;
+            ExpressionParser parser;
+            // Parse the test expression. The callback function is normally used to
+            // interrupt config file parsing when one of the classes refers to a
+            // non-existing client class. It returns false in this case. Here,
+            // we use the callback to capture client classes referenced by the
+            // upserted client class and record whether this class depends on
+            // KNOWN/UNKNOWN built-ins. The callback always returns true to avoid
+            // reporting the parsing error. The dependency check is performed later
+            // at the database level.
+            parser.parse(expression, Element::create(client_class->getTest()), AF_INET,
+                         [&dependencies, &depend_on_known](const ClientClass& client_class) -> bool {
+                if (isClientClassBuiltIn(client_class)) {
+                    if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+                        depend_on_known = true;
+                    }
+                } else {
+                    dependencies.push_back(client_class);
+                }
+                return (true);
+            });
+        }
+
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(client_class->getName()),
+            MySqlBinding::createString(client_class->getTest()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getNextServer().toUint32()),
+            MySqlBinding::createString(client_class->getSname()),
+            MySqlBinding::createString(client_class->getFilename()),
+            MySqlBinding::createBool(client_class->getRequired()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getValid()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMin()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMax()),
+            MySqlBinding::createBool(depend_on_known),
+            (follow_client_class.empty() ? MySqlBinding::createNull() :
+             MySqlBinding::createString(follow_client_class)),
+            MySqlBinding::createTimestamp(client_class->getModificationTime()),
+        };
+
+        MySqlTransaction transaction(conn_);
+
+        ScopedAuditRevision audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                                           server_selector, "client class set", true);
+        // Keeps track of whether the client class is inserted or updated.
+        auto update = false;
+        try {
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4, in_bindings);
+
+        } catch (const DuplicateEntry&) {
+            // Such class already exists.
+
+            // Delete options and option definitions. They will be re-created from the new class
+            // instance.
+            deleteOptions4(ServerSelector::ANY(), client_class);
+            deleteOptionDefs4(ServerSelector::ANY(), client_class);
+
+            // Try to update the class.
+            in_bindings.push_back(MySqlBinding::createString(client_class->getName()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4, in_bindings);
+
+            // Delete class associations with the servers and dependencies. We will re-create
+            // them according to the new class specification.
+            MySqlBindingCollection in_assoc_bindings = {
+                MySqlBinding::createString(client_class->getName())
+            };
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_DEPENDENCY,
+                                    in_assoc_bindings);
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_SERVER,
+                                    in_assoc_bindings);
+            update = true;
+        }
+
+        // Associate client class with the servers.
+        attachElementToServers(MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_SERVER,
+                               server_selector,
+                               MySqlBinding::createString(client_class->getName()),
+                               MySqlBinding::createTimestamp(client_class->getModificationTime()));
+
+        // Iterate over the captured dependencies and try to insert them into the database.
+        for (auto dependency : dependencies) {
+            try {
+                MySqlBindingCollection in_dependency_bindings = {
+                    MySqlBinding::createString(client_class->getName()),
+                    MySqlBinding::createString(dependency)
+                };
+                // We deleted earlier dependencies, so we can simply insert new ones.
+                conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_DEPENDENCY,
+                                  in_dependency_bindings);
+            } catch (const std::exception& ex) {
+                isc_throw(InvalidOperation, "unmet dependency on client class: " << dependency);
+            }
+        }
+
+        // If we performed client class update we also have to verify that its dependency
+        // on KNOWN/UNKNOWN client classes hasn't changed.
+        if (update) {
+            MySqlBindingCollection in_check_bindings;
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
+                              in_check_bindings);
+        }
+
+        // (Re)create option definitions.
+        if (client_class->getCfgOptionDef()) {
+            auto option_defs = client_class->getCfgOptionDef()->getContainer();
+            auto option_spaces = option_defs.getOptionSpaceNames();
+            for (auto option_space : option_spaces) {
+                OptionDefContainerPtr defs = option_defs.getItems(option_space);
+                for (auto def = defs->begin(); def != defs->end(); ++def) {
+                    createUpdateOptionDef4(server_selector, *def, client_class->getName());
+                }
+            }
+        }
+
+        // (Re)create options.
+        auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
+        for (auto option_space : option_spaces) {
+            OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
+            for (auto desc = options->begin(); desc != options->end(); ++desc) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+                desc_copy->space_name_ = option_space;
+                createUpdateOption4(server_selector, client_class, desc_copy);
+            }
+        }
+
+        // All ok. Commit the transaction.
+        transaction.commit();
+    }
+
+    /// @brief Removes client class by name.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Removed client class name.
+    /// @return Number of deleted client classes.
+    uint64_t deleteClientClass4(const ServerSelector& server_selector,
+                                const std::string& name) {
+        int index = server_selector.amAny() ? 
+            MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_ANY :
+            MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4;
+
+        uint64_t result = deleteTransactional(index, server_selector,
+                                              "deleting client class",
+                                              "client class deleted",
+                                              true,
+                                              name);
+        return (result);
     }
 
     /// @brief Removes unassigned global parameters, global options and
@@ -2434,7 +2949,10 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
       "CALL createAuditRevisionDHCP4(?, ?, ?, ?)"
     },
-
+    // Verify that dependency on KNOWN/UNKNOWN class has not changed.
+    { MySqlConfigBackendDHCPv4Impl::CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
+      "CALL checkDHCPv4ClientClassKnownDependencyChange()"
+    },
     // Select global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::GET_GLOBAL_PARAMETER4,
       MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
@@ -2596,6 +3114,31 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_OPTION4(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
+    // Select a client class by name.
+    { MySqlConfigBackendDHCPv4Impl::GET_CLIENT_CLASS4_NAME,
+      MYSQL_GET_CLIENT_CLASS4_WITH_TAG(WHERE c.name = ?)
+    },
+
+    // Select all client classes.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4,
+      MYSQL_GET_CLIENT_CLASS4_WITH_TAG()
+    },
+
+    // Select all unassigned client classes.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4_UNASSIGNED,
+      MYSQL_GET_CLIENT_CLASS4_UNASSIGNED()
+    },
+
+    // Select modified client classes.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_CLIENT_CLASSES4,
+      MYSQL_GET_CLIENT_CLASS4_WITH_TAG(WHERE c.modification_ts >= ?)
+    },
+
+    // Select modified client classes.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_CLIENT_CLASSES4_UNASSIGNED,
+      MYSQL_GET_CLIENT_CLASS4_UNASSIGNED(AND c.modification_ts >= ?)
+    },
+
     // Retrieves the most recent audit entries.
     { MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
       MYSQL_GET_AUDIT_ENTRIES_TIME(dhcp4)
@@ -2720,6 +3263,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_INSERT_OPTION_DEF(dhcp4)
     },
 
+    // Insert option definition for client class.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_CLIENT_CLASS,
+      MYSQL_INSERT_OPTION_DEF_CLIENT_CLASS(dhcp4)
+    },
+
     // Insert association of the option definition with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
       MYSQL_INSERT_OPTION_DEF_SERVER(dhcp4)
@@ -2734,7 +3282,31 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4_SERVER,
       MYSQL_INSERT_OPTION_SERVER(dhcp4)
     },
-
+    // Insert client class.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4,
+      "INSERT INTO dhcp4_client_class("
+      "  name,"
+      "  test,"
+      "  next_server,"
+      "  server_hostname,"
+      "  boot_file_name,"
+      "  only_if_required,"
+      "  valid_lifetime,"
+      "  min_valid_lifetime,"
+      "  max_valid_lifetime,"
+      "  depend_on_known_directly,"
+      "  follow_class_name,"
+      "  modification_ts"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    },
+    // Insert association of a client class with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_SERVER,
+      MYSQL_INSERT_CLIENT_CLASS_SERVER(dhcp4)
+    },
+    // Insert client class dependency.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_DEPENDENCY,
+      MYSQL_INSERT_CLIENT_CLASS_DEPENDENCY(dhcp4)
+    },
     // Insert server with server tag and description.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
       MYSQL_INSERT_SERVER(dhcp4)
@@ -2827,6 +3399,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_UPDATE_OPTION_DEF(dhcp4)
     },
 
+    // Update existing option definition.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4_CLIENT_CLASS,
+      MYSQL_UPDATE_OPTION_DEF_CLIENT_CLASS(dhcp4)
+    },
+
     // Update existing global option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
       MYSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
@@ -2845,6 +3422,28 @@ TaggedStatementArray tagged_statements = { {
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SHARED_NETWORK,
       MYSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+    },
+
+    // Update existing client class level option.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_CLIENT_CLASS,
+      MYSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ? AND o.space = ?)
+    },
+
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
+      "UPDATE dhcp4_client_class SET"
+      "  name = ?,"
+      "  test = ?,"
+      "  next_server = ?,"
+      "  server_hostname = ?,"
+      "  boot_file_name = ?,"
+      "  only_if_required = ?,"
+      "  valid_lifetime = ?,"
+      "  min_valid_lifetime = ?,"
+      "  max_valid_lifetime = ?,"
+      "  depend_on_known_directly = ?,"
+      "  follow_class_name = ?,"
+      "  modification_ts = ? "
+      "WHERE name = ?"
     },
 
     // Update existing server, e.g. server description.
@@ -2952,6 +3551,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_OPTION_DEF_UNASSIGNED(dhcp4)
     },
 
+    // Delete client class specific option definitions.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION_DEFS4_CLIENT_CLASS,
+      MYSQL_DELETE_OPTION_DEFS_CLIENT_CLASS(dhcp4)
+    },
+
     // Delete single global option.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
       MYSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
@@ -2987,6 +3591,41 @@ TaggedStatementArray tagged_statements = { {
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp4, WHERE o.scope_id = 4 AND o.shared_network_name = ?)
+    },
+
+    // Delete options belonging to a client class.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_CLIENT_CLASS,
+      MYSQL_DELETE_OPTION_NO_TAG(dhcp4, WHERE o.scope_id = 2 AND o.dhcp_client_class = ?)
+    },
+
+    // Delete all dependencies of a client class.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_DEPENDENCY,
+      MYSQL_DELETE_CLIENT_CLASS_DEPENDENCY(dhcp4)
+    },
+
+    // Delete associations of a client class with server.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_SERVER,
+      MYSQL_DELETE_CLIENT_CLASS_SERVER(dhcp4),
+    },
+
+    // Delete all client classes.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_CLIENT_CLASSES4,
+      MYSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp4)
+    },
+
+    // Delete all unassigned client classes.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_CLIENT_CLASSES4_UNASSIGNED,
+      MYSQL_DELETE_CLIENT_CLASS_UNASSIGNED(dhcp4)
+    },
+
+    // Delete specified client class.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4,
+      MYSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp4, AND name = ?)
+    },
+
+    // Delete any client class with a given name.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_ANY,
+      MYSQL_DELETE_CLIENT_CLASS_ANY(dhcp4, AND name = ?)
     },
 
     // Delete a server by tag.
@@ -3223,20 +3862,33 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
 }
 
 ClientClassDefPtr
-MySqlConfigBackendDHCPv4::getClientClientClass4(const db::ServerSelector& selector,
-                                                const std::string& name) const {
-    isc_throw(NotImplemented, "getClientClass4 is not implemented");
+MySqlConfigBackendDHCPv4::getClientClass4(const db::ServerSelector& server_selector,
+                                          const std::string& name) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_CLIENT_CLASS4)
+        .arg(name);
+    return (impl_->getClientClass4(server_selector, name));
 }
 
 ClientClassDictionary
-MySqlConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& selector) const {
-    isc_throw(NotImplemented, "getAllClientClasses4 is not implemented");
+MySqlConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_CLIENT_CLASSES4);
+    ClientClassDictionary client_classes;
+    impl_->getAllClientClasses4(server_selector, client_classes);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT)
+        .arg(client_classes.getClasses()->size());
+    return (client_classes);
 }
 
 ClientClassDictionary
-MySqlConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& selector,
+MySqlConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& server_selector,
                                                     const boost::posix_time::ptime& modification_time) const {
-    isc_throw(NotImplemented, "getModifiedClientClasses4 is not implemented");
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4)
+        .arg(util::ptimeToText(modification_time));
+    ClientClassDictionary client_classes;
+    impl_->getModifiedClientClasses4(server_selector, modification_time, client_classes);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT)
+        .arg(client_classes.getClasses()->size());
+    return (client_classes);
 }
 
 AuditEntryCollection
@@ -3345,10 +3997,12 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 
 void
 MySqlConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
-                                                   const ClientClassDefPtr& client_class) {
-    isc_throw(NotImplemented, "createUpdateClientClass4 is not implemented");
+                                                   const ClientClassDefPtr& client_class,
+                                                   const std::string& follow_client_class) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4)
+        .arg(client_class->getName());
+    impl_->createUpdateClientClass4(server_selector, client_class, follow_client_class);
 }
-
 
 void
 MySqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& server) {
@@ -3573,12 +4227,26 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 uint64_t
 MySqlConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_selector,
                                              const std::string& name) {
-    isc_throw(NotImplemented, "deleteClientClass4 is not implemented");
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_CLIENT_CLASS4)
+        .arg(name);
+    auto result = impl_->deleteClientClass4(server_selector, name);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& server_selector) {
-    isc_throw(NotImplemented, "deleteAllClientClasses4 is not implemented");
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4);
+
+    int index = (server_selector.amUnassigned() ?
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_CLIENT_CLASSES4_UNASSIGNED :
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_CLIENT_CLASSES4);
+    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all client classes",
+                                                 "deleted all client classes", true);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t

@@ -232,7 +232,7 @@ public:
     /// @param name Client class name.
     /// @return Pointer to the retrieved client class.
     virtual ClientClassDefPtr
-    getClientClientClass4(const db::ServerSelector& selector, const std::string& name) const;
+    getClientClass4(const db::ServerSelector& selector, const std::string& name) const;
 
     /// @brief Retrieves all client classes.
     ///
@@ -369,9 +369,14 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param client_class Client class to be added or updated.
+    /// @param follow_client_class name of the class after which the
+    /// new or updated class should be positioned. An empty value
+    /// causes the class to be appended at the end of the class
+    /// hierarchy.
     virtual void
     createUpdateClientClass4(const db::ServerSelector& server_selector,
-                             const ClientClassDefPtr& client_class);
+                             const ClientClassDefPtr& client_class,
+                             const std::string& follow_client_class);
 
     /// @brief Creates or updates a server.
     ///
