@@ -4099,14 +4099,14 @@ When an already assigned lease can fulfill a client query:
   - lease age i.e. the difference between the creation or last modification
     time and the current time is computed (elapsed duration)
 
-  - if the ``cache-max-age`` is configured, it is compared with the age
-    and too old leases are not reusable (this means that the value 0
+  - if ``cache-max-age`` is explicitly configured, it is compared with the age
+    and leases that are too old are not reusable (this means that the value 0
     for ``cache-max-age`` disables the lease cache feature)
 
-  - if the ``cache-threshold`` is configured and is between 0. and 1.
+  - if ``cache-threshold`` is explicitly configured and is between 0.0 and 1.0,
     it expresses the percentage of the lease valid lifetime which is
-    allowed for the lease age. Values below and including 0. and
-    values greater than 1. disable the lease cache feature.
+    allowed for the lease age. Values below and including 0.0 and
+    values greater than 1.0 disable the lease cache feature.
 
 In the example a lease with a valid lifetime of 2000 seconds can be
 reused if it was committed less than 500 seconds ago. With a lifetime
