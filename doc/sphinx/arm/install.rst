@@ -236,7 +236,7 @@ options. Some commonly used options are:
    Only useful when ``kea-shell`` is enabled. It causes the kea-shell
    python packages to be installed in the specified directory. This is
    mostly useful for Debian related distros. While most systems store
-   python packages in ${prefix}/usr/lib/pythonX/site-packages, Debian
+   python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
    introduced a separate directory for packages installed from DEB. Such
    python packages are expected to be installed in
    /usr/lib/python3/dist-packages.
