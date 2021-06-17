@@ -54,7 +54,7 @@ CREATE OR REPLACE FUNCTION modification_ts_update()
   END;
 
 -- Second, we need to specify which language it was written in.
-$modification_ts_update$ LANGUAGE plpgsql;
+\$modification_ts_update\$ LANGUAGE plpgsql;
 
 
 -- Create table modification and insert values for modification types.
