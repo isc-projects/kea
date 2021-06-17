@@ -316,7 +316,7 @@ CREATE TABLE dhcp6_global_parameter_server (
   modification_ts timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (parameter_id, server_id),
   CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
-    REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE  ON UPDATE NO ACTION,
+    REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
     REFERENCES dhcp6_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
 );
