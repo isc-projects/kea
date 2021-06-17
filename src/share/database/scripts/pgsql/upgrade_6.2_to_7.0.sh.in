@@ -48,7 +48,7 @@ START TRANSACTION;
 -- First, we need to define a function that will do the actual job.
 -- This is used in many, many tables.
 CREATE OR REPLACE FUNCTION modification_ts_update()
-  RETURNS trigger AS $modification_ts_update$
+  RETURNS trigger AS \$modification_ts_update\$
   BEGIN
     new.modification_ts = CURRENT_TIMESTAMP;
   END;
