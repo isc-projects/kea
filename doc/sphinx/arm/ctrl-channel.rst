@@ -313,7 +313,7 @@ invocation looks like this:
    }
 
 If the configuration file is incorrect reloading it can raise an error
-which leaves the server in an unusable state.. Look at :ref:`command-config-set`
+which leaves the server in an unusable state. Look at :ref:`command-config-set`
 what to do to recover a working server.
 
 .. _command-config-test:
