@@ -239,7 +239,7 @@ options. Some commonly used options are:
    python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
    introduced a separate directory for packages installed from DEB. Such
    python packages are expected to be installed in
-   /usr/lib/python3/dist-packages.
+   ``/usr/lib/python3/dist-packages``.
 
  - ``--enable-perfdhcp``
    Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
