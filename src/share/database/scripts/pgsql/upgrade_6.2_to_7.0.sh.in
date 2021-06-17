@@ -464,7 +464,7 @@ CREATE TABLE dhcp4_global_parameter_server (
   CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
     REFERENCES dhcp4_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
-    REFERENCES dhcp4_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+    REFERENCES dhcp4_server(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
 CREATE INDEX key_dhcp4_global_parameter_idx1 ON dhcp4_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
