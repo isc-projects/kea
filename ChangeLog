@@ -1,3 +1,7 @@
+1907.	[doc]		peterd, andrei, razvan
+	Many Kea ARM corrections and updates.
+	(Gitlab #1917)
+
 1906.	[func]		fdupont
 	Added support for the TKEY DNS resource record.
 	(Gitlab #1880)
