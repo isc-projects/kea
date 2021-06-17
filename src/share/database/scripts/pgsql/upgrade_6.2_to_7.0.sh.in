@@ -312,7 +312,7 @@ CREATE TABLE dhcp6_global_parameter_server (
   CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
     REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
-    REFERENCES dhcp6_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+    REFERENCES dhcp6_server(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
 CREATE INDEX key_dhcp6_global_parameter_server_idx1 on dhcp6_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
