@@ -279,17 +279,34 @@ pgsql_upgrade_3_0_to_6_1() {
     assert_eq 0 "${EXIT_CODE}" "logs table is missing or broken. (expected status code %d, returned %d)"
 }
 
-pgsql_upgrade_6_1_to_7_0() {
-    # Verify upgraded schema reports version 6.2.
-    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
-
+pgsql_upgrade_6_1_to_6_2() {
     insert_sql="\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010101', 'hex'), 0, 1, x'FFAF0002'::int);\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (decode('010101010102', 'hex'), 0, 1, x'FFAF0002'::int);"
     run_command \
         pgsql_execute "$insert_sql"
     assert_eq 0 "${EXIT_CODE}" "insert into hosts failed, expected exit code %d, actual %d"
+}
+
+pgsql_upgrade_6_2_to_7_0() {
+
+    # The dhcp6_server table has been introduced in this schema update. It should contain a special value "all" (with id 1)
+    # Hence we're adding tag "server1" with id 2.
+    insert_sql="insert into dhcp6_server (id,tag,description) values(2, 'server1', 'This is only a test server');"
+    run_command \
+        pgsql_execute "$insert_sql"
+    assert_eq 0 "${EXIT_CODE}" "insert into dhcp6_server failed, expected exit code %d, actual %d"
+
+    # And now check if it's possible to read something from the table.
+    select_sql="SELECT id, tag, description, modification_ts from dhcp6_server;"
+    run_command \
+        pgsql_execute "$select_sql"
+
+    assert_eq 0 "${EXIT_CODE}" "the dhcp6_server table is broken or missing. (expected status code %d, returned %d)"
+
+    # Verify upgraded schema reports version 7.0.
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 }
 
 pgsql_upgrade_test() {
@@ -318,6 +335,9 @@ pgsql_upgrade_test() {
 
     # Check 6.1 to 6.2 upgrade
     pgsql_upgrade_6_1_to_6_2
+
+    # Check 6.2 to 7.0 upgrade
+    pgsql_upgrade_6_2_to_7_0
 
     # Let's wipe the whole database
     pgsql_wipe
