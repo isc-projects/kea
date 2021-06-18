@@ -274,8 +274,8 @@ public:
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleMessages(const uint32_t msg_type,
-                                  const uint64_t msg_num);
+    uint64_t sendMultipleMessages4(const uint32_t msg_type,
+                                   const uint64_t msg_num);
 
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///

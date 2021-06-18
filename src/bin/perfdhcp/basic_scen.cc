@@ -177,7 +177,7 @@ BasicScen::run() {
 
             // Send multiple renews to satisfy the desired rate.
             if (options_.getIpVersion() == 4) {
-                tc_.sendMultipleMessages(DHCPREQUEST, renew_packets_due);
+                tc_.sendMultipleMessages4(DHCPREQUEST, renew_packets_due);
             } else {
                 tc_.sendMultipleMessages6(DHCPV6_RENEW, renew_packets_due);
             }
@@ -191,7 +191,7 @@ BasicScen::run() {
             // Send Release messages.
 
             if (options_.getIpVersion() == 4) {
-                tc_.sendMultipleMessages(DHCPRELEASE, release_packets_due);
+                tc_.sendMultipleMessages4(DHCPRELEASE, release_packets_due);
             } else {
                 tc_.sendMultipleMessages6(DHCPV6_RELEASE, release_packets_due);
             }

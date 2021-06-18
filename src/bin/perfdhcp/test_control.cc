@@ -553,8 +553,8 @@ TestControl::sendPackets(const uint64_t packets_num,
 }
 
 uint64_t
-TestControl::sendMultipleMessages(const uint32_t msg_type,
-                                  const uint64_t msg_num) {
+TestControl::sendMultipleMessages4(const uint32_t msg_type,
+                                   const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
         if (!sendMessageFromAck(msg_type)) {
             return (i);

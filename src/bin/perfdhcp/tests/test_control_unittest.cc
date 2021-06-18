@@ -160,7 +160,7 @@ public:
     using TestControl::sendDiscover4;
     using TestControl::sendRequest4;
     using TestControl::sendPackets;
-    using TestControl::sendMultipleMessages;
+    using TestControl::sendMultipleMessages4;
     using TestControl::sendMultipleMessages6;
     using TestControl::sendRequest6;
     using TestControl::sendSolicit6;
@@ -726,19 +726,19 @@ public:
         // Try to send 5 messages. It should be successful because 10
         // DHCPREQUEST messages has been received. For each of them we
         // should be able to send renewal.
-        msg_num = tc.sendMultipleMessages(msg_type, 5);
+        msg_num = tc.sendMultipleMessages4(msg_type, 5);
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which renews haven't been sent yet.
-        msg_num = tc.sendMultipleMessages(msg_type, 5);
+        msg_num = tc.sendMultipleMessages4(msg_type, 5);
         EXPECT_EQ(5, msg_num);
 
         // We used all the DHCPACK packets (we sent renew or release for each of
         // them already). Therefore, no further renew messages should be sent
         // before we acquire new leases.
-        msg_num = tc.sendMultipleMessages(msg_type, 5);
+        msg_num = tc.sendMultipleMessages4(msg_type, 5);
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
     }
