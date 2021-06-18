@@ -1106,7 +1106,7 @@ INSERT INTO ddns_replace_client_name_types (type, name) VALUES
 -- Create table for DHCPv6 servers
 CREATE TABLE dhcp6_server (
   id SERIAL PRIMARY KEY NOT NULL,
-  tag VARCHAR(256) NOT NULL,
+  tag VARCHAR(64) NOT NULL,
   description TEXT DEFAULT NULL,
   modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tag)
@@ -1294,7 +1294,6 @@ CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
-
 -- Create table for storing global DHCPv6 parameters.
 CREATE TABLE dhcp6_global_parameter (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1430,7 +1429,7 @@ CREATE INDEX dhcp6_audit_idx2 ON dhcp6_audit (revision_id);
 -- Create table for DHCPv4 servers
 CREATE TABLE dhcp4_server (
   id SERIAL PRIMARY KEY NOT NULL,
-  tag VARCHAR(256) NOT NULL,
+  tag VARCHAR(64) NOT NULL,
   description TEXT DEFAULT NULL,
   modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(tag)
