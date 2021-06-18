@@ -1,7 +1,7 @@
 # Kea Contributor's Guide
 
 So you found a bug in Kea or plan to develop an extension and want to send us a patch? Great! This
-page will explain how to contribute your changes smoothly.
+document will explain how to contribute your changes smoothly.
 
 Here's a quick list of how to contribute a patch:
 
@@ -21,7 +21,20 @@ Here's a quick list of how to contribute a patch:
    to the issue and will review your code. Please make sure you respond to comments. It's likely
    you'll be asked to update the code.
 
-For a much more detailed description with details, see the text below.
+For a much more detailed description with details, see the sections below.
+
+## Ideas for beginners
+
+If you're not an experienced C++ programmer, you can still help Kea in many ways. To help newcomers get
+involved in the project, we try to mark easy tickets with `beginner` label. Examples of such tasks may be
+elimination of compilation warnings, adding or fixing logging messages, improving the build
+system to not leave unnecessary files, conduct some experiments and improve documentation. You can see the
+list of all tickets with that label here:
+https://gitlab.isc.org/isc-projects/kea/-/issues?scope=all&utf8=%E2%9C%93&state=opened&label_name[]=beginner
+
+Don't be discouraged if a ticket that looks interesting to you is not marked for beginners. It may require
+a bit of DHCP protocol or C++ programming knowledge, but they're definitely all doable. If in doubt, ask on
+kea-dev list for suggestions or guidance.
 
 ## Writing a patch
 
@@ -38,7 +51,7 @@ compiles. This may seem obvious, but there's more to it. You have surely checked
 your system, but Kea is a portable software. Besides Linux, it is compiled and used on relatively
 uncommon systems like OpenBSD. Will your code compile and work there? What about endianness? It is
 likely that you used a regular x86 architecture machine to write your patch, but the software is
-expected to run on many other architectures. You may take a look at [system specific build
+expected to run on many other architectures, such as arm64. You may take a look at [system specific build
 notes](https://kb.isc.org/docs/installing-kea). For a complete list of systems we build on, you may
 take a look at the [Jenkins build farm](https://jenkins.isc.org/).
 
