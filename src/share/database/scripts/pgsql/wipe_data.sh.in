@@ -82,6 +82,7 @@ DELETE FROM dhcp4_options_server;
 DELETE FROM dhcp4_pool;
 DELETE FROM dhcp4_server WHERE tag != 'all'; -- preserve the special tag
 DELETE FROM dhcp4_shared_network;
+DELETE FROM dhcp4_shared_network_server;
 DELETE FROM dhcp4_subnet;
 DELETE FROM dhcp4_subnet_server;
 

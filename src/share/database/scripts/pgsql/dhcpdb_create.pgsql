@@ -1521,6 +1521,23 @@ CREATE TRIGGER dhcp4_shared_network_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+
+-- Now we need to create a relationship between defined shared networks and the servers
+CREATE TABLE dhcp4_shared_network_server (
+  shared_network_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (shared_network_id, server_id),
+  CONSTRAINT fk_dhcp4_shared_network_server_server_id FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp4_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
+    REFERENCES dhcp4_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
+);
+CREATE INDEX dhcp4_shared_network_server_idx1 ON dhcp4_shared_network_server (modification_ts);
+CREATE INDEX dhcp4_shared_network_server_idx2 ON dhcp4_shared_network_server (server_id);
+
+
+
 -- Create a list of IPv4 subnets
 CREATE TABLE dhcp4_subnet (
   subnet_id SERIAL PRIMARY KEY NOT NULL,
