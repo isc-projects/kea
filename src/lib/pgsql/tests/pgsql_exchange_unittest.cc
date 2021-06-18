@@ -8,6 +8,7 @@
 
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -301,6 +302,53 @@ public:
 #define RUN_PREP(a,b,c,d) (runPreparedStatement(a,b,c,d, __LINE__))
 #define FETCH_ROWS(a,b) (fetchRows(a,b,__LINE__))
 #define WIPE_ROWS(a) (RUN_SQL(a, "DELETE FROM BASICS", PGRES_COMMAND_OK))
+
+// A small extension of PgSqlBasicsTest that instantiates the actual Kea schema.
+// Those tests tend to be a bit heavy (especially with the CB and its tables),
+// so please consider adding your tests in PgSqlBasicsTest, unless you really need
+// the full schema.
+class PgSqlSchemaTest: public PgSqlBasicsTest {
+public:
+    PgSqlSchemaTest() : PgSqlBasicsTest() {
+        destroySchema(); // We don't need this fake schema with just "basics" table.
+
+        // Create the actual full Kea schema.
+        isc::db::test::createPgSQLSchema(true, true);
+    }
+
+    virtual ~PgSqlSchemaTest() {
+        // Clean up after ourselves.
+        isc::db::test::destroyPgSQLSchema(true, true);
+    }
+};
+
+/// @brief Checks if the schema version is really as expected.
+TEST_F(PgSqlSchemaTest, schemaVersion) {
+
+    PgSqlResultPtr r;
+    std::string sql = "SELECT version, minor FROM schema_version";
+    RUN_SQL(r, sql, PGRES_TUPLES_OK);
+    // There should be one row with 7,0 returned or whatever the latest schema is.
+    ASSERT_EQ(r->getRows(), 1) << "failed to check schema version, expected 1 row, have: "
+        << r->getRows();
+
+    int value = 0;
+    // Get row 0, column 0 (i.e. version field)
+    ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, 0));
+    ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, 0, value));
+    EXPECT_EQ(value, PG_SCHEMA_VERSION_MAJOR)
+        << "invalid schema version reported, major expected " << PG_SCHEMA_VERSION_MAJOR
+        << ", actual:" << value;
+
+    // Get row 0, column 1 (i.e. version field)
+    ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, 1));
+    ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, 1, value));
+    EXPECT_EQ(value, PG_SCHEMA_VERSION_MINOR)
+        << "invalid schema version reported, minor expected " << PG_SCHEMA_VERSION_MINOR
+        << ", actual:" << value;
+
+}
+
 
 /// @brief Verifies that PgResultSet row and column meta-data is correct
 TEST_F(PgSqlBasicsTest, rowColumnBasics) {

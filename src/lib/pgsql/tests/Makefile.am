@@ -31,6 +31,7 @@ libpgsql_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libpgsql_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 libpgsql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
 
 endif
