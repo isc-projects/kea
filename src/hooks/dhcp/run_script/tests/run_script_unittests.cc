@@ -429,15 +429,12 @@ TEST(RunScript, extractOption) {
     ProcessEnvVars vars;
     OptionPtr option;
     RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
-    ASSERT_EQ(1, vars.size());
-    string expected = "OPTION_PREFIX_OPTION_SUFFIX=\n";
-    EXPECT_EQ(expected, join(vars));
-    vars.clear();
+    ASSERT_EQ(0, vars.size());
     OptionBuffer buffer = { 0xca, 0xfe, 0xba, 0xbe };
     option = generateOption(Option::V4, DHO_USER_CLASS, buffer);
     RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    expected = "OPTION_PREFIX_OPTION_SUFFIX=0xCAFEBABE\n";
+    std::string expected = "OPTION_PREFIX_OPTION_77_OPTION_SUFFIX=0xCAFEBABE\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -446,10 +443,7 @@ TEST(RunScript, extractSubOption) {
     ProcessEnvVars vars;
     OptionPtr option;
     RunScriptImpl::extractOption(vars, option, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
-    ASSERT_EQ(1, vars.size());
-    string expected = "OPTION_SUBOPTION_PREFIX_OPTION_SUBOPTION_SUFFIX=\n";
-    EXPECT_EQ(expected, join(vars));
-    vars.clear();
+    ASSERT_EQ(0, vars.size());
     OptionBuffer data;
     option = generateOption(Option::V4, DHO_DHCP_AGENT_OPTIONS, data);
     uint8_t subscriber_id[] = { 0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f };
@@ -459,7 +453,7 @@ TEST(RunScript, extractSubOption) {
     option->addOption(subscriber_id_opt);
     RunScriptImpl::extractSubOption(vars, option, RAI_OPTION_SUBSCRIBER_ID, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    expected = "OPTION_SUBOPTION_PREFIX_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
+    std::string expected = "OPTION_SUBOPTION_PREFIX_OPTION_82_SUB_OPTION_6_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -686,7 +680,7 @@ TEST(RunScript, extractPkt4) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
-    ASSERT_EQ(25, vars.size());
+    ASSERT_EQ(22, vars.size());
     string expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_TXID_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=\n"
@@ -708,10 +702,7 @@ TEST(RunScript, extractPkt4) {
                       "PKT4_PREFIX_LOCAL_HWADDR_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=\n"
-                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=\n"
-                      "PKT4_PREFIX_RAI_PKT4_SUFFIX=\n"
-                      "PKT4_PREFIX_RAI_CIRCUIT_ID_PKT4_SUFFIX=\n"
-                      "PKT4_PREFIX_RAI_REMOTE_ID_PKT4_SUFFIX=\n";
+                      "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     pkt4 = generatePkt4();
@@ -739,9 +730,9 @@ TEST(RunScript, extractPkt4) {
                "PKT4_PREFIX_LOCAL_HWADDR_TYPE_PKT4_SUFFIX=1\n"
                "PKT4_PREFIX_REMOTE_HWADDR_PKT4_SUFFIX=00:01:02:03\n"
                "PKT4_PREFIX_REMOTE_HWADDR_TYPE_PKT4_SUFFIX=1\n"
-               "PKT4_PREFIX_RAI_PKT4_SUFFIX=0x0105686F776479020587F67977EF06061A2B3C4D5E6F\n"
-               "PKT4_PREFIX_RAI_CIRCUIT_ID_PKT4_SUFFIX=0x686F776479\n"
-               "PKT4_PREFIX_RAI_REMOTE_ID_PKT4_SUFFIX=0x87F67977EF\n";
+               "PKT4_PREFIX_OPTION_82_PKT4_SUFFIX=0x0105686F776479020587F67977EF06061A2B3C4D5E6F\n"
+               "PKT4_PREFIX_OPTION_82_SUB_OPTION_1_PKT4_SUFFIX=0x686F776479\n"
+               "PKT4_PREFIX_OPTION_82_SUB_OPTION_2_PKT4_SUFFIX=0x87F67977EF\n";
     EXPECT_EQ(expected, join(vars));
 }
 

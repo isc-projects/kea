@@ -74,12 +74,7 @@ RunScriptImpl::extractInteger(ProcessEnvVars& vars,
                               const uint64_t value,
                               const string& prefix,
                               const string& suffix) {
-    string data;
-    try {
-        data = boost::lexical_cast<string>(value);
-    } catch (...) {
-    }
-    string exported_data = prefix + suffix + "=" + data;
+    string exported_data = prefix + suffix + "=" + boost::lexical_cast<string>(value);
     vars.push_back(exported_data);
 }
 
@@ -125,9 +120,10 @@ RunScriptImpl::extractOption(ProcessEnvVars& vars,
                              const string& prefix,
                              const string& suffix) {
     if (option) {
-        RunScriptImpl::extractString(vars, option->toHexString(), prefix, suffix);
-    } else {
-        RunScriptImpl::extractString(vars, "", prefix, suffix);
+        RunScriptImpl::extractString(vars, option->toHexString(),
+                                     prefix + "_OPTION_" +
+                                     boost::lexical_cast<string>(option->getType()),
+                                     suffix);
     }
 }
 
@@ -138,9 +134,10 @@ RunScriptImpl::extractSubOption(ProcessEnvVars& vars,
                                 const string& prefix,
                                 const string& suffix) {
     if (option) {
-        RunScriptImpl::extractOption(vars, option->getOption(code), prefix, suffix);
-    } else {
-        RunScriptImpl::extractString(vars, "", prefix, suffix);
+        RunScriptImpl::extractOption(vars, option->getOption(code),
+                                     prefix + "_OPTION_" +
+                                     boost::lexical_cast<string>(option->getType()) +
+                                     "_SUB", suffix);
     }
 }
 
@@ -376,15 +373,15 @@ RunScriptImpl::extractPkt4(ProcessEnvVars& vars,
                                      prefix + "_REMOTE_HWADDR", suffix);
         RunScriptImpl::extractOption(vars,
                                      pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
-                                     prefix + "_RAI", suffix);
+                                     prefix, suffix);
         RunScriptImpl::extractSubOption(vars,
                                         pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
                                         RAI_OPTION_AGENT_CIRCUIT_ID,
-                                        prefix + "_RAI_CIRCUIT_ID", suffix);
+                                        prefix, suffix);
         RunScriptImpl::extractSubOption(vars,
                                         pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
                                         RAI_OPTION_REMOTE_ID,
-                                        prefix + "_RAI_REMOTE_ID", suffix);
+                                        prefix, suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_TXID", suffix);
@@ -408,11 +405,6 @@ RunScriptImpl::extractPkt4(ProcessEnvVars& vars,
                                      prefix + "_LOCAL_HWADDR", suffix);
         RunScriptImpl::extractHWAddr(vars, HWAddrPtr(),
                                      prefix + "_REMOTE_HWADDR", suffix);
-        RunScriptImpl::extractString(vars, "", prefix + "_RAI", suffix);
-        RunScriptImpl::extractString(vars, "",
-                                     prefix + "_RAI_CIRCUIT_ID", suffix);
-        RunScriptImpl::extractString(vars, "",
-                                     prefix + "_RAI_REMOTE_ID", suffix);
     }
 }
 
