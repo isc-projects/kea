@@ -172,6 +172,13 @@ Options
    The ``-e prefix-only`` and ``-e address-and-prefix`` forms may not be used
    with the ``-4`` option.
 
+``-F release-rate``
+   Specifies the rate at which RELEASE requests are sent to a server. This value
+   is only valid when used in conjunction with the exchange rate (given
+   by ``-r rate``). Furthermore, the sum of this value and the renew-rate
+   (given by ``-f rate``) must be equal to or less than the exchange
+   rate value.
+
 ``-f renew-rate``
    Specifies the rate at which DHCPv4 or DHCPv6 renew requests are sent to a server.
    This value is only valid when used in conjunction with the exchange
@@ -341,13 +348,6 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
 
 ``-c``
    Adds a rapid-commit option (exchanges will be SOLICIT-ADVERTISE).
-
-``-F release-rate``
-   Specifies the rate at which RELEASE requests are sent to a server. This value
-   is only valid when used in conjunction with the exchange rate (given
-   by ``-r rate``). Furthermore, the sum of this value and the renew-rate
-   (given by ``-f rate``) must be equal to or less than the exchange
-   rate value.
 
 ``-A encapsulation-level``
    Specifies that relayed traffic must be generated. The argument

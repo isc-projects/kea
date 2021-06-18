@@ -1221,6 +1221,11 @@ Options:
 -E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)
     elapsed-time option in the (second/request) template.
     The value 0 disables it.
+-F<release-rate>: Rate at which Release requests are sent to
+    a server. This value is only valid when used in conjunction with
+    the exchange rate (given by -r<rate>).  Furthermore the sum of
+    this value and the renew-rate (given by -f<rate>) must be equal
+    to or less than the exchange rate.
 -f<renew-rate>: Rate at which DHCPv4 or DHCPv6 renew requests are sent
     to a server. This value is only valid when used in conjunction
     with the exchange rate (given by -r<rate>).  Furthermore the sum of
@@ -1300,11 +1305,6 @@ DHCPv4 only options:
 
 DHCPv6 only options:
 -c: Add a rapid commit option (exchanges will be SA).
--F<release-rate>: Rate at which Release requests are sent to
-    a server. This value is only valid when used in conjunction with
-    the exchange rate (given by -r<rate>).  Furthermore the sum of
-    this value and the renew-rate (given by -f<rate>) must be equal
-    to or less than the exchange rate.
 -A<encapsulation-level>: Specifies that relayed traffic must be
     generated. The argument specifies the level of encapsulation, i.e.
     how many relay agents are simulated. Currently the only supported
