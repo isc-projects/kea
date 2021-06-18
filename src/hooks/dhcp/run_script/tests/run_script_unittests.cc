@@ -244,7 +244,7 @@ generatePkt4() {
 
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
 
-    uint8_t circuit_id[] = { 0x68, 0x6F, 0x77, 0x64, 0x79 };
+    uint8_t circuit_id[] = { 0x68, 0x6f, 0x77, 0x64, 0x79 };
     OptionPtr circuit_id_opt(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
                                         OptionBuffer(circuit_id,
                                         circuit_id + sizeof(circuit_id))));
@@ -256,7 +256,7 @@ generatePkt4() {
                                            subscriber_id + sizeof(subscriber_id))));
     rai->addOption(subscriber_id_opt);
 
-    uint8_t remote_id[] = { 0x87, 0xF6, 0x79, 0x77, 0xEF };
+    uint8_t remote_id[] = { 0x87, 0xf6, 0x79, 0x77, 0xef };
     OptionPtr remote_id_opt(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
                                        OptionBuffer(remote_id,
                                        remote_id + sizeof(remote_id))));

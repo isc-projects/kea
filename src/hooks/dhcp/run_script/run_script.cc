@@ -74,7 +74,7 @@ RunScriptImpl::extractInteger(ProcessEnvVars& vars,
                               const uint64_t value,
                               const string& prefix,
                               const string& suffix) {
-    string data = "";
+    string data;
     try {
         data = boost::lexical_cast<string>(value);
     } catch (...) {
@@ -300,7 +300,7 @@ RunScriptImpl::extractLeases4(ProcessEnvVars& vars,
     if (leases4) {
         RunScriptImpl::extractInteger(vars, leases4->size(),
                                       prefix + "_SIZE", suffix);
-        for (int i = 0; i < leases4->size(); ++i) {
+        for (size_t i = 0; i < leases4->size(); ++i) {
             RunScriptImpl::extractLease4(vars, leases4->at(i),
                                          prefix + "_AT" +
                                          boost::lexical_cast<string>(i),
@@ -319,7 +319,7 @@ RunScriptImpl::extractLeases6(ProcessEnvVars& vars,
     if (leases6) {
         RunScriptImpl::extractInteger(vars, leases6->size(),
                                       prefix + "_SIZE", suffix);
-        for (int i = 0; i < leases6->size(); ++i) {
+        for (size_t i = 0; i < leases6->size(); ++i) {
             RunScriptImpl::extractLease6(vars, leases6->at(i),
                                          prefix + "_AT" +
                                          boost::lexical_cast<string>(i),
@@ -374,11 +374,16 @@ RunScriptImpl::extractPkt4(ProcessEnvVars& vars,
                                      prefix + "_LOCAL_HWADDR", suffix);
         RunScriptImpl::extractHWAddr(vars, pkt4->getRemoteHWAddr(),
                                      prefix + "_REMOTE_HWADDR", suffix);
-        RunScriptImpl::extractOption(vars, pkt4->getOption(82),
+        RunScriptImpl::extractOption(vars,
+                                     pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
                                      prefix + "_RAI", suffix);
-        RunScriptImpl::extractSubOption(vars, pkt4->getOption(82), 1,
+        RunScriptImpl::extractSubOption(vars,
+                                        pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
+                                        RAI_OPTION_AGENT_CIRCUIT_ID,
                                         prefix + "_RAI_CIRCUIT_ID", suffix);
-        RunScriptImpl::extractSubOption(vars, pkt4->getOption(82), 2,
+        RunScriptImpl::extractSubOption(vars,
+                                        pkt4->getOption(DHO_DHCP_AGENT_OPTIONS),
+                                        RAI_OPTION_REMOTE_ID,
                                         prefix + "_RAI_REMOTE_ID", suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", suffix);
