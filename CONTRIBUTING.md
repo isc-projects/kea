@@ -36,6 +36,18 @@ Don't be discouraged if a ticket that looks interesting to you is not marked for
 a bit of DHCP protocol or C++ programming knowledge, but they're definitely all doable. If in doubt, ask on
 kea-dev list for suggestions or guidance.
 
+## A bit of a legal warning
+
+With the modern open source movement, it is very easy to contribute patches and people often don't think
+about the legal mechanism behind those. Is the code you're about to contribute really yours? If you're working
+for a company and you developed it during your work hours, it's likely to be owned by the company you work
+for. Are they OK with you contributing this? Are they OK with the fact that this will be open source and other
+users and companies, even possibly a competitor, may use it?
+
+Kea adopted Developer Certificate of Origin, which is a nice half a page document by Linux foundation. You can
+read it [here](https://developercertificate.org/). By contributing your patch, you confirm that you follow
+and agree with DCO.
+
 ## Writing a patch
 
 Before you start working on a patch or a new feature, it is a good idea to discuss it first with Kea
