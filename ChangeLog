@@ -1,3 +1,10 @@
+1908.	[func]		razvan
+	Added export for V4 option 82 (DHO_DHCP_AGENT_OPTIONS) and
+	respective suboptions 1 (RAI_OPTION_AGENT_CIRCUIT_ID) and
+	suboption 2 (RAI_OPTION_REMOTE_ID) in the run script hooks
+	library.
+	(Gitlab #1840)
+
 1907.	[doc]		peterd, andrei, razvan
 	Many Kea ARM corrections and updates.
 	(Gitlab #1917)
