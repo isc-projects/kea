@@ -564,6 +564,26 @@ CREATE INDEX dhcp4_subnet_idx1 ON dhcp4_subnet (modification_ts);
 CREATE INDEX dhcp4_subnet_idx2 ON dhcp4_subnet (shared_network_name);
 
 
+
+CREATE TABLE dhcp4_subnet_server (
+  subnet_id BIGINT NOT NULL,
+  server_id BIGINT NOT NULL,
+  modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (subnet_id, server_id),
+  CONSTRAINT fk_dhcp6_subnet_server_server_id
+    FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_subnet_server_subnet_id
+    FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  UNIQUE (subnet_id, server_id)
+);
+CREATE INDEX dhcp4_subnet_server_idx1 ON dhcp4_subnet_server(server_id);
+CREATE INDEX dhcp4_subnet_server_idx2 ON dhcp4_subnet_server(modification_ts);
+CREATE TRIGGER dhcp4_subnet_server_modification_ts_update
+  AFTER UPDATE ON dhcp4_subnet_server
+  FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
+
+
+
 -- Create a table that holds all address pools in IPv4.
 CREATE TABLE dhcp4_pool (
   id SERIAL PRIMARY KEY NOT NULL,
