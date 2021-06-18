@@ -29,23 +29,22 @@ If you're not an experienced C++ programmer, you can still help Kea in many ways
 involved in the project, we try to mark easy tickets with `beginner` label. Examples of such tasks may be
 elimination of compilation warnings, adding or fixing logging messages, improving the build
 system to not leave unnecessary files, conduct some experiments and improve documentation. You can see the
-list of all tickets with that label here:
-https://gitlab.isc.org/isc-projects/kea/-/issues?scope=all&utf8=%E2%9C%93&state=opened&label_name[]=beginner
+list of all tickets with that label [here](https://gitlab.isc.org/isc-projects/kea/-/issues?scope=all&utf8=%E2%9C%93&state=opened&label_name[]=beginner).
 
 Don't be discouraged if a ticket that looks interesting to you is not marked for beginners. It may require
 a bit of DHCP protocol or C++ programming knowledge, but they're definitely all doable. If in doubt, ask on
-kea-dev list for suggestions or guidance.
+[kea-dev](https://lists.isc.org/mailman/listinfo/kea-dev) list for suggestions or guidance.
 
 ## A bit of a legal warning
 
 With the modern open source movement, it is very easy to contribute patches and people often don't think
-about the legal mechanism behind those. Is the code you're about to contribute really yours? If you're working
+about the legal implications. Is the code you're about to contribute really yours? If you work
 for a company and you developed it during your work hours, it's likely to be owned by the company you work
 for. Are they OK with you contributing this? Are they OK with the fact that this will be open source and other
 users and companies, even possibly a competitor, may use it?
 
 Kea adopted Developer Certificate of Origin, which is a nice half a page document by Linux foundation. You can
-read it [here](https://developercertificate.org/). By contributing your patch, you confirm that you follow
+read it on [developercertificate.org page](https://developercertificate.org/). By contributing your patch, you confirm that you follow
 and agree with DCO.
 
 Here's the text:
