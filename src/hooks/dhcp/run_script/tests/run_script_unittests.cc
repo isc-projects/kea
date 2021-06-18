@@ -434,7 +434,7 @@ TEST(RunScript, extractOption) {
     option = generateOption(Option::V4, DHO_USER_CLASS, buffer);
     RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "OPTION_PREFIX_OPTION_77_OPTION_SUFFIX=0xCAFEBABE\n";
+    string expected = "OPTION_PREFIX_OPTION_77_OPTION_SUFFIX=0xCAFEBABE\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -453,7 +453,7 @@ TEST(RunScript, extractSubOption) {
     option->addOption(subscriber_id_opt);
     RunScriptImpl::extractSubOption(vars, option, RAI_OPTION_SUBSCRIBER_ID, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
     ASSERT_EQ(1, vars.size());
-    std::string expected = "OPTION_SUBOPTION_PREFIX_OPTION_82_SUB_OPTION_6_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
+    string expected = "OPTION_SUBOPTION_PREFIX_OPTION_82_SUB_OPTION_6_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
 
