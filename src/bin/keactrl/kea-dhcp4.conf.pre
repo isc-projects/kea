@@ -271,7 +271,7 @@
     //       // are addressed by the Flexible Identifiers hook application.
     //       "library": "@libdir@/kea/hooks/libdhcp_flex_id.so",
     //       "parameters": {
-    //           "identifier-expression": "substring(relay4[2].hex)"
+    //           "identifier-expression": "relay4[2].hex"
     //       }
     //   }
     // ],
@@ -412,8 +412,8 @@
     // They were not added here to not overwhelm people with too much
     // information at once.
 
-// Logging configuration starts here. Kea uses different loggers to log various
-// activities. For details (e.g. names of loggers), see Chapter 18.
+    // Logging configuration starts here. Kea uses different loggers to log various
+    // activities. For details (e.g. names of loggers), see Chapter 18.
     "loggers": [
     {
         // This section affects kea-dhcp4, which is the base logger for DHCPv4

@@ -217,7 +217,7 @@
     //       // are addressed by the Flexible Identifiers hook application.
     //       "library": "@libdir@/kea/hooks/libdhcp_flex_id.so",
     //       "parameters": {
-    //           "identifier-expression": "relay6[0].option[37].hex)"
+    //           "identifier-expression": "relay6[0].option[37].hex"
     //       }
     //   }
     // ],
@@ -370,13 +370,10 @@
     // Client-classes can be defined here. See "client-classes" in Dhcp4 for
     // an example.
 
-    // Hook libraries can be defined here. See "hooks-libraries" example in
-    // Dhcp4.
-
     // DDNS information (how the DHCPv6 component can reach a DDNS daemon)
 
-// Logging configuration starts here. Kea uses different loggers to log various
-// activities. For details (e.g. names of loggers), see Chapter 18.
+    // Logging configuration starts here. Kea uses different loggers to log various
+    // activities. For details (e.g. names of loggers), see Chapter 18.
     "loggers": [
     {
         // This specifies the logging for kea-dhcp6 logger, i.e. all logs
