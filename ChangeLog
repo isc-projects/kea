@@ -1,3 +1,8 @@
+1909.	[build]		fdupont
+	Experimental support for Heimdal implementation of GSS-API
+	with Kerberos 5 added.
+	(Gitlab #1909)
+
 1908.	[func]		razvan
 	Added export for V4 option 82 (DHO_DHCP_AGENT_OPTIONS) and
 	respective suboptions 1 (RAI_OPTION_AGENT_CIRCUIT_ID) and
