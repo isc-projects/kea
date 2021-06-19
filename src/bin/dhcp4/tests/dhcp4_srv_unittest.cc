@@ -2337,6 +2337,62 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     EXPECT_EQ(temp_timestamp, lease->cltt_);
 }
 
+// Exercises Dhcpv4Srv::buildCfgOptionList().
+TEST_F(Dhcpv4SrvTest, buildCfgOptionsList) {
+    configureServerIdentifier();
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    Pkt4Ptr query(new Pkt4(DHCPREQUEST, 1234));
+    query->addOption(generateClientId());
+    query->setHWAddr(generateHWAddr(6));
+    query->setIface("eth0");
+    query->setIndex(ETH0_INDEX);
+
+    {
+        SCOPED_TRACE("Pool value");
+
+        // Server id should come from subnet2's first pool.
+        buildCfgOptionTest(IOAddress("192.0.2.254"), query, IOAddress("192.0.2.101"), IOAddress("192.0.2.254"));
+    }
+
+    {
+        SCOPED_TRACE("Subnet value");
+
+        // Server id should come from subnet3.
+        buildCfgOptionTest(IOAddress("192.0.3.254"), query, IOAddress("192.0.3.101"), IOAddress("192.0.3.254"));
+    }
+
+    {
+        SCOPED_TRACE("Shared-network value");
+
+        // Server id should come from subnet4's shared-network.
+        buildCfgOptionTest(IOAddress("192.0.4.254"), query, IOAddress("192.0.4.101"), IOAddress("192.0.4.254"));
+    }
+
+    {
+        SCOPED_TRACE("Client-class value");
+
+        Pkt4Ptr query_with_classes(new Pkt4(DHCPREQUEST, 1234));
+        query_with_classes->addOption(generateClientId());
+        query_with_classes->setHWAddr(generateHWAddr(6));
+        query_with_classes->setIface("eth0");
+        query_with_classes->setIndex(ETH0_INDEX);
+
+        query_with_classes->addClass("foo");
+
+        // Server id should come from subnet5's client-class value.
+        buildCfgOptionTest(IOAddress("192.0.5.254"), query_with_classes, IOAddress("192.0.5.101"), IOAddress("192.0.5.254"));
+    }
+
+    {
+        SCOPED_TRACE("Global value");
+
+        // Server id should be global value as lease is from subnet2's second pool.
+        buildCfgOptionTest(IOAddress("10.0.0.254"), query, IOAddress("192.0.2.201"), IOAddress("10.0.0.254"));
+    }
+}
+
 // This test verifies that the logic which matches server identifier in the
 // received message with server identifiers used by a server works correctly:
 // - a message with no server identifier is accepted,
@@ -2345,6 +2401,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
 // - a message with a server identifier which doesn't match any server
 // identifier used by a server, is not accepted.
 TEST_F(Dhcpv4SrvTest, acceptServerId) {
+    configureServerIdentifier();
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -2371,23 +2428,67 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 
+    // Add a server id being an IPv4 address configured on eth1 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
+    eth1_serverid->writeAddress(IOAddress("192.0.2.3"));
+    ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
     // Add a server id being an IPv4 address configured on eth0 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
     OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
-    eth0_serverid->writeAddress(IOAddress("192.0.2.3"));
+    eth0_serverid->writeAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 
-    // Add a server id being an IPv4 address configured on eth1 interface.
+    // Add a server id being an IPv4 address configured on subnet3.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
-    eth1_serverid->writeAddress(IOAddress("10.0.0.1"));
-    ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
+    OptionCustomPtr subnet_serverid(new OptionCustom(def, Option::V6));
+    subnet_serverid->writeAddress(IOAddress("192.0.3.254"));
+    ASSERT_NO_THROW(pkt->addOption(subnet_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on shared network1.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr network_serverid(new OptionCustom(def, Option::V6));
+    network_serverid->writeAddress(IOAddress("192.0.4.254"));
+    ASSERT_NO_THROW(pkt->addOption(network_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on client class.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    Pkt4Ptr pkt_with_classes(new Pkt4(DHCPREQUEST, 1234));
+    OptionCustomPtr class_serverid(new OptionCustom(def, Option::V6));
+    class_serverid->writeAddress(IOAddress("10.0.0.254"));
+    ASSERT_NO_THROW(pkt_with_classes->addOption(class_serverid));
+    pkt_with_classes->addClass("foo");
+    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt_with_classes->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on global level.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr global_serverid(new OptionCustom(def, Option::V6));
+    global_serverid->writeAddress(IOAddress("10.0.0.254"));
+    ASSERT_NO_THROW(pkt->addOption(global_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 }
 
 // @todo: Implement tests for rejecting renewals

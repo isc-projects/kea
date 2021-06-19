@@ -3687,6 +3687,29 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
         return (true);
     }
 
+    // Check if the server identifier is configured at client class level.
+    const ClientClasses& classes = query->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            continue;
+        }
+
+        if (ccdef->getCfgOption()->empty()) {
+            // Skip classes which don't configure options
+            continue;
+        }
+
+        OptionCustomPtr context_opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
+                (ccdef->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
+        if (context_opt_server_id && (context_opt_server_id->readAddress() == server_id)) {
+            return (true);
+        }
+    }
+
     // Finally, it is possible that the server identifier is specified
     // on the global level.
     ConstCfgOptionPtr cfg_global_options = cfg->getCfgOption();

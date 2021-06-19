@@ -356,7 +356,11 @@ public:
     /// the server will not return it.
     void configureRequestedOptions();
 
+    /// @brief Configures server identifier at different levels.
+    void configureServerIdentifier();
+
     /// @brief checks that the response matches request
+    ///
     /// @param q query (client's message)
     /// @param a answer (server's message)
     void messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a);
@@ -404,6 +408,13 @@ public:
     /// @param pointer to Hardware Address object
     HWAddrPtr generateHWAddr(size_t size = 6);
 
+    /// @brief Convenience method for making a server identifier option instance.
+    ///
+    /// @param address IP address to add to the option
+    ///
+    /// @return Pointer to the newly constructed option.
+    OptionCustomPtr makeServerIdOption(const isc::asiolink::IOAddress& address);
+
     /// Check that address was returned from proper range, that its lease
     /// lifetime is correct, that T1 and T2 are returned properly
     /// @param rsp response to be checked
@@ -439,6 +450,7 @@ public:
                          const isc::asiolink::IOAddress& expected_addr);
 
     /// @brief Checks if server response (OFFER, ACK, NAK) includes proper server-id
+    ///
     /// @param rsp response packet to be validated
     /// @param expected_srvid expected value of server-id
     void checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_srvid);
@@ -452,6 +464,12 @@ public:
     /// @param rsp response packet to be validated
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
+
+    /// @brief Checks the value of the dhcp-server-identifier option in a packet
+    ///
+    /// @param packet packet to test
+    /// @param expected_address IP address the packet's option should contain
+    void checkServerIdOption(const Pkt4Ptr& packet, const isc::asiolink::IOAddress& expected_address);
 
     /// @brief Create packet from output buffer of another packet.
     ///
@@ -491,6 +509,17 @@ public:
     ///
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
     void testDiscoverRequest(const uint8_t msg_type);
+
+    /// @brief Create test which verifies server identifier.
+    ///
+    /// @param expected_server_id expected server identifier
+    /// @param query the query used to get associated client classes
+    /// @param query the requested the requested address
+    /// @param server_id server identifier
+    void buildCfgOptionTest(isc::asiolink::IOAddress expected_server_id,
+                            Pkt4Ptr& query,
+                            isc::asiolink::IOAddress requested,
+                            isc::asiolink::IOAddress server_id);
 
     /// @brief Runs DHCPv4 configuration from the JSON string.
     ///

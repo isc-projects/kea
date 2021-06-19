@@ -851,7 +851,7 @@ IfaceCollection::getIfaceInternal(const std::string& ifname, bool need_lock) {
             return (cache_);
         }
     } else {
-                if (cache_ && (cache_->getName() == ifname)) {
+        if (cache_ && (cache_->getName() == ifname)) {
             return (cache_);
         }
     }

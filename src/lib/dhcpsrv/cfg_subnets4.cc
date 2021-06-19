@@ -448,7 +448,7 @@ CfgSubnets4::getSubnet(const SubnetID id) const {
 
 Subnet4Ptr
 CfgSubnets4::selectSubnet(const IOAddress& address,
-                 const ClientClasses& client_classes) const {
+                          const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
          subnet != subnets_.end(); ++subnet) {
 
