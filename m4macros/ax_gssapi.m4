@@ -33,6 +33,8 @@ else
     CXXFLAGS_SAVED="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS $GSSAPI_CFLAGS"
 
+    # In general it is not required but some warnings about compiling to
+    # work but not the preprocessor were reported...
     CPPFLAGS_SAVED="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $GSSAPI_CFLAGS"
 
