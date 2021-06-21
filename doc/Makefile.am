@@ -74,3 +74,23 @@ nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twosubnets.xml
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
+
+grammar:
+if GENERATE_DOCS
+if GENERATE_PARSER
+	mkdir $(abs_top_srcdir)/doc/sphinx/grammar
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp4/dhcp4_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp4-parser.txt
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp6/dhcp6_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp6-parser.txt
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/d2/d2_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-d2-parser.txt
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/agent/agent_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-ca-parser.txt
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/netconf/netconf_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-netconf-parser.txt
+else
+	@echo "ERROR: You need to enable both docs (--enable-generate-docs) and parser (--enable-generate-parser)"
+	@echo "ERROR: to regenerate grammar documentation."
+	false
+endif
+else
+	@echo "ERROR: You need to enable both docs (--enable-generate-docs) and parser (--enable-generate-parser)"
+	@echo "ERROR: to regenerate grammar documentation."
+	false
+endif
