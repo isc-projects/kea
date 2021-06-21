@@ -33,6 +33,9 @@ else
     CXXFLAGS_SAVED="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS $GSSAPI_CFLAGS"
 
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $GSSAPI_CFLAGS"
+
     # Checks
     AC_CHECK_HEADERS([gssapi/gssapi.h gssapi/gssapi_krb5.h],,
         AC_MSG_ERROR([Missing required gss-api header files]))
@@ -67,6 +70,7 @@ else
         AC_DEFINE([HAVE_GSS_STR_TO_OID], [1], [gss_str_to_oid is available])],
        [AC_MSG_RESULT([no])])
     CXXFLAGS="$CXXFLAGS_SAVED"
+    CPPFLAGS="$CPPFLAGS_SAVED"
     LIBS="$LIBS_SAVED"
     AC_MSG_CHECKING([checking for MIT implementation vs Heimdal])
     if `${KRB5_CONFIG} --all | grep Vendor | grep -q Heimdal`; then
