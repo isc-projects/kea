@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Get BNF grammars from bison files
+
+# Check if there is one argument only
+if [ $# -ne 1]; then
+    echo "extract_bnf.sh <bison-file-base-name>"
+    exit 1
+fi
+
+# Get the output file
+base=$1
+output=
+
+if [ -f "${base}.output" ]; then
+    output="${base}.output"
+elif [ -f "${base}.yy" ]; then
+    @YACC@ -v "${base}.yy" -o output
+    rm -f output output.h *.hh
+    mv output.output /tmp/output
+    output=/tmp/output
+else
+    echo "cannot find ${base}.yy"
+    exit 1
+fi
+
+# Process the output file
+#  - extract the grammar part
+#  - remove line numbers
+#  - remove intermediate productions
+#  - remove intermediate non-terminals
+#  - squeeze multiple blank lines
+
+cat $output |\
+@AWK@ '/^Terminal/ { exit }; // { print }' |\
+@AWK@ '// { gsub("^ +[0-9]+ ", ""); print }' |\
+@AWK@ '/^\$@[0-9]+:/ { next }; // { print }' |\
+@AWK@ '// { gsub(" \\$@[0-9]+ ", " ") ; print }' |\
+cat -s

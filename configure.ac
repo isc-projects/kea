@@ -1927,6 +1927,9 @@ AC_CONFIG_FILES([src/share/yang/modules/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([tools/path_replacer.sh],
                 [chmod +x tools/path_replacer.sh])
+AC_CONFIG_FILES([tools/extract_bnf.sh],
+                [chmod +x tools/extract_bnf.sh])
+
 
 AC_OUTPUT
 
