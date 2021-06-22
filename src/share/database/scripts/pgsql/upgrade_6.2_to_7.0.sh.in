@@ -274,8 +274,10 @@ CREATE TABLE dhcp6_subnet_server (
   server_id BIGINT NOT NULL,
   modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (subnet_id, server_id),
-  CONSTRAINT fk_dhcp6_subnet_server_server_id FOREIGN KEY (server_id) REFERENCES dhcp6_server (id),
-  CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id),
+  CONSTRAINT fk_dhcp6_subnet_server_server_id
+    FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_dhcp6_subnet_server_subnet_id
+    FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION,
   UNIQUE (subnet_id, server_id)
 );
 CREATE INDEX dhcp6_subnet_server_idx1 ON dhcp6_subnet_server(server_id);

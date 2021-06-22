@@ -340,7 +340,7 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
         << "invalid schema version reported, major expected " << PG_SCHEMA_VERSION_MAJOR
         << ", actual:" << value;
 
-    // Get row 0, column 1 (i.e. version field)
+    // Get row 0, column 1 (i.e. minor field)
     ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, 1));
     ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, 1, value));
     EXPECT_EQ(value, PG_SCHEMA_VERSION_MINOR)

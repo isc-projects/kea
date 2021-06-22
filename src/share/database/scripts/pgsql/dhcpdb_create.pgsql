@@ -1294,6 +1294,7 @@ CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
 
+
 -- Create table for storing global DHCPv6 parameters.
 CREATE TABLE dhcp6_global_parameter (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1318,7 +1319,7 @@ CREATE TABLE dhcp6_global_parameter_server (
   modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (parameter_id, server_id),
   CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
-    REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE  ON UPDATE NO ACTION,
+    REFERENCES dhcp6_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
     REFERENCES dhcp6_server(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
@@ -1466,7 +1467,7 @@ CREATE TABLE dhcp4_global_parameter_server (
   CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
     REFERENCES dhcp4_global_parameter(id) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
-    REFERENCES dhcp4_server(id) ON DELETE CASCADE  ON UPDATE NO ACTION
+    REFERENCES dhcp4_server(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
 CREATE INDEX key_dhcp4_global_parameter_idx1 ON dhcp4_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
