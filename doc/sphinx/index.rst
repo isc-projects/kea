@@ -52,8 +52,8 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    manpages
    kea-messages
    umls
-   arm/acknowledgments
    grammar/grammar
+   arm/acknowledgments
 
 
 
