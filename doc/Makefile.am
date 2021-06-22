@@ -75,6 +75,18 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 
+# If there's any new parameter added for any grammar in one of the daemons, someone should go through
+# this procedure:
+#
+# 1. autoreconf -i && ./configure --enable-generate-docs --enable-generate-parser
+# 2. cd doc
+# 3. make grammar
+# 4. make -C sphinx html
+# 5. Inspect the html output and make sure it's ok.
+# 6. Review changes in doc/sphinx/grammar/*
+# 7. Check in changed files in doc/sphinx/grammar/*
+#
+# Make sure you commit only relevant changes, skip the timestamp only updates.
 grammar:
 if GENERATE_DOCS
 if GENERATE_PARSER

@@ -31,6 +31,22 @@ appeared, etc. Those JSON files are loaded by docgen tool that will generate
 api.xml that will be used by make guide. There is no need to generate this,
 unless you alter description of existing commands or add a new one.
 
+Since Kea 1.9.9, this doc has appendix with the grammar. If there were new
+parameters added, you can regenerate the grammars and the appendix with the
+following procedure:
+
+@code
+$ autoreconf -i && ./configure --enable-generate-docs --enable-generate-parser
+$ cd doc
+$ make grammar
+$ make -C sphinx html
+@endcode
+
+After that, inspect the html output and make sure it's ok, review changes in
+\c doc/sphinx/grammar/ and then check in those that are something more than a date
+update. The date is there, so we (and users) can determine if the grammar
+is or isn't out of date.
+
 @section docsNewCommand Documenting new command
 
 There are several steps needed to document a new API command:
