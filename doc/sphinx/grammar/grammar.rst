@@ -18,26 +18,24 @@ Here's the Backus-Naur form (BNF) https://en.wikipedia.org/wiki/Backus%E2%80%93N
 BNF Grammar for DHCPv4
 ----------------------
 
-```
-.. include:: grammar-dhcp4-parser.txt
-```
+.. include:: grammar-dhcp4-parser.rst
 
 BNF Grammar for DHCPv6
 ----------------------
 
-.. include:: grammar-dhcp6-parser.txt
+.. include:: grammar-dhcp6-parser.rst
 
 BNF Grammar for Control Agent
 -----------------------------
 
-.. include:: grammar-ca-parser.txt
+.. include:: grammar-ca-parser.rst
 
 BNF Grammar for D2 (DHCP-DDNS)
 ------------------------------
 
-.. include:: grammar-d2-parser.txt
+.. include:: grammar-d2-parser.rst
 
 BNF Grammar for Kea-netconf
 ---------------------------
 
-.. include:: grammar-netconf-parser.txt
+.. include:: grammar-netconf-parser.rst
