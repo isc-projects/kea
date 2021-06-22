@@ -78,7 +78,7 @@ nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 grammar:
 if GENERATE_DOCS
 if GENERATE_PARSER
-	mkdir $(abs_top_srcdir)/doc/sphinx/grammar
+	mkdir -p $(abs_top_srcdir)/doc/sphinx/grammar
 	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp4/dhcp4_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp4-parser.txt
 	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp6/dhcp6_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp6-parser.txt
 	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/d2/d2_parser > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-d2-parser.txt
