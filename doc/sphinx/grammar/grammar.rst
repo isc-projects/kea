@@ -13,7 +13,10 @@
 BNF Grammar
 ===========
 
-Here's the Backus-Naur form (BNF) https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form notation
+Kea consists of several daemons, each with its own configuration syntax. The following sections
+provide a complete syntax of all possible parameters, written as Backus-Naur Form (BNF).
+See `wikipedia article on BNF <https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form>`_ for
+background and explanation.
 
 BNF Grammar for DHCPv4
 ----------------------
@@ -30,8 +33,8 @@ BNF Grammar for Control Agent
 
 .. include:: grammar-ca-parser.rst
 
-BNF Grammar for D2 (DHCP-DDNS)
-------------------------------
+BNF Grammar for DHCP-DDNS
+-------------------------
 
 .. include:: grammar-d2-parser.rst
 

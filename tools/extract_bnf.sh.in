@@ -17,19 +17,23 @@
 # ./extract_bnf.sh <bison-file-base-name> --markdown
 
 # Check if there are one or two arguments
-if [ $# -ne 1 ] && [ $# -ne 2 ]; then
-    echo "extract_bnf.sh <bison-file-base-name> [--markdown]"
+if [ $# -le 1 ]; then
+    echo "extract_bnf.sh <bison-file-base-name> [--markdown <name>]"
     exit 1
 fi
 
 markdown=0
-if [ $# -eq 2 ] && [ "$2" = "--markdown" ]; then
+if [ $# -eq 3 ] && [ "$2" = "--markdown" ]; then
     markdown=1
+    md_name=$3
 fi
 
 # Get the output file
 base=$1
 output=
+now=$(date +"%Y-%m-%-d %H:%m")
+
+header="Grammar generated on $now. See Chapter $md_name for an explanation."
 
 if [ -f "${base}.output" ]; then
     output="${base}.output"
@@ -71,8 +75,14 @@ cat $output |\
 cat -s > $output.2
 
 if [ "$markdown" -eq 1 ]; then
-    echo ".. code-block:: BNF" > $output.3
-    echo "   :linenos:" >> $output.3
+    cat > $output.3 << EOF
+
+$header
+
+.. code-block:: BNF
+   :linenos:
+
+EOF
     cat $output.2 | @AWK@ '/^.+$/ { print "    ",$0 }; /^$/ { print } ' >> $output.3
     cat $output.3
 else

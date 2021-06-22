@@ -79,11 +79,16 @@ grammar:
 if GENERATE_DOCS
 if GENERATE_PARSER
 	mkdir -p $(abs_top_srcdir)/doc/sphinx/grammar
-	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp4/dhcp4_parser --markdown > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp4-parser.rst
-	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp6/dhcp6_parser --markdown > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp6-parser.rst
-	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/d2/d2_parser --markdown > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-d2-parser.rst
-	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/agent/agent_parser --markdown > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-ca-parser.rst
-	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/netconf/netconf_parser --markdown > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-netconf-parser.rst
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp4/dhcp4_parser \
+	    --markdown ':ref:`dhcp4`' > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp4-parser.rst
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/dhcp6/dhcp6_parser \
+	    --markdown ':ref:`dhcp6`' > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-dhcp6-parser.rst
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/d2/d2_parser \
+	    --markdown ':ref:`dhcp-ddns-server`' > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-d2-parser.rst
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/agent/agent_parser \
+	    --markdown ':ref:`kea-ctrl-agent`' > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-ca-parser.rst
+	$(abs_top_srcdir)/tools/extract_bnf.sh $(abs_top_srcdir)/src/bin/netconf/netconf_parser \
+	    --markdown ':ref:`netconf`' > $(abs_top_srcdir)/doc/sphinx/grammar/grammar-netconf-parser.rst
 else
 	@echo "ERROR: You need to enable both docs (--enable-generate-docs) and parser (--enable-generate-parser)"
 	@echo "ERROR: to regenerate grammar documentation."
