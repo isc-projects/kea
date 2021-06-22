@@ -172,17 +172,18 @@ TestControl::createMessageFromAck(const uint16_t msg_type,
 
     // Get the string representation of the message - to be used for error
     // logging purposes.
-    const char* msg_type_str = (msg_type == DHCPREQUEST ? "Request" :
-                                                          "Release");
+    auto msg_type_str = [=]() -> const char* {
+        return (msg_type == DHCPREQUEST ? "Request" : "Release");
+    };
 
     if (!ack) {
         isc_throw(isc::BadValue, "Unable to create "
-                                     << msg_type_str
+                                     << msg_type_str()
                                      << " from a null DHCPACK message");
     } else if (ack->getYiaddr().isV4Zero()) {
         isc_throw(isc::BadValue,
                   "Unable to create "
-                      << msg_type_str
+                      << msg_type_str()
                       << " from a DHCPACK message containing yiaddr of 0");
     }
     Pkt4Ptr msg(new Pkt4(msg_type, generateTransid()));
@@ -196,7 +197,7 @@ TestControl::createMessageFromAck(const uint16_t msg_type,
             if (first_packet_serverid_.empty()) {
                 isc_throw(isc::BadValue,
                           "Unable to create "
-                              << msg_type_str
+                              << msg_type_str()
                               << "from the first packet which lacks the server "
                                  "identifier option");
             }
@@ -210,7 +211,7 @@ TestControl::createMessageFromAck(const uint16_t msg_type,
             if (!server_identifier) {
                 isc_throw(isc::BadValue,
                           "Unable to create "
-                              << msg_type_str
+                              << msg_type_str()
                               << "from a DHCPACK message without the server "
                                  "identifier option");
             }
@@ -232,11 +233,13 @@ TestControl::createMessageFromReply(const uint16_t msg_type,
 
     // Get the string representation of the message - to be used for error
     // logging purposes.
-    const char* msg_type_str = (msg_type == DHCPV6_RENEW ? "Renew" : "Release");
+    auto msg_type_str = [=]() -> const char* {
+        return (msg_type == DHCPV6_RENEW ? "Renew" : "Release");
+    };
 
     // Reply message must be specified.
     if (!reply) {
-        isc_throw(isc::BadValue, "Unable to create " << msg_type_str
+        isc_throw(isc::BadValue, "Unable to create " << msg_type_str()
                   << " message from the Reply message because the instance of"
                   " the Reply message is NULL");
     }
@@ -245,7 +248,7 @@ TestControl::createMessageFromReply(const uint16_t msg_type,
     // Client id.
     OptionPtr opt_clientid = reply->getOption(D6O_CLIENTID);
     if (!opt_clientid) {
-        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str()
                   << " message because client id option has not been found"
                   " in the Reply message");
     }
@@ -253,7 +256,7 @@ TestControl::createMessageFromReply(const uint16_t msg_type,
     // Server id.
     OptionPtr opt_serverid = reply->getOption(D6O_SERVERID);
     if (!opt_serverid) {
-        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str()
                   << " because server id option has not been found in the"
                   " Reply message");
     }
