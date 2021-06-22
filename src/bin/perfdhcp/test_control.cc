@@ -189,6 +189,34 @@ TestControl::createMessageFromAck(const uint16_t msg_type,
     msg->setCiaddr(ack->getYiaddr());
     msg->setHWAddr(ack->getHWAddr());
     msg->addOption(generateClientId(msg->getHWAddr()));
+    if (msg_type == DHCPRELEASE) {
+        // RFC 2132: DHCPRELEASE MUST include server ID.
+        if (options_.isUseFirst()) {
+            // Honor the '-1' flag if it exists.
+            if (first_packet_serverid_.empty()) {
+                isc_throw(isc::BadValue,
+                          "Unable to create "
+                              << msg_type_str
+                              << "from the first packet which lacks the server "
+                                 "identifier option");
+            }
+            msg->addOption(Option::factory(Option::V4,
+                                           DHO_DHCP_SERVER_IDENTIFIER,
+                                           first_packet_serverid_));
+        } else {
+            // Otherwise take it from the DHCPACK message.
+            OptionPtr server_identifier(
+                ack->getOption(DHO_DHCP_SERVER_IDENTIFIER));
+            if (!server_identifier) {
+                isc_throw(isc::BadValue,
+                          "Unable to create "
+                              << msg_type_str
+                              << "from a DHCPACK message without the server "
+                                 "identifier option");
+            }
+            msg->addOption(server_identifier);
+        }
+    }
     return (msg);
 }
 
