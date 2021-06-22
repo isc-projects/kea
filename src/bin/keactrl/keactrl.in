@@ -421,28 +421,28 @@ fi
 
 # Get location of the DHCPv4 server binary.
 # shellcheck disable=SC2154
-if [ -z "${dhcp4_srv}" ]; then
+if [ -z "${dhcp4_srv+x}" ]; then
     log_error "dhcp4_srv parameter not specified"
     exit 1
 fi
 
 # Get location of the DHCPv6 server binary.
 # shellcheck disable=SC2154
-if [ -z "${dhcp6_srv}" ]; then
+if [ -z "${dhcp6_srv+x}" ]; then
     log_error "dhcp6_srv parameter not specified"
     exit 1
 fi
 
 # Get location of the DHCP DDNS server binary.
 # shellcheck disable=SC2154
-if [ -z "${dhcp_ddns}" ]; then
+if [ -z "${dhcp_ddns+x}" ]; then
     log_error "dhcp_ddns parameter not specified"
     exit 1
 fi
 
 # Get location of the Control Agent binary.
 # shellcheck disable=SC2154
-if [ -z "${ctrl_agent_srv}" ]; then
+if [ -z "${ctrl_agent_srv+x}" ]; then
     log_error "ctrl_agent_srv parameter not specified"
     exit 1
 fi
