@@ -34,6 +34,13 @@ include man/rst_man_sources.mk
 
 EXTRA_DIST += man/rst_man_sources.mk
 
+rst_arm_sources += grammar/grammar.rst
+rst_arm_sources += grammar/grammar-ca-parser.rst
+rst_arm_sources += grammar/grammar-d2-parser.rst
+rst_arm_sources += grammar/grammar-dhcp4-parser.rst
+rst_arm_sources += grammar/grammar-dhcp6-parser.rst
+rst_arm_sources += grammar/grammar-netconf-parser.rst
+
 man8s =
 include man/man8s.mk
 
