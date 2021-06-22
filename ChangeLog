@@ -1,3 +1,10 @@
+1911.	[bug]		andrei
+	Fixed a minor regression where kea-admin and keactrl would output
+	technical errors like "unbound variable" instead of more helpful
+	messages like "missing backend" because of the undefined variable
+	checks introduced in 1.9.4. Added tests to further prevent it.
+	(Gitlab #1653)
+
 1910.	[func]		andrei
 	Extended perfdhcp to send v4 DHCPRELEASE messages via -F flag.
 	(Gitlab #1119)
