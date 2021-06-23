@@ -10,8 +10,8 @@
 
 .. _bnf-grammar:
 
-BNF Grammar
-===========
+Kea Configuration File Syntax (BNF)
+===================================
 
 Kea consists of several daemons, each with its own configuration syntax. The following sections
 provide a complete syntax of all possible parameters, written as Backus-Naur Form (BNF).
