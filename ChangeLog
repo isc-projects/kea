@@ -1,3 +1,8 @@
+1912.	[doc]		fdupont, tomek
+	The Kea configuration syntax is now documented in BNF notation.
+	See new appendix in the ARM.
+	(Gitlab #504)
+
 1911.	[bug]		andrei
 	Fixed a minor regression where kea-admin and keactrl would output
 	technical errors like "unbound variable" instead of more helpful
