@@ -17,7 +17,7 @@
 # ./extract_bnf.sh <bison-file-base-name> --markdown
 
 # Check if there are one or two arguments
-if [ $# -le 1 ]; then
+if [ $# -lt 1 ]; then
     echo "extract_bnf.sh <bison-file-base-name> [--markdown <name>]"
     exit 1
 fi
@@ -35,10 +35,12 @@ now=$(date +"%Y-%m-%-d %H:%m")
 
 header="Grammar generated on $now. See Chapter $md_name for an explanation."
 
-if [ -f "${base}.output" ]; then
-    output="${base}.output"
-elif [ -f "${base}.yy" ]; then
-    /usr/bin/bison -v "${base}.yy" -o output
+if [ -f "${base}.yy" ]; then
+    # We want to explicitly set the language to English. Otherwise
+    # bison may produce language specific wording (like "symbole terminalne"
+    # if you system is set to Polish, rather than "Terminals") and this will
+    # confuse our script.
+    LANG=en_US LANGUAGE=en_US @YACC@ -v "${base}.yy" -o output
     rm -f output output.h *.hh
     mv output.output /tmp/output
     output=/tmp/output
