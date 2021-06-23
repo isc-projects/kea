@@ -1,3 +1,8 @@
+1913.	[doc]		tomek
+	Kea adopted Developer Certificate of Origin for incoming
+	contributions. Please see the CONTRIBUTING.md file for details.
+	(Gitlab #1895)
+
 1912.	[doc]		fdupont, tomek
 	The Kea configuration syntax is now documented in BNF notation.
 	See new appendix in the ARM.
