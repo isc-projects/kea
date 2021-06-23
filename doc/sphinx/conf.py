@@ -98,6 +98,11 @@ exclude_patterns = [
     'arm/hooks-run-script.rst',
     'arm/hooks-stat-cmds.rst',
     'arm/hammer.rst',
+    'grammar/grammar-ca-parser.rst',
+    'grammar/grammar-d2-parser.rst',
+    'grammar/grammar-dhcp4-parser.rst',
+    'grammar/grammar-dhcp6-parser.rst',
+    'grammar/grammar-netconf-parser.rst',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
