@@ -36,7 +36,8 @@ parameters added, you can regenerate the grammars and the appendix with the
 following procedure:
 
 @code
-$ autoreconf -i && ./configure --enable-generate-docs --enable-generate-parser
+$ autoreconf -i
+$ ./configure --enable-generate-docs --enable-generate-parser
 $ cd doc
 $ make grammar
 $ make -C sphinx html
