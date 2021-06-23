@@ -1,3 +1,11 @@
+1914.	[func]*		tomek
+	The Cassandra (CQL) support is being deprecated, both for
+	leases and host backends. For the time being the features
+	will produce a warning, but will otherwise function normally.
+	However, the functionality will be removed in the future
+	Kea releases.
+	(Gitlab #1892)
+
 1913.	[doc]		tomek
 	Kea adopted Developer Certificate of Origin for incoming
 	contributions. Please see the CONTRIBUTING.md file for details.
