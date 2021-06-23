@@ -1,7 +1,7 @@
 1958.	[func]		tomek
 	PostgreSQL database schema has been extended with tables for
-	Config Backend. This is the first step towards PostgreSQL-based Config
-	Backend (CB). However, as there is no code yet to use those new tables,
+	Config Backend (CB). This is the first step towards PostgreSQL
+	CB. However, as there is no code yet to use those new tables,
 	they're not not functional yet.
 	(Gitlab #90)
 
