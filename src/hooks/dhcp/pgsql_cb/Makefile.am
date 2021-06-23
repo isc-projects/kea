@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(pgsql_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
@@ -85,4 +85,3 @@ messages pgsql_cb_messages.h pgsql_cb_messages.cc:
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
-
