@@ -85,6 +85,7 @@ supported types are:
    database.
 
 -  ``cql`` — Information is stored in an Apache Cassandra database.
+   This backend is deprecated.
 
 Additional parameters may be needed, depending on the setup and
 specific operation: username, password, and database name or the
@@ -107,7 +108,7 @@ backend may be essential for the success of the deployment.
    | Feature       | Memfile        | MySQL          | PostgreSQL    | CQL          |
    |               |                |                |               | (Cassandra)  |
    +===============+================+================+===============+==============+
-   | Status        | Stable         | Stable         | Stable        | Experimental |
+   | Status        | Stable         | Stable         | Stable        | Deprecated   |
    |               |                |                |               |              |
    +---------------+----------------+----------------+---------------+--------------+
    | Data format   | CSV file       | SQL RMDB       | SQL RMDB      | NoSQL        |
@@ -530,6 +531,12 @@ per-host basis.
 Cassandra must be properly set up if Kea is to store information
 in it. This section can be safely ignored if the
 data will be stored in other backends.
+
+.. note::
+
+  Cassandra backend was deprecated in Kea 1.9.9. New users are discouraged from
+  using Cassandra and existing users should consider a migration strategy. See
+  :ref:`deprecated` for details.
 
 .. _cql-database-create:
 

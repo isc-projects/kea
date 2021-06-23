@@ -209,7 +209,7 @@ options. Some commonly used options are:
 
  - ``--with-cql``
    Build Kea with code to allow it to store leases and host reservations
-   in a Cassandra (CQL) database.
+   in a Cassandra (CQL) database. Cassandra is now deprecated.
 
  - ``--with-log4cplus``
    Define the path to find the Log4cplus headers and libraries. Normally
@@ -634,3 +634,64 @@ and 1548). Be sure to replace ens4 with the specific interface name.
    iptables -t nat -A PREROUTING -i ens4 -p udp --dport 2068 -j REDIRECT --to-port 68
    ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 547 -j REDIRECT --to-port 1547
    ip6tables -t nat -A PREROUTING -i ens4 -p udp --dport 1548 -j REDIRECT --to-port 548
+
+.. _deprecated:
+
+Deprecated Features
+===================
+
+This section lists significant features that used to be supported in the past and are either removed
+completely or there is an intention to remove it in the future.
+
+Cassandra (CQL) Support
+-----------------------
+
+Cassandra is a non-relational NoSQL database. Kea added support for CQL lease backend in
+Kea 1.1.0-beta1 and CQL host backend added in 1.4.0-beta1. The feature never gained too much
+traction, with only very limited deployments using it (two known as of June 2021), compared to
+substantially more using MySQL and PostgreSQL.
+
+The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
+DHCP features, such as config backend. Even with relational DBs, this requires over 20 tables
+of tighly related data that changes over time and needs to be kept in sync. With the Cassandra
+philosophy of data duplication, this would require creating and maintaining massive number of
+tables and keeping them in sync. To give more specific number, there is 36 different types of
+get queries in the DHCPv4 code for MySQL CB. So in the worst case where each query would
+require its own table, we're talking about duplication factor of over 70. This would clearly
+be a very bad design. While we did the initial MySQL and PostgreSQL designs for CB, we also
+attempted to come up with a design for Cassandra. That attempt ended up in a complete failure.
+We assessed that Cassandra is simply not the right technology for this task.
+
+Another problem with Cassandra is performance. In our performance tests MySQL and PostgreSQL
+was roughly 5-10 times faster than Cassandra. It is true our performance setup could be said
+to be overly simplistic (with a cluster consisting of only a single node). However, we did not
+do any specific MySQL or PostgreSQL related fine tuning.
+
+Another concern for Cassandra was its complicated setup. As of June 2021, Cassandra is not
+available in many major distros. It requires custom installation, which previously was available
+as native packages, but that option seems to be now limited to Debian packages only. The quick
+introduction seems to favor Docker containers as a replacement. Also, to use C++ bindings (Kea
+is written in C++), a data driver is required. For a while around 2020 there was a message about
+it being in maintenance mode, but as of now (June 2021) the message disappeared. The
+data driver does not use standard `pkg-config` approach and requires a custom hacking.
+Cassandra itself requires Java JVM to run. In the past, we experienced serious problems with the
+Java VM machine being in different version, not being able to start Cassandra and produce cryptic
+error messages. Compared to MySQL and PostgreSQL, which are widely available in all popular
+Linux and BSD distributions, setting up Cassandra is complex and the complexity not decreasing
+over time.
+
+Cassandra is also an ongoing maintenance pain. Over time, we introduce new features to Kea, such
+as the ability to get database statistics that are synced between multiple Kea instances sharing
+the same database, new API retrieving data of interest in various ways that address operational
+needs. Every time such a new feature appears, we want to maintain parity between backends.
+Porting solutions between MySQL and PostgreSQL is frequently very easy and is almost always a
+problem with Cassandra. That is not a Cassandra flaw on its own, the core problem here is that
+it is different than all the other solutions Kea supports.
+
+The final nail in the proverbial coffin came in May 2021 when one of the larger operators said
+they investigated Cassandra implementation in Kea and would like to reimplement it differently
+to better fit their deployment.
+
+For those reasons above, the Cassandra support is getting deprecated as of Kea 1.9.9. The feature
+will remain print a warning, but otherwise will function as before in 2.0.x and 2.1.x series, but
+may be removed in 2.2.0.
