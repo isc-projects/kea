@@ -88,6 +88,7 @@ extern const isc::log::MessageID DHCPSRV_CQL_LEASE_EXCEPTION_THROWN;
 extern const isc::log::MessageID DHCPSRV_CQL_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR4;
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR6;
+extern const isc::log::MessageID DHCPSRV_DEPRECATED;
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET;
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION;
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_HANDLER_NULL;

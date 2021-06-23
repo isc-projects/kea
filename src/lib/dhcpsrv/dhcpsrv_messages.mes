@@ -417,6 +417,13 @@ lease from the Cassandra database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the Cassandra database for the specified address.
 
+% DHCPSRV_DEPRECATED This configuration is using a deprecated feature: %1
+This warning is printed every time a feature (identified by the parameter) is used.
+A deprecated feature is functional now, but there will be a future Kea release where
+it will be completely removed. If you see this message it's not a reason for panic,
+but you should consider you long term strategy to eventually stop using the deprecated
+feature.
+
 % DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET received bad DHCPv4o6 packet: %1
 A bad DHCPv4o6 packet was received.
 

@@ -3449,6 +3449,8 @@ CqlHostDataSourceImpl::mergeHosts(const ConstHostPtr& source_host,
 
 CqlHostDataSource::CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new CqlHostDataSourceImpl(parameters)) {
+    // Cassandra support is now deprecated.
+    LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED).arg("Cassandra host backend");
 }
 
 CqlHostDataSource::~CqlHostDataSource() {
