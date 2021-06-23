@@ -12,12 +12,14 @@ Primary developers:
                      control agent, shared networks, high availability,
                      config backend)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
-                      congestion handling, config backend)
+                      congestion handling, config backend, multi-threading mode
+                      of high availability, forensic logging)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading)
  - Michal Nowikowski (testing, hammer, release engineering)
- - Razvan Becheriu (cassandra, sysrepo, multi-threading)
+ - Razvan Becheriu (cassandra, sysrepo, multi-threading, forensic logging,
+                    run script hook)
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (shell scripts)
