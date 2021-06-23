@@ -831,7 +831,7 @@ fi
 cql_config="no"
 AC_ARG_WITH([cql],
   AS_HELP_STRING([--with-cql=PATH],
-    [path to pkg-config or the Cassandra CQL 'cql_config' script]),
+    [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)]),
   [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
@@ -2094,7 +2094,7 @@ fi
 if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
-Cassandra CQL:
+Cassandra CQL (deprecated):
   CQL_VERSION:     ${CQL_VERSION}
   CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
   CQL_LIBS:        ${CQL_LIBS}
