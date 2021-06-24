@@ -651,7 +651,7 @@ to current users to plan a migration. New users should not rely on deprecated fe
 Cassandra (CQL) Support
 -----------------------
 
-Cassandra is a non-relational NoSQL database. Kea added support for CQL lease backend in
+Cassandra is a non-relational NoSQL database. Kea added support for the CQL lease backend in
 Kea 1.1.0-beta1 and the CQL host backend in 1.4.0-beta1. This feature never gained much
 traction with users, particularly compared to the level of interest in and deployments of
 the alternatives, MySQL and PostgreSQL.
@@ -663,9 +663,9 @@ Cassandra philosophy of data duplication, this would require creating and mainta
 number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4 
 code for the MySQL Configuration Backend. In the worst case, where each query required its 
 own table, this implies a duplication factor of over 70. This would clearly be a very bad design. 
-When we did the initial MySQL and PostgreSQL designs for the Configuration Backend, we also
-attempted to come up with a design for Cassandra. That attempt was a complete failure.
-We assessed that Cassandra is simply not the right technology for this task.
+When we created the initial MySQL and PostgreSQL designs for the Configuration Backend, we also
+attempted to come up with a design for Cassandra. That attempt was a complete failure. We 
+assessed that Cassandra is simply not the right technology for this task.
 
 Another problem with Cassandra is performance. In our performance tests MySQL and PostgreSQL
 were roughly 5-10 times faster than Cassandra, even though we did not do any special tuning
