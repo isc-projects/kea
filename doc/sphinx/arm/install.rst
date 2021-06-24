@@ -670,7 +670,11 @@ do any specific MySQL or PostgreSQL related fine tuning.
 Another concern for Cassandra was its complicated setup. As of June 2021, Cassandra is not
 available in many major distros. It requires custom installation, which previously was available
 as native packages, but that option seems to be now limited to Debian packages only. The quick
-introduction seems to favor Docker containers as a replacement. Also, to use C++ bindings (Kea
+introduction seems to favor Docker containers as a replacement. There seem to be Debian packages
+available, but those require Python 2 (which reached end of life at 1 Jan 2020) and will uninstall
+some python 3 packages. This is very risky step on production environment, which removes current
+3.8 or 3.9 python and installs old, unsupported version. The Cassandra software is written in Java,
+so the reasons why it even does anything with Python is unclear. Also, to use C++ bindings (Kea
 is written in C++), a data driver is required. For a while around 2020 there was a message about
 it being in maintenance mode, but as of now (June 2021) the message disappeared. The
 data driver does not use standard `pkg-config` approach and requires a custom hacking.
