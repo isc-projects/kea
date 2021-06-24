@@ -2113,7 +2113,6 @@ CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
     // Cassandra support is now deprecated.
     LOG_WARN(dhcpsrv_logger, DHCPSRV_DEPRECATED).arg("Cassandra lease backend");
 
-
     // Open the database.
     dbconn_.openDatabase();
 
