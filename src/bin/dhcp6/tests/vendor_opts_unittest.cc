@@ -43,9 +43,20 @@ using namespace isc::asiolink;
 /// @brief Class dedicated to testing vendor options in DHCPv6
 class VendorOptsTest : public Dhcpv6SrvTest {
 public:
-    void testVendorOptionsORO(int vendor_id) {
-        IfaceMgrTestConfig test_config(true);
+    /// @brief Called before each test
+    void SetUp() override {
+        iface_mgr_test_config_.reset(new IfaceMgrTestConfig(true));
+        IfaceMgr::instance().openSockets6();
+    }
 
+    /// @brief Called after each test
+    void TearDown() override {
+        iface_mgr_test_config_.reset();
+        IfaceMgr::instance().closeSockets();
+    }
+
+    void testVendorOptionsORO(int vendor_id) {
+        // Create a config with a custom option for Cable Labs.
         string config = R"(
             {
             "interfaces-config": {
@@ -89,8 +100,10 @@ public:
             }
         )";
 
+        // Configure a mocked server.
         ASSERT_NO_THROW(configure(config));
 
+        // Create a SOLICIT.
         Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
         sol->setRemoteAddr(IOAddress("fe80::abcd"));
         sol->setIface("eth0");
@@ -99,14 +112,14 @@ public:
         OptionPtr clientid = generateClientId();
         sol->addOption(clientid);
 
-        // Pass it to the server and get an advertise
+        // Pass it to the server and get an advertise.
         AllocEngine::ClientContext6 ctx;
         bool drop = false;
         srv_.initContext(sol, ctx, drop);
         ASSERT_FALSE(drop);
         Pkt6Ptr adv = srv_.processSolicit(ctx);
 
-        // check if we get response at all
+        // Check if we get a response at all.
         ASSERT_TRUE(adv);
 
         // We did not include any vendor opts in SOLICIT, so there should be none
@@ -137,14 +150,16 @@ public:
         }
         ASSERT_TRUE(tmp);
 
-        // The response should be OptionVendor object
+        // The response should be an OptionVendor.
         boost::shared_ptr<OptionVendor> vendor_resp =
             boost::dynamic_pointer_cast<OptionVendor>(tmp);
         ASSERT_TRUE(vendor_resp);
 
-        OptionPtr docsis33 = vendor_resp->getOption(33);
+        // Option 33 should be present.
+        OptionPtr docsis33 = vendor_resp->getOption(DOCSIS3_V6_CONFIG_FILE);
         ASSERT_TRUE(docsis33);
 
+        // Check that the provided content match the one in configuration.
         OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
         ASSERT_TRUE(config_file);
         EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
@@ -152,8 +167,6 @@ public:
 
     /// @brief Test what options a client can use to request vendor options.
     void testRequestingOfVendorOptions(vector<int8_t> const& client_options) {
-        IfaceMgrTestConfig test_config(true);
-        IfaceMgr::instance().openSockets6();
         Dhcp6Client client;
 
         EXPECT_NO_THROW(configure(config_, *client.getServer()));
@@ -257,6 +270,8 @@ private:
       ]
     }
     )";
+
+    std::unique_ptr<IfaceMgrTestConfig> iface_mgr_test_config_;
 };
 
 TEST_F(VendorOptsTest, dontRequestVendorID) {
@@ -354,9 +369,6 @@ TEST_F(VendorOptsTest, vendorOptionsORODifferentVendorID) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the persistent options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptions) {
-
-    IfaceMgrTestConfig test_config(true);
-
     string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -545,8 +557,6 @@ TEST_F(VendorOptsTest, cableLabsShortVendorClass) {
 // only. Once specific client (Genexis) sends only vendor-class info and
 // expects the server to include vendor opts in the response.
 TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets6();
     Dhcp6Client client;
 
     // The config defines custom vendor (17) suboption 2 that conveys

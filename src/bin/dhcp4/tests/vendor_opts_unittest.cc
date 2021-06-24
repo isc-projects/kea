@@ -49,12 +49,24 @@ using namespace isc::dhcp::test;
 /// tests in Dhcpv4SrvTest class anyway.
 class VendorOptsTest : public Dhcpv4SrvTest {
 public:
-    void testVendorOptionsORO(int vendor_id) {
-        IfaceMgrTestConfig test_config(true);
+    /// @brief Called before each test
+    void SetUp() override {
+        iface_mgr_test_config_.reset(new IfaceMgrTestConfig(true));
         IfaceMgr::instance().openSockets4();
+    }
 
-        NakedDhcpv4Srv srv(0);
+    /// @brief Called after each test
+    void TearDown() override {
+        iface_mgr_test_config_.reset();
+        IfaceMgr::instance().closeSockets();
+    }
 
+    /// @brief Checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+    /// vendor options is parsed correctly and the requested options are
+    /// actually assigned. Also covers negative tests - that options are not
+    /// provided when a different vendor ID is given.
+    void testVendorOptionsORO(int vendor_id) {
+        // Create a config with a custom option for Cable Labs.
         string config = R"(
             {
                 "interfaces-config": {
@@ -83,32 +95,34 @@ public:
             }
         )";
 
+        // Parse the configuration.
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP4(config));
 
+        // Configure a mocked server.
+        NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
         EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
-
         CfgMgr::instance().commit();
 
-        boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
         // Set the giaddr and hops to non-zero address as if it was relayed.
+        boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
         dis->setGiaddr(IOAddress("192.0.2.1"));
         dis->setHops(1);
 
-        OptionPtr clientid = generateClientId();
-        dis->addOption(clientid);
         // Set interface. It is required by the server to generate server id.
         dis->setIface("eth0");
         dis->setIndex(ETH0_INDEX);
+        OptionPtr clientid = generateClientId();
+        dis->addOption(clientid);
 
         // Pass it to the server and get an advertise
         Pkt4Ptr offer = srv.processDiscover(dis);
 
-        // check if we get response at all
+        // Check if we get a response at all.
         ASSERT_TRUE(offer);
 
         // We did not include any vendor opts in DISCOVER, so there should be none
@@ -119,16 +133,19 @@ public:
         // That suboption has code 1 and is a docsis ORO option.
         boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
                                                                             DOCSIS3_V4_ORO));
-        vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+        vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 2.
         OptionPtr vendor(new OptionVendor(Option::V4, vendor_id));
         vendor->addOption(vendor_oro);
         dis->addOption(vendor);
 
-        // Need to process SOLICIT again after requesting new option.
+        // Need to process DHCPDISCOVER again after requesting new option.
         offer = srv.processDiscover(dis);
         ASSERT_TRUE(offer);
 
-        // Check if there is (or not) a vendor option in the response.
+        // Check if there is a vendor option in the response, if the Cable Labs
+        // vendor ID was provided in the request. Otherwise, check that there is
+        // no vendor and stop processing since the following checks are built on
+        // top of the now-absent options.
         OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
         if (vendor_id != VENDOR_ID_CABLE_LABS) {
             EXPECT_FALSE(tmp);
@@ -136,22 +153,27 @@ public:
         }
         ASSERT_TRUE(tmp);
 
-        // The response should be OptionVendor object
+        // The response should be an OptionVendor.
         boost::shared_ptr<OptionVendor> vendor_resp =
             boost::dynamic_pointer_cast<OptionVendor>(tmp);
         ASSERT_TRUE(vendor_resp);
 
+        // Option 2 should be present.
         OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
         ASSERT_TRUE(docsis2);
 
+        // It should be an Option4AddrLst.
         Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
         ASSERT_TRUE(tftp_srvs);
 
+        // Check that the provided addresses match the ones in configuration.
         Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
         ASSERT_EQ(2, addrs.size());
         EXPECT_EQ("192.0.2.1", addrs[0].toText());
         EXPECT_EQ("192.0.2.2", addrs[1].toText());
     }
+
+    std::unique_ptr<IfaceMgrTestConfig> iface_mgr_test_config_;
 };
 
 /// @todo Add more extensive vendor options tests, including multiple
@@ -160,9 +182,6 @@ public:
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
 TEST_F(VendorOptsTest, vendorOptionsDocsis) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     string config = "{ \"interfaces-config\": {"
@@ -299,9 +318,6 @@ TEST_F(VendorOptsTest, vendorOptionsORODifferentVendorID) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and persistent options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptions) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     ConstElementPtr x;
@@ -460,8 +476,6 @@ TEST_F(VendorOptsTest, docsisClientClassification) {
 // only. Once specific client (Genexis) sends only vendor-class info and
 // expects the server to include vivso in the response.
 TEST_F(VendorOptsTest, vivsoInResponseOnly) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     // The config defines custom vendor 125 suboption 2 that conveys a TFTP URL.
@@ -538,9 +552,6 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
 
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // If there is no definition for option 43 a last resort
@@ -596,7 +607,7 @@ TEST_F(VendorOptsTest, option43LastResort) {
     srv.classifyPacket(query);
     ASSERT_NO_THROW(srv.deferredUnpack(query));
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -618,9 +629,6 @@ TEST_F(VendorOptsTest, option43LastResort) {
 
 // Checks effect of raw not compatible option 43 (no failure)
 TEST_F(VendorOptsTest, option43BadRaw) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options has an incompatible data
@@ -685,7 +693,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_TRUE(custom);
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -704,9 +712,6 @@ TEST_F(VendorOptsTest, option43BadRaw) {
 
 // Checks effect of raw not compatible option 43 (failure)
 TEST_F(VendorOptsTest, option43FailRaw) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options has an incompatible data
@@ -778,9 +783,6 @@ TEST_F(VendorOptsTest, option43FailRaw) {
 
 // Verifies raw option 43 can be handled (global)
 TEST_F(VendorOptsTest, option43RawGlobal) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options is redefined as raw binary
@@ -847,7 +849,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_FALSE(custom);
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -868,9 +870,6 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
 
 // Verifies raw option 43 can be handled (catch-all class)
 TEST_F(VendorOptsTest, option43RawClass) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options is redefined as raw binary
@@ -940,7 +939,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_FALSE(custom);
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -961,9 +960,6 @@ TEST_F(VendorOptsTest, option43RawClass) {
 
 // Verifies option 43 deferred processing (one class)
 TEST_F(VendorOptsTest, option43Class) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // A client class defines vendor-encapsulated-options (code 43)
@@ -1050,7 +1046,7 @@ TEST_F(VendorOptsTest, option43Class) {
     EXPECT_TRUE(custom);
     EXPECT_EQ(1, vopt->getOptions().size());
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -1076,9 +1072,6 @@ TEST_F(VendorOptsTest, option43Class) {
 
 // Verifies option 43 priority
 TEST_F(VendorOptsTest, option43ClassPriority) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // Both global and client-class scopes get vendor-encapsulated-options
@@ -1182,7 +1175,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     EXPECT_TRUE(custom);
     EXPECT_EQ(1, vopt->getOptions().size());
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -1212,9 +1205,6 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
 
 // Verifies option 43 deferred processing (two classes)
 TEST_F(VendorOptsTest, option43Classes) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // Two client-class scopes get vendor-encapsulated-options
@@ -1320,7 +1310,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     EXPECT_TRUE(custom);
     EXPECT_EQ(1, vopt->getOptions().size());
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
@@ -1350,8 +1340,6 @@ TEST_F(VendorOptsTest, option43Classes) {
 
 // Checks effect of raw not compatible option 43 sent by a client (failure)
 TEST_F(VendorOptsTest, clientOption43FailRaw) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     // The vendor-encapsulated-options has an incompatible data
@@ -1389,8 +1377,6 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
 
 // Verifies raw option 43 sent by a client can be handled (global)
 TEST_F(VendorOptsTest, clientOption43RawGlobal) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     // The vendor-encapsulated-options is redefined as raw binary
@@ -1434,8 +1420,6 @@ TEST_F(VendorOptsTest, clientOption43RawGlobal) {
 
 // Verifies raw option 43 sent by a client can be handled (catch-all class)
 TEST_F(VendorOptsTest, clientOption43RawClass) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     // The vendor-encapsulated-options is redefined as raw binary
@@ -1484,9 +1468,6 @@ TEST_F(VendorOptsTest, clientOption43RawClass) {
 // Verifies that an a client query with a truncated length in
 // vendor option (125) will still be processed by the server.
 TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     string config = "{ \"interfaces-config\": {"
@@ -1497,8 +1478,7 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
         "    \"subnet\": \"10.206.80.0/24\", "
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"eth0\" "
+        "    \"valid-lifetime\": 4000"
         " } ]"
         "}";
 
@@ -1510,7 +1490,7 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_EQ(0, rcode_) << isc::data::prettyPrint(status);
 
     CfgMgr::instance().commit();
 
@@ -1531,16 +1511,13 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     // Check that the server did send a response
     ASSERT_EQ(1, srv.fake_sent_.size());
 
-    // Make sure that we received an response and it was an offer
+    // Make sure that we received an response and it was a DHCPOFFER.
     Pkt4Ptr offer = srv.fake_sent_.front();
     ASSERT_TRUE(offer);
 }
 
 /// Checks that it's possible to define and use a suboption 0.
 TEST_F(VendorOptsTest, vendorOpsSubOption0) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     NakedDhcpv4Srv srv(0);
 
     // Zero Touch provisioning
@@ -1641,7 +1618,7 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     srv.classifyPacket(query);
     ASSERT_NO_THROW(srv.deferredUnpack(query));
 
-    // Pass it to the server and get an offer
+    // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv.processDiscover(query);
 
     // Check if we get response at all
