@@ -514,6 +514,45 @@ Expected wait_for_message return %d, returned %d."
     test_finish 0
 }
 
+# Test that a simple "keactrl status" without a configuration file works.
+keactrl_status_test() {
+  run_command \
+    "${keactrl}" status
+  assert_eq 0 "${EXIT_CODE}"
+  assert_str_eq \
+'DHCPv4 server: inactive
+DHCPv6 server: inactive
+DHCP DDNS: inactive
+Control Agent: inactive
+Netconf agent: inactive' \
+  "$(printf '%s\n' "${OUTPUT}" | head -n 5)"
+}
+
+# Test that a simple "keactrl status" without a configuration file works in two
+# cases: KEA_PIDFILE_DIR set and not set.
+keactrl_status_tests() {
+  # Run first without KEA_PIDFILE_DIR.
+  if test -n "${KEA_PIDFILE_DIR+x}"; then
+    save_kea_pidfile_dir="${KEA_PIDFILE_DIR}"
+    unset KEA_PIDFILE_DIR
+  fi
+  assert_str_eq '' "${KEA_PIDFILE_DIR-}"
+
+  test_start 'keactrl.status_test'
+  keactrl_status_test
+  test_finish ${?}
+
+  # Restore KEA_PIDFILE_DIR which should have been set from dhcp_test_lib.sh.
+  if test -n "${save_kea_pidfile_dir+x}"; then
+    export KEA_PIDFILE_DIR="${save_kea_pidfile_dir}"
+  fi
+  assert_str_neq '' "${KEA_PIDFILE_DIR-}"
+
+  # Restore KEA_PIDFILE_DIR.
+  test_start 'keactrl.status_test.KEA_PIDFILE_DIR'
+  keactrl_status_test
+  test_finish ${?}
+}
 
 # This test checks that only DHCPv4 server can be started and that other
 # servers are not started.
@@ -1487,6 +1526,7 @@ bin_path=$(dirname "${keactrl}")
 version_test 'keactrl.version' 'long_version_too_please'
 }
 
+keactrl_status_tests
 version_command_test
 start_all_servers_no_verbose_test
 start_all_servers_verbose_test

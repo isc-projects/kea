@@ -94,8 +94,8 @@ assert_eq() {
     fi
 }
 
-# Assertion that checks if two strings are equal.
-# If numbers are not equal, the mismatched values are presented and the
+# Assertion that checks that two strings are equal.
+# If strings are not equal, the mismatched values are presented and the
 # detailed error is printed. The detailed error must use the printf
 # formatting like this:
 #    "Expected that some value 1 %d is equal to some other value %d".
@@ -111,6 +111,21 @@ assert_str_eq() {
         # SC2059: SC2059: Don't use variables in the printf format string. Use printf '..%s..' "$foo".
         ERROR=$(printf "${detailed_err}" "${val1}" "${val2}")
         printf '%s\n%s\n' "${ERROR}" "${OUTPUT}" >&2
+        clean_exit 1
+    fi
+}
+
+# Assertion that checks that two strings are NOT equal.
+# If strings are equal, the mismatched values are presented and the
+# optional detailed error, if any, is printed.
+assert_str_neq() {
+    reference=${1}        # Reference value
+    tested=${2}           # Tested value
+    detailed_error=${3-}  # Optional detailed error format string
+    if test "${reference}" = "${tested}"; then
+        printf 'Assertion failure: expected different strings, but '
+        printf 'both variables have the value "%s".\n' "${reference}"
+        printf '%s\n%s\n' "${detailed_error}" "${OUTPUT}" >&2
         clean_exit 1
     fi
 }
