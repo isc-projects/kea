@@ -374,10 +374,10 @@ Dhcpv4SrvTest::makeServerIdOption(const IOAddress& address) {
 
 void
 Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
-                                       const Subnet4Ptr subnet,
-                                       bool t1_present,
-                                       bool t2_present,
-                                       uint32_t expected_valid) {
+                                  const Subnet4Ptr subnet,
+                                  bool t1_present,
+                                  bool t2_present,
+                                  uint32_t expected_valid) {
 
     // Technically inPool implies inRange, but let's be on the safe
     // side and check both.
@@ -427,7 +427,7 @@ Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
 
 void
 Dhcpv4SrvTest::checkResponse(const Pkt4Ptr& rsp, int expected_message_type,
-                                  uint32_t expected_transid) {
+                             uint32_t expected_transid) {
     ASSERT_TRUE(rsp);
     EXPECT_EQ(expected_message_type,
               static_cast<int>(rsp->getType()));
@@ -435,10 +435,8 @@ Dhcpv4SrvTest::checkResponse(const Pkt4Ptr& rsp, int expected_message_type,
 }
 
 Lease4Ptr
-Dhcpv4SrvTest::checkLease(const Pkt4Ptr& rsp,
-                                    const OptionPtr& client_id,
-                                    const HWAddrPtr&,
-                                    const IOAddress& expected_addr) {
+Dhcpv4SrvTest::checkLease(const Pkt4Ptr& rsp, const OptionPtr& client_id,
+                          const HWAddrPtr&, const IOAddress& expected_addr) {
 
     ClientIdPtr id;
     if (client_id) {

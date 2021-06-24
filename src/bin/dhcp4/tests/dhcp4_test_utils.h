@@ -514,7 +514,7 @@ public:
     ///
     /// @param expected_server_id expected server identifier
     /// @param query the query used to get associated client classes
-    /// @param query the requested the requested address
+    /// @param requested the requested address
     /// @param server_id server identifier
     void buildCfgOptionTest(isc::asiolink::IOAddress expected_server_id,
                             Pkt4Ptr& query,

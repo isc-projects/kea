@@ -3662,14 +3662,13 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // anywhere. This should be good enough to eliminate exchanges
     // with other servers in the same network.
 
-    /// @todo Currently we only check subnet identifiers configured on the
-    /// subnet level, shared network level and global level. This should
-    /// be sufficient for most of cases. At this point, trying to support
-    /// server identifiers on the class level seems to be an overkill and
-    /// is probably not needed. Same with host reservations. In fact,
-    /// at this point we don't know the reservations for the client
-    /// communicating with the server. We may revise some of these choices
-    /// in the future.
+    /// @todo Currently we only check server identifiers configured on the
+    /// subnet level, shared network level, client class level and global level.
+    /// This should be sufficient for most of cases. At this point, trying to
+    /// support server identifiers on the host reservations level seems to be an
+    /// overkill and is probably not needed. In fact, at this point we don't
+    /// know the reservations for the client communicating with the server.
+    /// We may revise some of these choices in the future.
 
     SrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
 

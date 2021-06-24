@@ -5806,10 +5806,10 @@ address of the interface on which the message from the client (or relay)
 has been received. A single server instance will use multiple server
 identifiers if it is receiving queries on multiple interfaces.
 
-It is possible to override the default server identifier values by
-specifying the "dhcp-server-identifier" option. This option is only
-supported at the global, shared network, and subnet levels; it must not
-be specified on the client class or host reservation levels.
+It is possible to override the default server identifier values by specifying
+the "dhcp-server-identifier" option. This option configuration is only supported
+at the subnet, shared network, client class and global levels; it must not be
+specified on the host reservation levels.
 
 The following example demonstrates how to override the server identifier
 for a subnet:
