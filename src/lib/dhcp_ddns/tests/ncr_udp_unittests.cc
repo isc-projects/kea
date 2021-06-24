@@ -1020,6 +1020,54 @@ public:
         io_service_.stop();
         FAIL() << "Test timeout hit.";
     }
+
+    /// @brief checks the received NCR content, ignoring the order if necessary.
+    ///
+    /// The UDP does not provide any guarantees regarding order. While in most cases
+    /// the NCRs are received in the order they're sent, that's not guaranteed. As such,
+    /// the test does the normal ordered check, which will pass in most cases. However,
+    /// we have documented Jenkins history that it sometimes fail. In those cases, we
+    /// need to go through a full check assuming the packets were received not in order.
+    /// If that fails, the test will print detailed information about the failure.
+    ///
+    /// This function returns a status, but it's not really necessary to check it as
+    /// it calls gtest macros to indicate failures.
+    ///
+    /// @param num_msgs number of received and sent messages
+    /// @param sent vector of sent NCRs
+    /// @param rcvd vector of received NCRs
+    /// @return true if all packets were received, false otherwise
+    bool checkUnordered(size_t num_msgs, const std::vector<NameChangeRequestPtr>& sent,
+                      const std::vector<NameChangeRequestPtr>& rcvd) {
+        // Verify that what we sent matches what we received.
+        // WRONG ASSUMPTION HERE: UDP does not guarantee ordered delivery.
+        bool ok = true;
+        for (int i = 0; i < num_msgs; i++) {
+            if (!checkSendVsReceived(sent[i], rcvd[i])) {
+                // Ok, the data was not received in order.
+                ok = false;
+                break;
+            }
+        }
+        if (!ok) {
+            std::cout << "UDP data received not in order! Checking un ordered delivery"
+                      << std::endl;
+            // We need to
+            for (int i = 0; i < num_msgs; i++) {
+                ok = false;
+                for (int j = 0; j < num_msgs; j++) {
+                    if (checkSendVsReceived(sent[i], rcvd[j])) {
+                        std::cout << "Found UDP packet " << i << ", received as " << j << "th"
+                                  << std::endl;
+                        ok = true;
+                    }
+                }
+                EXPECT_TRUE(ok) << "failed to find UDP packet " << i << " among total of "
+                                << num_msgs << " messages received";
+            }
+        }
+        return (ok);
+    }
 };
 
 /// @brief Uses a sender and listener to test UDP-based NCR delivery
@@ -1042,7 +1090,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
-        EXPECT_EQ(i+1, sender_->getQueueSize());
+            EXPECT_EQ(i+1, sender_->getQueueSize());
     }
 
     // Execute callbacks until we have sent and received all of messages.
@@ -1057,10 +1105,8 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     ASSERT_EQ(num_msgs, sent_ncrs_.size());
     ASSERT_EQ(num_msgs, received_ncrs_.size());
 
-    // Verify that what we sent matches what we received.
-    for (int i = 0; i < num_msgs; i++) {
-        EXPECT_TRUE (checkSendVsReceived(sent_ncrs_[i], received_ncrs_[i]));
-    }
+    // Check if the payload was received, ignoring the order if necessary.
+    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
@@ -1113,10 +1159,9 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     ASSERT_EQ(num_msgs, sent_ncrs_.size());
     ASSERT_EQ(num_msgs, received_ncrs_.size());
 
-    // Verify that what we sent matches what we received.
-    for (int i = 0; i < num_msgs; i++) {
-        EXPECT_TRUE (checkSendVsReceived(sent_ncrs_[i], received_ncrs_[i]));
-    }
+    // Verify that what we sent matches what we received. Ingore the order
+    // if necessary.
+    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
