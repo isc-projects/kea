@@ -195,9 +195,10 @@ TEST(ClientClassDef, copyAndEquality) {
     // that the equality tools reflect that the classes are not equal.
     ASSERT_NO_THROW(cclass2.reset(new ClientClassDef(*cclass)));
     EXPECT_TRUE(cclass->equals(*cclass2));
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, 43);
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_VENDOR_ENCAPSULATED_OPTIONS);
     EXPECT_FALSE(def);
-    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     EXPECT_TRUE(def);
     CfgOptionDefPtr cfg(new CfgOptionDef());
     ASSERT_NO_THROW(cfg->add(def));

@@ -415,6 +415,11 @@ public:
     /// @return Pointer to the newly constructed option.
     OptionCustomPtr makeServerIdOption(const isc::asiolink::IOAddress& address);
 
+    /// @brief Convenience method for making a fqdn list option instance.
+    ///
+    /// @return Pointer to the newly constructed option.
+    OptionPtr makeFqdnListOption();
+
     /// Check that address was returned from proper range, that its lease
     /// lifetime is correct, that T1 and T2 are returned properly
     /// @param rsp response to be checked

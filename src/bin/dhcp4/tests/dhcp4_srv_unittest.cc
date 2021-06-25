@@ -2378,11 +2378,38 @@ TEST_F(Dhcpv4SrvTest, buildCfgOptionsList) {
         query_with_classes->setHWAddr(generateHWAddr(6));
         query_with_classes->setIface("eth0");
         query_with_classes->setIndex(ETH0_INDEX);
-
         query_with_classes->addClass("foo");
 
         // Server id should come from subnet5's client-class value.
         buildCfgOptionTest(IOAddress("192.0.5.254"), query_with_classes, IOAddress("192.0.5.101"), IOAddress("192.0.5.254"));
+    }
+
+    {
+        SCOPED_TRACE("Global value if client class does not define it");
+
+        Pkt4Ptr query_with_classes(new Pkt4(DHCPREQUEST, 1234));
+        query_with_classes->addOption(generateClientId());
+        query_with_classes->setHWAddr(generateHWAddr(6));
+        query_with_classes->setIface("eth0");
+        query_with_classes->setIndex(ETH0_INDEX);
+        query_with_classes->addClass("bar");
+
+        // Server id should be global value as subnet6's client-class does not define it.
+        buildCfgOptionTest(IOAddress("10.0.0.254"), query_with_classes, IOAddress("192.0.6.101"), IOAddress("192.0.6.100"));
+    }
+
+    {
+        SCOPED_TRACE("Global value if client class does not define any option");
+
+        Pkt4Ptr query_with_classes(new Pkt4(DHCPREQUEST, 1234));
+        query_with_classes->addOption(generateClientId());
+        query_with_classes->setHWAddr(generateHWAddr(6));
+        query_with_classes->setIface("eth0");
+        query_with_classes->setIndex(ETH0_INDEX);
+        query_with_classes->addClass("xyz");
+
+        // Server id should be global value as subnet7's client-class does not define any option.
+        buildCfgOptionTest(IOAddress("10.0.0.254"), query_with_classes, IOAddress("192.0.7.101"), IOAddress("192.0.7.100"));
     }
 
     {
@@ -2472,7 +2499,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // A DHCPv4 message holding this server identifier should be accepted.
     Pkt4Ptr pkt_with_classes(new Pkt4(DHCPREQUEST, 1234));
     OptionCustomPtr class_serverid(new OptionCustom(def, Option::V6));
-    class_serverid->writeAddress(IOAddress("10.0.0.254"));
+    class_serverid->writeAddress(IOAddress("192.0.5.254"));
     ASSERT_NO_THROW(pkt_with_classes->addOption(class_serverid));
     pkt_with_classes->addClass("foo");
     EXPECT_TRUE(srv.acceptServerId(pkt_with_classes));
@@ -2481,9 +2508,31 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     ASSERT_NO_THROW(pkt_with_classes->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Add a server id being an IPv4 address configured on global level.
+    // The configured class does not define the server id option.
     // A DHCPv4 message holding this server identifier should be accepted.
+    Pkt4Ptr pkt_with_classes_option_not_defined(new Pkt4(DHCPREQUEST, 1234));
     OptionCustomPtr global_serverid(new OptionCustom(def, Option::V6));
     global_serverid->writeAddress(IOAddress("10.0.0.254"));
+    ASSERT_NO_THROW(pkt_with_classes_option_not_defined->addOption(global_serverid));
+    pkt_with_classes_option_not_defined->addClass("bar");
+    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes_option_not_defined));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt_with_classes_option_not_defined->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on global level.
+    // The configured class does not define any option.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    Pkt4Ptr pkt_with_classes_no_options(new Pkt4(DHCPREQUEST, 1234));
+    ASSERT_NO_THROW(pkt_with_classes_no_options->addOption(global_serverid));
+    pkt_with_classes_no_options->addClass("xyz");
+    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes_no_options));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt_with_classes_no_options->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on global level.
+    // A DHCPv4 message holding this server identifier should be accepted.
     ASSERT_NO_THROW(pkt->addOption(global_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 

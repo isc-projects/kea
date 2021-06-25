@@ -205,6 +205,33 @@ Dhcpv4SrvTest::configureServerIdentifier() {
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("foo", ExpressionPtr(), "", true, false, options);
     subnet5->requireClientClass("foo");
 
+    // Build and add subnet6.
+    Subnet4Ptr subnet6(new Subnet4(IOAddress("192.0.6.0"), 24, unspec, unspec, 3600, 6));
+    pool.reset(new Pool4(IOAddress("192.0.6.100"), IOAddress("192.0.6.200")));
+    subnet6->addPool(pool);
+    subnet6->setCalculateTeeTimes(false);
+
+    subnets->add(subnet6);
+
+    options.reset(new CfgOption());
+    OptionDescriptor desc_other(false);
+    desc_other.option_ = makeFqdnListOption();
+    options->add(desc_other, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("bar", ExpressionPtr(), "", true, false, options);
+    subnet6->requireClientClass("bar");
+
+    // Build and add subnet7.
+    Subnet4Ptr subnet7(new Subnet4(IOAddress("192.0.7.0"), 24, unspec, unspec, 3600, 7));
+    pool.reset(new Pool4(IOAddress("192.0.7.100"), IOAddress("192.0.7.200")));
+    subnet7->addPool(pool);
+    subnet7->setCalculateTeeTimes(false);
+
+    subnets->add(subnet7);
+
+    options.reset();
+    CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("xyz", ExpressionPtr(), "", true, false, options);
+    subnet7->requireClientClass("xyz");
+
     // Build and add a shared-network.
     CfgSharedNetworks4Ptr networks = cfg_mgr.getStagingCfg()->getCfgSharedNetworks4();
     SharedNetwork4Ptr network1(new SharedNetwork4("one"));
@@ -370,6 +397,28 @@ Dhcpv4SrvTest::makeServerIdOption(const IOAddress& address) {
     OptionCustomPtr server_id(new OptionCustom(*option_def, Option::V4));
     server_id->writeAddress(address);
     return (server_id);
+}
+
+OptionPtr
+Dhcpv4SrvTest::makeFqdnListOption() {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+
+    // Prepare buffer holding an array of FQDNs.
+    const uint8_t fqdn[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
+
+    OptionPtr option = def->optionFactory(Option::V4, DHO_DOMAIN_SEARCH,
+                                          fqdn_buf.begin(), fqdn_buf.end());
+
+    return (option);
 }
 
 void
