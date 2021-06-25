@@ -5807,12 +5807,13 @@ has been received. A single server instance will use multiple server
 identifiers if it is receiving queries on multiple interfaces.
 
 It is possible to override the default server identifier values by specifying
-the "dhcp-server-identifier" option. This option configuration is only supported
-at the subnet, shared network, client class and global levels; it must not be
-specified at the host reservation levels.
+the "dhcp-server-identifier" option. This option configuration is only
+supported at the subnet, shared network, client class and global levels. It
+must not be specified at the host reservation level.
 When configuring the "dhcp-server-identifier" option at client class level, the
-option must not use ``only-if-required`` flag, because this would cause the
-evaluation of the class to be done after subnet selection only when required.
+class must not set the ``only-if-required`` flag, because this class would not
+be evaluated before the server determines if the received DHCP message should
+be accepted for processing. Such classes are evaluated after subnet selection.
 See :ref:`dhcp4-required-class` for details.
 
 The following example demonstrates how to override the server identifier
