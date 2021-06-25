@@ -1090,7 +1090,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
-            EXPECT_EQ(i+1, sender_->getQueueSize());
+        EXPECT_EQ(i+1, sender_->getQueueSize());
     }
 
     // Execute callbacks until we have sent and received all of messages.
