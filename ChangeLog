@@ -1,3 +1,11 @@
+1917.	[func]		tomek
+	DHCPv4 and DHCPv6 are now more consistent when logging the
+	reasons	why a packet was dropped. This information is now
+	available on debuglevel 15. Also added a section in the ARM
+	discussing the debuglevels. The subnet selection failed log
+	message now provides more useful information about the subnet.
+	(Gitlab #1915, #1916)
+
 1916.	[func]		razvan
 	The Kea DHCPv4 server accepts requests using server identifier
 	configured at client class level.
