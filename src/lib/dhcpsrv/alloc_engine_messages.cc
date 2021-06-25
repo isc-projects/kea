@@ -94,7 +94,7 @@ const char* values[] = {
     "ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES", "%1: Failed to allocate an IPv4 address for client with classes: %2",
     "ALLOC_ENGINE_V4_ALLOC_FAIL_NO_POOLS", "%1: no pools were available for the address allocation",
     "ALLOC_ENGINE_V4_ALLOC_FAIL_SHARED_NETWORK", "%1: failed to allocate an IPv4 address in the shared network %2: %3 subnets have no available addresses, %4 subnets have no matching pools",
-    "ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv4 address in the subnet with id %2",
+    "ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv4 address in the subnet %2, subnet-id %3, shared network %4",
     "ALLOC_ENGINE_V4_DECLINED_RECOVERED", "IPv4 address %1 was recovered after %2 seconds of probation-period",
     "ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT", "%1: conflicting reservation for address %2 with existing lease %3",
     "ALLOC_ENGINE_V4_DISCOVER_HR", "client %1 sending DHCPDISCOVER has reservation for the address %2",

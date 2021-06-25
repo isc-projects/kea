@@ -4394,10 +4394,12 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
     } else {
         // The client is not connected to a shared network. It is connected
-        // to a subnet. Let's log the ID of that subnet.
+        // to a subnet. Let's log some details about the subnet.
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET)
             .arg(ctx.query_->getLabel())
-            .arg(ctx.subnet_->getID());
+            .arg(ctx.subnet_->toText())
+            .arg(ctx.subnet_->getID())
+            .arg(ctx.subnet_->getSharedNetworkName());
     }
     if (total_attempts == 0) {
         // In this case, it seems that none of the pools in the subnets could
