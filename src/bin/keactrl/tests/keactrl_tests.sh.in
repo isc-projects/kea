@@ -514,17 +514,33 @@ Expected wait_for_message return %d, returned %d."
     test_finish 0
 }
 
-# Test that a simple "keactrl status" without a configuration file works.
+# Test that a simple "keactrl status" works.
 keactrl_status_test() {
+  # Create the configuration files.
+  create_dhcp4_config "${dhcp4_config}"
+  create_dhcp6_config "${dhcp6_config}"
+  create_d2_config "${dhcp_ddns_config}"
+  create_ca_config "${control_agent_config}"
+  create_nc_config "${netconf_config}"
+  create_keactrl_config "${CFG_FILES}
+${keactrl_fixed_config}
+ctrl_agent=no
+dhcp_ddns=no
+dhcp4=yes
+dhcp6=yes
+netconf=no
+kea_verbose=no
+"
+
   run_command \
-    "${keactrl}" status
+    "${keactrl}" status -c "${KEACTRL_CFG_FILE}"
   assert_eq 0 "${EXIT_CODE}"
   assert_str_eq \
 'DHCPv4 server: inactive
 DHCPv6 server: inactive
 DHCP DDNS: inactive
 Control Agent: inactive' \
-  "$(printf '%s\n' "${OUTPUT}" | head -n 4)"
+    "$(printf '%s\n' "${OUTPUT}" | head -n 4)"
 
   if "${have_netconf}"; then
     assert_str_eq 'Netconf agent: inactive' \
@@ -535,7 +551,15 @@ Control Agent: inactive' \
 # Test that a simple "keactrl status" without a configuration file works in two
 # cases: KEA_PIDFILE_DIR set and not set.
 keactrl_status_tests() {
-  # Run first without KEA_PIDFILE_DIR.
+  # Run first without any relevant entries in the configuration file.
+  test_start 'keactrl.status_test.empty_config'
+  create_keactrl_config 'hello=world'
+  run_command \
+    "${keactrl}" status -c "${KEACTRL_CFG_FILE}"
+  assert_eq 1 "${EXIT_CODE}"
+  test_finish ${?}
+
+  # Run without KEA_PIDFILE_DIR.
   if test -n "${KEA_PIDFILE_DIR+x}"; then
     save_kea_pidfile_dir="${KEA_PIDFILE_DIR}"
     unset KEA_PIDFILE_DIR
