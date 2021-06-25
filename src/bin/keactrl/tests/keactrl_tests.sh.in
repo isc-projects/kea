@@ -523,9 +523,13 @@ keactrl_status_test() {
 'DHCPv4 server: inactive
 DHCPv6 server: inactive
 DHCP DDNS: inactive
-Control Agent: inactive
-Netconf agent: inactive' \
-  "$(printf '%s\n' "${OUTPUT}" | head -n 5)"
+Control Agent: inactive' \
+  "$(printf '%s\n' "${OUTPUT}" | head -n 4)"
+
+  if "${have_netconf}"; then
+    assert_str_eq 'Netconf agent: inactive' \
+      "$(printf '%s\n' "${OUTPUT}" | head -n 5 | tail -n 1)"
+  fi
 }
 
 # Test that a simple "keactrl status" without a configuration file works in two
