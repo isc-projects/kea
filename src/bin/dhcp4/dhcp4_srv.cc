@@ -3662,8 +3662,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // anywhere. This should be good enough to eliminate exchanges
     // with other servers in the same network.
 
-    /// @todo Currently we only check server identifiers configured on the
-    /// subnet level, shared network level, client class level and global level.
+    /// @todo Currently we only check server identifiers configured at the
+    /// subnet, shared network, client class and global levels.
     /// This should be sufficient for most of cases. At this point, trying to
     /// support server identifiers on the host reservations level seems to be an
     /// overkill and is probably not needed. In fact, at this point we don't

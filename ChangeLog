@@ -1,3 +1,8 @@
+1916.	[func]		razvan
+	The Kea DHCPv4 server accepts requests using server identifier
+	configured at client class level.
+	(Gitlab #1836)
+
 1915.	[func]		andrei
 	DOCSIS options are no longer offered to any vendor other than
 	Cable Labs (vendor-id == 4491). This was not an explicit check
