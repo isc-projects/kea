@@ -1114,7 +1114,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         // stage means that callouts did the parsing already, so server
         // should skip parsing.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING,
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL,
                       DHCP4_HOOK_BUFFER_RCVD_SKIP)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
