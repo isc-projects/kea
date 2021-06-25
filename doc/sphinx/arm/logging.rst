@@ -531,6 +531,8 @@ logger are inhibited.
    please make sure that the ``kea_verbose`` value is set to "no" within
    the ``keactrl`` configuration.
 
+.. _debuglevel:
+
 The debuglevel (integer) Logger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -823,3 +825,37 @@ KEA_LOGGER_DESTINATION
 
    Any other value is treated as a name of the output file. If not
    specified otherwise, Kea will log to standard output.
+
+
+Logging levels
+==============
+
+All Kea servers follow the overall intention to strike a balance between letting the user
+know what is going on and not overloading the logging system with too much information as that
+could easily be used as a Denial Of Service attack.
+
+A wealth of information is available on debug level. Opposed to ``FATAL``, ``ERROR``, ``WARN`` and
+``INFO`` levels, ``DEBUG`` has additional debuglevel parameters. The following table offers a rough
+idea of what kind of information is logged on which level. Sadly, that information is not very
+consistent. Future Kea versions may attempt to improve consistency in this regard. Also,
+keep in mind that sometimes the circumstances determine if an information is logged on higher
+or lower level. For example, if packet is being dropped due to configured classification, that
+is an execution of the configured policy and would be logged on debuglevel 15. However, if the
+packet is dropped due to an exception being thrown, it is much more important, as it may indicate
+software bug, serious problems with memory, database connectivity and similar. As such it may
+be logged on much higher levels, such as ``WARN`` or even ``ERROR``.
+
+- 0 - singular messages printed during start or shutdown of the server.
+- 10 - logs information about received API commands.
+- 15 - information about reasons why a packet was dropped.
+- 40 - a lot of tracing information, including processing decisions, results
+  of expression evaluations and more.
+- 45 - similar to level 40, but with more details, e.g. the subnet being
+  selected for incoming packet.
+- 50 - evaluations of expressions, status received from hook points, lease
+  processing, packet processing details, including unpacking, packing, sending etc.
+- 55 - includes all details available, including full packet contents
+  with all options printed.
+
+The debug levels apply only to messaged logged on ``DEBUG``. The debug levels are configured using
+the ``debuglevel`` option. See Section :ref:`debuglevel` for details.
