@@ -857,5 +857,5 @@ be logged on much higher levels, such as ``WARN`` or even ``ERROR``.
 - 55 - includes all details available, including full packet contents
   with all options printed.
 
-The debug levels apply only to messaged logged on ``DEBUG``. The debug levels are configured using
+The debug levels apply only to messages logged on ``DEBUG``. The debug levels are configured using
 the ``debuglevel`` option. See Section :ref:`debuglevel` for details.
