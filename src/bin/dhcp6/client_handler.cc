@@ -14,6 +14,7 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::log;
 
 namespace isc {
 namespace dhcp {
@@ -126,7 +127,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         if (next_query) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
-            LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
+            LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
                 .arg(next_query->toText())
                 .arg(this_thread::get_id())
                 .arg(holder->query_->toText())
@@ -137,7 +138,7 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
     } else {
         // Logging a warning as it is supposed to be a rare event
         // with well behaving clients...
-        LOG_WARN(bad_packet6_logger, DHCP6_PACKET_DROP_DUPLICATE)
+        LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
             .arg(query->toText())
             .arg(this_thread::get_id())
             .arg(holder->query_->toText())

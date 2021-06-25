@@ -685,7 +685,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // The response (rsp) is null so the caller (run_one) will
         // immediately return too.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_DROP)
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_BUFFER_RCVD_DROP)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
@@ -811,7 +811,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     // Check the DROP special class.
     if (query->inClass("DROP")) {
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_DROP_DROP_CLASS)
+        LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS)
             .arg(query->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
@@ -1067,7 +1067,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             // Drop the park job on the packet, it isn't needed.
             HooksManager::drop("leases6_committed", query);
             if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASES6_COMMITTED_DROP)
+                LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_LEASES6_COMMITTED_DROP)
                           .arg(query->getLabel());
                 rsp.reset();
             }
@@ -1141,7 +1141,7 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
         /// Callouts decided to drop the packet.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_DROP)
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_PACKET_SEND_DROP)
                 .arg(rsp->getLabel());
             rsp.reset();
             return;
@@ -3616,7 +3616,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         // Callouts decided to DROP the packet. Let's simply log it and
         // return false, so callers will act accordingly.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_DECLINE_DROP)
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_DECLINE_DROP)
                 .arg(decline->getLabel())
                 .arg(decline->getIface())
                 .arg(lease->addr_.toText());

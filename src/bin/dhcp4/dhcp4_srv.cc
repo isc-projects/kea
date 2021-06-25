@@ -1101,7 +1101,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         // The response (rsp) is null so the caller (run_one) will
         // immediately return too.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL,
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING,
                       DHCP4_HOOK_BUFFER_RCVD_DROP)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
@@ -1114,7 +1114,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         // stage means that callouts did the parsing already, so server
         // should skip parsing.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL,
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING,
                       DHCP4_HOOK_BUFFER_RCVD_SKIP)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
@@ -1401,7 +1401,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
             // Drop the park job on the packet, it isn't needed.
             HooksManager::drop("leases4_committed", query);
             if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_LEASES4_COMMITTED_DROP)
+                LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_LEASES4_COMMITTED_DROP)
                           .arg(query->getLabel());
                 rsp.reset();
             }
@@ -1474,7 +1474,7 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
         /// Callouts decided to drop the packet.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_DROP)
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_PACKET_SEND_DROP)
                 .arg(rsp->getLabel());
             rsp.reset();
             return;
@@ -3208,7 +3208,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 skip = true;
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING,
                           DHCP4_HOOK_LEASE4_RELEASE_SKIP)
                     .arg(release->getLabel());
             }
@@ -3358,7 +3358,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
         // If any of them did, we will drop the packet.
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_DECLINE_SKIP)
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_DECLINE_SKIP)
                 .arg(decline->getLabel()).arg(lease->addr_.toText());
             return;
         }

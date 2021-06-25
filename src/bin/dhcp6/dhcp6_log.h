@@ -9,6 +9,7 @@
 
 #include <dhcp6/dhcp6_messages.h>
 #include <log/logger_support.h>
+#include <log/log_dbglevels.h>
 #include <log/macros.h>
 
 namespace isc {
