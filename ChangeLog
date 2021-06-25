@@ -1,3 +1,11 @@
+1915.	[func]		andrei
+	DOCSIS options are no longer offered to any vendor other than
+	Cable Labs (vendor-id == 4491). This was not an explicit check
+	previously and the match to the vendor relied on a technicality
+	such that other vendors could have received these options under
+	certain conditions.
+	(Gitlab #1894)
+
 1914.	[func]*		tomek
 	The Cassandra (CQL) support is being deprecated, both for
 	leases and host backends. For the time being the features
