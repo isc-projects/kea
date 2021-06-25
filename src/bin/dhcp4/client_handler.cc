@@ -14,6 +14,7 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::log;
 
 namespace isc {
 namespace dhcp {
@@ -236,7 +237,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             if (next_query_id) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
-                LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0011)
+                LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
                     .arg(next_query_id->toText())
                     .arg(this_thread::get_id())
                     .arg(holder_id->query_->toText())
@@ -247,7 +248,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         } else {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
-            LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0011)
+            LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
                 .arg(query->toText())
                 .arg(this_thread::get_id())
                 .arg(holder_id->query_->toText())
