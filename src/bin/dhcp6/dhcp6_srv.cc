@@ -321,8 +321,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
         // Let us test received ServerID if it is same as ServerID
         // which is being used by server
         if (getServerID()->getData() != server_id->getData()){
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL_DATA,
-                      DHCP6_PACKET_DROP_SERVERID_MISMATCH)
+            LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_SERVERID_MISMATCH)
                 .arg(pkt->getLabel())
                 .arg(duidToString(server_id))
                 .arg(duidToString(getServerID()));
@@ -341,7 +340,7 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     case DHCPV6_REBIND:
     case DHCPV6_INFORMATION_REQUEST:
         if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_DROP_UNICAST)
+            LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
                 .arg(pkt->getLabel())
                 .arg(pkt->getName());
             return (false);
@@ -500,8 +499,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
     // Check the DROP special class.
     if (pkt->inClass("DROP")) {
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC,
-                  DHCP6_PACKET_DROP_DROP_CLASS2)
+        LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
             .arg(pkt->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
@@ -605,8 +603,7 @@ void Dhcpv6Srv::run_one() {
 
     // If the DHCP service has been globally disabled, drop the packet.
     if (!network_state_->isServiceEnabled()) {
-        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL_DATA,
-                  DHCP6_PACKET_DROP_DHCP_DISABLED)
+        LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DHCP_DISABLED)
             .arg(query->getLabel());
         return;
     } else {
@@ -719,8 +716,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                 .arg(e.what());
         } catch (const std::exception &e) {
             // Failed to parse the packet.
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL,
-                      DHCP6_PACKET_DROP_PARSE_FAIL)
+            LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_PARSE_FAIL)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())

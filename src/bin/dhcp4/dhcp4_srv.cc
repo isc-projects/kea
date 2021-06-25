@@ -258,7 +258,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
     // Check the DROP special class.
     if (query_->inClass("DROP")) {
-        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_PACKET_DROP_0013)
+        LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
             .arg(query_->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
@@ -1023,8 +1023,7 @@ Dhcpv4Srv::run_one() {
 
     // If the DHCP service has been globally disabled, drop the packet.
     if (!network_state_->isServiceEnabled()) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
-                  DHCP4_PACKET_DROP_0008)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
         return;
     } else {
@@ -1143,8 +1142,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                 .arg(e.what());
         } catch (const std::exception& e) {
             // Failed to parse the packet.
-            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_PACKET_DROP_0001)
+            LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0001)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())
@@ -1229,7 +1227,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
 
     // Check the DROP special class.
     if (query->inClass("DROP")) {
-        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_PACKET_DROP_0010)
+        LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
             .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
@@ -1320,8 +1318,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         // (The problem is logged as a debug message because debug is
         // disabled by default - it prevents a DDOS attack based on the
         // sending of problem packets.)
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
-                  DHCP4_PACKET_DROP_0007)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0007)
             .arg(query->getLabel())
             .arg(e.what());
 
@@ -3487,7 +3484,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0002)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -3496,7 +3493,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the DHCPv4 packet has been sent to us or to someone else.
     // If it hasn't been sent to us, drop it!
     if (!acceptServerId(query)) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0003)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0003)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -3552,7 +3549,7 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         type = query->getType();
 
     } catch (...) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0004)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0004)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -3577,19 +3574,19 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
             break;
 
         case DHCP_NOTYPE:
-            LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0009)
+            LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0009)
                      .arg(query->getLabel());
             break;
 
         default:
             // If we receive a message with a non-existing type, we are logging it.
             if (type >= DHCP_TYPES_EOF) {
-                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+                LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0005)
                           .arg(query->getLabel())
                           .arg(type);
             } else {
                 // Exists but we don't support it.
-                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+                LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0006)
                       .arg(query->getLabel())
                       .arg(type);
             }

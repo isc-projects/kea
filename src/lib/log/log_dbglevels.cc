@@ -13,6 +13,7 @@ namespace log {
 /// enabled without giving a level.
 extern const int DBGLVL_START_SHUT = 0;
 extern const int DBGLVL_COMMAND = 10;
+extern const int DBGLVL_PKT_HANDLING = 15;
 extern const int DBGLVL_COMMAND_DATA = 20;
 
 extern const int DBGLVL_TRACE_BASIC = 40;

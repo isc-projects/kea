@@ -53,6 +53,10 @@ extern const int DBGLVL_START_SHUT;
 /// between processes, including configuration messages.
 extern const int DBGLVL_COMMAND;
 
+/// This debug level is reserved for logging the details of packet handling, such
+/// as dropping the packet for various reasons.
+extern const int DBGLVL_PKT_HANDLING;
+
 /// If the commands have associated data, this level is when they are printed.
 /// This includes configuration messages.
 extern const int DBGLVL_COMMAND_DATA;
