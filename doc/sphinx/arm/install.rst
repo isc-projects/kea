@@ -7,8 +7,8 @@ Installation
 Packages
 ========
 
-ISC publishes native RPM, deb, and APK packages, along with the tarballs 
-with the source code. The packages are available on 
+ISC publishes native RPM, deb, and APK packages, along with the tarballs
+with the source code. The packages are available on
 `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ at
 https://cloudsmith.io/~isc/repos. The native packages can be downloaded
 and installed using the system available in a specific distribution (such
@@ -426,7 +426,7 @@ external dependencies, MySQL, PostgreSQL, and Cassandra support are
 disabled by default and only memfile is available. Support for the
 optional external database backend must be explicitly included when Kea
 is built. This section covers the building of Kea with one of the
-optional backends and the creation of the lease database. (*Note that
+optional backends and the creation of the lease database. (* Note that
 as of Kea 1.9.9 support for Cassandra is deprecated and will be removed
 in a future version.)
 
@@ -644,8 +644,8 @@ and 1548). Be sure to replace ens4 with the specific interface name.
 Deprecated Features
 ===================
 
-This section lists significant features that were supported in the past that have been, 
-or will be removed. We will try to deprecate features before removing them to signal 
+This section lists significant features that were supported in the past that have been,
+or will be removed. We will try to deprecate features before removing them to signal
 to current users to plan a migration. New users should not rely on deprecated features.
 
 Cassandra (CQL) Support
@@ -657,14 +657,14 @@ traction with users, particularly compared to the level of interest in and deplo
 the alternatives, MySQL and PostgreSQL.
 
 The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
-DHCP features, such as the configuration backend. The configuration backend requires over 20 
-tables of tighly related data that change over time and need to be kept in sync. With the 
-Cassandra philosophy of data duplication, this would require creating and maintaining a massive 
-number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4 
-code for the MySQL Configuration Backend. In the worst case, where each query required its 
-own table, this implies a duplication factor of over 70. This would clearly be a very bad design. 
+DHCP features, such as the configuration backend. The configuration backend requires over 20
+tables of tighly related data that change over time and need to be kept in sync. With the
+Cassandra philosophy of data duplication, this would require creating and maintaining a massive
+number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4
+code for the MySQL Configuration Backend. In the worst case, where each query required its
+own table, this implies a duplication factor of over 70. This would clearly be a very bad design.
 When we created the initial MySQL and PostgreSQL designs for the Configuration Backend, we also
-attempted to come up with a design for Cassandra. That attempt was a complete failure. We 
+attempted to come up with a design for Cassandra. That attempt was a complete failure. We
 assessed that Cassandra is simply not the right technology for this task.
 
 Another problem with Cassandra is performance. In our performance tests MySQL and PostgreSQL
@@ -673,21 +673,27 @@ for MySQL or PostgreSQL performance.
 
 Another concern with Cassandra is its complicated setup. As of June 2021, Cassandra is not
 available in many major distributions. It requires custom installation, with native packages
-now limited to Debian only. The quick introduction seems to favor Docker containers as a 
-replacement. The Debian packages available require Python 2 (which reached end of life at 
-1 Jan 2020) and will uninstall some python 3 packages. This is very risky step in a production 
-environment, because it removes the current 3.8 or 3.9 python and installs an old, unsupported 
-version. The Cassandra software is written in Java, so it is unclear why it even does anything 
-with Python. 
+now limited to Debian only. The quick introduction seems to favor Docker containers as a
+replacement. The Debian packages available require Python 2 (which reached end of life at
+1 Jan 2020) and will uninstall some python 3 packages. This is very risky step in a production
+environment, because it removes the current 3.8 or 3.9 python and installs an old, unsupported
+version. Support for python 3 is only available in alpha release of upcoming Cassandra 4.0,
+which is not released yet as of June 2021. The user has a tough choice between running antiquated
+version past its end of life or running unreleased alpha software. Neither option is reasonable
+in production environment.
 
-To use C++ bindings (Kea is written in C++), a data driver is required. For a while, around 
+Cassandra is also very picky about the Java version. For example, on modern systems such as
+Ubuntu 21.04, it simply doesn't start and produces no logs. After running the Cassandra manually,
+it produces a cryptic `Improperly specified VM option 'ThreadPriorityPolicy=42'` error message.
+This is an obscure information that the Java version is too new (11.x) and needs to be downgraded
+(to 8.x).
+
+To use C++ bindings (Kea is written in C++), a data driver is required. For a while, around
 2020 there was a message about it being in maintenance mode, but as of now (June 2021) this
-message disappeared. The data driver does not use the standard `pkg-config` approach and requires 
-custom hacking. Cassandra itself requires a Java JVM to run. In the past, we experienced serious 
-problems with the Java VM machine versioning, which impedes Cassandra operation and produces
-cryptic error messages. Compared to MySQL and PostgreSQL, which are widely available in all popular
-Linux and BSD distributions, setting up Cassandra is complex and the complexity is not decreasing
-over time.
+message disappeared. For a long time the data driver didn't not use the standard `pkg-config`
+approach and required custom hacking with regards to the software detection. Compared to
+MySQL and PostgreSQL, which are widely available in all popular Linux and BSD distributions,
+setting up Cassandra is complex and the complexity is not decreasing over time.
 
 Cassandra is also an ongoing maintenance burden. As we introduce new features to Kea, such
 as the ability to get database statistics that are synced between multiple Kea instances sharing
@@ -696,6 +702,6 @@ Porting solutions between MySQL and PostgreSQL is frequently very easy but is al
 problem with Cassandra. That is not a Cassandra flaw on its own, the core problem here is that
 it is different than the other solutions Kea supports.
 
-For these reasons, we are deprecating Cassandra support as of Kea 1.9.9. The feature will 
-function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. We plan to 
+For these reasons, we are deprecating Cassandra support as of Kea 1.9.9. The feature will
+function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. We plan to
 remove the feature entirely in a future release, possibly as soon as Kea 2.2.0.
