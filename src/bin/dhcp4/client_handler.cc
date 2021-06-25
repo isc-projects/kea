@@ -262,7 +262,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             if (next_query_hw) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
-                LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0012)
+                LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
                     .arg(next_query_hw->toText())
                     .arg(this_thread::get_id())
                     .arg(holder_hw->query_->toText())
@@ -273,7 +273,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         } else {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
-            LOG_WARN(bad_packet4_logger, DHCP4_PACKET_DROP_0012)
+            LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
                 .arg(query->toText())
                 .arg(this_thread::get_id())
                 .arg(holder_hw->query_->toText())
