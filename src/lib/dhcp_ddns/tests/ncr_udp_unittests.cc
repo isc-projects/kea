@@ -1052,7 +1052,8 @@ public:
         if (!ok) {
             std::cout << "UDP data received not in order! Checking un ordered delivery"
                       << std::endl;
-            // We need to
+            // We need to double iterate through the messages to check every one
+            // against one another.
             for (int i = 0; i < num_msgs; i++) {
                 ok = false;
                 for (int j = 0; j < num_msgs; j++) {
@@ -1159,7 +1160,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     ASSERT_EQ(num_msgs, sent_ncrs_.size());
     ASSERT_EQ(num_msgs, received_ncrs_.size());
 
-    // Verify that what we sent matches what we received. Ingore the order
+    // Verify that what we sent matches what we received. Ignore the order
     // if necessary.
     checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
 

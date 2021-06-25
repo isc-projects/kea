@@ -658,7 +658,7 @@ the alternatives, MySQL and PostgreSQL.
 
 The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
 DHCP features, such as the configuration backend. The configuration backend requires over 20
-tables of tighly related data that change over time and need to be kept in sync. With the
+tables of tightly coupled data that change over time and need to be kept in sync. With the
 Cassandra philosophy of data duplication, this would require creating and maintaining a massive
 number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4
 code for the MySQL Configuration Backend. In the worst case, where each query required its

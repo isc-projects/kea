@@ -18,7 +18,7 @@ Kea 1.9.9 (development) released on June 30, 2021
 	DHCPv4 and DHCPv6 are now more consistent when logging the
 	reasons	why a packet was dropped. This information is now
 	available on debuglevel 15. Also added a section in the ARM
-	discussing the debuglevels. The subnet selection failed log
+	discussing the debug levels. The subnet selection failed log
 	message now provides more useful information about the subnet.
 	(Gitlab #1915, #1916)
 
@@ -51,7 +51,7 @@ Kea 1.9.9 (development) released on June 30, 2021
 1912.	[doc]		fdupont, tomek
 	The Kea configuration syntax is now documented in BNF notation.
 	See new appendix in the ARM.
-	(Gitlab #504)
+	(Gitlab #504, #745)
 
 1911.	[bug]		andrei
 	Fixed a minor regression where kea-admin and keactrl would output
