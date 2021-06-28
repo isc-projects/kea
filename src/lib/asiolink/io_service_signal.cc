@@ -46,6 +46,9 @@ public:
     void remove(int signum);
 
 private:
+    /// @brief Extends the lifetime of IOService to avoid heap-use-after-free.
+    IOServicePtr io_service_;
+
     /// @brief the ASIO signal set.
     boost::asio::signal_set signal_set_;
 
@@ -61,7 +64,9 @@ private:
 
 IOSignalSetImpl::IOSignalSetImpl(IOServicePtr io_service,
                                  IOSignalHandler handler)
-    : signal_set_(io_service->get_io_service()), handler_(handler) {
+    : io_service_(io_service),
+      signal_set_(io_service_->get_io_service()),
+      handler_(handler) {
 }
 
 void
