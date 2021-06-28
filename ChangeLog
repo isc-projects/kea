@@ -1,3 +1,19 @@
+Kea 1.9.9 (development) released on June 30, 2021
+
+1920.	[build]		andrei
+	Bump library versions for the Kea 1.9.9 development release.
+	(Gitlab #1947)
+
+1919.	[bug]		razvan
+	Fix the run script hook library leaving behind defunct processes.
+	(Gitlab #1878)
+
+1918.	[bug]		razvan
+	When parsed, PSID was incorrectly ignoring the PSID value when
+	psid-len was 16 instead of ignoring it when the values is 0 as
+	per the RFC.
+	(Gitlab #1858)
+
 1917.	[func]		tomek
 	DHCPv4 and DHCPv6 are now more consistent when logging the
 	reasons	why a packet was dropped. This information is now
