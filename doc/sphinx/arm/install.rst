@@ -121,6 +121,8 @@ the system:
    If LaTeX packages are missing, Kea will skip PDF generation and will produce
    only HTML documents.
 
+-  The Kerberos 5 libraries, when using the --with-gssapi configuration flag.
+
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.
 
