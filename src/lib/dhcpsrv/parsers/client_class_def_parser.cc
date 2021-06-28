@@ -111,8 +111,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
             OptionDefinitionPtr def = parser.parse(option_def);
 
-            // Verify if the defition is for an option which are
-            // in a deferred processing list.
+            // Verify if the definition is for an option which is in a deferred
+            // processing list.
             if (!LibDHCP::shouldDeferOptionUnpack(def->getOptionSpaceName(),
                                                   def->getCode())) {
                 isc_throw(DhcpConfigError,
