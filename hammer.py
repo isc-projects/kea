@@ -101,7 +101,7 @@ IMAGE_TEMPLATES = {
     'fedora-34-lxc':           {'bare': 'isc/lxc-fedora-34',           'kea': 'isc/kea-fedora-34'},
 
     # centos
-    'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'isc/kea-centos-7'},
+    'centos-7-lxc':            {'bare': 'isc/lxc-centos-7',            'kea': 'isc/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
     'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'isc/kea-centos-8'},
@@ -112,7 +112,7 @@ IMAGE_TEMPLATES = {
     # ubuntu
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
-    'ubuntu-18.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.04',    'kea': 'godfryd/kea-ubuntu-18.04'},
+    'ubuntu-18.04-lxc':        {'bare': 'isc/lxc-ubuntu-18.04',        'kea': 'isc/kea-ubuntu-18.04'},
     'ubuntu-18.04-virtualbox': {'bare': 'ubuntu/bionic64',             'kea': 'godfryd/kea-ubuntu-18.04'},
     'ubuntu-18.10-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.10',    'kea': 'godfryd/kea-ubuntu-18.10'},
     'ubuntu-18.10-virtualbox': {'bare': 'ubuntu/cosmic64',             'kea': 'godfryd/kea-ubuntu-18.10'},
@@ -127,9 +127,9 @@ IMAGE_TEMPLATES = {
     # debian
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
-    'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
+    'debian-9-lxc':            {'bare': 'isc/lxc-debian-9',            'kea': 'isc/kea-debian-9'},
     'debian-9-virtualbox':     {'bare': 'debian/stretch64',            'kea': 'godfryd/kea-debian-9'},
-    'debian-10-lxc':           {'bare': 'godfryd/lxc-debian-10',       'kea': 'godfryd/kea-debian-10'},
+    'debian-10-lxc':           {'bare': 'isc/lxc-debian-10',           'kea': 'isc/kea-debian-10'},
     'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
 
     # freebsd
@@ -1298,6 +1298,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'gssapi' in features:
+            packages.extend(['krb5-devel'])
+
         if 'ccache' in features:
             packages.extend(['ccache'])
 
@@ -1336,6 +1339,9 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5-devel'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1423,6 +1429,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'gssapi' in features:
+            packages.extend(['libkrb5-dev'])
+
         if 'ccache' in features:
             packages.extend(['ccache'])
 
@@ -1477,6 +1486,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'gssapi' in features:
+            packages.extend(['libkrb5-dev'])
+
         if 'ccache' in features:
             packages.extend(['ccache'])
 
@@ -1513,6 +1525,9 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1553,6 +1568,9 @@ def prepare_system_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql-dev', 'postgresql'])
             packages.extend(['bison', 'flex', 'boost-dev', 'docbook-xsl', 'python3-dev'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5-dev'])
 
         if 'native-pkg' in features:
             packages.extend(['alpine-sdk'])
@@ -1686,6 +1704,11 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
+    if 'gssapi' in features:
+        if system == 'freebsd':
+            cmd += ' --with-gssapi=/usr/local/bin/krb5-config'
+        else:
+            cmd += ' --with-gssapi'
     if 'shell' in features:
         cmd += ' --enable-shell'
     if 'perfdhcp' in features:
@@ -2209,7 +2232,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
 ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
-                'radius', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
+                'radius', 'gssapi', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
 
 
 def parse_args():
@@ -2426,6 +2449,7 @@ def _get_features(args):
         features.add('mysql')
         features.add('pgsql')
         features.add('radius')
+        features.add('gssapi')
         # in case of build command of native packages, unittest should not
         # be run as they are not built
         if args.command == 'build':
@@ -2661,7 +2685,7 @@ def main():
     elif args.command == "package-box":
         _check_deps_presence()
         _check_system_revision(args.system, args.revision)
-        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'native-pkg'])
+        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'gssapi', 'native-pkg'])
 
         log.info('Enabled features: %s', ' '.join(features))
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse, args.skip_upload)
