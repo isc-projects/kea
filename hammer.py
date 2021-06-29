@@ -1008,7 +1008,7 @@ def _get_local_timezone():
       fi
 
       # brute force: for Alpine, FreeBSD
-      for i in $(find /usr/share/zoneinfo | cut -d '/' -f 5- | grep -E '^[A-Z][a-z]+/[A-Z][a-z]+$' | sort -uV); do
+      for i in $(find /usr/share/zoneinfo | cut -d '/' -f 5- | grep -E '^[A-Z][a-z]+/[A-Z][a-z]+.*$' | sort -ruV); do
         unset TZ
         if test "$(date)" = "$(TZ="${i}" date)"; then
           printf '%s\n' "${i}"
