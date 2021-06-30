@@ -502,17 +502,11 @@ HAService::partnerDownStateHandler() {
     }
 
     switch (communication_state_->getPartnerState()) {
-    case HA_HOT_STANDBY_ST:
-    case HA_LOAD_BALANCING_ST:
     case HA_COMMUNICATION_RECOVERY_ST:
     case HA_PARTNER_DOWN_ST:
     case HA_PARTNER_IN_MAINTENANCE_ST:
-        verboseTransition(HA_WAITING_ST);
-        break;
-
     case HA_READY_ST:
-        verboseTransition((config_->getHAMode() == HAConfig::LOAD_BALANCING ?
-                    HA_LOAD_BALANCING_ST : HA_HOT_STANDBY_ST));
+        verboseTransition(HA_WAITING_ST);
         break;
 
     case HA_TERMINATED_ST:

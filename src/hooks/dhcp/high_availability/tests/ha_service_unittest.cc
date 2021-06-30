@@ -5327,16 +5327,22 @@ public:
 //    it doesn't respond.
 // 4. I transition to partner down state.
 // 5. Partner finally shows up and eventually transitions to the ready state.
-// 6. I see the partner being ready, so I fall back to load balancing.
+// 6. I see the partner being ready, so I synchronize myself and eventually
+//    transition to the load-balancing state.
 // 7. Next, the partner crashes again.
 // 8. I detect partner's crash and transition back to partner down.
-// 9. While being in the partner down state, we find that the partner
+// 9. While being in the partner down state, I find that the partner
 //    is available and it is doing load balancing.
-// 10. Our server transitions to the waiting state to synchronize the
-//    database and then transition to the load balancing state.
+// 10. I stay in the partner-down state to force the partner to transition
+//     to the waiting state and synchronize its database.
 TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
+    HAConfigPtr config_storage = createValidConfiguration();
+    // Disable syncing leases to avoid transitions via the syncing state.
+    // In this state it is necessary to perform synchronous tasks.
+    config_storage->setSyncLeases(false);
+    startService(config_storage);
+
     // Start the server: offline ---> WAITING state.
-    startService(createValidConfiguration());
     EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
 
     // WAITING state: no heartbeat response for a long period of time.
@@ -5364,12 +5370,31 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 
     // PARTNER DOWN state: receive a response from the partner indicating that
     // the partner is in READY state.
-    // PARTNER DOWN ---> LOAD BALANCING
+    // PARTNER DOWN ---> WAITING
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // WAITING state: synchronization is disabled to simplify this test. The
+    // server should transition straight to the ready state.
+    // WAITING --> READY
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_READY_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // READY --> LOAD BALANCING
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     EXPECT_EQ(HA_LOAD_BALANCING_ST, service_->getCurrState());
     ASSERT_TRUE(isDoingHeartbeat());
     ASSERT_FALSE(isCommunicationInterrupted());
     ASSERT_FALSE(isFailureDetected());
+
+    // Ensure that the state handler is invoked.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
 
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service_->processStatusGet();
@@ -5394,7 +5419,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     std::string expected = "{"
         "    \"local\": {"
         "        \"role\": \"primary\","
-        "        \"scopes\": [ \"server1\", \"server2\" ], "
+        "        \"scopes\": [ \"server1\" ], "
         "        \"state\": \"load-balancing\""
         "    }, "
         "    \"remote\": {"
@@ -5450,16 +5475,17 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     partner.setControlResult(CONTROL_RESULT_SUCCESS);
     partner.transition("load-balancing");
 
-    // PARTNER DOWN state: it is weird situation that the partner shows up in
-    // the load-balancing state, but you can't really preclude that. Our server
-    // would rather expect it to be in the waiting or syncing state after being
-    // down but we need to deal with any status returned. If the other server
-    // is doing load balancing then the queries sent to our server aren't
-    // handled. Since this is so unusual situation we transition to the waiting
-    // state to synchronize the database and gracefully transition to the load
-    // balancing state.
+    // PARTNER DOWN state: the partner shows up in the load-balancing state.
+    // It may happen when the partner did not crash but there was a temporary
+    // communication error with it. It is possible that this server was not
+    // configured to monitor unacked clients and that's why it transitioned
+    // to the partner-down state. The partner may be configured differiently.
+    // The partner was not receiving lease updates from us, so we need to
+    // force it to transition to the waiting state and synchronize. We stay
+    // in the partner-down state as long as necessary to force the partner
+    // to synchronize.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
-    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
     ASSERT_TRUE(isDoingHeartbeat());
     ASSERT_FALSE(isCommunicationInterrupted());
     ASSERT_FALSE(isFailureDetected());
@@ -5471,8 +5497,8 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 // 3. I can't communicate with the partner so I transition to the partner-down
 //    state.
 // 4. Partner shows up and eventually transitions to the ready state.
-// 5. I can communicate with the partner so I transition to the hot-standby
-//    state as a standby server.
+// 5. I see the partner being ready, so I synchronize myself and eventually
+//    transition to the load-balancing state.
 // 6. Partner stops responding again.
 // 7. I monitor communication with the partner and eventually consider the
 //    communication to be interrupted.
@@ -5480,15 +5506,19 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 //    delays in responses.
 // 9. I transition to the partner-down state again seeing that the certain
 //    number of clients can't communicate with the partner.
-// 10. The partner unexpectedly shows up in the hot-standby mode, which causes
-//     me to transition to the waiting state and then synchronize my lease
-//     database.
+// 10. The partner unexpectedly shows up in the hot-standby mode. I stay in
+//    the partner-down state to force the partner to transition to the waiting
+//    state and synchronize its database.
 TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
     HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.
     valid_config->setThisServerName("server2");
     valid_config->getPeerConfig("server2")->setRole("standby");
+
+    // Disable syncing leases to avoid transitions via the syncing state.
+    // In this state it is necessary to perform synchronous tasks.
+    valid_config->setSyncLeases(false);
 
     // Start the server: offline ---> WAITING state.
     startService(valid_config);
@@ -5518,7 +5548,27 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
 
     // PARTNER DOWN state: receive a response from the partner indicating that
     // the partner is in READY state.
-    // PARTNER DOWN ---> HOT STANDBY
+    // PARTNER DOWN ---> WAITING
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // WAITING state: synchronization is disabled to simplify this test. The
+    // server should transition straight to the ready state.
+    // WAITING --> READY
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_READY_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // Primary server must transition to the hot-standby state first before
+    // standby can transition.
+    partner_->transition("hot-standby");
+
+    // READY --> HOT STANDBY
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     EXPECT_EQ(HA_HOT_STANDBY_ST, service_->getCurrState());
     ASSERT_TRUE(isDoingHeartbeat());
@@ -5562,16 +5612,14 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
     partner_->setControlResult(CONTROL_RESULT_SUCCESS);
     partner_->transition("hot-standby");
 
-    // HOT STANDBY state: it is weird situation that the partner shows up in
-    // the hot-standby state, but you can't really preclude that. Our server
-    // would rather expect it to be in the waiting or syncing state after being
-    // down but we need to deal with any status returned. If the other server
-    // is in hot standby then the queries sent to our server aren't handled.
-    // Since this is so unusual situation we transition to the waiting
-    // state to synchronize the database and gracefully transition to the hot
-    // standby state.
+    // PARTNER DOWN state: the partner shows up in the hot-standby state.
+    // It may happen when the partner did not crash but there was a temporary
+    // communication error with it. The partner was not receiving lease updates
+    // from us, so we need to force it to transition to the waiting state and
+    // synchronize. We stay in the partner-down state as long as necessary to
+    // force the partner to synchronize.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
-    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
     ASSERT_TRUE(isDoingHeartbeat());
     ASSERT_FALSE(isCommunicationInterrupted());
     ASSERT_FALSE(isFailureDetected());
@@ -5939,7 +5987,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -5951,7 +5999,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6305,7 +6353,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6317,7 +6365,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_LOAD_BALANCING_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6582,13 +6630,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
     {
         SCOPED_TRACE("PARTNER DOWN state transitions");
 
-        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
 
         EXPECT_TRUE(service_->unpause());
 
-        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_WAITING_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
     }
@@ -6939,10 +6987,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
-                       FinalState(HA_WAITING_ST));
-
-        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_LOAD_BALANCING_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6954,7 +6999,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_HOT_STANDBY_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -7226,7 +7271,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
@@ -7241,7 +7286,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_HOT_STANDBY_ST));
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
