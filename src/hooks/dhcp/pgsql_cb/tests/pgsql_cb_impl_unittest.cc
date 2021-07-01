@@ -32,30 +32,4 @@ TEST(PgSqlConfigBackendImplTest, createBindingFromTriplet) {
     EXPECT_EQ(123, binding->getInteger<uint32_t>(0));
 }
 
-#if 0
-// Test that the triplet can be created from the Postgres binding.
-TEST(PgSqlConfigBackendImplTest, createTripletFromBinding) {
-    // Create a binding encapsulating a number and try to create a triplet
-    // from this binding.
-    MySqlBindingPtr binding = MySqlBinding::createInteger<uint32_t>(234);
-    Triplet<uint32_t> triplet;
-    ASSERT_NO_THROW(triplet = PgSqlConfigBackendImpl::createTriplet(binding));
-
-    // The triplet should be specified and equal to the value stored in the
-    // binding.
-    ASSERT_FALSE(triplet.unspecified());
-    EXPECT_EQ(234, triplet.get());
-
-    // Create a null binding and then use it to create a triplet.
-    binding = MySqlBinding::createNull();
-    ASSERT_NO_THROW(triplet = PgSqlConfigBackendImpl::createTriplet(binding));
-    // This time the triplet should be unspecified.
-    EXPECT_TRUE(triplet.unspecified());
-
-    // Finally, make sure that the null binding pointer is rejected.
-    EXPECT_THROW(PgSqlConfigBackendImpl::createTriplet(MySqlBindingPtr()),
-                 isc::Unexpected);
-}
-#endif
-
 }

@@ -75,39 +75,33 @@ PsqlBindArrayPtr
 PgSqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) {
     PsqlBindArrayPtr bind(new PsqlBindArray());
 
-#if 0
     if (triplet.unspecified()) {
         bind->addNull();
     } else {
         bind->add<uint32_t>(triplet.get());
     }
-#endif
     return (bind);
 }
 
 PsqlBindArrayPtr
 PgSqlConfigBackendImpl::createMinBinding(const Triplet<uint32_t>& triplet) {
     PsqlBindArrayPtr bind(new PsqlBindArray());
-#if 0
     if (triplet.unspecified() || (triplet.getMin() == triplet.get())) {
         bind->addNull();
     } else {
         bind->add<uint32_t>(triplet.getMin());
     }
-#endif
     return (bind);
 }
 
 PsqlBindArrayPtr
 PgSqlConfigBackendImpl::createMaxBinding(const Triplet<uint32_t>& triplet) {
     PsqlBindArrayPtr bind(new PsqlBindArray());
-#if 0
     if (triplet.unspecified() || (triplet.getMax() == triplet.get())) {
         bind->addNull();
     } else {
         bind->add<uint32_t>(triplet.getMax());
     }
-#endif
     return (bind);
 }
 
