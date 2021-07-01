@@ -28,6 +28,10 @@ if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_generic_backend_unittest.cc mysql_generic_backend_unittest.h
 endif
 
+if HAVE_PGSQL
+libdhcpsrvtest_la_SOURCES += pgsql_generic_backend_unittest.cc pgsql_generic_backend_unittest.h
+endif
+
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

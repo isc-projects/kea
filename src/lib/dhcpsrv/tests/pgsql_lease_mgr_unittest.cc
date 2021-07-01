@@ -10,6 +10,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
+#include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
 #include <pgsql/pgsql_connection.h>
@@ -1026,6 +1027,25 @@ TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6) {
 TEST_F(PgSqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
     MultiThreadingTest mt(true);
     testLeaseStatsQueryAttribution6();
+}
+
+/// @brief This test is a basic check for the generic backend test class,
+///        rather than any production code check.
+TEST_F(PgSqlGenericBackendTest, leaseCount) {
+
+    // Create database connection parameter list
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest";
+    params["password"] = "keatest";
+
+    // Create and open the database connection
+    PgSqlConnection conn(params);
+    conn.openDatabase();
+
+    // Check that the countRows is working. It's used extensively in other
+    // tests, so basic check is enough here.
+    EXPECT_EQ(0, countRows(conn, "lease4"));
 }
 
 }  // namespace
