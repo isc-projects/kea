@@ -115,16 +115,37 @@ public:
     virtual ~PgSqlConfigBackendImpl();
 
     /// @todo: implement condCreateInteger(const util::Optional<T>& value)
-#if 0
     static db::PsqlBindArrayPtr createBinding(const Triplet<uint32_t>& triplet);
     static db::PsqlBindArrayPtr createMaxBinding(const Triplet<uint32_t>& triplet);
     static db::PsqlBindArrayPtr createMinBinding(const Triplet<uint32_t>& triplet);
+#if 0
     static Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& binding);
     static Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& def_binding,
         const db::PsqlBindArrayPtr& min_binding, const db::PsqlBindArrayPtr& max_binding);
 #endif
+
+    /// @brief Returns server tag associated with the particular selector.
+    ///
+    /// This method expects that there is exactly one server tag associated with
+    /// the server selector.
+    ///
+    /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for error reporting purposes.
+    /// @return Server tag.
+    /// @throw InvalidOperation if the server selector is unassigned or if there
+    /// is more than one server tag associated with the selector.
     std::string getServerTag(const db::ServerSelector& server_selector,
-                            const std::string& operation );
+                             const std::string& operation) const {
+        auto tags = server_selector.getTags();
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
+                      " while " << operation << ". Got: "
+                      << getServerTagsAsText(server_selector));
+        }
+
+        return (tags.begin()->get());
+    }
 
     /// @brief Returns server tags associated with the particular selector
     /// as text.
@@ -142,8 +163,6 @@ public:
 
         return (s.str());
     }
-
-
 
     /// @brief Invokes the corresponding stored procedure in MySQL.
     ///
