@@ -757,6 +757,33 @@ TEST_F(PgSqlBasicsTest, intTest) {
     ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INT_COL));
 }
 
+/// @brief Verify that we use the methods used for testing:
+/// amNull(), getInteger<T>(), getType()
+TEST_F(PgSqlBasicsTest, get) {
+    PsqlBindArray bind_array;
+
+    // The array itself is empty, its first column is not null
+    EXPECT_THROW(bind_array.amNull(), OutOfRange);
+    EXPECT_THROW(bind_array.getInteger<uint32_t>(), OutOfRange);
+    EXPECT_THROW(bind_array.getType(), OutOfRange);
+
+    // Now try again wi
+    bind_array.add(123); // This will be converted to "123" string.
+    bind_array.addNull();
+    bind_array.add("sagittarius");
+    EXPECT_FALSE(bind_array.amNull(0)); // first column is not null
+    EXPECT_TRUE(bind_array.amNull(1)); // second column is null
+    EXPECT_FALSE(bind_array.amNull(2)); // third column is not null
+
+    EXPECT_EQ(123, bind_array.getInteger<uint32_t>(0)); // first column is 123
+    EXPECT_THROW(bind_array.getInteger<uint32_t>(1), BadValue);
+    EXPECT_THROW(bind_array.getInteger<uint32_t>(2), boost::bad_lexical_cast);
+
+    EXPECT_EQ(PsqlBindArray::TEXT_FMT, bind_array.getType(0));
+    EXPECT_EQ(PsqlBindArray::TEXT_FMT, bind_array.getType(1));
+    EXPECT_EQ(PsqlBindArray::TEXT_FMT, bind_array.getType(2));
+}
+
 /// @brief Verify that we can read and write TEXT columns
 TEST_F(PgSqlBasicsTest, textTest) {
     // Create a prepared statement for inserting TEXT

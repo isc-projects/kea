@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <pgsql/pgsql_connection.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
@@ -182,6 +183,47 @@ struct PsqlBindArray {
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
     std::string toText() const;
+
+    // --- the following methods are mostly useful for testing -----
+
+    /// @brief Determines if specified value is null
+    /// @param index if array holds more than one value, this index determines
+    ///         which column to use
+    /// @return true if the column is defined and is null
+    bool amNull(size_t index = 0) const;
+
+    /// @brief Returns the value as an integer.
+    /// @param index if array holds more than one value, this index determines
+    ///         which column to use
+    /// @return value interpreted as specified integer type
+    /// @throw OutOfRange if the offset is too large
+    /// @throw BadValue if the data is null
+    /// @throw boost::bad_lexical_cast if value is not an integer
+    template<typename T>
+    T getInteger(size_t index = 0) {
+        if (values_.size() < index + 1) {
+            isc_throw(OutOfRange, "Invalid index " << index << ", the values array has "
+                                << values_.size() << " element(s)");
+        }
+        auto x = values_.at(index);
+        if (!x) {
+            isc_throw(BadValue, "the data in column " << index << " is null");
+        }
+        return (boost::lexical_cast<T>(x));
+    }
+
+    /// @brief Returns the column type
+    /// @param index if array holds more than one value, this index determines
+    ///         which column to use
+    /// @return the type of specified column
+    /// @throw BadValue if the offset is too large
+    int getType(size_t index = 0 ) {
+        if (formats_.size() < index + 1) {
+            isc_throw(OutOfRange, "Invalid index " << index << ", the formats_ array has "
+                                << formats_.size() << " element(s)");
+        }
+        return formats_.at(index);
+    }
 
 private:
     /// @brief vector of strings which supplied the values

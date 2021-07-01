@@ -8,6 +8,7 @@
 
 #include <pgsql/pgsql_exchange.h>
 #include <pgsql/pgsql_connection.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -116,6 +117,19 @@ std::string PsqlBindArray::toText() const {
 
     return (stream.str());
 }
+
+bool
+PsqlBindArray::amNull(size_t index) const {
+    if (values_.size() < index + 1) {
+        isc_throw(OutOfRange, "The index " << index << " is larger than the "
+        " array size " << values_.size());
+    }
+
+    // We assume lengths_.size() always equals values_.size(). If not, the
+    // at() operator will throw.
+    return ( (values_.at(index) == NULL) && (lengths_.at(index) == 0) );
+}
+
 
 std::string
 PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
