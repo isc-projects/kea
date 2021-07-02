@@ -1668,6 +1668,12 @@ mysql_client_class_test() {
              ON c.id = o.class_id WHERE c.name = 'foobar'";
     run_statement "#get order index of class foobar" "$sql" 3
 
+    # Check that the first class is still at the first position.
+    sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
+         INNER JOIN ${table_prefix}_client_class_order AS o \
+             ON c.id = o.class_id WHERE c.name = 'foo'";
+    run_statement "#get order index of class foo" "$sql" 1
+
     # Let's wipe the whole database
     mysql_wipe
 
