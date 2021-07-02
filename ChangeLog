@@ -1,3 +1,7 @@
+1925.	[build]		fdupont
+	Updated parsers to bison 3.3 or later.
+	(Gitlab #453)
+
 1924.	[bug]		razvan
 	The MultiThreadingCriticalSection is now thread-safe and can be
 	called from http client or http listener processing threads.
