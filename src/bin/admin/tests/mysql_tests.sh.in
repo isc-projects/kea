@@ -1571,7 +1571,7 @@ mysql_reservation_mode_upgrade_test() {
 mysql_client_class_test() {
     table_prefix="$1"
 
-    test_start "mysql_client_classes_test ${table_prefix}"
+    test_start "mysql_client_classes_test.${table_prefix}"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1632,7 +1632,7 @@ mysql_client_class_test() {
  COMMIT;"
     run_statement "insert client class bar" "$sql"
 
-    # Ensure that all thre classes have been added in the expected order.
+    # Ensure that all three classes have been added in the expected order.
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
              ON c.id = o.class_id WHERE c.name = 'foo'";

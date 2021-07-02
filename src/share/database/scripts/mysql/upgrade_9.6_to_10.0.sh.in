@@ -38,7 +38,7 @@ mysql "$@" <<EOF
 -- -----------------------------------------------------------------------
 -- Create a table holding the DHCPv4 client classes. Most table
 -- columns map directly to respective client class properties in
--- Kea configuration. The  depend_on_known_directly column is
+-- Kea configuration. The depend_on_known_directly column is
 -- explicitly set in an insert or update statement to indicate
 -- if the client class directly depends on KNOWN or UNKNOWN
 -- built-in classes. A caller should determine it by evaluating
@@ -466,7 +466,7 @@ ALTER TABLE dhcp4_option_def
 -- -----------------------------------------------------------------------
 -- Create a table holding the DHCPv6 client classes. Most table
 -- columns map directly to respective client class properties in
--- Kea configuration. The  depend_on_known_directly column is
+-- Kea configuration. The depend_on_known_directly column is
 -- explicitly set in an insert or update statement to indicate
 -- if the client class directly depends on KNOWN or UNKNOWN
 -- built-in classes. A caller should determine it by evaluating
@@ -510,7 +510,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_client_class (
 -- If the follow_client_class specifies a name of an existing class,
 -- the generated order_index is set to an id of that class + 1, and
 -- the order_index values of the later classes are incremented by 1.
--- The depend_on_known_directly column holds a boolean value indicating
+-- The depend_on_known_indirectly column holds a boolean value indicating
 -- whether the given class depends on KNOWN/UKNOWN built-in classes
 -- via other classes, i.e. it depends on classes that directly or
 -- indirectly depend on these built-ins. This value is auto-generated
