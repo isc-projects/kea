@@ -3416,10 +3416,10 @@ BEGIN
         );
     END IF;
     IF dependency <> 0 THEN
-       UPDATE dhcp4_client_class_order
-           SET depend_on_known_indirectly = 1
-       WHERE class_id = client_class_id;
-     END IF;
+        UPDATE dhcp4_client_class_order
+            SET depend_on_known_indirectly = 1
+        WHERE class_id = client_class_id;
+    END IF;
  END $$
 DELIMITER ;
 
