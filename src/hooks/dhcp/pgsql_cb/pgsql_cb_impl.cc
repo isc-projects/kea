@@ -48,18 +48,16 @@ PgSqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
                        const DbCallback db_reconnect_callback)
     : conn_(parameters,
             IOServiceAccessorPtr(new IOServiceAccessor(PgSqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""),
-      audit_revision_created_(false), parameters_(parameters) {
+            db_reconnect_callback), timer_name_(""), audit_revision_created_(false),
+            parameters_(parameters) {
+
     // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
-                                               PG_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version =
-        PgSqlConnection::getVersion(parameters);
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = PgSqlConnection::getVersion(parameters);
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Postgres schema version mismatch: need version: "
                   << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "."
-                  << db_version.second);
+                  << " found version:  " << db_version.first << "." << db_version.second);
     }
 
     // Open the database.
@@ -104,48 +102,6 @@ PgSqlConfigBackendImpl::createMaxBinding(const Triplet<uint32_t>& triplet) {
     }
     return (bind);
 }
-
-/* Triplet<uint32_t>
-PgSqlConfigBackendImpl::createTriplet(const PsqlBindArrayPtr& binding) {
-    if (!binding) {
-        isc_throw(Unexpected, "Postgres configuration backend internal error: "
-                  "binding pointer is NULL when creating a triplet value");
-    }
-
-    if (binding->empty()) {
-        return (Triplet<uint32_t>());
-    }
-
-    return (Triplet<uint32_t>(binding->getInteger<uint32_t>()));
-} */
-
-/* Triplet<uint32_t>
-PgSqlConfigBackendImpl::createTriplet(const PsqlBindArrayPtr& def_binding,
-                                      const PsqlBindArrayPtr& min_binding,
-                                      const PsqlBindArrayPtr& max_binding) {
-    if (!def_binding || !min_binding || !max_binding) {
-        isc_throw(Unexpected, "Postgres configuration backend internal error: "
-                  "binding pointer is NULL when creating a triplet value");
-    }
-
-    // This code assumes the database was filled using the API, e.g. it
-    // is not possible (so not handled) to have only the min_binding not NULL.
-    if (def_binding->empty()) {
-        return (Triplet<uint32_t>());
-    }
-
-    uint32_t value = def_binding->getInteger<uint32_t>();
-    uint32_t min_value = value;
-    if (!min_binding->empty()) {
-        min_value = min_binding->getInteger<uint32_t>();
-    }
-    uint32_t max_value = value;
-    if (!max_binding->empty()) {
-        max_value = max_binding->getInteger<uint32_t>();
-    }
-
-    return (Triplet<uint32_t>(min_value, value, max_value));
-} */
 
 void
 PgSqlConfigBackendImpl::createAuditRevision(const int index,
@@ -1049,7 +1005,7 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
 
 std::string
 PgSqlConfigBackendImpl::getType() const {
-    return ("mysql");
+    return ("pgsql");
 }
 
 std::string
