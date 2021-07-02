@@ -553,6 +553,7 @@ pgsql_upgrade_schema_to_version() {
 
     for script in "${db_scripts_dir}"/pgsql/upgrade*.sh
     do
+        version=$(pgsql_version)
         if [ "${version}" = "${target_version}" ]
         then
             break
@@ -560,8 +561,6 @@ pgsql_upgrade_schema_to_version() {
 
         echo "Processing $script file..."
         "${script}" -U "${db_user}" -d "${db_name}"
-
-        version=$(pgsql_version)
     done
 
     echo "Schema upgraded to $version"
