@@ -38,8 +38,9 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 
 # Kea environment variables for shell tests.
 # KEA_LOGGER_DESTINATION is set per test with set_logger.
-export KEA_LOCKFILE_DIR="@abs_top_builddir@"
-export KEA_PIDFILE_DIR="@abs_top_builddir@"
+export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
+export KEA_LOCKFILE_DIR="@abs_top_builddir@/test_lockfile_dir"
+export KEA_PIDFILE_DIR="@abs_top_builddir@/test_pidfile_dir"
 
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
