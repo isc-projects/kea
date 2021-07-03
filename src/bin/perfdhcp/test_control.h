@@ -13,13 +13,13 @@
 #include <perfdhcp/receiver.h>
 #include <perfdhcp/command_options.h>
 #include <perfdhcp/perf_socket.h>
+#include <perfdhcp/random_number_generator.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <util/random/random_number_generator.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -348,7 +348,7 @@ public:
     // what's followed in other classes.
 protected:
     /// Generate uniformly distributed integers in range of [min, max]
-    isc::util::random::UniformRandomIntegerGenerator number_generator_;
+    UniformRandomIntegerGenerator number_generator_;
 
     /// \brief Creates DHCPREQUEST from a DHCPACK message.
     ///

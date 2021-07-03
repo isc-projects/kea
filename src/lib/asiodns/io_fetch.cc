@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,9 @@
 #include <asiodns/logger.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
+#include <dns/qid_gen.h>
 #include <dns/rcode.h>
 #include <util/buffer.h>
-#include <util/random/qid_gen.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -35,7 +35,6 @@ using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace isc::util::random;
 using namespace isc::log;
 using namespace std;
 

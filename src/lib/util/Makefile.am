@@ -41,8 +41,6 @@ libkea_util_la_SOURCES += encode/base_n.cc encode/hex.h
 libkea_util_la_SOURCES += encode/binary_from_base32hex.h
 libkea_util_la_SOURCES += encode/binary_from_base16.h
 libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
-libkea_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
-libkea_util_la_SOURCES += random/random_number_generator.h
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
@@ -100,8 +98,3 @@ libkea_util_io_include_HEADERS = \
 	io/fd_share.h \
 	io/pktinfo_utilities.h \
 	io/sockaddr_util.h
-
-libkea_util_random_includedir = $(pkgincludedir)/util/random
-libkea_util_random_include_HEADERS = \
-	random/qid_gen.h \
-	random/random_number_generator.h

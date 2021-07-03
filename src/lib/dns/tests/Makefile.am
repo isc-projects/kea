@@ -68,6 +68,7 @@ run_unittests_SOURCES += rdata_hinfo_unittest.cc
 run_unittests_SOURCES += rdata_caa_unittest.cc
 run_unittests_SOURCES += rdata_tkey_unittest.cc
 run_unittests_SOURCES += rrset_unittest.cc
+run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += masterload_unittest.cc

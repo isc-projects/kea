@@ -11,9 +11,9 @@
 
 #include <gtest/gtest.h>
 
-#include <util/random/qid_gen.h>
+#include <dns/qid_gen.h>
 
-using namespace isc::util::random;
+using namespace isc::dns;
 
 // Tests the operation of the Qid generator
 
@@ -26,7 +26,7 @@ TEST(QidGenerator, singleton) {
 }
 
 TEST(QidGenerator, generate) {
-    // We'll assume that boost's generator is 'good enough', and won't
+    // We'll assume that cryptolink's generator is 'good enough', and won't
     // do full statistical checking here. Let's just call it the xkcd
     // test (http://xkcd.com/221/), and check if three consecutive
     // generates are not all the same.

@@ -36,6 +36,7 @@ run_unittests_SOURCES += perf_socket_unittest.cc
 run_unittests_SOURCES += basic_scen_unittest.cc
 run_unittests_SOURCES += avalanche_scen_unittest.cc
 run_unittests_SOURCES += command_options_helper.h
+run_unittests_SOURCES += random_number_generator_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)

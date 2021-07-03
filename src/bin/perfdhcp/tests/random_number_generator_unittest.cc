@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,18 +6,15 @@
 
 #include <config.h>
 
-#include <util/random/random_number_generator.h>
+#include "../random_number_generator.h"
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
 
-
-namespace isc {
-namespace util {
-namespace random {
-
+using namespace isc;
+using namespace isc::perfdhcp;  
 using namespace std;
 
 /// \brief Test Fixture Class for uniform random number generator
@@ -297,7 +294,3 @@ TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities) {
     ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
     ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
 }
-
-} // namespace random
-} // namespace util
-} // namespace isc

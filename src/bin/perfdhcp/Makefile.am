@@ -25,6 +25,7 @@ libperfdhcp_la_SOURCES += pkt_transform.cc pkt_transform.h
 libperfdhcp_la_SOURCES += rate_control.cc rate_control.h
 libperfdhcp_la_SOURCES += stats_mgr.cc stats_mgr.h
 libperfdhcp_la_SOURCES += test_control.cc test_control.h
+libperfdhcp_la_SOURCES += random_number_generator.h
 libperfdhcp_la_SOURCES += receiver.cc receiver.h
 libperfdhcp_la_SOURCES += perf_socket.cc perf_socket.h
 libperfdhcp_la_SOURCES += abstract_scen.h

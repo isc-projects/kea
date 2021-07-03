@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,8 +23,7 @@
 /// PLEASE DO NOT USE THIS IN CRYPTOGRAPHICALLY SENSITIVE CODE.
 
 namespace isc {
-namespace util {
-namespace random {
+namespace perfdhcp {
 
 class InvalidLimits : public isc::BadValue {
 public:
@@ -197,8 +196,7 @@ private:
     size_t min_;                                ///< The minimum integer that will be generated
 };
 
-}   // namespace random
-}   // namespace util
+}   // namespace perfdhcp
 }   // namespace isc
 
 #endif//NSAS_RANDOM_NUMBER_GENERATOR_H

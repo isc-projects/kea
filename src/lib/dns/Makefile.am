@@ -133,6 +133,7 @@ libkea_dns___la_SOURCES += rrset.h rrset.cc
 libkea_dns___la_SOURCES += rrttl.h rrttl.cc
 libkea_dns___la_SOURCES += rrtype.cc
 libkea_dns___la_SOURCES += rrcollator.h rrcollator.cc
+libkea_dns___la_SOURCES += qid_gen.h qid_gen.cc
 libkea_dns___la_SOURCES += question.h question.cc
 libkea_dns___la_SOURCES += serial.h serial.cc
 libkea_dns___la_SOURCES += tsig.h tsig.cc
@@ -197,6 +198,7 @@ libdns___include_HEADERS = \
 	name.h \
 	nsec3hash.h \
 	opcode.h \
+	qid_gen.h \
 	question.h \
 	rcode.h \
 	rdata.h \

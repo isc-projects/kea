@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,15 +13,11 @@
 #ifndef QID_GEN_H
 #define QID_GEN_H
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int.hpp>
-#include <boost/random/variate_generator.hpp>
-
+#include <cryptolink/crypto_rng.h>
 #include <stdint.h>
 
 namespace isc {
-namespace util {
-namespace random {
+namespace dns {
 
 /// This class generates Qids for outgoing queries
 ///
@@ -50,32 +46,9 @@ public:
     ///
     /// \return A random Qid
     uint16_t generateQid();
-
-    /// \brief Seeds the QidGenerator (based on the current time)
-    ///
-    /// This is automatically called by the constructor
-    void seed();
-
-private:
-    // "Mersenne Twister: A 623-dimensionally equidistributed
-    // uniform pseudo-random number generator", Makoto Matsumoto and
-    // Takuji Nishimura, ACM Transactions on Modeling and Computer
-    // Simulation: Special Issue on Uniform Random Number Generation,
-    // Vol. 8, No. 1, January 1998, pp. 3-30.
-    //
-    // mt19937 is an implementation of one of the pseudo random
-    // generators described in this paper.
-    boost::mt19937 generator_;
-
-    // For qid's we want a uniform distribution
-    boost::uniform_int<> dist_;
-
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> > vgen_;
 };
 
-
-} // namespace random
-} // namespace util
+} // namespace dns
 } // namespace isc
 
 #endif // QID_GEN_H

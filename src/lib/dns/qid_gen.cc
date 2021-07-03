@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,13 +12,12 @@
 
 #include <config.h>
 
-#include <util/random/qid_gen.h>
-
-#include <sys/time.h>
+#include <cryptolink/crypto_rng.h>
+#include <dns/qid_gen.h>
+#include <cstring>
 
 namespace isc {
-namespace util {
-namespace random {
+namespace dns {
 
 QidGenerator qid_generator_instance;
 
@@ -27,25 +26,17 @@ QidGenerator::getInstance() {
     return (qid_generator_instance);
 }
 
-QidGenerator::QidGenerator() : dist_(0, 65535),
-                               vgen_(generator_, dist_)
+QidGenerator::QidGenerator()
 {
-    seed();
-}
-
-void
-QidGenerator::seed() {
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    generator_.seed((tv.tv_sec * 1000000) + tv.tv_usec);
 }
 
 uint16_t
 QidGenerator::generateQid() {
-    return (vgen_());
+    uint16_t val;
+    std::vector<uint8_t> rnd = isc::cryptolink::random(sizeof(uint16_t));
+    memmove(&val, &rnd[0], sizeof(uint16_t));
+    return (val);
 }
 
-
-} // namespace random
-} // namespace util
+} // namespace dns
 } // namespace isc
