@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,6 +225,30 @@ public:
     getModifiedGlobalParameters6(const db::ServerSelector& server_selector,
                                  const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves a client class by name.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Client class name.
+    /// @return Pointer to the retrieved client class.
+    virtual ClientClassDefPtr
+    getClientClass6(const db::ServerSelector& selector, const std::string& name) const;
+
+    /// @brief Retrieves all client classes.
+    ///
+    /// @param selector Server selector.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getAllClientClasses6(const db::ServerSelector& selector) const;
+
+    /// @brief Retrieves client classes modified after specified time.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Modification time.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getModifiedClientClasses6(const db::ServerSelector& selector,
+                              const boost::posix_time::ptime& modification_time) const;
+
     /// @brief Retrieves the most recent audit entries.
     ///
     /// @param selector Server selector.
@@ -354,6 +378,19 @@ public:
     virtual void
     createUpdateGlobalParameter6(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates DHCPv6 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Client class to be added or updated.
+    /// @param follow_client_class name of the class after which the
+    /// new or updated class should be positioned. An empty value
+    /// causes the class to be appended at the end of the class
+    /// hierarchy.
+    virtual void
+    createUpdateClientClass6(const db::ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class,
+                             const std::string& follow_client_class);
 
     /// @brief Creates or updates a server.
     ///
@@ -527,6 +564,22 @@ public:
     /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllGlobalParameters6(const db::ServerSelector& server_selector);
+
+    /// @brief Deletes DHCPv6 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Name of the class to be deleted.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteClientClass6(const db::ServerSelector& server_selector,
+                       const std::string& name);
+
+    /// @brief Deletes all client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteAllClientClasses6(const db::ServerSelector& server_selector);
 
     /// @brief Deletes a server from the backend.
     ///

@@ -78,8 +78,8 @@ public:
     /// @brief Constructor.
     MySqlConfigBackendDHCPv6Test()
         : test_subnets_(), test_networks_(), test_option_defs_(),
-          test_options_(), test_servers_(), timestamps_(), cbptr_(),
-          audit_entries_() {
+          test_options_(), test_client_classes_(), test_servers_(), timestamps_(),
+          cbptr_(), audit_entries_() {
         // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
@@ -104,6 +104,7 @@ public:
         initTestSubnets();
         initTestSharedNetworks();
         initTestOptionDefs();
+        initTestClientClasses();
         initTimestamps();
     }
 
@@ -470,6 +471,24 @@ public:
         LibDHCP::setRuntimeOptionDefs(defs);
     }
 
+    /// @brief Creates several client classes used in tests.
+    void initTestClientClasses() {
+        ExpressionPtr match_expr = boost::make_shared<Expression>();
+        CfgOptionPtr cfg_option = boost::make_shared<CfgOption>();
+        auto class1 = boost::make_shared<ClientClassDef>("foo", match_expr, cfg_option);
+        class1->setRequired(true);
+        class1->setValid(Triplet<uint32_t>(30, 60, 90));
+        test_client_classes_.push_back(class1);
+
+        auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);
+        class2->setTest("member('foo')");
+        test_client_classes_.push_back(class2);
+
+        auto class3 = boost::make_shared<ClientClassDef>("foobar", match_expr, cfg_option);
+        class3->setTest("member('foo') and member('bar')");
+        test_client_classes_.push_back(class3);
+    }
+
     /// @brief Initialize posix time values used in tests.
     void initTimestamps() {
         // Current time minus 1 hour to make sure it is in the past.
@@ -590,6 +609,9 @@ public:
 
     /// @brief Holds pointers to options used in tests.
     std::vector<OptionDescriptorPtr> test_options_;
+
+    /// @brief Holds pointers to classes used in tests.
+    std::vector<ClientClassDefPtr> test_client_classes_;
 
     /// @brief Holds pointers to the servers used in tests.
     std::vector<ServerPtr> test_servers_;
@@ -4298,6 +4320,574 @@ TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkOptionIdOrder) {
                   networks[i]->toElement()->str());
         }
     }
+}
+
+// This test verifies that it is possible to create client classes, update them
+// and retrieve all classes for a given server.
+TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
+    // Create a server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server1"));
+    }
+    // Create first class.
+    auto class1 = test_client_classes_[0];
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+    {
+        SCOPED_TRACE("client class foo is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    // Create second class.
+    auto class2 = test_client_classes_[1];
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
+    {
+        SCOPED_TRACE("client class bar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    // Create third class.
+    auto class3 = test_client_classes_[2];
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+    {
+        SCOPED_TRACE("client class foobar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    // Update the third class to depend on the second class.
+    class3->setTest("member('foo')");
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+    {
+        SCOPED_TRACE("client class bar is updated");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::UPDATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    // Only the first class should be returned for the server selector ALL.
+    auto client_classes = cbptr_->getAllClientClasses6(ServerSelector::ALL());
+    ASSERT_EQ(1, client_classes.getClasses()->size());
+    // All three classes should be returned for the server1.
+    client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
+    auto classes_list = client_classes.getClasses();
+    ASSERT_EQ(3, classes_list->size());
+    EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_EQ("bar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
+
+
+    // Move the third class between the first and second class.
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, "foo"));
+
+    // Ensure that the classes order has changed.
+    client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
+    classes_list = client_classes.getClasses();
+    ASSERT_EQ(3, classes_list->size());
+    EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_EQ("bar", (*(classes_list->begin() + 2))->getName());
+}
+
+// This test verifies that a single class can be retrieved from the database.
+TEST_F(MySqlConfigBackendDHCPv6Test, getClientClass6) {
+    // Create a server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+
+    // Add classes.
+    auto class1 = test_client_classes_[0];
+    EXPECT_NO_THROW(class1->getCfgOption()->add(test_options_[0]->option_,
+                                                test_options_[0]->persistent_,
+                                                test_options_[0]->space_name_));
+    EXPECT_NO_THROW(class1->getCfgOption()->add(test_options_[1]->option_,
+                                                test_options_[1]->persistent_,
+                                                test_options_[1]->space_name_));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+
+    auto class2 = test_client_classes_[1];
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
+
+    // Get the first client class and validate its contents.
+    ClientClassDefPtr client_class;
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
+    ASSERT_TRUE(client_class);
+    EXPECT_EQ("foo", client_class->getName());
+    EXPECT_TRUE(client_class->getRequired());
+    EXPECT_EQ(30, client_class->getValid().getMin());
+    EXPECT_EQ(60, client_class->getValid().get());
+    EXPECT_EQ(90, client_class->getValid().getMax());
+
+    // Validate options belonging to this class.
+    ASSERT_TRUE(client_class->getCfgOption());
+    OptionDescriptor returned_opt_new_posix_timezone =
+        client_class->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
+    ASSERT_TRUE(returned_opt_new_posix_timezone.option_);
+
+    OptionDescriptor returned_opt_preference =
+        client_class->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_PREFERENCE);
+    ASSERT_TRUE(returned_opt_preference.option_);
+
+    // Fetch the same class using different server selectors.
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ANY(),
+                                                           class1->getName()));
+    EXPECT_TRUE(client_class);
+
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ONE("server1"),
+                                                           class1->getName()));
+    EXPECT_TRUE(client_class);
+
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::UNASSIGNED(),
+                                                           class1->getName()));
+    EXPECT_FALSE(client_class);
+
+    // Fetch the second client class using different selectors. This time the
+    // class should not be returned for the ALL server selector because it is
+    // associated with the server1.
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ALL(),
+                                                           class2->getName()));
+    EXPECT_FALSE(client_class);
+
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ANY(),
+                                                           class2->getName()));
+    EXPECT_TRUE(client_class);
+
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ONE("server1"),
+                                                           class2->getName()));
+    EXPECT_TRUE(client_class);
+
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::UNASSIGNED(),
+                                                           class2->getName()));
+    EXPECT_FALSE(client_class);
+}
+
+// This test verifies that client class specific DHCP options can be
+// modified during the class update.
+TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateClientClass6Options) {
+    // Add class with two options and two option definitions.
+    auto class1 = test_client_classes_[0];
+    EXPECT_NO_THROW(class1->getCfgOption()->add(test_options_[0]->option_,
+                                                test_options_[0]->persistent_,
+                                                test_options_[0]->space_name_));
+    EXPECT_NO_THROW(class1->getCfgOption()->add(test_options_[1]->option_,
+                                                test_options_[1]->persistent_,
+                                                test_options_[1]->space_name_));
+    auto cfg_option_def = boost::make_shared<CfgOptionDef>();
+    class1->setCfgOptionDef(cfg_option_def);
+    EXPECT_NO_THROW(class1->getCfgOptionDef()->add(test_option_defs_[0]));
+    EXPECT_NO_THROW(class1->getCfgOptionDef()->add(test_option_defs_[2]));
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+
+    // Fetch the class and the options from the database.
+    ClientClassDefPtr client_class;
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
+    ASSERT_TRUE(client_class);
+
+    // Validate options belonging to the class.
+    ASSERT_TRUE(client_class->getCfgOption());
+    OptionDescriptor returned_opt_new_posix_timezone =
+        client_class->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
+    ASSERT_TRUE(returned_opt_new_posix_timezone.option_);
+
+    OptionDescriptor returned_opt_preference =
+        client_class->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_PREFERENCE);
+    ASSERT_TRUE(returned_opt_preference.option_);
+
+    // Validate option definitions belonging to the class.
+    ASSERT_TRUE(client_class->getCfgOptionDef());
+    auto returned_def_foo = client_class->getCfgOptionDef()->get(test_option_defs_[0]->getOptionSpaceName(),
+                                                                 test_option_defs_[0]->getCode());
+
+    ASSERT_TRUE(returned_def_foo);
+    EXPECT_EQ(1234, returned_def_foo->getCode());
+    EXPECT_EQ("foo", returned_def_foo->getName());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, returned_def_foo->getOptionSpaceName());
+    EXPECT_EQ("espace", returned_def_foo->getEncapsulatedSpace());
+    EXPECT_EQ(OPT_STRING_TYPE, returned_def_foo->getType());
+    EXPECT_FALSE(returned_def_foo->getArrayType());
+
+    auto returned_def_fish = client_class->getCfgOptionDef()->get(test_option_defs_[2]->getOptionSpaceName(),
+                                                                  test_option_defs_[2]->getCode());
+    ASSERT_TRUE(returned_def_fish);
+    EXPECT_EQ(5235, returned_def_fish->getCode());
+    EXPECT_EQ("fish", returned_def_fish->getName());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, returned_def_fish->getOptionSpaceName());
+    EXPECT_TRUE(returned_def_fish->getEncapsulatedSpace().empty());
+    EXPECT_EQ(OPT_RECORD_TYPE, returned_def_fish->getType());
+    EXPECT_TRUE(returned_def_fish->getArrayType());
+
+    // Replace client class specific option definitions. Leave only one option
+    // definition.
+    cfg_option_def = boost::make_shared<CfgOptionDef>();
+    class1->setCfgOptionDef(cfg_option_def);
+    EXPECT_NO_THROW(class1->getCfgOptionDef()->add(test_option_defs_[2]));
+
+    // Delete one of the options and update the class.
+    class1->getCfgOption()->del(test_options_[0]->space_name_,
+                                test_options_[0]->option_->getType());
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
+    ASSERT_TRUE(client_class);
+
+    // Ensure that the first option definition is gone.
+    ASSERT_TRUE(client_class->getCfgOptionDef());
+    returned_def_foo = client_class->getCfgOptionDef()->get(test_option_defs_[0]->getOptionSpaceName(),
+                                                            test_option_defs_[0]->getCode());
+    EXPECT_FALSE(returned_def_foo);
+
+    // The second option definition should be present.
+    returned_def_fish = client_class->getCfgOptionDef()->get(test_option_defs_[2]->getOptionSpaceName(),
+                                                             test_option_defs_[2]->getCode());
+    EXPECT_TRUE(returned_def_fish);
+
+    // Make sure that the first option is gone.
+    ASSERT_TRUE(client_class->getCfgOption());
+    returned_opt_new_posix_timezone = client_class->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                                        D6O_NEW_POSIX_TIMEZONE);
+    EXPECT_FALSE(returned_opt_new_posix_timezone.option_);
+
+    // The second option should be there.
+    returned_opt_preference = client_class->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                                D6O_PREFERENCE);
+    ASSERT_TRUE(returned_opt_preference.option_);
+}
+
+// This test verifies that modified client classes can be retrieved from the database.
+TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedClientClasses6) {
+    // Create server1.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+
+    // Add three classes to the database with different timestamps.
+    auto class1 = test_client_classes_[0];
+    class1->setModificationTime(timestamps_["yesterday"]);
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+
+    auto class2 = test_client_classes_[1];
+    class2->setModificationTime(timestamps_["today"]);
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class2, ""));
+
+    auto class3 = test_client_classes_[2];
+    class3->setModificationTime(timestamps_["tomorrow"]);
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+
+    // Get modified client classes configured for all servers.
+    auto client_classes = cbptr_->getModifiedClientClasses6(ServerSelector::ALL(),
+                                                            timestamps_["two days ago"]);
+    EXPECT_EQ(2, client_classes.getClasses()->size());
+
+    // Get modified client classes appropriate for server1. It includes classes
+    // for all servers and for the server1.
+    client_classes = cbptr_->getModifiedClientClasses6(ServerSelector::ONE("server1"),
+                                                       timestamps_["two days ago"]);
+    EXPECT_EQ(3, client_classes.getClasses()->size());
+
+    // Get the classes again but use the timestamp equal to the modification
+    // time of the first class.
+    client_classes = cbptr_->getModifiedClientClasses6(ServerSelector::ONE("server1"),
+                                                       timestamps_["yesterday"]);
+    EXPECT_EQ(3, client_classes.getClasses()->size());
+
+    // Get modified classes starting from today. It should return only two.
+    client_classes = cbptr_->getModifiedClientClasses6(ServerSelector::ONE("server1"),
+                                                       timestamps_["today"]);
+    EXPECT_EQ(2, client_classes.getClasses()->size());
+
+    // Get client classes modified in the future. It should return none.
+    client_classes = cbptr_->getModifiedClientClasses6(ServerSelector::ONE("server1"),
+                                                       timestamps_["after tomorrow"]);
+    EXPECT_EQ(0, client_classes.getClasses()->size());
+
+    // Getting modified client classes for any server is unsupported.
+    EXPECT_THROW(cbptr_->getModifiedClientClasses6(ServerSelector::ANY(),
+                                                   timestamps_["two days ago"]),
+                 InvalidOperation);
+}
+
+// This test verifies that a specified client class can be deleted.
+TEST_F(MySqlConfigBackendDHCPv6Test, deleteClientClass6) {
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("server1 is created and available for server1");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("server1 is created and available for server2");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    auto class1 = test_client_classes_[0];
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+    {
+        SCOPED_TRACE("client class foo is created and available for server1");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("client class foo is created and available for server 2");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    auto class2 = test_client_classes_[1];
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
+    {
+        SCOPED_TRACE("client class bar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+
+    auto class3 = test_client_classes_[2];
+    class3->setTest("member('foo')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server2"), class3, ""));
+    {
+        SCOPED_TRACE("client class foobar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    uint64_t result;
+    EXPECT_NO_THROW(result = cbptr_->deleteClientClass6(ServerSelector::ONE("server1"),
+                                                        class2->getName()));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client class bar is deleted");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "client class deleted",
+                          ServerSelector::ONE("server1"));
+    }
+
+    EXPECT_NO_THROW(result = cbptr_->deleteClientClass6(ServerSelector::ONE("server2"),
+                                                        class3->getName()));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client class foobar is deleted");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "client class deleted",
+                          ServerSelector::ONE("server2"));
+    }
+
+    EXPECT_NO_THROW(result = cbptr_->deleteClientClass6(ServerSelector::ANY(),
+                                                        class1->getName()));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client class foo is deleted and no longer available for the server1");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "client class deleted",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("client class foo is deleted and no longer available for the server2");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "client class deleted",
+                          ServerSelector::ONE("server2"));
+    }
+}
+
+// This test verifies that all client classes can be deleted using
+// a specified server selector.
+TEST_F(MySqlConfigBackendDHCPv6Test, deleteAllClientClasses6) {
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("server1 is created and available for server1");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("server1 is created and available for server2");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    auto class1 = test_client_classes_[0];
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+    {
+        SCOPED_TRACE("client class foo is created and available for server1");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+    {
+        SCOPED_TRACE("client class foo is created and available for server 2");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    auto class2 = test_client_classes_[1];
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
+    {
+        SCOPED_TRACE("client class bar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server1"));
+    }
+
+    auto class3 = test_client_classes_[2];
+    class3->setTest("member('foo')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server2"), class3, ""));
+    {
+        SCOPED_TRACE("client class foobar is created");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::CREATE,
+                          "client class set",
+                          ServerSelector::ONE("server2"));
+    }
+
+    uint64_t result;
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::UNASSIGNED()));
+    EXPECT_EQ(0, result);
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ONE("server2")));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client classes for server2 deleted");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all client classes",
+                          ServerSelector::ONE("server2"));
+    }
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ONE("server2")));
+    EXPECT_EQ(0, result);
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ONE("server1")));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client classes for server1 deleted");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all client classes",
+                          ServerSelector::ONE("server1"));
+    }
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ONE("server1")));
+    EXPECT_EQ(0, result);
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ALL()));
+    EXPECT_EQ(1, result);
+    {
+        SCOPED_TRACE("client classes for all deleted");
+        testNewAuditEntry("dhcp6_client_class",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all client classes",
+                          ServerSelector::ONE("server1"));
+    }
+
+    EXPECT_NO_THROW(result = cbptr_->deleteAllClientClasses6(ServerSelector::ALL()));
+    EXPECT_EQ(0, result);
+
+    // Deleting multiple objects using ANY server tag is unsupported.
+    EXPECT_THROW(cbptr_->deleteAllClientClasses6(ServerSelector::ANY()), InvalidOperation);
+}
+
+// This test verifies that client class dependencies are tracked when the
+// classes are added to the database. It verifies that an attempt to update
+// a class violiting the dependencies results in an error.
+TEST_F(MySqlConfigBackendDHCPv6Test, clientClassDependencies6) {
+    // Create a server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+
+    // Create first class. It depends on KNOWN built-in class.
+    auto class1 = test_client_classes_[0];
+    class1->setTest("member('KNOWN')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+
+    // Create second class which depends on the first class. This yelds indirect
+    // dependency on KNOWN class.
+    auto class2 = test_client_classes_[1];
+    class2->setTest("member('foo')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class2, ""));
+
+    // Create third class depending on the second class. This also yelds indirect
+    // dependency on KNOWN class.
+    auto class3 = test_client_classes_[2];
+    class3->setTest("member('bar')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class3, ""));
+
+    // Try to change the dependency of the first class. There are other classes
+    // having indirect dependency on KNOWN class via this class. Therefore, the
+    // update should be unsuccessful.
+    class1->setTest("member('HA_server1')");
+    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""),
+                 DbOperationError);
+
+    // Try to change the dependency of the second class. This should result in
+    // an error because the third class depends on it.
+    class2->setTest("member('HA_server1')");
+    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class2, ""),
+                 DbOperationError);
+
+    // Changing the indirect dependency of the third class should succeed, because
+    // no other classes depend on this class.
+    class3->setTest("member('HA_server1')");
+    EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class3, ""));
 }
 
 /// This test verifies that audit entries can be retrieved from a given

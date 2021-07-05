@@ -20,6 +20,9 @@ Debug message issued when triggered an action to create or update option by subn
 % MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4 create or update client class: %1
 Debug message issued when triggered an action to create or update client class
 
+% MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS6 create or update client class: %1
+Debug message issued when triggered an action to create or update client class
+
 % MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4 create or update global parameter: %1
 Debug message issued when triggered an action to create or update global parameter
 
@@ -72,6 +75,12 @@ library has been unloaded successfully.
 Debug message issued when triggered an action to delete all client classes
 
 % MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete all client classes
+
+% MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6 delete all client classes
+Debug message issued when triggered an action to delete all client classes
+
+% MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete all client classes
 
 % MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4 delete all global parameters
@@ -194,6 +203,12 @@ Debug message issued when triggered an action to delete client class
 % MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete client class
 
+% MYSQL_CB_DELETE_CLIENT_CLASS6 delete client class: %1
+Debug message issued when triggered an action to delete client class
+
+% MYSQL_CB_DELETE_CLIENT_CLASS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete client class
+
 % MYSQL_CB_DELETE_GLOBAL_PARAMETER4 delete global parameter: %1
 Debug message issued when triggered an action to delete global parameter
 
@@ -284,6 +299,12 @@ Debug message issued when triggered an action to retrieve all client classes
 % MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve all client classes
 
+% MYSQL_CB_GET_ALL_CLIENT_CLASSES6 retrieving all client classes
+Debug message issued when triggered an action to retrieve all client classes
+
+% MYSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT retrieving: %1 elements
+Debug message indicating the result of an action to retrieve all client classes
+
 % MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4 retrieving all global parameters
 Debug message issued when triggered an action to retrieve all global parameters
 
@@ -363,6 +384,9 @@ Debug message indicating the result of an action to retrieve all subnets
 % MYSQL_CB_GET_CLIENT_CLASS4 retrieving client class: %1
 Debug message issued when triggered an action to retrieve a client class
 
+% MYSQL_CB_GET_CLIENT_CLASS6 retrieving client class: %1
+Debug message issued when triggered an action to retrieve a client class
+
 % MYSQL_CB_GET_GLOBAL_PARAMETER4 retrieving global parameter: %1
 Debug message issued when triggered an action to retrieve global parameter
 
@@ -379,6 +403,12 @@ Debug message issued when triggered an action to retrieve host
 Debug message issued when triggered an action to retrieve modified client classes from specified time
 
 % MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT retrieving: %1 elements
+Debug message indicating the result of an action to retrieve modified client classes from specified time
+
+% MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6 retrieving modified client classes from: %1
+Debug message issued when triggered an action to retrieve modified client classes from specified time
+
+% MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve modified client classes from specified time
 
 % MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4 retrieving modified global parameters from: %1

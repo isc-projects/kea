@@ -13,6 +13,7 @@ extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_BY_PREFIX_OPTION6 = "MYS
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4 = "MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6 = "MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4 = "MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4";
+extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS6 = "MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4 = "MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6 = "MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_OPTION4 = "MYSQL_CB_CREATE_UPDATE_OPTION4";
@@ -30,6 +31,8 @@ extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SUBNET6 = "MYSQL_CB_CREA
 extern const isc::log::MessageID MYSQL_CB_DEINIT_OK = "MYSQL_CB_DEINIT_OK";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4 = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6 = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4 = "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT = "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6 = "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6";
@@ -70,6 +73,8 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6 = "MYSQL_C
 extern const isc::log::MessageID MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT = "MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_CLIENT_CLASS4 = "MYSQL_CB_DELETE_CLIENT_CLASS4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT = "MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_CLIENT_CLASS6 = "MYSQL_CB_DELETE_CLIENT_CLASS6";
+extern const isc::log::MessageID MYSQL_CB_DELETE_CLIENT_CLASS6_RESULT = "MYSQL_CB_DELETE_CLIENT_CLASS6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_GLOBAL_PARAMETER4 = "MYSQL_CB_DELETE_GLOBAL_PARAMETER4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT = "MYSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_GLOBAL_PARAMETER6 = "MYSQL_CB_DELETE_GLOBAL_PARAMETER6";
@@ -100,6 +105,8 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6 = "MYSQ
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT = "MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_CLIENT_CLASSES4 = "MYSQL_CB_GET_ALL_CLIENT_CLASSES4";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT = "MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_CLIENT_CLASSES6 = "MYSQL_CB_GET_ALL_CLIENT_CLASSES6";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT = "MYSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4 = "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT = "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6 = "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6";
@@ -125,12 +132,15 @@ extern const isc::log::MessageID MYSQL_CB_GET_ALL_SUBNETS4_RESULT = "MYSQL_CB_GE
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_SUBNETS6 = "MYSQL_CB_GET_ALL_SUBNETS6";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_SUBNETS6_RESULT = "MYSQL_CB_GET_ALL_SUBNETS6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_CLIENT_CLASS4 = "MYSQL_CB_GET_CLIENT_CLASS4";
+extern const isc::log::MessageID MYSQL_CB_GET_CLIENT_CLASS6 = "MYSQL_CB_GET_CLIENT_CLASS6";
 extern const isc::log::MessageID MYSQL_CB_GET_GLOBAL_PARAMETER4 = "MYSQL_CB_GET_GLOBAL_PARAMETER4";
 extern const isc::log::MessageID MYSQL_CB_GET_GLOBAL_PARAMETER6 = "MYSQL_CB_GET_GLOBAL_PARAMETER6";
 extern const isc::log::MessageID MYSQL_CB_GET_HOST4 = "MYSQL_CB_GET_HOST4";
 extern const isc::log::MessageID MYSQL_CB_GET_HOST6 = "MYSQL_CB_GET_HOST6";
 extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4 = "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4";
 extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT = "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6 = "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6";
+extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT = "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4 = "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4";
 extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT = "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6 = "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6";
@@ -199,6 +209,7 @@ const char* values[] = {
     "MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4", "create or update option by subnet id: %1",
     "MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6", "create or update option by subnet id: %1",
     "MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4", "create or update client class: %1",
+    "MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS6", "create or update client class: %1",
     "MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4", "create or update global parameter: %1",
     "MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6", "create or update global parameter: %1",
     "MYSQL_CB_CREATE_UPDATE_OPTION4", "create or update option",
@@ -216,6 +227,8 @@ const char* values[] = {
     "MYSQL_CB_DEINIT_OK", "unloading MYSQL CB hooks library successful",
     "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4", "delete all client classes",
     "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6", "delete all client classes",
+    "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4", "delete all global parameters",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6", "delete all global parameters",
@@ -256,6 +269,8 @@ const char* values[] = {
     "MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_CLIENT_CLASS4", "delete client class: %1",
     "MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_CLIENT_CLASS6", "delete client class: %1",
+    "MYSQL_CB_DELETE_CLIENT_CLASS6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_GLOBAL_PARAMETER4", "delete global parameter: %1",
     "MYSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_GLOBAL_PARAMETER6", "delete global parameter: %1",
@@ -286,6 +301,8 @@ const char* values[] = {
     "MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_GET_ALL_CLIENT_CLASSES4", "retrieving all client classes",
     "MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT", "retrieving: %1 elements",
+    "MYSQL_CB_GET_ALL_CLIENT_CLASSES6", "retrieving all client classes",
+    "MYSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4", "retrieving all global parameters",
     "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6", "retrieving all global parameters",
@@ -311,12 +328,15 @@ const char* values[] = {
     "MYSQL_CB_GET_ALL_SUBNETS6", "retrieving all subnets",
     "MYSQL_CB_GET_ALL_SUBNETS6_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_CLIENT_CLASS4", "retrieving client class: %1",
+    "MYSQL_CB_GET_CLIENT_CLASS6", "retrieving client class: %1",
     "MYSQL_CB_GET_GLOBAL_PARAMETER4", "retrieving global parameter: %1",
     "MYSQL_CB_GET_GLOBAL_PARAMETER6", "retrieving global parameter: %1",
     "MYSQL_CB_GET_HOST4", "get host",
     "MYSQL_CB_GET_HOST6", "get host",
     "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4", "retrieving modified client classes from: %1",
     "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT", "retrieving: %1 elements",
+    "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6", "retrieving modified client classes from: %1",
+    "MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4", "retrieving modified global parameters from: %1",
     "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6", "retrieving modified global parameters from: %1",

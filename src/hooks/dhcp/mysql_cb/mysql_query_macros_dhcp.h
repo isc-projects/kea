@@ -727,6 +727,69 @@ namespace {
 
 #endif
 
+#ifndef MYSQL_GET_CLIENT_CLASS6_COMMON
+#define MYSQL_GET_CLIENT_CLASS6_COMMON(server_join, ...) \
+    "SELECT " \
+    "  c.id," \
+    "  c.name," \
+    "  c.test," \
+    "  c.only_if_required," \
+    "  c.valid_lifetime," \
+    "  c.min_valid_lifetime," \
+    "  c.max_valid_lifetime," \
+    "  c.depend_on_known_directly," \
+    "  o.depend_on_known_indirectly, " \
+    "  c.modification_ts," \
+    "  d.id," \
+    "  d.code," \
+    "  d.name," \
+    "  d.space," \
+    "  d.type," \
+    "  d.modification_ts," \
+    "  d.is_array," \
+    "  d.encapsulate," \
+    "  d.record_types," \
+    "  d.user_context," \
+    "  x.option_id," \
+    "  x.code," \
+    "  x.value," \
+    "  x.formatted_value," \
+    "  x.space," \
+    "  x.persistent," \
+    "  x.dhcp6_subnet_id," \
+    "  x.scope_id," \
+    "  x.user_context," \
+    "  x.shared_network_name," \
+    "  x.pool_id," \
+    "  x.modification_ts," \
+    "  s.tag " \
+    "FROM dhcp6_client_class AS c " \
+    "INNER JOIN dhcp6_client_class_order AS o " \
+    "  ON c.id = o.class_id " \
+    server_join \
+    "LEFT JOIN dhcp6_option_def AS d ON c.id = d.class_id " \
+    "LEFT JOIN dhcp6_options AS x ON x.scope_id = 2 AND c.name = x.dhcp_client_class " \
+    #__VA_ARGS__ \
+    "  ORDER BY o.order_index, d.id, x.option_id"
+
+#define MYSQL_GET_CLIENT_CLASS6_WITH_TAG(...) \
+    MYSQL_GET_CLIENT_CLASS6_COMMON( \
+    "INNER JOIN dhcp6_client_class_server AS a " \
+    "  ON c.id = a.class_id " \
+    "INNER JOIN dhcp6_server AS s " \
+    "  ON a.server_id = s.id ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_CLIENT_CLASS6_UNASSIGNED(...) \
+    MYSQL_GET_CLIENT_CLASS6_COMMON( \
+    "LEFT JOIN dhcp6_client_class_server AS a " \
+    "  ON c.id = a.class_id " \
+    "LEFT JOIN dhcp4_server AS s " \
+    "  ON a.server_id = s.id ", \
+    WHERE a.class_id IS NULL __VA_ARGS__)
+
+#endif
+
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER
 #define MYSQL_INSERT_GLOBAL_PARAMETER(table_prefix) \
     "INSERT INTO " #table_prefix "_global_parameter(" \
@@ -825,7 +888,7 @@ namespace {
     "  record_types," \
     "  user_context," \
     "  class_id" \
-    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM dhcp4_client_class WHERE name = ?))"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM " #table_prefix "_client_class WHERE name = ?))"
 #endif
 
 #ifndef MYSQL_INSERT_OPTION_DEF_SERVER
