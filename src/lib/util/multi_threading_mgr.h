@@ -194,6 +194,10 @@ public:
 
     /// @brief Apply the multi-threading related settings.
     ///
+    /// This function should usually be called after constructing a
+    /// @ref MultiThreadingCriticalSection so that all thread pool parameters
+    /// can be safely applied.
+    ///
     /// @param enabled The enabled flag: true if multi-threading is enabled,
     /// false otherwise.
     /// @param thread_count The desired number of threads: non 0 if explicitly
@@ -237,6 +241,13 @@ protected:
     virtual ~MultiThreadingMgr();
 
 private:
+
+    /// @brief Is in critical section flag.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return The critical section flag.
+    bool isInCriticalSectionInternal();
 
     /// @brief Class method stops non-critical processing.
     ///
@@ -282,6 +293,9 @@ private:
 
     /// @brief List of CriticalSection entry and exit callback pairs.
     CSCallbackPairList cs_callbacks_;
+
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.

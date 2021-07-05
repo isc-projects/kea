@@ -36,12 +36,14 @@ MultiThreadingMgr::setMode(bool enabled) {
 
 void
 MultiThreadingMgr::enterCriticalSection() {
+    std::lock_guard<std::mutex> lk(mutex_);
     stopProcessing();
     ++critical_section_count_;
 }
 
 void
 MultiThreadingMgr::exitCriticalSection() {
+    std::lock_guard<std::mutex> lk(mutex_);
     if (critical_section_count_ == 0) {
         isc_throw(InvalidOperation, "invalid negative value for override");
     }
@@ -51,6 +53,12 @@ MultiThreadingMgr::exitCriticalSection() {
 
 bool
 MultiThreadingMgr::isInCriticalSection() {
+    std::lock_guard<std::mutex> lk(mutex_);
+    return (isInCriticalSectionInternal());
+}
+
+bool
+MultiThreadingMgr::isInCriticalSectionInternal() {
     return (critical_section_count_ != 0);
 }
 
@@ -120,7 +128,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 
 void
 MultiThreadingMgr::stopProcessing() {
-    if (getMode() && !isInCriticalSection()) {
+    if (getMode() && !isInCriticalSectionInternal()) {
         if (getThreadPoolSize()) {
             thread_pool_.stop();
         }
@@ -139,7 +147,7 @@ MultiThreadingMgr::stopProcessing() {
 
 void
 MultiThreadingMgr::startProcessing() {
-    if (getMode() && !isInCriticalSection()) {
+    if (getMode() && !isInCriticalSectionInternal()) {
         if (getThreadPoolSize()) {
             thread_pool_.start(getThreadPoolSize());
         }
