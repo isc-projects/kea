@@ -1,5 +1,8 @@
 SUBDIRS = .
 
+# Needed by shell_unittest.py to access python modules like kea_conn.
+TESTS_ENVIRONMENT = PYTHONPATH="$(abs_top_srcdir)/src/bin/shell"
+
 # Python tests
 PYTESTS = shell_unittest.py
 

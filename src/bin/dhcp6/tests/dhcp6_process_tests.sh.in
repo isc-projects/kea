@@ -192,8 +192,6 @@ syntax_check_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create correct configuration file.
     create_config "${config}"
     # Check it
@@ -212,8 +210,6 @@ syntax_check_test() {
 dynamic_reconfiguration_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv6_srv.dynamic_reconfiguration"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct Kea to log to the specific file.
@@ -321,8 +317,6 @@ shutdown_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct Kea to log to the specific file.
@@ -386,8 +380,6 @@ returned %d."
 lfc_timer_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv6_srv.lfc_timer_test"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create a configuration with the LFC enabled, by replacing the section
     # with the lfc-interval and persist parameters.
     LFC_CONFIG=$(printf '%s' "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 3/g' \

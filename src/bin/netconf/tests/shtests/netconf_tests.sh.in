@@ -87,8 +87,6 @@ usage_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
 
     # Create correct configuration file.
     create_config "${CONFIG}"
@@ -111,8 +109,6 @@ no_argument_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
 
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin}\""
@@ -137,8 +133,6 @@ syntax_check_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create correct configuration file.
     create_config "${config}"
     # Check it
@@ -159,8 +153,6 @@ shutdown_test() {
     signum=${2}      # Signal number
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Netconf instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct Netconf Agent to log to the specific file.

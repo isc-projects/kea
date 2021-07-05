@@ -95,8 +95,6 @@ syntax_check_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create correct configuration file.
     create_config "${config}"
     # Check it
@@ -117,8 +115,6 @@ shutdown_test() {
     signum=${2}      # Signal number
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling D2 instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct Control Agent to log to the specific file.

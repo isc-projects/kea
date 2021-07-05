@@ -92,9 +92,6 @@ shell_command_test() {
     # Log the start of the test and print test name.
     test_start "${test_name}"
 
-    # Remove any dangling CA instances and remove log files.
-    cleanup
-
     # Create new configuration file.
     create_config "${CONFIG}"
 

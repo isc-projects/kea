@@ -121,9 +121,6 @@ list_commands_test() {
     # Log the start of the test and print test name.
     test_start "${test_name}"
 
-    # Remove dangling Kea instances and remove log files.
-    cleanup
-
     # Create correct configuration file.
     create_config "${config}"
 

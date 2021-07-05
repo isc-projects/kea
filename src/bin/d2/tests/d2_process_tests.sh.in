@@ -154,8 +154,6 @@ syntax_check_test() {
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling Kea instances and remove log files.
-    cleanup
     # Create correct configuration file.
     create_config "${config}"
     # Check it
@@ -173,8 +171,6 @@ syntax_check_test() {
 dynamic_reconfiguration_test() {
     # Log the start of the test and print test name.
     test_start "dhcp_ddns.dynamic_reconfiguration"
-    # Remove dangling D2 instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct D2 to log to the specific file.
@@ -274,8 +270,6 @@ shutdown_test() {
     local signum=${2}       # Signal number
     # Log the start of the test and print test name.
     test_start "${test_name}"
-    # Remove dangling D2 instances and remove log files.
-    cleanup
     # Create new configuration file.
     create_config "${CONFIG}"
     # Instruct D2 to log to the specific file.

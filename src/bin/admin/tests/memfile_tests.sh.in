@@ -28,9 +28,7 @@ clean_up() {
     remove_if_exists \
         "${config_file-}" \
         "${csv-}" \
-        "${csv_2-}" \
-        "${KEA_LOCKFILE_DIR-}" \
-        "${KEA_PIDFILE_DIR-}"
+        "${csv_2-}"
 }
 
 # Print location of CSV file. Accepts 4 or 6 as parameter.
@@ -122,8 +120,6 @@ memfile_init_test() {
             clean_up
             clean_exit 1
         fi
-        mkdir -p "${KEA_LOCKFILE_DIR}"
-        mkdir -p "${KEA_PIDFILE_DIR}"
         start_kea_dhcp "${v}"
         # This assumes that the CSV creation + writing to CSV is atomic. Not
         # sure if it is, but if this ever fails on the comparison further below,
