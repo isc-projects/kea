@@ -33,13 +33,13 @@ clean_up() {
 
 # Print location of CSV file. Accepts 4 or 6 as parameter.
 csv_file() {
-    local v=${1}
+    local v="${1}"
     printf '%s' "@abs_top_builddir@/src/bin/admin/tests/kea-dhcp${v}.csv"
 }
 
 # Print location of kea-dhcp[46] binaries. Accepts 4 or 6 as parameter.
 kea_dhcp() {
-    local v=${1}
+    local v="${1}"
     printf '%s' "@abs_top_builddir@/src/bin/dhcp${v}/kea-dhcp${v}"
 }
 
@@ -81,7 +81,7 @@ server_id_v6() {
 # Starts Kea and sets PID. It logs to stdout and stderr if DEBUG is enabled.
 # Accepts 4 or 6 as parameter.
 start_kea_dhcp() {
-    local v=${1}
+    local v="${1}"
     if test -n "${DEBUG+x}"; then
         "$(kea_dhcp "${v}")" -c "${config_file}" &
     else

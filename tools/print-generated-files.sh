@@ -95,9 +95,9 @@ mandatory_commands() {
 print_lines_between_matching_patterns() {
   mandatory_commands sed
 
-  local start_pattern=${1}; shift
-  local end_pattern=${1}; shift
-  local file=${1}; shift
+  local start_pattern="${1}"; shift
+  local end_pattern="${1}"; shift
+  local file="${1}"; shift
 
   # Escape all slashes.
   start_pattern=$(printf '%s' "${start_pattern}" | sed 's#\/#\\\/#g')
@@ -110,7 +110,7 @@ print_lines_between_matching_patterns() {
 
 # Print file name if a file with that name exists.
 print_file_name() {
-  local file_name=${1}
+  local file_name="${1}"
   if test -f "${file_name}"; then
     printf '%s\n' "${file_name}" | cut -d '/' -f '2-'
   fi
@@ -121,8 +121,8 @@ print_file_name() {
 # SC1003: Want to escape a single quote? echo 'This is how it'\''s done'
 # reason: No, we don't want to escape a single quote, we want a backslash.
 print_generated_messages() {
-  local makefile_am=${1}; shift
-  local directory=${1}; shift
+  local makefile_am="${1}"; shift
+  local directory="${1}"; shift
 
   for j in $(grep -F 'messages:' "${makefile_am}" | cut -d ':' -f '2-' | \
     cut -d '\' -f 1); do
@@ -138,8 +138,8 @@ print_generated_messages() {
 
 # Generated parsers
 print_generated_parsers() {
-  local makefile_am=${1}; shift
-  local directory=${1}; shift
+  local makefile_am="${1}"; shift
+  local directory="${1}"; shift
 
   for j in $(grep -F 'parser:' "${makefile_am}" | cut -d ':' -f '2-'); do
     print_file_name "${directory}/${j}"
@@ -148,8 +148,8 @@ print_generated_parsers() {
 
 # Other generated files
 print_built_sources() {
-  local makefile_am=${1}; shift
-  local directory=${1}; shift
+  local makefile_am="${1}"; shift
+  local directory="${1}"; shift
 
   for j in $(grep -E 'BUILT_SOURCES (=|\+=)' "${makefile_am}" | cut -d '=' -f '2-'); do
     print_file_name "${directory}/${j}"
@@ -158,7 +158,7 @@ print_built_sources() {
 
 # Print all files of interest sorted alphabetically.
 print_all_sorted() {
-  local built_sources=${1-true}
+  local built_sources="${1-true}"
 
   for i in $(find . -type f -name 'Makefile.am'); do
     directory=$(dirname "${i}")

@@ -57,9 +57,9 @@ fi
 
 # Prints error message.
 test_lib_error() {
-    local s=${1-}            # Error message.
-    local no_new_line=${2-}  # If specified, the message not terminated with
-                             # new line.
+    local s="${1-}"             # Error message.
+    local no_new_line="${2-}"   # If specified, the message is not terminated
+                                # with new line.
     printf "ERROR/test_lib: %s" "${s}"
     if [ -z "${no_new_line}" ]; then
         printf '\n'
@@ -68,9 +68,9 @@ test_lib_error() {
 
 # Prints info message.
 test_lib_info() {
-    local s=${1-}            # Info message.
-    local no_new_line=${2-}  # If specified, the message is not terminated with
-                             # new line.
+    local s="${1-}"             # Info message.
+    local no_new_line="${2-}"   # If specified, the message is not terminated
+                                # with new line.
     printf "INFO/test_lib: %s" "${s}"
     if [ -z "${no_new_line}" ]; then
         printf '\n'
@@ -254,7 +254,7 @@ test_start() {
 # Prints test result an cleans up after the test.
 test_finish() {
     # Exit code to be returned by the exit function
-    local exit_code=${1}
+    local exit_code="${1}"
 
     # Stop timer and set duration.
     FINISH_TIME=$(get_current_time)
@@ -443,8 +443,8 @@ set_logger() {
 #   _GET_PID: holds a PID if process is running
 #   _GET_PIDS_NUM: holds 1 if process is running, 0 otherwise
 get_pid() {
-    local proc_name=${1-}       # Process name
-    local cfg_file_name=${2-}   # Configuration file name without extension.
+    local proc_name="${1-}"         # Process name
+    local cfg_file_name="${2-}"     # Configuration file name without extension.
 
     # Reset PID results.
     _GET_PID=0
@@ -487,7 +487,7 @@ get_pid() {
 
 # Get the name of the process identified by PID.
 get_process_name() {
-    local pid=${1-}
+    local pid="${1-}"
     if test -z "${pid}"; then
         test_lib_error 'expected PID parameter in get_process_name'
         clean_exit 1
@@ -498,14 +498,14 @@ get_process_name() {
 
 # Wait for file to be created.
 wait_for_file() {
-    local file=${1-}
+    local file="${1-}"
     if test -z "${file}"; then
         test_lib_error 'expected file parameter in wait_for_file'
         clean_exit 1
     fi
 
     local timeout='4' # seconds
-    local deadline=$(($(date +%s) + timeout))
+    local deadline="$(($(date +%s) + timeout))"
     while ! test -f "${file}"; do
         if test "${deadline}" -lt "$(date +%s)"; then
             # Time is up.
@@ -519,14 +519,14 @@ wait_for_file() {
 
 # Wait for process identified by PID to die.
 wait_for_process_to_stop() {
-    local pid=${1-}
+    local pid="${1-}"
     if test -z "${pid}"; then
         test_lib_error 'expected PID parameter in wait_for_process_to_stop'
         clean_exit 1
     fi
 
     local timeout='4' # seconds
-    local deadline=$(($(date +%s) + timeout))
+    local deadline="$(($(date +%s) + timeout))"
     while ps "${pid}" >/dev/null; do
         if test "${deadline}" -lt "$(date +%s)"; then
             # Time is up.
@@ -550,7 +550,7 @@ wait_for_process_to_stop() {
 # names, add this before pgrep:
 # proc_name=$(printf '%s' "${proc_name}" | cut -c1-15)
 kill_processes_by_name() {
-    local proc_name=${1-}  # Process name
+    local proc_name="${1-}"     # Process name
     if [ -z "${proc_name}" ]; then
         test_lib_error "kill_processes_by_name requires process name"
         clean_exit 1
@@ -692,7 +692,7 @@ clean_exit() {
 # Starts Kea process in background using a configuration file specified
 # in the global variable ${CFG_FILE}.
 start_kea() {
-    local bin=${1-}
+    local bin="${1-}"
     if [ -z "${bin}" ]; then
         test_lib_error "binary name must be specified for start_kea"
         clean_exit 1
@@ -712,7 +712,7 @@ start_kea() {
 # Return value:
 #    _WAIT_FOR_KEA: 0 if Kea hasn't started, 1 otherwise
 wait_for_kea() {
-    local timeout=${1-} # Desired timeout in seconds.
+    local timeout="${1-}"   # Desired timeout in seconds.
     if test -z "${timeout}"; then
         test_lib_error 'expected timeout parameter in wait_for_kea'
         clean_exit 1
@@ -831,8 +831,8 @@ wait_for_server_down() {
 
 # Sends specified signal to the Kea process.
 send_signal() {
-    local sig=${1-}       # Signal number.
-    local proc_name=${2-} # Process name
+    local sig="${1-}"           # Signal number.
+    local proc_name="${2-}"     # Process name
 
     # Validate signal
     case ${sig} in

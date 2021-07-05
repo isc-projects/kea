@@ -24,9 +24,9 @@ report_test_result_in_xml() {
     fi
 
     # Declarations
-    local test_name=${1}; shift
-    local exit_code=${1}; shift
-    local duration=${1}; shift # milliseconds
+    local test_name="${1}"; shift
+    local exit_code="${1}"; shift
+    local duration="${1}"; shift # milliseconds
     local now
     local test_case
     local test_suite
@@ -72,9 +72,9 @@ report_test_result_in_xml() {
 
 # Add ${string} after ${reference} in ${file}.
 _add_after() {
-    local string=${1}; shift
-    local reference=${1}; shift
-    local file=${1}; shift
+    local string="${1}"; shift
+    local reference="${1}"; shift
+    local file="${1}"; shift
 
     # Escape all slashes.
     string=$(printf '%s' "${string}" | sed 's#\/#\\\/#g')
@@ -98,9 +98,9 @@ ${string}
 
 # Add ${string} before ${reference} in ${file}.
 _add_before() {
-    local string=${1}; shift
-    local reference=${1}; shift
-    local file=${1}; shift
+    local string="${1}"; shift
+    local reference="${1}"; shift
+    local file="${1}"; shift
 
     # Get the line number of the reference line.
     local line_number
@@ -127,8 +127,8 @@ ${string}
 }
 
 _add_failure_tag() {
-    local test_case_tag=${1}; shift
-    local xml=${1}; shift
+    local test_case_tag="${1}"; shift
+    local xml="${1}"; shift
 
     local closing_tag='    </testcase>'
     local failure_tag
@@ -151,12 +151,12 @@ _add_failure_tag() {
 
 # Add test result if not in file.
 _add_test_case() {
-    local test_suite=${1}; shift
-    local test_case=${1}; shift
-    local result=${1}; shift
-    local duration=${1}; shift
-    local xml=${1}; shift
-    local now=${1}; shift
+    local test_suite="${1}"; shift
+    local test_case="${1}"; shift
+    local result="${1}"; shift
+    local duration="${1}"; shift
+    local xml="${1}"; shift
+    local now="${1}"; shift
 
     # Determine the test case tag.
     local closing_backslash
@@ -219,9 +219,9 @@ _add_test_case() {
 
 # Add a set of test suite tags if not already present in the XML.
 _add_test_suite() {
-    local test_suite=${1}; shift
-    local xml=${1}; shift
-    local now=${1}; shift
+    local test_suite="${1}"; shift
+    local xml="${1}"; shift
+    local now="${1}"; shift
     local test_suite_line
     local all_test_suites
 
@@ -267,8 +267,8 @@ _create_xml() {
         return;
     fi
 
-    local xml=${1}; shift
-    local now=${1}; shift
+    local xml="${1}"; shift
+    local now="${1}"; shift
 
     mkdir -p "$(dirname "${xml}")"
     printf \
@@ -297,9 +297,9 @@ _create_xml() {
 # Print the lines between two matching regex patterns from a file. Excludes the
 # lines that contain the patterns themselves. Matches only the first occurrence.
 _print_lines_between_matching_patterns() {
-    local start_pattern=${1}; shift
-    local end_pattern=${1}; shift
-    local file=${1}; shift
+    local start_pattern="${1}"; shift
+    local end_pattern="${1}"; shift
+    local file="${1}"; shift
 
     # Escape all slashes.
     start_pattern=$(printf '%s' "${start_pattern}" | sed 's#\/#\\\/#g')
@@ -313,10 +313,10 @@ _print_lines_between_matching_patterns() {
 # Update the test suite XML attributes with metrics collected from the child
 # test cases.
 _update_test_suite_metrics() {
-    local test_suite=${1}; shift
-    local all_test_cases=${1}; shift
-    local xml=${1}; shift
-    local now=${1}; shift
+    local test_suite="${1}"; shift
+    local all_test_cases="${1}"; shift
+    local xml="${1}"; shift
+    local now="${1}"; shift
 
     # Get the metrics on the parent test suite.
     local duration

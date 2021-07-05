@@ -93,7 +93,7 @@ usage() {
 #
 # shellcheck disable=SC2154
 get_pid_from_file() {
-    local proc_name=${1} # Process name.
+    local proc_name="${1}"  # Process name.
 
     local kea_config_file=
     case ${proc_name} in
@@ -144,7 +144,7 @@ get_pid_from_file() {
 # PID file and checking the PID it contains.  If the file does
 # not exist, the process is assumed to not be running.
 check_running() {
-    local proc_name=${1} # Process name.
+    local proc_name="${1}"  # Process name.
     # Initially mark the process as not running.
     _running=0
 
@@ -161,8 +161,8 @@ check_running() {
 
 # Sends a signal to a process based on its PID file
 send_signal() {
-    local sig=${1}        # Signal number
-    local proc_name=${2}  # Process name.
+    local sig="${1}"        # Signal number
+    local proc_name="${2}"  # Process name.
 
     get_pid_from_file "${proc_name}"
     if [ "${_pid}" -eq 0 ]; then
@@ -261,7 +261,7 @@ print_version() {
 # Check if the Kea configuration file location has been specified in the
 # keactrl configuration file. If not, it is a warning or a fatal error.
 check_kea_conf() {
-    local conf_file=${1-} # Kea config file name.
+    local conf_file="${1-}"     # Kea config file name.
     if [ -z "${conf_file}" ]; then
         log_error "Configuration file for Kea not specified."
         exit 1
@@ -280,10 +280,10 @@ check_kea_conf() {
 #   and be set to yes, e.g. ${dhcp4} should be equal to yes if server name
 #   is dhcp4
 run_conditional() {
-    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent, netconf
-    local commands="${2}"     # Commands to execute
-    local check_file_cfg=${3} # Check if server enabled in the configuration file
-    local is_all=0            # is all servers or a specific one
+    local server="${1}"             # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent, netconf
+    local commands="${2}"           # Commands to execute
+    local check_file_cfg="${3}"     # Check if server enabled in the configuration file
+    local is_all=0                  # is all servers or a specific one
 
     # If keyword "all" is not on the list of servers we will have to check
     # if our specific server is on the list. If, not return.
