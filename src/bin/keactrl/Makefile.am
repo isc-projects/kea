@@ -2,8 +2,6 @@ SUBDIRS = . tests
 
 # Install keactrl in sbin and the keactrl.conf required by the keactrl
 # in etc. keactrl will look for its configuration file in the etc folder.
-# If the default location needs to be changed it may be achieved by
-# setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
 KEA_CONFIGFILES = kea-dhcp4.conf kea-dhcp6.conf kea-dhcp-ddns.conf \
                   kea-ctrl-agent.conf
