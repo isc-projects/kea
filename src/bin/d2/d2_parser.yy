@@ -17,7 +17,7 @@
 {
 #include <string>
 #include <cc/data.h>
-#include <d2/d2_config.h>
+#include <d2srv/d2_config.h>
 #include <boost/lexical_cast.hpp>
 #include <d2/parser_context_decl.h>
 

@@ -6,12 +6,12 @@
 
 #include <config.h>
 
-#include <d2/d2_config.h>
-#include <d2/d2_cfg_mgr.h>
-#include <d2/d2_simple_parser.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <d2/tests/test_libraries.h>
+#include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_config.h>
+#include <d2srv/d2_simple_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>

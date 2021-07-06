@@ -10,7 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_config.h>
+#include <d2srv/d2_config.h>
 #include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
 

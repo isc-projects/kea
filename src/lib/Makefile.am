@@ -19,4 +19,4 @@ if HAVE_SYSREPO
 SUBDIRS += yang
 endif
 
-SUBDIRS += asiodns dhcp_ddns eval cfgrpt process dhcpsrv
+SUBDIRS += asiodns dhcp_ddns eval cfgrpt process dhcpsrv d2srv

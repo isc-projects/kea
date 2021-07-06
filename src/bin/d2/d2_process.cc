@@ -8,10 +8,10 @@
 #include <asiolink/asio_wrapper.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
-#include <d2/d2_log.h>
-#include <d2/d2_cfg_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
+#include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_log.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 

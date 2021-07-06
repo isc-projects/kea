@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,11 @@
 /// @file d2_update_mgr.h This file defines the class D2UpdateMgr.
 
 #include <asiolink/io_service.h>
-#include <exceptions/exceptions.h>
-#include <d2/d2_log.h>
 #include <d2/d2_queue_mgr.h>
-#include <d2/d2_cfg_mgr.h>
 #include <d2/nc_trans.h>
+#include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_log.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>

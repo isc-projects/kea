@@ -6,13 +6,13 @@
 
 #include <config.h>
 
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <testutils/user_context_utils.h>
-#include <process/testutils/d_test_stubs.h>
-#include <d2/d2_config.h>
-#include <d2/d2_cfg_mgr.h>
+#include <cc/data.h>
 #include <d2/parser_context.h>
+#include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_config.h>
+#include <process/testutils/d_test_stubs.h>
+#include <testutils/user_context_utils.h>
 #include <gtest/gtest.h>
 
 #include <iostream>

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define D2_SIMPLE_PARSER_H
 
 #include <cc/simple_parser.h>
-#include <d2/d2_cfg_mgr.h>
+#include <d2srv/d2_cfg_mgr.h>
 
 namespace isc {
 namespace d2 {

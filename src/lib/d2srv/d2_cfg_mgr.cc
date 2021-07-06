@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <d2/d2_log.h>
-#include <d2/d2_cfg_mgr.h>
-#include <d2/d2_simple_parser.h>
+#include <d2srv/d2_log.h>
+#include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_simple_parser.h>
 #include <cc/command_interpreter.h>
 #include <util/encode/hex.h>
 

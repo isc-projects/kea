@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <d2/d2_log.h>
 #include <d2/nc_trans.h>
+#include <d2srv/d2_log.h>
 #include <dns/qid_gen.h>
 #include <dns/rdata.h>
 

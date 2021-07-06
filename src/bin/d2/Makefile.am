@@ -29,14 +29,10 @@ EXTRA_DIST += images/trans_classes.svg images/update_exec_classes.svg
 noinst_LTLIBRARIES = libd2.la
 
 libd2_la_SOURCES  =
-libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
-libd2_la_SOURCES += d2_config.cc d2_config.h
-libd2_la_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 libd2_la_SOURCES += d2_lexer.ll location.hh position.hh stack.hh
 libd2_la_SOURCES += d2_parser.cc d2_parser.h
 libd2_la_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
-libd2_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
 libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
 libd2_la_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 libd2_la_SOURCES += d2_zone.cc d2_zone.h
@@ -46,10 +42,8 @@ libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
 libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-libd2_la_SOURCES += d2_messages.h d2_messages.cc
 libd2_la_SOURCES += simple_add.cc simple_add.h
 libd2_la_SOURCES += simple_remove.cc simple_remove.h
-EXTRA_DIST += d2_messages.mes
 
 sbin_PROGRAMS = kea-dhcp-ddns
 
@@ -57,6 +51,7 @@ kea_dhcp_ddns_SOURCES  = main.cc
 
 kea_dhcp_ddns_LDADD  = libd2.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
@@ -79,39 +74,6 @@ kea_dhcp_ddns_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 kea_dhcp_ddns_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
-
-# If we want to get rid of all generated messages files, we need to use
-# make maintainer-clean. The proper way to introduce custom commands for
-# that operation is to define maintainer-clean-local target. However,
-# make maintainer-clean also removes Makefile, so running configure script
-# is required.  To make it easy to rebuild messages without going through
-# reconfigure, a new target messages-clean has been added.
-maintainer-clean-local:
-	rm -f d2_messages.h d2_messages.cc
-
-# To regenerate messages files, one can do:
-#
-# make messages-clean
-# make messages
-#
-# This is needed only when a .mes file is modified.
-messages-clean: maintainer-clean-local
-
-if GENERATE_MESSAGES
-
-# Define rule to build logging source files from message file
-messages: d2_messages.h d2_messages.cc
-	@echo Message files regenerated
-
-d2_messages.h d2_messages.cc: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
-
-else
-
-messages d2_messages.h d2_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
-
-endif
 
 if GENERATE_PARSER
 

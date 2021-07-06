@@ -6,9 +6,9 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
-#include <d2/d2_simple_parser.h>
-#include <d2/tests/parser_unittest.h>
 #include <cc/data.h>
+#include <d2/tests/parser_unittest.h>
+#include <d2srv/d2_simple_parser.h>
 #include <testutils/test_to_element.h>
 
 #include <boost/lexical_cast.hpp>

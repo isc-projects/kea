@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <d2/d2_config.h>
-#include <d2/d2_simple_parser.h>
+#include <d2srv/d2_config.h>
+#include <d2srv/d2_simple_parser.h>
 #include <cc/data.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
