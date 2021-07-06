@@ -325,6 +325,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     // Reschedule the timer because the transaction is ongoing.
     scheduleTimer();
 
+    ConstElementPtr cmd;
     ConstElementPtr rsp;
 
     try {
@@ -340,7 +341,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
         // Received entire command. Parse the command into JSON.
         if (feed_.feedOk()) {
-            ConstElementPtr cmd = feed_.toElement();
+            cmd = feed_.toElement();
             response_in_progress_ = true;
 
             // Cancel the timer to make sure that long lasting command
@@ -366,7 +367,8 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
     // No response generated. Connection will be closed.
     if (!rsp) {
-        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
+        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR)
+            .arg(cmd ? cmd->str() : "unknown");
         rsp = createAnswer(CONTROL_RESULT_ERROR,
                            "internal server error: no response generated");
 
