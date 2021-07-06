@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/d2/d2_messages.mes
+// File created from ../../../src/lib/d2srv/d2_messages.mes
 
 #ifndef D2_MESSAGES_H
 #define D2_MESSAGES_H

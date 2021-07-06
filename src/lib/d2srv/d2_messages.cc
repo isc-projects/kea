@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/d2/d2_messages.mes
+// File created from ../../../src/lib/d2srv/d2_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

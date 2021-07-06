@@ -64,7 +64,7 @@ messages: d2_messages.h d2_messages.cc
 	@echo Message files regenerated
 
 d2_messages.h d2_messages.cc: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/d2srv/d2_messages.mes
 
 else
 
@@ -75,7 +75,7 @@ endif
 
 # Specify the headers for copying into the installation directory tree.
 libkea_d2srv_includedir = $(pkgincludedir)/d2srv
-libkea_d2srv_include_HEADERS =
+libkea_d2srv_include_HEADERS = \
 	d2_cfg_mgr.h \
 	d2_config.h \
 	d2_log.h \
