@@ -306,6 +306,11 @@ ClientClassDictionary::getClasses() const {
 }
 
 bool
+ClientClassDictionary::empty() const {
+    return (list_->empty());
+}
+
+bool
 ClientClassDictionary::dependOnClass(const std::string& name,
                                      std::string& dependent_class) const {
     // Skip previous classes as they should not depend on name.

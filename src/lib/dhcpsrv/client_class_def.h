@@ -352,6 +352,11 @@ public:
     /// @return ClientClassDefListPtr to the list of classes
     const ClientClassDefListPtr& getClasses() const;
 
+    /// @brief Checks if the class dictionary is empty.
+    ///
+    /// @return true if there are no classes, false otherwise.
+    bool empty() const;
+
     /// @brief Checks direct dependency.
     ///
     /// @param name The client class name.

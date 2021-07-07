@@ -260,6 +260,7 @@ TEST(ClientClassDictionary, basics) {
     const ClientClassDefListPtr classes = dictionary->getClasses();
     ASSERT_TRUE(classes);
     EXPECT_EQ(0, classes->size());
+    EXPECT_TRUE(classes->empty());
 
     // Verify that we can add classes with both addClass variants
     // First addClass(name, expression, cfg_option)
@@ -291,6 +292,7 @@ TEST(ClientClassDictionary, basics) {
 
     // Map should show 3 entries.
     EXPECT_EQ(3, classes->size());
+    EXPECT_FALSE(classes->empty());
 
     // Verify we can find them all.
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc1"));
@@ -312,6 +314,7 @@ TEST(ClientClassDictionary, basics) {
     // Verify that we can remove a class
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());
+    EXPECT_FALSE(classes->empty());
 
     // Shouldn't be able to find anymore
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc3"));
@@ -321,6 +324,7 @@ TEST(ClientClassDictionary, basics) {
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());
+    EXPECT_FALSE(classes->empty());
 }
 
 // Verifies copy constructor and equality tools (methods/operators)

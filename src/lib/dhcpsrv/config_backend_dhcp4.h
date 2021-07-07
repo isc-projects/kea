@@ -667,7 +667,6 @@ public:
     virtual uint64_t
     deleteAllClientClasses4(const db::ServerSelector& server_selector) = 0;
 
-
     /// @brief Deletes a server from the backend.
     ///
     /// @param server_tag Tag of the server to be deleted.
