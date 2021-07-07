@@ -512,7 +512,7 @@ ClientClassDefPtr
 TestConfigBackendDHCPv6::getClientClass6(const db::ServerSelector& server_selector,
                                          const std::string& name) const {
     auto client_class = classes_.findClass(name);
-    if (!client_class) {
+    if (!client_class || server_selector.amAny()) {
         return (client_class);
     }
     if (server_selector.amUnassigned()) {

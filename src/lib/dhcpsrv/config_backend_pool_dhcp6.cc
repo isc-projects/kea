@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -200,6 +200,39 @@ getModifiedGlobalParameters6(const db::BackendSelector& backend_selector,
     return (parameters);
 }
 
+ClientClassDefPtr
+ConfigBackendPoolDHCPv6::getClientClass6(const BackendSelector& backend_selector,
+                                         const ServerSelector& server_selector,
+                                         const std::string& name) const {
+    ClientClassDefPtr client_class;
+    getPropertyPtrConst<ClientClassDefPtr, const std::string&>
+        (&ConfigBackendDHCPv6::getClientClass6, backend_selector, server_selector,
+         client_class, name);
+    return (client_class);
+}
+
+ClientClassDictionary
+ConfigBackendPoolDHCPv6::getAllClientClasses6(const BackendSelector& backend_selector,
+                                              const ServerSelector& server_selector) const {
+    ClientClassDictionary client_classes;
+    getAllPropertiesConst<ClientClassDictionary>
+        (&ConfigBackendDHCPv6::getAllClientClasses6, backend_selector, server_selector,
+         client_classes);
+    return (client_classes);
+
+}
+
+ClientClassDictionary
+ConfigBackendPoolDHCPv6::getModifiedClientClasses6(const BackendSelector& backend_selector,
+                                                   const ServerSelector& server_selector,
+                                                   const boost::posix_time::ptime& modification_time) const {
+    ClientClassDictionary client_classes;
+    getMultiplePropertiesConst<ClientClassDictionary, const boost::posix_time::ptime&>
+        (&ConfigBackendDHCPv6::getModifiedClientClasses6, backend_selector, server_selector,
+         client_classes, modification_time);
+    return (client_classes);
+}
+
 AuditEntryCollection
 ConfigBackendPoolDHCPv6::
 getRecentAuditEntries(const db::BackendSelector& backend_selector,
@@ -319,6 +352,16 @@ ConfigBackendPoolDHCPv6::createUpdateGlobalParameter6(const BackendSelector& bac
     createUpdateDeleteProperty<void, const StampedValuePtr&>
         (&ConfigBackendDHCPv6::createUpdateGlobalParameter6, backend_selector,
          server_selector, value);
+}
+
+void
+ConfigBackendPoolDHCPv6::createUpdateClientClass6(const BackendSelector& backend_selector,
+                                                  const ServerSelector& server_selector,
+                                                  const ClientClassDefPtr& client_class,
+                                                  const std::string& follow_class_name) {
+    createUpdateDeleteProperty<void, const ClientClassDefPtr&, const std::string&>
+        (&ConfigBackendDHCPv6::createUpdateClientClass6, backend_selector,
+         server_selector, client_class, follow_class_name);
 }
 
 void
@@ -470,6 +513,22 @@ ConfigBackendPoolDHCPv6::deleteAllGlobalParameters6(const BackendSelector& backe
     return (createUpdateDeleteProperty<uint64_t>
             (&ConfigBackendDHCPv6::deleteAllGlobalParameters6, backend_selector,
              server_selector));
+}
+
+uint64_t
+ConfigBackendPoolDHCPv6::deleteClientClass6(const BackendSelector& backend_selector,
+                                            const ServerSelector& server_selector,
+                                            const std::string& name) {
+    return (createUpdateDeleteProperty<uint64_t, const std::string&>
+            (&ConfigBackendDHCPv6::deleteClientClass6, backend_selector,
+             server_selector, name));
+}
+
+uint64_t
+ConfigBackendPoolDHCPv6::deleteAllClientClasses6(const BackendSelector& backend_selector,
+                                                 const ServerSelector& server_selector) {
+    return (createUpdateDeleteProperty<uint64_t>
+            (&ConfigBackendDHCPv6::deleteAllClientClasses6, backend_selector, server_selector));
 }
 
 uint64_t
