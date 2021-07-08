@@ -157,18 +157,21 @@ protected:
     /// @param config - JSON string containing the list of definitions to parse.
     /// @param family - the address family in which the parsing should
     /// occur.
+    /// @param check_dependencies - indicates if the parser should check whether
+    /// referenced classes exist.
     /// @return Returns a pointer to class dictionary created
     /// @throw indirectly, exceptions converting the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDictionaryPtr parseClientClassDefList(const std::string& config,
-                                                     uint16_t family)
+                                                     uint16_t family,
+                                                     bool check_dependencies = true)
     {
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(config);
 
         // Parse the configuration. This may emit exceptions.
         ClientClassDefListParser parser;
-        return (parser.parse(config_element, family));
+        return (parser.parse(config_element, family, check_dependencies));
     }
 };
 
@@ -1085,6 +1088,24 @@ TEST_F(ClientClassDefListParserTest, dependentNotDefined) {
         "] \n";
 
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that error is not reported when a class references another
+// not defined class, but dependency checking is disabled.
+TEST_F(ClientClassDefListParserTest, dependencyCheckingDisabled) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+    try {
+        parseClientClassDefList(cfg_text, AF_INET6, false);
+    } catch ( const std::exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6, false));
 }
 
 // Verifies that forward dependencies will not parse.

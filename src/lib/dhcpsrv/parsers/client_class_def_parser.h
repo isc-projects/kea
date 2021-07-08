@@ -94,12 +94,15 @@ public:
     /// of the parsed string within parsed JSON should be appended. The
     /// default setting is to append it, but it is typically set to false
     /// when this parser is used by hooks libraries.
+    /// @param check_dependencies indicates if the parser should evaluate an
+    /// expression to see if the referenced client classes exist.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ClientClassDictionaryPtr& class_dictionary,
                isc::data::ConstElementPtr client_class_def,
                uint16_t family,
-               bool append_error_position = true);
+               bool append_error_position = true,
+               bool check_dependencies = true);
 
     /// @brief Iterates over class parameters and checks if they are supported.
     ///
@@ -135,10 +138,13 @@ public:
     /// @param class_def_list pointer to an element that holds entries
     /// for client class definitions.
     /// @param family the address family of the client class definitions.
+    /// @param check_dependencies indicates if the parser should evaluate an
+    /// expression to see if the referenced client classes exist.
     /// @return a pointer to the filled dictionary
     /// @throw DhcpConfigError if configuration parsing fails.
     ClientClassDictionaryPtr
-    parse(isc::data::ConstElementPtr class_def_list, uint16_t family);
+    parse(isc::data::ConstElementPtr class_def_list, uint16_t family,
+          bool check_dependencies = true);
 };
 
 } // end of namespace isc::dhcp

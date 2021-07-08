@@ -70,7 +70,8 @@ void
 ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                             ConstElementPtr class_def_cfg,
                             uint16_t family,
-                            bool append_error_position) {
+                            bool append_error_position,
+                            bool check_dependencies) {
     // name is now mandatory, so let's deal with it first.
     std::string name = getString(class_def_cfg, "name");
     if (name.empty()) {
@@ -87,11 +88,11 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     if (test_cfg) {
         ExpressionParser parser;
         auto check_defined =
-            [&class_dictionary, &depend_on_known]
+            [&class_dictionary, &depend_on_known, check_dependencies]
             (const ClientClass& cclass) {
-                return (isClientClassDefined(class_dictionary,
-                                             depend_on_known,
-                                             cclass));
+                return (!check_dependencies || isClientClassDefined(class_dictionary,
+                                                                    depend_on_known,
+                                                                    cclass));
         };
         parser.parse(match_expr, test_cfg, family, check_defined);
         test = test_cfg->stringValue();
@@ -282,12 +283,12 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
 
 ClientClassDictionaryPtr
 ClientClassDefListParser::parse(ConstElementPtr client_class_def_list,
-                                uint16_t family) {
+                                uint16_t family, bool check_dependencies) {
     ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
     BOOST_FOREACH(ConstElementPtr client_class_def,
                   client_class_def_list->listValue()) {
         ClientClassDefParser parser;
-        parser.parse(dictionary, client_class_def, family);
+        parser.parse(dictionary, client_class_def, family, true, check_dependencies);
     }
     return (dictionary);
 }
