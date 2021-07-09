@@ -43,9 +43,6 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - process spawn.
 
- - random: pseudo-random number generator for query ids (please use
-  the cryptolink random generator when security matters).
-
  - range utilities.
 
  - read-write mutex (header only).
