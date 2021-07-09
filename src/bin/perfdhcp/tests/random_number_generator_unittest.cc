@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include "../random_number_generator.h"
+#include <perfdhcp/random_number_generator.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
@@ -14,13 +14,13 @@
 #include <iostream>
 
 using namespace isc;
-using namespace isc::perfdhcp;  
+using namespace isc::perfdhcp;
 using namespace std;
 
 /// \brief Test Fixture Class for uniform random number generator
 ///
 /// The hard part for this test is how to test that the number is random?
-/// and how to test that the number is uniformly distributed? 
+/// and how to test that the number is uniformly distributed?
 /// Or maybe we can trust the boost implementation
 class UniformRandomIntegerGeneratorTest : public ::testing::Test {
 public:
