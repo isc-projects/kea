@@ -19,7 +19,7 @@ if HAVE_GTEST
 TESTS += libd2srv_unittests
 
 libd2srv_unittests_SOURCES  = run_unittests.cc
-#libd2srv_unittests_SOURCES += 
+# Currently no unit test file was moved even partially.
 
 libd2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
