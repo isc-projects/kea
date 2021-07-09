@@ -406,6 +406,11 @@ MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
 
 void
 MySqlConnection::startTransaction() {
+    // If it is nested transaction, do nothing.
+    if (++transactions_count_ > 1) {
+        return;
+    }
+
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_START_TRANSACTION);
     checkUnusable();
     // We create prepared statements for all other queries, but MySQL
@@ -419,6 +424,13 @@ MySqlConnection::startTransaction() {
 
 void
 MySqlConnection::commit() {
+    // When committing nested transaction, do nothing.
+    if (--transactions_count_ > 0) {
+        return;
+    }
+    if (transactions_count_ < 0) {
+        transactions_count_ = 0;
+    }
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
     checkUnusable();
     if (mysql_commit(mysql_) != 0) {
@@ -429,6 +441,13 @@ MySqlConnection::commit() {
 
 void
 MySqlConnection::rollback() {
+    // When rolling back nested transaction, do nothing.
+    if (--transactions_count_ > 0) {
+        return;
+    }
+    if (transactions_count_ < 0) {
+        transactions_count_ = 0;
+    }
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
     checkUnusable();
     if (mysql_rollback(mysql_) != 0) {

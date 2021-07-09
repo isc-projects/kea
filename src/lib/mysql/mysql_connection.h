@@ -247,7 +247,8 @@ public:
                     IOServiceAccessorPtr io_accessor = IOServiceAccessorPtr(),
                     DbCallback callback = DbCallback())
         : DatabaseConnection(parameters, callback),
-          io_service_accessor_(io_accessor), io_service_() {
+          io_service_accessor_(io_accessor), io_service_(),
+          transactions_count_(0) {
     }
 
     /// @brief Destructor
@@ -371,7 +372,19 @@ public:
                                  uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
-    /// @brief Starts Transaction
+    /// @brief Starts new transaction
+    ///
+    /// This function begins a new transaction by sending the START TRANSACTION
+    /// statement to the database. The transaction should be explicitly committed
+    /// by calling @c commit() or rolled back by calling @c rollback(). MySQL
+    /// does not support nested transactions, and it implicitly commits a
+    /// current transaction when the new transaction begins. Therefore, this
+    /// function checks if a transaction has already started and does not start
+    /// a new transaction. However, it increments a transaction reference counter
+    /// which is later decremented when @c commit() or @c rollback() is called.
+    /// When this mechanism is used properly, it guarantees that nested
+    /// transactions are not attempted, thus avoiding implicit (unexpected)
+    /// commits of the pending transaction.
     void startTransaction();
 
     /// @brief Executes SELECT query using prepared statement.
@@ -564,18 +577,26 @@ public:
         return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
     }
 
-    /// @brief Commit Transactions
+    /// @brief Commits current transaction
     ///
     /// Commits all pending database operations. On databases that don't
     /// support transactions, this is a no-op.
     ///
+    /// When this method is called for a nested transaction it decrements the
+    /// transaction reference counter incremented during the call to
+    /// @c startTransaction.
+    ///
     /// @throw DbOperationError If the commit failed.
     void commit();
 
-    /// @brief Rollback Transactions
+    /// @brief Rollbacks current transaction
     ///
     /// Rolls back all pending database operations. On databases that don't
     /// support transactions, this is a no-op.
+    ///
+    /// When this method is called for a nested transaction it decrements the
+    /// transaction reference counter incremented during the call to
+    /// @c startTransaction.
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();
@@ -698,6 +719,14 @@ public:
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Reference counter for transactions.
+    ///
+    /// It precludes starting and commiting nested transactions. MySQL
+    /// implicitly commits current transaction when new transaction is
+    /// started. We want to not start new transactions when one is already
+    /// in progress.
+    int transactions_count_;
 };
 
 } // end of isc::db namespace

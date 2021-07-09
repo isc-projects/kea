@@ -538,6 +538,54 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
     deleteByValue();
 }
 
+TEST_F(MySqlConnectionTest, transactions) {
+    // Two inserts within a transaction and successful commit.
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (1)");
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (2)");
+    conn_.commit();
+    auto result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
+    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ("2", result[0][0]);
+
+    // Add third row but roll back the transaction. We should still have
+    // two rows in the table.
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (5)");
+    conn_.rollback();
+    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ("2", result[0][0]);
+
+    // Nested transaction. The inner transaction should be ignored and the outer
+    // transaction rolled back. We should still have two rows in the database.
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (3)");
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (4)");
+    conn_.commit();
+    conn_.rollback();
+    result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
+    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ("2", result[0][0]);
+
+    // Nested transaction. The inner transaction is rolled back but this should
+    // be ignored because nested transactions are not supported. We should
+    // have two new rows.
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (5)");
+    conn_.startTransaction();
+    runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (6)");
+    conn_.rollback();
+    conn_.commit();
+    result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
+    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ("4", result[0][0]);
+}
+
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
     select();
 }
