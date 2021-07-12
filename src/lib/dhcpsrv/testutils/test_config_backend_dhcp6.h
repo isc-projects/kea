@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -564,7 +565,7 @@ public:
     OptionDefContainer option_defs_;
     OptionContainer options_;
     data::StampedValueCollection globals_;
-    ClientClassDictionary classes_;
+    std::vector<ClientClassDefPtr> classes_;
     db::ServerCollection servers_;
 /// @}
 };

@@ -511,7 +511,13 @@ TestConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector& 
 ClientClassDefPtr
 TestConfigBackendDHCPv6::getClientClass6(const db::ServerSelector& server_selector,
                                          const std::string& name) const {
-    auto client_class = classes_.findClass(name);
+    ClientClassDefPtr client_class;
+    for (auto c : classes_) {
+        if (c->getName() == name) {
+            client_class = c;
+            break;
+        }
+    }
     if (!client_class || server_selector.amAny()) {
         return (client_class);
     }
@@ -531,7 +537,7 @@ ClientClassDictionary
 TestConfigBackendDHCPv6::getAllClientClasses6(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
     ClientClassDictionary all_classes;
-    for (auto client_class : *classes_.getClasses()) {
+    for (auto client_class : classes_) {
         auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
         if (server_selector.amAny()) {
             all_classes.addClass(non_const_client_class);
@@ -566,7 +572,7 @@ TestConfigBackendDHCPv6::getModifiedClientClasses6(const db::ServerSelector& ser
                                                    const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     ClientClassDictionary modified_classes;
-    for (auto client_class : *classes_.getClasses()) {
+    for (auto client_class : classes_) {
         if (client_class->getModificationTime() >= modification_time) {
             auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
             bool got = false;
@@ -591,15 +597,47 @@ TestConfigBackendDHCPv6::getModifiedClientClasses6(const db::ServerSelector& ser
 void
 TestConfigBackendDHCPv6::createUpdateClientClass6(const db::ServerSelector& server_selector,
                                                   const ClientClassDefPtr& client_class,
-                                                  const std::string&) {
+                                                  const std::string& follow_class_name) {
+    int follow_class_index = -1;
+    if (!follow_class_name.empty()) {
+        for (auto i = 0; i < classes_.size(); ++i) {
+            if (classes_[i]->getName() == follow_class_name) {
+                follow_class_index = i;
+                break;
+            }
+        }
+        if (follow_class_index < 0) {
+            isc_throw(BadValue, "class " << follow_class_name << " does not exist");
+
+        }
+    }
+
     mergeServerTags(client_class, server_selector);
 
-    auto existing_class = classes_.findClass(client_class->getName());
-    if (existing_class) {
-        classes_.removeClass(client_class->getName());
+    int existing_class_index = -1;
+    for (auto i = 0; i < classes_.size(); ++i) {
+        if (classes_[i]->getName() == client_class->getName()) {
+            existing_class_index = i;
+            break;
+        }
     }
+
     auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
-    classes_.addClass(non_const_client_class);
+
+    if (follow_class_index < 0) {
+        if (existing_class_index >= 0) {
+            classes_[existing_class_index] = non_const_client_class;
+        } else {
+            classes_.push_back(non_const_client_class);
+        }
+    } else {
+        if (existing_class_index < 0) {
+            classes_.insert(classes_.begin() + follow_class_index + 1, client_class);
+        } else {
+            classes_.erase(classes_.begin() + existing_class_index);
+            classes_.insert(classes_.begin() + follow_class_index + 1, client_class);
+        }
+    }
 }
 
 AuditEntryCollection
@@ -1426,7 +1464,14 @@ TestConfigBackendDHCPv6::deleteAllGlobalParameters6(const db::ServerSelector& se
 uint64_t
 TestConfigBackendDHCPv6::deleteClientClass6(const db::ServerSelector& server_selector,
                                             const std::string& name) {
-    auto existing_class = classes_.findClass(name);
+    ClientClassDefPtr existing_class;
+    auto c = classes_.begin();
+    for (; c != classes_.end(); ++c) {
+        if ((*c)->getName() == name) {
+            existing_class = (*c);
+            break;
+        }
+    }
     if (!existing_class) {
         return (0);
     }
@@ -1447,21 +1492,24 @@ TestConfigBackendDHCPv6::deleteClientClass6(const db::ServerSelector& server_sel
             return (0);
         }
     }
-    classes_.removeClass(name);
+    classes_.erase(c);
     return (1);
 }
 
 uint64_t
 TestConfigBackendDHCPv6::deleteAllClientClasses6(const db::ServerSelector& server_selector) {
-    std::list<std::string> class_names;
-    for (auto client_class : (*classes_.getClasses())) {
+    uint64_t count = 0;
+    for (auto c = classes_.begin(); c != classes_.end(); ++c) {
+        auto client_class = *c;
         if (server_selector.amAny()) {
-            class_names.push_back(client_class->getName());
+            c = classes_.erase(c);
+            ++count;
             continue;
         }
         if (server_selector.amUnassigned()) {
             if (client_class->getServerTags().empty()) {
-                class_names.push_back(client_class->getName());
+                c = classes_.erase(c);
+                ++count;
             }
             continue;
         }
@@ -1469,7 +1517,8 @@ TestConfigBackendDHCPv6::deleteAllClientClasses6(const db::ServerSelector& serve
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (client_class->hasServerTag(ServerTag(tag))) {
-                class_names.push_back(client_class->getName());
+                c = classes_.erase(c);
+                ++count;
                 got = true;
                 break;
             }
@@ -1478,15 +1527,12 @@ TestConfigBackendDHCPv6::deleteAllClientClasses6(const db::ServerSelector& serve
             continue;
         }
         if (client_class->hasAllServerTag()) {
-            class_names.push_back(client_class->getName());
+            c = classes_.erase(c);
+            ++count;
         }
     }
 
-    // Erase client classes.
-    for (auto name : class_names) {
-        classes_.removeClass(name);
-    }
-    return (class_names.size());
+    return (count);
 }
 
 uint64_t
