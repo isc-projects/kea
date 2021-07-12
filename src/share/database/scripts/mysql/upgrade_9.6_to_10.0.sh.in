@@ -114,15 +114,35 @@ DROP PROCEDURE IF EXISTS setClientClass4Order;
 -- - id id of the positioned class,
 -- - follow_class_name name of the class after which this class should be
 --   positioned within the class hierarchy.
+-- - old_follow_class_name previous name of the class after which this
+--   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 DELIMITER $$
 CREATE PROCEDURE setClientClass4Order(IN id BIGINT UNSIGNED,
-                                      IN follow_class_name VARCHAR(128))
-BEGIN
+                                      IN follow_class_name VARCHAR(128),
+                                      IN old_follow_class_name VARCHAR(128))
+proc_label:BEGIN
     -- This variable will be optionally set if the follow_class_name
     -- column value is specified.
     DECLARE follow_class_index BIGINT UNSIGNED;
     DECLARE msg TEXT;
+
+    -- Remember currently used value of depend_on_known_indirectly.
+    SET @depend_on_known_indirectly = (
+        SELECT depend_on_known_indirectly FROM dhcp4_client_class_order WHERE id = class_id
+    );
+
+    -- Bail if the class is updated without re-positioning.
+    IF (@depend_on_known_indirectly IS NOT NULL AND follow_class_name = old_follow_class_name) THEN
+        -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+        -- whenever the dhcp4_client_class record is updated. Such update may include
+        -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+        -- This value will be later adjusted when dependencies are inserted.
+       UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = 0
+           WHERE class_id = id;
+       LEAVE proc_label;
+    END IF;
+
     IF follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
         SET follow_class_index = (
@@ -157,13 +177,23 @@ BEGIN
             SET follow_class_index = 0;
         END IF;
     END IF;
+
+    -- Check if moving the class doesn't break dependent classes.
+    IF EXISTS(
+        SELECT 1 FROM dhcp4_client_class_dependency AS d
+            INNER JOIN dhcp4_client_class_order AS o
+                ON d.class_id = o.class_id
+            WHERE d.dependency_id = id AND o.order_index < follow_class_index + 1
+        LIMIT 1
+    ) THEN
+        SET msg = CONCAT('Unable to move class with id ', id, ' because it would break its dependencies');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = msg;
+    END IF;
+
     -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
     -- whenever the dhcp4_client_class record is updated. Such update may include
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
-    SET @depend_on_known_indirectly = (
-        SELECT depend_on_known_indirectly FROM dhcp4_client_class_order WHERE id = class_id
-    );
     REPLACE INTO dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, 0);
 END $$
@@ -175,7 +205,7 @@ DELIMITER ;
 -- -----------------------------------------------------------------------
 DELIMITER $$
 CREATE TRIGGER dhcp4_client_class_AINS AFTER INSERT ON dhcp4_client_class FOR EACH ROW BEGIN
-    CALL setClientClass4Order(NEW.id, NEW.follow_class_name);
+    CALL setClientClass4Order(NEW.id, NEW.follow_class_name, NULL);
     CALL createAuditEntryDHCP4('dhcp4_client_class', NEW.id, "create");
 END $$
 DELIMITER ;
@@ -197,7 +227,7 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_client_class_AUPD AFTER UPDATE ON dhcp4_client_class FOR EACH ROW BEGIN
     SET @depend_on_known_directly = OLD.depend_on_known_directly;
     SET @client_class_id = NEW.id;
-    CALL setClientClass4Order(NEW.id, NEW.follow_class_name);
+    CALL setClientClass4Order(NEW.id, NEW.follow_class_name, OLD.follow_class_name);
     CALL createAuditEntryDHCP4('dhcp4_client_class', NEW.id, "update");
 END $$
 DELIMITER ;
@@ -540,15 +570,35 @@ DROP PROCEDURE IF EXISTS setClientClass6Order;
 -- - id id of the positioned class,
 -- - follow_class_name name of the class after which this class should be
 --   positioned within the class hierarchy.
+-- - old_follow_class_name previous name of the class after which this
+--   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 DELIMITER $$
 CREATE PROCEDURE setClientClass6Order(IN id BIGINT UNSIGNED,
-                                      IN follow_class_name VARCHAR(128))
-BEGIN
+                                      IN follow_class_name VARCHAR(128),
+                                      IN old_follow_class_name VARCHAR(128))
+proc_label:BEGIN
     -- This variable will be optionally set if the follow_class_name
     -- column value is specified.
     DECLARE follow_class_index BIGINT UNSIGNED;
     DECLARE msg TEXT;
+
+    -- Remember currently used value of depend_on_known_indirectly.
+    SET @depend_on_known_indirectly = (
+        SELECT depend_on_known_indirectly FROM dhcp6_client_class_order WHERE id = class_id
+    );
+
+    -- Bail if the class is updated without re-positioning.
+    IF (@depend_on_known_indirectly IS NOT NULL AND follow_class_name = old_follow_class_name) THEN
+        -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+        -- whenever the dhcp6_client_class record is updated. Such update may include
+        -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+        -- This value will be later adjusted when dependencies are inserted.
+       UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = 0
+           WHERE class_id = id;
+       LEAVE proc_label;
+    END IF;
+
     IF follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
         SET follow_class_index = (
@@ -583,13 +633,23 @@ BEGIN
             SET follow_class_index = 0;
         END IF;
     END IF;
+
+    -- Check if moving the class doesn't break dependent classes.
+    IF EXISTS(
+        SELECT 1 FROM dhcp6_client_class_dependency AS d
+            INNER JOIN dhcp6_client_class_order AS o
+                ON d.class_id = o.class_id
+            WHERE d.dependency_id = id AND o.order_index < follow_class_index + 1
+        LIMIT 1
+    ) THEN
+        SET msg = CONCAT('Unable to move class with id ', id, ' because it would break its dependencies');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = msg;
+    END IF;
+
     -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
     -- whenever the dhcp6_client_class record is updated. Such update may include
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
-    SET @depend_on_known_indirectly = (
-        SELECT depend_on_known_indirectly FROM dhcp6_client_class_order WHERE id = class_id
-    );
     REPLACE INTO dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, 0);
 END $$
@@ -601,7 +661,7 @@ DELIMITER ;
 -- -----------------------------------------------------------------------
 DELIMITER $$
 CREATE TRIGGER dhcp6_client_class_AINS AFTER INSERT ON dhcp6_client_class FOR EACH ROW BEGIN
-    CALL setClientClass6Order(NEW.id, NEW.follow_class_name);
+    CALL setClientClass6Order(NEW.id, NEW.follow_class_name, NULL);
     CALL createAuditEntryDHCP6('dhcp6_client_class', NEW.id, "create");
 END $$
 DELIMITER ;
@@ -623,7 +683,7 @@ DELIMITER $$
 CREATE TRIGGER dhcp6_client_class_AUPD AFTER UPDATE ON dhcp6_client_class FOR EACH ROW BEGIN
     SET @depend_on_known_directly = OLD.depend_on_known_directly;
     SET @client_class_id = NEW.id;
-    CALL setClientClass6Order(NEW.id, NEW.follow_class_name);
+    CALL setClientClass6Order(NEW.id, NEW.follow_class_name, OLD.follow_class_name);
     CALL createAuditEntryDHCP6('dhcp6_client_class', NEW.id, "update");
 END $$
 DELIMITER ;
