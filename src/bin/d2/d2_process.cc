@@ -271,6 +271,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // to the common IO service object, new server configuration in the JSON
     // format and with the pointer to the configuration storage where the
     // parsed configuration is stored.
+    std::string error("");
     if (HooksManager::calloutsPresent(Hooks.hooks_index_d2_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
@@ -278,12 +279,18 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         callout_handle->setArgument("json_config", config_set);
         callout_handle->setArgument("server_config",
                                     getD2CfgMgr()->getD2CfgContext());
+        callout_handle->setArgument("error", error);
 
         HooksManager::callCallouts(Hooks.hooks_index_d2_srv_configured_,
                                    *callout_handle);
 
-        // Ignore status code as none of them would have an effect on further
-        // operation.
+        // The config can be rejected by a hook.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            callout_handle->getArgument("error", error);
+            reconf_queue_flag_ = false;
+            answer = isc::config::createAnswer(1, error);
+            return (answer);
+        }
     }
 
     // If we are here, configuration was valid, at least it parsed correctly
