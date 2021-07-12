@@ -3429,6 +3429,7 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ? AND o.space = ?)
     },
 
+    // Update existing client class with specifying its position.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
       "UPDATE dhcp4_client_class SET"
       "  name = ?,"
