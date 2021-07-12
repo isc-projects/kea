@@ -4385,11 +4385,21 @@ TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
     EXPECT_EQ("bar", (*(classes_list->begin() + 1))->getName());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
 
-
     // Move the third class between the first and second class.
     ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, "foo"));
 
     // Ensure that the classes order has changed.
+    client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
+    classes_list = client_classes.getClasses();
+    ASSERT_EQ(3, classes_list->size());
+    EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_EQ("bar", (*(classes_list->begin() + 2))->getName());
+
+    // Update the foobar class without specifying its position. It should not
+    // be moved.
+    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+
     client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
     classes_list = client_classes.getClasses();
     ASSERT_EQ(3, classes_list->size());
@@ -4870,6 +4880,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, clientClassDependencies6) {
     auto class3 = test_client_classes_[2];
     class3->setTest("member('bar')");
     EXPECT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class3, ""));
+
+    // An attempt to move the first class to the end of the class hierarchy should
+    // fail because other classes depend on it.
+    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, "bar"),
+                 DbOperationError);
 
     // Try to change the dependency of the first class. There are other classes
     // having indirect dependency on KNOWN class via this class. Therefore, the

@@ -591,7 +591,7 @@ TestConfigBackendDHCPv6::getModifiedClientClasses6(const db::ServerSelector& ser
 void
 TestConfigBackendDHCPv6::createUpdateClientClass6(const db::ServerSelector& server_selector,
                                                   const ClientClassDefPtr& client_class,
-                                                  const std::string& follow_client_class) {
+                                                  const std::string&) {
     mergeServerTags(client_class, server_selector);
 
     auto existing_class = classes_.findClass(client_class->getName());

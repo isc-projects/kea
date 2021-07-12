@@ -1077,6 +1077,21 @@ namespace {
     "WHERE name = ?"
 #endif
 
+#ifndef MYSQL_UPDATE_CLIENT_CLASS6
+#define MYSQL_UPDATE_CLIENT_CLASS6(follow_class_name_set) \
+    "UPDATE dhcp6_client_class SET" \
+    "  name = ?," \
+    "  test = ?," \
+    "  only_if_required = ?," \
+    "  valid_lifetime = ?," \
+    "  min_valid_lifetime = ?," \
+    "  max_valid_lifetime = ?," \
+    "  depend_on_known_directly = ?," \
+    follow_class_name_set \
+    "  modification_ts = ? " \
+    "WHERE name = ?"
+#endif
+
 #ifndef MYSQL_UPDATE_SERVER
 #define MYSQL_UPDATE_SERVER(table_prefix) \
     "UPDATE " #table_prefix "_server " \
