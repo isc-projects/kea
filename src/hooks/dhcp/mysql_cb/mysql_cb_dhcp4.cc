@@ -130,6 +130,7 @@ public:
         UPDATE_OPTION4_SHARED_NETWORK,
         UPDATE_OPTION4_CLIENT_CLASS,
         UPDATE_CLIENT_CLASS4,
+        UPDATE_CLIENT_CLASS4_SAME_POSITION,
         UPDATE_SERVER4,
         DELETE_GLOBAL_PARAMETER4,
         DELETE_ALL_GLOBAL_PARAMETERS4,
@@ -2591,13 +2592,13 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param client_class Pointer to the upserted client class.
-    /// @param follow_client_class name of the class after which the
+    /// @param follow_class_name name of the class after which the
     /// new or updated class should be positioned. An empty value
     /// causes the class to be appended at the end of the class
     /// hierarchy.
     void createUpdateClientClass4(const ServerSelector& server_selector,
                                   const ClientClassDefPtr& client_class,
-                                  const std::string& follow_client_class) {
+                                  const std::string& follow_class_name) {
         // We need to evaluate class expression to see if it references any
         // other classes (dependencies). As part of this evaluation we will
         // also check if the client class depends on KNOWN/UNKNOWN built-in
@@ -2640,8 +2641,8 @@ public:
             MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMin()),
             MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMax()),
             MySqlBinding::createBool(depend_on_known),
-            (follow_client_class.empty() ? MySqlBinding::createNull() :
-             MySqlBinding::createString(follow_client_class)),
+            (follow_class_name.empty() ? MySqlBinding::createNull() :
+             MySqlBinding::createString(follow_class_name)),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
         };
 
@@ -2664,7 +2665,18 @@ public:
 
             // Try to update the class.
             in_bindings.push_back(MySqlBinding::createString(client_class->getName()));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4, in_bindings);
+            if (follow_class_name.empty()) {
+                // If position is not specified, leave the class at the same position.
+                // Remove the binding which specifies the position and use different
+                // query.
+                in_bindings.erase(in_bindings.begin() + 10, in_bindings.begin() + 11);
+                conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4_SAME_POSITION,
+                                        in_bindings);
+            } else {
+                // Update with specifying the position.
+                conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
+                                        in_bindings);
+            }
 
             // Delete class associations with the servers and dependencies. We will re-create
             // them according to the new class specification.
@@ -3431,20 +3443,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing client class with specifying its position.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
-      "UPDATE dhcp4_client_class SET"
-      "  name = ?,"
-      "  test = ?,"
-      "  next_server = ?,"
-      "  server_hostname = ?,"
-      "  boot_file_name = ?,"
-      "  only_if_required = ?,"
-      "  valid_lifetime = ?,"
-      "  min_valid_lifetime = ?,"
-      "  max_valid_lifetime = ?,"
-      "  depend_on_known_directly = ?,"
-      "  follow_class_name = ?,"
-      "  modification_ts = ? "
-      "WHERE name = ?"
+      MYSQL_UPDATE_CLIENT_CLASS4("follow_class_name = ?,")
+    },
+
+    // Update existing client class without specifying its position.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4_SAME_POSITION,
+      MYSQL_UPDATE_CLIENT_CLASS4("")
     },
 
     // Update existing server, e.g. server description.
@@ -3999,10 +4003,10 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 void
 MySqlConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
                                                    const ClientClassDefPtr& client_class,
-                                                   const std::string& follow_client_class) {
+                                                   const std::string& follow_class_name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4)
         .arg(client_class->getName());
-    impl_->createUpdateClientClass4(server_selector, client_class, follow_client_class);
+    impl_->createUpdateClientClass4(server_selector, client_class, follow_class_name);
 }
 
 void

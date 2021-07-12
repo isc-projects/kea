@@ -455,7 +455,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param client_class Client class to be added or updated.
-    /// @param follow_client_class name of the class after which the
+    /// @param follow_class_name name of the class after which the
     /// new or updated class should be positioned. An empty value
     /// causes the class to be appended at the end of the class
     /// hierarchy.

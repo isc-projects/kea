@@ -996,6 +996,24 @@ namespace {
     MYSQL_UPDATE_OPTION_COMMON(dhcp6, "", ", o.pd_pool_id = ? ", __VA_ARGS__)
 #endif
 
+#ifndef MYSQL_UPDATE_CLIENT_CLASS4
+#define MYSQL_UPDATE_CLIENT_CLASS4(follow_class_name_set) \
+    "UPDATE dhcp4_client_class SET" \
+    "  name = ?," \
+    "  test = ?," \
+    "  next_server = ?," \
+    "  server_hostname = ?," \
+    "  boot_file_name = ?," \
+    "  only_if_required = ?," \
+    "  valid_lifetime = ?," \
+    "  min_valid_lifetime = ?," \
+    "  max_valid_lifetime = ?," \
+    "  depend_on_known_directly = ?," \
+    follow_class_name_set \
+    "  modification_ts = ? " \
+    "WHERE name = ?"
+#endif
+
 #ifndef MYSQL_UPDATE_SERVER
 #define MYSQL_UPDATE_SERVER(table_prefix) \
     "UPDATE " #table_prefix "_server " \
