@@ -41,6 +41,11 @@ has been invoked.
 This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
 
+% DHCP_DDNS_CONFIGURED_CALLOUT_DROP configuration was rejected because a callout set the next step to 'drop': %1
+This error message indicates that the DHCP-DDNS had failed configuration
+attempt because the next stop of the configured callout was set to 'drop'
+by a hook library. The error message provided by the hook library is displayed.
+
 % DHCP_DDNS_CONFIG_CHECK_FAIL DHCP-DDNS server configuration check failed: %1
 This error message indicates that the DHCP-DDNS had failed configuration
 check. Details are provided. Additional details may be available

@@ -108,11 +108,25 @@ libcallout_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libcallout_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libcallout_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-noinst_LTLIBRARIES = libcallout.la
+# The d2_srv_configured callout library
+libconfigured_la_SOURCES  = configured_library.cc
+libconfigured_la_CXXFLAGS = $(AM_CXXFLAGS)
+libconfigured_la_CPPFLAGS = $(AM_CPPFLAGS)
+libconfigured_la_LIBADD   = $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libconfigured_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
+libconfigured_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libconfigured_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libconfigured_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libconfigured_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libconfigured_la_LIBADD  += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
+libconfigured_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+
+noinst_LTLIBRARIES = libcallout.la libconfigured.la
 
 nodist_d2_unittests_SOURCES  =
 nodist_d2_unittests_SOURCES += test_data_files_config.h
-nodist_d2_unittests_SOURCES += test_libraries.h
+nodist_d2_unittests_SOURCES += test_callout_libraries.h
+nodist_d2_unittests_SOURCES += test_configured_libraries.h
 
 # Run C++ tests on "make check".
 TESTS += $(PROGRAM_TESTS)
@@ -121,7 +135,8 @@ TESTS += $(PROGRAM_TESTS)
 # "make distclean", but not on "make clean".
 DISTCLEANFILES += d2_process_tests.sh
 DISTCLEANFILES += test_data_files_config.h
-DISTCLEANFILES += test_libraries.h
+DISTCLEANFILES += test_callout_libraries.h
+DISTCLEANFILES += test_configured_libraries.h
 
 # Don't install C++ tests.
 noinst_PROGRAMS = $(PROGRAM_TESTS)

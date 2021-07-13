@@ -12,6 +12,7 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <process/testutils/d_test_stubs.h>
 #include <d2/tests/nc_test_utils.h>
+#include <d2/tests/test_configured_libraries.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -23,6 +24,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::config;
 using namespace isc::d2;
+using namespace isc::data;
 using namespace isc::process;
 using namespace boost::posix_time;
 
@@ -70,7 +72,7 @@ public:
 
     /// @brief Callback that will invoke shutdown method.
     void genShutdownCallback() {
-        shutdown(isc::data::ConstElementPtr());
+        shutdown(ConstElementPtr());
     }
 
     /// @brief Callback that throws an exception.
@@ -95,8 +97,8 @@ public:
             return res;
         }
 
-        isc::data::ConstElementPtr answer = configure(config_set_, false);
-        isc::data::ConstElementPtr comment;
+        ConstElementPtr answer = configure(config_set_, false);
+        ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer);
 
         if (rcode) {
@@ -129,6 +131,17 @@ public:
     bool checkCanShutdown(ShutdownType shutdown_type) {
         setShutdownType(shutdown_type);
         return (canShutdown());
+    }
+
+    /// @brief Replaces %LIBRARY% with specified library name.
+    ///
+    /// @param config input config text (should contain "%LIBRARY%" string).
+    /// @param lib_name %LIBRARY% will be replaced with that name.
+    /// @return configuration text with library name replaced.
+    string pathReplacer(const char* config, const char* lib_name) {
+        string txt(config);
+        txt.replace(txt.find("%LIBRARY%"), strlen("%LIBRARY%"), string(lib_name));
+        return (txt);
     }
 };
 
@@ -182,7 +195,7 @@ TEST_F(D2ProcessTest, configure) {
     ASSERT_TRUE(fromJSON(valid_d2_config));
 
     // Invoke configure() with a valid D2 configuration.
-    isc::data::ConstElementPtr answer = configure(config_set_, false);
+    ConstElementPtr answer = configure(config_set_, false);
 
     // Verify that configure result is success and reconfigure queue manager
     // flag is true.
@@ -267,7 +280,6 @@ TEST_F(D2ProcessTest, queueStopOnReconf) {
     runIO();
     ASSERT_EQ(D2QueueMgr::STOPPED, queue_mgr->getMgrState());
 }
-
 
 /// @brief Tests checkQueueStatus() logic for recovering from queue full
 /// This test manually creates a receive queue full condition and then
@@ -371,7 +383,7 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
 
     // Invoke configure() with a valid config that contains an unusable IP
     ASSERT_TRUE(fromJSON(bad_ip_d2_config));
-    isc::data::ConstElementPtr answer = configure(config_set_, false);
+    ConstElementPtr answer = configure(config_set_, false);
 
     // Verify that configure result is success and reconfigure queue manager
     // flag is true.
@@ -411,8 +423,8 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
 /// success response; and for invalid values: sets the shutdown flag to false
 /// and returns a failure response.
 TEST_F(D2ProcessTest, shutdownArgs) {
-    isc::data::ElementPtr args;
-    isc::data::ConstElementPtr answer;
+    ElementPtr args;
+    ConstElementPtr answer;
     const char* default_args = "{}";
     const char* normal_args =  "{ \"type\" : \"normal\" }";
     const char* drain_args = "{ \"type\" : \"drain_first\" }";
@@ -420,35 +432,35 @@ TEST_F(D2ProcessTest, shutdownArgs) {
     const char* bogus_args = "{ \"type\" : \"bogus\" }";
 
     // Verify defaulting to SD_NORMAL if no argument is given.
-    ASSERT_NO_THROW(args = isc::data::Element::fromJSON(default_args));
+    ASSERT_NO_THROW(args = Element::fromJSON(default_args));
     EXPECT_NO_THROW(answer = shutdown(args));
     ASSERT_TRUE(checkAnswer(answer, 0));
     EXPECT_EQ(SD_NORMAL, getShutdownType());
     EXPECT_TRUE(shouldShutdown());
 
     // Verify argument value "normal".
-    ASSERT_NO_THROW(args = isc::data::Element::fromJSON(normal_args));
+    ASSERT_NO_THROW(args = Element::fromJSON(normal_args));
     EXPECT_NO_THROW(answer = shutdown(args));
     ASSERT_TRUE(checkAnswer(answer, 0));
     EXPECT_EQ(SD_NORMAL, getShutdownType());
     EXPECT_TRUE(shouldShutdown());
 
     // Verify argument value "drain_first".
-    ASSERT_NO_THROW(args = isc::data::Element::fromJSON(drain_args));
+    ASSERT_NO_THROW(args = Element::fromJSON(drain_args));
     EXPECT_NO_THROW(answer = shutdown(args));
     ASSERT_TRUE(checkAnswer(answer, 0));
     EXPECT_EQ(SD_DRAIN_FIRST, getShutdownType());
     EXPECT_TRUE(shouldShutdown());
 
     // Verify argument value "now".
-    ASSERT_NO_THROW(args = isc::data::Element::fromJSON(now_args));
+    ASSERT_NO_THROW(args = Element::fromJSON(now_args));
     EXPECT_NO_THROW(answer = shutdown(args));
     ASSERT_TRUE(checkAnswer(answer, 0));
     EXPECT_EQ(SD_NOW, getShutdownType());
     EXPECT_TRUE(shouldShutdown());
 
     // Verify correct handling of an invalid value.
-    ASSERT_NO_THROW(args = isc::data::Element::fromJSON(bogus_args));
+    ASSERT_NO_THROW(args = Element::fromJSON(bogus_args));
     EXPECT_NO_THROW(answer = shutdown(args));
     ASSERT_TRUE(checkAnswer(answer, 1));
     EXPECT_FALSE(shouldShutdown());
@@ -544,7 +556,6 @@ TEST_F(D2ProcessTest, canShutdown) {
     EXPECT_TRUE(checkCanShutdown(SD_NOW));
 }
 
-
 /// @brief Verifies that an "external" call to shutdown causes the run method
 /// to exit gracefully.
 TEST_F(D2ProcessTest, normalShutdown) {
@@ -568,7 +579,6 @@ TEST_F(D2ProcessTest, normalShutdown) {
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
                 elapsed.total_milliseconds() <= 2200);
 }
-
 
 /// @brief Verifies that an "uncaught" exception thrown during event loop
 /// execution is treated as a fatal error.
@@ -612,7 +622,6 @@ TEST_F(D2ProcessTest, notLoopbackTest) {
     runWithConfig(config);
 }
 
-
 /// @brief Used to permit visual inspection of logs to ensure
 /// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
 TEST_F(D2ProcessTest, v4LoopbackTest) {
@@ -637,6 +646,48 @@ TEST_F(D2ProcessTest, v6LoopbackTest) {
                         "\"reverse-ddns\" : {}"
                         "}";
     ASSERT_TRUE(runWithConfig(config));
+}
+
+/// @brief Check the configured callout (positive case).
+TEST_F(D2ProcessTest, configuredNoFail) {
+    const char* config = "{\n"
+        "\"hooks-libraries\": [ {\n"
+        " \"library\": \"%LIBRARY%\",\n"
+        " \"parameters\": {\n"
+        " } } ] }\n";
+    string cfg = pathReplacer(config, CONFIGURED_LIBRARY);
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(cfg));
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = configure(json, false));
+    int rcode = -1;
+    ConstElementPtr comment;
+    comment = isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode) << comment->str();
+}
+
+/// @brief Check the configured callout (negative case).
+TEST_F(D2ProcessTest, configuredFail) {
+    const char* config = "{\n"
+        "\"user-context\": { \"error\": \"Fail!\" },\n"
+        "\"hooks-libraries\": [ {\n"
+        " \"library\": \"%LIBRARY%\",\n"
+        " \"parameters\": {\n"
+        " } } ] }\n";
+    string cfg = pathReplacer(config, CONFIGURED_LIBRARY);
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(cfg));
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = configure(json, false));
+    int rcode = -1;
+    ConstElementPtr comment;
+    comment = isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(Element::string, comment->getType());
+    EXPECT_EQ("Fail!", comment->stringValue());
 }
 
 } // end of anonymous namespace

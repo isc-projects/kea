@@ -21,7 +21,7 @@
 #include <sstream>
 
 #include "test_data_files_config.h"
-#include "test_libraries.h"
+#include "test_callout_libraries.h"
 
 using namespace isc::config;
 using namespace isc::d2;

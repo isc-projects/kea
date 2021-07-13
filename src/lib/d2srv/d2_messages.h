@@ -15,6 +15,7 @@ extern const isc::log::MessageID DHCP_DDNS_AT_MAX_TRANSACTIONS;
 extern const isc::log::MessageID DHCP_DDNS_CLEARED_FOR_SHUTDOWN;
 extern const isc::log::MessageID DHCP_DDNS_COMMAND;
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURE;
+extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP;
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL;
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_FAIL;
 extern const isc::log::MessageID DHCP_DDNS_FAILED;

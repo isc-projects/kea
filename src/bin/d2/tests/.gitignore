@@ -1,4 +1,5 @@
 /d2_process_tests.sh
 /d2_unittests
 /test_data_files_config.h
-/test_libraries.h
+/test_callout_libraries.h
+/test_configured_libraries.h

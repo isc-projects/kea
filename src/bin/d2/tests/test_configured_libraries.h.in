@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef D2_TEST_LIBRARIES_H
-#define D2_TEST_LIBRARIES_H
+#ifndef D2_TEST_CONFIGURED_LIBRARIES_H
+#define D2_TEST_CONFIGURED_LIBRARIES_H
 
 #include <config.h>
 
@@ -16,9 +16,11 @@ namespace {
 // .so file.  Note that we access the .so file - libtool creates this as a
 // like to the real shared library.
 
-// Basic callout library with context_create and three "standard" callouts.
-static const char* CALLOUT_LIBRARY = "@abs_builddir@/.libs/libcallout.so";
+// Configured library with d2_srv_configured testing: if there is a toplevel
+// user context with an error entry the returned status is DROP with the
+// content of the error entry.
+static const char* CONFIGURED_LIBRARY = "@abs_builddir@/.libs/libconfigured.so";
 
 } // anonymous namespace
 
-#endif // D2_TEST_LIBRARIES_H
+#endif // D2_TEST_CONFIGURED_LIBRARIES_H

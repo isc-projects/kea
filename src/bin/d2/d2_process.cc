@@ -287,6 +287,8 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         // The config can be rejected by a hook.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             callout_handle->getArgument("error", error);
+            LOG_ERROR(d2_logger, DHCP_DDNS_CONFIGURED_CALLOUT_DROP)
+                .arg(error);
             reconf_queue_flag_ = false;
             answer = isc::config::createAnswer(1, error);
             return (answer);

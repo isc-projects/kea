@@ -14,6 +14,7 @@ extern const isc::log::MessageID DHCP_DDNS_AT_MAX_TRANSACTIONS = "DHCP_DDNS_AT_M
 extern const isc::log::MessageID DHCP_DDNS_CLEARED_FOR_SHUTDOWN = "DHCP_DDNS_CLEARED_FOR_SHUTDOWN";
 extern const isc::log::MessageID DHCP_DDNS_COMMAND = "DHCP_DDNS_COMMAND";
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURE = "DHCP_DDNS_CONFIGURE";
+extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP = "DHCP_DDNS_CONFIGURED_CALLOUT_DROP";
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL = "DHCP_DDNS_CONFIG_CHECK_FAIL";
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_FAIL = "DHCP_DDNS_CONFIG_FAIL";
 extern const isc::log::MessageID DHCP_DDNS_FAILED = "DHCP_DDNS_FAILED";
@@ -95,6 +96,7 @@ const char* values[] = {
     "DHCP_DDNS_CLEARED_FOR_SHUTDOWN", "application has met shutdown criteria for shutdown type: %1",
     "DHCP_DDNS_COMMAND", "command directive received, command: %1 - args: %2",
     "DHCP_DDNS_CONFIGURE", "configuration %1 received: %2",
+    "DHCP_DDNS_CONFIGURED_CALLOUT_DROP", "configuration was rejected because a callout set the next step to 'drop': %1",
     "DHCP_DDNS_CONFIG_CHECK_FAIL", "DHCP-DDNS server configuration check failed: %1",
     "DHCP_DDNS_CONFIG_FAIL", "DHCP-DDNS server configuration failed: %1",
     "DHCP_DDNS_FAILED", "application experienced a fatal error: %1",
