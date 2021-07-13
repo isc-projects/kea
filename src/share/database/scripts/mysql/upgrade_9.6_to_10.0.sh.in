@@ -133,7 +133,11 @@ proc_label:BEGIN
     );
 
     -- Bail if the class is updated without re-positioning.
-    IF (@depend_on_known_indirectly IS NOT NULL AND follow_class_name = old_follow_class_name) THEN
+    IF(
+        @depend_on_known_indirectly IS NOT NULL AND
+        ((follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+         (follow_class_name = old_follow_class_name))
+    ) THEN
         -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
         -- whenever the dhcp4_client_class record is updated. Such update may include
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
@@ -589,7 +593,11 @@ proc_label:BEGIN
     );
 
     -- Bail if the class is updated without re-positioning.
-    IF (@depend_on_known_indirectly IS NOT NULL AND follow_class_name = old_follow_class_name) THEN
+    IF(
+        @depend_on_known_indirectly IS NOT NULL AND
+        ((follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+         (follow_class_name = old_follow_class_name))
+    ) THEN
         -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
         -- whenever the dhcp6_client_class record is updated. Such update may include
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
