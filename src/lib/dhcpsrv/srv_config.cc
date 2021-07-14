@@ -20,6 +20,8 @@
 #include <stats/stats_mgr.h>
 #include <util/strutil.h>
 
+#include <boost/make_shared.hpp>
+
 #include <list>
 #include <sstream>
 
@@ -182,6 +184,15 @@ SrvConfig::merge(ConfigBase& other) {
 
         // Merge options.
         cfg_option_->merge(cfg_option_def_, (*other_srv_config.getCfgOption()));
+
+        if (!other_srv_config.getClientClassDictionary()->empty()) {
+            // Client classes are complicated because they are ordered and may
+            // depend on each other. Merging two lists of classes with preserving
+            // the order would be very involved and could result in errors. Thus,
+            // we simply replace the current list of classes with a new list.
+            setClientClassDictionary(boost::make_shared
+                                     <ClientClassDictionary>(*other_srv_config.getClientClassDictionary()));
+        }
 
         if (CfgMgr::instance().getFamily() == AF_INET) {
             merge4(other_srv_config);

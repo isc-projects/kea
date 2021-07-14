@@ -107,6 +107,12 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
                 cfg->getCfgOption()->del((*entry)->getObjectId());
             }
 
+            range = index.equal_range(boost::make_tuple("dhcp6_client_class",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getClientClassDictionary()->removeClass((*entry)->getObjectId());
+            }
+
             range = index.equal_range(boost::make_tuple("dhcp6_shared_network",
                                                         AuditEntry::ModificationType::DELETE));
             for (auto entry = range.first; entry != range.second; ++entry) {
@@ -187,6 +193,16 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             }
             external_cfg->getCfgOption()->add((*option), (*option).space_name_);
         }
+    }
+
+    // Fetch client classes. They are returned in a ClientClassDictionary.
+    if (!audit_entries.empty()) {
+        updated_entries = fetchConfigElement(audit_entries, "dhcp6_client_class");
+    }
+    if (audit_entries.empty() || !updated_entries.empty()) {
+        ClientClassDictionary client_classes = getMgr().getPool()->getAllClientClasses6(backend_selector,
+                                                                                        server_selector);
+        external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
     }
 
     // Now fetch the shared networks.

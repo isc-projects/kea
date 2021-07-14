@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
@@ -107,6 +108,12 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
                 cfg->getCfgOption()->del((*entry)->getObjectId());
             }
 
+            range = index.equal_range(boost::make_tuple("dhcp4_client_class",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getClientClassDictionary()->removeClass((*entry)->getObjectId());
+            }
+
             range = index.equal_range(boost::make_tuple("dhcp4_shared_network",
                                                         AuditEntry::ModificationType::DELETE));
             for (auto entry = range.first; entry != range.second; ++entry) {
@@ -187,6 +194,16 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
             }
             external_cfg->getCfgOption()->add((*option), (*option).space_name_);
         }
+    }
+
+    // Fetch client classes. They are returned in a ClientClassDictionary.
+    if (!audit_entries.empty()) {
+        updated_entries = fetchConfigElement(audit_entries, "dhcp4_client_class");
+    }
+    if (audit_entries.empty() || !updated_entries.empty()) {
+        ClientClassDictionary client_classes = getMgr().getPool()->getAllClientClasses4(backend_selector,
+                                                                                        server_selector);
+        external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
     }
 
     // Now fetch the shared networks.

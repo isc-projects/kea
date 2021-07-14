@@ -347,6 +347,11 @@ public:
     /// @param name the name of the class to remove
     void removeClass(const std::string& name);
 
+    /// @brief Removes a client class by id.
+    ///
+    /// @param id class id.
+    void removeClass(const uint64_t id);
+
     /// @brief Fetches the dictionary's list of classes
     ///
     /// @return ClientClassDefListPtr to the list of classes

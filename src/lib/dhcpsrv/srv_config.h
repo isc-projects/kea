@@ -655,6 +655,13 @@ public:
     /// The data that do not overlap between the two objects is simply
     /// inserted into this configuration.
     ///
+    /// Due to the nature of the client classes, i.e. they are ordered and
+    /// depend on each other, individual classes are not merged. Instead,
+    /// the new list of classes entirely replaces the existing list. It
+    /// implies that client classes should not be defined in a config
+    /// file if there are classes defined in the config backend for this
+    /// server.
+    ///
     /// @warning The call to @c merge may modify the data in the @c other
     /// object. Therefore, the caller must not rely on the data held
     /// in the @c other object after the call to @c merge. Also, the
@@ -669,6 +676,7 @@ public:
     /// - globals
     /// - option definitions
     /// - options
+    /// - client classes
     /// - via @c merge4 or @c merge6 depending on @c CfgMgr::family_:
     ///     - shared networks
     ///     - subnets

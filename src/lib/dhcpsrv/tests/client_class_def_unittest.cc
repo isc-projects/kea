@@ -22,6 +22,7 @@
 /// classes.
 
 using namespace std;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::asiolink;
@@ -354,18 +355,26 @@ TEST(ClientClassDictionary, basics) {
     EXPECT_EQ(3, classes->size());
     EXPECT_FALSE(classes->empty());
 
+    // Removing client class by id of 0 should be no-op.
+    ASSERT_NO_THROW(dictionary->removeClass(0));
+    EXPECT_EQ(3, classes->size());
+    EXPECT_FALSE(classes->empty());
+
     // Verify we can find them all.
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc1"));
     ASSERT_TRUE(cclass);
     EXPECT_EQ("cc1", cclass->getName());
+    cclass->setId(1);
 
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc2"));
     ASSERT_TRUE(cclass);
     EXPECT_EQ("cc2", cclass->getName());
+    cclass->setId(2);
 
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc3"));
     ASSERT_TRUE(cclass);
     EXPECT_EQ("cc3", cclass->getName());
+    cclass->setId(3);
 
     // Verify the looking for non-existing returns empty pointer
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
@@ -385,6 +394,13 @@ TEST(ClientClassDictionary, basics) {
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());
     EXPECT_FALSE(classes->empty());
+
+    // Verify that we can remove client class by id.
+    ASSERT_NO_THROW(dictionary->removeClass(2));
+    EXPECT_EQ(1, classes->size());
+    EXPECT_FALSE(classes->empty());
+    ASSERT_NO_THROW(cclass = dictionary->findClass("cc2"));
+    EXPECT_FALSE(cclass);
 }
 
 // Verifies copy constructor and equality tools (methods/operators)

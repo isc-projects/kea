@@ -12,6 +12,7 @@
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
@@ -21,6 +22,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <map>
@@ -288,6 +290,7 @@ public:
         setTimestamp("dhcp4_options", timestamp_index);
         setTimestamp("dhcp4_shared_network", timestamp_index);
         setTimestamp("dhcp4_subnet", timestamp_index);
+        setTimestamp("dhcp4_client_class", timestamp_index);
     }
 
     /// @brief Creates test server configuration and stores it in a test
@@ -375,6 +378,20 @@ public:
         subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
         mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                            subnet);
+
+        // Insert client classes into the database.
+        auto expression = boost::make_shared<Expression>();
+        ClientClassDefPtr client_class = boost::make_shared<ClientClassDef>("first-class", expression);
+        client_class->setId(1);
+        client_class->setModificationTime(getTimestamp("dhcp4_client_class"));
+        mgr.getPool()->createUpdateClientClass4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                                client_class, "");
+
+        client_class = boost::make_shared<ClientClassDef>("second-class", expression);
+        client_class->setId(2);
+        client_class->setModificationTime(getTimestamp("dhcp4_client_class"));
+        mgr.getPool()->createUpdateClientClass4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                                client_class, "");
     }
 
     /// @brief Deletes specified global parameter from the configuration
@@ -462,6 +479,24 @@ public:
         addDeleteAuditEntry("dhcp4_subnet", id);
     }
 
+    /// @brief Deletes specified client class from the configuration backend
+    /// and generates audit entry.
+    ///
+    /// @param name Name of the client class to be deleted.
+    void remoteDeleteClientClass(const std::string& name) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        auto client_class = mgr.getPool()->getClientClass4(BackendSelector::UNSPEC(),
+                                                           ServerSelector::ALL(),
+                                                           name);
+
+        if (client_class) {
+            mgr.getPool()->deleteClientClass4(BackendSelector::UNSPEC(),
+                                              ServerSelector::ALL(),
+                                              name);
+            addDeleteAuditEntry("dhcp4_client_class", client_class->getId());
+        }
+    }
 
     /// @brief Tests the @c CBControlDHCPv4::databaseConfigApply method.
     ///
@@ -550,6 +585,17 @@ public:
 
         } else {
             EXPECT_FALSE(found_subnet);
+        }
+
+        auto client_classes = srv_cfg->getClientClassDictionary();
+        auto found_class = client_classes->findClass("first-class");
+        if (hasConfigElement("dhcp4_client_class") &&
+            (getTimestamp("dhcp4_client_class") > lb_modification_time)) {
+            ASSERT_TRUE(found_class);
+            EXPECT_EQ("first-class", found_class->getName());
+
+        } else {
+            EXPECT_FALSE(found_class);
         }
     }
 
@@ -674,6 +720,19 @@ public:
                 EXPECT_TRUE(found_subnet);
             }
         }
+
+        {
+            SCOPED_TRACE("client classes");
+            // One of the subnets should still be there.
+            EXPECT_TRUE(srv_cfg->getClientClassDictionary()->findClass("second-class"));
+            auto found_client_class = srv_cfg->getClientClassDictionary()->findClass("first-class");
+            if (deleteConfigElement("dhcp4_client_class", 1)) {
+                EXPECT_FALSE(found_client_class);
+
+            } else {
+                EXPECT_TRUE(found_client_class);
+            }
+        }
     }
 
     /// @brief Instance of the @c CBControlDHCPv4 used for testing.
@@ -695,6 +754,8 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyAll) {
     addCreateAuditEntry("dhcp4_shared_network", 2);
     addCreateAuditEntry("dhcp4_subnet", 1);
     addCreateAuditEntry("dhcp4_subnet", 2);
+    addCreateAuditEntry("dhcp4_client_class", 1);
+    addCreateAuditEntry("dhcp4_client_class", 2);
 
     testDatabaseConfigApply(getTimestamp(-5));
 }
@@ -709,6 +770,7 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteAll) {
         remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
         remoteDeleteSharedNetwork("one");
         remoteDeleteSubnet(SubnetID(1));
+        remoteDeleteClientClass("first-class");
     });
 }
 
@@ -725,6 +787,7 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteNonExisting) {
         addDeleteAuditEntry("dhcp4_options", 3);
         addDeleteAuditEntry("dhcp4_shared_network", 3);
         addDeleteAuditEntry("dhcp4_subnet", 3);
+        addDeleteAuditEntry("dhcp4_client_class", 3);
     });
 }
 
@@ -860,7 +923,23 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnetNotFetched) {
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
-// This test verifies that the configuration updates calls the hook.
+// This test verifies that only client classes are merged into the current
+// configuration.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyClientClasses) {
+    addCreateAuditEntry("dhcp4_client_class", 1);
+    addCreateAuditEntry("dhcp4_client_class", 2);
+    testDatabaseConfigApply(getTimestamp(-5));
+}
+
+// This test verifies that a client class is deleted from the local
+// configuration as a result of being deleted from the database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteClientClass) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteClientClass("first-class");
+    });
+}
+
+// This test verifies that the configuration update calls the hook.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyHook) {
 
     // Initialize Hooks Manager.
@@ -1004,6 +1083,7 @@ public:
         setTimestamp("dhcp6_options", timestamp_index);
         setTimestamp("dhcp6_shared_network", timestamp_index);
         setTimestamp("dhcp6_subnet", timestamp_index);
+        setTimestamp("dhcp6_client_class", timestamp_index);
     }
 
     /// @brief Creates test server configuration and stores it in a test
@@ -1091,6 +1171,20 @@ public:
         subnet->setModificationTime(getTimestamp("dhcp6_subnet"));
         mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                            subnet);
+
+        // Insert client classes into the database.
+        auto expression = boost::make_shared<Expression>();
+        ClientClassDefPtr client_class = boost::make_shared<ClientClassDef>("first-class", expression);
+        client_class->setId(1);
+        client_class->setModificationTime(getTimestamp("dhcp6_client_class"));
+        mgr.getPool()->createUpdateClientClass6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                                client_class, "");
+
+        client_class = boost::make_shared<ClientClassDef>("second-class", expression);
+        client_class->setId(2);
+        client_class->setModificationTime(getTimestamp("dhcp6_client_class"));
+        mgr.getPool()->createUpdateClientClass6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                                client_class, "");
     }
 
     /// @brief Deletes specified global parameter from the configuration
@@ -1178,6 +1272,24 @@ public:
         addDeleteAuditEntry("dhcp6_subnet", id);
     }
 
+    /// @brief Deletes specified client class from the configuration backend
+    /// and generates audit entry.
+    ///
+    /// @param name Name of the client class to be deleted.
+    void remoteDeleteClientClass(const std::string& name) {
+        auto& mgr = ConfigBackendDHCPv6Mgr::instance();
+
+        auto client_class = mgr.getPool()->getClientClass6(BackendSelector::UNSPEC(),
+                                                           ServerSelector::ALL(),
+                                                           name);
+
+        if (client_class) {
+            mgr.getPool()->deleteClientClass6(BackendSelector::UNSPEC(),
+                                              ServerSelector::ALL(),
+                                              name);
+            addDeleteAuditEntry("dhcp6_client_class", client_class->getId());
+        }
+    }
 
     /// @brief Tests the @c CBControlDHCPv6::databaseConfigApply method.
     ///
@@ -1266,6 +1378,17 @@ public:
 
         } else {
             EXPECT_FALSE(found_subnet);
+        }
+
+        auto client_classes = srv_cfg->getClientClassDictionary();
+        auto found_class = client_classes->findClass("first-class");
+        if (hasConfigElement("dhcp6_client_class") &&
+            (getTimestamp("dhcp6_client_class") > lb_modification_time)) {
+            ASSERT_TRUE(found_class);
+            EXPECT_EQ("first-class", found_class->getName());
+
+        } else {
+            EXPECT_FALSE(found_class);
         }
     }
 
@@ -1410,6 +1533,8 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyAll) {
     addCreateAuditEntry("dhcp6_shared_network", 2);
     addCreateAuditEntry("dhcp6_subnet", 1);
     addCreateAuditEntry("dhcp6_subnet", 2);
+    addCreateAuditEntry("dhcp6_client_class", 1);
+    addCreateAuditEntry("dhcp6_client_class", 2);
 
     testDatabaseConfigApply(getTimestamp(-5));
 }
@@ -1575,7 +1700,23 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplySubnetNotFetched) {
     testDatabaseConfigApply(getTimestamp(-3));
 }
 
-// This test verifies that the configuration updates calls the hook.
+// This test verifies that only client classes are merged into the current
+// configuration.
+TEST_F(CBControlDHCPv6Test, databaseConfigApplyClientClasses) {
+    addCreateAuditEntry("dhcp6_client_class", 1);
+    addCreateAuditEntry("dhcp6_client_class", 2);
+    testDatabaseConfigApply(getTimestamp(-5));
+}
+
+// This test verifies that a client class is deleted from the local
+// configuration as a result of being deleted from the database.
+TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteClientClass) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteClientClass("first-class");
+    });
+}
+
+// This test verifies that the configuration update calls the hook.
 TEST_F(CBControlDHCPv6Test, databaseConfigApplyHook) {
 
     // Initialize Hooks Manager.

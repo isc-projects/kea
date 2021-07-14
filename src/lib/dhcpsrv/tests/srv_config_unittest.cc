@@ -8,6 +8,7 @@
 
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
 #include <process/logging_info.h>
@@ -1146,6 +1147,59 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     EXPECT_TRUE(isEquivalent(expected_globals, cfg_to.getConfiguredGlobals()));
 
+}
+
+// This test verifies that new list of client classes replaces and old list
+// when server configuration is merged.
+TEST_F(SrvConfigTest, mergeClientClasses) {
+    // Let's create the "existing" config we will merge into.
+    SrvConfig cfg_to;
+
+    auto expression = boost::make_shared<Expression>();
+    auto client_class = boost::make_shared<ClientClassDef>("foo", expression);
+    cfg_to.getClientClassDictionary()->addClass(client_class);
+
+    client_class = boost::make_shared<ClientClassDef>("bar", expression);
+    cfg_to.getClientClassDictionary()->addClass(client_class);
+
+    // Now we'll create the config we'll merge from.
+    SrvConfig cfg_from;
+    client_class = boost::make_shared<ClientClassDef>("baz", expression);
+    cfg_from.getClientClassDictionary()->addClass(client_class);
+
+    client_class = boost::make_shared<ClientClassDef>("abc", expression);
+    cfg_from.getClientClassDictionary()->addClass(client_class);
+
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    // The old classes should be replaced with new classes.
+    EXPECT_FALSE(cfg_to.getClientClassDictionary()->findClass("foo"));
+    EXPECT_FALSE(cfg_to.getClientClassDictionary()->findClass("bar"));
+    EXPECT_TRUE(cfg_to.getClientClassDictionary()->findClass("baz"));
+    EXPECT_TRUE(cfg_to.getClientClassDictionary()->findClass("abc"));
+}
+
+// This test verifies that client classes are not modified if the merged
+// list of classes is empty.
+TEST_F(SrvConfigTest, mergeEmptyClientClasses) {
+    // Let's create the "existing" config we will merge into.
+    SrvConfig cfg_to;
+
+    auto expression = boost::make_shared<Expression>();
+    auto client_class = boost::make_shared<ClientClassDef>("foo", expression);
+    cfg_to.getClientClassDictionary()->addClass(client_class);
+
+    client_class = boost::make_shared<ClientClassDef>("bar", expression);
+    cfg_to.getClientClassDictionary()->addClass(client_class);
+
+    // Now we'll create the config we'll merge from.
+    SrvConfig cfg_from;
+
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    // Empty list of classes should not replace an existing list.
+    EXPECT_TRUE(cfg_to.getClientClassDictionary()->findClass("foo"));
+    EXPECT_TRUE(cfg_to.getClientClassDictionary()->findClass("bar"));
 }
 
 // Validates SrvConfig::moveDdnsParams by ensuring that deprecated dhcp-ddns

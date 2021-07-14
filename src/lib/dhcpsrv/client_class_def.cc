@@ -33,7 +33,6 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
     // We permit an empty expression for now.  This will likely be useful
     // for automatic classes such as vendor class.
-
     // For classes without options, make sure we have an empty collection
     if (!cfg_option_) {
         cfg_option_.reset(new CfgOption());
@@ -295,6 +294,23 @@ ClientClassDictionary::removeClass(const std::string& name) {
         }
     }
     map_->erase(name);
+}
+
+void
+ClientClassDictionary::removeClass(const uint64_t id) {
+    // Class id equal to 0 means it wasn't set.
+    if (id == 0) {
+        return;
+    }
+    for (ClientClassDefList::iterator this_class = list_->begin();
+         this_class != list_->end(); ++this_class) {
+        std::cout << "id: " << id << ", " << "this_class: " << (*this_class)->getId() << std::endl;
+        if ((*this_class)->getId() == id) {
+            map_->erase((*this_class)->getName());
+            list_->erase(this_class);
+            break;
+        }
+    }
 }
 
 const ClientClassDefListPtr&
