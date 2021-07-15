@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,12 +7,16 @@
 #ifndef ISC_DATA_H
 #define ISC_DATA_H 1
 
-#include <stdint.h>
+#include <iostream>
+#include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <map>
+
 #include <boost/shared_ptr.hpp>
-#include <stdexcept>
+
+#include <stdint.h>
+
 #include <exceptions/exceptions.h>
 
 namespace isc { namespace data {
@@ -263,8 +267,6 @@ public:
     virtual bool setValue(const std::map<std::string, ConstElementPtr>& v);
     //@}
 
-
-
     // Other functions for specific subtypes
 
     /// @name ListElement functions
@@ -352,7 +354,6 @@ public:
     virtual bool find(const std::string& identifier, ConstElementPtr& t) const;
     //@}
 
-
     /// @name Factory functions
 
     // TODO: should we move all factory functions to a different class
@@ -402,7 +403,6 @@ public:
     /// in the configuration string. It is used for error logging purposes.
     static ElementPtr createMap(const Position& pos = ZERO_POSITION());
     //@}
-
 
     /// @name Compound factory functions
 
@@ -529,6 +529,50 @@ public:
     /// @return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
     //@}
+
+    /// @brief Remove all empty maps and lists from this Element and its
+    /// descendants.
+    void removeEmptyContainersRecursively() {
+        if (type_ == list || type_ == map) {
+            size_t s(size());
+            for (size_t i = 0; i < s; ++i) {
+                // Get child.
+                ElementPtr child;
+                if (type_ == list) {
+                    child = getNonConst(i);
+                } else if (type_ == map) {
+                    std::string const key(get(i)->stringValue());
+                    // The ElementPtr - ConstElementPtr disparity between
+                    // ListElement and MapElement is forcing a const cast here.
+                    // It's undefined behavior to modify it after const casting.
+                    // The options are limited. I've tried templating, moving
+                    // this function from a member function to free-standing and
+                    // taking the Element template as argument. I've tried
+                    // making it a virtual function with overriden
+                    // implementations in ListElement and MapElement. Nothing
+                    // works.
+                    child = boost::const_pointer_cast<Element>(get(key));
+                }
+
+                // Makes no sense to continue for non-container children.
+                if (child->getType() != list && child->getType() != map) {
+                    continue;
+                }
+
+                // Recurse if not empty.
+                if (!child->empty()){
+                    child->removeEmptyContainersRecursively();
+                }
+
+                // When returning from recursion, remove if empty.
+                if (child->empty()) {
+                    remove(i);
+                    --i;
+                    --s;
+                }
+            }
+        }
+    }
 };
 
 /// Notes: IntElement type is changed to int64_t.
@@ -543,8 +587,6 @@ public:
 ///
 class IntElement : public Element {
     int64_t i;
-private:
-
 public:
     IntElement(int64_t v, const Position& pos = ZERO_POSITION())
         : Element(integer, pos), i(v) { }
@@ -641,6 +683,17 @@ public:
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }
     bool equals(const Element& other) const;
+
+    /// @brief Sorts the elements inside the list.
+    ///
+    /// The list must contain elments of the same type.
+    /// Call with the key by which you want to sort when the list contains maps.
+    /// Nested lists are not supported.
+    /// Call without a parameter when sorting any other type.
+    ///
+    /// @param index the key by which you want to sort when the list contains
+    /// maps
+    void sort(std::string const& index = std::string());
 };
 
 class MapElement : public Element {
@@ -668,6 +721,19 @@ public:
         auto found = m.find(s);
         return (found != m.end() ? found->second : ConstElementPtr());
     }
+
+    /// @brief Get the i-th element in the map.
+    ///
+    /// Useful when required to iterate with an index.
+    ///
+    /// @param i the position of the element you want to return
+    /// @return the element at position i
+    ConstElementPtr get(int const i) const override {
+        auto it(m.begin());
+        std::advance(it, i);
+        return create(it->first);
+    }
+
     using Element::set;
     void set(const std::string& key, ConstElementPtr value);
     using Element::remove;
@@ -783,7 +849,6 @@ void prettyPrint(ConstElementPtr element, std::ostream& out,
 std::string prettyPrint(ConstElementPtr element,
                         unsigned indent = 0, unsigned step = 2);
 
-///
 /// @brief Insert Element::Position as a string into stream.
 ///
 /// This operator converts the @c Element::Position into a string and
@@ -796,7 +861,6 @@ std::string prettyPrint(ConstElementPtr element,
 /// parameter @c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 
-///
 /// @brief Insert the Element as a string into stream.
 ///
 /// This method converts the @c ElementPtr into a string with
@@ -815,7 +879,11 @@ std::ostream& operator<<(std::ostream& out, const Element& e);
 
 bool operator==(const Element& a, const Element& b);
 bool operator!=(const Element& a, const Element& b);
-} }
+bool operator<(const Element& a, const Element& b);
+
+}  // namespace data
+}  // namespace isc
+
 #endif // ISC_DATA_H
 
 // Local Variables:

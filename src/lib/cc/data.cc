@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,7 +128,7 @@ Element::setValue(const std::map<std::string, ConstElementPtr>&) {
 
 ConstElementPtr
 Element::get(const int) const {
-    throwTypeError("get(int) called on a non-list Element");
+    throwTypeError("get(int) called on a non-container Element");
 }
 
 ElementPtr
@@ -158,7 +158,7 @@ Element::size() const {
 
 bool
 Element::empty() const {
-    throwTypeError("empty() called on a non-list Element");
+    throwTypeError("empty() called on a non-container Element");
 }
 
 ConstElementPtr
@@ -213,6 +213,25 @@ operator==(const Element& a, const Element& b) {
 
 bool operator!=(const Element& a, const Element& b) {
     return (!a.equals(b));
+}
+
+bool
+operator<(Element const& a, Element const& b) {
+    if (a.getType() != b.getType()) {
+        isc_throw(BadValue, "cannot compare Elements of different types");
+    }
+    switch (a.getType()) {
+    case Element::integer:
+        return a.intValue() < b.intValue();
+    case Element::real:
+        return a.doubleValue() < b.doubleValue();
+    case Element::boolean:
+        return b.boolValue() || !a.boolValue();
+    case Element::string:
+        return std::strcmp(a.stringValue().c_str(), b.stringValue().c_str()) < 0;
+    }
+    isc_throw(BadValue, "cannot compare Elements of type " <<
+                            std::to_string(a.getType()));
 }
 
 //
@@ -1000,6 +1019,42 @@ ListElement::equals(const Element& other) const {
     } else {
         return (false);
     }
+}
+
+void
+ListElement::sort(std::string const& index /* = std::string() */) {
+    if (l.empty()) {
+        return;
+    }
+
+    int const t(l.at(0)->getType());
+    std::function<bool(ElementPtr, ElementPtr)> comparator;
+    if (t == map) {
+        if (index.empty()) {
+            isc_throw(BadValue, "index required when sorting maps");
+        }
+        comparator = [&](ElementPtr const& a, ElementPtr const& b) {
+            ConstElementPtr const& ai(a->get(index));
+            ConstElementPtr const& bi(b->get(index));
+            if (ai && bi) {
+                return *ai < *bi;
+            }
+            return true;
+        };
+    } else if (t == list) {
+        // Nested lists. Not supported.
+        return;
+    } else {
+        // Assume scalars.
+        if (!index.empty()) {
+            isc_throw(BadValue, "index given when sorting scalars?");
+        }
+        comparator = [&](ElementPtr const& a, ElementPtr const& b) {
+            return *a < *b;
+        };
+    }
+
+    std::sort(l.begin(), l.end(), comparator);
 }
 
 bool
