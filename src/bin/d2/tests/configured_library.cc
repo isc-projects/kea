@@ -32,7 +32,7 @@ d2_srv_configured(CalloutHandle& handle) {
         if (uc) {
             ConstElementPtr msg = uc->get("error");
             if (msg && (msg->getType() == Element::string)) {
-                error = msg->stringValue();
+                error += msg->stringValue();
             }
         }
     }
