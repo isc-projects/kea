@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <netconf/netconf_config.h>
 #include <netconf/http_control_socket.h>
 #include <netconf/stdout_control_socket.h>
@@ -20,7 +21,10 @@
 #include <http/tests/response_test.h>
 #include <testutils/threaded_test.h>
 #include <testutils/sandbox.h>
+#include <yang/tests/sysrepo_setup.h>
+
 #include <gtest/gtest.h>
+
 #include <sstream>
 #include <thread>
 
@@ -32,6 +36,8 @@ using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::test;
+
+using isc::yang::test::SysrepoSetup;
 
 namespace {
 
@@ -141,11 +147,15 @@ public:
     /// @brief Constructor.
     UnixControlSocketTest()
         : ThreadedTest(), io_service_() {
+    }
+
+
+    void SetUp() override {
+        SysrepoSetup::cleanSharedMemory();
         removeUnixSocketFile();
     }
 
-    /// @brief Destructor.
-    virtual ~UnixControlSocketTest() {
+    void TearDown() override {
         if (thread_) {
             thread_->join();
             thread_.reset();
@@ -504,13 +514,12 @@ public:
 /// @brief Test fixture class for http control sockets.
 class HttpControlSocketTest : public ThreadedTest {
 public:
-    /// @brief Constructor
-    HttpControlSocketTest()
-        : ThreadedTest(), io_service_() {
+    void SetUp() override {
+        SysrepoSetup::cleanSharedMemory();
     }
 
-    /// @brief Destructor.
-    virtual ~HttpControlSocketTest() {
+    void TearDown() override {
+        SysrepoSetup::cleanSharedMemory();
         if (thread_) {
             thread_->join();
             thread_.reset();
@@ -854,4 +863,4 @@ TEST_F(HttpControlSocketTest, partial) {
     stop();
 }
 
-}
+}  // namespace

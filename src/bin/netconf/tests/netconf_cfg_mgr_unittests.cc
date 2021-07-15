@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,7 +110,7 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_EQ(server2, ctx.getCfgServersMap()->at("dhcp6"));
 
     // Finally, set all servers.
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp4",  server3)));
+    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
     EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
     EXPECT_EQ(4, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW(ctx.getCfgServersMap()->at("dhcp4"));
@@ -190,7 +190,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     }
 }
 
-/// Netconf configurations used in tests.
+/// @brief Netconf configurations used in tests.
 const char* NETCONF_CONFIGS[] = {
 
     // configuration 0: empty (nothing specified)
@@ -731,4 +731,4 @@ TEST_F(NetconfParserTest, comments) {
     EXPECT_EQ("1", ctx6->get("version")->str());
 }
 
-}; // end of anonymous namespace
+}  // namespace

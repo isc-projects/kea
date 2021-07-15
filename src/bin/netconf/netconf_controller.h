@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ public:
     static process::DControllerBasePtr& instance();
 
     /// @brief Destructor
-    virtual ~NetconfController();
+    virtual ~NetconfController() = default;
 
     /// @brief Returns pointer to an instance of the underlying process object.
     NetconfProcessPtr getNetconfProcess();

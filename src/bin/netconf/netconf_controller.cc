@@ -10,6 +10,7 @@
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
+
 #include <signal.h>
 
 using namespace isc::process;
@@ -60,9 +61,6 @@ NetconfController::parseFile(const std::string& name) {
 
 NetconfController::NetconfController()
     : DControllerBase(netconf_app_name_, netconf_bin_name_) {
-}
-
-NetconfController::~NetconfController() {
 }
 
 NetconfProcessPtr

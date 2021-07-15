@@ -9,20 +9,14 @@
 #ifndef NETCONF_H
 #define NETCONF_H
 
-#ifndef HAVE_SYSREPO
-#error "config.h must be included before netconf.h"
-#endif
-
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/control_socket.h>
 #include <netconf/http_control_socket.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
-#ifndef HAVE_PRE_0_7_6_SYSREPO
+
 #include <sysrepo-cpp/Session.hpp>
-#else
-#include <sysrepo-cpp/Session.h>
-#endif
+
 #include <map>
 
 namespace isc {
@@ -44,9 +38,6 @@ typedef boost::shared_ptr<NetconfAgent> NetconfAgentPtr;
 ///  - on shutdown close subscriptions.
 class NetconfAgent {
 public:
-    /// @brief Constructor.
-    NetconfAgent();
-
     /// @brief Destructor (call clear).
     virtual ~NetconfAgent();
 
@@ -63,9 +54,6 @@ public:
     /// Load Kea server configurations from YANG datastore.
     /// Subscribe configuration changes in YANG datastore.
     ///
-    /// If @c NetconfProcess::global_shut_down_flag becomes true
-    /// returns as soon as possible.
-    ///
     /// @param cfg_mgr The configuration manager (can be null).
     void init(NetconfCfgMgrPtr cfg_mgr);
 
@@ -74,33 +62,26 @@ public:
     /// Close subscriptions and sysrepo.
     void clear();
 
-    /// @brief Validate.
+    /// @brief SR_EV_CHANGE callback.
     ///
     /// Validate YANG datastore changes using Kea configuration test.
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
-    static int validate(sysrepo::S_Session sess,
-                        const CfgServersMapPair& service_pair);
-#else
-    static int validate(S_Session sess, const CfgServersMapPair& service_pair);
-#endif
+    static sr_error_t
+    change(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
 
-    /// @brief Update.
+    /// @brief SR_EV_DONE callback.
     ///
-    /// Update a Kea configuration from YANG datastore changes.
+    /// Get notified that a Kea configuration has been written to the YANG
+    /// datastore.
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
-    static int update(sysrepo::S_Session sess,
-                      const CfgServersMapPair& service_pair);
-#else
-    static int update(S_Session sess, const CfgServersMapPair& service_pair);
-#endif
+    static sr_error_t
+    done(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief Log changes.
     ///
@@ -110,11 +91,7 @@ public:
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     static void logChanges(sysrepo::S_Session sess, const std::string& model);
-#else
-    static void logChanges(S_Session sess, const std::string& model);
-#endif
 
 protected:
     /// @brief Get and display Kea server configuration.
@@ -136,11 +113,19 @@ protected:
     /// @return true if available, false if not.
     bool checkModule(const std::string& module_name) const;
 
+    /// @brief Retrieve names and revisions of installed modules through the
+    /// sysrepo API.
+    void getModules();
+
     /// @brief Check module availability.
     ///
     /// Emit a warning if a module is missing or does not have
     /// the expected revision.
-    void checkModules() const;
+    ///
+    /// @param servers the configured servers to check against YANG_REVISIONS.
+    /// Is empty by default for when the caller only wants to check
+    /// installed modules.
+    void checkModules(CfgServersMapPtr const& servers = {}) const;
 
     /// @brief Retrieve Kea server configuration from the YANG startup
     ///        datastore and applies it to servers.
@@ -160,36 +145,32 @@ protected:
     /// @param service_pair The service name and configuration pair.
     void subscribeConfig(const CfgServersMapPair& service_pair);
 
+    /// @brief Subscribe to notifications for a given YANG module.
+    ///
+    /// @param service_pair the service name and configuration pair
+    void subscribeToNotifications(const CfgServersMapPair& service_pair);
+
+    /// @brief Set the shutdown flag of the process to true so that it can exit
+    /// at the earliest convenient time.
+    void announceShutdown() const;
+
+    /// @brief Check the shutdown flag of the process.
+    bool shouldShutdown() const;
+
     /// @brief Sysrepo connection.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Connection conn_;
-#else
-    S_Connection conn_;
-#endif
 
     /// @brief Sysrepo startup datastore session.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session startup_sess_;
-#else
-    S_Session startup_sess_;
-#endif
 
     /// @brief Sysrepo running datastore session.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session running_sess_;
-#else
-    S_Session running_sess_;
-#endif
 
     /// @brief Available modules and revisions in Sysrepo.
     std::map<const std::string, const std::string> modules_;
 
     /// @brief Subscription map.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     std::map<const std::string, sysrepo::S_Subscribe> subscriptions_;
-#else
-    std::map<const std::string, S_Subscribe> subscriptions_;
-#endif
 };
 
 } // namespace netconf

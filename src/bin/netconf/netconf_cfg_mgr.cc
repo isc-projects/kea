@@ -50,9 +50,6 @@ NetconfCfgMgr::NetconfCfgMgr()
     : DCfgMgrBase(ConfigPtr(new NetconfConfig())) {
 }
 
-NetconfCfgMgr::~NetconfCfgMgr() {
-}
-
 std::string
 NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 

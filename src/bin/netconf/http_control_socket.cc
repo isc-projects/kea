@@ -37,9 +37,6 @@ HttpControlSocket::HttpControlSocket(CfgControlSocketPtr ctrl_sock)
     : ControlSocketBase(ctrl_sock) {
 }
 
-HttpControlSocket::~HttpControlSocket() {
-}
-
 ConstElementPtr
 HttpControlSocket::configGet(const string& service) {
     if (service == "ca") {

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,7 +71,7 @@ readFile(const std::string& file_path) {
 
 /// @brief Runs parser in JSON mode
 ElementPtr
-parseJSON(const std::string& in,  bool verbose = false) {
+parseJSON(const std::string& in, bool verbose = false) {
     try {
         ParserContext ctx;
         return (ctx.parseString(in, ParserContext::PARSER_JSON));
@@ -85,7 +85,7 @@ parseJSON(const std::string& in,  bool verbose = false) {
 
 /// @brief Runs parser in NETCONF mode
 ElementPtr
-parseNETCONF(const std::string& in,  bool verbose = false) {
+parseNETCONF(const std::string& in, bool verbose = false) {
     try {
         ParserContext ctx;
         return (ctx.parseString(in, ParserContext::PARSER_NETCONF));
@@ -115,9 +115,9 @@ public:
     using NetconfCfgMgr::parse;
 };
 
-}
+}  // namespace
 
-/// Test fixture class
+/// @brief Test fixture class
 class NetconfGetCfgTest : public ConfigParseTest {
 public:
     NetconfGetCfgTest()
@@ -226,7 +226,7 @@ public:
     ConstElementPtr comment_;         ///< Reason for parse fail
 };
 
-/// Test a configuration
+// Test a simple configuration.
 TEST_F(NetconfGetCfgTest, simple) {
 
     // get the simple configuration

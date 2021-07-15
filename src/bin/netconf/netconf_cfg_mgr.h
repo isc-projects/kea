@@ -128,7 +128,7 @@ public:
     NetconfCfgMgr();
 
     /// @brief Destructor
-    virtual ~NetconfCfgMgr();
+    virtual ~NetconfCfgMgr() = default;
 
     /// @brief Convenience method that returns the Netconf configuration
     /// context.

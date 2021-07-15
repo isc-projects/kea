@@ -86,7 +86,7 @@ public:
                      const isc::http::Url& url);
 
     /// @brief Destructor (doing nothing).
-    virtual ~CfgControlSocket();
+    virtual ~CfgControlSocket() = default;
 
     /// @brief Getter which returns the socket type.
     ///
@@ -156,7 +156,7 @@ public:
     CfgServer(const std::string& model, CfgControlSocketPtr ctrl_sock);
 
     /// @brief Destructor (doing nothing).
-    virtual ~CfgServer();
+    virtual ~CfgServer() = default;
 
     /// @brief Getter which returns the model name.
     ///
@@ -193,11 +193,25 @@ public:
         return (subscribe_changes_);
     }
 
+    /// @brief Getter which returns the subscribe-changes flag.
+    ///
+    /// @return returns the subscribe-changes flag as a bool.
+    bool getSubscribeNotifications() const {
+        return (subscribe_notifications_);
+    }
+
     /// @brief Set the subscribe-changes flag.
     ///
     /// @param subscribe_changes The subscribe-changes flag.
     void setSubscribeChanges(bool subscribe_changes) {
         subscribe_changes_ = subscribe_changes;
+    }
+
+    /// @brief Set the subscribe-changes flag.
+    ///
+    /// @param subscribe_changes The subscribe-changes flag.
+    void setSubscribeNotifications(bool subscribe_notifications) {
+        subscribe_notifications_ = subscribe_notifications;
     }
 
     /// @brief Getter which returns the validate-changes flag.
@@ -237,6 +251,13 @@ private:
     /// If true (the default) the netconf agent subscribes module changes
     /// so will be notified when the YANG running configuration is changed.
     bool subscribe_changes_;
+
+    /// @brief The subscribe-notifications flag.
+    ///
+    /// If true (the default) the netconf agent subscribes to the notifications
+    /// API so it will be notified on various events like module installations
+    /// and uninstallations.
+    bool subscribe_notifications_;
 
     /// @brief The validate-changes flag.
     ///
@@ -301,7 +322,7 @@ public:
     CfgServerPtr parse(data::ConstElementPtr server_config);
 };
 
-}; // end of isc::netconf namespace
-}; // end of isc namespace
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_CONFIG_H

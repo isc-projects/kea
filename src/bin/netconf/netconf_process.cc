@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,14 +26,9 @@ using namespace isc::process;
 namespace isc {
 namespace netconf {
 
-std::atomic<bool> NetconfProcess::shut_down(false);
-
 NetconfProcess::NetconfProcess(const char* name,
                                const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new NetconfCfgMgr())) {
-}
-
-NetconfProcess::~NetconfProcess() {
 }
 
 void
@@ -48,22 +43,11 @@ NetconfProcess::run() {
         // Initialize netconf agent in a thread.
         std::thread th([this]() {
             try {
-                if (shouldShutdown()) {
-                    return;
-                }
                 // Initialize sysrepo.
                 agent_.initSysrepo();
-                if (shouldShutdown()) {
-                    return;
-                }
 
                 // Get the configuration manager.
-                NetconfCfgMgrPtr cfg_mgr;
-                if (shouldShutdown()) {
-                    return;
-                } else {
-                    cfg_mgr = getNetconfCfgMgr();
-                }
+                NetconfCfgMgrPtr cfg_mgr(getNetconfCfgMgr());
 
                 // Call init.
                 agent_.init(cfg_mgr);
@@ -113,7 +97,6 @@ NetconfProcess::runIO() {
 
 isc::data::ConstElementPtr
 NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
-    shut_down = true;
     setShutdownFlag(true);
     return (isc::config::createAnswer(0, "Netconf is shutting down"));
 }
