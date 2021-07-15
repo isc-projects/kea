@@ -259,11 +259,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorSubnet(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorSubnet(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSubnet();
@@ -322,11 +318,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorSubnets(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorSubnets(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSubnets();
@@ -369,7 +361,7 @@ protected:
                        const std::string& subsel);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_TRANSLATOR_SUBNET_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -28,22 +26,28 @@ namespace {
 extern char const client_classes[] = "client classes";
 
 /// @brief Test fixture class for @ref TranslatorClasses.
-class TranslatorClassesTest :
+class TranslatorClassesTestv4 :
     public GenericTranslatorTest<client_classes, TranslatorClasses> {
 public:
 
     /// Constructor.
-    TranslatorClassesTest() { }
+    TranslatorClassesTestv4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
+};
+class TranslatorClassesTestv6 :
+    public GenericTranslatorTest<client_classes, TranslatorClasses> {
+public:
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorClassesTest() { }
+    /// Constructor.
+    TranslatorClassesTestv6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
 };
 
 // This test verifies that an empty client class list can be properly
 // translated from YANG to JSON.
-TEST_F(TranslatorClassesTest, getEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorClassesTestv4, getEmpty) {
     // Get the client class list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes;
@@ -53,9 +57,7 @@ TEST_F(TranslatorClassesTest, getEmpty) {
 
 // This test verifies that one client class can be properly translated
 // from YANG to JSON.
-TEST_F(TranslatorClassesTest, get) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorClassesTestv6, get) {
     // Create the client class.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xclass = xpath + "/client-class[name='foo']";
@@ -83,9 +85,7 @@ TEST_F(TranslatorClassesTest, get) {
 
 // This test verifies that an empty client class list can be properly
 // translated from JSON to YANG.
-TEST_F(TranslatorClassesTest, setEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorClassesTestv4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes = Element::createList();
@@ -95,18 +95,11 @@ TEST_F(TranslatorClassesTest, setEmpty) {
     classes.reset();
     EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
     EXPECT_FALSE(classes);
-
-    // Check that the tree representation is empty.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
-    EXPECT_FALSE(tree);
 }
 
 // This test verifies that one client class can be properly translated
 // from JSON to YANG.
-TEST_F(TranslatorClassesTest, set) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorClassesTestv6, set) {
     // Set one client class.
     const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr classes = Element::createList();
@@ -125,24 +118,8 @@ TEST_F(TranslatorClassesTest, set) {
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(cclass->equals(*got->get(0)));
 
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "kea-dhcp6-server:config (container)\n"
-        " |\n"
-        " -- client-class (list instance)\n"
-        "     |\n"
-        "     -- name = foo\n"
-        "     |\n"
-        "     -- test = ''==''\n"
-        "     |\n"
-        "     -- only-if-required = false\n";
-    EXPECT_EQ(expected, tree->to_string(100));
-
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());
 }
 
-}; // end of anonymous namespace
+}  // namespace

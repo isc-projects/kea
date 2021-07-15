@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,25 +6,27 @@
 
 #include <config.h>
 
+#include <testutils/gtest_utils.h>
 #include <yang/translator.h>
 
 #include <boost/scoped_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
+
+using libyang::S_Data_Node;
 
 namespace {
 
 // Test constructor.
 TEST(TranslatorBasicTest, constructor) {
     // Get a connection.
-    S_Connection conn(new Connection("translator unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     // Get a session.
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     // Get a translator object.
@@ -61,11 +63,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 8 bit integer.
     uint8_t u8(123);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -74,11 +72,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 16 bit integer.
     uint16_t u16(12345);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u16));
-#else
-    s_val.reset(new Val(u16, SR_UINT16_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -87,11 +81,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 32 bit integer.
     uint32_t u32(123456789);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u32));
-#else
-    s_val.reset(new Val(u32, SR_UINT32_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -100,11 +90,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 8 bit integer.
     int8_t s8(-123);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s8));
-#else
-    s_val.reset(new Val(s8, SR_INT8_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -113,11 +99,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 16 bit integer.
     int16_t s16(-12345);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s16));
-#else
-    s_val.reset(new Val(s16, SR_INT16_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -126,11 +108,7 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 32 bit integer.
     int32_t s32(-123456789);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s32));
-#else
-    s_val.reset(new Val(s32, SR_INT32_T));
-#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -174,26 +152,13 @@ TEST(TranslatorBasicTest, valueFrom) {
 // Test basic yang value to JSON using sysrepo test models.
 TEST(TranslatorBasicTest, getItem) {
     // Get a translator object to play with.
-    S_Connection conn(new Connection("translator unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
-
-    // Container.
-    string xpath = "/keatest-module:container/list";
     S_Val s_val;
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     ConstElementPtr elem;
-    EXPECT_NO_THROW(elem = t_obj->getItem("/keatest-module:container"));
-    EXPECT_FALSE(elem);
-    elem.reset();
-
-    // List.
-    EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
-    ASSERT_TRUE(elem);
-    ASSERT_EQ(Element::list, elem->getType());
-    EXPECT_EQ(0, elem->size());
-    elem.reset();
+    string xpath;
 
     // String.
     xpath = "/keatest-module:main/string";
@@ -218,11 +183,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 8 bit integer.
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -233,11 +194,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 16 bit integer.
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u16));
-#else
-    s_val.reset(new Val(u16, SR_UINT16_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -248,11 +205,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 32 bit integer.
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u32));
-#else
-    s_val.reset(new Val(u32, SR_UINT32_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -263,11 +216,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 8 bit integer.
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s8));
-#else
-    s_val.reset(new Val(s8, SR_INT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -278,11 +227,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 16 bit integer.
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s16));
-#else
-    s_val.reset(new Val(s16, SR_INT16_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -293,11 +238,7 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 32 bit integer.
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s32));
-#else
-    s_val.reset(new Val(s32, SR_INT32_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -345,25 +286,13 @@ TEST(TranslatorBasicTest, getItem) {
 
     // Leaf-list: 1, 2 and 3.
     u8 = 1;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     u8 = 2;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     u8 = 3;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItems(xpath));
     ASSERT_TRUE(elem);
@@ -384,8 +313,9 @@ TEST(TranslatorBasicTest, getItem) {
 
     // Not found.
     xpath = "/keatest-module:main/no_such_string";
-    EXPECT_NO_THROW(sess->delete_item(xpath.c_str()));
-    EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
+    // sysrepo_exception: "Invalid argument" ¯\_(ツ)_/¯
+    EXPECT_THROW(sess->delete_item(xpath.c_str()), sysrepo_exception);
+    EXPECT_THROW(elem = t_obj->getItem(xpath), SysrepoError);
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -395,7 +325,7 @@ TEST(TranslatorBasicTest, getItem) {
         elem = t_obj->getItem(xpath);
         ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-        EXPECT_EQ("sysrepo error getting item at 'null': Invalid argument",
+        EXPECT_EQ("sysrepo error getting item at 'null': libyang error",
                   string(ex.what()));
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception with: " << ex.what();
@@ -519,7 +449,7 @@ TEST(TranslatorBasicTest, valueTo) {
 // Test JSON to  basic yang value using sysrepo test models.
 TEST(TranslatorBasicTest, setItem) {
     // Get a translator object to play with.
-    S_Connection conn(new Connection("translator unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
@@ -531,17 +461,8 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),
                  NotImplemented);
 
-    // List.
-    xpath = "/keatest-module:container/list";
-    elem = Element::createList();
-    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_LIST_T));
-    S_Val s_val;
-    EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(SR_LIST_T, s_val->type());
-    s_val.reset();
-
     // String.
+    S_Val s_val;
     xpath = "/keatest-module:main/string";
     elem = Element::create(string("str"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_STRING_T));
@@ -664,28 +585,27 @@ TEST(TranslatorBasicTest, setItem) {
 
     // Leaf-list.
     xpath = "/keatest-module:main/numbers";
-    S_Vals s_vals;
-    EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
-    EXPECT_FALSE(s_vals);
-    s_vals.reset();
+    S_Data_Node data_node;
+    EXPECT_NO_THROW(data_node = sess->get_subtree(xpath.c_str()));
+    EXPECT_FALSE(data_node);
+    data_node.reset();
 
     // Fill it.
-    elem = Element::create(1);
-    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT8_T));
-    elem = Element::create(2);
-    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT8_T));
-    elem = Element::create(3);
-    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT8_T));
-    EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
-    ASSERT_TRUE(s_vals);
-    EXPECT_EQ(3, s_vals->val_cnt());
-    s_vals.reset();
+    sess->set_item_str(xpath.c_str(), "1");
+    sess->set_item_str(xpath.c_str(), "2");
+    sess->set_item_str(xpath.c_str(), "3");
+    sess->apply_changes();
+    // sysrepo_exception: "Invalid argument" ¯\_(ツ)_/¯
+    EXPECT_THROW(data_node = sess->get_subtree(xpath.c_str()),
+        sysrepo_exception);
+    EXPECT_FALSE(data_node);
+    data_node.reset();
 
     // Clean it.
     EXPECT_NO_THROW(t_obj->delItem(xpath));
-    EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
-    EXPECT_FALSE(s_vals);
-    s_vals.reset();
+    EXPECT_NO_THROW(data_node = sess->get_subtree(xpath.c_str()));
+    EXPECT_FALSE(data_node);
+    data_node.reset();
 
     // Bad xpath.
     xpath = "/keatest-module:main/no_such_string";
@@ -695,7 +615,7 @@ TEST(TranslatorBasicTest, setItem) {
         ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
         string expected = "sysrepo error setting item '\"str\"' at '" +
-            xpath + "': Request contains unknown element";
+            xpath + "': Invalid argument";
         EXPECT_EQ(expected, string(ex.what()));
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception with: " << ex.what();
@@ -706,14 +626,19 @@ TEST(TranslatorBasicTest, setItem) {
     elem = Element::create(true);
     try {
         t_obj->setItem(xpath, elem, SR_BOOL_T);
-        ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-        string expected = "sysrepo error setting item 'true' at '" +
-            xpath + "': Invalid argument";
-        EXPECT_EQ(expected, string(ex.what()));
+        ADD_FAILURE() << "unexpected exception with: " << ex.what();
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
+
+    // In sysrepo 1.x, set_item() is based on set_item_str() which sets the
+    // value in textual format. After setting a value with SR_BOOL_T, it's value
+    // is now "true". :)
+    elem = t_obj->getItem(xpath);
+    ASSERT_TRUE(elem);
+    EXPECT_EQ(elem->getType(), Element::string);
+    EXPECT_EQ(elem->str(), "\"true\"");
 
     // Delete (twice).
     xpath = "/keatest-module:main/string";
@@ -721,41 +646,35 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_TRUE(s_val);
     s_val.reset();
     EXPECT_NO_THROW(t_obj->delItem(xpath));
-    EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
+    // sysrepo_exception: "Item not found" ¯\_(ツ)_/¯
+    EXPECT_THROW(s_val = sess->get_item(xpath.c_str()), sysrepo_exception);
     EXPECT_FALSE(s_val);
     EXPECT_NO_THROW(t_obj->delItem(xpath));
 }
 
-// Test yang list iteration.
+// Test yang list item retrieval.
 TEST(TranslatorBasicTest, list) {
     // Get a translator object to play with.
-    S_Connection conn(new Connection("translator unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
+    string xpath;
 
     // Empty list.
-    S_Iter_Value iter;
-    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
-    ASSERT_TRUE(iter);
-    string xpath;
-    EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_TRUE(xpath.empty());
+    ElementPtr element;
+    EXPECT_NO_THROW(element = t_obj->getItem("/keatest-module:container/list"));
+    EXPECT_FALSE(element);
+    element.reset();
 
     // Retried with a filled list.
     xpath = "/keatest-module:container/list[key1='key1'][key2='key2']/leaf";
     S_Val s_val(new Val("Leaf value"));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
-    ASSERT_TRUE(iter);
-    EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_EQ("/keatest-module:container/list[key1='key1'][key2='key2']",
-              xpath);
-    EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_TRUE(xpath.empty());
-
-    // Not found: same as empty because sr_get_items_iter() translates
-    // SR_ERR_NOT_FOUND by SR_ERR_OK...
+    EXPECT_NO_THROW(element = t_obj->getItem("/keatest-module:container/list"));
+    ASSERT_TRUE(element);
+    EXPECT_NO_THROW(element = t_obj->getItem("/keatest-module:container/list[key1='key1'][key2='key2']"));
+    ASSERT_TRUE(element);
 }
 
-}; // end of anonymous namespace
+} // anonymous namespace

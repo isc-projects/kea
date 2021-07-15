@@ -13,9 +13,7 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::util::encode;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -48,11 +46,7 @@ TranslatorBasic::~TranslatorBasic() {
 }
 
 ElementPtr
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 TranslatorBasic::value(sysrepo::S_Val s_val) {
-#else
-TranslatorBasic::value(S_Val s_val) {
-#endif
     if (!s_val) {
         isc_throw(BadValue, "value called with null");
     }
@@ -113,6 +107,10 @@ TranslatorBasic::getItem(const string& xpath) {
     try {
         s_val = session_->get_item(xpath.c_str());
     } catch (const sysrepo_exception& ex) {
+        if (std::string(ex.what()).find("Item not found") != string::npos) {
+            // The YANG configuration node was not there.
+            return nullptr;
+        }
         isc_throw(SysrepoError, "sysrepo error getting item at '" << xpath
                   << "': " << ex.what());
     }
@@ -124,23 +122,21 @@ TranslatorBasic::getItem(const string& xpath) {
 
 ElementPtr
 TranslatorBasic::getItems(const string& xpath) {
-    S_Vals s_vals;
+    S_Vals s_vals(getValuesFromItems(xpath));
+    if (!s_vals) {
+        return (ElementPtr());
+    }
+    ElementPtr result(Element::createList());
     try {
-        s_vals = session_->get_items(xpath.c_str());
-        if (!s_vals) {
-            return (ElementPtr());
-        }
-        ElementPtr result = Element::createList();
         for (size_t i = 0; i < s_vals->val_cnt(); ++i) {
             S_Val s_val = s_vals->val(i);
             result->add(value(s_val));
         }
-        return (result);
     } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
+        isc_throw(SysrepoError, "sysrepo error getting item at '"
+                                    << xpath << "': " << ex.what());
     }
+    return (result);
 }
 
 S_Val
@@ -188,11 +184,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<uint8_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<uint8_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_UINT16_T:
@@ -201,11 +193,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<uint16_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<uint16_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_UINT32_T:
@@ -214,11 +202,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<uint32_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<uint32_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_INT8_T:
@@ -227,11 +211,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<int8_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<int8_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_INT16_T:
@@ -240,11 +220,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<int16_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<int16_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_INT32_T:
@@ -253,11 +229,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
-#ifdef HAVE_POST_0_7_7_SYSREPO
-        s_val.reset(new Val(static_cast<int32_t>(elem->intValue())));
-#else
-        s_val.reset(new Val(static_cast<int32_t>(elem->intValue()), type));
-#endif
+        s_val.reset(new Val(elem->intValue(), type));
         break;
 
     case SR_DECIMAL64_T:
@@ -288,9 +260,6 @@ void
 TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
                          sr_type_t type) {
     S_Val s_val = value(elem, type);
-    if (!s_val && (type != SR_LIST_T)) {
-        return;
-    }
     try {
         session_->set_item(xpath.c_str(), s_val);
     } catch (const sysrepo_exception& ex) {
@@ -298,6 +267,7 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
                   "sysrepo error setting item '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
     }
+    session_->apply_changes();
 }
 
 void
@@ -305,35 +275,24 @@ TranslatorBasic::delItem(const std::string& xpath) {
     try {
         session_->delete_item(xpath.c_str());
     } catch (const sysrepo_exception& ex) {
+        if (std::string(ex.what()).find("Invalid argument") != string::npos) {
+            // The YANG configuration node was not there.
+            return;
+        }
         isc_throw(SysrepoError,
                   "sysrepo error deleting item at '"
                   << xpath << "': " << ex.what());
     }
+    session_->apply_changes();
 }
 
-
-S_Iter_Value
-TranslatorBasic::getIter(const std::string& xpath) {
-    return (session_->get_items_iter(xpath.c_str()));
-}
-
-string
-TranslatorBasic::getNext(S_Iter_Value iter) {
-    if (!iter) {
-        isc_throw(BadValue, "getNext called with null");
-    }
-    S_Val s_val;
+S_Vals TranslatorBasic::getValuesFromItems(std::string const& xpath) {
     try {
-        s_val = session_->get_item_next(iter);
-    } catch (const sysrepo_exception&) {
-        // Should not happen according to the doc but still happen?
-        return ("");
+        return session_->get_items(xpath.c_str());
+    } catch (sysrepo::sysrepo_exception const& exception) {
+        isc_throw(SysrepoError, "sysrepo error getting items: " << exception.what());
     }
-    if (!s_val) {
-        return ("");
-    }
-    return (s_val->xpath());
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

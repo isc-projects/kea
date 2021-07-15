@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -388,11 +388,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorConfig(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorConfig(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorConfig();
@@ -483,6 +479,8 @@ protected:
     /// @param elem The JSON element.
     void setServerKeaDhcpCommon(const std::string& xpath,
                                 isc::data::ConstElementPtr elem);
+
+    isc::data::ElementPtr getHook(const std::string& xpath);
 
     /// @brief Retrieves hooks configuration from sysrepo.
     ///

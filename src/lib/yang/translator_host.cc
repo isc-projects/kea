@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -193,26 +191,8 @@ TranslatorHosts::~TranslatorHosts() {
 
 ElementPtr
 TranslatorHosts::getHosts(const string& xpath) {
-    try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/host");
-        if (!iter) {
-            // Can't happen.
-            isc_throw(Unexpected, "getHosts can't get iterator: " << xpath);
-        }
-        for (;;) {
-            const string& host = getNext(iter);
-            if (host.empty()) {
-                break;
-            }
-            result->add(getHost(host));
-        }
-        return (result);
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting host reservations at '" << xpath
-                  << "': " << ex.what());
-    }
+    return getList<TranslatorHost>(xpath + "/host", *this,
+                                   &TranslatorHost::getHost);
 }
 
 void
@@ -277,5 +257,5 @@ TranslatorHosts::setHostsKea(const string& xpath, ConstElementPtr elem) {
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

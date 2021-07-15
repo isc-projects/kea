@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,14 @@
 #include <testutils/user_context_utils.h>
 #include <yang/translator_config.h>
 #include <yang/yang_models.h>
-#include <yang/tests/yang_configs.h>
 #include <yang/tests/json_configs.h>
+#include <yang/tests/yang_configs.h>
+#include <yang/tests/sysrepo_setup.h>
+
 #include <boost/algorithm/string.hpp>
+
 #include <gtest/gtest.h>
+
 #include <iostream>
 
 using namespace std;
@@ -21,9 +25,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -50,39 +52,38 @@ std::string generateDiff(std::string, std::string) {
 }
 #endif
 
-
 /// @brief Test Fixture class for Yang <-> JSON configs.
 class ConfigTest : public ::testing::Test {
 public:
+    virtual ~ConfigTest() = default;
 
-    /// @brief Constructor.
-    ConfigTest() {
-        createSession();
+    void SetUp() override {
+        SysrepoSetup::cleanSharedMemory();
+        connection_ = std::make_shared<Connection>();
+        session_.reset(new Session(connection_, SR_DS_CANDIDATE));
+        translator_.reset(new TranslatorBasic(session_, model_));
+        cleanModelData();
     }
 
-    /// @brief Virtual destructor.
-    virtual ~ConfigTest() {
+    void TearDown() override {
+        cleanModelData();
+        translator_.reset();
         session_.reset();
         connection_.reset();
-        model_.clear();
+        SysrepoSetup::cleanSharedMemory();
     }
 
-    /// @brief Set model.
-    ///
-    /// @param model The model name.
-    void setModel(const string model) {
-        model_ = model;
-    }
-
-    /// @brief Create session.
-    void createSession() {
-        connection_.reset(new Connection("configs unittests"));
-        session_.reset(new Session(connection_, SR_DS_CANDIDATE));
+    void cleanModelData() {
+        std::string toplevel_node("config");
+        if (model_ == IETF_DHCPV6_SERVER) {
+            toplevel_node = "server";
+        }
+        translator_->delItem("/" + model_ + ":" + toplevel_node);
     }
 
     /// @brief Reset session.
     void resetSession() {
-        session_.reset(new Session(connection_, SR_DS_CANDIDATE));
+        SetUp();
     }
 
     /// @brief Loads YANG configuration from specified tree.
@@ -105,7 +106,7 @@ public:
     ///
     /// @param config The JSON tree to load in textual format.
     void load(const string& config) {
-        ConstElementPtr json;
+        ElementPtr json;
         ASSERT_NO_THROW(json = Element::fromJSON(config));
         load(json);
     }
@@ -192,13 +193,28 @@ public:
 
     /// @brief The sysrepo session.
     S_Session session_;
+
+    std::unique_ptr<TranslatorBasic> translator_;
+};
+
+struct ConfigTestKeaV4 : ConfigTest {
+    ConfigTestKeaV4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
+};
+struct ConfigTestKeaV6 : ConfigTest {
+    ConfigTestKeaV6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+};
+struct ConfigTestIetfV6 : ConfigTest {
+    ConfigTestIetfV6() {
+        model_ = IETF_DHCPV6_SERVER;
+    }
 };
 
 // Check empty config with ietf-dhcpv6-server model.
-TEST_F(ConfigTest, emptyIetf6) {
-    // First set the model.
-    setModel(IETF_DHCPV6_SERVER);
-
+TEST_F(ConfigTestIetfV6, emptyIetf6) {
     YRTree tree;
     ASSERT_NO_THROW(load(tree));
     EXPECT_TRUE(verify(tree));
@@ -211,45 +227,36 @@ TEST_F(ConfigTest, emptyIetf6) {
 }
 
 // Check empty config with kea-dhcp4-server:config model.
-TEST_F(ConfigTest, emptyKeaDhcp4) {
-    // First set the model.
-    setModel(KEA_DHCP4_SERVER);
-
+TEST_F(ConfigTestKeaV4, emptyKeaDhcp4) {
     YRTree tree;
     ASSERT_NO_THROW(load(tree));
-    EXPECT_TRUE(verify(tree));
+    EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
 
     ConstElementPtr json = Element::fromJSON(emptyJson4);
     EXPECT_TRUE(verify(json));
     ASSERT_NO_THROW(load(json));
     EXPECT_TRUE(verify(emptyJson4));
-    EXPECT_TRUE(verify(tree));
+    EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
 }
 
 // Check empty config with kea-dhcp6-server:config model.
-TEST_F(ConfigTest, emptyKeaDhcp6) {
-    // First set the model.
-    setModel(KEA_DHCP6_SERVER);
-
+TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
     YRTree tree;
     ASSERT_NO_THROW(load(tree));
-    EXPECT_TRUE(verify(tree));
+    EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 
     ConstElementPtr json = Element::fromJSON(emptyJson6);
     EXPECT_TRUE(verify(json));
     ASSERT_NO_THROW(load(json));
     EXPECT_TRUE(verify(emptyJson6));
-    EXPECT_TRUE(verify(tree));
+    EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 }
 
 // Check subnet with two pools with ietf-dhcpv6-server model.
 // Validation will fail because the current model has a vendor-info
 // container with a mandatory ent-num leaf and no presence flag,
 // and of course the candidate YANG tree has nothing for this.
-TEST_F(ConfigTest, subnetTwoPoolsIetf6) {
-    // First set the model.
-    setModel(subnetTwoPoolsModelIetf6);
-
+TEST_F(ConfigTestIetfV6, subnetTwoPoolsIetf6) {
     ASSERT_NO_THROW(load(subnetTwoPoolsTreeIetf6));
     EXPECT_TRUE(verify(subnetTwoPoolsJson6));
 
@@ -258,16 +265,12 @@ TEST_F(ConfigTest, subnetTwoPoolsIetf6) {
     ASSERT_NO_THROW(load(subnetTwoPoolsJson6));
     EXPECT_TRUE(verify(subnetTwoPoolsTreeIetf6));
 
-    cout << "validation is expected to fail: please ignore messages" << endl;
     EXPECT_FALSE(validate());
 }
 
 // Check subnet with a pool and option data lists with
 // kea-dhcp4-server:config model.
-TEST_F(ConfigTest, subnetOptionsKeaDhcp4) {
-    // First set the model.
-    setModel(subnetOptionsModelKeaDhcp4);
-
+TEST_F(ConfigTestKeaV4, subnetOptionsKeaDhcp4) {
     ASSERT_NO_THROW(load(subnetOptionsTreeKeaDhcp4));
     EXPECT_TRUE(verify(subnetOptionsJson4));
 
@@ -281,10 +284,7 @@ TEST_F(ConfigTest, subnetOptionsKeaDhcp4) {
 
 // Check subnet with a pool and option data lists with
 // kea-dhcp6-server:config model.
-TEST_F(ConfigTest, subnetOptionsKeaDhcp6) {
-    // First set the model.
-    setModel(subnetOptionsModelKeaDhcp6);
-
+TEST_F(ConfigTestKeaV6, subnetOptionsKeaDhcp6) {
     ASSERT_NO_THROW(load(subnetOptionsTreeKeaDhcp6));
     EXPECT_TRUE(verify(subnetOptionsJson6));
 
@@ -297,10 +297,7 @@ TEST_F(ConfigTest, subnetOptionsKeaDhcp6) {
 }
 
 // Check with timers.
-TEST_F(ConfigTest, subnetTimersIetf6) {
-    // First set the model.
-    setModel(subnetTimersModel);
-
+TEST_F(ConfigTestIetfV6, subnetTimersIetf6) {
     ASSERT_NO_THROW(load(subnetTimersIetf6));
     EXPECT_TRUE(verify(subnetTimersJson6));
 
@@ -311,10 +308,7 @@ TEST_F(ConfigTest, subnetTimersIetf6) {
 }
 
 // Check a ietf-dhcpv6-server configuration which validates.
-TEST_F(ConfigTest, validateIetf6) {
-    // First set the model.
-    setModel(validModelIetf6);
-
+TEST_F(ConfigTestIetfV6, validateIetf6) {
     ASSERT_NO_THROW(load(validTreeIetf6));
     EXPECT_TRUE(verify(validTreeIetf6));
 
@@ -328,10 +322,7 @@ TEST_F(ConfigTest, validateIetf6) {
 }
 
 // Check Kea4 example files.
-TEST_F(ConfigTest, examples4) {
-    // First set the model.
-    setModel(KEA_DHCP4_SERVER);
-
+TEST_F(ConfigTestKeaV4, examples4) {
     vector<string> examples = {
         "advanced.json",
         "all-keys-netconf.json",
@@ -369,10 +360,7 @@ TEST_F(ConfigTest, examples4) {
 }
 
 // Check Kea6 example files.
-TEST_F(ConfigTest, examples6) {
-    // First set the model.
-    setModel(KEA_DHCP6_SERVER);
-
+TEST_F(ConfigTestKeaV6, examples6) {
     vector<string> examples = {
         "advanced.json",
         "all-keys-netconf.json",
@@ -414,10 +402,7 @@ TEST_F(ConfigTest, examples6) {
 }
 
 // Check the example in the design document.
-TEST_F(ConfigTest, designExample) {
-    // First set the model.
-    setModel(designExampleModel);
-
+TEST_F(ConfigTestIetfV6, designExample) {
     ASSERT_NO_THROW(load(designExampleTree));
     EXPECT_TRUE(verify(designExampleJson));
 
@@ -427,4 +412,4 @@ TEST_F(ConfigTest, designExample) {
     EXPECT_TRUE(verify(designExampleTree));
 }
 
-}; // end of anonymous namespace
+}  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -349,27 +347,8 @@ TranslatorSharedNetworks::~TranslatorSharedNetworks() {
 
 ElementPtr
 TranslatorSharedNetworks::getSharedNetworks(const string& xpath) {
-    try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/shared-network");
-        if (!iter) {
-            // Can't happen.
-            isc_throw(Unexpected, "getSharedNetworks: can't get iterator: "
-                      << xpath);
-        }
-        for (;;) {
-            const string& network = getNext(iter);
-            if (network.empty()) {
-                break;
-            }
-            result->add(getSharedNetwork(network));
-        }
-        return (result);
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting shared networks at '" << xpath
-                  << "': " << ex.what());
-    }
+    return getList<TranslatorSharedNetwork>(xpath + "/shared-network", *this,
+                                            &TranslatorSharedNetwork::getSharedNetwork);
 }
 
 void
@@ -407,5 +386,5 @@ TranslatorSharedNetworks::setSharedNetworksKea(const string& xpath,
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

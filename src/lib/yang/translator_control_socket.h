@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,12 +74,8 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorControlSocket(sysrepo::S_Session session,
                             const std::string& model);
-#else
-    TranslatorControlSocket(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorControlSocket();
@@ -119,7 +115,7 @@ protected:
                              isc::data::ConstElementPtr elem);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_TRANSLATOR_CONTROL_SOCKET_H

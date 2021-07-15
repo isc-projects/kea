@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,16 +6,15 @@
 
 #include <config.h>
 
-#include <yang/translator_subnet.h>
 #include <yang/adaptor_pool.h>
+#include <yang/translator_subnet.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -87,7 +86,9 @@ TranslatorSubnet::getSubnetIetf6(const string& xpath) {
         result->set("user-context", context);
     }
     /// missing a lot of things
-    AdaptorPool::toSubnet(model_, result, result->get("pools"));
+    if (result->get("pools")) {
+        AdaptorPool::toSubnet(model_, result, result->get("pools"));
+    }
     return (result);
 }
 
@@ -484,20 +485,8 @@ TranslatorSubnets::getSubnets(const string& xpath) {
 ElementPtr
 TranslatorSubnets::getSubnetsCommon(const string& xpath,
                                     const std::string& subsel) {
-    ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/" + subsel);
-    if (!iter) {
-        /// Can't happen.
-        isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
-    }
-    for (;;) {
-        const string& subnet = getNext(iter);
-        if (subnet.empty()) {
-            break;
-        }
-        result->add(getSubnet(subnet));
-    }
-    return (result);
+    return getList<TranslatorSubnet>(xpath + "/" + subsel, *this,
+                                     &TranslatorSubnet::getSubnet);
 }
 
 void
@@ -550,5 +539,5 @@ TranslatorSubnets::setSubnetsKea(const string& xpath, ConstElementPtr elem,
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -103,21 +101,8 @@ TranslatorLogger::getOutputOption(const string& xpath) {
 
 ElementPtr
 TranslatorLogger::getOutputOptions(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/output-option");
-    if (!iter) {
-        // Can't happen.
-        isc_throw(Unexpected, "getOutputOptions: can't get iterator: "
-                  << xpath);
-    }
-    ElementPtr result = Element::createList();
-    for (;;) {
-        const string& option = getNext(iter);
-        if (option.empty()) {
-            break;
-        }
-        result->add(getOutputOption(option));
-    }
-    return (result);
+    return getList(xpath + "/output-option", *this,
+                   &TranslatorLogger::getOutputOption);
 }
 
 void
@@ -197,7 +182,7 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr option = elem->get(i);
         if (!option->contains("output")) {
-            isc_throw(BadValue, "output-options without output: "
+            isc_throw(BadValue, "output-option without output: "
                       << option->str());
         }
         string output = option->get("output")->stringValue();
@@ -235,20 +220,8 @@ TranslatorLoggers::getLoggers(const string& xpath) {
 
 ElementPtr
 TranslatorLoggers::getLoggersKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/logger");
-    if (!iter) {
-        // Can't happen.
-        isc_throw(Unexpected, "getLoggersKea: can't get iterator: " << xpath);
-    }
-    ElementPtr result = Element::createList();
-    for (;;) {
-        const string& logger = getNext(iter);
-        if (logger.empty()) {
-            break;
-        }
-        result->add(getLogger(logger));
-    }
-    return (result);
+    return getList<TranslatorLogger>(xpath + "/logger", *this,
+                                     &TranslatorLogger::getLogger);
 }
 
 void
@@ -284,5 +257,5 @@ TranslatorLoggers::setLoggersKea(const string& xpath, ConstElementPtr elem) {
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

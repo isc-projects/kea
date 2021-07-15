@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,9 +17,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -27,22 +25,43 @@ namespace {
 extern char const control_socket[] = "control socket";
 
 /// @brief Test fixture class for @ref TranslatorControlSocket.
-class TranslatorControlSocketTest :
+class TranslatorControlSocketTestv4 :
     public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
 public:
 
     /// Constructor.
-    TranslatorControlSocketTest() { }
+    TranslatorControlSocketTestv4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorControlSocketTest() { }
+    virtual ~TranslatorControlSocketTestv4() = default;
+};
+class TranslatorControlSocketTestv6 :
+    public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
+public:
+
+    /// Constructor.
+    TranslatorControlSocketTestv6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+
+    virtual ~TranslatorControlSocketTestv6() = default;
+};
+class TranslatorControlSocketTestCtrlAgent :
+    public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
+public:
+
+    /// Constructor.
+    TranslatorControlSocketTestCtrlAgent() {
+        model_ = KEA_CTRL_AGENT;
+    }
+
+    virtual ~TranslatorControlSocketTestCtrlAgent() = default;
 };
 
 // This test verifies that an empty control socket can be properly
 // translated from YANG to JSON.
-TEST_F(TranslatorControlSocketTest, getEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorControlSocketTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
     ConstElementPtr sock;
@@ -52,9 +71,7 @@ TEST_F(TranslatorControlSocketTest, getEmpty) {
 
 // This test verifies that a not empty control socket can be properly
 // translated from YANG to JSON.
-TEST_F(TranslatorControlSocketTest, get) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorControlSocketTestv6, get) {
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config/control-socket";
     const string& xname = xpath + "/socket-name";
@@ -88,9 +105,7 @@ TEST_F(TranslatorControlSocketTest, get) {
 
 // This test verifies that a not empty control socket can be properly
 // translated from JSON to YANG.
-TEST_F(TranslatorControlSocketTest, set) {
-    useModel(KEA_CTRL_AGENT);
-
+TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
     // Set a value.
     const string& xpath =
         "/kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/control-socket";
@@ -129,9 +144,7 @@ TEST_F(TranslatorControlSocketTest, set) {
 
 // This test verifies that an empty control socket can be properly
 // translated from JSON to YANG.
-TEST_F(TranslatorControlSocketTest, setEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorControlSocketTestv4, setEmpty) {
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
     const string& xname = xpath + "/socket-name";
@@ -143,14 +156,21 @@ TEST_F(TranslatorControlSocketTest, setEmpty) {
     EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     S_Val s_context(new Val("{ \"foo\": 1 }"));
     EXPECT_NO_THROW(sess_->set_item(xcontext.c_str(), s_context));
-
-    // Reset to empty.
-    ASSERT_NO_THROW(t_obj_->setControlSocket(xpath, ConstElementPtr()));
+    sess_->apply_changes();
 
     // Get it back.
     ConstElementPtr sock;
     EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
+    ASSERT_TRUE(sock);
+    EXPECT_EQ(sock->str(),
+        R"({ "socket-name": "/tmp/kea.sock", "socket-type": "unix", "user-context": { "foo": 1 } })");
+
+    // Reset to empty.
+    EXPECT_NO_THROW(t_obj_->setControlSocket(xpath, ConstElementPtr()));
+
+    // Get it back.
+    EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
     EXPECT_FALSE(sock);
 }
 
-}; // end of anonymous namespace
+}  // namespace

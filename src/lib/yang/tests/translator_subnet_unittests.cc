@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,9 +17,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -27,51 +25,58 @@ namespace {
 extern char const subnet_list[] = "subnet list";
 
 /// @brief Test fixture class for @ref TranslatorSubnets.
-class TranslatorSubnetsTest :
+class TranslatorSubnetsTestKeaV4 :
     public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
 public:
 
     /// Constructor.
-    TranslatorSubnetsTest() { }
+    TranslatorSubnetsTestKeaV4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
+};
+class TranslatorSubnetsTestKeaV6 :
+    public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
+public:
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorSubnetsTest() { }
+    /// Constructor.
+    TranslatorSubnetsTestKeaV6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+};
+class TranslatorSubnetsTestIetfV6 :
+    public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
+public:
+
+    /// Constructor.
+    TranslatorSubnetsTestIetfV6() {
+        model_ = IETF_DHCPV6_SERVER;
+    }
 };
 
 // This test verifies that an empty subnet list can be properly
 // translated from YANG to JSON using IETF model.
-TEST_F(TranslatorSubnetsTest, getEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, getEmptyIetf) {
     // Get the subnet list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
-    ASSERT_TRUE(subnets);
-    ASSERT_EQ(Element::list, subnets->getType());
-    EXPECT_EQ(0, subnets->size());
+    ASSERT_FALSE(subnets);
 }
 
 // This test verifies that an empty subnet list can be properly
 // translated from YANG to JSON using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, getEmptyKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV6, getEmptyKea) {
     // Get the subnet list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config";
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
-    ASSERT_TRUE(subnets);
-    ASSERT_EQ(Element::list, subnets->getType());
-    EXPECT_EQ(0, subnets->size());
+    ASSERT_FALSE(subnets);
 }
 
 // This test verifies that one subnet can be properly
 // translated from YANG to JSON using IETF model.
-TEST_F(TranslatorSubnetsTest, getIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
@@ -84,7 +89,7 @@ TEST_F(TranslatorSubnetsTest, getIetf) {
     ConstElementPtr subnet;
     EXPECT_NO_THROW(subnet = t_obj_->getSubnet(xsub));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("{ \"id\": 111, \"pools\": [  ], "
+    EXPECT_EQ("{ \"id\": 111, "
               "\"subnet\": \"2001:db8::/48\" }",
               subnet->str());
 
@@ -94,14 +99,13 @@ TEST_F(TranslatorSubnetsTest, getIetf) {
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
+    ASSERT_TRUE(subnets->get(0));
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
 // This test verifies that one subnet can be properly
 // translated from YANG to JSON using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, getKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xsub = xpath + "/subnet6[id='111']";
@@ -129,9 +133,7 @@ TEST_F(TranslatorSubnetsTest, getKea) {
 
 // This test verifies that one subnet with two pools can be properly
 // translated from YANG to JSON using IETF model.
-TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
@@ -150,10 +152,6 @@ TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
     const string& prefix2 = xpool + "/address-pool[pool-id='2']/pool-prefix";
     S_Val s_pool2(new Val("2001:db8::2:0/112"));
     EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
-
-    // Uncomment this for debugging.
-    // S_Tree tree = sess_->get_subtree("/ietf-dhcpv6-server:server");
-    // cerr << "tree:\n" << tree->to_string(100) << "\n";
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -185,9 +183,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
 
 // This test verifies that one subnet with two pools can be properly
 // translated from YANG to JSON using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, getPoolsKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xsub = xpath + "/subnet6[id='111']";
@@ -206,10 +202,6 @@ TEST_F(TranslatorSubnetsTest, getPoolsKea) {
         "[end-address='2001:db8::2:ffff']";
     S_Val s_pool2;
     EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
-
-    // Uncomment this for debugging.
-    // S_Tree tree = sess_->get_subtree("/kea-dhcp6-server:config");
-    // cerr << "tree:\n" << tree->to_string(100) << "\n";
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -241,9 +233,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsKea) {
 
 // This test verifies that an empty subnet list can be properly
 // translated from JSON to YANG using IETF model.
-TEST_F(TranslatorSubnetsTest, setEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, setEmptyIetf) {
     // Set empty list.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
@@ -253,21 +243,12 @@ TEST_F(TranslatorSubnetsTest, setEmptyIetf) {
     // Get it back.
     subnets.reset();
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
-    ASSERT_TRUE(subnets);
-    ASSERT_EQ(Element::list, subnets->getType());
-    EXPECT_EQ(0, subnets->size());
-
-    // Check that the tree representation is empty.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/ietf-dhcpv6-server:server"));
-    EXPECT_FALSE(tree);
+    ASSERT_FALSE(subnets);
 }
 
 // This test verifies that an empty subnet list can be properly
 // translated from JSON to YANG using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, setEmptyKea) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV4, setEmptyKea) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
@@ -276,21 +257,12 @@ TEST_F(TranslatorSubnetsTest, setEmptyKea) {
     // Get it back.
     subnets.reset();
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
-    ASSERT_TRUE(subnets);
-    ASSERT_EQ(Element::list, subnets->getType());
-    EXPECT_EQ(0, subnets->size());
-
-    // Check that the tree representation is empty.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
-    EXPECT_FALSE(tree);
+    ASSERT_FALSE(subnets);
 }
 
 // This test verifies that one subnet can be properly
 // translated from JSON to YANG using IETF model.
-TEST_F(TranslatorSubnetsTest, setIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, setIetf) {
     // Set one subnet.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
@@ -298,7 +270,6 @@ TEST_F(TranslatorSubnetsTest, setIetf) {
     ElementPtr subnet = Element::createMap();
     subnet->set("subnet", Element::create(string("2001:db8::/48")));
     subnet->set("id", Element::create(123));
-    subnet->set("pools", Element::createList());
     subnets->add(subnet);
     EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
 
@@ -313,9 +284,7 @@ TEST_F(TranslatorSubnetsTest, setIetf) {
 
 // This test verifies that one subnet can be properly
 // translated from JSON to YANG using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, setKea) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV4, setKea) {
     // Set one subnet.
     const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
@@ -339,9 +308,7 @@ TEST_F(TranslatorSubnetsTest, setKea) {
 
 // This test verifies that one subnet with two pools can be properly
 // translated from JSON to YANG using IETF model.
-TEST_F(TranslatorSubnetsTest, setTwoIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorSubnetsTestIetfV6, setTwoIetf) {
     // Set one subnet.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
@@ -371,57 +338,11 @@ TEST_F(TranslatorSubnetsTest, setTwoIetf) {
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
-
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/ietf-dhcpv6-server:server"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "ietf-dhcpv6-server:server (container)\n"
-        " |\n"
-        " -- server-config (container)\n"
-        "     |\n"
-        "     -- network-ranges (container)\n"
-        "         |\n"
-        "         -- network-range (list instance)\n"
-        "             |\n"
-        "             -- network-range-id = 123\n"
-        "             |\n"
-        "             -- network-prefix = 2001:db8::/48\n"
-        "             |\n"
-        "             -- address-pools (container)\n"
-        "                 |\n"
-        "                 -- address-pool (list instance)\n"
-        "                 |   |\n"
-        "                 |   -- pool-id = 0\n"
-        "                 |   |\n"
-        "                 |   -- pool-prefix = 2001:db8::1:0/112\n"
-        "                 |   |\n"
-        "                 |   -- start-address = 2001:db8::1:0\n"
-        "                 |   |\n"
-        "                 |   -- end-address = 2001:db8::1:ffff\n"
-        "                 |   |\n"
-        "                 |   -- max-address-count = disabled\n"
-        "                 |\n"
-        "                 -- address-pool (list instance)\n"
-        "                     |\n"
-        "                     -- pool-id = 1\n"
-        "                     |\n"
-        "                     -- pool-prefix = 2001:db8::2:0/112\n"
-        "                     |\n"
-        "                     -- start-address = 2001:db8::2:0\n"
-        "                     |\n"
-        "                     -- end-address = 2001:db8::2:ffff\n"
-        "                     |\n"
-        "                     -- max-address-count = disabled\n";
-    EXPECT_EQ(expected, tree->to_string(100));
 }
 
 // This test verifies that one subnet with two pools can be properly
 // translated from JSON to YANG using Kea ad hoc model.
-TEST_F(TranslatorSubnetsTest, setTwoKea) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorSubnetsTestKeaV4, setTwoKea) {
     // Set one subnet.
     const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
@@ -451,36 +372,8 @@ TEST_F(TranslatorSubnetsTest, setTwoKea) {
     ASSERT_EQ(1, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "kea-dhcp4-server:config (container)\n"
-        " |\n"
-        " -- subnet4 (list instance)\n"
-        "     |\n"
-        "     -- id = 123\n"
-        "     |\n"
-        "     -- pool (list instance)\n"
-        "     |   |\n"
-        "     |   -- start-address = 10.0.1.0\n"
-        "     |   |\n"
-        "     |   -- end-address = 10.0.1.15\n"
-        "     |   |\n"
-        "     |   -- prefix = 10.0.1.0/28\n"
-        "     |\n"
-        "     -- pool (list instance)\n"
-        "     |   |\n"
-        "     |   -- start-address = 10.0.1.200\n"
-        "     |   |\n"
-        "     |   -- end-address = 10.0.1.222\n"
-        "     |\n"
-        "     -- subnet = 10.0.1.0/24\n";
-    EXPECT_EQ(expected, tree->to_string(100));
-
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());
 }
 
-}; // end of anonymous namespace
+}  // namespace

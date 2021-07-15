@@ -114,11 +114,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorDatabase(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorDatabase(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorDatabase();
@@ -171,11 +167,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorDatabases(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorDatabases(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorDatabases();
@@ -213,7 +205,7 @@ protected:
                          isc::data::ConstElementPtr elem);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_TRANSLATOR_DATABASE_H

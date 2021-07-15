@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,7 +155,6 @@ const std::string designExampleJson =
     "        \"id\": 1,\n"
     "        \"subnet\": \"2001:db8:20:b00::/56\",\n"
     "        \"user-context\": { \"description\": \"example\" },\n"
-    "        \"pools\": [ ],\n"
     "        \"pd-pools\": [\n"
     "          {\n"
     "            \"prefix\": \"2001:db8:20:b00::\",\n"
@@ -168,8 +167,8 @@ const std::string designExampleJson =
     "  }\n"
     "}";
 
-}; // end of namespace isc::yang::test
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace test
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_JSON_CONFIGS_H

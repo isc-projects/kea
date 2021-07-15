@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,8 +57,8 @@ bool LogContentTest::checkFile() {
     while (getline(file, line) && (i != exp_strings_.size())) {
         exp_line = exp_strings_[i];
         if (verbose_) {
-            cout << "Read line  :" << line << endl;
-            cout << "Looking for:" << exp_line << endl;
+            cout << "Read line  : " << line << endl;
+            cout << "Looking for: " << exp_line << endl;
         }
         i++;
         if (string::npos == line.find(exp_line)) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -28,52 +26,50 @@ namespace {
 extern char const pd_pool_list[] = "pd pool list";
 
 /// @brief Test fixture class for @ref TranslatorPdPools.
-class TranslatorPdPoolsTest :
+class TranslatorPdPoolsTestKeaV6 :
     public GenericTranslatorTest<pd_pool_list, TranslatorPdPools> {
 public:
 
     /// Constructor.
-    TranslatorPdPoolsTest() { }
+    TranslatorPdPoolsTestKeaV6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+};
+class TranslatorPdPoolsTestIetfV6 :
+    public GenericTranslatorTest<pd_pool_list, TranslatorPdPools> {
+public:
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorPdPoolsTest() { }
+    /// Constructor.
+    TranslatorPdPoolsTestIetfV6() {
+        model_ = IETF_DHCPV6_SERVER;
+    }
 };
 
 // This test verifies that an empty pd pool list can be properly
 // translated from YANG to JSON using the IETF model.
-TEST_F(TranslatorPdPoolsTest, getEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestIetfV6, getEmptyIetf) {
     // Get the pd-pool list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']/pd-pools";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that an empty pd pool list can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
-TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestKeaV6, getEmptyKea) {
     // Get the pd-pool list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that one pd pool can be properly
 // translated from YANG to JSON using the IETF model.
-TEST_F(TranslatorPdPoolsTest, getIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestIetfV6, getIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
@@ -89,11 +85,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     EXPECT_NO_THROW(sess_->set_item(prefix.c_str(), s_prefix));
     const string& length = xpath + "/prefix-length";
     uint8_t len = 56;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     S_Val s_length(new Val(len));
-#else
-    S_Val s_length(new Val(len, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess_->set_item(length.c_str(), s_length));
 
     // Get the pool.
@@ -116,9 +108,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
 
 // This test verifies that one pd pool can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
-TEST_F(TranslatorPdPoolsTest, getKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -132,11 +122,7 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     S_Val s_delegated(new Val(dl));
-#else
-    S_Val s_delegated(new Val(dl, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Get the pool.
@@ -160,9 +146,7 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
 
 // This test verifies that an empty pd pool list can be properly
 // translated from JSON to YANG using the IETF model.
-TEST_F(TranslatorPdPoolsTest, setEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestIetfV6, setEmptyIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
@@ -179,16 +163,12 @@ TEST_F(TranslatorPdPoolsTest, setEmptyIetf) {
     // Get it back.
     pools.reset();
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that an empty pd pool list can be properly
 // translated from JSON to YANG using the Kea ad hoc model.
-TEST_F(TranslatorPdPoolsTest, setEmptyKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestKeaV6, setEmptyKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -203,16 +183,12 @@ TEST_F(TranslatorPdPoolsTest, setEmptyKea) {
     // Get it back.
     pools.reset();
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that one pd pool can be properly
 // translated from JSON to YANG using the IETF model.
-TEST_F(TranslatorPdPoolsTest, setIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestIetfV6, setIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
@@ -237,43 +213,11 @@ TEST_F(TranslatorPdPoolsTest, setIetf) {
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
-
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/ietf-dhcpv6-server:server"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "ietf-dhcpv6-server:server (container)\n"
-        " |\n"
-        " -- server-config (container)\n"
-        "     |\n"
-        "     -- network-ranges (container)\n"
-        "         |\n"
-        "         -- network-range (list instance)\n"
-        "             |\n"
-        "             -- network-range-id = 111\n"
-        "             |\n"
-        "             -- network-prefix = 2001:db8::/48\n"
-        "             |\n"
-        "             -- pd-pools (container)\n"
-        "                 |\n"
-        "                 -- pd-pool (list instance)\n"
-        "                     |\n"
-        "                     -- pool-id = 0\n"
-        "                     |\n"
-        "                     -- prefix = 2001:db8:0:1000::/56\n"
-        "                     |\n"
-        "                     -- prefix-length = 56\n"
-        "                     |\n"
-        "                     -- max-pd-space-utilization = disabled\n";
-    EXPECT_EQ(expected, tree->to_string(100));
 }
 
 // This test verifies that one pd pool can be properly
 // translated from JSON to YANG using the kea ad hoc model.
-TEST_F(TranslatorPdPoolsTest, setKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestKeaV6, setKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -298,35 +242,13 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
     ASSERT_EQ(1, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "kea-dhcp6-server:config (container)\n"
-        " |\n"
-        " -- subnet6 (list instance)\n"
-        "     |\n"
-        "     -- id = 111\n"
-        "     |\n"
-        "     -- subnet = 2001:db8::/48\n"
-        "     |\n"
-        "     -- pd-pool (list instance)\n"
-        "         |\n"
-        "         -- prefix = 2001:db8:0:1000::/56\n"
-        "         |\n"
-        "         -- delegated-len = 64\n";
-    EXPECT_EQ(expected, tree->to_string(100));
-
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that a non-empty list of pd pools can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
-TEST_F(TranslatorPdPoolsTest, getListKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -340,11 +262,7 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     S_Val s_delegated(new Val(dl));
-#else
-    S_Val s_delegated(new Val(dl, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Create the second pd-pool 2001:db8:0:2000::/56
@@ -353,11 +271,7 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
-#ifdef HAVE_POST_0_7_7_SYSREPO
     S_Val s_delegated2(new Val(dl2));
-#else
-    S_Val s_delegated2(new Val(dl2, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated2.c_str(), s_delegated2));
 
 
@@ -373,4 +287,4 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
               "\"2001:db8:0:2000::\", \"prefix-len\": 56 } ]");
 }
 
-}; // end of anonymous namespace
+}  // namespace

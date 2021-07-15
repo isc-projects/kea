@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,11 +82,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorOptionDef(sysrepo::S_Session session, const std::string& model);
-#else
-    TranslatorOptionDef(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDef();
@@ -135,12 +131,8 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorOptionDefList(sysrepo::S_Session session,
                             const std::string& model);
-#else
-    TranslatorOptionDefList(S_Session session, const std::string& model);
-#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDefList();
@@ -176,7 +168,7 @@ protected:
                              isc::data::ConstElementPtr elem);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_TRANSLATOR_OPTION_DEF_H

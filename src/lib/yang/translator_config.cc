@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -105,36 +103,23 @@ TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
     }
 }
 
-ElementPtr
-TranslatorConfig::getHooksKea(const std::string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/hook-library");
-    if (iter) {
-        ElementPtr hook_libs = Element::createList();
-        for (;;) {
-            const string& lib = getNext(iter);
-            if (lib.empty()) {
-                break;
-            }
-            ElementPtr hook_lib = Element::createMap();
-            ConstElementPtr name = getItem(lib + "/library");
-            if (name) {
-                hook_lib->set("library", name);
-                ConstElementPtr params = getItem(lib + "/parameters");
-                if (params) {
-                    string parameters = params->stringValue();
-                    if (!parameters.empty()) {
-                        hook_lib->set("parameters",
-                                      Element::fromJSON(parameters));
-                    }
-                }
-                hook_libs->add(hook_lib);
-            }
-        }
-        if (!hook_libs->empty()) {
-            return (hook_libs);
+ElementPtr TranslatorConfig::getHook(string const& xpath) {
+    ElementPtr const& hook_library(Element::createMap());
+    ElementPtr const& name(getItem(xpath + "/library"));
+    if (name) {
+        hook_library->set("library", name);
+        ElementPtr const& parameters(getItem(xpath + "/parameters"));
+        if (parameters) {
+            hook_library->set("parameters",
+                              Element::fromJSON(parameters->stringValue()));
         }
     }
-    return (ElementPtr());
+    return hook_library;
+}
+
+ElementPtr
+TranslatorConfig::getHooksKea(const std::string& xpath) {
+    return getList(xpath + "/hook-library", *this, &TranslatorConfig::getHook);
 }
 
 isc::data::ElementPtr
@@ -898,5 +883,5 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

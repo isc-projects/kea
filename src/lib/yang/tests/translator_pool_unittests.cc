@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -28,51 +26,59 @@ namespace {
 extern char const pool_list[] = "pool list";
 
 /// @brief Test fixture class for @ref TranslatorPools.
-class TranslatorPoolsTest :
+class TranslatorPoolsTestKeaV4 :
     public GenericTranslatorTest<pool_list, TranslatorPools> {
 public:
 
     /// Constructor.
-    TranslatorPoolsTest() { }
+    TranslatorPoolsTestKeaV4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
+};
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorPoolsTest() { }
+class TranslatorPoolsTestKeaV6 :
+    public GenericTranslatorTest<pool_list, TranslatorPools> {
+public:
+
+    /// Constructor.
+    TranslatorPoolsTestKeaV6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+};
+class TranslatorPoolsTestIetfV6 :
+    public GenericTranslatorTest<pool_list, TranslatorPools> {
+public:
+
+    /// Constructor.
+    TranslatorPoolsTestIetfV6() {
+        model_ = IETF_DHCPV6_SERVER;
+    }
 };
 
 // This test verifies that an empty pool list can be properly
 // translated from YANG to JSON using IETF model.
-TEST_F(TranslatorPoolsTest, getEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPoolsTestIetfV6, getEmptyIetf) {
     // Get the pool list and check if it is empty.
     const string& xpath = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']/address-pools";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that an empty pool list can be properly
 // translated from YANG to JSON using Kea ad hoc model.
-TEST_F(TranslatorPoolsTest, getEmptyKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPoolsTestKeaV6, getEmptyKea) {
     // Get the pool list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that one pool can be properly
 // translated from YANG to JSON using IETF model.
-TEST_F(TranslatorPoolsTest, getIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPoolsTestIetfV6, getIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']";
@@ -103,9 +109,7 @@ TEST_F(TranslatorPoolsTest, getIetf) {
 
 // This test verifies that one pool can be properly
 // translated from YANG to JSON using Kea ad hoc model.
-TEST_F(TranslatorPoolsTest, getKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPoolsTestKeaV6, getKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -147,9 +151,7 @@ TEST_F(TranslatorPoolsTest, getKea) {
 
 // This test verifies that an empty pool list can be properly
 // translated from JSON to YANG using IETF model.
-TEST_F(TranslatorPoolsTest, setEmptyIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPoolsTestIetfV6, setEmptyIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']";
@@ -165,16 +167,12 @@ TEST_F(TranslatorPoolsTest, setEmptyIetf) {
     // Get it back.
     pools.reset();
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that an empty pool list can be properly
 // translated from JSON to YANG using Kea ad hoc model.
-TEST_F(TranslatorPoolsTest, setEmptyKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPoolsTestKeaV6, setEmptyKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -189,16 +187,12 @@ TEST_F(TranslatorPoolsTest, setEmptyKea) {
     // Get it back.
     pools.reset();
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
-    ASSERT_TRUE(pools);
-    ASSERT_EQ(Element::list, pools->getType());
-    EXPECT_EQ(0, pools->size());
+    ASSERT_FALSE(pools);
 }
 
 // This test verifies that one pool can be properly
 // translated from JSON to YANG using IETF model.
-TEST_F(TranslatorPoolsTest, setIetf) {
-    useModel(IETF_DHCPV6_SERVER);
-
+TEST_F(TranslatorPoolsTestIetfV6, setIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']";
@@ -221,45 +215,11 @@ TEST_F(TranslatorPoolsTest, setIetf) {
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
-
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/ietf-dhcpv6-server:server"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "ietf-dhcpv6-server:server (container)\n"
-        " |\n"
-        " -- server-config (container)\n"
-        "     |\n"
-        "     -- network-ranges (container)\n"
-        "         |\n"
-        "         -- network-range (list instance)\n"
-        "             |\n"
-        "             -- network-range-id = 111\n"
-        "             |\n"
-        "             -- network-prefix = 2001:db8::/48\n"
-        "             |\n"
-        "             -- address-pools (container)\n"
-        "                 |\n"
-        "                 -- address-pool (list instance)\n"
-        "                     |\n"
-        "                     -- pool-id = 0\n"
-        "                     |\n"
-        "                     -- pool-prefix = 2001:db8::1:0/112\n"
-        "                     |\n"
-        "                     -- start-address = 2001:db8::1:0\n"
-        "                     |\n"
-        "                     -- end-address = 2001:db8::1:ffff\n"
-        "                     |\n"
-        "                     -- max-address-count = disabled\n";
-    EXPECT_EQ(expected, tree->to_string(100));
 }
 
 // This test verifies that one pool can be properly
 // translated from JSON to YANG using Kea ad hoc model.
-TEST_F(TranslatorPoolsTest, setKea) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorPoolsTestKeaV6, setKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
@@ -283,28 +243,8 @@ TEST_F(TranslatorPoolsTest, setKea) {
     ASSERT_EQ(1, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "kea-dhcp6-server:config (container)\n"
-        " |\n"
-        " -- subnet6 (list instance)\n"
-        "     |\n"
-        "     -- id = 111\n"
-        "     |\n"
-        "     -- subnet = 2001:db8::/48\n"
-        "     |\n"
-        "     -- pool (list instance)\n"
-        "         |\n"
-        "         -- start-address = 2001:db8::1\n"
-        "         |\n"
-        "         -- end-address = 2001:db8::100\n";
-    EXPECT_EQ(expected, tree->to_string(100));
-
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());
 }
 
-}; // end of anonymous namespace
+}  // namespace

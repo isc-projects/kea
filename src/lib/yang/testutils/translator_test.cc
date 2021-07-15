@@ -7,15 +7,14 @@
 #include <config.h>
 
 #include <yang/testutils/translator_test.h>
+
 #include <boost/lexical_cast.hpp>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
-
 namespace isc {
 namespace yang {
 namespace test {
@@ -113,16 +112,12 @@ YangRepr::Tree
 YangRepr::get(S_Session session) const {
     Tree result;
     try {
-        const string& xpath0 = "/" + model_ + ":*//.";
         TranslatorBasic tb(session, model_);
-        S_Iter_Value iter = tb.getIter(xpath0);
-        for (;;) {
-            const string& xpath = tb.getNext(iter);
-            if (xpath.empty()) {
-                break;
-            }
-            result.push_back(YangReprItem::get(xpath, session));
-        }
+        string const xpath0("/" + model_ + ":*//.");
+        tb.forAll(xpath0, [&](libyang::S_Data_Node const& node) {
+            string const& xpath(node->path());
+            result.emplace(xpath, YangReprItem::get(xpath, session));
+        });
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error in  YangRepr::getTree: " << ex.what());
@@ -133,31 +128,47 @@ YangRepr::get(S_Session session) const {
 bool
 YangRepr::verify(const Tree& expected, S_Session session,
                  ostream& errs) const {
-    const Tree& got = get(session);
-    for (size_t i = 0; (i < expected.size()) && (i < got.size()); ++i) {
-        if (expected[i] == got[i]) {
+    bool result(true);
+    const Tree& received = get(session);
+    for (auto const& kv : received) {
+        string const& xpath(kv.first);
+        YangReprItem const& received_node(kv.second);
+
+        auto iterator(expected.find(xpath));
+        if (iterator == expected.end()) {
+            errs << "received " << received_node << ", but was not expected"
+                 << endl;
+            result = false;
             continue;
         }
-        errs << "expected[" << i << "]: " << expected[i] << endl;
-        errs << "got[" << i << "]: " << got[i] << endl;
-        return (false);
+
+        YangReprItem const expected_node(iterator->second);
+        if (expected_node != received_node) {
+            errs << "expected " << expected_node << ", but received "
+                 << received_node << endl;
+            result = false;
+        }
     }
-    if (expected.size() == got.size()) {
-        return (true);
+
+    for (auto const& kv : expected) {
+        string const& xpath(kv.first);
+        YangReprItem const& expected_node(kv.second);
+
+        auto iterator(received.find(xpath));
+        if (iterator == received.end()) {
+            errs << "expected " << expected_node << ", but was not received"
+                 << endl;
+            result = false;
+        }
     }
-    if (expected.size() > got.size()) {
-        errs << "missings " << (expected.size() - got.size());
-        errs << " beginning by:" << endl << expected[got.size()] << endl;
-    } else {
-        errs << "extras " << (got.size() - expected.size());
-        errs << " beginning by:" << endl << got[expected.size()] << endl;
-    }
-    return (false);
+
+    return result;
 }
 
 void
 YangRepr::set(const Tree& tree, S_Session session) const {
-    for (auto item : tree) {
+    for (auto const& kv : tree) {
+        YangReprItem const& item(kv.second);
         if (!item.settable_) {
             continue;
         }
@@ -170,6 +181,8 @@ YangRepr::set(const Tree& tree, S_Session session) const {
                           "YangRepr::set called for a container");
 
             case SR_LIST_T:
+                isc_throw(NotImplemented,
+                          "YangRepr::set called for a list");
                 break;
 
             case SR_STRING_T:
@@ -192,11 +205,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT8_T:
                 try {
                     uint8_t u8 = boost::lexical_cast<unsigned>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(u8));
-#else
-                    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint8");
@@ -206,11 +215,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT16_T:
                 try {
                     uint16_t u16 = boost::lexical_cast<uint16_t>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(u16));
-#else
-                    s_val.reset(new Val(u16, SR_UINT16_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint16");
@@ -220,11 +225,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT32_T:
                 try {
                     uint32_t u32 = boost::lexical_cast<uint32_t>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(u32));
-#else
-                    s_val.reset(new Val(u32, SR_UINT32_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint32");
@@ -234,11 +235,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT8_T:
                 try {
                     int8_t i8 = boost::lexical_cast<int>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(i8));
-#else
-                    s_val.reset(new Val(i8, SR_INT8_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int8");
@@ -248,11 +245,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT16_T:
                 try {
                     int16_t i16 = boost::lexical_cast<int16_t>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(i16));
-#else
-                    s_val.reset(new Val(i16, SR_INT16_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int16");
@@ -262,11 +255,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT32_T:
                 try {
                     int32_t i32 = boost::lexical_cast<int32_t>(item.value_);
-#ifdef HAVE_POST_0_7_7_SYSREPO
                     s_val.reset(new Val(i32));
-#else
-                    s_val.reset(new Val(i32, SR_INT32_T));
-#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int32");
@@ -295,10 +284,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
                       << ", error: " << ex.what());
         }
     }
+    session->apply_changes();
 }
 
 bool
-YangRepr::validate(S_Session session, std::ostream& errs) const {
+YangRepr::validate(S_Session session, ostream& errs) const {
     try {
         // Try to validate. If it succeeds, then we're done here.
         session->validate();
@@ -308,37 +298,25 @@ YangRepr::validate(S_Session session, std::ostream& errs) const {
     }
     try {
         // If we get here, it means the validate() threw exceptions.
-        S_Errors s_errors = session->get_last_errors();
-        if (!s_errors) {
-
+        S_Errors errors(session->get_error());
+        if (!errors) {
             // This is really weird. An exception was thrown, but
             // get_last_errors() didn't return anything. Maybe we're out of
             // memory or something?
             errs << "no errors" << endl;
             return (false);
         }
-        size_t cnt = s_errors->error_cnt();
-        errs << "got " << cnt << " errors" << endl;
-        for (size_t i = 0; i < cnt; ++i) {
-            S_Error s_error = s_errors->error(i);
-            if (!s_error) {
+        size_t const count(errors->error_cnt());
+        errs << "got " << count << " errors" << endl;
+        for (size_t i = 0; i < count ; ++i) {
+            const char* message(errors->message(i));
+            const char* xpath(errors->xpath(i));
+            if (!message || !xpath) {
                 continue;
             }
-            const char* xpath = s_error->xpath();
-            const char* message = s_error->message();
-            if (!xpath || !message) {
-                continue;
-            }
-            // Bug in sysrepo returning message for xpath().
-            if (xpath == message) {
-                errs << message << endl;
-            } else {
-                errs << message << endl
-                     << "At " << xpath << endl;
-            }
+            errs << message << " at " << xpath << endl;
         }
     } catch (const std::exception& ex) {
-        // Bug in sysrepo rethrowing the last error when trying to get it.
         errs << "double error " << ex.what();
     }
     return (false);
@@ -431,12 +409,13 @@ ostream& operator<<(ostream& os, const YangRepr::YangReprItem& item) {
 }
 
 ostream& operator<<(ostream& os, const YangRepr::Tree& tree) {
-    for (auto item : tree) {
+    for (auto const& kv : tree) {
+        YangRepr::YangReprItem const& item(kv.second);
         os << item << endl;
     }
     return (os);
 }
 
-}; // end of namespace isc::yang::test
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace test
+}  // namespace yang
+}  // namespace isc

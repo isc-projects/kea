@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -161,21 +159,8 @@ TranslatorOptionDefList::getOptionDefList(const string& xpath) {
 
 ConstElementPtr
 TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
-    ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/option-def");
-    if (!iter) {
-        // Can't happen.
-        isc_throw(Unexpected, "getOptionDefListKea: can't get iterator: "
-                  << xpath);
-    }
-    for (;;) {
-        const string& def = getNext(iter);
-        if (def.empty()) {
-            break;
-        }
-        result->add(getOptionDef(def));
-    }
-    return (result);
+    return getList<TranslatorOptionDef>(xpath + "/option-def", *this,
+                                        &TranslatorOptionDefList::getOptionDef);
 }
 
 void
@@ -219,5 +204,5 @@ TranslatorOptionDefList::setOptionDefListKea(const string& xpath,
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

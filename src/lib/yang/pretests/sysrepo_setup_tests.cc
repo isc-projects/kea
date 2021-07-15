@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,37 +9,34 @@
 #define KEATEST_MODULE
 #include <yang/yang_revisions.h>
 
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 #include <sysrepo-cpp/Session.hpp>
-#else
-#include <sysrepo-cpp/Session.h>
-#endif
 
 #include <sstream>
 
 using namespace std;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 using namespace isc::yang;
+
+using libyang::S_Context;
+using libyang::S_Module;
 
 const string REPOSITORY = SYSREPO_REPO;
 
 /// @brief Returns nicely formed error message if module is missing
 ///
 /// @param name name of the YANG module to complain about
-/// #param revision revision of the YANG module
+/// @param revision revision of the YANG module
 /// @return a text explaining what the problem is and how to fix it
 string missingModuleText(const string& name, const string& revision) {
     stringstream tmp;
     tmp << "ERROR: YANG module " << name << " is not installed." << endl
-        << "The environment is not suitable for running unit-tests." << endl
+        << "The environment is not suitable for running unit tests." << endl
         << "Please locate " << name << "@" << revision << ".yang, "
-        << "change to its directory and issue the following command:"
-        << endl << endl
-        << "# sysrepoctl -i -s " << REPOSITORY << "/yang "
-        << "-s . -g " << name << "@" << revision << ".yang" << endl
-        << endl << endl;
+        << "change to its directory and issue the following command:" << endl
+        << endl
+        << "sysrepoctl -i " << name << "@" << revision << ".yang" << endl
+        << endl
+        << endl;
     return (tmp.str());
 }
 
@@ -76,11 +73,11 @@ string badRevisionModuleText(const string& name, const string& expected,
 int main() {
     S_Connection conn;
     try {
-        conn.reset(new Connection("sysrepo setup check"));
+        conn = std::make_shared<Connection>();
     } catch (const sysrepo_exception& ex) {
-        cerr << "ERROR: Can't connect to sysrepo: " << ex.what() << endl;
-        cerr << "ERROR: Make sure the sysrepod daemon is running." << endl;
-        exit(-1);
+        cerr << "ERROR: Can't initialize sysrepo: " << ex.what() << endl;
+        cerr << "ERROR: Make sure you have the right permissions to the sysrepo repository." << endl;
+        return 1;
     }
 
     S_Session sess;
@@ -89,74 +86,46 @@ int main() {
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't establish a sysrepo session: "
              << ex.what() << endl;
-        exit(-2);
+        return 2;
     }
 
-    S_Yang_Schemas schemas;
+    vector<S_Module> modules;
     try {
-        schemas = sess->list_schemas();
+        S_Context context(sess->get_context());
+        modules = context->get_module_iter();
     } catch (const sysrepo_exception& ex) {
-        cerr << "ERROR: Can't list available schemas: " <<  ex.what() << endl;
-        exit(-3);
+        cerr << "ERROR: Can't retrieve available modules: " << ex.what() << endl;
+        return 3;
     }
 
-    map<string, bool> found;
-    map<string, string> got;
-    for (auto modrev : YANG_REVISIONS) {
-        found[modrev.first] = false;
+    std::unordered_map<std::string, std::string> installed_modules;
+    for (S_Module const& module : modules) {
+        if (!module->name()) {
+            cerr << "ERROR: module name is mangled" << endl;
+            return 4;
+        }
+        string const name(module->name());
+        if (!module->rev() || !module->rev()->date()) {
+            cerr << "ERROR: module revision is mangled" << endl;
+            return 5;
+        }
+        string const revision(module->rev()->date());
+        installed_modules.emplace(name, revision);
     }
 
-    for (size_t i = 0; i < schemas->schema_cnt(); ++i) {
-        string module = schemas->schema(i)->module_name();
-        if (YANG_REVISIONS.count(module)) {
-            found[module] = true;
-            if (!schemas->schema(i)->revision() ||
-                !schemas->schema(i)->revision()->revision()) {
-                got[module] = "none";
-            } else {
-                string rev = schemas->schema(i)->revision()->revision();
-                got[module] = rev;
-            }
+    for (auto const& kv : YANG_REVISIONS) {
+        std::string const& name(kv.first);
+        std::string const& revision(kv.second);
+        if (!installed_modules.count(name)) {
+            cerr << missingModuleText(name, revision);
+            return 6;
+        }
+        string const& expected_revision(installed_modules.at(name));
+        if (expected_revision != revision) {
+            cerr << badRevisionModuleText(name, expected_revision, revision);
+            return 7;
         }
     }
 
-    int exit_code = 0;
-
-    for (auto modfnd : found) {
-        string rev = YANG_REVISIONS.at(modfnd.first);
-        if (!modfnd.second) {
-            if (exit_code > -4) {
-                exit_code = -4;
-            }
-            --exit_code;
-            cerr << missingModuleText(modfnd.first, rev);
-        } else if (rev != got[modfnd.first]) {
-            if (exit_code > -40) {
-                exit_code += -40;
-            } else {
-                exit_code += -10;
-            }
-            cerr << badRevisionModuleText(modfnd.first, rev, got[modfnd.first]);
-        }
-    }
-
-    try {
-        sess.reset();
-        conn.reset(new Connection("sysrepo setup check",
-                                  SR_CONN_DAEMON_REQUIRED));
-    } catch (const sysrepo_exception& ex) {
-        cerr <<"ERROR: Can't connect to sysrepo daemon: " <<ex.what() << endl
-             << endl
-             << "Sysrepo daemon is required or actions will be local to "
-             << "the local library instance." << endl;
-        cerr << "Please make sure the sysrepod daemon is running." << endl;
-        cerr << "The following command should do the trick:" << endl;
-        cerr << endl;
-        cerr << "$ sudo sysrepod" << endl;
-        cerr << endl;
-
-        exit_code -= 100;
-    }
-
-    exit(exit_code);
+    return 0;
 }

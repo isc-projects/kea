@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,18 +6,19 @@
 
 #include <config.h>
 
+#include <testutils/gtest_utils.h>
 #include <yang/tests/yang_configs.h>
+#include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -61,93 +62,83 @@ TEST(YangReprTest, item) {
 
 // Test get with test module.
 TEST(YangReprTest, getTest) {
+    SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    // Cleanup.
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
+    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     // Fill the test module.
     string xpath;
     S_Val s_val;
 
-    // Create a list.
-    xpath = "/keatest-module:container/list";
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-
     xpath = "/keatest-module:main/string";
     s_val.reset(new Val("str", SR_STRING_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/boolean";
     s_val.reset(new Val(true, SR_BOOL_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u8));
-#else
-    s_val.reset(new Val(u8, SR_UINT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u16));
-#else
-    s_val.reset(new Val(u16, SR_UINT16_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(u32));
-#else
-    s_val.reset(new Val(u32, SR_UINT32_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s8));
-#else
-    s_val.reset(new Val(s8, SR_INT8_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s16));
-#else
-    s_val.reset(new Val(s16, SR_INT16_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
-#ifdef HAVE_POST_0_7_7_SYSREPO
     s_val.reset(new Val(s32));
-#else
-    s_val.reset(new Val(s32, SR_INT32_T));
-#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/id_ref";
     s_val.reset(new Val("keatest-module:id_1", SR_IDENTITYREF_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     xpath = "/keatest-module:main/enum";
     s_val.reset(new Val("maybe", SR_ENUM_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     // Binary.
     xpath = "/keatest-module:main/raw";
     s_val.reset(new Val("Zm9vYmFy", SR_BINARY_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     // Get it.
     YangRepr repr(testModel);
@@ -160,9 +151,17 @@ TEST(YangReprTest, getTest) {
 
 // This test verifies that errors are handled properly.
 TEST(YangReprTrest, getTestErrors) {
+    SysrepoSetup::cleanSharedMemory();
+
     // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    // Cleanup.
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
+    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     // Get it.
     YangRepr repr(testModel);
@@ -172,41 +171,52 @@ TEST(YangReprTrest, getTestErrors) {
     // Verify.
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
 
-    // Some error messages will be displayed.
-    cout << "Some error messages will be displayed. Please ignore." << endl;
-
-    // Change a path.
+    // Change a path. Remove final 'm'.
     YRTree badpath = testTree;
-    badpath[14].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
+    string xpath("/keatest-module:main/enum");
+    YRItem node(badpath.at(xpath));
+    node.xpath_ = "/keatest-module:main/enu";
+    badpath.erase(xpath);
+    badpath.emplace(xpath, node);
     EXPECT_FALSE(repr.verify(badpath, sess, cerr));
 
-    // Change a value.
+    // Change a value from "str" to "Str".
     YRTree badvalue = testTree;
-    badvalue[3].value_ = "Str"; // was "str"
+    xpath = "/keatest-module:main/string";
+    badvalue.at(xpath).value_ = "Str";
     EXPECT_FALSE(repr.verify(badvalue, sess, cerr));
 
-    // Change a type.
+    // Change a type from SR_INT32_T to SR_UINT32_T.
     YRTree badtype = testTree;
-    badtype[10].type_ = SR_UINT32_T; // was SR_INT32_T
+    xpath = "/keatest-module:main/i32";
+    badtype.at(xpath).type_ = SR_UINT32_T;
     EXPECT_FALSE(repr.verify(badtype, sess, cerr));
 
     // Add a record at the end.
     YRTree badmissing = testTree;
-    const string& xpathpc = "/keatest-module:presence-container";
-    badmissing.push_back(YRItem(xpathpc, "", SR_CONTAINER_PRESENCE_T, false));
+    xpath = "/keatest-module:presence-container";
+    badmissing.emplace(xpath, YRItem(xpath, "", SR_CONTAINER_PRESENCE_T, false));
     EXPECT_FALSE(repr.verify(badmissing, sess, cerr));
 
     // Delete last record.
     YRTree badextra = testTree;
-    badextra.pop_back();
+    badextra.erase("/keatest-module:kernel-modules");
     EXPECT_FALSE(repr.verify(badextra, sess, cerr));
 }
 
 // Test set with test module.
 TEST(YangReprTest, setTest) {
+    SysrepoSetup::cleanSharedMemory();
+
     // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    // Cleanup.
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
+    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
+    EXPECT_NO_THROW(sess->apply_changes());
 
     // Set the module content.
     YangRepr repr(testModel);
@@ -223,9 +233,19 @@ TEST(YangReprTest, setTest) {
 /// @param model name of the model to be verified against.
 /// @param tree tree to be verified.
 void sanityCheckConfig(const std::string& model, const YRTree& tree) {
+    SysrepoSetup::cleanSharedMemory();
+
     // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
+    S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    // Cleanup.
+    TranslatorBasic translator(sess, model);
+    std::string toplevel_node("config");
+    if (model == IETF_DHCPV6_SERVER) {
+        toplevel_node = "server";
+    }
+    translator.delItem("/" + model + ":" + toplevel_node);
 
     // Get it.
     YangRepr repr(model);
@@ -235,7 +255,8 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     bool result = false;
     EXPECT_NO_THROW(result = repr.verify(tree, sess, cerr))
         << " for model " << model;
-    EXPECT_TRUE(result);
+    EXPECT_TRUE(result)
+        << " for model " << model;
 }
 
 // This is test environment sanity check. It verifies that all configuration
@@ -246,4 +267,4 @@ TEST(YangReprTest, verifyConfigs) {
     }
 }
 
-}; // end of anonymous namespace
+}  // namespace

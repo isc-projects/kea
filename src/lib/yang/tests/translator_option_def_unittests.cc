@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace {
 
@@ -28,36 +26,47 @@ namespace {
 extern char const option_definition_list[] = "option definition list";
 
 /// @brief Test fixture class for @ref TranslatorOptionDefList.
-class TranslatorOptionDefListTest :
+class TranslatorOptionDefListTestKeaV4 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
 
     /// Constructor.
-    TranslatorOptionDefListTest() { }
+    TranslatorOptionDefListTestKeaV4() {
+        model_ = KEA_DHCP4_SERVER;
+    }
+};
+class TranslatorOptionDefListTestKeaV6 :
+    public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
+public:
 
-    /// Destructor (does nothing).
-    virtual ~TranslatorOptionDefListTest() { }
+    /// Constructor.
+    TranslatorOptionDefListTestKeaV6() {
+        model_ = KEA_DHCP6_SERVER;
+    }
+};
+class TranslatorOptionDefListTestIetfV6 :
+    public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
+public:
+
+    /// Constructor.
+    TranslatorOptionDefListTestIetfV6() {
+        model_ = IETF_DHCPV6_SERVER;
+    }
 };
 
 // This test verifies that an empty option definition list can be properly
 // translated from YANG to JSON.
-TEST_F(TranslatorOptionDefListTest, getEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorOptionDefListTestKeaV4, getEmpty) {
     // Get the option definition list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = t_obj_->getOptionDefList(xpath));
-    ASSERT_TRUE(options);
-    ASSERT_EQ(Element::list, options->getType());
-    EXPECT_EQ(0, options->size());
+    ASSERT_FALSE(options);
 }
 
 // This test verifies that one option definition can be properly
 // translated from YANG to JSON.
-TEST_F(TranslatorOptionDefListTest, get) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorOptionDefListTestKeaV6, get) {
     // Create the option code 100.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xdef = xpath + "/option-def[code='100'][space='isc']";
@@ -94,9 +103,7 @@ TEST_F(TranslatorOptionDefListTest, get) {
 
 // This test verifies that an empty option definition list can be properly
 // translated from JSON to YANG.
-TEST_F(TranslatorOptionDefListTest, setEmpty) {
-    useModel(KEA_DHCP4_SERVER);
-
+TEST_F(TranslatorOptionDefListTestKeaV4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr defs = Element::createList();
@@ -105,20 +112,12 @@ TEST_F(TranslatorOptionDefListTest, setEmpty) {
     // Get it back.
     defs.reset();
     EXPECT_NO_THROW(defs = t_obj_->getOptionDefList(xpath));
-    ASSERT_TRUE(defs);
-    EXPECT_EQ(0, defs->size());
-
-    // Check that the tree representation is empty.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
-    EXPECT_FALSE(tree);
+    ASSERT_FALSE(defs);
 }
 
 // This test verifies that one option definition can be properly
 // translated from JSON to YANG.
-TEST_F(TranslatorOptionDefListTest, set) {
-    useModel(KEA_DHCP6_SERVER);
-
+TEST_F(TranslatorOptionDefListTestKeaV6, set) {
     // Set one option def.
     const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr defs = Element::createList();
@@ -137,26 +136,6 @@ TEST_F(TranslatorOptionDefListTest, set) {
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(def->equals(*got->get(0)));
-
-    // Check the tree representation.
-    S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
-    ASSERT_TRUE(tree);
-    string expected =
-        "kea-dhcp6-server:config (container)\n"
-        " |\n"
-        " -- option-def (list instance)\n"
-        "     |\n"
-        "     -- code = 100\n"
-        "     |\n"
-        "     -- space = isc\n"
-        "     |\n"
-        "     -- name = foo\n"
-        "     |\n"
-        "     -- type = string\n"
-        "     |\n"
-        "     -- array = false\n";
-    EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());

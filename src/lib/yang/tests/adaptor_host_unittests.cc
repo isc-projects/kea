@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <testutils/gtest_utils.h>
 #include <yang/adaptor_host.h>
 
 #include <gtest/gtest.h>
@@ -115,4 +116,4 @@ TEST(AdaptorHostTest, notQuoted) {
     EXPECT_EQ("73:6f:6d:65:22:76:61:6c:75:65", id->stringValue());
 }
 
-}; // end of anonymous namespace
+}  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace isc::data;
-#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
-#endif
 
 namespace isc {
 namespace yang {
@@ -89,9 +87,6 @@ void
 TranslatorControlSocket::setControlSocketKea(const string& xpath,
                                              ConstElementPtr elem) {
     if (!elem) {
-        delItem(xpath + "/socket-name");
-        delItem(xpath + "/socket-type");
-        delItem(xpath + "/user-context");
         delItem(xpath);
         return;
     }
@@ -112,5 +107,5 @@ TranslatorControlSocket::setControlSocketKea(const string& xpath,
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
