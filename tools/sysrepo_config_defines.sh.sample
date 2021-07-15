@@ -1,10 +1,13 @@
 #!/bin/sh
 
-# This auxiliary script is considered temporary in nature. It will not be
-# necessary once the DataStax cpp-driver project accepts proper cql_config
-# script.
+# Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# This variable should point to the directory where sysrepo is compiled.
-# You can download sysrepo sources from https://github.com/sysrepo/sysrepo.git
+# Variables should point to the installation directories of libyang and sysrepo.
+# You can download libyang sources from https://github.com/CESNET/libyang.git.
+# You can download sysrepo sources from https://github.com/sysrepo/sysrepo.git.
 export LIBYANG_PATH="/please/specify/path/to/libyang/in/sysrepo_config_defines.sh"
 export SYSREPO_PATH="/please/specify/path/to/sysrepo/in/sysrepo_config_defines.sh"

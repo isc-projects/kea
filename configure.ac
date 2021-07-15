@@ -917,10 +917,36 @@ if test "$SYSREPO_CONFIG" != "" ; then
     SYSREPO_REPO=$($SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo)
 
     # Now get the environment for C++ bindings for Sysrepo.
-    SYSREPOCPP_INCLUDEDIR=$($SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp)
-    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp)"
-    SYSREPOCPP_LIBS=$($SYSREPO_CONFIG --libs libSysrepo-cpp)
-    SYSREPOCPP_VERSION=$($SYSREPO_CONFIG --modversion libSysrepo-cpp)
+    SYSREPOCPP_INCLUDEDIR=$($SYSREPO_CONFIG --cflags-only-I libsysrepo-cpp)
+    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libsysrepo-cpp)"
+    SYSREPOCPP_LIBS=$($SYSREPO_CONFIG --libs libsysrepo-cpp)
+    SYSREPOCPP_VERSION=$($SYSREPO_CONFIG --modversion libsysrepo-cpp)
+
+    AC_SUBST(SYSREPO_INCLUDEDIR)
+    AC_SUBST(SYSREPO_CPPFLAGS)
+    AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_REPO)
+
+    # Check that a simple program using Sysrepo functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
+    LIBS="$SYSREPO_LIBS $LIBS"
+
+    AC_MSG_CHECKING([sysrepo])
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM(
+        [extern "C" {
+           #include <sysrepo.h>
+         }],
+        [sr_conn_ctx_t *connection;
+         sr_session_ctx_t *session;
+         sr_disconnect(connection);])],
+      [AC_MSG_RESULT([yes])],
+      [AC_MSG_RESULT([no])
+       AC_MSG_ERROR([Cannot integrate with Sysrepo's C API. Make sure that the sysrepo.h header and the libsysrepo.so library can be found.])]
+    )
 
     # If include paths are equal, there's no need to include both. But if they're different,
     # we need both.
@@ -939,57 +965,50 @@ if test "$SYSREPO_CONFIG" != "" ; then
     AC_SUBST(SYSREPO_INCLUDEDIR)
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
-    AC_SUBST(SYSREPO_REPO)
-
-    # Check that a simple program using Sysrepo functions can compile and link.
-    CPPFLAGS_SAVED="$CPPFLAGS"
-    LIBS_SAVED="$LIBS"
 
     CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
     LIBS="$SYSREPO_LIBS $LIBS"
 
+    AC_MSG_CHECKING([sysrepo-cpp])
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([extern "C" {
-                              #include <sysrepo.h>
-                              }],
-                              [sr_conn_ctx_t *connection = NULL;
-                              sr_session_ctx_t *session = NULL;
-                              sr_connect("configure_test", SR_CONN_DEFAULT, &connection);
-                              sr_disconnect(connection);])],
-            [AC_MSG_RESULT([checking for Sysrepo headers and library... yes])],
-            [AC_MSG_RESULT([checking for Sysrepo headers and library... no])
-             AC_MSG_ERROR([Needs Sysrepo library])]
-    )
-
-    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM(
+        [#include <sysrepo-cpp/Session.hpp>],
+        [])],
+      [AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
+          [#include <sysrepo-cpp/Session.hpp>],
+          [sysrepo::Connection();]
+        )],
+        [AC_MSG_RESULT([v1.x])
+         AC_DEFINE([HAVE_SYSREPO_V1], [true], [Using sysrepo 1.x])],
+        [AC_LINK_IFELSE(
+          [AC_LANG_PROGRAM(
             [#include <sysrepo-cpp/Session.hpp>],
-            [sysrepo::Connection("conn-name");])],
-        [AC_LINK_IFELSE(
+            [sysrepo::S_Val value;
+             value->empty();]
+          )],
+          [AC_MSG_RESULT([>= v0.7.7])
+           AC_MSG_ERROR([Using legacy sysrepo >= 0.7.7 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
+          [AC_LINK_IFELSE(
             [AC_LANG_PROGRAM(
-                [#include <sysrepo-cpp/Session.hpp>],
-                [auto is_empty = [[]](sysrepo::S_Val v){
-                    return (v->empty()); };
-                ])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, new])
-             AC_DEFINE([HAVE_POST_0_7_7_SYSREPO], [1], [Using sysrepo > 0.7.7])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, yes])])],
-        [AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM(
-                [#include <sysrepo-cpp/Session.h>],
-                [Connection("conn-name");])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... old])
-             AC_DEFINE([HAVE_PRE_0_7_6_SYSREPO], [1], [Using sysrepo < 0.7.6])],
-             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
-              AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.)])]
+              [#include <sysrepo-cpp/Session.h>],
+              [Connection("conn-name");])],
+            [AC_MSG_RESULT([<= v0.7.6])
+             AC_MSG_ERROR([Using sysrepo <= 0.7.6 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
+            [AC_MSG_RESULT([no])
+             AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.)])]
+          )]
         )]
+      )],
+      [AC_MSG_RESULT([no])
+      AC_MSG_ERROR([Count not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
     )
 
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
     # Note that Sysrepo is present in the config.h file
-    AC_DEFINE([HAVE_SYSREPO], [1], [SYSREPO is present])
+    AC_DEFINE([HAVE_SYSREPO], [true], [SYSREPO is present])
 fi
 
 # ... and at the shell level, so Makefile.am can take action depending on this.
