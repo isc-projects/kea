@@ -9,7 +9,6 @@
 #include <config.h>
 #include <cc/data.h>
 #include <hooks/hooks.h>
-#include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -23,22 +22,18 @@ extern "C" {
 int
 d2_srv_configured(CalloutHandle& handle) {
     // Get the parameters.
-    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
     ConstElementPtr cfg;
-    handle.getArgument("json_config", cfg);
-    EXPECT_TRUE(cfg);
-    if (!cfg) {
-        return (1);
-    }
     string error;
+    handle.getArgument("json_config", cfg);
     handle.getArgument("error", error);
-    EXPECT_TRUE(error.empty());
 
-    ConstElementPtr uc = cfg->get("user-context");
-    if (uc) {
-        ConstElementPtr msg = uc->get("error");
-        if (msg && (msg->getType() == Element::string)) {
-            error = msg->stringValue();
+    if (cfg) {
+        ConstElementPtr uc = cfg->get("user-context");
+        if (uc) {
+            ConstElementPtr msg = uc->get("error");
+            if (msg && (msg->getType() == Element::string)) {
+                error = msg->stringValue();
+            }
         }
     }
 

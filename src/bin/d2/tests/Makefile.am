@@ -111,14 +111,14 @@ libcallout_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 # The d2_srv_configured callout library
 libconfigured_la_SOURCES  = configured_library.cc
 libconfigured_la_CXXFLAGS = $(AM_CXXFLAGS)
-libconfigured_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+libconfigured_la_CPPFLAGS = $(AM_CPPFLAGS)
 libconfigured_la_LIBADD   = $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libconfigured_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libconfigured_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libconfigured_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libconfigured_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libconfigured_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libconfigured_la_LIBADD  += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
+libconfigured_la_LIBADD  += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 libconfigured_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 noinst_LTLIBRARIES = libcallout.la libconfigured.la
