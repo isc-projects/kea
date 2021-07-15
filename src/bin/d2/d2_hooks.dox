@@ -46,7 +46,7 @@ packet processing, but the exact order depends on the actual processing. Hook po
 that are not specific to packet processing (e.g. lease expiration) will be added
 to the end of this list.
 
- @subsection d2HooksD2SrvConfigured dhcp2_srv_configured
+ @subsection d2HooksD2SrvConfigured d2_srv_configured
  - @b Arguments:
    - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
    - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
