@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_client_class (
 -- If the follow_client_class specifies a name of an existing class,
 -- the generated order_index is set to an id of that class + 1, and
 -- the order_index values of the later classes are incremented by 1.
--- The depend_on_known_directly column holds a boolean value indicating
+-- The depend_on_known_indirectly column holds a boolean value indicating
 -- whether the given class depends on KNOWN/UKNOWN built-in classes
 -- via other classes, i.e. it depends on classes that directly or
 -- indirectly depend on these built-ins. This value is auto-generated
@@ -97,7 +97,8 @@ CREATE TABLE IF NOT EXISTS dhcp4_client_class_order (
     depend_on_known_indirectly TINYINT NOT NULL DEFAULT '0',
     PRIMARY KEY (class_id),
     KEY key_dhcp4_client_class_order_index (order_index),
-    CONSTRAINT fk_dhcp4_client_class_order_class_id FOREIGN KEY (class_id) REFERENCES dhcp4_client_class (id) ON DELETE CASCADE
+    CONSTRAINT fk_dhcp4_client_class_order_class_id FOREIGN KEY (class_id)
+        REFERENCES dhcp4_client_class (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 DROP TRIGGER IF EXISTS dhcp4_client_class_AINS;
@@ -142,9 +143,9 @@ proc_label:BEGIN
         -- whenever the dhcp4_client_class record is updated. Such update may include
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
         -- This value will be later adjusted when dependencies are inserted.
-       UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = 0
-           WHERE class_id = id;
-       LEAVE proc_label;
+        UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = 0
+            WHERE class_id = id;
+        LEAVE proc_label;
     END IF;
 
     IF follow_class_name IS NOT NULL THEN
@@ -398,11 +399,11 @@ BEGIN
         );
     END IF;
     IF dependency <> 0 THEN
-       UPDATE dhcp4_client_class_order
-           SET depend_on_known_indirectly = 1
-       WHERE class_id = client_class_id;
-     END IF;
- END $$
+        UPDATE dhcp4_client_class_order
+            SET depend_on_known_indirectly = 1
+        WHERE class_id = client_class_id;
+    END IF;
+END $$
 DELIMITER ;
 
 -- -----------------------------------------------------------------------
@@ -602,9 +603,9 @@ proc_label:BEGIN
         -- whenever the dhcp6_client_class record is updated. Such update may include
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
         -- This value will be later adjusted when dependencies are inserted.
-       UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = 0
-           WHERE class_id = id;
-       LEAVE proc_label;
+        UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = 0
+            WHERE class_id = id;
+        LEAVE proc_label;
     END IF;
 
     IF follow_class_name IS NOT NULL THEN
@@ -858,9 +859,9 @@ BEGIN
         );
     END IF;
     IF dependency <> 0 THEN
-       UPDATE dhcp6_client_class_order
-           SET depend_on_known_indirectly = 1
-       WHERE class_id = client_class_id;
+        UPDATE dhcp6_client_class_order
+            SET depend_on_known_indirectly = 1
+        WHERE class_id = client_class_id;
     END IF;
 END $$
 DELIMITER ;
