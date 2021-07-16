@@ -722,6 +722,56 @@ CREATE INDEX dhcp4_audit_idx1 ON dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
 
 
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp4_audit_revision table and sets appropriate session
+-- variables to be used while creating the audit entries
+-- by triggers. This procedure should be called at the
+-- beginning of a transaction which modifies configuration
+-- data in the database, e.g. when new subnet is added.
+--
+-- Parameters:
+-- - audit_ts timestamp to be associated with the audit
+--   revision.
+-- - server_tag is used to retrieve the server_id which
+--   associates the changes applied with the particular
+--   server or all servers.
+-- - audit_log_message is a log message associates with
+--   the audit revision.
+-- - cascade_transaction is assigned to a session
+--   variable which is used in some triggers to determine
+--   if the audit entry should be created for them or
+--   not. Specifically, this is used when DHCP options
+--   are inserted, updated or deleted. If such modification
+--   is a part of the larger change (e.g. change in the
+--   subnet the options belong to) the dedicated audit
+--   entry for options must not be created. On the other
+--   hand, if the global option is being added, the
+--   audit entry for the option must be created because
+--   it is the sole object modified in that case.
+--   Session variable disable_audit is used to disable
+--   the procedure when wiping the database during
+--   unit tests.  This avoids issues with revision_id
+--   being null.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
+CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP,
+                                          IN server_tag VARCHAR(64),
+                                          IN audit_log_message TEXT,
+                                          IN cascade_transaction boolean)
+LANGUAGE PLPGSQL
+AS $$
+    DECLARE srv_id int;
+BEGIN
+    IF current_setting('disable_audit') IS NULL OR current_setting('disable_audit') = 0 THEN
+        SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
+        INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
+            VALUES (audit_ts, srv_id, audit_log_message)
+        RETURNING id;
+        SET SESSION "audit_revision_id" = id;
+        SET SESSION "cascade_transaction" = cascade_transaction;
+    END IF;
+END $$;
 
 -- Update the schema version number
 UPDATE schema_version
