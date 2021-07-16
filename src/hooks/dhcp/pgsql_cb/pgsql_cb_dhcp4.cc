@@ -701,8 +701,8 @@ PgSqlTaggedStatementArray;
 /// retrieve data from the database.
 /// @todo: OID types are obviously wrong.
 PgSqlTaggedStatementArray tagged_statements = { {
-    { 4, { OID_INT8, OID_INT8, OID_INT8, OID_INT8 }, "CREATE_AUDIT_REVISION",
-      "CALL createAuditRevisionDHCP4(?, ?, ?, ?)"
+    { 4, { OID_TIMESTAMP, OID_VARCHAR, OID_TEXT, OID_BOOL }, "CREATE_AUDIT_REVISION",
+      "CALL createAuditRevisionDHCP4($1, $2, $3, $4)"
     },
 
     // Select global parameter by name.
