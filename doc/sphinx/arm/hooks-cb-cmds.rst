@@ -3,15 +3,15 @@
 cb_cmds: Configuration Backend Commands
 =======================================
 
-This section describes the ``cb_cmds`` hooks library, which is used to
-manage Kea servers' configurations in the Configuration Backends. This
-library must be used in conjunction with the available CB hooks libraries
-implementing the common APIs to create, read, update, and delete (CRUD)
-the configuration information in the respective databases. For example:
-the ``mysql_cb`` hooks library, released in Kea 1.6.0, implements this
-API for MySQL. In order to manage the configuration information in the
-MySQL database, both the ``mysql_cb`` and ``cb_cmds`` libraries must be
-loaded by the server used for the configuration management.
+This section describes the ``cb_cmds`` hooks library, used to manage Kea
+servers' configurations in the Configuration Backends. This library must
+be used in conjunction with the available CB hooks libraries implementing
+the common APIs to create, read, update, and delete (CRUD) the
+configuration information in the respective databases. For example:
+the ``mysql_cb`` hooks library implements this API for MySQL. In order to
+manage the configuration information in the MySQL database, both the
+``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server
+used for the configuration management.
 
 The ``cb_cmds`` library is only available to ISC customers with a paid
 support contract.
@@ -68,12 +68,12 @@ the configuration of the server receiving the command.
 
 .. note::
 
-   As of the Kea 1.6.0 release, it is possible to configure the Kea server
+   In the present Kea release, it is possible to configure the Kea server
    to use only one configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one MySQL database using the
-   ``config-control`` parameter. That's why, in this release, the
-   ``remote`` parameter may be omitted in the commands and the
-   cb_cmds hooks library will use the sole backend by default.
+   ``config-control`` parameter. That's why the ``remote`` parameter may
+   be omitted in the commands and the cb_cmds hooks library will use the
+   sole backend by default.
 
 .. _cb-cmds-dhcp:
 
@@ -111,9 +111,9 @@ The typical response to the ``get`` or ``list`` command includes a list
 of returned objects (e.g. subnets), and each such object contains the
 ``metadata`` map with some database-specific information describing this
 object. In other words, the metadata contains any information about the
-fetched object which may be useful for the administrator, but which is not
+fetched object which may be useful for an administrator but which is not
 part of the object specification from the DHCP server standpoint. In the
-Kea 1.6.0 release, the metadata is limited to the ``server-tag``, which
+present Kea release, the metadata is limited to the ``server-tag``. It
 describes the association of the object with a particular server or
 all servers.
 
@@ -1906,3 +1906,254 @@ to the database when the keyword "all" is used as the server tag.</para>
    specified for the updated subnet instance. Any unspecified parameter
    will be marked as unspecified in the database, even if its value was
    present prior to sending the command.
+
+.. _command-remote-class4-del:
+
+.. _command-remote-class6-del:
+
+The remote-class4-del, remote-class6-del Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands delete a DHCPv4 or DHCPv6 client class by name. If any client
+classes in the database depend on the deleted class, an error is returned in
+response to this command. In this case, to successfully delete the class,
+the dependent client classes must be deleted first. Use the
+``remote-class4-get-all`` command to fetch all client classes and find
+the dependent ones.
+
+::
+
+    {
+        "command": "remote-class4-del",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "foo"
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+The `server-tags` parameter must not be used for this command because client
+classes are uniquely identified by name.
+
+.. _command-remote-class4-get:
+
+.. _command-remote-class6-get:
+
+The remote-class4-get, remote-class6-get Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands retrieve DHCPv4 or DHCPv6 client class information by a client
+class name.
+
+::
+
+    {
+        "command": "remote-class4-get",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "foo"
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+The `server-tags` parameter must not be used for this command because client
+classes are uniquely identified by name.
+
+A response to the command looks similar to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCPv4 client class 'foo' found.",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "foo",
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                }
+            ],
+            "count": 1
+        }
+    }
+
+.. _command-remote-class4-get-all:
+
+.. _command-remote-class6-get-all:
+
+The remote-class4-get-all, remote-class6-get-all Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands retrieve all DHCPv4 or DHCPv6 client classes for a particular server,
+multiple explicitly listed servers, or all servers. For example, the following
+command retrieves all client classes defined for a server having the server tag
+of `server1` and all servers. In other words, it returns all client classes
+used by that server.
+
+::
+
+    {
+        "command": "remote-class4-get-all",
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "server1" ]
+        }
+    }
+
+The `server-tags` parameter is mandatory and it contains one or more server
+tags. It may contain the keyword "all" to fetch the client classes associated
+with all servers. When the `server-tags` list contains the
+`null` value the returned response contains a list of unassigned client
+classes, i.e. the networks which are associated with no servers.
+
+A response to the command looks similar to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "2 DHCPv4 client class(es) found.",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "foo",
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                },
+                {
+                    "name": "bar",
+                    "test": "member('foo')",
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                }
+            ],
+            "count": 2
+        }
+    }
+
+
+.. _command-remote-class4-set:
+
+.. _command-remote-class6-set:
+
+The remote-class4-set, remote-class6-set Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands insert a new or replace an existing DHCPv4 or DHCPv6 client class in
+the database. The client class information structure is the same as in the Kea
+configuration file (see :ref:`dhcp4-client-classifier` and
+:ref:`dhcp6-client-classifier` for details).
+
+::
+
+    {
+        "command": "remote-class4-set",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "foo",
+                    "test": "member('KNOWN') or member('bar')",
+                    "option-def": [
+                        {
+                            "name": "configfile",
+                            "code": 224,
+                            "type": "string"
+                        }
+                    ],
+                    "option-data": [
+                        {
+                            "name": "configfile",
+                            "data": "1APC"
+                        }
+                    ]
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "all" ]
+        }
+    }
+
+
+Client class ordering rules described in :ref:`classification-using-expressions`
+apply to the classes inserted into the database. It implies that the class `bar`
+referenced in the test expression must exist in the database when issuing the
+above command.
+
+By default, a new client class is inserted at the end of the class hierarchy in
+the database and can reference any class associated with the same server tag or
+with the special server tag `all`. If an existing class is updated, it remains
+at its current position within the class hierarchy.
+
+However, the class commands allow for specifying a position of the inserted
+or updated client class. The optional `follow-class-name` parameter can be
+included in the command to specify the name of the existing class after which
+the managed class should be placed. Suppose there are two DHCPv6 classes in the
+database: `first-class` and `second-class`. To add a new class, `third-class`,
+between these two, use the command similar to the following:
+
+::
+
+    {
+        "command": "remote-class6-set",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "third-class",
+                    "test": "member('first-class')"
+                }
+            ],
+            "follow-class-name": "first-class",
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "all" ]
+        }
+    }
+
+Note that the `third-class` can depend on the `first-class` because it is placed
+after the `first-class`. The `third-class` must not depend on the `second-class`
+because it is placed before it. However, the `second-class` could now be updated to
+depend on the `third-class`.
+
+The `follow-class-name` parameter can be explicitly set to `null`, e.g.:
+
+::
+
+    {
+        "command": "remote-class6-set",
+        "arguments": {
+            "client-classes": [
+                {
+                    "name": "third-class",
+                    "test": "member('first-class')"
+                }
+            ],
+            "follow-class-name": null,
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "all" ]
+        }
+    }
+
+It yields the same behavior as if the `follow-class-name` parameter is not included,
+i.e. the new class is appended at the end of the class hierarchy, and the updated
+class remains at the current position.
