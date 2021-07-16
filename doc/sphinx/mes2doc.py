@@ -82,7 +82,7 @@ Consortium (ISC).
 This is the reference guide for Kea version |release|.
 Links to the most up-to-date version of this document (in PDF, HTML,
 and plain text formats), along with other useful information about
-Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administrator-reference-manual>`_.
+Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
 
 Please note that in the messages below, the percent sign ("%") followed by a number is
 used to indicate a placeholder for data that is provided by the Kea code during its operation.

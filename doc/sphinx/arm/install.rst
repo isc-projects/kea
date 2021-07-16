@@ -106,9 +106,9 @@ the system:
 -  The FreeRADIUS client library is required to connect to a RADIUS server.
    This is specified using the --with-freeradius configuration switch.
 
--  Sysrepo (version 0.7.6 or later up to and including 0.7.9) and
-   libyang (version 0.16-r2 or 0.16-r3) are needed to connect to a Sysrepo database.
-   This is specified using the --with-sysrepo switch when running "configure".
+-  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
+   datastore. This is specified using the --with-sysrepo option when running
+   "configure".
 
 -  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.

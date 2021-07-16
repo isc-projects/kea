@@ -22,7 +22,7 @@
  *
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
- * <a href="https://kb.isc.org/docs/kea-administrator-reference-manual">Kea
+ * <a href="https://kea.readthedocs.io">Kea
  * Administrator Reference Manual</a> instead. If you are using a beta or
  * development version of Kea, the
  * <a href="https://kea.readthedocs.io/">

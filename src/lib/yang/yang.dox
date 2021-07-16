@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,8 @@
  @page libyang libkea-yang - Kea YANG Utilities Library
 
 The libkea-yang library was developed to handle base YANG operations,
-such are retrieving YANG schema and configuration and translating
-data between YANG syntax and JSON that is understandable by Kea.
+such as retrieving YANG schema and configuration and translating
+data between YANG data and JSON that is understandable by Kea.
 
 @section yangTranslator Translator between YANG and JSON
 
@@ -17,29 +17,38 @@ An essential concept is the idea of translator. It is a primitive that is able
 to convert certain data structure between YANG and JSON. It is envisaged
 that more complex translators will use other translators to handle more
 complex data structures. For details, see @ref isc::yang::TranslatorBasic.
+It is also envisioned that translators could do the translation automatically by
+relying on capabilities of iterating through data, retrieving data type
+information and value information from nodes through the libyang and sysrepo
+APIs.
 
 Note that although the initial focus is on translation from YANG to JSON (so
 Kea can retrieve its configuration), the opposite translation direction -
-from JSON to YANG - is also very useful, for at least two reasons. First,
+from JSON to YANG - is also very useful, for at least three reasons. First,
 in many cases we can use it in tests to check that conversion back and forth
 doesn't lose anything: yang = toYang(toJson(yang)). Second, YANG models
 cover two major types of data: configuration and run-time state. While
 we're initially focusing on getting the configuration, the run-time state
 is something that Kea is expected to provide. Kea uses JSON internally in many
-places and that data will have to be exported in YANG format.
+places and that data will have to be exported in YANG format. Thirdly, the
+SR_EV_UPDATE callback allows mid-flight configuration changes before data is
+committed to the sysrepo datastore. If it ever will be used in the future,
+changes applied during this step will most likely come from Kea's current JSON
+configuration. As such, JSON to YANG translation will be necessary. One
+application for this is reverting stuff that is necessary for Kea - Sysrepo
+communication like the unix socket.
 
 All translators take a Session pointer (a structure provided by Sysrepo that
 is responsible for maintaining a connection) in constructors and derive from
-the basic / base class and recursively of translators for embedded parts.
+the basic / base class and recursively from translators for embedded parts.
 
 @c isc::yang::TranslatorBasic provides some methods:
- - getItem() gets and translates basic value from YANG to JSON
- - getItems() gets and translates a leaf-list from YANG to JSON
-   (for a list please use an iterator)
+ - getItem() retrieves and translates basic value from YANG to JSON
+ - getItems() retrieves and translates a leaf-list from YANG to JSON
+ - getList() retrieves and translates a list from YANG to JSOIN
  - setItem() translates and sets a basic value from JSON to YANG
  - delItem() deletes a value
- - getIter() gets an iterator over a YANG list
- - getNext() returns the xpath of the next item
+ - forAll() iterates over the top node and its descendants and calls a function
 
 @section yangTranslatorPool Pool translator
 
@@ -49,10 +58,6 @@ implements some variants to accommodate the model with shared code
 moved into a common private routine. When called with an unsupported
 model, generic methods of all structure translators throw
 @c isc::NotImplemented.
-
-@c isc::yang::TranslatorPools deals with a list of pools. The getPools
-method iterates over the list in both ways. Look at examples in unit
-tests to understand how can be filled.
 
 Note pools show two shortcomings in IETF models:
  - option sets make to track changes nearly impossible: the only easy
@@ -101,40 +106,50 @@ category of adaptors are divided into:
   YANG configuration (by getXXX) to make it acceptable by a Kea server.
   By definition they are not defined for Kea models.
 
-@section unitTestsSysrepo Running unit-tests with Sysrepo
+@section unitTestsSysrepo Running unit tests with Sysrepo
 
-To run YANG/NETCONF/Sysrepo tests you obviously need to compile Kea with
-Sysrepo support:
+To run YANG/NETCONF/Sysrepo tests you need to compile Kea with Sysrepo support:
 
 @verbatim
 ./configure --with-sysrepo
 @endverbatim
 
-For details, see Section 20 "YANG/NETCONF support" in the Kea User's Guide.
+For details, see Section "YANG/NETCONF support" in the Kea Administrator
+Reference Manual: https://kea.readthedocs.io/en/latest/arm/netconf.html.
 
-You also need to install YANG schemas, so the unit-tests are able to
+You also need to install YANG models, so the unit tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several production Kea models (src/share/yang/modules/kea*.yang)
-and one test specific model (src/share/yang/modules/keatest-module*.yang)
-which is only required if you want to run Kea unit tests, i.e. it is not
-used in production.
+There are several Kea models (src/share/yang/modules/*.yang), mostly usable in
+production, but one called keatest-module is only used in unit tests. To be able
+to run unit tests as a non-root user, which is the recommended way, make sure
+the sysrepo repository and /dev/shm/sr* are owned by said user. One way to
+prevent sporadic chown-ing is to install sysrepo and the Kea models as non-root.
 
-To install the test module, issue the following command:
+To install all the models, run the following script:
 
 @verbatim
-sudo sysrepoctl --install --yang=src/share/yang/modules/keatest-module*.yang
+./src/share/yang/modules/utils/reinstall.sh
+@endverbatim
+
+Alternatively to install each model, issue the following command:
+
+@verbatim
+sysrepoctl -i "src/share/yang/modules/${model}.yang"
 @endverbatim
 
 To verify that you have the schemas installed, do this:
 @verbatim
 sysrepoctl -l
 @endverbatim
+
 Make sure that keatest-module and other necessary modules are on the list.
 
-Note as DHCP modules are still being developed it can be useful to
-deinstall them before reinstalling a more recent version:
+As DHCP modules are still being developed, if the revision has been bumped,
+reinstalling it will update the module automatically . Otherwise, it can be
+useful to uninstall them before reinstalling a more recent version:
+
 @verbatim
-sudo sysrepoctl --uninstall --module=<module-name>
+sysrepoctl -u <module-name>
 @endverbatim
 
 Tests use these modules you can find in src/share/yang/modules in addition
@@ -154,7 +169,9 @@ Those models depend on the following modules:
 
 Those modules are extracted from the IETF DHCPv6 YANG draft too:
  - ietf-dhcpv6-client
+ - ietf-dhcpv6-options
  - ietf-dhcpv6-relay
+ - ietf-dhcpv6-types
 
 All are available in the src/share/yang/modules directory using the
 <module-name>[@<revision>].yang syntax for file names.
@@ -163,13 +180,10 @@ src/share/yang/modules/utils provides a few utilities for developers:
   and in the file content matches
  - check-hashes.sh which detects updates in the file content without
   a revision change using the SHA-256 hash of the to YIN translation.
+  Updates hashes automatically if -a is passed to the script.
  - gen-revisions.sh which produces the module / revision table of
   the yang_revisions.h header file.
-
-Finally, sysrepod daemon must run be running (as root):
-@verbatim
-sudo sysrepod
-@endverbatim
+ - reinstall.sh which installs all the modules.
 
 You can run this tool:
 

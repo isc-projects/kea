@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,7 @@ Kea Messages Manual, which lists all possible messages Kea can print
 with a brief description for each of them. Both documents are
 available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
-https://kb.isc.org/docs/kea-administrator-reference-manual .
+https://kea.readthedocs.io.
 
 Kea source code is documented in the Kea Developer's Guide. Its online
 version is available at https://jenkins.isc.org/job/Kea_doc/doxygen/.

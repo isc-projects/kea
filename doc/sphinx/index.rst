@@ -12,7 +12,7 @@ Consortium (ISC).
 This is the reference guide for Kea version |release|.
 Links to the most up-to-date version of this document (in PDF, HTML,
 and plain text formats), along with other documents for
-Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administrator-reference-manual>`_.
+Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
 
 
 .. toctree::

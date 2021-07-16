@@ -49,7 +49,7 @@ The following software is included with Kea:
    a RESTful control interface for managing Kea servers.
 
 -  ``kea-netconf`` - kea-netconf is an agent that provides a
-   YANG/NETCONF interface for the Kea environment.
+   YANG/NETCONF interface for configuring Kea.
 
 -  ``kea-shell`` — This simple text client uses the REST interface to
    connect to the Kea Control Agent.

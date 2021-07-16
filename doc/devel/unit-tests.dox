@@ -332,7 +332,7 @@ local   all             postgres                                trust
 
   The unit tests are run automatically when "make check" is executed (providing
   that Kea has been build with the \c --with-pgsql switch (see the installation
-  section in the <a href="https://kb.isc.org/docs/kea-administrator-reference-manual">Kea Administrator
+  section in the <a href="https://kea.readthedocs.io">Kea Administrator
   Reference Manual</a>).
 
 

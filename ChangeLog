@@ -1,3 +1,10 @@
+1923.	[func]		andrei
+	Integrate with Sysrepo v1.x branch. Building with support for
+	Sysrepo now requires the latest v1.x versions:
+	sysrepo v1.4.140 + libyang v1.0.240.
+	Support for legacy Sysrepo versions v0.x has been dropped.
+	(Gitlab #1077)
+
 1922.	[func]		marcin
 	Added support for storing client classes in the MySQL config
 	backend.
