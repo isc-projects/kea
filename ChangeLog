@@ -1,3 +1,8 @@
+1922.	[func]		marcin
+	Added support for storing client classes in the MySQL config
+	backend.
+	(Gitlab #1920, #1928, #1965, #1972, #1977)
+
 1921.	[func]	fdupont
 	The D2 d2_srv_configured hook point used DROP status to notify
 	the D2 server that an error has occured and the configuration
