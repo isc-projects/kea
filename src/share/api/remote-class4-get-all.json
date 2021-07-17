@@ -1,0 +1,52 @@
+{
+    "access": "read",
+    "avail": "1.9.10",
+    "brief": [
+        "This command fetches all DHCPv4 client classes for specified servers from the configuration database."
+    ],
+    "cmd-comment": [
+        "The ``server-tags`` list is required for this command, and must not be empty."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-class4-get-all\",",
+        "    \"arguments\": {",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-class4-get-all",
+    "resp-comment": [
+        "The returned response contains a list of maps. Each map contains a client class name and the metadata, which provides database-specific information associated with the client class."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 DHCPv4 client class(es) found.\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                <first client class specification>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "                }",
+        "            },",
+        "            {",
+        "                <second client class specification>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, ... ]",
+        "                }",
+        "            }",
+        "        ],",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

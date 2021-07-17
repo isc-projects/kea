@@ -66,6 +66,14 @@ src/share/api/network6-get.json
 src/share/api/network6-list.json
 src/share/api/network6-subnet-add.json
 src/share/api/network6-subnet-del.json
+src/share/api/remote-class4-del.json
+src/share/api/remote-class4-get.json
+src/share/api/remote-class4-get-all.json
+src/share/api/remote-class4-set.json
+src/share/api/remote-class6-del.json
+src/share/api/remote-class6-get.json
+src/share/api/remote-class6-get-all.json
+src/share/api/remote-class6-set.json
 src/share/api/remote-global-parameter4-del.json
 src/share/api/remote-global-parameter4-get-all.json
 src/share/api/remote-global-parameter4-get.json

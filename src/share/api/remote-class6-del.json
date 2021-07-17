@@ -1,0 +1,39 @@
+{
+    "access": "write",
+    "avail": "1.9.10",
+    "brief": [
+        "This command deletes a DHCPv6 client class from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one name of the client class to be deleted. The ``server-tags`` parameter must not be specified for this command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-class6-del\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                \"name\": <client class name>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-class6-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv6 client class(es) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

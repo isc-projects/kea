@@ -1,0 +1,51 @@
+{
+    "access": "read",
+    "avail": "1.9.10",
+    "brief": [
+        "This command fetches a selected DHCPv6 client class by name from the specified database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one name of the client class to be returned. The ``server-tags`` parameter must not be specified for this command."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-class6-get\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                \"name\": <client class name>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-class6-get",
+    "resp-comment": [
+        "The metadata is included in the returned shared network definition and provides the database-specific information associated with the returned object."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 client class found.\",",
+        "    \"arguments\": {",
+        "        \"client-classes\": [",
+        "            {",
+        "                \"name\": <client class name>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "                },",
+        "                <the rest of the client class information>",
+        "            }",
+        "        ],",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}
