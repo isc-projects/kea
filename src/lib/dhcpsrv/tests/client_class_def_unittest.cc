@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <cc/data.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp/libdhcp++.h>
@@ -14,6 +15,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <asiolink/io_address.h>
 
+#include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 
 /// @file client_class_def_unittest.cc Unit tests for client class storage
@@ -54,6 +56,64 @@ TEST(ClientClassDef, construction) {
     // Verify we don't depend on something.
     EXPECT_FALSE(cclass->dependOnClass("foobar"));
     EXPECT_FALSE(cclass->dependOnClass(""));
+}
+
+// Test that client class is copied using the copy constructor.
+TEST(ClientClassDef, copyConstruction) {
+    auto expr = boost::make_shared<Expression>();
+
+    auto cfg_option = boost::make_shared<CfgOption>();
+    auto option = boost::make_shared<Option>(Option::V6, 1024);
+    cfg_option->add(option, false, DHCP6_OPTION_SPACE);
+
+    auto option_def = boost::make_shared<OptionDefinition>("foo", 1024, "dhcp6", "empty");
+    CfgOptionDefPtr cfg_option_def = boost::make_shared<CfgOptionDef>();
+    cfg_option_def->add(option_def);
+
+    boost::scoped_ptr<ClientClassDef> cclass;
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class1", expr, cfg_option)));
+    cclass->setId(123);
+    cclass->setContext(data::Element::create("my-context"));
+    cclass->setCfgOptionDef(cfg_option_def);
+    cclass->setTest("member('KNOWN')");
+    cclass->setRequired(true);
+    cclass->setDependOnKnown(true);
+    cclass->setNextServer(IOAddress("1.2.3.4"));
+    cclass->setSname("ufo");
+    cclass->setFilename("ufo.efi");
+    cclass->setValid(Triplet<uint32_t>(10, 20, 30));
+
+    // Copy the client class.
+    boost::scoped_ptr<ClientClassDef> cclass_copy;
+    ASSERT_NO_THROW(cclass_copy.reset(new ClientClassDef(*cclass)));
+
+    // Ensure that class data was copied.
+    EXPECT_EQ(cclass->getName(), cclass_copy->getName());
+    EXPECT_EQ(cclass->getId(), cclass_copy->getId());
+    ASSERT_TRUE(cclass_copy->getContext());
+    ASSERT_EQ(data::Element::string, cclass_copy->getContext()->getType());
+    EXPECT_EQ("my-context", cclass_copy->getContext()->stringValue());
+    ASSERT_TRUE(cclass->getMatchExpr());
+    EXPECT_NE(cclass_copy->getMatchExpr(), cclass->getMatchExpr());
+    EXPECT_EQ(cclass->getTest(), cclass_copy->getTest());
+    EXPECT_EQ(cclass->getRequired(), cclass_copy->getRequired());
+    EXPECT_EQ(cclass->getDependOnKnown(), cclass_copy->getDependOnKnown());
+    EXPECT_EQ(cclass->getNextServer().toText(), cclass_copy->getNextServer().toText());
+    EXPECT_EQ(cclass->getSname(), cclass_copy->getSname());
+    EXPECT_EQ(cclass->getFilename(), cclass_copy->getFilename());
+    EXPECT_EQ(cclass->getValid().get(), cclass_copy->getValid().get());
+    EXPECT_EQ(cclass->getValid().getMin(), cclass_copy->getValid().getMin());
+    EXPECT_EQ(cclass->getValid().getMax(), cclass_copy->getValid().getMax());
+
+    // Ensure that the option was copied into a new structure.
+    ASSERT_TRUE(cclass_copy->getCfgOption());
+    EXPECT_NE(cclass_copy->getCfgOption(), cclass->getCfgOption());
+    EXPECT_TRUE(cclass_copy->getCfgOption()->get("dhcp6", 1024).option_);
+
+    // Ensure that the option definition was copied into a new structure.
+    ASSERT_TRUE(cclass_copy->getCfgOptionDef());
+    EXPECT_NE(cclass_copy->getCfgOptionDef(), cclass->getCfgOptionDef());
+    EXPECT_TRUE(cclass_copy->getCfgOptionDef()->get("dhcp6", 1024));
 }
 
 // Tests options operations.  Note we just do the basics

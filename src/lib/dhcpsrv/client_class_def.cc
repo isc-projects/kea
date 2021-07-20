@@ -41,9 +41,11 @@ ClientClassDef::ClientClassDef(const std::string& name,
 }
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
-    : name_(rhs.name_), match_expr_(ExpressionPtr()), required_(false),
-      depend_on_known_(false), cfg_option_(new CfgOption()),
-      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
+    : UserContext(rhs), CfgToElement(rhs), StampedElement(rhs), name_(rhs.name_),
+      match_expr_(ExpressionPtr()), test_(rhs.test_), required_(rhs.required_),
+      depend_on_known_(rhs.depend_on_known_), cfg_option_(new CfgOption()),
+      next_server_(rhs.next_server_), sname_(rhs.sname_),
+      filename_(rhs.filename_), valid_(rhs.valid_) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
@@ -51,18 +53,13 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     }
 
     if (rhs.cfg_option_def_) {
+        cfg_option_def_.reset(new CfgOptionDef());
         rhs.cfg_option_def_->copyTo(*cfg_option_def_);
     }
 
     if (rhs.cfg_option_) {
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
-
-    required_ = rhs.required_;
-    depend_on_known_ = rhs.depend_on_known_;
-    next_server_ = rhs.next_server_;
-    sname_ = rhs.sname_;
-    filename_ = rhs.filename_;
 }
 
 ClientClassDef::~ClientClassDef() {
