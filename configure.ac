@@ -1232,10 +1232,11 @@ if test "x$enable_generate_parser" != "xno"; then
        AC_MSG_ERROR([Bison is required for enable-generate-parser, but was not found])
     fi
 
-# Ok, let's check if we have at least 3.0.0 version of the bison. The code used
-# to generate parsers is roughly based on bison 3.0 examples.
+# Let's check if we have at least 3.3.0 version of the bison. The
+# api.parser.class is available with 3.2.91, but let's be safe and offer support
+# for minor versions, as opposed to patch versions.
    cat > bisontest.y << EOF
-%require "3.0.0"
+%require "3.3.0"
 %token X
 %%
 %start Y;
@@ -1247,7 +1248,7 @@ EOF
     if test $? -ne 0 ; then
         $YACC -V
         $RM -f bisontest.y bisontest.cc
-        AC_MSG_ERROR("Error with $YACC. Possibly incorrect version? Required at least 3.0.0.")
+        AC_MSG_ERROR("Error with $YACC. Possibly incorrect version? Required at least 3.3.0.")
     fi
     $RM -f bisontest.y bisontest.cc
 fi

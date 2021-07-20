@@ -35,7 +35,7 @@ libnetconf_la_SOURCES += netconf_process.cc netconf_process.h
 libnetconf_la_SOURCES += parser_context.cc parser_context.h
 libnetconf_la_SOURCES += parser_context_decl.h
 libnetconf_la_SOURCES += simple_parser.cc simple_parser.h
-libnetconf_la_SOURCES += location.hh position.hh stack.hh
+libnetconf_la_SOURCES += location.hh
 libnetconf_la_SOURCES += netconf_lexer.ll netconf_parser.yy
 libnetconf_la_SOURCES += netconf_messages.h netconf_messages.cc
 
@@ -100,9 +100,9 @@ endif
 if GENERATE_PARSER
 
 # Generate parser first.
-all-recursive: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
+all-recursive: netconf_lexer.cc location.hh netconf_parser.cc netconf_parser.h
 
-parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
+parser: netconf_lexer.cc location.hh netconf_parser.cc netconf_parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -114,7 +114,7 @@ parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netc
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h: netconf_parser.yy
+location.hh netconf_parser.cc netconf_parser.h: netconf_parser.yy
 	$(YACC) -Wno-yacc --defines=netconf_parser.h --report=all \
 	--report-file=netconf_parser.report -o netconf_parser.cc \
 	netconf_parser.yy
@@ -124,7 +124,7 @@ netconf_lexer.cc: netconf_lexer.ll
 
 else
 
-parser location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h netconf_lexer.cc:
+parser location.hh netconf_parser.cc netconf_parser.h netconf_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif

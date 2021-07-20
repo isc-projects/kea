@@ -37,7 +37,7 @@ libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 libdhcp4_la_SOURCES += client_handler.cc client_handler.h
-libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
+libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
 libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libdhcp4_la_SOURCES += dhcp4_messages.h dhcp4_messages.cc
@@ -128,9 +128,9 @@ endif
 if GENERATE_PARSER
 
 # Generate parser first.
-all-recursive: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h
+all-recursive: dhcp4_lexer.cc location.hh dhcp4_parser.cc dhcp4_parser.h
 
-parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h
+parser: dhcp4_lexer.cc location.hh dhcp4_parser.cc dhcp4_parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -142,7 +142,7 @@ parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_pa
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h: dhcp4_parser.yy
+location.hh dhcp4_parser.cc dhcp4_parser.h: dhcp4_parser.yy
 	$(YACC) -Wno-yacc --defines=dhcp4_parser.h --report=all \
 	--report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
 
@@ -151,7 +151,7 @@ dhcp4_lexer.cc: dhcp4_lexer.ll
 
 else
 
-parser location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h dhcp4_lexer.cc:
+parser location.hh dhcp4_parser.cc dhcp4_parser.h dhcp4_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif

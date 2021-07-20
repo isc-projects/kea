@@ -48,10 +48,10 @@
 #line 17 "d2_parser.yy"
 
 #include <string>
-#include <boost/lexical_cast.hpp>
 #include <cc/data.h>
-#include <d2/parser_context_decl.h>
 #include <d2srv/d2_config.h>
+#include <boost/lexical_cast.hpp>
+#include <d2/parser_context_decl.h>
 
 using namespace isc::d2;
 using namespace isc::data;

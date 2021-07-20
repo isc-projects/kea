@@ -30,7 +30,7 @@ noinst_LTLIBRARIES = libd2.la
 
 libd2_la_SOURCES  =
 libd2_la_SOURCES += d2_process.cc d2_process.h
-libd2_la_SOURCES += d2_lexer.ll location.hh position.hh stack.hh
+libd2_la_SOURCES += d2_lexer.ll location.hh
 libd2_la_SOURCES += d2_parser.cc d2_parser.h
 libd2_la_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
 libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
@@ -78,9 +78,9 @@ kea_dhcp_ddnsdir = $(pkgdatadir)
 if GENERATE_PARSER
 
 # Generate parser first.
-all-recursive: d2_lexer.cc location.hh position.hh stack.hh d2_parser.cc d2_parser.h
+all-recursive: d2_lexer.cc location.hh d2_parser.cc d2_parser.h
 
-parser: d2_lexer.cc location.hh position.hh stack.hh d2_parser.cc d2_parser.h
+parser: d2_lexer.cc location.hh d2_parser.cc d2_parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -92,7 +92,7 @@ parser: d2_lexer.cc location.hh position.hh stack.hh d2_parser.cc d2_parser.h
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-location.hh position.hh stack.hh d2_parser.cc d2_parser.h: d2_parser.yy
+location.hh d2_parser.cc d2_parser.h: d2_parser.yy
 	$(YACC) -Wno-yacc --defines=d2_parser.h --report=all \
 	--report-file=d2_parser.report -o d2_parser.cc d2_parser.yy
 
@@ -101,7 +101,7 @@ d2_lexer.cc: d2_lexer.ll
 
 else
 
-parser location.hh position.hh stack.hh d2_parser.cc d2_parser.h d2_lexer.cc:
+parser location.hh d2_parser.cc d2_parser.h d2_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif

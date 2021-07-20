@@ -5,7 +5,7 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %skeleton "lalr1.cc" /* -*- C++ -*- */
-%require "3.0.0"
+%require "3.3.0"
 %defines
 %define api.parser.class {NetconfParser}
 %define api.prefix {netconf_}

@@ -94,9 +94,9 @@ convey the intent; a more detailed description is available in subsequent sectio
 The only input file used by flex is the .ll file and the only input file used by bison is the .yy
 file. When making changes to the lexer or parser, only those two files are edited. When processed,
 the two tools generate a number of .h, .hh and .cc files. The major ones have the same name as their
-.ll and .yy counterparts (e.g. dhcp6_lexer.cc, dhcp6_parser.cc and dhcp6_parser.h etc.), but a
-number of additional files are also created: location.hh, position.hh and stack.hh. Those are
-internal bison headers that are needed for compilation.
+.ll and .yy counterparts (e.g. dhcp6_lexer.cc, dhcp6_parser.cc and dhcp6_parser.h etc.), but an
+additional file is also created: location.hh. Those are internal bison headers that are needed for
+compilation.
 
 To avoid the need for every user to have flex and bison installed, the output files are generated
 when the .ll or .yy files are altered and are stored in the Kea repository. To generate those files,

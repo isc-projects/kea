@@ -29,7 +29,7 @@ libagent_la_SOURCES += ca_response_creator.cc ca_response_creator.h
 libagent_la_SOURCES += ca_response_creator_factory.h
 libagent_la_SOURCES += simple_parser.cc simple_parser.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
+libagent_la_SOURCES += agent_lexer.ll location.hh
 libagent_la_SOURCES += ca_messages.h ca_messages.cc
 EXTRA_DIST += ca_messages.mes
 EXTRA_DIST += agent_lexer.ll
@@ -97,9 +97,9 @@ endif
 if GENERATE_PARSER
 
 # Generate parser first.
-all-recursive: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_parser.h
+all-recursive: agent_lexer.cc location.hh agent_parser.cc agent_parser.h
 
-parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_parser.h
+parser: agent_lexer.cc location.hh agent_parser.cc agent_parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -111,7 +111,7 @@ parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_pa
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
+location.hh agent_parser.cc agent_parser.h: agent_parser.yy
 	$(YACC) -Wno-yacc --defines=agent_parser.h --report=all \
 	--report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
 
@@ -120,7 +120,7 @@ agent_lexer.cc: agent_lexer.ll
 
 else
 
-parser location.hh position.hh stack.hh agent_parser.cc agent_parser.h agent_lexer.cc:
+parser location.hh agent_parser.cc agent_parser.h agent_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif
