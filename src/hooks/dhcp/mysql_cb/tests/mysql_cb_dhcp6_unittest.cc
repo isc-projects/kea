@@ -4859,7 +4859,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, deleteAllClientClasses6) {
 
 // This test verifies that client class dependencies are tracked when the
 // classes are added to the database. It verifies that an attempt to update
-// a class violiting the dependencies results in an error.
+// a class violating the dependencies results in an error.
 TEST_F(MySqlConfigBackendDHCPv6Test, clientClassDependencies6) {
     // Create a server.
     EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
