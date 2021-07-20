@@ -361,6 +361,19 @@ ClientClassDictionary::toElement() const {
     return (result);
 }
 
+ClientClassDictionary&
+ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
+    if (this != &rhs) {
+        list_->clear();
+        map_->clear();
+        for (auto cclass : *(rhs.list_)) {
+            ClientClassDefPtr copy(new ClientClassDef(*cclass));
+            addClass(copy);
+        }
+    }
+    return (*this);
+}
+
 std::list<std::string>
 builtinNames = {
     // DROP is not in this list because it is special but not built-in.

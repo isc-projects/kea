@@ -391,6 +391,12 @@ public:
         return (!equals(other));
     }
 
+    /// @brief Copy assignment operator.
+    ///
+    /// @param rhs Client class dictionary to be copied from.
+    /// @return Instance copy.
+    ClientClassDictionary& operator=(const ClientClassDictionary& rhs);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration

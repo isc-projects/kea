@@ -431,6 +431,45 @@ TEST(ClientClassDictionary, copyAndEquality) {
     EXPECT_TRUE(*dictionary != *dictionary2);
 }
 
+// Verify that client class dictionaries are deep-copied.
+TEST(ClientClassDictionary, copy) {
+    ClientClassDictionary dictionary;
+    ExpressionPtr expr;
+    CfgOptionPtr options;
+
+    // Get a client class dictionary and fill it.
+    ASSERT_NO_THROW(dictionary.addClass("one", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary.addClass("two", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary.addClass("three", expr, "", false,
+                                         false, options));
+
+    // Make a copy with a copy constructor. Expect it to be a deep copy.
+    ClientClassDictionary dictionary_copy(dictionary);
+    ASSERT_NO_THROW(dictionary.removeClass("one"));
+    ASSERT_NO_THROW(dictionary.removeClass("two"));
+    ASSERT_NO_THROW(dictionary.removeClass("three"));
+    EXPECT_TRUE(dictionary.empty());
+    EXPECT_FALSE(dictionary_copy.empty());
+
+    // Refill the client class dictionary.
+    ASSERT_NO_THROW(dictionary.addClass("one", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary.addClass("two", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary.addClass("three", expr, "", false,
+                                         false, options));
+
+    // Make a copy with operator=. Expect it to be a deep copy.
+    dictionary_copy = dictionary;
+    ASSERT_NO_THROW(dictionary.removeClass("one"));
+    ASSERT_NO_THROW(dictionary.removeClass("two"));
+    ASSERT_NO_THROW(dictionary.removeClass("three"));
+    EXPECT_TRUE(dictionary.empty());
+    EXPECT_FALSE(dictionary_copy.empty());
+}
+
 // Tests dependency.
 TEST(ClientClassDictionary, dependency) {
     ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
