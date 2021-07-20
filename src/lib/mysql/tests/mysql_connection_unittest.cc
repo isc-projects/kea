@@ -547,7 +547,7 @@ TEST_F(MySqlConnectionTest, transactions) {
     auto result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
-    ASSERT_EQ("2", result[0][0]);
+    EXPECT_EQ("2", result[0][0]);
 
     // Add third row but roll back the transaction. We should still have
     // two rows in the table.
@@ -556,7 +556,7 @@ TEST_F(MySqlConnectionTest, transactions) {
     conn_.rollback();
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
-    ASSERT_EQ("2", result[0][0]);
+    EXPECT_EQ("2", result[0][0]);
 
     // Nested transaction. The inner transaction should be ignored and the outer
     // transaction rolled back. We should still have two rows in the database.
@@ -569,7 +569,7 @@ TEST_F(MySqlConnectionTest, transactions) {
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
-    ASSERT_EQ("2", result[0][0]);
+    EXPECT_EQ("2", result[0][0]);
 
     // Nested transaction. The inner transaction is rolled back but this should
     // be ignored because nested transactions are not supported. We should
@@ -583,7 +583,7 @@ TEST_F(MySqlConnectionTest, transactions) {
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
-    ASSERT_EQ("4", result[0][0]);
+    EXPECT_EQ("4", result[0][0]);
 }
 
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
