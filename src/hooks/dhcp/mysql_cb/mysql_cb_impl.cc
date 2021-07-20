@@ -179,9 +179,10 @@ MySqlConfigBackendImpl::createAuditRevision(const int index,
 
 void
 MySqlConfigBackendImpl::clearAuditRevision() {
-    if (audit_revision_ref_count_ > 0) {
-        --audit_revision_ref_count_;
+    if (audit_revision_ref_count_ <= 0) {
+        isc_throw(Unexpected, "attempted to clear audit revision that does not exist - coding error");
     }
+    --audit_revision_ref_count_;
 }
 
 void
