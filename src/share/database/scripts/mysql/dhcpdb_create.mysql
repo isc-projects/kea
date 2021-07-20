@@ -3206,7 +3206,7 @@ proc_label:BEGIN
             SELECT o.order_index FROM dhcp4_client_class AS c
                 INNER JOIN dhcp4_client_class_order AS o
                     ON c.id = o.class_id
-            WHERE name = follow_class_name
+            WHERE c.name = follow_class_name
         );
         IF follow_class_index IS NULL THEN
             -- The class with a name specified with follow_class_name does
@@ -3666,7 +3666,7 @@ proc_label:BEGIN
             SELECT o.order_index FROM dhcp6_client_class AS c
                 INNER JOIN dhcp6_client_class_order AS o
                     ON c.id = o.class_id
-            WHERE name = follow_class_name
+            WHERE c.name = follow_class_name
         );
         IF follow_class_index IS NULL THEN
             -- The class with a name specified with follow_class_name does
