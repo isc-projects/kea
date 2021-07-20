@@ -3932,7 +3932,9 @@ MySqlHostDataSource::commit() {
 
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly(ctx);
-    ctx->conn_.commit();
+    if (ctx->conn_.isTransactionStarted()) {
+        ctx->conn_.commit();
+    }
 }
 
 void
@@ -3943,7 +3945,9 @@ MySqlHostDataSource::rollback() {
 
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly(ctx);
-    ctx->conn_.rollback();
+    if (ctx->conn_.isTransactionStarted()) {
+        ctx->conn_.rollback();
+    }
 }
 
 bool

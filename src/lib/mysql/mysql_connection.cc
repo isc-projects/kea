@@ -407,7 +407,7 @@ MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
 void
 MySqlConnection::startTransaction() {
     // If it is nested transaction, do nothing.
-    if (++transactions_count_ > 1) {
+    if (++transaction_ref_count_ > 1) {
         return;
     }
 
@@ -422,14 +422,20 @@ MySqlConnection::startTransaction() {
     }
 }
 
+bool
+MySqlConnection::isTransactionStarted() const {
+    return (transaction_ref_count_ > 0);
+}
+
 void
 MySqlConnection::commit() {
-    // When committing nested transaction, do nothing.
-    if (--transactions_count_ > 0) {
-        return;
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "commit called for not started transaction - coding error");
     }
-    if (transactions_count_ < 0) {
-        transactions_count_ = 0;
+
+    // When committing nested transaction, do nothing.
+    if (--transaction_ref_count_ > 0) {
+        return;
     }
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
     checkUnusable();
@@ -441,12 +447,13 @@ MySqlConnection::commit() {
 
 void
 MySqlConnection::rollback() {
-    // When rolling back nested transaction, do nothing.
-    if (--transactions_count_ > 0) {
-        return;
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "rollback called for not started transaction - coding error");
     }
-    if (transactions_count_ < 0) {
-        transactions_count_ = 0;
+
+    // When rolling back nested transaction, do nothing.
+    if (--transaction_ref_count_ > 0) {
+        return;
     }
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
     checkUnusable();

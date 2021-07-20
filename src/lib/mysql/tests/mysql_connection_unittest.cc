@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -109,7 +110,9 @@ public:
     ///
     /// Removes test table from the database.
     virtual ~MySqlConnectionTest() {
-        conn_.rollback();
+        if (conn_.isTransactionStarted()) {
+            conn_.rollback();
+        }
         dropTestTable();
     }
 
@@ -541,9 +544,11 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
 TEST_F(MySqlConnectionTest, transactions) {
     // Two inserts within a transaction and successful commit.
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (1)");
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (2)");
     conn_.commit();
+    EXPECT_FALSE(conn_.isTransactionStarted());
     auto result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
@@ -552,8 +557,10 @@ TEST_F(MySqlConnectionTest, transactions) {
     // Add third row but roll back the transaction. We should still have
     // two rows in the table.
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (5)");
     conn_.rollback();
+    EXPECT_FALSE(conn_.isTransactionStarted());
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
     EXPECT_EQ("2", result[0][0]);
@@ -561,11 +568,15 @@ TEST_F(MySqlConnectionTest, transactions) {
     // Nested transaction. The inner transaction should be ignored and the outer
     // transaction rolled back. We should still have two rows in the database.
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (3)");
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (4)");
     conn_.commit();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     conn_.rollback();
+    EXPECT_FALSE(conn_.isTransactionStarted());
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
@@ -575,15 +586,23 @@ TEST_F(MySqlConnectionTest, transactions) {
     // be ignored because nested transactions are not supported. We should
     // have two new rows.
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (5)");
     conn_.startTransaction();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (6)");
     conn_.rollback();
+    EXPECT_TRUE(conn_.isTransactionStarted());
     conn_.commit();
+    EXPECT_FALSE(conn_.isTransactionStarted());
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
     ASSERT_EQ(1, result.size());
     ASSERT_EQ(1, result[0].size());
     EXPECT_EQ("4", result[0][0]);
+
+    // Committing or rolling back a not started transaction is a coding error.
+    EXPECT_THROW(conn_.commit(), isc::Unexpected);
+    EXPECT_THROW(conn_.rollback(), isc::Unexpected);
 }
 
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {

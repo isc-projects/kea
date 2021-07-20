@@ -248,7 +248,7 @@ public:
                     DbCallback callback = DbCallback())
         : DatabaseConnection(parameters, callback),
           io_service_accessor_(io_accessor), io_service_(),
-          transactions_count_(0) {
+          transaction_ref_count_(0) {
     }
 
     /// @brief Destructor
@@ -386,6 +386,11 @@ public:
     /// transactions are not attempted, thus avoiding implicit (unexpected)
     /// commits of the pending transaction.
     void startTransaction();
+
+    /// @brief Checks if there is a transaction in progress.
+    ///
+    /// @return true if a transaction has been started, false otherwise.
+    bool isTransactionStarted() const;
 
     /// @brief Executes SELECT query using prepared statement.
     ///
@@ -726,7 +731,7 @@ public:
     /// implicitly commits current transaction when new transaction is
     /// started. We want to not start new transactions when one is already
     /// in progress.
-    int transactions_count_;
+    int transaction_ref_count_;
 };
 
 } // end of isc::db namespace
