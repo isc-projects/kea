@@ -722,7 +722,7 @@ public:
 
     /// @brief Reference counter for transactions.
     ///
-    /// It precludes starting and commiting nested transactions. MySQL
+    /// It precludes starting and committing nested transactions. MySQL
     /// implicitly commits current transaction when new transaction is
     /// started. We want to not start new transactions when one is already
     /// in progress.
