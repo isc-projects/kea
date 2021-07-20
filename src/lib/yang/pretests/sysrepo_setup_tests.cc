@@ -11,6 +11,7 @@
 
 #include <sysrepo-cpp/Session.hpp>
 
+#include <unordered_map>
 #include <sstream>
 
 using namespace std;

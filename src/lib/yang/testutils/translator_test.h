@@ -10,6 +10,7 @@
 #include <yang/translator.h>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 namespace isc {
 namespace yang {
