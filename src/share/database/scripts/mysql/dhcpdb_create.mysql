@@ -3627,7 +3627,7 @@ DROP PROCEDURE IF EXISTS setClientClass6Order;
 -- - id id of the positioned class,
 -- - follow_class_name name of the class after which this class should be
 --   positioned within the class hierarchy.
--- - old_follow_class_name previous name of the class after which this
+-- - old_follow_class_name name of the previous class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 DELIMITER $$
