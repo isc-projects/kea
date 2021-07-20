@@ -539,21 +539,20 @@ TestConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_s
     auto tags = server_selector.getTags();
     ClientClassDictionary all_classes;
     for (auto client_class : classes_) {
-        auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
         if (server_selector.amAny()) {
-            all_classes.addClass(non_const_client_class);
+            all_classes.addClass(client_class);
             continue;
         }
         if (server_selector.amUnassigned()) {
             if (client_class->getServerTags().empty()) {
-                all_classes.addClass(non_const_client_class);
+                all_classes.addClass(client_class);
             }
             continue;
         }
         bool got = false;
         for (auto tag : tags) {
             if (client_class->hasServerTag(ServerTag(tag))) {
-                all_classes.addClass(non_const_client_class);
+                all_classes.addClass(client_class);
                 got = true;
                 break;
             }
@@ -562,7 +561,7 @@ TestConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_s
             continue;
         }
         if (client_class->hasAllServerTag()) {
-            all_classes.addClass(non_const_client_class);
+            all_classes.addClass(client_class);
         }
     }
     return (all_classes);
@@ -575,11 +574,10 @@ TestConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& ser
     ClientClassDictionary modified_classes;
     for (auto client_class : classes_) {
         if (client_class->getModificationTime() >= modification_time) {
-            auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
             bool got = false;
             for (auto tag : tags) {
                 if (client_class->hasServerTag(ServerTag(tag))) {
-                    modified_classes.addClass(non_const_client_class);
+                    modified_classes.addClass(client_class);
                     got = true;
                     break;
                 }
@@ -588,7 +586,7 @@ TestConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& ser
                 continue;
             }
             if (client_class->hasAllServerTag()) {
-                modified_classes.addClass(non_const_client_class);
+                modified_classes.addClass(client_class);
             }
         }
     }
@@ -623,13 +621,11 @@ TestConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& serv
         }
     }
 
-    auto non_const_client_class = boost::const_pointer_cast<ClientClassDef>(client_class);
-
     if (follow_class_index < 0) {
         if (existing_class_index >= 0) {
-            classes_[existing_class_index] = non_const_client_class;
+            classes_[existing_class_index] = client_class;
         } else {
-            classes_.push_back(non_const_client_class);
+            classes_.push_back(client_class);
         }
     } else {
         if (existing_class_index < 0) {
