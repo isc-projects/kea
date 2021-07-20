@@ -19,6 +19,7 @@ Debug message issued when triggered an action to create or update option by subn
 
 % MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4 create or update client class: %1
 Debug message issued when triggered an action to create or update client class
+
 % MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4 create or update global parameter: %1
 Debug message issued when triggered an action to create or update global parameter
 
