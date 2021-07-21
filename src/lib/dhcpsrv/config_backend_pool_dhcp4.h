@@ -236,7 +236,7 @@ public:
     /// @brief Retrieves all client classes.
     ///
     /// @param backend_selector Backend selector.
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Collection of client classes.
     virtual ClientClassDictionary
     getAllClientClasses4(const db::BackendSelector& backend_selector,
@@ -245,7 +245,7 @@ public:
     /// @brief Retrieves client classes modified after specified time.
     ///
     /// @param backend_selector Backend selector.
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param modification_time Modification time.
     /// @return Collection of client classes.
     virtual ClientClassDictionary

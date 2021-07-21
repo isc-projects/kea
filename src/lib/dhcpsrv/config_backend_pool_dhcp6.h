@@ -235,7 +235,7 @@ public:
     /// @brief Retrieves all client classes.
     ///
     /// @param backend_selector Backend selector.
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Collection of client classes.
     virtual ClientClassDictionary
     getAllClientClasses6(const db::BackendSelector& backend_selector,
@@ -244,7 +244,7 @@ public:
     /// @brief Retrieves client classes modified after specified time.
     ///
     /// @param backend_selector Backend selector.
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param modification_time Modification time.
     /// @return Collection of client classes.
     virtual ClientClassDictionary
@@ -400,7 +400,7 @@ public:
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param client_class Client class to be added or updated.
-    /// @param follow_client_class name of the class after which the
+    /// @param follow_class_name name of the class after which the
     /// new or updated class should be positioned. An empty value
     /// causes the class to be appended at the end of the class
     /// hierarchy.

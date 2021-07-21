@@ -784,7 +784,7 @@ namespace {
     MYSQL_GET_CLIENT_CLASS6_COMMON( \
     "LEFT JOIN dhcp6_client_class_server AS a " \
     "  ON c.id = a.class_id " \
-    "LEFT JOIN dhcp4_server AS s " \
+    "LEFT JOIN dhcp6_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.class_id IS NULL __VA_ARGS__)
 

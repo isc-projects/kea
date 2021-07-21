@@ -296,7 +296,7 @@ public:
 
     /// @brief Retrieves a client class by name.
     ///
-    /// @param server_selector Server selector.
+    /// @param selector Server selector.
     /// @param name Client class name.
     /// @return Pointer to the retrieved client class.
     virtual ClientClassDefPtr

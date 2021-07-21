@@ -2473,7 +2473,7 @@ public:
                 // filename
                 if (!out_bindings[5]->amNull()) {
                     last_client_class->setFilename(out_bindings[5]->getString());
-                }                
+                }
 
                 // required
                 if (!out_bindings[6]->amNull()) {

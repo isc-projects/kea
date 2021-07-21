@@ -2854,7 +2854,7 @@ public:
             MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
             MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
             MySqlBinding::createInteger<uint8_t>(), // option: persistent
-            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
+            MySqlBinding::createInteger<uint32_t>(), // option: dhcp6_subnet_id
             MySqlBinding::createInteger<uint8_t>(), // option: scope_id
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
