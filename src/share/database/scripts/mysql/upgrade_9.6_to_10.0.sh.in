@@ -33,6 +33,69 @@ if test "${version}" != "9.6"; then
     exit 0
 fi
 
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in "${@}"
+do
+    if ! printf '%s' "${arg}" | grep -Eq '^\-\-'
+    then
+        schema="$arg"
+        break
+    fi
+done
+
+# Make sure we have the schema.
+if [ -z "$schema" ]
+then
+    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
+    exit 255
+fi
+
+shrink_tag_column() {
+    local schema="${1-}"; shift
+    local table="${1-}"; shift
+
+    # Check if the table already has a correct server tag length.
+    sql="SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='${schema}' AND TABLE_NAME='${table}' AND COLUMN_NAME='tag'"
+    if ! taglen=$(mysql -N -B "${@}" -e "${sql}")
+    then
+        printf 'shrink_tag_column: schema query failed [%s]\n' "${sql}"
+        exit 255
+    fi
+
+    # We aim for the length of 64 characters.
+    if [ "$taglen" -ne 64 ]
+    then
+        # Check if any of the tags are longer than 64 characters.
+        sql="SELECT COUNT(*) FROM $table WHERE CHAR_LENGTH(tag) > 64 LIMIT 1"
+        if ! longtag=$(mysql -N -B "${@}" -e "${sql}")
+        then
+            printf 'shrink_tag_column: select query failed [%s]\n' "${sql}"
+            exit 255
+        fi
+        # Report an error if there are any server tags exceeding 64 characters.
+        # A user should fix the tags and rerun this migration.
+        if [ "$longtag" -eq 1 ]
+        then
+            printf 'shrink_tag_column: failed to resize server tag column for table %s.\n' "${table}"
+            printf 'Ensure that no server tags are longer than 64 characters and rerun this migration.\n'
+            printf 'The remote-server4-set and remote-server6-set commands from  the cb_cmds hooks\n'
+            printf 'library can be used to modify the tags.\n'
+            exit 255
+        fi
+        # If there are no long server tags we can safely alter the column.
+        sql="ALTER TABLE $table MODIFY COLUMN tag VARCHAR(64) NOT NULL"
+        if ! mysql -N -B "${@}" -e "${sql}"
+        then
+            printf 'shrink_tag_column: alter quary failed [%s]\n' "${sql}"
+            exit 255
+        fi
+    fi
+}
+
+shrink_tag_column "${schema}" dhcp4_server "${@}"
+shrink_tag_column "${schema}" dhcp6_server "${@}"
+
 mysql "$@" <<EOF
 
 -- -----------------------------------------------------------------------
