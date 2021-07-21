@@ -8,7 +8,7 @@ module kea-dhcp-types {
   }
   import kea-types {
     prefix kea;
-    revision-date 2019-08-12;
+    revision-date 2021-07-28;
   }
 
   organization "Internet Systems Consortium";

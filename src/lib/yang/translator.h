@@ -79,6 +79,21 @@ public:
     void setItem(const std::string& xpath, isc::data::ConstElementPtr elem,
                  sr_type_t type);
 
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void checkAndSetLeaf(isc::data::ElementPtr const& from,
+                         std::string const& xpath,
+                         std::string const& name,
+                         sr_type_t const& type);
+
+
     /// @brief Delete basic value from YANG.
     ///
     /// @param xpath The xpath of the basic value.

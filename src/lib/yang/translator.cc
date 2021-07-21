@@ -270,6 +270,16 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
     session_->apply_changes();
 }
 
+void TranslatorBasic::checkAndSetLeaf(ElementPtr const& from,
+                                      string const& xpath,
+                                      string const& name,
+                                      sr_type_t const& type) {
+    ElementPtr const& x(from->get(name));
+    if (x) {
+        setItem(xpath + "/" + name, x, type);
+    }
+}
+
 void
 TranslatorBasic::delItem(const std::string& xpath) {
     try {

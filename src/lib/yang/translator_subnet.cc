@@ -406,6 +406,7 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
             }
         }
     }
+    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOLEAN_T);
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr match = elem->get("match-client-id");
         if (match) {

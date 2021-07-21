@@ -7,8 +7,8 @@ module kea-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea types and groupings.";
 
-  revision 2019-08-12 {
-    description "Initial revision";
+  revision 2021-07-28 {
+    description "Initial revision + added store-extended-info";
     reference "";
   }
 
@@ -155,6 +155,13 @@ module kea-types {
         type user-context;
         description "Logger user context.";
       }
+    }
+  }
+
+  grouping store-extended-info {
+    leaf store-extended-info {
+      description "whether Kea should store additional client query data e.g. RAI in packets";
+      type boolean;
     }
   }
 }
