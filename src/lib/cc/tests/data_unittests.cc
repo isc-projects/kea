@@ -1420,17 +1420,45 @@ TEST(Element, sortStrings) {
 }
 
 TEST(Element, sortMaps) {
-    ElementPtr e1(Element::fromJSON(R"({"id": 1, "subnet": "10.0.1.0/24"})"));
+    ElementPtr e1(Element::fromJSON(R"({"id": 1, "subnet": "10.0.2.0/24"})"));
     ElementPtr e2(Element::fromJSON(R"({"id": 2, "subnet": "10.0.1.0/24"})"));
-    ElementPtr l(Element::createList());
-    l->add(e2);
+    ElementPtr l;
+
+    // Test sorting by "id". Order shouldn't change.
+    l = Element::createList();
     l->add(e1);
-    EXPECT_EQ(*l->get(0), *e2);
-    EXPECT_EQ(*l->get(1), *e1);
+    l->add(e2);
     boost::dynamic_pointer_cast<ListElement>(l)->sort("id");
     ASSERT_EQ(l->size(), 2);
     EXPECT_EQ(*l->get(0), *e1);
     EXPECT_EQ(*l->get(1), *e2);
+
+    // Test sorting by "id". Order should change.
+    l = Element::createList();
+    l->add(e2);
+    l->add(e1);
+    boost::dynamic_pointer_cast<ListElement>(l)->sort("id");
+    ASSERT_EQ(l->size(), 2);
+    EXPECT_EQ(*l->get(0), *e1);
+    EXPECT_EQ(*l->get(1), *e2);
+
+    // Test sorting by "subnet". Order should change.
+    l = Element::createList();
+    l->add(e1);
+    l->add(e2);
+    boost::dynamic_pointer_cast<ListElement>(l)->sort("subnet");
+    ASSERT_EQ(l->size(), 2);
+    EXPECT_EQ(*l->get(0), *e2);
+    EXPECT_EQ(*l->get(1), *e1);
+
+    // Test sorting by "subnet". Order shouldn't change.
+    l = Element::createList();
+    l->add(e2);
+    l->add(e1);
+    boost::dynamic_pointer_cast<ListElement>(l)->sort("subnet");
+    ASSERT_EQ(l->size(), 2);
+    EXPECT_EQ(*l->get(0), *e2);
+    EXPECT_EQ(*l->get(1), *e1);
 }
 
 TEST(Element, removeEmptyContainersRecursively) {
