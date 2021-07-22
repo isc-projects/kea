@@ -107,7 +107,6 @@ protected:
     ///
     /// Emit a fatal error if an essential one (i.e. required in
     /// a further phase) is missing or does not have the expected revision.
-    /// The caller (init) will exit().
     ///
     /// @param module_name The module name.
     /// @return true if available, false if not.

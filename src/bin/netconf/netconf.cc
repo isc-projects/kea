@@ -272,19 +272,17 @@ void NetconfAgent::getModules() {
         S_Context context(running_sess_->get_context());
         modules = context->get_module_iter();
     } catch (const sysrepo_exception& ex) {
-        cerr << "ERROR: Can't retrieve available modules: " << ex.what() << endl;
-        exit(1);
+        isc_throw(Unexpected, "can't retrieve available modules: " << ex.what());
     }
 
     for (S_Module const& module : modules) {
         if (!module->name()) {
-            cerr << "ERROR: module name is mangled" << endl;
-            exit(2);
+            isc_throw(Unexpected, "could not retrieve module name");
         }
         string const name(module->name());
         if (!module->rev() || !module->rev()->date()) {
-            cerr << "ERROR: module revision is mangled" << endl;
-            exit(3);
+            isc_throw(Unexpected,
+                      "could not retrieve module revision for module " << name);
         }
         string const revision(module->rev()->date());
         modules_.emplace(name, revision);
@@ -328,11 +326,8 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
     }
 
     if (faulty_model) {
-        cerr << "ERROR: The logged YANG module is missing or its revision is not "
-                "supported. The environment is not suitable for running "
-                "kea-netconf."
-            << endl;
-        exit(4);
+        isc_throw(Unexpected, "YANG module is missing or its revision is not "
+                              "supported. Check logs for details.");
     }
 
     for (auto modrev : YANG_REVISIONS) {

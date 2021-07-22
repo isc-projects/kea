@@ -90,7 +90,7 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
                      bool check_only) {
     // Do a sanity check first.
     if (!config_set) {
-        isc_throw(DhcpConfigError, "Mandatory config parameter not provided");
+        isc_throw(ConfigError, "Mandatory config parameter not provided");
     }
 
     NetconfConfigPtr ctx = getNetconfConfig();
