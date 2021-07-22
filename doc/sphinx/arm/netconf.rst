@@ -999,3 +999,40 @@ Finally, any of the previous examples can be replayed by using
 
 or by using a NETCONF client like ``netopeer2-cli`` from the
 `Netopeer2 <https://github.com/CESNET/Netopeer2>`__ NETCONF Toolset.
+
+.. _migrating-yang-v0-to-v1:
+
+Migrating YANG data from sysrepo v0.x to v1.x
+---------------------------------------------
+
+Start the migration after turning off kea-netconf to make sure that backups done
+for both datastores are done at the same configuration state and no change
+happens between exporting them.
+
+Unfortunately, sysrepo v0.x does not support import/export of all YANG modules.
+This was added in sysrepo v1.x. You will need to do per-module backup. It's
+probably for the best, for isolating potential failures and preventing them from
+affecintg all your modules.
+
+With sysrepo v0.x:
+
+.. code-block:: console
+
+    $ sysrepocfg --datastore running --export=save.xml --format=xml kea-dhcp6-server
+    $ sysrepocfg --datastore startup --export=save.xml --format=xml kea-dhcp6-server
+
+Install sysrepo v1.x and then:
+
+.. code-block:: console
+
+    $ sysrepocfg --datastore running --edit=save.xml
+    $ sysrepocfg --datastore startup --edit=save.xml
+
+Module name and format are optional for v1.x, they are detected automatically.
+In case of trouble, they can be provided with the ``--format xml`` and
+``--module kea-dhcp6-server`` flags.
+
+If you upgraded after a long time, there might also be changes to the YANG
+modules themselves. In that case the backups will need some minor massaging. But
+this will be a dilligence that will have to be carried out occasionally and
+completely independent of sysrepo upgrades.
