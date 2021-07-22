@@ -223,8 +223,10 @@ public:
         return (SR_ERR_OK);
     }
 
-    /// @brief logChanges is called in another thread so we can have to wait for
-    /// it.
+    /// @brief logChanges is called in another thread so we have to wait for it.
+    ///
+    /// @todo The better way to get notified and get rid of the sleep is with a
+    /// conditional variable.
     void waitForCallback() {
         while (!finished_) {
             usleep(1000);
@@ -1050,7 +1052,7 @@ TEST_F(NetconfAgentTest, validate) {
     // Wait servers to be stopped.
     waitStopped();
 
-    // Check requests.
+    // Check that the fake server received the first request.
     ASSERT_LE(1, requests_.size());
     string request_str = requests_[0];
     ConstElementPtr request;
@@ -1079,7 +1081,8 @@ TEST_F(NetconfAgentTest, validate) {
     sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
-    ASSERT_LE(2, requests_.size());
+    // Check that the fakse server received the second request.
+    ASSERT_EQ(2, requests_.size());
     request_str = requests_[1];
     ASSERT_NO_THROW(request = Element::fromJSON(request_str));
     expected_str = "{\n"
@@ -1104,9 +1107,6 @@ TEST_F(NetconfAgentTest, validate) {
     sortSubnets(expected);
     sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
-
-    // Check that no more than 2 requests have been received.
-    ASSERT_EQ(2, requests_.size());
 
     // Check responses.
     ASSERT_EQ(2, responses_.size());
