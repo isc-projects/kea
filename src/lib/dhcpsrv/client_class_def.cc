@@ -304,7 +304,6 @@ ClientClassDictionary::removeClass(const uint64_t id) {
     }
     for (ClientClassDefList::iterator this_class = list_->begin();
          this_class != list_->end(); ++this_class) {
-        std::cout << "id: " << id << ", " << "this_class: " << (*this_class)->getId() << std::endl;
         if ((*this_class)->getId() == id) {
             map_->erase((*this_class)->getName());
             list_->erase(this_class);
