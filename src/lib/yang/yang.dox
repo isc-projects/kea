@@ -26,7 +26,7 @@ Note that although the initial focus is on translation from YANG to JSON (so
 Kea can retrieve its configuration), the opposite translation direction -
 from JSON to YANG - is also very useful, for at least three reasons. First,
 in many cases we can use it in tests to check that conversion back and forth
-doesn't lose anything: yang = toYang(toJson(yang)). Second, YANG models
+doesn't lose anything: yang = toYang(toJson(yang)). Second, YANG modules
 cover two major types of data: configuration and run-time state. While
 we're initially focusing on getting the configuration, the run-time state
 is something that Kea is expected to provide. Kea uses JSON internally in many
@@ -53,13 +53,13 @@ the basic / base class and recursively from translators for embedded parts.
 @section yangTranslatorPool Pool translator
 
 @c isc::yang::TranslatorPool is the standard example of a translator
-for a structured value. Its constructor takes a model name: the code
-implements some variants to accommodate the model with shared code
+for a structured value. Its constructor takes a module name: the code
+implements some variants to accommodate the module with shared code
 moved into a common private routine. When called with an unsupported
-model, generic methods of all structure translators throw
+module, generic methods of all structure translators throw
 @c isc::NotImplemented.
 
-Note pools show two shortcomings in IETF models:
+Note pools show two shortcomings in IETF modules:
  - option sets make to track changes nearly impossible: the only easy
   code is to translate the whole configuration.
  - prefix and start - end forms of pool ranges are both mandatory.
@@ -86,7 +86,7 @@ to pools and back.
 Adaptors are tools which adapts JSON complete or partial configuration
 before translation to YANG to ease this translation or after translation
 from YANG to follow the Kea syntax, for instance by adding static
-components which are not in the model.
+components which are not in the module.
 
 Methods provided by adaptors are class methods (i.e. declared static).
 Specific adaptors can be derived from the isc::yang::Adaptor base class.
@@ -95,16 +95,16 @@ There are a few basic adaptors and per structure adaptors. The second
 category of adaptors are divided into:
  - from JSON to YANG adaptors or pre-processing which adapt a JSON
   configuration to make it acceptable by a from JSON to YANG (setXXX)
-  translators. For a Kea model this kind of adaptors fill some required
+  translators. For a Kea module this kind of adaptors fill some required
   but missing fields, or only transform a configuration into a canonical
-  form. Note for a Kea model and a configuration taken from config-get
+  form. Note for a Kea module and a configuration taken from config-get
   or config-write it likely does nearly nothing but the code must
   handle any hand written configuration so these adaptors are always
   applied.
 
  - from YANG to JSON adaptors or post-processing which adapt translated
   YANG configuration (by getXXX) to make it acceptable by a Kea server.
-  By definition they are not defined for Kea models.
+  By definition, they are not defined for Kea modules.
 
 @section unitTestsSysrepo Running unit tests with Sysrepo
 
@@ -117,24 +117,24 @@ To run YANG/NETCONF/Sysrepo tests you need to compile Kea with Sysrepo support:
 For details, see Section "YANG/NETCONF support" in the Kea Administrator
 Reference Manual: https://kea.readthedocs.io/en/latest/arm/netconf.html.
 
-You also need to install YANG models, so the unit tests are able to
+You also need to install YANG modules, so the unit tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several Kea models (src/share/yang/modules/*.yang), mostly usable in
+There are several Kea modules (src/share/yang/modules/*.yang), mostly usable in
 production, but one called keatest-module is only used in unit tests. To be able
 to run unit tests as a non-root user, which is the recommended way, make sure
 the sysrepo repository and /dev/shm/sr* are owned by said user. One way to
-prevent sporadic chown-ing is to install sysrepo and the Kea models as non-root.
+prevent sporadic chown-ing is to install sysrepo and the Kea modules as non-root.
 
-To install all the models, run the following script:
+To install all the modules, run the following script:
 
 @verbatim
 ./src/share/yang/modules/utils/reinstall.sh
 @endverbatim
 
-Alternatively to install each model, issue the following command:
+Alternatively to install each module, issue the following command:
 
 @verbatim
-sysrepoctl -i "src/share/yang/modules/${model}.yang"
+sysrepoctl -i "src/share/yang/modules/${module}.yang"
 @endverbatim
 
 To verify that you have the schemas installed, do this:
@@ -160,7 +160,7 @@ of keatest-module:
  - kea-dhcp4-server
  - kea-dhcp6-server
 
-Those models depend on the following modules:
+Those modules depend on the following modules:
  - ietf-inet-types
  - ietf-yang-types
  - ietf-interfaces
