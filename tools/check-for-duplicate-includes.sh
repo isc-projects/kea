@@ -42,7 +42,7 @@ while test ${#} -gt 0; do
     '-d'|'--debug') set -vx ;;
 
     # [-h|--help]              print usage (this text).
-    '-h'|'--help') print_usage ;;
+    '-h'|'--help') print_usage; exit 0 ;;
 
     # Unrecognized argument
     *)

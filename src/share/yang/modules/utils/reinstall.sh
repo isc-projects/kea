@@ -28,7 +28,6 @@ Options:
   [-d|--debug]                              enable debug mode, showing every executed command
   [-h|--help]                               print usage (this text)
   [-s|--sysrepo ${SYSREPO_INSTALLATION}]    point to sysrepo installation which is needed for sysrepoctl
-  [-r|--repository ${SYSREPO_REPOSITORY}]   point to sysrepo repository
 ' \
     "$(basename "${0}")"
 }
@@ -49,7 +48,7 @@ while test ${#} -gt 0; do
     '-d'|'--debug') set -vx ;;
 
     # [-h|--help]                               print usage (this text)
-    '-h'|'--help') print_usage ;;
+    '-h'|'--help') print_usage; exit 0 ;;
 
     # [-s|--sysrepo ${SYSREPO_INSTALLATION}]    point to sysrepo installation which is needed for sysrepoctl
     '-s'|'--sysrepo') shift; sysrepo=${1} ;;

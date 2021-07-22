@@ -51,7 +51,7 @@ while test ${#} -gt 0; do
     '-d'|'--debug') set -vx ;;
 
     # [-h|--help]              print usage (this text).
-    '-h'|'--help') print_usage ;;
+    '-h'|'--help') print_usage; exit 0 ;;
 
     # [-n|--name-only]         only show names of files that will be modified
     '-n'|'--name-only') name_only=true ;;
