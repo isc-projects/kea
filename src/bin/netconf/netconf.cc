@@ -134,7 +134,7 @@ void
 NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
     // Check for a configuration manager.
     if (!cfg_mgr) {
-        isc_throw(BadValue, "missing configuration for kea-netconf");
+        isc_throw(Unexpected, "missing configuration manager");
         return;
     }
     const CfgServersMapPtr& servers =
