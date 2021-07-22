@@ -19,20 +19,19 @@ Installing NETCONF
 
 To get its NETCONF capabilities, Kea uses Sysrepo.
 
-The following sections provide installation instructions for Ubuntu
-18.04 and CentOS 7.5.
+The following sections provide installation instructions for Ubuntu and CentOS.
 
 .. _netconf-ubuntu-install:
 
-Installing NETCONF on Ubuntu 18.04
-----------------------------------
+Installing NETCONF on Ubuntu
+----------------------------
 
 For detailed installation instructions, see the `Ubuntu installation notes page <https://gitlab.isc.org/isc-projects/kea/wikis/docs/ubuntu-installation-notes>`__.
 
 .. _netconf-centos-install:
 
-Installing NETCONF on CentOS 7.5
---------------------------------
+Installing NETCONF on CentOS
+----------------------------
 
 For detailed installation instructions, see the `CentOS installation notes page <https://gitlab.isc.org/isc-projects/kea/wikis/docs/centos-installation-notes>`__.
 
