@@ -78,7 +78,7 @@ int main() {
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't initialize sysrepo: " << ex.what() << endl;
         cerr << "ERROR: Make sure you have the right permissions to the sysrepo repository." << endl;
-        return 1;
+        return (1);
     }
 
     S_Session sess;
@@ -87,7 +87,7 @@ int main() {
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't establish a sysrepo session: "
              << ex.what() << endl;
-        return 2;
+        return (2);
     }
 
     vector<S_Module> modules;
@@ -96,19 +96,19 @@ int main() {
         modules = context->get_module_iter();
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't retrieve available modules: " << ex.what() << endl;
-        return 3;
+        return (3);
     }
 
     std::unordered_map<std::string, std::string> installed_modules;
     for (S_Module const& module : modules) {
         if (!module->name()) {
             cerr << "ERROR: module name is mangled" << endl;
-            return 4;
+            return (4);
         }
         string const name(module->name());
         if (!module->rev() || !module->rev()->date()) {
             cerr << "ERROR: module revision is mangled" << endl;
-            return 5;
+            return (5);
         }
         string const revision(module->rev()->date());
         installed_modules.emplace(name, revision);
@@ -119,12 +119,12 @@ int main() {
         std::string const& revision(kv.second);
         if (!installed_modules.count(name)) {
             cerr << missingModuleText(name, revision);
-            return 6;
+            return (6);
         }
         string const& expected_revision(installed_modules.at(name));
         if (expected_revision != revision) {
             cerr << badRevisionModuleText(name, expected_revision, revision);
-            return 7;
+            return (7);
         }
     }
 

@@ -114,6 +114,8 @@ protected:
 
     /// @brief Retrieve names and revisions of installed modules through the
     /// sysrepo API.
+    ///
+    /// @throw Unexpected if module information cannot be retrieved from sysrepo
     void getModules();
 
     /// @brief Check module availability.
@@ -124,6 +126,9 @@ protected:
     /// @param servers the configured servers to check against YANG_REVISIONS.
     /// Is empty by default for when the caller only wants to check
     /// installed modules.
+    ///
+    /// @throw Unexpected if a module from YANG_REVISIONS is not installed or
+    /// has the wrong revision.
     void checkModules(CfgServersMapPtr const& servers = {}) const;
 
     /// @brief Retrieve Kea server configuration from the YANG startup

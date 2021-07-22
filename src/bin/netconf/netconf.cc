@@ -486,19 +486,18 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
         .arg(model);
 
     S_Subscribe subscription(std::make_shared<Subscribe>(running_sess_));
-    auto event_notif_callback =
-        [=](sysrepo::S_Session session,
-            sr_ev_notif_type_t const notification_type, char const* path,
-            sysrepo::S_Vals const vals, time_t timestamp) {
-            NetconfAgentCallback agent(service_pair);
-            return agent.event_notif(session, notification_type, path, vals,
-                                     timestamp, nullptr);
-        };
+    auto callback = [=](sysrepo::S_Session session,
+                        sr_ev_notif_type_t const notification_type,
+                        char const* path,
+                        sysrepo::S_Vals const vals,
+                        time_t timestamp) {
+        NetconfAgentCallback agent(service_pair);
+        return agent.event_notif(session, notification_type, path, vals, timestamp, nullptr);
+    };
     try {
         // The alternative event_notif_subscribe_tree() might expose more data
         // as S_Data_Node if needed.
-        subscription->event_notif_subscribe(model.c_str(),
-            event_notif_callback);
+        subscription->event_notif_subscribe(model.c_str(), callback);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<
@@ -540,7 +539,7 @@ NetconfAgent::change(S_Session sess, const CfgServersMapPair& service_pair) {
             LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
                 .arg(service_pair.first)
                 .arg(msg.str());
-            return SR_ERR_OPERATION_FAILED;
+            return (SR_ERR_OPERATION_FAILED);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_VALIDATE_CONFIG)

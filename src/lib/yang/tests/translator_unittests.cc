@@ -313,7 +313,8 @@ TEST(TranslatorBasicTest, getItem) {
 
     // Not found.
     xpath = "/keatest-module:main/no_such_string";
-    // sysrepo_exception: "Invalid argument" ¯\_(ツ)_/¯
+
+    // sysrepo_exception: "Invalid argument"
     EXPECT_THROW(sess->delete_item(xpath.c_str()), sysrepo_exception);
     EXPECT_THROW(elem = t_obj->getItem(xpath), SysrepoError);
     EXPECT_FALSE(elem);
@@ -595,7 +596,8 @@ TEST(TranslatorBasicTest, setItem) {
     sess->set_item_str(xpath.c_str(), "2");
     sess->set_item_str(xpath.c_str(), "3");
     sess->apply_changes();
-    // sysrepo_exception: "Invalid argument" ¯\_(ツ)_/¯
+
+    // sysrepo_exception: "Invalid argument"
     EXPECT_THROW(data_node = sess->get_subtree(xpath.c_str()),
         sysrepo_exception);
     EXPECT_FALSE(data_node);
@@ -646,7 +648,8 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_TRUE(s_val);
     s_val.reset();
     EXPECT_NO_THROW(t_obj->delItem(xpath));
-    // sysrepo_exception: "Item not found" ¯\_(ツ)_/¯
+
+    // sysrepo_exception: "Item not found"
     EXPECT_THROW(s_val = sess->get_item(xpath.c_str()), sysrepo_exception);
     EXPECT_FALSE(s_val);
     EXPECT_NO_THROW(t_obj->delItem(xpath));
