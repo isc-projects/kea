@@ -17,6 +17,6 @@ if GENERATE_DOCS
 # Scripts for sysrepo are also included. If users do not want to install
 # the sysrepo libraries and binaries in the default system tree and prefer
 # a custom path, these scripts can be used.
-EXTRA_DIST = cql_config cql_config_defines.sh.sample sysrepo_config sysrepo_config_defines.sh.sample
+EXTRA_DIST = cql_config cql_config_defines.sh.sample
 
 endif

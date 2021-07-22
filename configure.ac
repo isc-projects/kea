@@ -885,134 +885,8 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
-DISTCHECK_SYSREPO_CONFIGURE_FLAG=
-sysrepo_config="no"
-AC_ARG_WITH([sysrepo],
-  AS_HELP_STRING([--with-sysrepo=PATH],
-    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
-  [sysrepo_config="$withval"])
-
-if test "${sysrepo_config}" = "yes" ; then
-    if test "$PKG_CONFIG" = ""; then
-        AC_MSG_ERROR([--with-sysrepo specified without any parameter and pkg-config was not found. Either use --with-sysrepo=path or install pkg-config])
-    fi
-    SYSREPO_CONFIG="$PKG_CONFIG"
-    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
-elif test "${sysrepo_config}" != "no" ; then
-    SYSREPO_CONFIG="${sysrepo_config}"
-    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
-fi
-AC_SUBST(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
-
-if test "$SYSREPO_CONFIG" != "" ; then
-    if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
-        AC_MSG_ERROR([--with-sysrepo should point to a pkg-config or sysrepo_config program])
-    fi
-
-    # Let's get the configuration environment for pure Sysrepo (written in C) first
-    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
-    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libsysrepo)"
-    SYSREPO_LIBS=$($SYSREPO_CONFIG --libs libsysrepo)
-    SYSREPO_VERSION=$($SYSREPO_CONFIG --modversion libsysrepo)
-    SYSREPO_REPO=$($SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo)
-
-    # Now get the environment for C++ bindings for Sysrepo.
-    SYSREPOCPP_INCLUDEDIR=$($SYSREPO_CONFIG --cflags-only-I libsysrepo-cpp)
-    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR $($SYSREPO_CONFIG --cflags-only-other libsysrepo-cpp)"
-    SYSREPOCPP_LIBS=$($SYSREPO_CONFIG --libs libsysrepo-cpp)
-    SYSREPOCPP_VERSION=$($SYSREPO_CONFIG --modversion libsysrepo-cpp)
-
-    AC_SUBST(SYSREPO_INCLUDEDIR)
-    AC_SUBST(SYSREPO_CPPFLAGS)
-    AC_SUBST(SYSREPO_LIBS)
-    AC_SUBST(SYSREPO_REPO)
-
-    # Check that a simple program using Sysrepo functions can compile and link.
-    CPPFLAGS_SAVED="$CPPFLAGS"
-    LIBS_SAVED="$LIBS"
-
-    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
-    LIBS="$SYSREPO_LIBS $LIBS"
-
-    AC_MSG_CHECKING([sysrepo])
-    AC_LINK_IFELSE(
-      [AC_LANG_PROGRAM(
-        [extern "C" {
-           #include <sysrepo.h>
-         }],
-        [sr_conn_ctx_t *connection;
-         sr_session_ctx_t *session;
-         sr_disconnect(connection);])],
-      [AC_MSG_RESULT([yes])],
-      [AC_MSG_RESULT([no])
-       AC_MSG_ERROR([Cannot integrate with Sysrepo's C API. Make sure that the sysrepo.h header and the libsysrepo.so library can be found.])]
-    )
-
-    # If include paths are equal, there's no need to include both. But if they're different,
-    # we need both.
-    if test "${SYSREPO_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
-       SYSREPO_INCLUDEDIR="${SYSREPO_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
-    fi
-
-    if test "${SYSREPO_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
-       SYSREPO_CPPFLAGS="${SYSREPO_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
-    fi
-
-    if test "${SYSREPO_LIBS}" != "${SYSREPOCPP_LIBS}"; then
-       SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
-    fi
-
-    AC_SUBST(SYSREPO_INCLUDEDIR)
-    AC_SUBST(SYSREPO_CPPFLAGS)
-    AC_SUBST(SYSREPO_LIBS)
-
-    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
-    LIBS="$SYSREPO_LIBS $LIBS"
-
-    AC_MSG_CHECKING([sysrepo-cpp])
-    AC_LINK_IFELSE(
-      [AC_LANG_PROGRAM(
-        [#include <sysrepo-cpp/Session.hpp>],
-        [])],
-      [AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM(
-          [#include <sysrepo-cpp/Session.hpp>],
-          [sysrepo::Connection();]
-        )],
-        [AC_MSG_RESULT([v1.x])
-         AC_DEFINE([HAVE_SYSREPO_V1], [true], [Using sysrepo 1.x])],
-        [AC_LINK_IFELSE(
-          [AC_LANG_PROGRAM(
-            [#include <sysrepo-cpp/Session.hpp>],
-            [sysrepo::S_Val value;
-             value->empty();]
-          )],
-          [AC_MSG_RESULT([>= v0.7.7])
-           AC_MSG_ERROR([Using legacy sysrepo >= 0.7.7 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
-          [AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM(
-              [#include <sysrepo-cpp/Session.h>],
-              [Connection("conn-name");])],
-            [AC_MSG_RESULT([<= v0.7.6])
-             AC_MSG_ERROR([Using sysrepo <= 0.7.6 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
-            [AC_MSG_RESULT([no])
-             AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.)])]
-          )]
-        )]
-      )],
-      [AC_MSG_RESULT([no])
-      AC_MSG_ERROR([Count not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
-    )
-
-    CPPFLAGS=$CPPFLAGS_SAVED
-    LIBS=$LIBS_SAVED
-
-    # Note that Sysrepo is present in the config.h file
-    AC_DEFINE([HAVE_SYSREPO], [true], [SYSREPO is present])
-fi
-
-# ... and at the shell level, so Makefile.am can take action depending on this.
-AM_CONDITIONAL(HAVE_SYSREPO, test "$SYSREPO_CONFIG" != "")
+# Check for sysrepo.
+AX_SYSREPO
 
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
@@ -2132,17 +2006,23 @@ Cassandra CQL:
 END
 fi
 
-if test "$SYSREPO_CPPFLAGS" != "" ; then
-cat >> config.report << END
+if "${HAVE_SYSREPO}"; then
+  cat >> config.report << END
 
 Sysrepo:
-  SYSREPO_VERSION:     ${SYSREPO_VERSION}
-  SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
-  SYSREPO_LIBS:        ${SYSREPO_LIBS}
-  SYSREPO_REPO:        ${SYSREPO_REPO}
+  LIBYANG_VERSION:      ${LIBYANG_VERSION}
+  LIBYANGCPP_VERSION:   ${LIBYANGCPP_VERSION}
+  LIBYANG_SOVERSION:    ${LIBYANG_SOVERSION}
+  SYSREPO_CPPFLAGS:     ${SYSREPO_CPPFLAGS}
+  SYSREPO_INCLUDEDIR:   ${SYSREPO_INCLUDEDIR}
+  SYSREPO_LIBS:         ${SYSREPO_LIBS}
+  SR_REPO_PATH:         ${SR_REPO_PATH}
+  SRPD_PLUGINS_PATH:    ${SRPD_PLUGINS_PATH}
+  SYSREPO_VERSION:      ${SYSREPO_VERSION}
+  SYSREPOCPP_VERSION:   ${SYSREPOCPP_VERSION}
 END
 else
-cat >> config.report << END
+  cat >> config.report << END
 
 Sysrepo:
   no

@@ -95,7 +95,6 @@ shellcheck:
     - SCRIPTS+="tools/path_replacer.sh.in "
     - SCRIPTS+="tools/print-generated-files.sh "
     - SCRIPTS+="tools/shellcheck-all.sh "
-    - SCRIPTS+="tools/sysrepo_config "
     - SCRIPTS+="tools/tests_in_valgrind.sh "
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
 

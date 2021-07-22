@@ -1,46 +1,43 @@
+######################### public functions ##########################
+
+# input:
+#   * value of --with-library
+#   * list of headers to check
+#   * list of libraries to check
+#   * list of variables to retrieve with pkg-config
+#   * additional parameters to pass to pkg-config, useful e.g. when --with-path
+#       is needed to point to a dependency of the checked library
+# output:
+#   * LIBRARY_FOUND
+#   * LIBRARY_CPFFLAGS
+#   * LIBRARY_INCLUDEDIR
+#   * LIBRARY_LIBS
+#   * LIBRARY_PREFIX
 AC_DEFUN([AX_FIND_LIBRARY], [
-  library="${1}"
+  library=$1
+  with_library=$2
+  list_of_headers=$3
+  list_of_libraries=$4
+  list_of_variables=$5
+  additional_arguments_to_pkg_config=$6
 
-  AC_ARG_WITH([${library}],
-    AS_HELP_STRING([--with-${library}=PATH], [path to the ${library}.pc file or to the ${library} installation directory]),
-    [with_library="$withval"])
-
-  library_found=false
-  if test -n "${with_library}"; then
+  LIBRARY_FOUND=false
+  if test "${with_library}" = 'no'; then
+    : # nothing to do
+  elif test "${with_library}" != 'yes'; then
     if test -f "${with_library}"; then
+      # User has pointed --with-library to a file.
+      # It might be a .pc file.
+      AX_FIND_LIBRARY_WITH_PKG_CONFIG(["${with_library}"], ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
 
-      # User has pointed --with-${library} to a file. Let's try parse it with pkg-config.
-      if test -n "${PKG_CONFIG}"; then
-        if "${PKG_CONFIG}" "${with_library}"; then
-          LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${with_library}")
-          LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${with_library}")
-          LIBRARY_LIBS=$("${PKG_CONFIG}" --libs "${with_library}")
-          LIBRARY_REPO=$("${PKG_CONFIG}" --variable=SR_REPO_PATH "${with_library}")
-          # LIBRARY_INCLUDEDIR="${LIBRARY_INCLUDEDIR} -I${LIBRARY_CONFIG}/include"
-          # LIBRARY_LIBS="${LIBRARY_LIBS} -Wl,-rpath=${LIBRARY_CONFIG}/lib"
-          library_found=true
-        else
-          AC_MSG_ERROR(["pkg-config ${with_library}" doesn't work properly. It seems like a bad pkg-config file.])
-        fi
-      else
-        AC_MSG_ERROR([--with-${library} seems to point to a pkg-config file, but pkg-config is not available])
-      fi
     elif test -d "${with_library}"; then
-
-      # User has pointed --with-${library} to a directory.
-      # Let's try to find a ${library}.pc first.
-      library_pc="${LIBRARY_CONFIG}/lib/pkgconfig/${library}.pc"
+      # User has pointed --with-library to a directory.
+      # Let's try to find a library.pc first inside that directory.
+      library_pc="${with_library}/lib/pkgconfig/${library}.pc"
       if test -f "${library_pc}"; then
         if test -n "${PKG_CONFIG}"; then
           if "${PKG_CONFIG}" "${library_pc}"; then
-            LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${with_library}")
-            LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${with_library}")
-            LIBRARY_LIBS=$("${PKG_CONFIG}" --libs "${with_library}")
-            LIBRARY_REPO=$(cat "${with_library}/lib/pkgconfig/${library}.pc" | grep -F 'SR_REPO_PATH=' | cut -d '=' -f 2)
-            LIBRARY_VERSION=$("${PKG_CONFIG}" --modversion "${with_library}")
-            # LIBRARY_INCLUDEDIR="${LIBRARY_INCLUDEDIR} -I${LIBRARY_CONFIG}/include"
-            # LIBRARY_LIBS="${LIBRARY_LIBS} -Wl,-rpath=${LIBRARY_CONFIG}/lib"
-            library_found=true
+            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
           else
             AC_MSG_WARN(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
           fi
@@ -48,64 +45,119 @@ AC_DEFUN([AX_FIND_LIBRARY], [
           AC_MSG_WARN([pkg-config file found at ${library_pc}, but pkg-config is not available])
         fi
       else
-          AC_MSG_WARN([pkg-config file not found at ${library_pc}])
+        AC_MSG_WARN([pkg-config file not found at ${library_pc}])
       fi
     else
-      AC_MSG_ERROR([--with-${library} doesn't point to the sysrepo.pc file or to the sysrepo installation directory])
+      AC_MSG_ERROR(["${with_library}" needs to point to a .pc file or to the installation directory, but points to none of those])
     fi
-  else
 
+  else
     # No parameter given. Try pkg-config first.
-    for i in /usr usr/local; do
-      if test -n "${PKG_CONFIG}"; then
-        if test -f "${i}/include/sysrepo.h" && test -f "${i}/lib/libsysrepo.so"; then
-          LIBRARY_CPPFLAGS=
-          LIBRARY_INCLUDEDIR="-I${i}/include"
-          LIBRARY_LIBS="-L${i}/lib -lsysrepo -lsysrepo-cpp"
-          LIBRARY_REPO=$(cat "${i}/lib/pkgconfig/sysrepo.pc" | grep -F 'SR_REPO_PATH=' | cut -d '=' -f 2)
-          LIBRARY_VERSION=$(cat "${i}/include/sysrepo/version.h" | grep -F '#define SR_VERSION ' | cut -d '"' -f 2)
-          library_found=true
-          break
+    if test -n "${PKG_CONFIG}"; then
+      AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+    fi
+
+    # If not found, then search in usual paths for a .pc file.
+    if ! "${LIBRARY_FOUND}"; then
+      for p in /usr /usr/local; do
+        library_pc="${p}/lib/pkgconfig/${library}.pc"
+        if test -f "${library_pc}"; then
+          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+          if "${LIBRARY_FOUND}"; then
+            break
+          fi
         fi
-      fi
-    done
+      done
+    fi
 
     # If not found, then search in usual paths for header and libraries.
-    if ! "${library_found}"; then
-      for i in /usr usr/local; do
-        if test -f "${i}/include/sysrepo.h" && test -f "${i}/lib/libsysrepo.so"; then
+    if ! "${LIBRARY_FOUND}"; then
+      for p in /usr /usr/local; do
+        headers_found=true
+        libraries_found=true
+        for i in ${list_of_headers}; do
+          if test ! -f "${p}/include/${i}"; then
+            AC_MSG_WARN(["${library}" headers not found in "${p}"])
+            headers_found=false
+            break
+          fi
+        done
+        if "${headers_found}"; then
           LIBRARY_CPPFLAGS=
-          LIBRARY_INCLUDEDIR="-I${i}/include"
-          LIBRARY_LIBS=$(-L"${i}/lib" -lsysrepo -lsysrepo-cpp)
-          LIBRARY_REPO=$(cat "${i}/lib/pkgconfig/sysrepo.pc" | grep -F 'SR_REPO_PATH=' | cut -d '=' -f 2)
-          LIBRARY_VERSION=$(cat "${i}/include/sysrepo/version.h" | grep -F '#define SR_VERSION ' | cut -d '"' -f 2)
-          library_found=true
-          break
-        else
-          AC_MSG_WARN([sysrepo not found in ${i}])
+          LIBRARY_INCLUDEDIR="-I${p}/include"
         fi
+
+        LIBRARY_LIBS="-L${i}/lib -Wl,-rpath=${i}/lib"
+        for i in ${list_of_libraries}; do
+          if test ! -f "${p}/lib/${i}"; then
+            AC_MSG_WARN(["${library}" libraries not found in "${p}"])
+            libraries_found=false
+            break
+          fi
+          l=$(printf '%s' "${i}" | sed 's/^lib//g;s/.so$//g')
+          LIBRARY_LIBS="${LIBRARY_LIBS} -l${l}"
+        done
+
+        if "${headers_found}" && "${libraries_found}"; then
+          LIBRARY_FOUND=true
+          break
+        fi
+
       done
     fi
   fi
 
-  dnl TODO:
-    dnl Now get the environment for C++ bindings for Sysrepo.
-    dnl SYSREPOCPP_INCLUDEDIR=$("${LIBRARY_CONFIG}" --cflags-only-I libsysrepo-cpp)
-    dnl SYSREPOCPP_CPPFLAGS="${LIBRARY_INCLUDEDIR} $("${LIBRARY_CONFIG}" --cflags-only-other libsysrepo-cpp)"
-    dnl SYSREPOCPP_LIBS=$("${LIBRARY_CONFIG}" --libs libsysrepo-cpp)
-    dnl SYSREPOCPP_VERSION=$("${LIBRARY_CONFIG}" --modversion libsysrepo-cpp)
+  # Remove leading and trailing spaces.
+  if "${LIBRARY_FOUND}"; then
+    LIBRARY_CPFFLAGS="$(printf '%s' "${LIBRARY_CPPFLAGS}" | sed 's/^ *//g;s/ *$//g')"
+    LIBRARY_INCLUDEDIR="$(printf '%s' "${LIBRARY_INCLUDEDIR}" | sed 's/^ *//g;s/ *$//g')"
+    LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
+  fi
+])
 
-    dnl If include paths are equal, there's no need to include both. But if they're different,
-    dnl we need both.
-    dnl if test "${LIBRARY_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
-    dnl    LIBRARY_INCLUDEDIR="${LIBRARY_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
-    dnl fi
+######################### private functions #########################
 
-    dnl if test "${LIBRARY_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
-    dnl    LIBRARY_CPPFLAGS="${LIBRARY_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
-    dnl fi
+# input:
+#   * value of --with-library
+#   * list of variables to retrieve with pkg-config
+#   * additional parameters to pass to pkg-config, useful e.g. when --with-path
+#       is needed to point to a dependency of the checked library
+# output:
+#   * LIBRARY_FOUND
+#   * LIBRARY_CPFFLAGS
+#   * LIBRARY_INCLUDEDIR
+#   * LIBRARY_LIBS
+#   * LIBRARY_PREFIX
+AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
+  library_pc_or_name=$1
+  list_of_variables=$2
+  additional_arguments_to_pkg_config=$3
+  args="${additional_arguments_to_pkg_config}" # Shorten.
 
-    dnl if test "${LIBRARY_LIBS}" != "${SYSREPOCPP_LIBS}"; then
-    dnl    LIBRARY_LIBS="${LIBRARY_LIBS} ${SYSREPOCPP_LIBS}"
-    dnl fi
+  LIBRARY_FOUND=false
+  # Check that we have pkg-config installed on the system.
+  if test -n "${PKG_CONFIG}"; then
+    # Check that pkg-config is able to interpret the file.
+    if "${PKG_CONFIG}" "${library_pc_or_name}"; then
+      # Get the flags.
+      LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" ${args} --cflags-only-other "${library_pc_or_name}")
+      LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" ${args} --cflags-only-I "${library_pc_or_name}")
+      LIBRARY_LIBS=$("${PKG_CONFIG}" ${args} --libs "${library_pc_or_name}")
+      LIBRARY_VERSION=$("${PKG_CONFIG}" ${args} --modversion "${library_pc_or_name}")
+      LIBRARY_PREFIX=$("${PKG_CONFIG}" ${args} --variable=prefix "${library_pc_or_name}")
+
+      # Get the variables.
+      for i in $(printf '%s' "${list_of_variables}" | sed 's/,/ /g'); do
+        # The export is not strictly required here, but we need a way to
+        # dynamically assign values to "${i}". And export is nicer than eval.
+        export "${i}"="$("${PKG_CONFIG}" ${args} --variable="${i}" "${library_pc_or_name}")"
+      done
+
+      # LIBRARY_INCLUDEDIR="${LIBRARY_INCLUDEDIR} -I${LIBRARY_CONFIG}/include"
+      # LIBRARY_LIBS="${LIBRARY_LIBS} -Wl,-rpath=${LIBRARY_CONFIG}/lib"
+
+      # Mark that we have the required flags for our library.
+      LIBRARY_FOUND=true
+    fi
+  fi
 ])
