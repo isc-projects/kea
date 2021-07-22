@@ -45,7 +45,7 @@ There are 5 types of commands supported by this library:
 All types of commands accept an optional ``remote`` map which selects the
 database instance to which the command refers. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet4-list",
@@ -120,7 +120,7 @@ all servers.
 The following is the example response to the ``remote-network4-list``
 command, which includes the metadata:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -154,7 +154,7 @@ This command is used to delete the information about a selected DHCP server from
 the configuration database. The server is identified by a unique case
 insensitive server tag.  For example:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-server4-del",
@@ -190,7 +190,7 @@ can be also deleted from the database using the `remote-subnet4-del-by-id` or
 
 The following is the successful response to the `remote-server4-del` command:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -219,7 +219,7 @@ remote-server4-get, remote-server6-get commands
 This command is used to fetch the information about the selected DHCP server
 from the configuration database.  For example:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-server6-get"
@@ -241,7 +241,7 @@ server tag `server1`. The server tag is case insensitive.  A successful response
 returns basic information about the server, such as server tag and the user's
 description of the server:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -266,7 +266,7 @@ remote-server4-get-all, remote-server6-get-all commands
 This command is used to fetch all user defined DHCPv4 or DHCPv6 servers from the
 database. The command structure is very simple:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-server4-get-all"
@@ -280,7 +280,7 @@ database. The command structure is very simple:
 The response includes basic information about each server, such as its server
 tag and description:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -318,7 +318,7 @@ database via the `remote-server4-set` or `remote-server6-set` commands. The
 following command creates a new (or updates an existing) DHCPv6 server in the
 database:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-server6-set"
@@ -343,7 +343,7 @@ reserved and must not be used as server tags: "all" and "any".
 
 The following is the example response to the above command:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -375,7 +375,7 @@ the configuration file.
 The following command attempts to delete the DHCPv4 ``renew-timer``
 parameter common for all servers from the database:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-global-parameter4-del",
@@ -406,7 +406,7 @@ configuration database.
 The following command attempts to fetch the ``boot-file-name``
 parameter for the "server1":
 
-::
+.. code-block:: json
 
    {
        "command": "remote-global-parameter4-get",
@@ -426,7 +426,7 @@ or list, are not returned by this command.
 
 In the case of the example above, the string value is returned, e.g.:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -451,7 +451,7 @@ in the database this value would be returned instead.
 
 The example response for the integer value is:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -470,7 +470,7 @@ The example response for the integer value is:
 
 The real value:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -489,7 +489,7 @@ The real value:
 
 Finally, the boolean value:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -517,7 +517,7 @@ These commands are used to fetch all global DHCP parameters from the database
 for the specified server. The following example demonstrates how to fetch all
 global parameters to be used by the server "server1":
 
-::
+.. code-block:: json
 
     {
         "command": "remote-global-parameter4-get-all",
@@ -531,7 +531,7 @@ global parameters to be used by the server "server1":
 
 The example response may look as follows:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -585,7 +585,7 @@ as a result of this command. It is possible to set multiple parameters
 within a single command, each having one of the four types: string,
 integer, real, or boolean. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-global-parameter4-set"
@@ -632,7 +632,7 @@ deleted along with the shared network.
 
 The following command:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-network6-del",
@@ -674,7 +674,7 @@ returned together with the shared network.
 The following command fetches the "level3" IPv6 shared network along
 with the full information about the subnets belonging to it:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-network6-get",
@@ -705,7 +705,7 @@ These commands are used to list all IPv4 or IPv6 shared networks for a server.
 The following command retrieves all shared networks to be used by the
 "server1" and "server2":
 
-::
+.. code-block:: json
 
     {
         "command": "remote-network4-list"
@@ -723,7 +723,7 @@ with all servers. When the `server-tags` list contains the
 `null` value the returned response contains a list of unassigned shared
 networks, i.e. the networks which are associated with no servers. For example:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-network4-list"
@@ -738,7 +738,7 @@ networks, i.e. the networks which are associated with no servers. For example:
 The example response to this command when non-null server tags are specified
 looks similar to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -783,7 +783,7 @@ the "server2".
 When listing unassigned shared networks, the response will look similar
 to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -827,7 +827,7 @@ disassociate the subnets with the shared networks, the
 The following command adds the IPv6 shared network "level3" to the
 database:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-network6-set",
@@ -883,7 +883,7 @@ These commands are used to delete a DHCP option definition from the
 database. The option definition is identified by an option code and
 option space. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option-def6-del",
@@ -925,7 +925,7 @@ DHCPv4 and DHCPv6 top-level options, respectively.
 The following command retrieves a DHCPv4 option definition associated with all
 servers, having the code of 1 and belonging to the option space "isc":
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option-def4-get"
@@ -956,7 +956,7 @@ The remote-option-def4-get-all, remote-option-def6-get-all Commands
 These commands are used to fetch all DHCP option definitions from the database
 for the particular server or all servers. For example:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-option-def6-get-all"
@@ -976,7 +976,7 @@ It must not include the `null` value.</para>
 
 The following is the example response to this command:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -1017,7 +1017,7 @@ definition information is the same as in the Kea configuration file (see
 The following command creates the DHCPv4 option definition in the
 top-level "dhcp4" option space and associates it with the "server1":
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option-def4-set",
@@ -1055,7 +1055,7 @@ These commands are used to delete a global DHCP option from the
 database. The option is identified by an option code and option space.
 For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option4-global-del",
@@ -1096,10 +1096,10 @@ option spaces where DHCP standard options belong are called "dhcp4" and
 The following command retrieves the IPv6 "DNS Servers" (code 23) option
 associated with all servers:
 
-::
+.. code-block:: json
 
    {
-       "command": remote-option6-global-get",
+       "command": "remote-option6-global-get",
        "arguments": {
            "options": [
                {
@@ -1129,7 +1129,7 @@ These commands are used to fetch all global DHCP options from the configuration
 database for the particular server or for all servers. The following command
 fetches all global DHCPv4 options for the "server1":
 
-::
+.. code-block:: json
 
     {
         "command": "remote-option6-global-get-all",
@@ -1146,7 +1146,7 @@ it must contain exactly one server tag or a keyword "all". It must not contain
 the `null` value. The following is the example response to this
 command with a single option being associated with the "server1" returned:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -1181,7 +1181,7 @@ option in the database. The structure of the option information is the
 same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-global-set",
@@ -1209,7 +1209,7 @@ works reliably for the standard DHCP options. When specifying a value
 for the user-defined DHCP option, the option code should be specified
 instead of the name. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-global-set",
@@ -1249,7 +1249,7 @@ The following command attempts to delete an option having the
 option code 5 in the top-level option space from the shared
 network "fancy".
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option4-network-del",
@@ -1289,7 +1289,7 @@ and :ref:`dhcp6-std-options`). The option information is carried in the
 name of the shared network for which the option is to be set. If such an option
 already exists for the shared network, it is replaced with the new instance.
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-network-set",
@@ -1334,7 +1334,7 @@ command as this command merely deletes a prefix delegation pool level
 option. In order to delete a subnet level option the
 `remote-option6-subnet-del` command must be used instead.
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-pd-pool-del",
@@ -1377,7 +1377,7 @@ the new instance.
 
 For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-pd-pool-set",
@@ -1430,7 +1430,7 @@ The following command attempts to delete an option having the
 option code 5 in the top-level option space from an IPv4 address
 pool:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option4-pool-del",
@@ -1473,7 +1473,7 @@ the pool, it is replaced with the new instance.
 
 For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option4-pool-set",
@@ -1520,7 +1520,7 @@ The following command attempts to delete an option having the
 option code 5 in the top-level option space from the subnet
 having an identifier of 123.
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option4-subnet-del",
@@ -1560,7 +1560,7 @@ and :ref:`dhcp6-std-options`). The option information is carried in the
 the subnet for which the option is to be set. If such an option already exists
 for the subnet, it is replaced with the new instance.
 
-::
+.. code-block:: json
 
    {
        "command": "remote-option6-subnet-set",
@@ -1599,7 +1599,7 @@ This is the first variant of the commands used to delete an IPv4 or IPv6
 subnet from the database. It uses the subnet ID to identify the subnet. For
 example, to delete the IPv4 subnet with an ID of 5:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet4-del-by-id",
@@ -1628,7 +1628,7 @@ This is the second variant of the commands used to delete an IPv4 or
 IPv6 subnet from the database. It uses the subnet prefix to identify the
 subnet. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet6-del-by-prefix",
@@ -1657,7 +1657,7 @@ This is the first variant of the commands used to fetch an IPv4 or IPv6
 subnet from the database. It uses a subnet ID to identify the subnet.
 For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet4-get-by-id",
@@ -1686,7 +1686,7 @@ This is the second variant of the commands used to fetch an IPv4 or IPv6
 subnet from the database. It uses a subnet prefix to identify the
 subnet. For example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet6-get-by-prefix",
@@ -1715,7 +1715,7 @@ These commands are used to list all IPv4 or IPv6 subnets from the database for
 selected servers or all servers. The following command retrieves all servers to
 be used by the "server1" and "server2":
 
-::
+.. code-block:: json
 
     {
         "command": "remote-subnet4-list"
@@ -1734,7 +1734,7 @@ contains the `null` value, the returned response contains a list
 of unassigned subnets, i.e. the subnets which are associated with no servers.
 For example:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-subnet4-list"
@@ -1749,7 +1749,7 @@ For example:
 The example response to this command when non-null server tags are specified
 looks similar to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -1790,7 +1790,7 @@ the "server1" and "server2".
 
 When listing unassigned subnets, the response will look similar to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -1833,7 +1833,7 @@ shared network.
 
 Consider the following example:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet4-set",
@@ -1866,7 +1866,7 @@ If the created subnet must be global - that is, not associated with any shared
 network - the ``shared-network-name`` must be explicitly set to
 ``null``:
 
-::
+.. code-block:: json
 
    {
        "command": "remote-subnet4-set",
@@ -1921,7 +1921,7 @@ the dependent client classes must be deleted first. Use the
 ``remote-class4-get-all`` command to fetch all client classes and find
 the dependent ones.
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class4-del",
@@ -1950,7 +1950,7 @@ The remote-class4-get, remote-class6-get Commands
 These commands retrieve DHCPv4 or DHCPv6 client class information by a client
 class name.
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class4-get",
@@ -1971,7 +1971,7 @@ classes are uniquely identified by name.
 
 A response to the command looks similar to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -2002,7 +2002,7 @@ command retrieves all client classes defined for a server having the server tag
 of `server1` and all servers. In other words, it returns all client classes
 used by that server.
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class4-get-all",
@@ -2022,7 +2022,7 @@ classes, i.e. the networks which are associated with no servers.
 
 A response to the command looks similar to this:
 
-::
+.. code-block:: json
 
     {
         "result": 0,
@@ -2060,7 +2060,7 @@ the database. The client class information structure is the same as in the Kea
 configuration file (see :ref:`dhcp4-client-classifier` and
 :ref:`dhcp6-client-classifier` for details).
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class4-set",
@@ -2109,7 +2109,7 @@ the managed class should be placed. Suppose there are two DHCPv6 classes in the
 database: `first-class` and `second-class`. To add a new class, `third-class`,
 between these two, use the command similar to the following:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class6-set",
@@ -2135,7 +2135,7 @@ depend on the `third-class`.
 
 The `follow-class-name` parameter can be explicitly set to `null`, e.g.:
 
-::
+.. code-block:: json
 
     {
         "command": "remote-class6-set",

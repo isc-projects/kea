@@ -5,7 +5,7 @@
         "This command creates or replaces a DHCPv6 client class in the configuration database."
     ],
     "cmd-comment": [
-        "The provided list must contain exactly one client class specification. It may contain an optional parameter \"follow-class-name\" which can specify an existing class name to indicate that the class from the command is placed right after this existing class in the hierarchy. This parameter can be ommitted or set to \"null\" to indicate that the new client class should be appended at the end of the hierarchy or an updated class should remain at the current position. The ``server-tags`` list is mandatory and must contain one or more server tags as strings to explicitly associate the client class with one or more user-defined servers. It may include the special server tag \"all\" to associate the class with all servers."
+        "The provided list must contain exactly one client class specification. It may contain an optional parameter \"follow-class-name\" which can specify an existing class name to indicate that the class from the command is placed right after this existing class in the hierarchy. This parameter can be omitted or set to \"null\" to indicate that the new client class should be appended at the end of the hierarchy or an updated class should remain at the current position. The ``server-tags`` list is mandatory and must contain one or more server tags as strings to explicitly associate the client class with one or more user-defined servers. It may include the special server tag \"all\" to associate the class with all servers."
     ],
     "cmd-syntax": [
         "{",

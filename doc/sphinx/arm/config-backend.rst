@@ -70,8 +70,8 @@ Kea CB has some limitations as a result of its complexity and development
 time constraints:
 - supported for the MySQL database only,
 
-- supported for DHCPv4 and DHCPv6 daemon; neither the Control Agent nor D2
-  daemon can be configured from the database,
+- supported for DHCPv4 and DHCPv6 daemon; the Control Agent, D2 daemon and
+  the NETCONF  daemon cannot be configured from the database,
 
 - only a subset of the DHCP configuration parameters can be set in the
   database: global parameters, option definitions, global options, client
@@ -113,6 +113,21 @@ The current CB limitations will be gradually removed in subsequent Kea releases.
    precedence over instructions from the file, so parts of the configuration
    specified in the file may be overridden if contradicted by information in
    the database.
+
+.. note::
+
+   Although it is not recommended, it is possible to specify certain parameter
+   types both in a configuration file and the database. For example, a subnet
+   can be specified in the configuration file and another subnet in the database.
+   As a result, the server will use both subnets. DHCP client classes, however,
+   must not be specified in the configuration file and the database, even if
+   they do not overlap. If any client classes are specified in the database
+   for a particular DHCP server, this server will use these classes and ignore
+   all classes present in its configuration file. This behavior was introduced
+   to ensure that the server receives a consistent set of client classes
+   specified in an expected order with all inter-class dependencies fulfilled.
+   It is impossible to guarantee consistency when client classes are specified
+   in two independent configuration sources.
 
 .. note::
 
