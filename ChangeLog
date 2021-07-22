@@ -1,3 +1,8 @@
+1935.	[func]		andrei
+	The store-extended-info config entry was added to Kea YANG
+	modules at root-level and at subnet-level.
+	(Gitlab #1944)
+
 1934.	[func]		tmark
 	Kea-dhcp6 now supports specifying valid-lifetime and
 	preferred-lifetime values in client classes (via both
