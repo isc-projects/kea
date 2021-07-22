@@ -152,8 +152,8 @@ useful to uninstall them before reinstalling a more recent version:
 sysrepoctl -u <module-name>
 @endverbatim
 
-Tests use these modules you can find in src/share/yang/modules in addition
-of keatest-module:
+Tests use these modules which you can find in src/share/yang/modules in addition
+to keatest-module:
  - ietf-dhcpv6-server
  - kea-ctrl-agent
  - kea-dhcp-ddns
@@ -167,7 +167,7 @@ Those modules depend on the following modules:
  - kea-types
  - kea-dhcp-types
 
-Those modules are extracted from the IETF DHCPv6 YANG draft too:
+The following modules are extracted from the IETF DHCPv6 YANG draft:
  - ietf-dhcpv6-client
  - ietf-dhcpv6-options
  - ietf-dhcpv6-relay

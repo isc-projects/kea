@@ -411,7 +411,7 @@ A control socket is specified by:
 -  ``socket-url`` - the HTTP URL for the ``http`` socket type (default
    ``http://127.0.0.1:8000/``).
 
-user     contexts can store arbitrary data as long as they are in valid JSON
+User contexts can store arbitrary data as long as they are in valid JSON
 syntax and their top-level element is a map (i.e. the data must be
 enclosed in curly brackets). They are accepted at the NETCONF entry,
 i.e. below the top-level, managed-service entry, and control-socket

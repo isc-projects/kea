@@ -711,8 +711,7 @@ remove the feature entirely in a future release, possibly as soon as Kea 2.2.0.
 Sysrepo 0.x
 -----------
 
-Kea versions earlier than 1.9.9 required Sysrepo 0.7.x and related libyang 0.x library to run, when
-optional support for NETCONF was enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x
-and related libyang 1.x library to run. The earlier Sysrepo versions are no longer supported.
-The latest Sysrepo 2.x version does not provide C++ bindings yet, and as such, is not usable for
-Kea yet.
+Kea versions 1.9.9 and earlier required Sysrepo 0.7.x to run, when optional support for NETCONF was
+enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x and related libyang 1.x library to
+run. The earlier Sysrepo versions are no longer supported. The latest Sysrepo 2.x version does not
+provide C++ bindings yet, and as such, is not usable for Kea yet.
