@@ -738,6 +738,16 @@ public:
     void set(const std::string& key, ConstElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
+
+    /// @brief Remove the i-th element from the map.
+    ///
+    /// @param i the position of the element you want to remove
+    void remove(int const i) override {
+        auto it(m.begin());
+        std::advance(it, i);
+        m.erase(it);
+    }
+
     bool contains(const std::string& s) const {
         return (m.find(s) != m.end());
     }

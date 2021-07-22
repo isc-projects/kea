@@ -1433,4 +1433,69 @@ TEST(Element, sortMaps) {
     EXPECT_EQ(*l->get(1), *e2);
 }
 
+TEST(Element, removeEmptyContainersRecursively) {
+    ElementPtr e(Element::fromJSON(R"(
+{
+  "list": [
+    {
+      "nested-list": [
+        {
+          "nestedx2-list": [
+            {}
+          ]
+        }
+      ]
+    }
+  ],
+  "map": {
+    "nested-map": {
+      "nestedx2-map": {}
+    }
+  },
+  "simple-list": {},
+  "simple-map": {}
+}
+)"));
+    e->removeEmptyContainersRecursively();
+    EXPECT_EQ(*e, *Element::fromJSON("{}"));
+
+    e = Element::fromJSON(R"(
+{
+  "list": [
+    {
+      "value": "not empty anymore",
+      "nested-list": [
+        {
+          "nestedx2-list": [
+            {}
+          ]
+        }
+      ]
+    }
+  ],
+  "map": {
+    "value": "not empty anymore",
+    "nested-map": {
+      "nestedx2-map": {}
+    }
+  },
+  "simple-list": {},
+  "simple-map": {}
+}
+)");
+    e->removeEmptyContainersRecursively();
+    EXPECT_EQ(*e, *Element::fromJSON(R"(
+{
+  "list": [
+    {
+      "value": "not empty anymore"
+    }
+  ],
+  "map": {
+    "value": "not empty anymore"
+  }
+}
+)"));
+}
+
 }  // namespace

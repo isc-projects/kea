@@ -133,7 +133,7 @@ Element::get(const int) const {
 
 ElementPtr
 Element::getNonConst(const int) const {
-    throwTypeError("get(int) called on a non-list Element");
+    throwTypeError("get(int) called on a non-container Element");
 }
 
 void
@@ -148,7 +148,7 @@ Element::add(ElementPtr) {
 
 void
 Element::remove(const int) {
-    throwTypeError("remove(int) called on a non-list Element");
+    throwTypeError("remove(int) called on a non-container Element");
 }
 
 size_t
