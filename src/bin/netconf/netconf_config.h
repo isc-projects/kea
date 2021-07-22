@@ -207,9 +207,9 @@ public:
         subscribe_changes_ = subscribe_changes;
     }
 
-    /// @brief Set the subscribe-changes flag.
+    /// @brief Set the subscribe-notifications flag.
     ///
-    /// @param subscribe_changes The subscribe-changes flag.
+    /// @param subscribe_notifications the subscribe-notifications flag
     void setSubscribeNotifications(bool subscribe_notifications) {
         subscribe_notifications_ = subscribe_notifications;
     }

@@ -19,7 +19,15 @@ namespace isc {
 namespace yang {
 namespace test {
 
+/// @brief Wrapper for sysrepo setup actions
 struct SysrepoSetup {
+    /// @brief Cleans shared memory.
+    ///
+    /// If a unit test crashes (mostly when migrating to a new version), it
+    /// leaves behind corrupted shared memory. Let's make sure we can run all
+    /// the following unit tests free of any side effect from said crash. This
+    /// is the equivalent of running "make shm_clean" in sysrepo:
+    /// https://github.com/sysrepo/sysrepo/blob/v1.4.140/CMakeLists.txt#L329-L334
     static void cleanSharedMemory() {
         system("rm -rf /dev/shm/sr_*");
         system("rm -rf /dev/shm/srsub_*");
