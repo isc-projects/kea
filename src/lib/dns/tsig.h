@@ -180,7 +180,7 @@ public:
     /// directly.
     enum State {
         INIT,                   ///< Initial state
-        SENT_REQUEST,            ///< Client sent a signed request, waiting response
+        SENT_REQUEST,           ///< Client sent a signed request, waiting response
         RECEIVED_REQUEST,       ///< Server received a signed request
         SENT_RESPONSE,          ///< Server sent a signed response
         VERIFIED_RESPONSE       ///< Client successfully verified a response
