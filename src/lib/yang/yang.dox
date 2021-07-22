@@ -45,7 +45,7 @@ the basic / base class and recursively from translators for embedded parts.
 @c isc::yang::TranslatorBasic provides some methods:
  - getItem() retrieves and translates basic value from YANG to JSON
  - getItems() retrieves and translates a leaf-list from YANG to JSON
- - getList() retrieves and translates a list from YANG to JSOIN
+ - getList() retrieves and translates a list from YANG to JSON
  - setItem() translates and sets a basic value from JSON to YANG
  - delItem() deletes a value
  - forAll() iterates over the top node and its descendants and calls a function
