@@ -436,33 +436,33 @@ The following example demonstrates the basic NETCONF configuration. More
 examples are available in the ``doc/examples/netconf`` directory in the
 Kea sources.
 
-::
+.. code-block:: javascript
 
-   # This is a simple example of a configuration for the NETCONF agent.
-   # This server provides a YANG interface for all Kea servers and the agent.
+   // This is a simple example of a configuration for the NETCONF agent.
+   // This server provides a YANG interface for all Kea servers and the agent.
    {
        "Netconf":
        {
-           # Control flags can be defined in the global scope or
-           # in a managed server scope. Precedences are:
-           # - use the default value (true)
-           # - use the global value
-           # - use the local value.
-           # So this overwrites the default value:
+           // Control flags can be defined in the global scope or
+           // in a managed server scope. Precedences are:
+           // - use the default value (true)
+           // - use the global value
+           // - use the local value.
+           // So this overwrites the default value:
            "boot-update": false,
 
-           # This map specifies how each server is managed. For each server there
-           # is a name of the YANG model to be used and the control channel.
+           // This map specifies how each server is managed. For each server there
+           // is a name of the YANG model to be used and the control channel.
            //
-           # Currently three control channel types are supported:
-           # "stdout" which outputs the configuration on the standard output,
-           # "unix" which uses the local control channel supported by the
-           # "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
-           # and "http" which uses the Control Agent "ca" to manage itself or
-           # to forward commands to "dhcp4" or "dhcp6".
+           // Currently three control channel types are supported:
+           // "stdout" which outputs the configuration on the standard output,
+           // "unix" which uses the local control channel supported by the
+           // "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
+           // and "http" which uses the Control Agent "ca" to manage itself or
+           // to forward commands to "dhcp4" or "dhcp6".
            "managed-servers":
            {
-               # This is how kea-netconf can communicate with the DHCPv4 server.
+               // This is how kea-netconf can communicate with the DHCPv4 server.
                "dhcp4":
                {
                    "comment": "DHCP4 server",
@@ -474,7 +474,7 @@ Kea sources.
                    }
                },
 
-               # DHCPv6 parameters.
+               // DHCPv6 parameters.
                "dhcp6":
                {
                    "model": "kea-dhcp6-server",
@@ -485,8 +485,8 @@ Kea sources.
                    }
                },
 
-               # Currently the DHCP-DDNS (nicknamed D2) server does not support
-               # a command channel.
+               // Currently the DHCP-DDNS (nicknamed D2) server does not support
+               // a command channel.
                "d2":
                {
                    "model": "kea-dhcp-ddns",
@@ -497,7 +497,7 @@ Kea sources.
                    }
                },
 
-               # Of course the Control Agent (CA) supports HTTP.
+               // Of course the Control Agent (CA) supports HTTP.
                "ca":
                {
                    "model": "kea-ctrl-agent",
@@ -509,39 +509,39 @@ Kea sources.
                }
            },
 
-           # kea-netconf is able to load hooks libraries that augment its operation.
-           # Currently there are no hook points defined in kea-netconf
-           # processing.
+           // kea-netconf is able to load hooks libraries that augment its operation.
+           // Currently there are no hook points defined in kea-netconf
+           // processing.
            "hooks-libraries": [
-               # The hooks libraries list may contain more than one library.
+               // The hooks libraries list may contain more than one library.
                {
-                   # The only necessary parameter is the library filename.
+                   // The only necessary parameter is the library filename.
                    "library": "/opt/local/netconf-commands.so",
 
-                   # Some libraries may support parameters. Make sure you
-                   # type this section carefully, as kea-netconf does not
-                   # validate it (because the format is library-specific).
+                   // Some libraries may support parameters. Make sure you
+                   // type this section carefully, as kea-netconf does not
+                   // validate it (because the format is library-specific).
                    "parameters": {
                        "param1": "foo"
                    }
                }
            ],
 
-           # Similar to other Kea components, NETCONF also uses logging.
+           // Similar to other Kea components, NETCONF also uses logging.
            "loggers": [
                {
                    "name": "kea-netconf",
                    "output_options": [
                        {
                            "output": "/var/log/kea-netconf.log",
-                           # Several additional parameters are possible in
-                           # addition to the typical output.
-                           # Flush determines whether logger flushes output
-                           #  to a file.
-                           # Maxsize determines maximum filesize before
-                           # the file is being rotated.
-                           # Maxver specifies the maximum number of
-                           #  rotated files being kept.
+                           // Several additional parameters are possible in
+                           // addition to the typical output.
+                           // Flush determines whether logger flushes output
+                           //  to a file.
+                           // Maxsize determines maximum filesize before
+                           // the file is being rotated.
+                           // Maxver specifies the maximum number of
+                           //  rotated files being kept.
                            "flush": true,
                            "maxsize": 204800,
                            "maxver": 4
