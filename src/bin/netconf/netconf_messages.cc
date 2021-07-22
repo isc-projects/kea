@@ -16,13 +16,13 @@ extern const isc::log::MessageID NETCONF_FAILED = "NETCONF_FAILED";
 extern const isc::log::MessageID NETCONF_GET_CONFIG = "NETCONF_GET_CONFIG";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED = "NETCONF_GET_CONFIG_FAILED";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_STARTED = "NETCONF_GET_CONFIG_STARTED";
-extern const isc::log::MessageID NETCONF_INFO = "NETCONF_INFO";
 extern const isc::log::MessageID NETCONF_LOG_CHANGE_FAIL = "NETCONF_LOG_CHANGE_FAIL";
 extern const isc::log::MessageID NETCONF_MODULE_INSTALL = "NETCONF_MODULE_INSTALL";
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_ERR = "NETCONF_MODULE_MISSING_ERR";
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN = "NETCONF_MODULE_MISSING_WARN";
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR = "NETCONF_MODULE_REVISION_ERR";
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_WARN = "NETCONF_MODULE_REVISION_WARN";
+extern const isc::log::MessageID NETCONF_NOTIFICATION_RECEIVED = "NETCONF_NOTIFICATION_RECEIVED";
 extern const isc::log::MessageID NETCONF_RUN_EXIT = "NETCONF_RUN_EXIT";
 extern const isc::log::MessageID NETCONF_SET_CONFIG = "NETCONF_SET_CONFIG";
 extern const isc::log::MessageID NETCONF_SET_CONFIG_FAILED = "NETCONF_SET_CONFIG_FAILED";
@@ -57,13 +57,13 @@ const char* values[] = {
     "NETCONF_GET_CONFIG", "got configuration from %1 server: %2",
     "NETCONF_GET_CONFIG_FAILED", "getting configuration from %1 server failed: %2",
     "NETCONF_GET_CONFIG_STARTED", "getting configuration from %1 server",
-    "NETCONF_INFO", "%1",
     "NETCONF_LOG_CHANGE_FAIL", "Netconf configuration change logging failed: %1",
     "NETCONF_MODULE_INSTALL", "Sysrepo (un)installs a module: %1 (revision %2)",
     "NETCONF_MODULE_MISSING_ERR", "Missing essential module %1 in sysrepo",
     "NETCONF_MODULE_MISSING_WARN", "Missing module %1 in sysrepo",
     "NETCONF_MODULE_REVISION_ERR", "Essential module %1 does NOT have the right revision: expected %2, got %3",
     "NETCONF_MODULE_REVISION_WARN", "Module %1 does NOT have the right revision: expected %2, got %3",
+    "NETCONF_NOTIFICATION_RECEIVED", "Received notification of type %1 for module %1: %2",
     "NETCONF_RUN_EXIT", "application is exiting the event loop",
     "NETCONF_SET_CONFIG", "set configuration to %1 server: %2",
     "NETCONF_SET_CONFIG_FAILED", "setting configuration to %1 server failed: %2",

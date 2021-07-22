@@ -105,19 +105,40 @@ public:
                      sysrepo::S_Vals const vals,
                      time_t timestamp,
                      void* private_data) {
-        LOG_INFO(netconf_logger, NETCONF_INFO).arg("======== notification received ========");
-        for (size_t i(0); i < vals->val_cnt(); ++i) {
-            LOG_INFO(netconf_logger, NETCONF_INFO).arg(vals->val(i)->xpath());
+        string n;
+        switch (notification_type) {
+        case SR_EV_NOTIF_REALTIME:
+            n = "SR_EV_NOTIF_REALTIME";
+            break;
+        case SR_EV_NOTIF_REPLAY:
+            n = "SR_EV_NOTIF_REPLAY";
+            break;
+        case SR_EV_NOTIF_REPLAY_COMPLETE:
+            n = "SR_EV_NOTIF_REPLAY_COMPLETE";
+            break;
+        case SR_EV_NOTIF_STOP:
+            n = "SR_EV_NOTIF_STOP";
+            break;
+        case SR_EV_NOTIF_SUSPENDED:
+            n = "SR_EV_NOTIF_SUSPENDED";
+            break;
+        case SR_EV_NOTIF_RESUMED:
+            n = "SR_EV_NOTIF_RESUMED";
+            break;
         }
-    }
 
-    void event_notif_tree(sysrepo::S_Session session,
-                          sr_ev_notif_type_t const notif_type,
-                          libyang::S_Data_Node const notification,
-                          time_t timestamp,
-                          void* private_data) {
-        LOG_INFO(netconf_logger, NETCONF_INFO).arg("======== notification tree received ========");
-        LOG_INFO(netconf_logger, NETCONF_INFO).arg(notification->print_mem(LYD_XML, LYP_FORMAT));
+        stringstream s;
+        for (size_t i(0); i < vals->val_cnt(); ++i) {
+            if (i != 0) {
+                s << ", ";
+            }
+            s << vals->val(i)->to_string();
+        }
+
+        LOG_INFO(netconf_logger, NETCONF_NOTIFICATION_RECEIVED)
+            .arg(n)
+            .arg(service_pair_.first)
+            .arg(s.str());
     }
 };
 
@@ -478,19 +499,11 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
             return agent.event_notif(session, notification_type, path, vals,
                                      timestamp, nullptr);
         };
-    auto event_notif_tree_callback =
-        [=](sysrepo::S_Session session,
-            sr_ev_notif_type_t const notification_type,
-            libyang::S_Data_Node const notification, time_t timestamp) {
-            NetconfAgentCallback agent(service_pair);
-            return agent.event_notif_tree(session, notification_type,
-                                          notification, timestamp, nullptr);
-        };
     try {
+        // The alternative event_notif_subscribe_tree() might expose more data
+        // as S_Data_Node if needed.
         subscription->event_notif_subscribe(model.c_str(),
             event_notif_callback);
-        subscription->event_notif_subscribe_tree(model.c_str(),
-            event_notif_tree_callback);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<

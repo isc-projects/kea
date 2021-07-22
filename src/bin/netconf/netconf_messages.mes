@@ -48,9 +48,6 @@ name of the server and the error are printed.
 This informational message indicates that Netconf is trying to get the
 configuration from a Kea server.
 
-% NETCONF_INFO %1
-Generic NETCONF message
-
 % NETCONF_LOG_CHANGE_FAIL Netconf configuration change logging failed: %1
 The warning message indicates that the configuration change logging
 encountered an unexpected condition. Details of it will be logged.
@@ -78,6 +75,12 @@ The name, expected and available revisions of the module are printed.
 This warning message indicates that a module used by Kea is not at the
 right revision in the sysrepo repository. The name, expected and
 available revisions of the module are printed.
+
+% NETCONF_NOTIFICATION_RECEIVED Received notification of type %1 for module %1: %2
+This informational message logs any YANG notification that has been signaled
+by the server, sent to kea-netconf which then was forwarded to subscribed
+clients. To achieve this, kea-netconf subscribes itself as a client to all
+notifications for the configured module.
 
 % NETCONF_RUN_EXIT application is exiting the event loop
 This is a debug message issued when the Netconf application exits its
