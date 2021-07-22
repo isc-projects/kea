@@ -108,7 +108,7 @@ the system:
 
 -  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
    datastore. This is specified using the --with-sysrepo option when running
-   "configure".
+   "configure". Earlier versions are no longer supported.
 
 -  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.
