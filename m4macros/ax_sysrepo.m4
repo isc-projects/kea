@@ -56,7 +56,7 @@ AC_DEFUN([AX_SYSREPO], [
     [with_library="${withval}"])
 
   AC_MSG_CHECKING([sysrepo])
-  AX_FIND_LIBRARY([sysrepo], ["${with_library}"], [sysrepo.h], [libsysrepo.so], [], [--with-path="${LIBYANG_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([sysrepo], ["${with_library}"], [sysrepo.h], [libsysrepo.so], [], [])
   if "${LIBRARY_FOUND}"; then
     SYSREPO_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     SYSREPO_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
@@ -104,7 +104,7 @@ AC_DEFUN([AX_SYSREPO], [
 
   AC_MSG_CHECKING([sysrepo-cpp])
 
-  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_library}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [SR_REPO_PATH,SRPD_PLUGINS_PATH], [--with-path="${LIBYANGCPP_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_library}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [SR_REPO_PATH,SRPD_PLUGINS_PATH], [])
   if "${LIBRARY_FOUND}"; then
     SYSREPOCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     SYSREPOCPP_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
