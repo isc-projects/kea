@@ -787,8 +787,7 @@ NetconfAgent::announceShutdown() const {
 }
 
 bool NetconfAgent::shouldShutdown() const {
-    return boost::dynamic_pointer_cast<NetconfController>(
-               NetconfController::instance())
+    return boost::dynamic_pointer_cast<NetconfController>(NetconfController::instance())
         ->getNetconfProcess()
         ->shouldShutdown();
 }
