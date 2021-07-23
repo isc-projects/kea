@@ -495,8 +495,6 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
         return agent.event_notif(session, notification_type, path, vals, timestamp, nullptr);
     };
     try {
-        // The alternative event_notif_subscribe_tree() might expose more data
-        // as S_Data_Node if needed.
         subscription->event_notif_subscribe(model.c_str(), callback);
     } catch (const std::exception& ex) {
         ostringstream msg;
