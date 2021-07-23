@@ -1948,6 +1948,7 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])
 AC_CONFIG_FILES([src/share/yang/modules/Makefile])
+AC_CONFIG_FILES([src/share/yang/modules/utils/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([tools/path_replacer.sh],
                 [chmod +x tools/path_replacer.sh])
