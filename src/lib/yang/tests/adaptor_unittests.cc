@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@ TEST(AdaptorTest, getContext) {
         "}\n";
     ConstElementPtr json = Element::fromJSON(config);
     ConstElementPtr context;
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     EXPECT_FALSE(context);
 
     // No relevant.
@@ -33,7 +33,7 @@ TEST(AdaptorTest, getContext) {
         " \"foo\": 1\n"
         "}\n";
     json = Element::fromJSON(config);
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     EXPECT_FALSE(context);
 
     // User context.
@@ -42,7 +42,7 @@ TEST(AdaptorTest, getContext) {
         " \"user-context\": { \"bar\": 2 }\n"
         "}\n";
     json = Element::fromJSON(config);
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     ASSERT_TRUE(context);
     EXPECT_EQ("{ \"bar\": 2 }", context->str());
 
@@ -52,7 +52,7 @@ TEST(AdaptorTest, getContext) {
         " \"comment\": \"a comment\"\n"
         "}\n";
     json = Element::fromJSON(config);
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     ASSERT_TRUE(context);
     EXPECT_EQ("{ \"comment\": \"a comment\" }", context->str());
 
@@ -63,7 +63,7 @@ TEST(AdaptorTest, getContext) {
         " \"comment\": \"a comment\"\n"
         "}\n";
     json = Element::fromJSON(config);
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     ASSERT_TRUE(context);
     EXPECT_EQ("{ \"bar\": 2, \"comment\": \"a comment\" }", context->str());
 
@@ -77,7 +77,7 @@ TEST(AdaptorTest, getContext) {
         " \"comment\": \"a comment\"\n"
         "}\n";
     json = Element::fromJSON(config);
-    ASSERT_NO_THROW(context = Adaptor::getContext(json));
+    ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     ASSERT_TRUE(context);
     EXPECT_EQ("{ \"bar\": 2, \"comment\": \"a comment\" }", context->str());
 }
@@ -176,10 +176,10 @@ TEST(AdaptorTest, modifyMapInsert) {
         "   \"bar\": {\n"
         "}}}\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ \"foo\", \"bar\" ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"insert\",\n"
@@ -187,15 +187,15 @@ TEST(AdaptorTest, modifyMapInsert) {
         "  \"value\": 1234\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "{\n"
         " \"foo\": {\n"
         "   \"bar\": {\n"
         "     \"test\": 1234\n"
         "}}}\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -208,10 +208,10 @@ TEST(AdaptorTest, modifyMapReplace) {
         "     \"test2\": 1234\n"
         "}}}\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ \"foo\", \"bar\" ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"insert\",\n"
@@ -223,7 +223,7 @@ TEST(AdaptorTest, modifyMapReplace) {
         "  \"value\": 5678\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "{\n"
         " \"foo\": {\n"
         "   \"bar\": {\n"
@@ -231,8 +231,8 @@ TEST(AdaptorTest, modifyMapReplace) {
         "     \"test2\": 5678\n"
         "}}}\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -244,24 +244,24 @@ TEST(AdaptorTest, modifyMapDelete) {
         "     \"test\": 1234\n"
         "}}}\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ \"foo\", \"bar\" ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"delete\",\n"
         "  \"key\": \"test\"\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "{\n"
         " \"foo\": {\n"
         "   \"bar\": {\n"
         "}}}\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -272,10 +272,10 @@ TEST(AdaptorTest, modifyListInsert) {
         " \"foo\": \"bar\"\n"
         "}]]\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ 0, { \"key\": \"foo\", \"value\": \"bar\" }]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"insert\",\n"
@@ -283,15 +283,15 @@ TEST(AdaptorTest, modifyListInsert) {
         "  \"value\": 1234\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "[\n"
         "[{\n"
         " \"foo\": \"bar\",\n"
         " \"test\": 1234\n"
         "}]]\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -303,10 +303,10 @@ TEST(AdaptorTest, modifyListAllInsert) {
         "{ \"test\": 1234 },\n"
         "]\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ -1 ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"insert\",\n"
@@ -314,15 +314,15 @@ TEST(AdaptorTest, modifyListAllInsert) {
         "  \"value\": 5678\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "[\n"
         "{ \"test\": 5678 },\n"
         "{ \"test\": 5678 },\n"
         "{ \"test\": 1234 }\n"
         "]\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -335,10 +335,10 @@ TEST(AdaptorTest, modifyListDelete) {
         "0, 1, 2, 3\n"
         "]]]\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     string spath = "[ 0 ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     // Put the positional first as it applies after previous actions...
     string sactions = "[\n"
         "{\n"
@@ -349,11 +349,11 @@ TEST(AdaptorTest, modifyListDelete) {
         "  \"key\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "[[{}]]\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 
@@ -366,12 +366,12 @@ TEST(AdaptorTest, modifyListAllDelete) {
         "0, 1, 2, 3\n"
         "]]]\n";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     // The main change from the previous unit test is key 0 -> -1 so
     // modify() applies the delete to all elements vs only the first one.
     string spath = "[ -1 ]";
     ConstElementPtr path;
-    ASSERT_NO_THROW(path = Element::fromJSON(spath));
+    ASSERT_NO_THROW_LOG(path = Element::fromJSON(spath));
     // Put the positional first as it applies after previous actions...
     string sactions = "[\n"
         "{\n"
@@ -382,11 +382,11 @@ TEST(AdaptorTest, modifyListAllDelete) {
         "  \"key\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
         "}]\n";
     ConstElementPtr actions;
-    ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
+    ASSERT_NO_THROW_LOG(actions = Element::fromJSON(sactions));
     string result = "[[{}]]\n";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(result));
-    ASSERT_NO_THROW(Adaptor::modify(path, actions, json));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(result));
+    ASSERT_NO_THROW_LOG(Adaptor::modify(path, actions, json));
     EXPECT_TRUE(expected->equals(*json));
 }
 

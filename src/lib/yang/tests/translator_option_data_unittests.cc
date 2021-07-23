@@ -66,10 +66,10 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
     const string& xdata = xoption + "/data";
     const string& xsend = xoption + "/always-send";
     S_Val s_false(new Val(false));
-    ASSERT_NO_THROW(sess_->set_item(xformat.c_str(), s_false));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xformat.c_str(), s_false));
     S_Val s_data(new Val("12121212"));
-    ASSERT_NO_THROW(sess_->set_item(xdata.c_str(), s_data));
-    ASSERT_NO_THROW(sess_->set_item(xsend.c_str(), s_false));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xdata.c_str(), s_data));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xsend.c_str(), s_false));
 
     // Get the option data.
     ConstElementPtr option;

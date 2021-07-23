@@ -232,13 +232,13 @@ TEST_F(NetconfGetCfgTest, simple) {
     // get the simple configuration
     std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";
     std::string config;
-    ASSERT_NO_THROW(config = readFile(simple_file));
+    ASSERT_NO_THROW_LOG(config = readFile(simple_file));
 
     // get the expected configuration
     std::string expected_file =
         std::string(NETCONF_TEST_DATA_DIR) + "/" + "get_config.json";
     std::string expected;
-    ASSERT_NO_THROW(expected = readFile(expected_file));
+    ASSERT_NO_THROW_LOG(expected = readFile(expected_file));
 
     // execute the sample configuration
     ASSERT_TRUE(executeConfiguration(config, "simple config"));
@@ -246,26 +246,26 @@ TEST_F(NetconfGetCfgTest, simple) {
     // unparse it
     NetconfConfigPtr context = srv_->getNetconfConfig();
     ConstElementPtr unparsed;
-    ASSERT_NO_THROW(unparsed = context->toElement());
+    ASSERT_NO_THROW_LOG(unparsed = context->toElement());
 
     // dump if wanted else check
     if (generate_action) {
         std::cerr << "// Generated Configuration (remove this line)\n";
-        ASSERT_NO_THROW(expected = prettyPrint(unparsed));
+        ASSERT_NO_THROW_LOG(expected = prettyPrint(unparsed));
         prettyPrint(unparsed, std::cerr, 0, 4);
         std::cerr << "\n";
     } else {
         // get the expected config using the netconf syntax parser
         ElementPtr jsond;
-        ASSERT_NO_THROW(jsond = parseNETCONF(expected, true));
+        ASSERT_NO_THROW_LOG(jsond = parseNETCONF(expected, true));
         // get the expected config using the generic JSON syntax parser
         ElementPtr jsonj;
-        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        ASSERT_NO_THROW_LOG(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         // replace the path by its actual value
         ConstElementPtr ca;
-        ASSERT_NO_THROW(ca = jsonj->get("Netconf"));
+        ASSERT_NO_THROW_LOG(ca = jsonj->get("Netconf"));
         ASSERT_TRUE(ca);
         pathReplacer(ca);
         // check that unparsed and updated expected values match
@@ -285,7 +285,7 @@ TEST_F(NetconfGetCfgTest, simple) {
     // is it a fixed point?
     NetconfConfigPtr context2 = srv_->getNetconfConfig();
     ConstElementPtr unparsed2;
-    ASSERT_NO_THROW(unparsed2 = context2->toElement());
+    ASSERT_NO_THROW_LOG(unparsed2 = context2->toElement());
     ASSERT_TRUE(unparsed2);
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }

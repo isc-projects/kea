@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,10 +24,10 @@ TEST(AdaptorSubnetTest, collectNoId) {
         " \"subnet\": \"192.0.2.0/24\"\n"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     SubnetIDSet set;
     bool ret = true;
-    ASSERT_NO_THROW(ret = AdaptorSubnet::collectID(json, set));
+    ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_FALSE(ret);
     EXPECT_EQ(0, set.size());
 }
@@ -39,10 +39,10 @@ TEST(AdaptorSubnetTest, collectId) {
         " \"id\": 123\n"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     SubnetIDSet set;
     bool ret = false;
-    ASSERT_NO_THROW(ret = AdaptorSubnet::collectID(json, set));
+    ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, set.size());
     EXPECT_EQ(1, set.count(123));
@@ -56,10 +56,10 @@ TEST(AdaptorSubnetTest, collectKnownId) {
         " \"id\": 123\n"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     SubnetIDSet set = { 123 };
     bool ret = false;
-    ASSERT_NO_THROW(ret = AdaptorSubnet::collectID(json, set));
+    ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, set.size());
     EXPECT_EQ(1, set.count(123));
@@ -72,11 +72,11 @@ TEST(AdaptorSubnetTest, assignNoId) {
         " \"subnet\": \"192.0.2.0/24\"\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     SubnetIDSet set;
     SubnetID next_id = 123;
-    ASSERT_NO_THROW(AdaptorSubnet::assignID(json, set, next_id));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_FALSE(copied->equals(*json));
     EXPECT_EQ(1, set.size());
     EXPECT_EQ(1, set.count(123));
@@ -94,11 +94,11 @@ TEST(AdaptorSubnetTest, assignNoIdUsed) {
         " \"subnet\": \"192.0.2.0/24\"\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     SubnetIDSet set = { 123 };
     SubnetID next_id = 123;
-    ASSERT_NO_THROW(AdaptorSubnet::assignID(json, set, next_id));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_FALSE(copied->equals(*json));
     EXPECT_EQ(2, set.size());
     EXPECT_EQ(1, set.count(123));
@@ -117,11 +117,11 @@ TEST(AdaptorSubnetTest, assignId) {
         " \"id\": 123\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     SubnetIDSet set; // ignored.
     SubnetID next_id = 123; // ignored.
-    ASSERT_NO_THROW(AdaptorSubnet::assignID(json, set, next_id));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_TRUE(copied->equals(*json));
     EXPECT_EQ(0, set.size());
     EXPECT_EQ(123, next_id);
@@ -133,9 +133,9 @@ TEST(AdaptorSubnetTest, updateNoRelay) {
         " \"subnet\": \"192.0.2.0/24\"\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW(AdaptorSubnet::updateRelay(json));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -147,9 +147,9 @@ TEST(AdaptorSubnetTest, updateEmptyRelay) {
         " \"relay\": { }\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW(AdaptorSubnet::updateRelay(json));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
     EXPECT_FALSE(copied->equals(*json));
     EXPECT_FALSE(json->get("relay"));
 }
@@ -164,9 +164,9 @@ TEST(AdaptorSubnetTest, updateRelayEmptyAddresses) {
         " }\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW(AdaptorSubnet::updateRelay(json));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
     EXPECT_FALSE(copied->equals(*json));
     EXPECT_FALSE(json->get("relay"));
 }
@@ -181,9 +181,9 @@ TEST(AdaptorSubnetTest, updateRelayAddresses) {
         " }\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW(AdaptorSubnet::updateRelay(json));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -197,9 +197,9 @@ TEST(AdaptorSubnetTest, updateRelayAddress) {
         " }\n"
         "}";
     ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW(AdaptorSubnet::updateRelay(json));
+    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr relay = json->get("relay");
     ASSERT_TRUE(relay);

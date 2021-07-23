@@ -50,7 +50,7 @@ void testParser(const std::string& txt, ParserContext::ParserType parser_type,
     bool compare = true) {
     ConstElementPtr test_json;
 
-    ASSERT_NO_THROW({
+    ASSERT_NO_THROW_LOG({
             try {
                 ParserContext ctx;
                 test_json = ctx.parseString(txt, parser_type);
@@ -67,7 +67,7 @@ void testParser(const std::string& txt, ParserContext::ParserType parser_type,
 
     // Now compare if both representations are the same.
     ElementPtr reference_json;
-    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
+    ASSERT_NO_THROW_LOG(reference_json = Element::fromJSON(txt, true));
     compareJSON(reference_json, test_json);
 }
 
@@ -732,7 +732,7 @@ TEST(ParserTest, unicodeEscapes) {
         ins[1] = c;
         ConstElementPtr e(new StringElement(ins));
         json = e->str();
-        ASSERT_NO_THROW(
+        ASSERT_NO_THROW_LOG(
         try {
             ParserContext ctx;
             result = ctx.parseString(json, ParserContext::PARSER_JSON);
@@ -750,7 +750,7 @@ TEST(ParserTest, unicodeSlash) {
     // check the 4 possible encodings of solidus '/'
     ConstElementPtr result;
     string json = "\"/\\/\\u002f\\u002F\"";
-    ASSERT_NO_THROW(
+    ASSERT_NO_THROW_LOG(
     try {
         ParserContext ctx;
         result = ctx.parseString(json, ParserContext::PARSER_JSON);

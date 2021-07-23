@@ -91,7 +91,7 @@ TEST_F(TranslatorDatabaseTestv4, set) {
     ElementPtr database = Element::createMap();
     database->set("type", Element::create(string("memfile")));
     database->set("lfc-interval", Element::create(3600));
-    ASSERT_NO_THROW(t_obj_->setDatabase(xpath, database));
+    ASSERT_NO_THROW_LOG(t_obj_->setDatabase(xpath, database));
 
     // Get it back.
     ConstElementPtr got;
@@ -124,7 +124,7 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
     sess_->apply_changes();
 
     // Reset to empty.
-    ASSERT_NO_THROW(t_obj_->setDatabase(xpath, ConstElementPtr()));
+    ASSERT_NO_THROW_LOG(t_obj_->setDatabase(xpath, ConstElementPtr()));
 
     // Get it back.
     ConstElementPtr database;
@@ -233,7 +233,7 @@ TEST_F(TranslatorDatabasesTestv6, set) {
     database->set("lfc-interval", Element::create(3600));
     ElementPtr databases = Element::createList();
     databases->add(database);
-    ASSERT_NO_THROW(t_obj_->setDatabases(xpath, databases));
+    ASSERT_NO_THROW_LOG(t_obj_->setDatabases(xpath, databases));
 
     // Get it back.
     ConstElementPtr gots;

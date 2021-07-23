@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,9 +45,9 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
 
     string before = json->str();
     if (v6) {
-        ASSERT_NO_THROW(AdaptorConfig::preProcess6(json));
+        ASSERT_NO_THROW_LOG(AdaptorConfig::preProcess6(json));
     } else {
-        ASSERT_NO_THROW(AdaptorConfig::preProcess4(json));
+        ASSERT_NO_THROW_LOG(AdaptorConfig::preProcess4(json));
     }
     string after = json->str();
 

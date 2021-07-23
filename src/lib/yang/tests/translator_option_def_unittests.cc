@@ -74,11 +74,11 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
     const string& xtype = xdef + "/type";
     const string& xarray = xdef + "/array";
     S_Val s_name(new Val("foo"));
-    ASSERT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xname.c_str(), s_name));
     S_Val s_type(new Val("string"));
-    ASSERT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xtype.c_str(), s_type));
     S_Val s_array(new Val(false));
-    ASSERT_NO_THROW(sess_->set_item(xarray.c_str(), s_array));
+    ASSERT_NO_THROW_LOG(sess_->set_item(xarray.c_str(), s_array));
 
     // Get the option def.
     ConstElementPtr def;

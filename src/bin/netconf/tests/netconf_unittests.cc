@@ -411,7 +411,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
 
     // Run checkModules but it will be indirectly checked as
     // emitting nothing.
-    ASSERT_NO_THROW(agent_->checkModules());
+    ASSERT_NO_THROW_LOG(agent_->checkModules());
 
     // Remove kea-dhcp6-server.
     const string& module = "kea-dhcp6-server";
@@ -419,7 +419,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
     if (it6 != agent_->modules_.end()) {
         agent_->modules_.erase(it6);
     }
-    ASSERT_NO_THROW(agent_->checkModules());
+    ASSERT_NO_THROW_LOG(agent_->checkModules());
     ostringstream mmsg;
     mmsg << "NETCONF_MODULE_MISSING_WARN Missing module " << module
          << " in sysrepo";
@@ -428,7 +428,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
     // Add it back with a bad revision.
     const string& bad_revision = "2018-07-14";
     agent_->modules_.insert(make_pair(module, bad_revision));
-    ASSERT_NO_THROW(agent_->checkModules());
+    ASSERT_NO_THROW_LOG(agent_->checkModules());
     ostringstream rmsg;
     rmsg << "NETCONF_MODULE_REVISION_WARN Module " << module
          << " does NOT have the right revision: expected "
@@ -455,9 +455,9 @@ TEST_F(NetconfAgentLogTest, logChanges) {
           "10.0.2.0/24", SR_STRING_T, true }
     });
     // Load initial YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Subscribe configuration changes.
@@ -525,9 +525,9 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
           "10.0.2.0/24", SR_STRING_T, true }
     });
     // Load initial YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Subscribe configuration changes.
@@ -633,12 +633,12 @@ TEST_F(NetconfAgentTest, keaConfig) {
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
     ConstElementPtr request;
-    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-get\"\n"
         "}";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*request));
     // Alternative showing more for debugging...
     // EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
@@ -647,14 +647,14 @@ TEST_F(NetconfAgentTest, keaConfig) {
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
     ConstElementPtr response;
-    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0,\n"
         "\"arguments\": {\n"
         "    \"comment\": \"empty\"\n"
         "    }\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*response));
 }
 
@@ -676,9 +676,9 @@ TEST_F(NetconfAgentTest, yangConfig) {
           "10.0.2.0/24", SR_STRING_T, true }
     });
     // Load YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Netconf configuration.
@@ -734,7 +734,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
     ConstElementPtr request;
-    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-set\",\n"
         "\"arguments\": {\n"
@@ -753,7 +753,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "  }\n"
         "}";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
     sortSubnets(expected);
     sortSubnets(request);
@@ -763,11 +763,11 @@ TEST_F(NetconfAgentTest, yangConfig) {
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
     ConstElementPtr response;
-    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*response));
 }
 
@@ -812,7 +812,7 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
 
     // Try subscribeConfig.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_EQ(0, agent_->subscriptions_.size());
     EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
@@ -839,9 +839,9 @@ TEST_F(NetconfAgentTest, update) {
           "10.0.2.0/24", SR_STRING_T, true }
     });
     // Load initial YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Netconf configuration.
@@ -918,7 +918,7 @@ TEST_F(NetconfAgentTest, update) {
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
     ConstElementPtr request;
-    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-set\",\n"
         "\"arguments\": {\n"
@@ -937,7 +937,7 @@ TEST_F(NetconfAgentTest, update) {
         "  }\n"
         "}";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
     sortSubnets(expected);
     sortSubnets(request);
@@ -947,11 +947,11 @@ TEST_F(NetconfAgentTest, update) {
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
     ConstElementPtr response;
-    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*response));
 }
 
@@ -974,9 +974,9 @@ TEST_F(NetconfAgentTest, validate) {
           "10.0.2.0/24", SR_STRING_T, true }
     });
     // Load initial YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Netconf configuration.
@@ -1056,7 +1056,7 @@ TEST_F(NetconfAgentTest, validate) {
     ASSERT_LE(1, requests_.size());
     string request_str = requests_[0];
     ConstElementPtr request;
-    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-test\",\n"
         "\"arguments\": {\n"
@@ -1075,7 +1075,7 @@ TEST_F(NetconfAgentTest, validate) {
         "  }\n"
         "}";
     ConstElementPtr expected;
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
     sortSubnets(expected);
     sortSubnets(request);
@@ -1084,7 +1084,7 @@ TEST_F(NetconfAgentTest, validate) {
     // Check that the fakse server received the second request.
     ASSERT_EQ(2, requests_.size());
     request_str = requests_[1];
-    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     expected_str = "{\n"
         "\"command\": \"config-set\",\n"
         "\"arguments\": {\n"
@@ -1102,7 +1102,7 @@ TEST_F(NetconfAgentTest, validate) {
         "    }\n"
         "  }\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
     sortSubnets(expected);
     sortSubnets(request);
@@ -1112,19 +1112,19 @@ TEST_F(NetconfAgentTest, validate) {
     ASSERT_EQ(2, responses_.size());
     string response_str = responses_[0];
     ConstElementPtr response;
-    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*response));
 
     response_str = responses_[1];
-    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
         "}";
-    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*response));
 }
 
@@ -1140,9 +1140,9 @@ TEST_F(NetconfAgentTest, noValidate) {
           "10.0.0.0/24", SR_STRING_T, true }
     });
     // Load initial YANG configuration.
-    ASSERT_NO_THROW(agent_->initSysrepo());
+    ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     YangRepr repr(KEA_DHCP4_SERVER);
-    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    ASSERT_NO_THROW_LOG(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->apply_changes());
 
     // Netconf configuration.

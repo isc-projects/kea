@@ -40,11 +40,11 @@ TEST(NetconfCfgMgr, construction) {
     boost::scoped_ptr<NetconfCfgMgr> cfg_mgr;
 
     // Verify that configuration manager constructions without error.
-    ASSERT_NO_THROW(cfg_mgr.reset(new NetconfCfgMgr()));
+    ASSERT_NO_THROW_LOG(cfg_mgr.reset(new NetconfCfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
     NetconfConfigPtr context;
-    ASSERT_NO_THROW(context = cfg_mgr->getNetconfConfig());
+    ASSERT_NO_THROW_LOG(context = cfg_mgr->getNetconfConfig());
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
@@ -56,7 +56,7 @@ TEST(NetconfCfgMgr, getContext) {
     NetconfCfgMgr cfg_mgr;
 
     NetconfConfigPtr ctx;
-    ASSERT_NO_THROW(ctx = cfg_mgr.getNetconfConfig());
+    ASSERT_NO_THROW_LOG(ctx = cfg_mgr.getNetconfConfig());
     ASSERT_TRUE(ctx);
 }
 
@@ -96,7 +96,7 @@ TEST(NetconfCfgMgr, contextServer) {
 
     // Now check the values returned
     EXPECT_EQ(1, ctx.getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx.getCfgServersMap()->at("d2"));
+    ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
     EXPECT_THROW(ctx.getCfgServersMap()->at("dhcp4"), std::out_of_range);
 
@@ -105,7 +105,7 @@ TEST(NetconfCfgMgr, contextServer) {
 
     // Should be possible to retrieve two servers
     EXPECT_EQ(2, ctx.getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx.getCfgServersMap()->at("dhcp6"));
+    ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("dhcp6"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server2, ctx.getCfgServersMap()->at("dhcp6"));
 
@@ -113,8 +113,8 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
     EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
     EXPECT_EQ(4, ctx.getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx.getCfgServersMap()->at("dhcp4"));
-    ASSERT_NO_THROW(ctx.getCfgServersMap()->at("ca"));
+    ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("ca"));
     EXPECT_EQ(server3, ctx.getCfgServersMap()->at("dhcp4"));
     EXPECT_EQ(server4, ctx.getCfgServersMap()->at("ca"));
 }
@@ -162,10 +162,10 @@ TEST(NetconfCfgMgr, contextGlobals) {
     " \"alist\": [ 1, 2, 3 ],\n"
     " \"abool\": true\n"
         "}\n";
-    ASSERT_NO_THROW(global_cfg = Element::fromJSON(global_cfg_str));
+    ASSERT_NO_THROW_LOG(global_cfg = Element::fromJSON(global_cfg_str));
 
     // Extract globals from the config.
-    ASSERT_NO_THROW(ctx.extractConfiguredGlobals(global_cfg));
+    ASSERT_NO_THROW_LOG(ctx.extractConfiguredGlobals(global_cfg));
 
     // Now see if the extract was correct.
     globals = ctx.getConfiguredGlobals();
@@ -439,7 +439,7 @@ TEST_F(NetconfParserTest, configParseEmptyCfgServer) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(1, ctx->getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
@@ -460,7 +460,7 @@ TEST_F(NetconfParserTest, configParseDefaults) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(1, ctx->getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
@@ -485,7 +485,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp4) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(1, ctx->getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
@@ -508,7 +508,7 @@ TEST_F(NetconfParserTest, configParseServerD2) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(1, ctx->getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("d2"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("d2"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("d2");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP_DDNS, server->getModel());
@@ -530,7 +530,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp6) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(1, ctx->getCfgServersMap()->size());
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp6"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp6"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp6");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP6_SERVER, server->getModel());
@@ -551,7 +551,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(4, ctx->getCfgServersMap()->size());
 
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
@@ -564,7 +564,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     EXPECT_EQ("/tmp/socket-v4", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("dhcp6"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp6"));
     server = ctx->getCfgServersMap()->at("dhcp6");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP6_SERVER, server->getModel());
@@ -577,7 +577,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     EXPECT_EQ("/tmp/socket-v6", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("d2"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("d2"));
     server = ctx->getCfgServersMap()->at("d2");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP_DDNS, server->getModel());
@@ -590,7 +590,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     EXPECT_EQ("/tmp/socket-d2", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
-    ASSERT_NO_THROW(ctx->getCfgServersMap()->at("ca"));
+    ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("ca"));
     server = ctx->getCfgServersMap()->at("ca");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_CTRL_AGENT, server->getModel());
@@ -703,7 +703,7 @@ TEST_F(NetconfParserTest, comments) {
 
     // There is a DHCP4 server.
     ASSERT_TRUE(netconf_ctx->getCfgServersMap());
-    ASSERT_NO_THROW(netconf_ctx->getCfgServersMap()->at("dhcp4"));
+    ASSERT_NO_THROW_LOG(netconf_ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = netconf_ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
 
@@ -715,7 +715,7 @@ TEST_F(NetconfParserTest, comments) {
     EXPECT_EQ("\"dhcp4 server\"", ctx4->get("comment")->str());
 
     // There is a DHCP6 server.
-    ASSERT_NO_THROW(netconf_ctx->getCfgServersMap()->at("dhcp6"));
+    ASSERT_NO_THROW_LOG(netconf_ctx->getCfgServersMap()->at("dhcp6"));
     server = netconf_ctx->getCfgServersMap()->at("dhcp6");
     ASSERT_TRUE(server);
 

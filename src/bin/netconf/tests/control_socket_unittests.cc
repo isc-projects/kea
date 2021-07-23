@@ -104,7 +104,7 @@ TEST(StdoutControlSocketTest, configTest) {
     StdoutControlSocketPtr scs(new StdoutControlSocket(cfg));
     ASSERT_TRUE(scs);
     ConstElementPtr answer;
-    ASSERT_NO_THROW(answer = scs->configTest(ConstElementPtr(), "foo"));
+    ASSERT_NO_THROW_LOG(answer = scs->configTest(ConstElementPtr(), "foo"));
 
     // Check answer.
     ASSERT_TRUE(answer);
@@ -123,7 +123,7 @@ TEST(StdoutControlSocketTest, configSet) {
     ASSERT_TRUE(tscs);
     ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
     ConstElementPtr answer;
-    ASSERT_NO_THROW(answer = tscs->configSet(json, "foo"));
+    ASSERT_NO_THROW_LOG(answer = tscs->configSet(json, "foo"));
 
     // Check answer.
     ASSERT_TRUE(answer);
@@ -577,7 +577,7 @@ public:
 
         // If the thread is ready to go, start the listener.
         if (listener_) {
-            ASSERT_NO_THROW(listener_->start());
+            ASSERT_NO_THROW_LOG(listener_->start());
         }
     }
 
@@ -598,7 +598,7 @@ public:
         // Thread has terminated. We can stop the HTTP
         // listener safely.
         if (listener_) {
-            ASSERT_NO_THROW(listener_->stop());
+            ASSERT_NO_THROW_LOG(listener_->stop());
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,7 @@ TEST(NetconfProcess, construction) {
 
     // Verify that the constructor succeeds with a valid io_service
     lcl_io_service.reset(new IOService());
-    ASSERT_NO_THROW(NetconfProcess("TestProcess", lcl_io_service));
+    ASSERT_NO_THROW_LOG(NetconfProcess("TestProcess", lcl_io_service));
 
     // Verify tha the configuration is accessible after construction.
     NetconfProcess netconf_process("TestProcess", lcl_io_service);

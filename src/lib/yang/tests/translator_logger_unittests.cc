@@ -117,7 +117,7 @@ TEST_F(TranslatorLoggersTestv4, set) {
     logger->set("output_options", options);
     ElementPtr loggers = Element::createList();
     loggers->add(logger);
-    ASSERT_NO_THROW(t_obj_->setLoggers(xpath, loggers));
+    ASSERT_NO_THROW_LOG(t_obj_->setLoggers(xpath, loggers));
 
     // Get it back.
     ConstElementPtr gots;

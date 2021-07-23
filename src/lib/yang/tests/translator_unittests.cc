@@ -155,7 +155,7 @@ TEST(TranslatorBasicTest, getItem) {
     S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
+    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
     S_Val s_val;
     ConstElementPtr elem;
     string xpath;
@@ -453,7 +453,7 @@ TEST(TranslatorBasicTest, setItem) {
     S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
+    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
 
     // Container.
     string xpath = "/keatest-module:container";
@@ -661,7 +661,7 @@ TEST(TranslatorBasicTest, list) {
     S_Connection conn(std::make_shared<Connection>());
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
+    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
     string xpath;
 
     // Empty list.

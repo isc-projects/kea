@@ -107,7 +107,7 @@ public:
     /// @param config The JSON tree to load in textual format.
     void load(const string& config) {
         ElementPtr json;
-        ASSERT_NO_THROW(json = Element::fromJSON(config));
+        ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
         load(json);
     }
 
@@ -216,12 +216,12 @@ struct ConfigTestIetfV6 : ConfigTest {
 // Check empty config with ietf-dhcpv6-server model.
 TEST_F(ConfigTestIetfV6, emptyIetf6) {
     YRTree tree;
-    ASSERT_NO_THROW(load(tree));
+    ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(tree));
 
     ConstElementPtr json = Element::fromJSON(emptyJson6);
     EXPECT_TRUE(verify(json));
-    ASSERT_NO_THROW(load(json));
+    ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson6));
     EXPECT_TRUE(verify(tree));
 }
@@ -229,12 +229,12 @@ TEST_F(ConfigTestIetfV6, emptyIetf6) {
 // Check empty config with kea-dhcp4-server:config model.
 TEST_F(ConfigTestKeaV4, emptyKeaDhcp4) {
     YRTree tree;
-    ASSERT_NO_THROW(load(tree));
+    ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
 
     ConstElementPtr json = Element::fromJSON(emptyJson4);
     EXPECT_TRUE(verify(json));
-    ASSERT_NO_THROW(load(json));
+    ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson4));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
 }
@@ -242,12 +242,12 @@ TEST_F(ConfigTestKeaV4, emptyKeaDhcp4) {
 // Check empty config with kea-dhcp6-server:config model.
 TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
     YRTree tree;
-    ASSERT_NO_THROW(load(tree));
+    ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 
     ConstElementPtr json = Element::fromJSON(emptyJson6);
     EXPECT_TRUE(verify(json));
-    ASSERT_NO_THROW(load(json));
+    ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson6));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 }
@@ -257,12 +257,12 @@ TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
 // container with a mandatory ent-num leaf and no presence flag,
 // and of course the candidate YANG tree has nothing for this.
 TEST_F(ConfigTestIetfV6, subnetTwoPoolsIetf6) {
-    ASSERT_NO_THROW(load(subnetTwoPoolsTreeIetf6));
+    ASSERT_NO_THROW_LOG(load(subnetTwoPoolsTreeIetf6));
     EXPECT_TRUE(verify(subnetTwoPoolsJson6));
 
     resetSession();
 
-    ASSERT_NO_THROW(load(subnetTwoPoolsJson6));
+    ASSERT_NO_THROW_LOG(load(subnetTwoPoolsJson6));
     EXPECT_TRUE(verify(subnetTwoPoolsTreeIetf6));
 
     EXPECT_FALSE(validate());
@@ -271,12 +271,12 @@ TEST_F(ConfigTestIetfV6, subnetTwoPoolsIetf6) {
 // Check subnet with a pool and option data lists with
 // kea-dhcp4-server:config model.
 TEST_F(ConfigTestKeaV4, subnetOptionsKeaDhcp4) {
-    ASSERT_NO_THROW(load(subnetOptionsTreeKeaDhcp4));
+    ASSERT_NO_THROW_LOG(load(subnetOptionsTreeKeaDhcp4));
     EXPECT_TRUE(verify(subnetOptionsJson4));
 
     resetSession();
 
-    ASSERT_NO_THROW(load(subnetOptionsJson4));
+    ASSERT_NO_THROW_LOG(load(subnetOptionsJson4));
     EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp4));
 
     EXPECT_TRUE(validate());
@@ -285,12 +285,12 @@ TEST_F(ConfigTestKeaV4, subnetOptionsKeaDhcp4) {
 // Check subnet with a pool and option data lists with
 // kea-dhcp6-server:config model.
 TEST_F(ConfigTestKeaV6, subnetOptionsKeaDhcp6) {
-    ASSERT_NO_THROW(load(subnetOptionsTreeKeaDhcp6));
+    ASSERT_NO_THROW_LOG(load(subnetOptionsTreeKeaDhcp6));
     EXPECT_TRUE(verify(subnetOptionsJson6));
 
     resetSession();
 
-    ASSERT_NO_THROW(load(subnetOptionsJson6));
+    ASSERT_NO_THROW_LOG(load(subnetOptionsJson6));
     EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp6));
 
     EXPECT_TRUE(validate());
@@ -298,18 +298,18 @@ TEST_F(ConfigTestKeaV6, subnetOptionsKeaDhcp6) {
 
 // Check with timers.
 TEST_F(ConfigTestIetfV6, subnetTimersIetf6) {
-    ASSERT_NO_THROW(load(subnetTimersIetf6));
+    ASSERT_NO_THROW_LOG(load(subnetTimersIetf6));
     EXPECT_TRUE(verify(subnetTimersJson6));
 
     resetSession();
 
-    ASSERT_NO_THROW(load(subnetTimersJson6));
+    ASSERT_NO_THROW_LOG(load(subnetTimersJson6));
     EXPECT_TRUE(verify(subnetTimersIetf6));
 }
 
 // Check a ietf-dhcpv6-server configuration which validates.
 TEST_F(ConfigTestIetfV6, validateIetf6) {
-    ASSERT_NO_THROW(load(validTreeIetf6));
+    ASSERT_NO_THROW_LOG(load(validTreeIetf6));
     EXPECT_TRUE(verify(validTreeIetf6));
 
     // If this validation fails, make sure you have the model *and its
@@ -352,7 +352,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
         string path = string(CFG_EXAMPLES) + "/kea4/" + file;
         cout << "Testing file " << path << endl;
         ConstElementPtr json;
-        ASSERT_NO_THROW(json = loadFile(path));
+        ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
         EXPECT_TRUE(verify(json));
         EXPECT_TRUE(validate());
@@ -394,7 +394,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         string path = string(CFG_EXAMPLES) + "/kea6/" + file;
         cout << "Testing file " << path << endl;
         ConstElementPtr json;
-        ASSERT_NO_THROW(json = loadFile(path));
+        ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
         EXPECT_TRUE(verify(json));
         EXPECT_TRUE(validate());
@@ -403,12 +403,12 @@ TEST_F(ConfigTestKeaV6, examples6) {
 
 // Check the example in the design document.
 TEST_F(ConfigTestIetfV6, designExample) {
-    ASSERT_NO_THROW(load(designExampleTree));
+    ASSERT_NO_THROW_LOG(load(designExampleTree));
     EXPECT_TRUE(verify(designExampleJson));
 
     resetSession();
 
-    ASSERT_NO_THROW(load(designExampleJson));
+    ASSERT_NO_THROW_LOG(load(designExampleJson));
     EXPECT_TRUE(verify(designExampleTree));
 }
 

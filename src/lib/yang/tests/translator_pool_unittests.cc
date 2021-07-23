@@ -121,7 +121,7 @@ TEST_F(TranslatorPoolsTestKeaV6, getKea) {
     const string& prefix = "2001:db8::1:0/112";
     string start_addr;
     string end_addr;
-    ASSERT_NO_THROW(TranslatorPool::getAddresses(prefix,
+    ASSERT_NO_THROW_LOG(TranslatorPool::getAddresses(prefix,
                                                  start_addr, end_addr));
     EXPECT_EQ("2001:db8::1:0", start_addr);
     EXPECT_EQ("2001:db8::1:ffff", end_addr);

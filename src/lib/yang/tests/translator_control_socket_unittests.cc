@@ -118,7 +118,7 @@ TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
     } catch (const std::exception& ex) {
         cerr << "setControlSocket fail with " << ex.what() << endl;
     }
-    ASSERT_NO_THROW(t_obj_->setControlSocket(xpath, sock));
+    ASSERT_NO_THROW_LOG(t_obj_->setControlSocket(xpath, sock));
 
     // Get it back.
     ConstElementPtr got;
