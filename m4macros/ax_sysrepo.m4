@@ -24,6 +24,12 @@ AC_DEFUN([AX_SYSREPO], [
   AX_FIND_LIBRARY([libyang-cpp], ["${with_library}"], [libyang/Libyang.hpp], [libyang-cpp.so])
   if "${LIBRARY_FOUND}"; then
 
+    LIBYANGCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
+    LIBYANGCPP_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
+    LIBYANGCPP_LIBS="${LIBRARY_LIBS}"
+    LIBYANGCPP_VERSION="${LIBRARY_VERSION}"
+    LIBYANGCPP_PREFIX="${LIBRARY_PREFIX}"
+
     # If include paths are equal, there's no need to include both. But if
     # they're different, we need both.
     if test "${LIBYANG_INCLUDEDIR}" != "${LIBYANGCPP_INCLUDEDIR}"; then
@@ -37,12 +43,6 @@ AC_DEFUN([AX_SYSREPO], [
     if test "${LIBYANG_LIBS}" != "${LIBYANGCPP_LIBS}"; then
        LIBYANG_LIBS="${LIBYANG_LIBS} ${LIBYANGCPP_LIBS}"
     fi
-
-    LIBYANGCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
-    LIBYANGCPP_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
-    LIBYANGCPP_LIBS="${LIBRARY_LIBS}"
-    LIBYANGCPP_VERSION="${LIBRARY_VERSION}"
-    LIBYANGCPP_PREFIX="${LIBRARY_PREFIX}"
 
     libyang_cpp_found=true
     AC_MSG_RESULT([yes])
@@ -58,9 +58,9 @@ AC_DEFUN([AX_SYSREPO], [
   AC_MSG_CHECKING([sysrepo])
   AX_FIND_LIBRARY([sysrepo], ["${with_library}"], [sysrepo.h], [libsysrepo.so], [], [])
   if "${LIBRARY_FOUND}"; then
-    SYSREPO_CPPFLAGS="${LIBRARY_CPPFLAGS}"
-    SYSREPO_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
-    SYSREPO_LIBS="${LIBRARY_LIBS}"
+    SYSREPO_CPPFLAGS="${LIBRARY_CPPFLAGS} ${LIBYANG_CPPFLAGS}"
+    SYSREPO_INCLUDEDIR="${LIBRARY_INCLUDEDIR} ${LIBYANG_INCLUDEDIR}"
+    SYSREPO_LIBS="${LIBRARY_LIBS} ${LIBYANG_LIBS}"
     SYSREPO_VERSION="${LIBRARY_VERSION}"
 
     sysrepo_found=true
