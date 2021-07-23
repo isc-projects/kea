@@ -17,7 +17,6 @@ extern const isc::log::MessageID NETCONF_GET_CONFIG = "NETCONF_GET_CONFIG";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED = "NETCONF_GET_CONFIG_FAILED";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_STARTED = "NETCONF_GET_CONFIG_STARTED";
 extern const isc::log::MessageID NETCONF_LOG_CHANGE_FAIL = "NETCONF_LOG_CHANGE_FAIL";
-extern const isc::log::MessageID NETCONF_MODULE_INSTALL = "NETCONF_MODULE_INSTALL";
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_ERR = "NETCONF_MODULE_MISSING_ERR";
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN = "NETCONF_MODULE_MISSING_WARN";
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR = "NETCONF_MODULE_REVISION_ERR";
@@ -58,7 +57,6 @@ const char* values[] = {
     "NETCONF_GET_CONFIG_FAILED", "getting configuration from %1 server failed: %2",
     "NETCONF_GET_CONFIG_STARTED", "getting configuration from %1 server",
     "NETCONF_LOG_CHANGE_FAIL", "Netconf configuration change logging failed: %1",
-    "NETCONF_MODULE_INSTALL", "Sysrepo (un)installs a module: %1 (revision %2)",
     "NETCONF_MODULE_MISSING_ERR", "Missing essential module %1 in sysrepo",
     "NETCONF_MODULE_MISSING_WARN", "Missing module %1 in sysrepo",
     "NETCONF_MODULE_REVISION_ERR", "Essential module %1 does NOT have the right revision: expected %2, got %3",

@@ -52,11 +52,6 @@ configuration from a Kea server.
 The warning message indicates that the configuration change logging
 encountered an unexpected condition. Details of it will be logged.
 
-% NETCONF_MODULE_INSTALL Sysrepo (un)installs a module: %1 (revision %2)
-This warning message indicates that sysrepo reports the installation
-or uninstallation of a module used by Kea. The name and revision of
-the module are printed.
-
 % NETCONF_MODULE_MISSING_ERR Missing essential module %1 in sysrepo
 This fatal error message indicates that a module required by Netconf
 configuration is not available in the sysrepo repository.  The name of

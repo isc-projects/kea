@@ -18,7 +18,6 @@ extern const isc::log::MessageID NETCONF_GET_CONFIG;
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED;
 extern const isc::log::MessageID NETCONF_GET_CONFIG_STARTED;
 extern const isc::log::MessageID NETCONF_LOG_CHANGE_FAIL;
-extern const isc::log::MessageID NETCONF_MODULE_INSTALL;
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_ERR;
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN;
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR;
