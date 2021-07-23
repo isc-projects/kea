@@ -1,3 +1,12 @@
+1926.	[func]*		marcin
+	Server tags in the MySQL database are now represented as strings
+	with a maximum length of 64 characters. Previously, the server
+	tags could be up to 256 characters long, and it could cause
+	database migrations to fail on the systems with UTF-8 encoding
+	configured for MySQL. Shorter server tags avoid hitting the
+	limitation on the maximum length of an indexed table column.
+	(Gitlab #1976)
+
 1925.	[build]		fdupont
 	Updated parsers to bison 3.3 or later.
 	(Gitlab #453)
