@@ -28,7 +28,7 @@ fi
 # Check version.
 version=$(mysql_version "${@}")
 if test "${version}" != "9.6"; then
-    printf 'This script upgrades 9.5 to 9.6. '
+    printf 'This script upgrades 9.6 to 10.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
 fi
