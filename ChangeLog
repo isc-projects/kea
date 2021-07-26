@@ -1,3 +1,8 @@
+1924.	[bug]		razvan
+	The MultiThreadingCriticalSection is now thread-safe and can be
+	called from http client or http listener processing threads.
+	(Gitlab #1964)
+
 1923.	[func]		andrei
 	Integrate with Sysrepo v1.x branch. Building with support for
 	Sysrepo now requires the latest v1.x versions:
