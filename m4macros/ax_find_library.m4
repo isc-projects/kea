@@ -93,7 +93,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
           LIBRARY_INCLUDEDIR="-I${p}/include"
         fi
 
-        LIBRARY_LIBS="-L${i}/lib -Wl,-rpath=${i}/lib"
+        LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
         for i in ${list_of_libraries}; do
           if test ! -f "${p}/lib/${i}"; then
             AC_MSG_WARN(["${library}" libraries not found in "${p}"])
