@@ -25,15 +25,14 @@ libd2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 libd2srv_unittests_LDADD  = $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
-libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-libd2srv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la

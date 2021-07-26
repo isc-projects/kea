@@ -22,9 +22,9 @@ libkea_d2srv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_d2srv_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 libkea_d2srv_la_LIBADD  =
+libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
