@@ -19,16 +19,22 @@ AC_DEFUN([AX_FIND_LIBRARY], [
   list_of_headers=$3
   list_of_libraries=$4
   list_of_variables=$5
-  additional_arguments_to_pkg_config=$6
+  pkg_config_paths=$6
 
   LIBRARY_FOUND=false
-  if test "${with_library}" = 'no'; then
-    : # nothing to do
+  if test -z "${with_library}"; then
+    # library not requested, nothing to do
+    :
+  elif test "${with_library}" = 'no'; then
+    # library specifically disabled, nothing to do
+    :
   elif test "${with_library}" != 'yes'; then
+    # library enabled and has custom --with parameter
+
     if test -f "${with_library}"; then
       # User has pointed --with-library to a file.
       # It might be a .pc file.
-      AX_FIND_LIBRARY_WITH_PKG_CONFIG(["${with_library}"], ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+      AX_FIND_LIBRARY_WITH_PKG_CONFIG(["${with_library}"], ["${list_of_variables}"], ["${pkg_config_paths}"])
 
     elif test -d "${with_library}"; then
       # User has pointed --with-library to a directory.
@@ -37,7 +43,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
       if test -f "${library_pc}"; then
         if test -n "${PKG_CONFIG}"; then
           if "${PKG_CONFIG}" "${library_pc}"; then
-            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
           else
             AC_MSG_WARN(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
           fi
@@ -54,7 +60,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
   else
     # No parameter given. Try pkg-config first.
     if test -n "${PKG_CONFIG}"; then
-      AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+      AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library}", ["${list_of_variables}"], ["${pkg_config_paths}"])
     fi
 
     # If not found, then search in usual paths for a .pc file.
@@ -62,7 +68,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
       for p in /usr /usr/local; do
         library_pc="${p}/lib/pkgconfig/${library}.pc"
         if test -f "${library_pc}"; then
-          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${additional_arguments_to_pkg_config}"])
+          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
           if "${LIBRARY_FOUND}"; then
             break
           fi
@@ -120,8 +126,8 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 # input:
 #   * value of --with-library
 #   * list of variables to retrieve with pkg-config
-#   * additional parameters to pass to pkg-config, useful e.g. when --with-path
-#       is needed to point to a dependency of the checked library
+#   * additional paths to pass to pkg-config, for when a .pc file has
+#       a dependency
 # output:
 #   * LIBRARY_FOUND
 #   * LIBRARY_CPFFLAGS
@@ -131,30 +137,35 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
   library_pc_or_name=$1
   list_of_variables=$2
-  additional_arguments_to_pkg_config=$3
-  args="${additional_arguments_to_pkg_config}" # Shorten.
+  pkg_config_paths=$3
 
   LIBRARY_FOUND=false
   # Check that we have pkg-config installed on the system.
   if test -n "${PKG_CONFIG}"; then
     # Check that pkg-config is able to interpret the file.
     if "${PKG_CONFIG}" "${library_pc_or_name}"; then
+      # Save the previous PKG_CONFIG_PATH.
+      save_pkg_config_path="${PKG_CONFIG_PATH}"
+
+      # Append the requested paths.
+      export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${pkg_config_paths}"
+
       # Get the flags.
-      LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" ${args} --cflags-only-other "${library_pc_or_name}")
-      LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" ${args} --cflags-only-I "${library_pc_or_name}")
-      LIBRARY_LIBS=$("${PKG_CONFIG}" ${args} --libs "${library_pc_or_name}")
-      LIBRARY_VERSION=$("${PKG_CONFIG}" ${args} --modversion "${library_pc_or_name}")
-      LIBRARY_PREFIX=$("${PKG_CONFIG}" ${args} --variable=prefix "${library_pc_or_name}")
+      LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${library_pc_or_name}")
+      LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${library_pc_or_name}")
+      LIBRARY_LIBS=$("${PKG_CONFIG}" --libs "${library_pc_or_name}")
+      LIBRARY_VERSION=$("${PKG_CONFIG}" --modversion "${library_pc_or_name}")
+      LIBRARY_PREFIX=$("${PKG_CONFIG}" --variable=prefix "${library_pc_or_name}")
 
       # Get the variables.
       for i in $(printf '%s' "${list_of_variables}" | sed 's/,/ /g'); do
         # The export is not strictly required here, but we need a way to
         # dynamically assign values to "${i}". And export is nicer than eval.
-        export "${i}"="$("${PKG_CONFIG}" ${args} --variable="${i}" "${library_pc_or_name}")"
+        export "${i}"="$("${PKG_CONFIG}" --variable="${i}" "${library_pc_or_name}")"
       done
 
-      # LIBRARY_INCLUDEDIR="${LIBRARY_INCLUDEDIR} -I${LIBRARY_CONFIG}/include"
-      # LIBRARY_LIBS="${LIBRARY_LIBS} -Wl,-rpath=${LIBRARY_CONFIG}/lib"
+      # Restore the previous PKG_CONFIG_PATH.
+      PKG_CONFIG_PATH="${save_pkg_config_path}"
 
       # Mark that we have the required flags for our library.
       LIBRARY_FOUND=true
