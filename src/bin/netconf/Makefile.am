@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
