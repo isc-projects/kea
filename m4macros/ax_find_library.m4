@@ -40,9 +40,16 @@ AC_DEFUN([AX_FIND_LIBRARY], [
       # User has pointed --with-library to a directory.
       # Let's try to find a library.pc first inside that directory.
       library_pc="${with_library}/lib/pkgconfig/${library}.pc"
+
       if test -f "${library_pc}"; then
         if test -n "${PKG_CONFIG}"; then
-          if "${PKG_CONFIG}" "${library_pc}"; then
+          # The check was inadequate. We need to run pkg-config with the actual .pc file and use it. Otherwise
+          # pkg-config always returns 1 (invalid usage), regardless if the file exists or not. Let's use a flag
+          # that should work everywhere (--modversion asks for package version). We don't care about the version
+          # at this stage, just want to make sure the .pc file is not garbage.
+          ignore_me=$("${PKG_CONFIG}" --modversion "${library_pc}")
+          exit_code=$?
+          if test "${exit_code}" -eq 0; then
             AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
           else
             AC_MSG_WARN(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
@@ -143,7 +150,9 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
   # Check that we have pkg-config installed on the system.
   if test -n "${PKG_CONFIG}"; then
     # Check that pkg-config is able to interpret the file.
-    if "${PKG_CONFIG}" "${library_pc_or_name}"; then
+    ignore_me=$("${PKG_CONFIG}" --modversion "${library_pc}")
+    exit_code=$?
+    if test "${exit_code}" -eq 0; then
       # Save the previous PKG_CONFIG_PATH.
       save_pkg_config_path="${PKG_CONFIG_PATH}"
 
