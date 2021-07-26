@@ -12,8 +12,8 @@
 
 namespace {
 
-// Version 10909 of the hooks framework, set for Kea 1.9.9
-const int KEA_HOOKS_VERSION = 10909;
+// Version 10910 of the hooks framework, set for Kea 1.9.10
+const int KEA_HOOKS_VERSION = 10910;
 
 // Names of the framework functions.
 const char* const LOAD_FUNCTION_NAME = "load";

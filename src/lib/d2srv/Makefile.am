@@ -38,7 +38,8 @@ libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_d2srv_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_d2srv_la_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+libkea_d2srv_la_LDFLAGS  = -no-undefined -version-info 1:0:0
+libkea_d2srv_la_LDFLAGS += $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

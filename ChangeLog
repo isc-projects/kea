@@ -1,3 +1,8 @@
+1927.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.10 development
+	version.
+	(Gitlab #1984)
+
 1926.	[func]*		marcin
 	Server tags in the MySQL database are now represented as strings
 	with a maximum length of 64 characters. Previously, the server
