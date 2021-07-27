@@ -1,7 +1,7 @@
 AC_DEFUN([AX_SYSREPO], [
 
   AC_ARG_WITH([libyang],
-    AS_HELP_STRING([--with-libyang=PATH], [path to the libyang.pc file, to the libyang-cpp.pc file or to the libyang installation directory]),
+    AS_HELP_STRING([--with-libyang=PATH], [optional path to the libyang installation directory]),
     [with_library="${withval}"])
 
   AC_MSG_CHECKING([libyang])
@@ -52,7 +52,7 @@ AC_DEFUN([AX_SYSREPO], [
   fi
 
   AC_ARG_WITH([sysrepo],
-    AS_HELP_STRING([--with-sysrepo=PATH], [path to the sysrepo.pc file, to the sysrepo-cpp.pc file or to the sysrepo installation directory]),
+    AS_HELP_STRING([--with-sysrepo=PATH], [optional path to the sysrepo installation directory]),
     [with_library="${withval}"])
 
   AC_MSG_CHECKING([sysrepo])
