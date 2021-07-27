@@ -2,10 +2,20 @@ AC_DEFUN([AX_SYSREPO], [
 
   AC_ARG_WITH([libyang],
     AS_HELP_STRING([--with-libyang=PATH], [optional path to the libyang installation directory]),
-    [with_library="${withval}"])
+    [with_libyang="${withval}"])
+
+  AC_ARG_WITH([sysrepo],
+    AS_HELP_STRING([--with-sysrepo=PATH], [optional path to the sysrepo installation directory]),
+    [with_sysrepo="${withval}"])
+
+  # If --with-libyang was omitted, assume it was passed and give it the value
+  # from --with-sysrepo.
+  if test -z "${with_libyang}"; then
+    with_libyang="${with_sysrepo}"
+  fi
 
   AC_MSG_CHECKING([libyang])
-  AX_FIND_LIBRARY([libyang], ["${with_library}"], [libyang/libyang.h], [libyang.so], [LIBYANG_SOVERSION])
+  AX_FIND_LIBRARY([libyang], ["${with_libyang}"], [libyang/libyang.h], [libyang.so], [LIBYANG_SOVERSION])
   if "${LIBRARY_FOUND}"; then
     LIBYANG_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     LIBYANG_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
@@ -21,7 +31,7 @@ AC_DEFUN([AX_SYSREPO], [
   fi
 
   AC_MSG_CHECKING([libyang-cpp])
-  AX_FIND_LIBRARY([libyang-cpp], ["${with_library}"], [libyang/Libyang.hpp], [libyang-cpp.so])
+  AX_FIND_LIBRARY([libyang-cpp], ["${with_libyang}"], [libyang/Libyang.hpp], [libyang-cpp.so])
   if "${LIBRARY_FOUND}"; then
 
     LIBYANGCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
@@ -51,12 +61,8 @@ AC_DEFUN([AX_SYSREPO], [
     AC_MSG_RESULT([no])
   fi
 
-  AC_ARG_WITH([sysrepo],
-    AS_HELP_STRING([--with-sysrepo=PATH], [optional path to the sysrepo installation directory]),
-    [with_library="${withval}"])
-
   AC_MSG_CHECKING([sysrepo])
-  AX_FIND_LIBRARY([sysrepo], ["${with_library}"], [sysrepo.h], [libsysrepo.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([sysrepo], ["${with_sysrepo}"], [sysrepo.h], [libsysrepo.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig"])
   if "${LIBRARY_FOUND}"; then
     SYSREPO_CPPFLAGS="${LIBRARY_CPPFLAGS} ${LIBYANG_CPPFLAGS}"
     SYSREPO_INCLUDEDIR="${LIBRARY_INCLUDEDIR} ${LIBYANG_INCLUDEDIR}"
@@ -104,7 +110,7 @@ AC_DEFUN([AX_SYSREPO], [
 
   AC_MSG_CHECKING([sysrepo-cpp])
 
-  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_library}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [SR_REPO_PATH,SRPD_PLUGINS_PATH], ["${LIBYANGCPP_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_sysrepo}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [SR_REPO_PATH,SRPD_PLUGINS_PATH], ["${LIBYANGCPP_PREFIX}/lib/pkgconfig"])
   if "${LIBRARY_FOUND}"; then
     SYSREPOCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     SYSREPOCPP_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
