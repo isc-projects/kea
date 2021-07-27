@@ -2495,6 +2495,10 @@ TEST_F(HAServiceTest, processHeartbeat) {
     TestHAService service(io_service_,  network_state_, config_storage);
     service.query_filter_.serveDefaultScopes();
 
+    for (auto i = 0; i < 6; ++i) {
+        service.communication_state_->increaseUnsentUpdateCount();
+    }
+
     // Process heartbeat command.
     ConstElementPtr rsp;
     ASSERT_NO_THROW(rsp = service.processHeartbeat());
@@ -2538,6 +2542,14 @@ TEST_F(HAServiceTest, processHeartbeat) {
     // Let's allow the response propagation time of 5 seconds to make
     // sure this test doesn't fail on slow systems.
     EXPECT_LT(td.seconds(), 5);
+
+    // The response should contain unsent-update-count parameter indicating
+    // how many updates haven't been sent to a partner because the partner
+    // was unavailable.
+    ConstElementPtr unsent_update_count = args->get("unsent-update-count");
+    ASSERT_TRUE(unsent_update_count);
+    EXPECT_EQ(Element::integer, unsent_update_count->getType());
+    EXPECT_EQ(6, static_cast<uint64_t>(unsent_update_count->intValue()));
 }
 
 // This test verifies that the correct value of the heartbeat-delay is used.

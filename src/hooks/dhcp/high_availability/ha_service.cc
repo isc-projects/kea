@@ -1573,6 +1573,9 @@ HAService::processHeartbeat() {
     }
     arguments->set("scopes", scopes_list);
 
+    arguments->set("unsent-update-count",
+                   Element::create(static_cast<int64_t>(communication_state_->getUnsentUpdateCount())));
+
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA peer status returned.",
                          arguments));
 }
