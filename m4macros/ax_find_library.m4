@@ -9,7 +9,7 @@
 #       is needed to point to a dependency of the checked library
 # output:
 #   * LIBRARY_FOUND
-#   * LIBRARY_CPFFLAGS
+#   * LIBRARY_CPPFLAGS
 #   * LIBRARY_INCLUDEDIR
 #   * LIBRARY_LIBS
 #   * LIBRARY_PREFIX
@@ -122,7 +122,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 
   # Remove leading and trailing spaces.
   if "${LIBRARY_FOUND}"; then
-    LIBRARY_CPFFLAGS="$(printf '%s' "${LIBRARY_CPPFLAGS}" | sed 's/^ *//g;s/ *$//g')"
+    LIBRARY_CPPFLAGS="$(printf '%s' "${LIBRARY_CPPFLAGS}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_INCLUDEDIR="$(printf '%s' "${LIBRARY_INCLUDEDIR}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
   fi
@@ -137,7 +137,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 #       a dependency
 # output:
 #   * LIBRARY_FOUND
-#   * LIBRARY_CPFFLAGS
+#   * LIBRARY_CPPFLAGS
 #   * LIBRARY_INCLUDEDIR
 #   * LIBRARY_LIBS
 #   * LIBRARY_PREFIX
