@@ -1364,16 +1364,10 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             // We don't care about the result of the lease update to the backup server.
             // It is a best effort update.
-            if (config->getRole() != HAConfig::PeerConfig::BACKUP) {
-                if (lease_update_success) {
-                    // If the lease update was successful and we have sent it to the server
-                    // to which we also send heartbeats (primary, secondary or standby) we
-                    // can assume that the server is online and we can defer next heartbeat.
-                    communication_state_->poke();
-
-                } else {
-                    communication_state_->setPartnerState("unavailable");
-                }
+            if ((config->getRole() != HAConfig::PeerConfig::BACKUP) && !lease_update_success) {
+                // If we were unable to communicate with the partner we set partner's
+                // state as unavailable.
+                communication_state_->setPartnerState("unavailable");
             }
 
             // It is possible to configure the server to not wait for a response from

@@ -272,15 +272,13 @@ CommunicationState::pokeInternal() {
 
     if (timer_) {
         // Check the duration since last poke. If it is less than a second, we don't
-        // want to reschedule the timer. The only case when the poke time duration is
-        // lower than 1s is when we're performing lease updates. In order to avoid the
-        // overhead of re-scheduling the timer too frequently we reschedule it only if the
+        // want to reschedule the timer. In order to avoid the overhead of
+        // re-scheduling the timer too frequently we reschedule it only if the
         // duration is 1s or more. This matches the time resolution for heartbeats.
         if (duration_since_poke.total_seconds() > 0) {
             // A poke causes the timer to be re-scheduled to prevent it
             // from triggering a heartbeat shortly after confirming the
-            // connection is ok, based on the lease update or another
-            // command.
+            // connection is ok.
             startHeartbeatInternal();
         }
     }

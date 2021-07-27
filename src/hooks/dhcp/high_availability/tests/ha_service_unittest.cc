@@ -791,14 +791,14 @@ public:
     /// the partner is online or offline.
     ///
     /// @param unpark_handler a function called when packet is unparked.
-    /// @param should_pass indicates if the update is expected to be successful.
+    /// @param should_fail indicates if the update is expected to be unsuccessful.
     /// @param num_updates expected number of servers to which lease updates are
     /// sent.
     /// @param my_state state of the server while lease updates are sent.
     /// @param wait_backup_ack indicates if the server should wait for the acknowledgment
     /// from the backup servers.
     void testSendLeaseUpdates(std::function<void()> unpark_handler,
-                              const bool should_pass,
+                              const bool should_fail,
                               const size_t num_updates,
                               const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
                               const bool wait_backup_ack = false) {
@@ -861,8 +861,6 @@ public:
         // an acknowledgment.
         EXPECT_EQ(2 * num_updates, service_->getPendingRequest(query));
 
-        EXPECT_FALSE(state->isPoked());
-
         // Let's park the packet and associate it with the callback function which
         // simply records the fact that it has been called. We expect that it wasn't
         // because the parked packet should be dropped as a result of lease updates
@@ -888,10 +886,8 @@ public:
         // The updates should not be sent to this server.
         EXPECT_TRUE(factory_->getResponseCreator()->getReceivedRequests().empty());
 
-        if (should_pass) {
-            EXPECT_TRUE(state->isPoked());
-        } else {
-            EXPECT_FALSE(state->isPoked());
+        if (should_fail) {
+            EXPECT_EQ(HA_UNAVAILABLE_ST, state->getPartnerState());
         }
     }
 
@@ -899,14 +895,14 @@ public:
     /// the partner is online or offline.
     ///
     /// @param unpark_handler a function called when packet is unparked.
-    /// @param should_pass indicates if the update is expected to be successful.
+    /// @param should_fail indicates if the update is expected to be unsuccessful.
     /// @param num_updates expected number of servers to which lease updates are
     /// sent.
     /// @param my_state state of the server while lease updates are sent.
     /// @param wait_backup_ack indicates if the server should wait for the acknowledgment
     /// from the backup servers.
     void testSendLeaseUpdates6(std::function<void()> unpark_handler,
-                               const bool should_pass,
+                               const bool should_fail,
                                const size_t num_updates,
                                const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
                                const bool wait_backup_ack = false) {
@@ -989,10 +985,8 @@ public:
         // The updates should not be sent to this server.
         EXPECT_TRUE(factory_->getResponseCreator()->getReceivedRequests().empty());
 
-        if (should_pass) {
-            EXPECT_TRUE(state->isPoked());
-        } else {
-            EXPECT_FALSE(state->isPoked());
+        if (should_fail) {
+            EXPECT_EQ(HA_UNAVAILABLE_ST, state->getPartnerState());
         }
     }
 
@@ -1071,7 +1065,7 @@ public:
         // This flag will be set to true if unpark is called.
         bool unpark_called = false;
         testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
-                             true, 1);
+                             false, 1);
 
         // Expecting that the packet was unparked because lease
         // updates are expected to be successful.
@@ -1294,7 +1288,7 @@ public:
         testSendLeaseUpdates([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // Server 2 should not receive lease4-update.
         auto update_request2 =
@@ -1325,7 +1319,7 @@ public:
         testSendLeaseUpdates([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // The updates should be sent to server 2 and this server should
         // return error code.
@@ -1375,7 +1369,7 @@ public:
         testSendLeaseUpdates([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // The updates should be sent to server 2 and this server should
         // return error code.
@@ -1408,7 +1402,7 @@ public:
 
         bool unpark_called = false;
         testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
-                             true, 1);
+                             false, 1);
 
         EXPECT_TRUE(unpark_called);
 
@@ -1452,7 +1446,7 @@ public:
         // This flag will be set to true if unpark is called.
         bool unpark_called = false;
         testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
-                              true, 1);
+                              false, 1);
 
         // Expecting that the packet was unparked because lease
         // updates are expected to be successful.
@@ -1655,7 +1649,7 @@ public:
         testSendLeaseUpdates6([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // Server 2 should not receive lease6-bulk-apply.
         auto update_request2 =
@@ -1676,7 +1670,7 @@ public:
 
         bool unpark_called = false;
         testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
-                              true, 1);
+                              false, 1);
 
         EXPECT_TRUE(unpark_called);
 
@@ -1714,7 +1708,7 @@ public:
         testSendLeaseUpdates6([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // The updates should be sent to server 2 and this server should return error code.
         EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
@@ -1743,7 +1737,7 @@ public:
         testSendLeaseUpdates6([] {
             ADD_FAILURE() << "unpark function called but expected that "
                 "the packet is dropped";
-        }, false, 1);
+        }, true, 1);
 
         // The updates should be sent to server 2 and this server should return error code.
         EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
@@ -1806,7 +1800,7 @@ public:
         // This flag will be set to true if unpark is called.
         bool unpark_called = false;
         testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
-                              true, 1);
+                              false, 1);
 
         // Expecting that the packet was unparked because lease
         // updates are expected to be successful.

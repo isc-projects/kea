@@ -39,21 +39,17 @@ namespace ha {
 /// the two peers. If the connection is lost it is an indicator that
 /// the partner server may be down and failover actions should be triggered.
 ///
-/// Any command successfully sent over the control channel is an indicator
-/// that the connection is healthy. The most common command sent over the
-/// control channel is a lease update. If the DHCP traffic is heavy, the
-/// number of generated lease updates is sufficient to determine whether
-/// the connection is healthy or not. There is no need to send heartbeat
-/// commands in this case. However, if the DHCP traffic is low there is
-/// a need to send heartbeat commands to the partner at the specified
-/// rate to keep up-to-date information about the state of the connection.
+/// A heartbeat command successfully sent over the control channel is an
+/// indicator that the connection is healthy. A reply to the heartbeat
+/// command includes information about the recipient state, its notion of
+/// time, and other information useful for determining its health and
+/// current activity.
 ///
 /// This class uses an interval timer to run heartbeat commands over the
 /// control channel. The implementation of the heartbeat is external to
 /// this class and is provided via @c CommunicationState::startHeartbeat
 /// method. This implementation is required to run the @c poke method
 /// in case of receiving a successful response to the heartbeat command.
-/// It must also run @c poke when the lease update is successful.
 ///
 /// The @c poke method sets the "last poke time" to current time, thus
 /// indicating that the connection is healthy. The @c getDurationInMillisecs
