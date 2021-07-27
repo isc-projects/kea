@@ -23,6 +23,7 @@
 #include <boost/pointer_cast.hpp>
 
 #include <functional>
+#include <limits>
 #include <sstream>
 #include <utility>
 
@@ -59,7 +60,8 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
       heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
       clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
       my_time_at_skew_(), partner_time_at_skew_(),
-      analyzed_messages_count_(0), mutex_(new mutex()) {
+      analyzed_messages_count_(0), unsent_update_count_(0),
+      partner_unsent_update_count_{0, 0}, mutex_(new mutex()) {
 }
 
 CommunicationState::~CommunicationState() {
@@ -469,6 +471,69 @@ CommunicationState::getReport() const {
     report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));
 
     return (report);
+}
+
+uint64_t
+CommunicationState::getUnsentUpdateCount() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (unsent_update_count_);
+    } else {
+        return (unsent_update_count_);
+    }
+}
+
+void
+CommunicationState::increaseUnsentUpdateCount() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        increaseUnsentUpdateCountInternal();
+    } else {
+        increaseUnsentUpdateCountInternal();
+    }
+}
+
+void
+CommunicationState::increaseUnsentUpdateCountInternal() {
+    // Protect against setting the incremented value to zero.
+    // The zero value is reserved for a server startup.
+    if (unsent_update_count_ < std::numeric_limits<uint64_t>::max()) {
+        ++unsent_update_count_;
+    } else {
+        unsent_update_count_ = 1;
+    }
+}
+
+bool
+CommunicationState::hasPartnerNewUnsentUpdates() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (hasPartnerNewUnsentUpdatesInternal());
+    } else {
+        return (hasPartnerNewUnsentUpdatesInternal());
+    }
+}
+
+bool
+CommunicationState::hasPartnerNewUnsentUpdatesInternal() const {
+    return (partner_unsent_update_count_.second > 0 &&
+            (partner_unsent_update_count_.first != partner_unsent_update_count_.second));
+}
+
+void
+CommunicationState::setPartnerUnsentUpdateCount(uint64_t unsent_update_count) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerUnsentUpdateCountInternal(unsent_update_count);
+    } else {
+        setPartnerUnsentUpdateCountInternal(unsent_update_count);
+    }
+}
+
+void
+CommunicationState::setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_count) {
+    partner_unsent_update_count_.first = partner_unsent_update_count_.second;
+    partner_unsent_update_count_.second = unsent_update_count;
 }
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,

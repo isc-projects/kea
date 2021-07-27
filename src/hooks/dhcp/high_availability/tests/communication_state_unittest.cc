@@ -19,7 +19,9 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
+#include <limits>
 #include <functional>
+#include <limits>
 #include <sstream>
 
 using namespace isc;
@@ -102,6 +104,13 @@ public:
 
     /// @brief Tests unusual values used to create the report.
     void getReportDefaultValuesTest();
+
+    /// @brief Tests that unsent updates count can be incremented and fetched.
+    void getUnsentUpdateCountTest();
+
+    /// @brief Tests that unsent updates count from partner can be set and
+    /// a difference from previous value detected.
+    void hasPartnerNewUnsentUpdatesTest();
 
     /// @brief Returns test heartbeat implementation.
     ///
@@ -636,6 +645,48 @@ CommunicationStateTest::getReportDefaultValuesTest() {
     EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
 }
 
+void
+CommunicationStateTest::getUnsentUpdateCountTest() {
+    // Initially the count should be 0.
+    EXPECT_EQ(0, state_.getUnsentUpdateCount());
+
+    // Increasing the value by 1 several times.
+    EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
+    EXPECT_EQ(1, state_.getUnsentUpdateCount());
+    EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
+    EXPECT_EQ(2, state_.getUnsentUpdateCount());
+    EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
+    EXPECT_EQ(3, state_.getUnsentUpdateCount());
+
+    // Test that the method under test protects against an overflow
+    // resetting the value to 0.
+    state_.unsent_update_count_ = std::numeric_limits<uint64_t>::max();
+    state_.increaseUnsentUpdateCount();
+    EXPECT_EQ(1, state_.getUnsentUpdateCount());
+}
+
+void
+CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
+    // Initially the counts should be 0.
+    EXPECT_FALSE(state_.hasPartnerNewUnsentUpdates());
+
+    // Set a positive value. It should be noticed.
+    EXPECT_NO_THROW(state_.setPartnerUnsentUpdateCount(5));
+    EXPECT_TRUE(state_.hasPartnerNewUnsentUpdates());
+
+    // No change, no new unsent updates.
+    EXPECT_NO_THROW(state_.setPartnerUnsentUpdateCount(5));
+    EXPECT_FALSE(state_.hasPartnerNewUnsentUpdates());
+
+    // Change it again. New updates.
+    EXPECT_NO_THROW(state_.setPartnerUnsentUpdateCount(10));
+    EXPECT_TRUE(state_.hasPartnerNewUnsentUpdates());
+
+    // Set it to 0 to simulate restart. No updates.
+    EXPECT_NO_THROW(state_.setPartnerUnsentUpdateCount(0));
+    EXPECT_FALSE(state_.hasPartnerNewUnsentUpdates());
+}
+
 TEST_F(CommunicationStateTest, partnerStateTest) {
     partnerStateTest();
 }
@@ -760,6 +811,24 @@ TEST_F(CommunicationStateTest, getReportDefaultValuesTest) {
 TEST_F(CommunicationStateTest, getReportDefaultValuesTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     getReportDefaultValuesTest();
+}
+
+TEST_F(CommunicationStateTest, getUnsentUpdateCountTest) {
+    getUnsentUpdateCountTest();
+}
+
+TEST_F(CommunicationStateTest, getUnsentUpdateCountTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    getUnsentUpdateCountTest();
+}
+
+TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTest) {
+    hasPartnerNewUnsentUpdatesTest();
+}
+
+TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    hasPartnerNewUnsentUpdatesTest();
 }
 
 }

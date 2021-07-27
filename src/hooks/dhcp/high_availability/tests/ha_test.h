@@ -59,6 +59,7 @@ public:
     using StateType::last_clock_skew_warn_;
     using StateType::my_time_at_skew_;
     using StateType::partner_time_at_skew_;
+    using StateType::unsent_update_count_;
 };
 
 /// @brief Type of the NakedCommunicationState for DHCPv4.

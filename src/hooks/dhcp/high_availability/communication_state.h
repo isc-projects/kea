@@ -29,6 +29,7 @@
 #include <mutex>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace isc {
 namespace ha {
@@ -459,6 +460,66 @@ private:
     /// @return The time elapsed.
     boost::posix_time::time_duration updatePokeTimeInternal();
 
+public:
+
+    /// @brief Returns a total number of unsent lease updates.
+    uint64_t getUnsentUpdateCount() const;
+
+    /// @brief Increases a total number of unsent lease updates by 1.
+    ///
+    /// This method should be called when the server has allocated a
+    /// lease but decided to not send the lease update to its partner.
+    /// If the server is in the partner-down state it allocates new
+    /// leases but doesn't send lease updates because the partner is
+    /// unavailable.
+    ///
+    /// This method protects against setting the value to 0 in an
+    /// unlikely event of the overflow. The zero is reserved for the
+    /// server startup case.
+    void increaseUnsentUpdateCount();
+
+private:
+
+    /// @brief Thread unsafe implementation of the @c increaseUnsentUpdateCount.
+    void increaseUnsentUpdateCountInternal();
+
+public:
+
+    /// @brief Checks if the partner allocated new leases for which it hasn't sent
+    /// any lease updates.
+    ///
+    /// It compares a previous and current value of the @c parent_unsent_update_count_.
+    /// If the current value is 0 and the previous value is non-zero it indicates
+    /// that the partner was restarted.
+    ///
+    /// @return true if the partner has allocated new leases for which it didn't
+    /// send lease updates, false otherwise.
+    bool hasPartnerNewUnsentUpdates() const;
+
+private:
+
+    /// @brief Thread unsafe implementation of the @c hasPartnerNewUnsentUpdates.
+    ///
+    /// @return true if the partner has allocated new leases for which it didn't
+    /// send lease updates, false otherwise.
+    bool hasPartnerNewUnsentUpdatesInternal() const;
+
+public:
+
+    /// @brief Saves new total number of unsent lease updates from the partner.
+    ///
+    /// @param unsent_updates_count new total number of unsent lease updates from
+    /// the partner.
+    void setPartnerUnsentUpdateCount(uint64_t unsent_update_count);
+
+private:
+
+    /// @brief Thread unsafe implementation of the @c setPartnerUnsentUpdateCount.
+    ///
+    /// @param unsent_updates_count new total number of unsent lease updates from
+    /// the partner.
+    void setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_count);
+
 protected:
     /// @brief Pointer to the common IO service instance.
     asiolink::IOServicePtr io_service_;
@@ -501,6 +562,24 @@ protected:
 
     /// @brief Total number of analyzed messages to be responded by partner.
     size_t analyzed_messages_count_;
+
+    /// @brief Total number of unsent lease updates.
+    ///
+    /// The lease updates are not sent when the server is in the partner
+    /// down state. The server counts the number of lease updates which
+    /// haven't been sent to the partner because the partner was unavailable.
+    /// The partner receives this value in a response to a heartbeat message
+    /// and can use it to determine if it should synchronize its lease
+    /// database.
+    uint64_t unsent_update_count_;
+
+    /// @brief Previous and current total number of unsent lease updates
+    /// from the partner.
+    ///
+    /// This value is returned in response to a heartbeat command and saved
+    /// using the @c setPartnerUnsentUpdateCount. The previous value is
+    /// preserved so the values can be compared in the state handlers.
+    std::pair<uint64_t, uint64_t> partner_unsent_update_count_;
 
     /// @brief The mutex used to protect internal state.
     const boost::scoped_ptr<std::mutex> mutex_;
