@@ -1,11 +1,11 @@
 AC_DEFUN([AX_SYSREPO], [
 
   AC_ARG_WITH([libyang],
-    AS_HELP_STRING([--with-libyang=PATH], [optional path to the libyang installation directory]),
+    [AS_HELP_STRING([--with-libyang[[=PATH]]], [optional path to the libyang installation directory])],
     [with_libyang="${withval}"])
 
   AC_ARG_WITH([sysrepo],
-    AS_HELP_STRING([--with-sysrepo=PATH], [optional path to the sysrepo installation directory]),
+    [AS_HELP_STRING([--with-sysrepo[[=PATH]]], [optional path to the sysrepo installation directory])],
     [with_sysrepo="${withval}"])
 
   # If --with-libyang was omitted, assume it was passed and give it the value

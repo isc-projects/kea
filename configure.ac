@@ -892,9 +892,9 @@ AX_SYSREPO
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
-  AS_HELP_STRING([--with-log4cplus=PATH],
-    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
-  [log4cplus_path="$withval"])
+            [AS_HELP_STRING([--with-log4cplus[[=PATH]]],
+                            [optional path to the log4cplus installation directory])],
+            [log4cplus_path="$withval"])
 if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then

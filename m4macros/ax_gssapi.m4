@@ -3,7 +3,7 @@ AC_DEFUN([AX_GSS_API], [
 gssapi_path=""
 
 AC_ARG_WITH([gssapi],
-            [AS_HELP_STRING([--with-gssapi[=PATH]],
+            [AS_HELP_STRING([--with-gssapi[[=PATH]]],
                             [optionally specify the path to a krb5-config file])],
         [gssapi_path="$withval"; enable_gssapi="yes"])
 
