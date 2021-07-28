@@ -28,6 +28,7 @@ AC_DEFUN([AX_SYSREPO], [
   else
     libyang_found=false
     AC_MSG_RESULT([no])
+    AX_DISPLAY_LIBRARY_WARNINGS()
   fi
 
   AC_MSG_CHECKING([libyang-cpp])
@@ -59,6 +60,7 @@ AC_DEFUN([AX_SYSREPO], [
   else
     libyang_cpp_found=false
     AC_MSG_RESULT([no])
+    AX_DISPLAY_LIBRARY_WARNINGS()
   fi
 
   AC_MSG_CHECKING([sysrepo])
@@ -98,6 +100,7 @@ AC_DEFUN([AX_SYSREPO], [
          sr_disconnect(connection);])],
       [AC_MSG_RESULT([yes])],
       [AC_MSG_RESULT([no])
+       AX_DISPLAY_LIBRARY_WARNINGS()
        AC_MSG_ERROR([Cannot integrate with Sysrepo's C API. Make sure that the sysrepo.h header and the libsysrepo.so library can be found.])]
     )
 
@@ -106,10 +109,10 @@ AC_DEFUN([AX_SYSREPO], [
     LIBS="${LIBS_SAVED}"
   else
     AC_MSG_RESULT([no])
+    AX_DISPLAY_LIBRARY_WARNINGS()
   fi
 
   AC_MSG_CHECKING([sysrepo-cpp])
-
   AX_FIND_LIBRARY([sysrepo-cpp], ["${with_sysrepo}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [SR_REPO_PATH,SRPD_PLUGINS_PATH], ["${LIBYANGCPP_PREFIX}/lib/pkgconfig"])
   if "${LIBRARY_FOUND}"; then
     SYSREPOCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
@@ -160,6 +163,7 @@ AC_DEFUN([AX_SYSREPO], [
           [sysrepo::Connection();]
         )],
         [AC_MSG_RESULT([v1.x])
+         AX_DISPLAY_LIBRARY_WARNINGS()
          AC_DEFINE([HAVE_SYSREPO_V1], [true], [Using sysrepo 1.x])],
         [AC_LINK_IFELSE(
           [AC_LANG_PROGRAM(
@@ -168,20 +172,24 @@ AC_DEFUN([AX_SYSREPO], [
              value->empty();]
           )],
           [AC_MSG_RESULT([>= v0.7.7])
+           AX_DISPLAY_LIBRARY_WARNINGS()
            AC_MSG_ERROR([Using legacy sysrepo >= 0.7.7 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
           [AC_LINK_IFELSE(
             [AC_LANG_PROGRAM(
               [#include <sysrepo-cpp/Session.h>],
               [Connection("conn-name");])],
             [AC_MSG_RESULT([<= v0.7.6])
+             AX_DISPLAY_LIBRARY_WARNINGS()
              AC_MSG_ERROR([Using sysrepo <= 0.7.6 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
             [AC_MSG_RESULT([no])
+             AX_DISPLAY_LIBRARY_WARNINGS()
              AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.)])]
           )]
         )]
       )],
       [AC_MSG_RESULT([no])
-      AC_MSG_ERROR([Count not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
+       AX_DISPLAY_LIBRARY_WARNINGS()
+       AC_MSG_ERROR([Count not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
     )
 
     # Restore flags.
@@ -189,6 +197,7 @@ AC_DEFUN([AX_SYSREPO], [
     LIBS="${LIBS_SAVED}"
   else
     AC_MSG_RESULT([no])
+    AX_DISPLAY_LIBRARY_WARNINGS()
   fi
 
   if "${libyang_found}" && "${libyang_cpp_found}" && "${sysrepo_found}" && "${sysrepo_cpp_found}"; then

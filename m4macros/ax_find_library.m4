@@ -13,6 +13,11 @@
 #   * LIBRARY_INCLUDEDIR
 #   * LIBRARY_LIBS
 #   * LIBRARY_PREFIX
+#
+# This function assumes that you have called AC_MSG_CHECKING() before and that
+# you are responsible for calling AC_MSG_RESULT() if LIBRARY_FOUND is false or
+# if any other checks that you do outside of this function fail. AC_MSG_RESULT()
+# will be called in this function in case of fatal errors.
 AC_DEFUN([AX_FIND_LIBRARY], [
   library=$1
   with_library=$2
@@ -22,6 +27,8 @@ AC_DEFUN([AX_FIND_LIBRARY], [
   pkg_config_paths=$6
 
   LIBRARY_FOUND=false
+  AX_RESET_LIBRARY_WARNINGS()
+
   if test -z "${with_library}"; then
     # library not requested, nothing to do
     :
@@ -43,24 +50,21 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 
       if test -f "${library_pc}"; then
         if test -n "${PKG_CONFIG}"; then
-          # The check was inadequate. We need to run pkg-config with the actual .pc file and use it. Otherwise
-          # pkg-config always returns 1 (invalid usage), regardless if the file exists or not. Let's use a flag
-          # that should work everywhere (--modversion asks for package version). We don't care about the version
-          # at this stage, just want to make sure the .pc file is not garbage.
-          ignore_me=$("${PKG_CONFIG}" --modversion "${library_pc}")
-          exit_code=$?
-          if test "${exit_code}" -eq 0; then
+          # Check that pkg-config is able to interpret the file.
+          if "${PKG_CONFIG}" "${library_pc}" > /dev/null 2>&1; then
             AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
           else
-            AC_MSG_WARN(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
+            AX_ADD_TO_LIBRARY_WARNINGS(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
           fi
         else
-          AC_MSG_WARN([pkg-config file found at ${library_pc}, but pkg-config is not available])
+          AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
         fi
       else
-        AC_MSG_WARN([pkg-config file not found at ${library_pc}])
+        AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file not found at ${library_pc}])
       fi
     else
+      AC_MSG_RESULT(["no"])
+      AX_DISPLAY_LIBRARY_WARNINGS()
       AC_MSG_ERROR(["${with_library}" needs to point to a .pc file or to the installation directory, but points to none of those])
     fi
 
@@ -90,7 +94,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         libraries_found=true
         for i in ${list_of_headers}; do
           if test ! -f "${p}/include/${i}"; then
-            AC_MSG_WARN(["${library}" headers not found in "${p}"])
+            AX_ADD_TO_LIBRARY_WARNINGS([${library} headers not found in "${p}"])
             headers_found=false
             break
           fi
@@ -103,7 +107,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
         for i in ${list_of_libraries}; do
           if test ! -f "${p}/lib/${i}"; then
-            AC_MSG_WARN(["${library}" libraries not found in "${p}"])
+            AX_ADD_TO_LIBRARY_WARNINGS([${library} libraries not found in "${p}"])
             libraries_found=false
             break
           fi
@@ -125,6 +129,18 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     LIBRARY_CPPFLAGS="$(printf '%s' "${LIBRARY_CPPFLAGS}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_INCLUDEDIR="$(printf '%s' "${LIBRARY_INCLUDEDIR}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
+  fi
+])
+
+# You usually want to call this after you have called AC_MSG_RESULT so that the
+# warnings don't interefere between the text displayed by AC_MSG_CHECKING
+# "checking library..." and the text displayed by AC_MSG_RESULT "yes" or "no"
+# that sould be on the same line.
+AC_DEFUN([AX_DISPLAY_LIBRARY_WARNINGS], [
+  if test -n "${LIBRARY_WARNINGS}"; then
+    printf '%s\n' "${LIBRARY_WARNINGS}" | while read -r line; do
+      AC_MSG_WARN([${line}])
+    done
   fi
 ])
 
@@ -150,9 +166,7 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
   # Check that we have pkg-config installed on the system.
   if test -n "${PKG_CONFIG}"; then
     # Check that pkg-config is able to interpret the file.
-    ignore_me=$("${PKG_CONFIG}" --modversion "${library_pc}")
-    exit_code=$?
-    if test "${exit_code}" -eq 0; then
+    if "${PKG_CONFIG}" "${library_pc}" > /dev/null 2>&1; then
       # Save the previous PKG_CONFIG_PATH.
       save_pkg_config_path="${PKG_CONFIG_PATH}"
 
@@ -180,4 +194,16 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
       LIBRARY_FOUND=true
     fi
   fi
+])
+
+AC_DEFUN([AX_ADD_TO_LIBRARY_WARNINGS], [
+  if test -n "${LIBRARY_WARNINGS}"; then
+    LIBRARY_WARNINGS="${LIBRARY_WARNINGS}
+"
+  fi
+  LIBRARY_WARNINGS="${LIBRARY_WARNINGS}$1"
+])
+
+AC_DEFUN([AX_RESET_LIBRARY_WARNINGS], [
+  LIBRARY_WARNINGS=
 ])
