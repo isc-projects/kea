@@ -19,7 +19,6 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
-#include <limits>
 #include <functional>
 #include <limits>
 #include <sstream>
