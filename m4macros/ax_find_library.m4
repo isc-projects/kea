@@ -165,14 +165,15 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
   LIBRARY_FOUND=false
   # Check that we have pkg-config installed on the system.
   if test -n "${PKG_CONFIG}"; then
+
+    # Save the previous PKG_CONFIG_PATH.
+    save_pkg_config_path="${PKG_CONFIG_PATH}"
+
+    # Append some usual paths and the requested paths.
+    export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:${pkg_config_paths}"
+
     # Check that pkg-config is able to interpret the file.
-    if "${PKG_CONFIG}" "${library_pc}" > /dev/null 2>&1; then
-      # Save the previous PKG_CONFIG_PATH.
-      save_pkg_config_path="${PKG_CONFIG_PATH}"
-
-      # Append the requested paths.
-      export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${pkg_config_paths}"
-
+    if "${PKG_CONFIG}" "${library_pc_or_name}" > /dev/null 2>&1; then
       # Get the flags.
       LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${library_pc_or_name}")
       LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${library_pc_or_name}")
@@ -187,12 +188,12 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
         export "${i}"="$("${PKG_CONFIG}" --variable="${i}" "${library_pc_or_name}")"
       done
 
-      # Restore the previous PKG_CONFIG_PATH.
-      PKG_CONFIG_PATH="${save_pkg_config_path}"
-
       # Mark that we have the required flags for our library.
       LIBRARY_FOUND=true
     fi
+
+    # Restore the previous PKG_CONFIG_PATH.
+    PKG_CONFIG_PATH="${save_pkg_config_path}"
   fi
 ])
 
