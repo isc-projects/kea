@@ -1,3 +1,9 @@
+1947.	[bug]		marcin
+	Corrected a bug in the High Availablity hooks library that could
+	cause a standby server not to synchronize its lease database
+	after a temporary communication interruption with its partner.
+	(Gitlab #1959)
+
 1946.	[bug]		marcin
 	Fixes a bug in MySQL configuration backend schema. DHCP options
 	associated with deleted client classes are now automatically
