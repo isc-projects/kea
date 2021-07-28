@@ -93,8 +93,7 @@ your system, but Kea is a portable software. Besides Linux, it is compiled and u
 uncommon systems like OpenBSD. Will your code compile and work there? What about endianness? It is
 likely that you used a regular x86 architecture machine to write your patch, but the software is
 expected to run on many other architectures, such as arm64. You may take a look at [system specific build
-notes](https://kb.isc.org/docs/installing-kea). For a complete list of systems we build on, you may
-take a look at the [Jenkins build farm](https://jenkins.isc.org/).
+notes](https://kb.isc.org/docs/installing-kea).
 
 ### Coding guidelines
 

@@ -226,7 +226,7 @@ the specific server directly and bypasses the Control Agent.
 It is also easy to open a UNIX socket programmatically. An example of a
 simple client written in C is available in the Kea Developer's Guide, in
 the Control Channel Overview chapter, in the
-`Using Control Channel <https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html#ctrlSocketClient>`__
+`Using Control Channel <https://reports.kea.isc.org/dev_guide/d2/d96/ctrlSocket.html#ctrlSocketClient>`__
 section.
 
 To use Kea's RESTful API with ``curl``, use the following:

@@ -3992,7 +3992,7 @@ recommendations and are very dependent on the particular hardware that was used
 for testing. We strongly advise that administrators run their own performance tests.
 
 A full report of performance results for the latest stable Kea can be found
-`here <https://jenkins.isc.org/job/kea-dev/job/performance/KeaPerformanceReport/>`_.
+`here <https://reports.kea.isc.org/>`_.
 This includes hardware and test scenario descriptions, as well as
 current results.
 
@@ -6589,7 +6589,7 @@ values are 107 on Linux and 103 on FreeBSD.
 Communication over the control channel is conducted using JSON
 structures. See the
 `Control Channel section in the Kea Developer's Guide
-<https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html>`__
+<https://reports.kea.isc.org/dev_guide/d2/d96/ctrlSocket.html>`__
 for more details.
 
 The DHCPv4 server supports the following operational commands:

@@ -45,7 +45,7 @@ or reload: the process must be stopped and relaunched.
 The next section describes how to configure hooks libraries. Users who are
 interested in writing their own hooks library can find information
 in the `Hooks Developer's Guide section of the Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/df/d46/hooksdgDevelopersGuide.html>`__.
+Guide <https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>`__.
 
 Note that some libraries are available under different licenses.
 
@@ -238,7 +238,7 @@ floor (integer parameter), debug (boolean parameter), lists
 (list of strings), and maps (containing strings). Nested parameters can
 be used if the library supports it. This topic is explained in detail in
 the `Hooks Developer's Guide section of the Kea Developer's Guide
-<https://jenkins.isc.org/job/Kea_doc/doxygen/df/d46/hooksdgDevelopersGuide.html>`__.
+<https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>`__.
 
 Notes:
 
@@ -551,10 +551,10 @@ A sample user registry file is shown below:
 As with any other hooks libraries provided by ISC, internals of the
 user_chk code are well-documented. Users may refer to the `user_chk
 library section of the Kea Developer's Guide
-<https://jenkins.isc.org/job/Kea_doc/doxygen/d8/db2/libdhcp_user_chk.html>`__
+<https://reports.kea.isc.org/dev_guide/d8/db2/libdhcp_user_chk.html>`__
 for information on how the code works internally. That, together with the
 `Hooks Framework section of the Kea Developer's Guide
-<https://jenkins.isc.org/job/Kea_doc/doxygen/index.html#hooksFramework>`__ should give users
+<https://reports.kea.isc.org/dev_guide/index.html#hooksFramework>`__ should give users
 some pointers on how to extend this library and perhaps even write one
 from scratch.
 

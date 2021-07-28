@@ -282,7 +282,7 @@ values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON structures.
 See the `Control Channel section in the Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html>`__
+Guide <https://reports.kea.isc.org/dev_guide/d2/d96/ctrlSocket.html>`__
 for more details.
 
 The D2 server supports the following operational commands:

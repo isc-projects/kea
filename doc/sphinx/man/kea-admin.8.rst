@@ -113,7 +113,7 @@ distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
 Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://jenkins.isc.org/job/Kea_doc/doxygen/.
+version is available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 

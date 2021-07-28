@@ -16,7 +16,7 @@ of the Flexible Option library. This file provides information needed
 to understand and perhaps extend this library.
 
 This documentation is stand-alone: you should have read and understood
-the <a href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
+the <a href="https://reports.kea.isc.org/dev_guide/">Kea
 Developer's Guide</a> and in particular its section about hooks.
 
 @section libdhcp_flex_optionUser Now To Use libdhcp_flex_option

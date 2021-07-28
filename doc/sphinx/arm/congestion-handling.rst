@@ -71,7 +71,7 @@ implementation via a hook library. This should make it straightforward
 for interested parties to experiment with their own solutions.
 (Developers can refer to isc::dhcp::PacketQueue and
 isc::dhcp::PacketQueueMgr, described in the
-`Kea Developer's Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/index.html>`__.)
+`Kea Developer's Guide <https://reports.kea.isc.org/dev_guide/index.html>`__.)
 
 Packet queue behavior is configured in both kea-dhcp4 and kea-dhcp6
 servers through an optional, top-level, configuration element,

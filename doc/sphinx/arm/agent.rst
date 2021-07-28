@@ -24,7 +24,7 @@ or custom behavior of existing commands. Such hook libraries must
 implement callouts for the "control_command_receive" hook point. Details
 about creating new hook libraries and supported hook points can be found
 in the `Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
+Guide <https://reports.kea.isc.org/dev_guide/>`__.
 
 The CA processes received commands according to the following algorithm:
 

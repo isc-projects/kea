@@ -179,7 +179,7 @@ Developers planning to contribute to Kea should check our
 `Contributor's
 Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`__.
 The `Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__ contains more
+Guide <https://reports.kea.isc.org/dev_guide/>`__ contains more
 information about the process, and describes the requirements for
 contributed code to be accepted by ISC.
 
@@ -413,7 +413,7 @@ It is outside of the scope of common administrator operations and requires
 some developer skills, but the Developer Guide explains how to do that
 using an x86_64 Linux system to build Kea for a Raspberry Pi box running
 Raspbian: `Kea Cross-Compiling Example
-<https://jenkins.isc.org/job/Kea_doc/doxygen/de/d9a/crossCompile.html>`__.
+<https://reports.kea.isc.org/dev_guide/de/d9a/crossCompile.html>`__.
 
 .. _dhcp-install-configure:
 
@@ -438,7 +438,7 @@ in a future version.)
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
    found in the `Kea Developer's
-   Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
+   Guide <https://reports.kea.isc.org/dev_guide/>`__.
 
 Building with MySQL Support
 ---------------------------
