@@ -483,6 +483,11 @@ private:
             arguments->set("date-time", Element::create(HttpDateTime().rfc1123Format()));
         }
 
+        // Insert unsent-update-count if not present.
+        if (arguments && !arguments->contains("unsent-update-count")) {
+            arguments->set("unsent-update-count", Element::create(int64_t(0)));
+        }
+
         response_body->add(boost::const_pointer_cast<Element>
                            (createAnswer(control_result, "response returned",
                                          arguments)));
@@ -4848,7 +4853,8 @@ public:
               const TestHttpResponseCreatorFactoryPtr& factory,
               const std::string& initial_state = "waiting")
         : listener_(listener), factory_(factory), running_(false),
-          static_date_time_(), static_scopes_() {
+          static_date_time_(), static_scopes_(),
+          static_unsent_update_count_(0) {
         transition(initial_state);
     }
 
@@ -4930,9 +4936,19 @@ public:
             }
             response_arguments->set("scopes", json_scopes);
         }
+        if (static_unsent_update_count_ >= 0) {
+            response_arguments->set("unsent-update-count", Element::create(static_unsent_update_count_));
+        }
         factory_->getResponseCreator()->setArguments(response_arguments);
     }
 
+    /// @brief Sets static value of unsent update count.
+    ///
+    /// @param unsent_update_count new value of the unsent update count.
+    /// Specify a negative value to exclude the count from the response.
+    void setUnsentUpdateCount(int64_t unsent_update_count) {
+        static_unsent_update_count_ = unsent_update_count;
+    }
 
 private:
 
@@ -4952,6 +4968,10 @@ private:
 
     /// @brief Static scopes to be reported.
     std::set<std::string> static_scopes_;
+
+    /// @brief Static count of lease updates not sent by the partner
+    /// because the other server was unavailable.
+    int64_t static_unsent_update_count_;
 };
 
 /// @brief Shared pointer to a partner.
@@ -5371,6 +5391,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     // Partner shows up and (eventually) transitions to READY state.
     HAPartner partner(listener2_, factory2_);
     partner.setScopes({ "server1", "server2" });
+    partner.setUnsentUpdateCount(10);
     partner.transition("ready");
     partner.startup();
 
@@ -5549,7 +5570,9 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
     EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
 
     // Partner shows up and (eventually) transitions to READY state.
-    partner_.reset(new HAPartner(listener_, factory_, "ready"));
+    partner_.reset(new HAPartner(listener_, factory_));
+    partner_->setUnsentUpdateCount(10);
+    partner_->transition("ready");
     partner_->startup();
 
     // PARTNER DOWN state: receive a response from the partner indicating that
@@ -6005,7 +6028,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_LOAD_BALANCING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6371,7 +6394,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_LOAD_BALANCING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -6643,7 +6666,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
         EXPECT_TRUE(service_->unpause());
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_LOAD_BALANCING_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
     }
 
@@ -7005,7 +7028,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_HOT_STANDBY_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -7292,7 +7315,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
-                       FinalState(HA_WAITING_ST));
+                       FinalState(HA_HOT_STANDBY_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));

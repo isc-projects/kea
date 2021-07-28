@@ -505,8 +505,19 @@ HAService::partnerDownStateHandler() {
     case HA_COMMUNICATION_RECOVERY_ST:
     case HA_PARTNER_DOWN_ST:
     case HA_PARTNER_IN_MAINTENANCE_ST:
-    case HA_READY_ST:
         verboseTransition(HA_WAITING_ST);
+        break;
+
+    case HA_READY_ST:
+        // If partner allocated new leases for which it didn't send lease updates
+        // to us we should synchronize our database.
+        if (communication_state_->hasPartnerNewUnsentUpdates()) {
+            verboseTransition(HA_WAITING_ST);
+        } else {
+            // We did not miss any lease updates. There is no need to synchronize
+            // the database.
+            verboseTransition(getNormalState());
+        }
         break;
 
     case HA_TERMINATED_ST:
@@ -1681,6 +1692,15 @@ HAService::asyncSendHeartbeat() {
                         // versions. We may make it mandatory one day, but during
                         // upgrades of existing HA setup it would be a real issue
                         // if we failed here.
+                    }
+
+                    auto unsent_update_count = args->get("unsent-update-count");
+                    if (unsent_update_count) {
+                        if (unsent_update_count->getType() != Element::integer) {
+                            isc_throw(CtrlChannelError, "unsent-update-count returned in"
+                                      " the ha-heartbeat response is not an integer");
+                        }
+                        communication_state_->setPartnerUnsentUpdateCount(static_cast<uint64_t>(unsent_update_count->intValue()));
                     }
 
                 } catch (const std::exception& ex) {
