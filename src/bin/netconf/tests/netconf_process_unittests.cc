@@ -5,13 +5,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/netconf_process.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <gtest/gtest.h>
+
 #include <functional>
 
 using namespace boost::posix_time;

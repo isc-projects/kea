@@ -11,7 +11,10 @@
 #include <netconf/netconf_process.h>
 #include <cc/data.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <sstream>
 
 using namespace isc::asiolink::test;

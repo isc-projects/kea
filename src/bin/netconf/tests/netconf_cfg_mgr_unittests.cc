@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
 #include <exceptions/exceptions.h>
@@ -12,9 +13,12 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <yang/yang_models.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <netconf/tests/test_libraries.h>
+
 #include <boost/scoped_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace std;

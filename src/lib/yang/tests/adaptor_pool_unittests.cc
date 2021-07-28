@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <testutils/gtest_utils.h>
 #include <yang/adaptor_pool.h>
 #include <yang/yang_models.h>
 

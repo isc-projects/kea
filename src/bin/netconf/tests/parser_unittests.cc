@@ -9,9 +9,12 @@
 #include <cc/data.h>
 #include <netconf/parser_context.h>
 #include <cc/dhcp_config_error.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
+
 #include <gtest/gtest.h>
+
 #include <fstream>
 #include <set>
 

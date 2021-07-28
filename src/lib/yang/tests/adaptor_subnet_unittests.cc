@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <testutils/gtest_utils.h>
 #include <yang/adaptor_subnet.h>
 
 #include <gtest/gtest.h>

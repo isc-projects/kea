@@ -6,11 +6,12 @@
 
 #include <config.h>
 
-#include <yang/adaptor_option.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
+#include <testutils/gtest_utils.h>
+#include <yang/adaptor_option.h>
 
 #include <gtest/gtest.h>
 
