@@ -107,8 +107,10 @@ the system:
    This is specified using the --with-freeradius configuration switch.
 
 -  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
-   datastore. This is specified using the --with-sysrepo option when running
-   "configure". Earlier versions are no longer supported.
+   datastore. Earlier versions are no longer supported. When compiling from
+   sources, the configure switches that can be used are --with-libyang and
+   --with-sysrepo without any parameters. If these dependencies were installed
+   in custom paths, point the switches to them.
 
 -  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.

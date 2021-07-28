@@ -17,23 +17,44 @@ Kea provides optional support for a YANG/NETCONF interface with the
 Installing NETCONF
 ==================
 
-To get its NETCONF capabilities, Kea uses Sysrepo.
+To get its NETCONF capabilities, Kea uses libyang v1.0.240 and sysrepo v1.4.140.
+Use packages if they are provided on your system. There is always the
+alternative method of building from sources which should work on all popular
+OSs:
 
-The following sections provide installation instructions for Ubuntu and CentOS.
+.. _libyang-install-sources:
 
-.. _netconf-ubuntu-install:
+Installing libyang From Sources
+-------------------------------
 
-Installing NETCONF on Ubuntu
-----------------------------
+.. code-block:: console
 
-For detailed installation instructions, see the `Ubuntu installation notes page <https://gitlab.isc.org/isc-projects/kea/wikis/docs/ubuntu-installation-notes>`__.
+    $ git clone https://github.com/CESNET/libyang.git
+    $ cd libyang
+    $ git checkout v1.0.240
+    $ mkdir build
+    $ cd build
+    $ cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF
+    $ make
+    $ make install  # without sudo if you're doing development and want to run unit tests
 
-.. _netconf-centos-install:
+.. _sysrepo-install-sources:
 
-Installing NETCONF on CentOS
-----------------------------
+Installing sysrepo From Sources
+-------------------------------
 
-For detailed installation instructions, see the `CentOS installation notes page <https://gitlab.isc.org/isc-projects/kea/wikis/docs/centos-installation-notes>`__.
+.. code-block:: console
+
+    $ git clone https://github.com/sysrepo/sysrepo.git
+    $ cd sysrepo
+    $ git checkout v1.4.140
+    $ mkdir build
+    $ cd build
+    $ cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF
+    $ make
+    $ make install  # without sudo if you're doing development and want to run unit tests
+
+.. _sysrepo-overview:
 
 Quick Sysrepo Overview
 ======================
