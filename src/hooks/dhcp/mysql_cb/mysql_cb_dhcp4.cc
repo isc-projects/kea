@@ -180,7 +180,7 @@ public:
                                           parameters);
 
     /// @brief Destructor.
-    ~MySqlConfigBackendDHCPv4Impl();
+    ~MySqlConfigBackendDHCPv4Impl() = default;
 
     /// @brief Sends query to retrieve global parameter.
     ///
@@ -3645,7 +3645,7 @@ TaggedStatementArray tagged_statements = { {
 }
 };
 
-}; // end anonymous namespace
+} // end anonymous namespace
 
 MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
     : MySqlConfigBackendImpl(parameters, &MySqlConfigBackendDHCPv4Impl::dbReconnect) {
@@ -3665,9 +3665,6 @@ MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnect
     conn_.makeReconnectCtl(timer_name_);
 }
 
-MySqlConfigBackendDHCPv4Impl::~MySqlConfigBackendDHCPv4Impl() {
-}
-
 MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new MySqlConfigBackendDHCPv4Impl(parameters)), base_impl_(impl_) {
 }
@@ -3675,6 +3672,11 @@ MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::Par
 bool
 MySqlConfigBackendDHCPv4::isUnusable() {
     return (impl_->conn_.isUnusable());
+}
+
+DatabaseConnection::ParameterMap
+MySqlConfigBackendDHCPv4::getParameters() const {
+    return impl_->getParameters();
 }
 
 Subnet4Ptr

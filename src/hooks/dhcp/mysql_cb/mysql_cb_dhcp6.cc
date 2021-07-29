@@ -188,7 +188,7 @@ public:
                                           parameters);
 
     /// @brief Destructor.
-    ~MySqlConfigBackendDHCPv6Impl();
+    ~MySqlConfigBackendDHCPv6Impl() = default;
 
     /// @brief Sends query to retrieve global parameter.
     ///
@@ -4110,7 +4110,7 @@ TaggedStatementArray tagged_statements = { {
 }
 };
 
-}; // end anonymous namespace
+} // end anonymous namespace
 
 MySqlConfigBackendDHCPv6Impl::MySqlConfigBackendDHCPv6Impl(const DatabaseConnection::ParameterMap& parameters)
     : MySqlConfigBackendImpl(parameters, &MySqlConfigBackendDHCPv6Impl::dbReconnect) {
@@ -4130,9 +4130,6 @@ MySqlConfigBackendDHCPv6Impl::MySqlConfigBackendDHCPv6Impl(const DatabaseConnect
     conn_.makeReconnectCtl(timer_name_);
 }
 
-MySqlConfigBackendDHCPv6Impl::~MySqlConfigBackendDHCPv6Impl() {
-}
-
 MySqlConfigBackendDHCPv6::MySqlConfigBackendDHCPv6(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new MySqlConfigBackendDHCPv6Impl(parameters)), base_impl_(impl_) {
 }
@@ -4140,6 +4137,11 @@ MySqlConfigBackendDHCPv6::MySqlConfigBackendDHCPv6(const DatabaseConnection::Par
 bool
 MySqlConfigBackendDHCPv6::isUnusable() {
     return (impl_->conn_.isUnusable());
+}
+
+DatabaseConnection::ParameterMap
+MySqlConfigBackendDHCPv6::getParameters() const {
+    return impl_->getParameters();
 }
 
 Subnet6Ptr

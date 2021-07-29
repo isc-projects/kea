@@ -636,6 +636,13 @@ public:
     /// otherwise
     virtual bool isUnusable();
 
+    /// @brief Return backend parameters
+    ///
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    isc::db::DatabaseConnection::ParameterMap getParameters() const;
+
 protected:
 
     /// @brief Pointer to the implementation of the @c MySqlConfigBackendDHCPv6
