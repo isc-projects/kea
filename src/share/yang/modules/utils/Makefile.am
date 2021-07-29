@@ -1,9 +1,24 @@
 SUBDIRS = .
 
+yangdir = ${datarootdir}/${PACKAGE_NAME}/yang/modules/utils
+
+yang_list  =
+yang_list += check-hashes.sh
+yang_list += check-revisions.sh
+yang_list += reinstall.sh
+
+EXTRA_DIST = ${yang_list}
+
 if HAVE_SYSREPO
 
+# Add to the tarball.
+yang_DATA = ${yang_list}
+yang_SCRIPTS = ${yang_list}
+
 # Shell tests
-SHTESTS = check-hashes.sh
+SHTESTS  =
+SHTESTS += check-hashes.sh
+SHTESTS += check-revisions.sh
 
 # Run shell tests on "make check".
 check_SCRIPTS = $(SHTESTS)
@@ -11,8 +26,5 @@ TESTS = $(SHTESTS)
 
 # Don't install tests.
 noinst_SCRIPTS = $(SHTESTS)
-
-# Add to the tarball:
-EXTRA_DIST = $(SHTESTS)
 
 endif

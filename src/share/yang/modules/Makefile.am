@@ -2,7 +2,9 @@ SUBDIRS = utils
 
 yangmodulesdir = ${datarootdir}/${PACKAGE_NAME}/yang/modules
 
-yangmodules_list  = ietf-dhcpv6-client@2018-09-04.yang
+yangmodules_list  =
+yangmodules_list += hashes
+yangmodules_list += ietf-dhcpv6-client@2018-09-04.yang
 yangmodules_list += ietf-interfaces@2018-02-20.yang
 yangmodules_list += ietf-dhcpv6-options@2018-09-04.yang
 yangmodules_list += ietf-dhcpv6-relay@2018-09-04.yang
