@@ -1,11 +1,12 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <asiolink/asio_wrapper.h>
+
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -14,8 +15,15 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <exception>
 #include <functional>
+#include <map>
+#include <mutex>
+#include <ostream>
+#include <string>
 #include <utility>
+
+#include <stddef.h>
 
 using namespace isc;
 using namespace isc::asiolink;
