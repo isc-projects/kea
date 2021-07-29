@@ -221,6 +221,13 @@ CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& s
     return (command);
 }
 
+ConstElementPtr
+CommandCreator::createSyncCompleteNotify(const HAServerType& server_type) {
+    auto command = config::createCommand("ha-sync-complete-notify");
+    insertService(command, server_type);
+    return (command);
+}
+
 void
 CommandCreator::insertLeaseExpireTime(ElementPtr& lease) {
     if ((lease->getType() != Element::map) ||

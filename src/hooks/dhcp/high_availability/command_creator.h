@@ -165,6 +165,13 @@ public:
     static data::ConstElementPtr
     createMaintenanceNotify(const bool cancel, const HAServerType& server_type);
 
+    /// @brief Creates ha-sync-complete-notify command.
+    ///
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createSyncCompleteNotify(const HAServerType& server_type);
+
 private:
 
     /// @brief Replaces "cltt" with "expire" value within the lease.

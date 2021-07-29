@@ -500,4 +500,19 @@ TEST(CommandCreatorTest, createMaintenanceNotify6) {
     EXPECT_FALSE(cancel->boolValue());
 }
 
+// This test verifies that the ha-sync-complete-notify command sent to a
+// DHCPv4 server is correct.
+TEST(CommandCreatorTest, createSyncCompleteNotify4) {
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(HAServerType::DHCPv4);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp4"));
+}
+
+// This test verifies that the ha-sync-complete-notify command sent to a
+// DHCPv4 server is correct.
+TEST(CommandCreatorTest, createSyncCompleteNotify6) {
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(HAServerType::DHCPv6);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp6"));
+}
+
 }
