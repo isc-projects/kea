@@ -1162,6 +1162,14 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         // Check if the lease update should be sent to the server. If we're in
         // the partner-down state we don't send lease updates to the partner.
         if (!shouldSendLeaseUpdates(conf)) {
+            // If we decide to not send the lease updates to an active partner, we
+            // should make a record of it in the communication state. The partner
+            // can check if there were any unsent lease updates when he determines
+            // whether it should synchronize its database or not when it recovers
+            // from the partner-down state.
+            if (conf->getRole() != HAConfig::PeerConfig::BACKUP) {
+                communication_state_->increaseUnsentUpdateCount();
+            }
             continue;
         }
 
@@ -1222,6 +1230,14 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         // Check if the lease update should be sent to the server. If we're in
         // the partner-down state we don't send lease updates to the partner.
         if (!shouldSendLeaseUpdates(conf)) {
+            // If we decide to not send the lease updates to an active partner, we
+            // should make a record of it in the communication state. The partner
+            // can check if there were any unsent lease updates when he determines
+            // whether it should synchronize its database or not when it recovers
+            // from the partner-down state.
+            if (conf->getRole() != HAConfig::PeerConfig::BACKUP) {
+                communication_state_->increaseUnsentUpdateCount();
+            }
             continue;
         }
 

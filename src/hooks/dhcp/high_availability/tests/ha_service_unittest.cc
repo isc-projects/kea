@@ -1076,6 +1076,9 @@ public:
         // updates are expected to be successful.
         EXPECT_TRUE(unpark_called);
 
+        // Updates have been sent so this counter should remain 0.
+        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+
         // The server 2 should have received two commands.
         EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
 
@@ -1268,6 +1271,13 @@ public:
         // such situation the packet is not parked either.
         EXPECT_FALSE(unpark_called);
 
+        // In the partner-down state we don't send lease updates. We
+        // should count transactions for which lease updates were not sent.
+        // This is later returned in the heartbeat so the partner can
+        // determine whether it should synchronize its lease database or
+        // not.
+        EXPECT_EQ(1, service_->communication_state_->getUnsentUpdateCount());
+
         // Server 2 should not receive lease4-update.
         auto update_request2 =
             factory2_->getResponseCreator()->findRequest("lease4-update",
@@ -1457,6 +1467,9 @@ public:
         // updates are expected to be successful.
         EXPECT_TRUE(unpark_called);
 
+        // Updates have been sent so this counter should remain 0.
+        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+
         // The server 2 should have received one command.
         EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
 
@@ -1633,6 +1646,13 @@ public:
         // complete so the packet was never unparked. Note that in such
         // situation the packet is not parked either.
         EXPECT_FALSE(unpark_called);
+
+        // In the partner-down state we don't send lease updates. We
+        // should count transactions for which lease updates were not sent.
+        // This is later returned in the heartbeat so the partner can
+        // determine whether it should synchronize its lease database or
+        // not.
+        EXPECT_EQ(1, service_->communication_state_->getUnsentUpdateCount());
 
         // Server 2 should not receive lease6-bulk-apply.
         auto update_request2 =
