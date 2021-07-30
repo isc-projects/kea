@@ -12,8 +12,8 @@ EXTRA_DIST = ${yang_list}
 if HAVE_SYSREPO
 
 # Add to the tarball.
-yang_DATA = ${yang_list}
-yang_SCRIPTS = ${yang_list}
+yang_DATA = reinstall.sh
+yang_SCRIPTS = reinstall.sh
 
 # Shell tests
 SHTESTS  =

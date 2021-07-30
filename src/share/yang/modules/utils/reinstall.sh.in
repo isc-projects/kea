@@ -8,15 +8,11 @@
 
 # Usage:
 #
-# ./src/share/yang/modules/reinstall.sh [-d|--debug] [-h|--help] [-s|--sysrepo ${SYSREPO_INSTALLATION}]
+# reinstall.sh [-d|--debug] [-h|--help] [-s|--sysrepo ${SYSREPO_INSTALLATION}]
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
-
-script_path=$(cd "$(dirname "${0}")" && pwd)
-kea_sources=$(cd "${script_path}/../../../../.." && pwd)
-modules="${kea_sources}/src/share/yang/modules"
 
 # Print usage.
 # Expressions don't expand in single quotes, use double quotes for that. [SC2016]
@@ -63,6 +59,31 @@ done
 test -z "${sysrepo+x}" && sysrepo='/usr/local'
 
 #------------------------------------------------------------------------------#
+
+# Get script path.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+
+# shellcheck disable=SC2034
+# prefix appears unused. Verify use (or export if used externally).
+# reason: prefix is used in datarootdir (@datarootdir@) below.
+prefix="@prefix@"
+
+# Find modules location.
+# If script is in sources, use modules from sources.
+# If script is in installation, use modules from installation.
+for i in \
+  "@datarootdir@/@PACKAGE_NAME@/yang/modules" \
+  "@abs_top_builddir@/src/share/yang/modules" \
+; do
+  if test "${script_path}" = "${i}/utils"; then
+    modules="${i}"
+    break
+  fi
+done
+if test -z "${modules+x}"; then
+  printf 'ERROR: cannot find location of modules. Use this script from sources or from installation.' >&2
+  exit 1
+fi
 
 # Check if model is installed.
 is_model_installed() {
@@ -117,9 +138,9 @@ install_yang_models() {
 #   Internal module "ietf-inet-types" cannot be uninstalled.
 # Something about another module depending on ietf-inet-types.
 # Might be related to a module that is internal to sysrepo.
-# Might be for the better since installing YANG modules is idempotent and
-# actually has logic to only install if the revision is newer which is arguably
-# beneficial.
+# Might be for the better to not uninstall them since installing YANG modules is
+# idempotent and actually has logic to only install if the revision is newer
+# which is arguably beneficial.
 uninstall_yang_models() {
   uninstall_model 'kea-dhcp6-server'
   uninstall_model 'kea-dhcp4-server'

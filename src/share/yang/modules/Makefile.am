@@ -3,7 +3,6 @@ SUBDIRS = utils
 yangmodulesdir = ${datarootdir}/${PACKAGE_NAME}/yang/modules
 
 yangmodules_list  =
-yangmodules_list += hashes
 yangmodules_list += ietf-dhcpv6-client@2018-09-04.yang
 yangmodules_list += ietf-interfaces@2018-02-20.yang
 yangmodules_list += ietf-dhcpv6-options@2018-09-04.yang
@@ -20,7 +19,7 @@ yangmodules_list += kea-dhcp6-server@2019-08-12.yang
 yangmodules_list += kea-types@2019-08-12.yang
 yangmodules_list += keatest-module@2018-11-20.yang
 
-EXTRA_DIST = ${yangmodules_list}
+EXTRA_DIST = hashes ${yangmodules_list}
 
 if HAVE_SYSREPO
 yangmodules_DATA = ${yangmodules_list}

@@ -86,7 +86,7 @@ shellcheck:
     - SCRIPTS+="src/share/yang/modules/utils/check-hashes.sh "
     - SCRIPTS+="src/share/yang/modules/utils/check-revisions.sh "
     - SCRIPTS+="src/share/yang/modules/utils/gen-revisions.sh "
-    - SCRIPTS+="src/share/yang/modules/utils/reinstall.sh "
+    - SCRIPTS+="src/share/yang/modules/utils/reinstall.sh.in "
     - SCRIPTS+="tools/add-config-h.sh "
     - SCRIPTS+="tools/bump-lib-versions.sh "
     - SCRIPTS+="tools/check-for-duplicate-includes.sh "
