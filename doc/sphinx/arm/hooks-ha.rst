@@ -1885,8 +1885,8 @@ command structure is as simple as:
 The ha-heartbeat Command
 ------------------------
 
-The :ref:`ha-server-states` describes how the ``ha-heartbeat`` command is used by
-the active HA servers to detect a failure of one of them. This command, however,
+The :ref:`ha-server-states` section describes how the ``ha-heartbeat`` command is
+used by the active HA servers to detect a failure of one of them. This command, however,
 can also be sent by the system administrator to one or both servers to check their
 state with regards to the HA relationship. This allows for hooking up a monitoring
 system to the HA enabled servers to periodically check if they are operational
@@ -1911,19 +1911,25 @@ be returned:
       "arguments":
           {
               "state": "partner-down",
-              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT"
+              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT",
+              "scopes": [ "server1" ],
+              "unsent-update-count": 123
           }
    }
 
 The returned state value may be one of the values listed in :ref:`ha-server-states`.
-In the example above the ``partner-down`` state is returned, which indicates that
-the server which responded to the command is assuming that its partner is offline,
-thus it is serving all DHCP requests sent to the servers. In order to ensure that
-the partner is indeed offline the administrator should send the ``ha-heartbeat``
-command to the second server. If sending the command fails, e.g. as a result of
-inability to establish TCP connection to the Control Agent or the Control Agent
-reports issues with communication with the DHCP server, it is very likely that
-the server is not running.
+In the example above, the ``partner-down`` state is returned, which indicates that
+the server which responded to the command is assuming that its partner is offline;
+thus, it is serving all DHCP requests sent to the servers. In order to ensure that
+the partner is indeed offline, the administrator should send the ``ha-heartbeat``
+command to the second server. If sending the command fails, e.g. due to inability
+to establish TCP connection to the Control Agent or the Control Agent reports
+issues with communication with the DHCP server, it is very likely that the server
+is not running.
+
+The ``date-time`` parameter conveys the server's notion of time. The
+``unsent-update-count`` is used internally by the partner receiving the heartbeat
+response to determine whether it should synchronize its lease database.
 
 The typical response returned by one of the servers when both servers are
 operational is:
@@ -1936,7 +1942,9 @@ operational is:
       "arguments":
           {
               "state": "load-balancing",
-              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT"
+              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT",
+              "scopes": [ "server1" ],
+              "unsent-update-count": 0
           }
    }
 

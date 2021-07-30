@@ -13,7 +13,19 @@
     "hook": "high_availability",
     "name": "ha-heartbeat",
     "resp-comment": [
-        "The response to this command is different from the typical command response. The response includes the server state (see :ref:`ha-server-states`) plus the current clock value."
+        "The response includes a server state (see :ref:`ha-server-states`), current clock value, served scopes and the counter indicating how many leases the server has allocated without sending lease updates to its partner. The partner uses this counter to determine if it should synchronize its lease database."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"HA peer status returned.\",",
+        "    \"arguments\": {",
+        "        \"state\": <server state>,",
+        "        \"date-time\": <server notion of time>,",
+        "        \"scopes\": [ <first scope>, <second scope>, ... ],",
+        "        \"unsent-update-count\": <total number of lease allocations in partner-down state>",
+        "    }",
+        "}"
     ],
     "support": [
         "kea-dhcp4",
