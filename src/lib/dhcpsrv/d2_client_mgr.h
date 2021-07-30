@@ -184,6 +184,9 @@ public:
     ///
     ///     <partial_name>.<qualifying-suffix>.
     ///
+    /// Note that the qualifying suffix will only be appended if the
+    /// input name does not already end with that suffix.
+    ///
     /// @param partial_name domain name to qualify
     /// @param ddns_params DDNS behavioral configuration parameters
     /// @param trailing_dot A boolean value which when true guarantees the

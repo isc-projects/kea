@@ -1,3 +1,11 @@
+1928.	[bug]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to only append the
+	ddns-qualifying-suffix if the input name does not
+	already end with that suffix.  Prior to this the
+	suffix was always added which could lead to names
+	including the suffix twice.
+	(Gitlab #1529)
+
 Kea 1.9.10 (development) released on Jul 30, 2021
 
 1927.	[build]		razvan

@@ -665,6 +665,42 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
 
 }
 
+/// @brief Tests the qualifyName method's ability to avoid duplicating
+/// qualifying suffix.
+TEST_F(D2ClientMgrParamsTest, qualifyNameWithoutDuplicatingSuffix) {
+    D2ClientMgr mgr;
+    bool do_not_dot = false;
+    bool do_dot = true;
+
+    // Create enabled configuration
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
+
+    // Verify that the qualifying suffix does not get appended when the
+    // input name has the suffix but no trailing dot.
+    std::string partial_name = "somehost.suffix.com";
+    std::string qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
+    EXPECT_EQ("somehost.suffix.com.", qualified_name);
+
+    // Verify that the qualifying suffix does not get appended when the
+    // input name has the suffix and a trailing dot.
+    partial_name = "somehost.suffix.com.";
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
+    EXPECT_EQ("somehost.suffix.com.", qualified_name);
+
+    // Verify that the qualifying suffix does get appended when the
+    // input name has the suffix embedded in it.
+    partial_name = "somehost.almostsuffix.com";
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
+    EXPECT_EQ("somehost.almostsuffix.com.suffix.com.", qualified_name);
+}
+
 /// @brief Tests the generateFdqn method's ability to construct FQDNs
 TEST_F(D2ClientMgrParamsTest, generateFqdn) {
     D2ClientMgr mgr;
