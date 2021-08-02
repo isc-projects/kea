@@ -4141,7 +4141,7 @@ MySqlConfigBackendDHCPv6::isUnusable() {
 
 DatabaseConnection::ParameterMap
 MySqlConfigBackendDHCPv6::getParameters() const {
-    return impl_->getParameters();
+    return (impl_->getParameters());
 }
 
 Subnet6Ptr
