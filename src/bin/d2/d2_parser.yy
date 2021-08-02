@@ -456,7 +456,7 @@ ddns_domain_params: ddns_domain_param
                   ;
 
 ddns_domain_param: ddns_domain_name
-                 | ddns_domain_key_name
+                 | ddns_key_name
                  | dns_servers
                  | user_context
                  | comment
@@ -477,7 +477,7 @@ ddns_domain_name: NAME {
     ctx.leave();
 };
 
-ddns_domain_key_name: KEY_NAME {
+ddns_key_name: KEY_NAME {
     ctx.unique("key-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -534,6 +534,7 @@ dns_server_params: dns_server_param
 dns_server_param: dns_server_hostname
               | dns_server_ip_address
               | dns_server_port
+              | ddns_key_name
               | user_context
               | comment
               | unknown_map_entry

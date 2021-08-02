@@ -329,6 +329,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DDNS_DOMAIN:
     case isc::d2::D2ParserContext::DDNS_DOMAINS:
+    case isc::d2::D2ParserContext::DNS_SERVER:
+    case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_KEY_NAME(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("key-name", driver.loc_);
