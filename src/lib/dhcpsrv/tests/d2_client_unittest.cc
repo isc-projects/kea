@@ -699,6 +699,12 @@ TEST_F(D2ClientMgrParamsTest, qualifyNameWithoutDuplicatingSuffix) {
     partial_name = "somehost.almostsuffix.com";
     qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
     EXPECT_EQ("somehost.almostsuffix.com.suffix.com.", qualified_name);
+
+    // Verify that the qualifying suffix does not get appended when the
+    // input name is the suffix itself.
+    partial_name = "suffix.com";
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
+    EXPECT_EQ("suffix.com.", qualified_name);
 }
 
 /// @brief Tests the generateFdqn method's ability to construct FQDNs

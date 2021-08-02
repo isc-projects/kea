@@ -200,8 +200,7 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
         }
 
         while (suffix_rit != suffix.rend()) {
-            if ((gen_rit == str.rend()) ||
-                (*suffix_rit != *gen_rit)) {
+            if ((gen_rit == str.rend()) || (*suffix_rit != *gen_rit)) {
                 // They don't match.
                 suffix_present = false;
                 break;
@@ -214,7 +213,7 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
         // Catch the case where name has suffix embedded.
         // input: foo.barexample.com   suffix: example.com
         if ((suffix_present) && (suffix_rit == suffix.rend())) {
-            if (*gen_rit != '.') {
+            if ((gen_rit != str.rend()) && (*gen_rit != '.')) {
                 suffix_present = false;
             }
         }
