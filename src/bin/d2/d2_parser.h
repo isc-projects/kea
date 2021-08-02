@@ -684,7 +684,7 @@ namespace isc { namespace d2 {
         S_ddns_domain_param = 124,               // ddns_domain_param
         S_ddns_domain_name = 125,                // ddns_domain_name
         S_126_27 = 126,                          // $@27
-        S_ddns_domain_key_name = 127,            // ddns_domain_key_name
+        S_ddns_key_name = 127,                   // ddns_key_name
         S_128_28 = 128,                          // $@28
         S_dns_servers = 129,                     // dns_servers
         S_130_29 = 130,                          // $@29
@@ -2394,7 +2394,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 304,     ///< Last index in yytable_.
+      yylast_ = 307,     ///< Last index in yytable_.
       yynnts_ = 151,  ///< Number of nonterminal symbols.
       yyfinal_ = 22 ///< Termination state number.
     };
