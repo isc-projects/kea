@@ -703,21 +703,21 @@ public:
     MapElement(const Position& pos = ZERO_POSITION()) : Element(map, pos) {}
     // @todo should we have direct iterators instead of exposing the std::map
     // here?
-    const std::map<std::string, ConstElementPtr>& mapValue() const {
+    const std::map<std::string, ConstElementPtr>& mapValue() const override {
         return (m);
     }
     using Element::getValue;
-    bool getValue(std::map<std::string, ConstElementPtr>& t) const {
+    bool getValue(std::map<std::string, ConstElementPtr>& t) const override {
         t = m;
         return (true);
     }
     using Element::setValue;
-    bool setValue(const std::map<std::string, ConstElementPtr>& v) {
+    bool setValue(const std::map<std::string, ConstElementPtr>& v) override {
         m = v;
         return (true);
     }
     using Element::get;
-    ConstElementPtr get(const std::string& s) const {
+    ConstElementPtr get(const std::string& s) const override {
         auto found = m.find(s);
         return (found != m.end() ? found->second : ConstElementPtr());
     }
@@ -735,9 +735,9 @@ public:
     }
 
     using Element::set;
-    void set(const std::string& key, ConstElementPtr value);
+    void set(const std::string& key, ConstElementPtr value) override;
     using Element::remove;
-    void remove(const std::string& s) { m.erase(s); }
+    void remove(const std::string& s) override { m.erase(s); }
 
     /// @brief Remove the i-th element from the map.
     ///
@@ -748,34 +748,34 @@ public:
         m.erase(it);
     }
 
-    bool contains(const std::string& s) const {
+    bool contains(const std::string& s) const override {
         return (m.find(s) != m.end());
     }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss) const override;
 
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
     // mapelement.
     // returns an empty element if the item could not be found
-    ConstElementPtr find(const std::string& id) const;
+    ConstElementPtr find(const std::string& id) const override;
 
     // find the Element at 'id', and store the element pointer in t
     // returns true if found, or false if not found (either because
     // it doesn't exist or one of the elements in the path is not
     // a MapElement)
-    bool find(const std::string& id, ConstElementPtr& t) const;
+    bool find(const std::string& id, ConstElementPtr& t) const override;
 
     /// @brief Returns number of stored elements
     ///
     /// @return number of elements.
-    size_t size() const {
+    size_t size() const override {
         return (m.size());
     }
 
-    bool equals(const Element& other) const;
+    bool equals(const Element& other) const override;
 
-    bool empty() const { return (m.empty()); }
+    bool empty() const override { return (m.empty()); }
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
