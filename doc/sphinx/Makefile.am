@@ -61,9 +61,9 @@ api_files =
 include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
-all: html mans pdf
+all: html mans pdf text
 else
-all: html mans
+all: html mans text
 endif
 
 # build the list of message files
@@ -163,6 +163,9 @@ html: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
 # generated in doc/sphinx/_build/singlehtml
 singlehtml: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
 	$(SPHINXBUILD) -M singlehtml $(srcdir) $(sphinxbuilddir) $(sphinxopts)
+
+text: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
+	$(SPHINXBUILD) -M text $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
 $(man8s): mans
 

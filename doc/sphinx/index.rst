@@ -1,5 +1,9 @@
-.. figure:: static/kea-logo-200.png
-   :align: right
+.. only:: not latex
+
+    .. image:: static/kea-logo-200.png
+        :align: right
+
+.. _introduction:
 
 ##################################
 Kea Administrator Reference Manual
@@ -54,12 +58,3 @@ Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
    umls
    grammar/grammar
    arm/acknowledgments
-
-
-
-Indices and Tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

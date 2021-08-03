@@ -116,7 +116,6 @@ pygments_style = None
 #
 #html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
-#html_logo = '_static/kea-logo-100x70.png'
 html_logo = 'static/kea-imageonly-100bw.png'
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -175,6 +174,8 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'kea-arm.tex', 'Kea Administrator Reference Manual Documentation', author, 'manual'),
 ]
+
+latex_logo = 'static/kea-logo-200.png'
 
 if os.getenv("READTHEDOCS", "False") == "False":
     latex_documents.append((messages_doc, 'kea-messages.tex', 'Kea Messages Manual', author, 'manual'))

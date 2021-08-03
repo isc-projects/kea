@@ -88,8 +88,11 @@ API Reference
         rst += '.\n\n'
 
     for func in sorted(apis.values(), key=lambda f: f['name']):
-        name = func['name']
-        rst += '.. _ref-%s:\n\n' % name
+        # The dot is added to overcome an overlap of ordinal numbers and text
+        # in the table of contents.
+        name = '. ' + func['name']
+        real_name = func['name']
+        rst += '.. _ref-%s:\n\n' % real_name
         rst += name + '\n'
         rst += '-' * len(name) + '\n\n'
 
@@ -120,7 +123,7 @@ API Reference
         rst += 'Access: %s *(parameter ignored in this Kea version)* \n\n' % access
 
         # description and examples
-        rst += 'Description and examples: see :ref:`%s command <command-%s>`\n\n' % (name, name)
+        rst += 'Description and examples: see :ref:`%s command <command-%s>`\n\n' % (name, real_name)
 
         # command syntax
         rst += 'Command syntax:\n\n'
