@@ -211,6 +211,8 @@ migrate_host_data() {
         line_cnt=$((line_cnt + 1));
         update_cols=""
         xIFS="$IFS"
+        # shellcheck disable=SC3003
+        # SC3003: In POSIX sh, $'..' is undefined.
         IFS=$','
 
         i=1

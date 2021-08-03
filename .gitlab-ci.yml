@@ -4,16 +4,19 @@ variables:
 
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/kea
 
-  # Disabled warnings:
-  # SC2039 - complains about local var: In POSIX sh, 'local' is undefined.
-  SHELLCHECK_OPTS: "--exclude=SC2039"
+  # Disabled shellcheck warnings:
+  # SC1117: Backslash is literal in "\/". Prefer explicit escaping: "\\/".
+  # SC2039: In POSIX sh, 'local' is undefined.
+  # SC3043: In POSIX sh, 'local' is undefined.
+  SHELLCHECK_OPTS: "--exclude=SC1117 --exclude=SC2039 --exclude=SC3043"
+
 
 stages:
   - test
 
 shellcheck:
   stage: test
-  image: "$CI_REGISTRY_IMAGE:latest"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   tags:
     - linux
     - amd64
@@ -117,27 +120,27 @@ danger:
 
 duplicate-includes:
   stage: test
-  image: "$CI_REGISTRY_IMAGE:latest"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   tags:
     - linux
     - amd64
   script:
-    - tools/check-for-duplicate-includes.sh
+    - ./tools/check-for-duplicate-includes.sh
 
 missing-config-h-include:
   stage: test
-  image: "$CI_REGISTRY_IMAGE:latest"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   tags:
     - linux
     - amd64
   script:
-    - FILES=$(tools/add-config-h.sh -n)
+    - FILES=$(./tools/add-config-h.sh -n)
     - printf '%s\n' "${FILES}"
     - test -z "${FILES}"
 
 missing-git-attribute:
   stage: test
-  image: "$CI_REGISTRY_IMAGE:latest"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   tags:
     - linux
     - amd64

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,9 +27,9 @@ if ! [ -f "${DIR}/cql_config_defines.sh" ] || ! [ -x "${DIR}/cql_config_defines.
     exit 1
 fi
 
-# Shellcheck tries to follow this link and gets confused about not being able
-# to find the file.
-# shellcheck disable=SC1090
+# shellcheck disable=SC1091
+# SC1091: Not following: ./cql_config_defines.sh was not specified as input (see shellcheck -x).
+# shellcheck source=./tools/cql_config_defines.sh.sample
 . "${DIR}/cql_config_defines.sh"
 
 if [ $# -ne 1 ] && [ $# -ne 2 ]; then

@@ -56,4 +56,6 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 cd "${root_path}"
 
 # shellcheck disable=SC2046
-shellcheck $(grep -F 'SCRIPTS+=' ./.gitlab-ci.yml | cut -d '"' -f 2 | xargs | sort -uV)
+# SC2046: Quote this to prevent word splitting.
+# Reason: We explicitly want the parameters split.
+shellcheck $(grep -F 'SHELLCHECK_OPTS:' ./.gitlab-ci.yml | cut -d '"' -f 2 | xargs | sort -uV) $(grep -F 'SCRIPTS+=' ./.gitlab-ci.yml | cut -d '"' -f 2 | xargs | sort -uV)
