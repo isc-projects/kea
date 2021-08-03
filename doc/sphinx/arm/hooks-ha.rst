@@ -347,8 +347,12 @@ The following is the list of all possible server states:
    fetched. The DHCP service is disabled for a maximum time of 60
    seconds, after which it is automatically re-enabled, in case the
    syncing partner was unable to re-enable the service. If the
-   synchronization is completed, the syncing server issues the
-   ``dhcp-enable`` command to re-enable the DHCP service of its partner.
+   synchronization is completed successfully, the synchronizing server
+   issues the ``ha-sync-complete-notify`` command to notify the partner.
+   In most states, the partner re-enables its DHCP service to continue
+   responding to the DHCP queries. In the ``partner-down`` state, the
+   partner first reassures that the communication between the servers
+   is re-established before enabling the DHCP service.
    The syncing operation is synchronous; the server waits for an answer
    from the partner and does nothing else while the lease
    synchronization takes place. A server that is configured not to
@@ -2207,3 +2211,39 @@ The response:
 
 If the server receiving this command is already in the waiting state,
 the command has no effect.
+
+.. _command-ha-sync-complete-notify:
+
+The ha-sync-complete-notify Command
+-----------------------------------
+
+A server sends this command to its partner to notify that it has completed
+lease database synchronization. The partner may enable its DHCP service if
+it can allocate new leases in its current state. The partner does not enable
+the DHCP service in the partner-down state until it sends a successful
+heartbeat testing connection with the server. If the connection is still
+unavailable, the server in the partner-down state enables the DHCP service
+to continue responding to the clients.
+
+::
+
+   {
+       "command": "ha-sync-complete-notify",
+       "service": [ "dhcp4" ]
+   }
+
+The response:
+
+::
+
+   {
+       "result": 0,
+       "text": "Server successfully notified about the synchronization completion."
+   }
+
+.. warning::
+
+   The ``ha-sync-complete-notify`` command is not meant to be used by the
+   system administrators. It is used for internal communication between
+   a pair of HA enabled DHCP servers. Direct use of this command is not
+   supported and may produce unintended consequences.

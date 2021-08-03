@@ -1,0 +1,19 @@
+{
+    "access": "write",
+    "avail": "1.9.11",
+    "brief": [
+        "A server notifies its partner with this command that it has finished the",
+        "lease database synchronization. If the partner is in the partner-down state",
+        "it temporarily stops allocating new leases until it transitions to a normal",
+        "operation state, e.g. load-balancing. If the partner observes a failing",
+        "heartbeat it can resume allocating new leases in the partner-down state."
+    ],
+    "cmd-comment": [ "This command takes no arguments." ],
+    "description": [ "See <xref linkend=\"command-ha-sync-complete-notify\"/>" ],
+    "hook": "high_availability",
+    "name": "ha-sync-complete-notify",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

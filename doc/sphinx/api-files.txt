@@ -37,6 +37,7 @@ src/share/api/ha-maintenance-start.json
 src/share/api/ha-reset.json
 src/share/api/ha-scopes.json
 src/share/api/ha-sync.json
+src/share/api/ha-sync-complete-notify.json
 src/share/api/lease4-add.json
 src/share/api/lease4-del.json
 src/share/api/lease4-get-all.json

@@ -37,6 +37,7 @@ api_files += $(top_srcdir)/src/share/api/ha-maintenance-start.json
 api_files += $(top_srcdir)/src/share/api/ha-reset.json
 api_files += $(top_srcdir)/src/share/api/ha-scopes.json
 api_files += $(top_srcdir)/src/share/api/ha-sync.json
+api_files += $(top_srcdir)/src/share/api/ha-sync-complete-notify.json
 api_files += $(top_srcdir)/src/share/api/lease4-add.json
 api_files += $(top_srcdir)/src/share/api/lease4-del.json
 api_files += $(top_srcdir)/src/share/api/lease4-get-all.json
