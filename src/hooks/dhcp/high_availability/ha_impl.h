@@ -164,6 +164,11 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void haResetHandler(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implements handler for the ha-sync-complete-notify command.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle);
+
 protected:
 
     /// @brief Holds parsed configuration.

@@ -3380,10 +3380,11 @@ TEST_F(HAServiceTest, processSynchronize4) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease4-get-page and dhcp-enable.
+    // lease4-get-page and ha-sync-complete-notify.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify", ""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable", ""));
 }
 
 // This test verifies that the ha-sync command is processed successfully for the
@@ -3416,10 +3417,11 @@ TEST_F(HAServiceTest, processSynchronize4Authorized) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease4-get-page and dhcp-enable.
+    // lease4-get-page and ha-sync-complete-notify.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify", ""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable", ""));
 }
 
 // This test verifies that an error is reported when sending a dhcp-disable
@@ -3437,10 +3439,11 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    // The server2 should only receive dhcp-disable commands. Remaining two should
+    // The server2 should only receive dhcp-disable command. Remaining three should
     // not be sent.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -3482,6 +3485,7 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
 }
 
 // This test verifies that an error is reported when sending a dhcp-enable
@@ -3489,6 +3493,34 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
 TEST_F(HAServiceTest, processSynchronizeEnableError) {
     // Setup the server2 to return an error to dhcp-disable commands.
     factory2_->getResponseCreator()->setControlResult("dhcp-enable",
+                                                      CONTROL_RESULT_ERROR);
+
+    // Return the unsupported command status for this command to enforce
+    // sending the dhcp-enable command.
+    factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
+                                                      CONTROL_RESULT_COMMAND_UNSUPPORTED);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize4(rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // The server2 should receive four commands of which ha-sync-complete-notify
+    // was unsupported.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that dhcp-enable command is not sent to the partner after
+// receiving an error to the ha-sync-complete-notify command.
+TEST_F(HAServiceTest, processSynchronizeNotifyError) {
+    // Return an error to the ha-sync-complete-notify command.
+    factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -3499,10 +3531,10 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
 // This test verifies that the ha-sync command is processed successfully for the
@@ -3527,10 +3559,10 @@ TEST_F(HAServiceTest, processSynchronize6) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease6-get-page and dhcp-enable.
+    // lease6-get-page and ha-sync-complete-notify.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
 }
 
 // This test verifies that the ha-sync command is processed successfully for the
@@ -3564,10 +3596,10 @@ TEST_F(HAServiceTest, processSynchronize6Authorized) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease6-get-page and dhcp-enable.
+    // lease6-get-page and ha-sync-complete-notify.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
 }
 
 // This test verifies that an error is reported when sending a dhcp-disable
@@ -3585,10 +3617,10 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    // The server2 should only receive dhcp-disable commands. Remaining two should
-    // not be sent.
+    // The server2 should only receive dhcp-disable command.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -3630,6 +3662,7 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
 }
 
 // This test verifies that an error is reported when sending a dhcp-enable
@@ -3637,6 +3670,34 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
 TEST_F(HAServiceTest, processSynchronize6EnableError) {
     // Setup the server2 to return an error to dhcp-disable commands.
     factory2_->getResponseCreator()->setControlResult("dhcp-enable",
+                                                      CONTROL_RESULT_ERROR);
+
+    // Return the unsupported command status for this command to enforce
+    // sending the dhcp-enable command.
+    factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
+                                                      CONTROL_RESULT_COMMAND_UNSUPPORTED);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize6(rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // The server2 should receive four commands of which ha-sync-complete-notify
+    // was unsupported.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that dhcp-enable command is not sent to the partner after
+// receiving an error to the ha-sync-complete-notify command.
+TEST_F(HAServiceTest, processSynchronize6NotifyError) {
+    // Return an error to the ha-sync-complete-notify command.
+    factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -3647,10 +3708,10 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
 // This test verifies that the DHCPv4 service can be disabled on the remote server.
@@ -3672,7 +3733,8 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4) {
     // When the transaction is finished, the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
                                                     [this](const bool success,
-                                                           const std::string& error_message) {
+                                                           const std::string& error_message,
+                                                           const int) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -3717,7 +3779,8 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4Authorized) {
     // When the transaction is finished, the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
                                                     [this](const bool success,
-                                                           const std::string& error_message) {
+                                                           const std::string& error_message,
+                                                           const int) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -3745,7 +3808,8 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ServerOffline) {
     // When the transaction is finished, the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncDisableDHCPService("server2", 10,
                                                     [this](const bool success,
-                                                           const std::string& error_message) {
+                                                           const std::string& error_message,
+                                                           const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -3779,7 +3843,8 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
     // When the transaction is finished, the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
                                                     [this](const bool success,
-                                                           const std::string& error_message) {
+                                                           const std::string& error_message,
+                                                           const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -3812,7 +3877,8 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultUnauthorized) {
     // When the transaction is finished, the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
                                                     [this](const bool success,
-                                                           const std::string& error_message) {
+                                                           const std::string& error_message,
+                                                           const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -3841,7 +3907,8 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4) {
     // the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
                                                    [this](const bool success,
-                                                          const std::string& error_message) {
+                                                          const std::string& error_message,
+                                                          const int) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -3885,7 +3952,8 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4Authorized) {
     // the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
                                                    [this](const bool success,
-                                                          const std::string& error_message) {
+                                                          const std::string& error_message,
+                                                          const int) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -3912,7 +3980,8 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ServerOffline) {
     // the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
                                                    [this](const bool success,
-                                                          const std::string& error_message) {
+                                                          const std::string& error_message,
+                                                          const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -3946,7 +4015,8 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
     // the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
                                                    [this](const bool success,
-                                                          const std::string& error_message) {
+                                                          const std::string& error_message,
+                                                          const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -3979,7 +4049,8 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultUnauthorized) {
     // the IO service gets stopped.
     ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
                                                    [this](const bool success,
-                                                          const std::string& error_message) {
+                                                          const std::string& error_message,
+                                                          const int) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -4627,7 +4698,7 @@ TEST_F(HAServiceTest, processHAResetWaiting) {
     HAConfigPtr config_storage = createValidConfiguration();
     TestHAService service(io_service_, network_state_, config_storage);
 
-    // Transition the server to the load-balancing state.
+    // Transition the server to the waiting state.
     EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
 
     // Process ha-reset command that should not change the state of the
@@ -4645,6 +4716,76 @@ TEST_F(HAServiceTest, processHAResetWaiting) {
 
     // The server should be in the waiting state.
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
+// This test verifies that the ha-sync-complete-notify command is processed
+// successfully, the server keeps the DHCP service disabled in the partner-down
+// state and enables the service when it is in another state.
+TEST_F(HAServiceTest, processSyncCompleteNotify) {
+    HAConfigPtr config_storage = createValidConfiguration();
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Transition the server to the partner-down state.
+    EXPECT_NO_THROW(service.transition(HA_PARTNER_DOWN_ST, HAService::NOP_EVT));
+
+    // Simulate disabling the DHCP service for synchronization.
+    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+
+    ConstElementPtr rsp;
+    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+
+    // The server should remain in the partner-down state.
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
+
+    // The service should be disabled until the server transitions to the
+    // normal state.
+    EXPECT_FALSE(service.network_state_->isServiceEnabled());
+
+    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
+
+    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+
+    // The server should remain in the partner-down state.
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
+
+    // The service should be disabled to avoid allocating new leases before
+    // the server transitions to the normal state.
+    EXPECT_FALSE(service.network_state_->isServiceEnabled());
+
+    // It is possible that the connection from this server to the partner
+    // is still broken. In that case, the HA_SYNCED_PARTNER_UNAVAILABLE_EVT
+    // is emitted and the server should enable DHCP service to continue
+    // serving the clients in the partner-down state.
+    EXPECT_NO_THROW(service.postNextEvent(HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT));
+    EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+    EXPECT_TRUE(service.network_state_->isServiceEnabled());
+
+    // Transition the server to the load-balancing state.
+    EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
+
+    // Disable the service again.
+    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+
+    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
+
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+
+    // The server should remain in the load-balancing state.
+    EXPECT_EQ(HA_LOAD_BALANCING_ST, service.getCurrState());
+
+    // This time the service should be enabled because the server is in
+    // the state in which it sends the lease updates.
+    EXPECT_TRUE(service.network_state_->isServiceEnabled());
 }
 
 /// @brief HA partner to the server under test.

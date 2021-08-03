@@ -554,6 +554,22 @@ This error message is issued to indicate that the lease database synchronization
 failed. The first argument provides the partner server's name. The second argument
 provides a reason for the failure.
 
+% HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-sync-complete-notify to %1: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the ha-sync-complete-notify command. The first argument
+provides the remote server's name. The second argument provides a reason for
+failure.
+
+% HA_SYNC_COMPLETE_NOTIFY_FAILED error processing ha-sync-complete-notify command on %1: %2
+This warning message indicates that a peer returned an error status code
+in response to the ha-sync-complete-notify command.  The first argument provides
+the remote server's name. The second argument provides a reason for failure.
+
+% HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED ha-sync-complete-notify command failed: %1
+This error message is issued to indicate that the ha-sync-complete-notify command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
 % HA_SYNC_HANDLER_FAILED ha-sync command failed: %1
 This error message is issued to indicate that the ha-sync command handler
 failed while processing the command. The argument provides the reason for

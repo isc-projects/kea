@@ -283,6 +283,18 @@ int ha_reset_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-sync-complete-notify command handler implementation.
+int sync_complete_notify_command(CalloutHandle& handle) {
+    try {
+        impl->syncCompleteNotifyHandler(handle);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -321,6 +333,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-maintenance-start", maintenance_start_command);
         handle.registerCommandCallout("ha-maintenance-cancel", maintenance_cancel_command);
         handle.registerCommandCallout("ha-reset", ha_reset_command);
+        handle.registerCommandCallout("ha-sync-complete-notify", sync_complete_notify_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

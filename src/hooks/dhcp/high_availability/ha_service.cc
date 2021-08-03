@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <exceptions/exceptions.h>
 #include <http/date_time.h>
 #include <http/response_json.h>
 #include <http/post_request_json.h>
@@ -38,6 +39,17 @@ using namespace isc::log;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
+namespace {
+
+/// @brief Exception thrown when command sent to the partner is unsupported.
+class CommandUnsupportedError : public CtrlChannelError {
+public:
+    CommandUnsupportedError(const char* file, size_t line, const char* what) :
+        CtrlChannelError(file, line, what) {}
+};
+
+}
+
 namespace isc {
 namespace ha {
 
@@ -49,13 +61,15 @@ const int HAService::HA_MAINTENANCE_NOTIFY_EVT;
 const int HAService::HA_MAINTENANCE_START_EVT;
 const int HAService::HA_MAINTENANCE_CANCEL_EVT;
 const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
+const int HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT;
 
 HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(), listener_(), communication_state_(),
       query_filter_(config), mutex_(), pending_requests_(),
-      lease_update_backlog_(config->getDelayedUpdatesLimit()) {
+      lease_update_backlog_(config->getDelayedUpdatesLimit()),
+      sync_complete_notified_(false) {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -123,6 +137,7 @@ HAService::defineEvents() {
     defineEvent(HA_MAINTENANCE_NOTIFY_EVT, "HA_MAINTENANCE_NOTIFY_EVT");
     defineEvent(HA_MAINTENANCE_START_EVT, "HA_MAINTENANCE_START_EVT");
     defineEvent(HA_MAINTENANCE_CANCEL_EVT, "HA_MAINTENANCE_CANCEL_EVT");
+    defineEvent(HA_SYNCED_PARTNER_UNAVAILABLE_EVT, "HA_SYNCED_PARTNER_UNAVAILABLE_EVT");
 }
 
 void
@@ -136,6 +151,7 @@ HAService::verifyEvents() {
     getEvent(HA_MAINTENANCE_NOTIFY_EVT);
     getEvent(HA_MAINTENANCE_START_EVT);
     getEvent(HA_MAINTENANCE_CANCEL_EVT);
+    getEvent(HA_SYNCED_PARTNER_UNAVAILABLE_EVT);
 }
 
 void
@@ -453,6 +469,14 @@ HAService::partnerDownStateHandler() {
             // receiving the ha-maintenance-start command let's log it.
             LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN);
         }
+
+    } else if (getLastEvent() == HA_SYNCED_PARTNER_UNAVAILABLE_EVT) {
+        // Partner sent the ha-sync-complete-notify command to indicate that
+        // it has successfully synchronized its lease database but this server
+        // was unable to send heartbeat to this server. Enable the DHCP service
+        // and continue serving the clients in the partner-down state until the
+        // communication with the partner is fixed.
+        adjustNetworkState();
     }
 
     scheduleHeartbeat();
@@ -1578,6 +1602,8 @@ HAService::processHAReset() {
 void
 HAService::asyncSendHeartbeat() {
     HAConfig::PeerConfigPtr partner_config = config_->getFailoverPeerConfig();
+    bool sync_complete_notified = sync_complete_notified_;
+    sync_complete_notified_ = false;
 
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
@@ -1595,7 +1621,7 @@ HAService::asyncSendHeartbeat() {
     client_->asyncSendRequest(partner_config->getUrl(),
                               partner_config->getTlsContext(),
                               request, response,
-        [this, partner_config]
+        [this, partner_config, sync_complete_notified]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
              const std::string& error_str) {
@@ -1682,12 +1708,18 @@ HAService::asyncSendHeartbeat() {
                 }
             }
 
+            startHeartbeat();
+            // Even though the partner notified us about the synchronization completion,
+            // we still can't communicate with the partner. Let's continue serving
+            // the clients until the link is fixed.
+            if (sync_complete_notified && !heartbeat_success) {
+                postNextEvent(HA_SYNCED_PARTNER_UNAVAILABLE_EVT);
+            }
             // Whatever the result of the heartbeat was, the state machine needs
             // to react to this. Let's run the state machine until the state machine
             // finds that some new events are required, i.e. next heartbeat or
             // lease update.  The runModel() may transition to another state, schedule
             // asynchronous tasks etc. Then it returns control to the DHCP server.
-            startHeartbeat();
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
@@ -1749,6 +1781,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              // when non-success error code is returned in the response carried
              // in the HTTP message or if the JSON response is otherwise broken.
 
+             int rcode = 0;
              std::string error_message;
 
              // Handle first two groups of errors.
@@ -1762,7 +1795,6 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
 
                  // Handle third group of errors.
                  try {
-                     int rcode = 0;
                      static_cast<void>(verifyAsyncResponse(response, rcode));
 
                  } catch (const std::exception& ex) {
@@ -1782,7 +1814,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              // Invoke post request action if it was specified.
              if (post_request_action) {
                  post_request_action(error_message.empty(),
-                                     error_message);
+                                     error_message,
+                                     rcode);
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
@@ -1825,6 +1858,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              // when non-success error code is returned in the response carried
              // in the HTTP message or if the JSON response is otherwise broken.
 
+             int rcode = 0;
              std::string error_message;
 
              // Handle first two groups of errors.
@@ -1838,7 +1872,6 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
                  // Handle third group of errors.
                  try {
-                     int rcode = 0;
                      static_cast<void>(verifyAsyncResponse(response, rcode));
 
                  } catch (const std::exception& ex) {
@@ -1858,7 +1891,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              // Invoke post request action if it was specified.
              if (post_request_action) {
                  post_request_action(error_message.empty(),
-                                     error_message);
+                                     error_message,
+                                     rcode);
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
@@ -1909,7 +1943,7 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
     asyncDisableDHCPService(http_client, server_name, max_period,
                             [this, &http_client, server_name, max_period, last_lease,
                              post_sync_action, dhcp_disabled]
-                            (const bool success, const std::string& error_message) {
+                            (const bool success, const std::string& error_message, const int) {
 
         // If we have successfully disabled the DHCP service on the peer,
         // we can start fetching the leases.
@@ -2149,21 +2183,66 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         // we need to re-enable the DHCP service on the peer if the
         // DHCP service was disabled in the course of synchronization.
         if (dhcp_disabled) {
-            asyncEnableDHCPService(client, server_name,
-                                   [&](const bool success,
-                                       const std::string& error_message) {
-                // It is possible that we have already recorded an error
-                // message while synchronizing the lease database. Don't
-                // override the existing error message.
-                if (!success && status_message.empty()) {
-                    status_message = error_message;
-                }
+            // If the synchronization was completed successfully let's
+            // try to send the ha-sync-complete-notify command to the
+            // partner.
+            if (success) {
+                asyncSyncCompleteNotify(client, server_name,
+                                        [&](const bool success,
+                                            const std::string& error_message,
+                                            const int rcode) {
+                    // This command may not be supported by the partner when it
+                    // runs an older Kea version. In that case, send the dhcp-enable
+                    // command as in previous Kea version.
+                    if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
+                        asyncEnableDHCPService(client, server_name,
+                                               [&](const bool success,
+                                                   const std::string& error_message,
+                                                   const int rcode) {
+                            // It is possible that we have already recorded an error
+                            // message while synchronizing the lease database. Don't
+                            // override the existing error message.
+                            if (!success && status_message.empty()) {
+                                status_message = error_message;
+                            }
 
-                // The synchronization process is completed, so let's break
-                // the IO service so as we can return the response to the
-                // controlling client.
-                io_service.stop();
-            });
+                            // The synchronization process is completed, so let's break
+                            // the IO service so as we can return the response to the
+                            // controlling client.
+                            io_service.stop();
+                        });
+
+                    } else {
+                        // ha-sync-complete-notify command was delivered to the partner.
+                        // The synchronization process ends here.
+                        if (!success && status_message.empty()) {
+                            status_message = error_message;
+                        }
+
+                        io_service.stop();
+                    }
+                });
+
+            } else {
+                // Synchronization was unsuccessul. Send the dhcp-enable command to
+                //  re-enable the DHCP service. Note, that we don't send the
+                // ha-sync-complete-notify command in this case. It is only sent in
+                // the case when synchronization ends successfully.
+                asyncEnableDHCPService(client, server_name,
+                                       [&](const bool success,
+                                           const std::string& error_message,
+                                           const int rcode) {
+                    if (!success && status_message.empty()) {
+                        status_message = error_message;
+                    }
+
+                    // The synchronization process is completed, so let's break
+                    // the IO service so as we can return the response to the
+                    // controlling client.
+                    io_service.stop();
+
+                });
+            }
 
         } else {
             // Also stop IO service if there is no need to enable DHCP
@@ -2213,7 +2292,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
                                             const HAConfig::PeerConfigPtr& config,
                                             PostRequestCallback post_request_action) {
     if (lease_update_backlog_.size() == 0) {
-        post_request_action(true, "");
+        post_request_action(true, "", CONTROL_RESULT_SUCCESS);
         return;
     }
 
@@ -2250,6 +2329,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
+             int rcode = 0;
              std::string error_message;
 
              if (ec || !error_str.empty()) {
@@ -2261,7 +2341,6 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              } else {
                  // Handle third group of errors.
                  try {
-                    int rcode = 0;
                     auto args = verifyAsyncResponse(response, rcode);
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
@@ -2279,7 +2358,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              if (error_message.empty()) {
                  asyncSendLeaseUpdatesFromBacklog(http_client, config, post_request_action);
              } else {
-                 post_request_action(error_message.empty(), error_message);
+                 post_request_action(error_message.empty(), error_message, rcode);
              }
    });
 }
@@ -2302,7 +2381,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
         .arg(remote_config->getName());
 
     asyncSendLeaseUpdatesFromBacklog(client, remote_config,
-                                     [&](const bool success, const std::string&) {
+                                     [&](const bool success, const std::string&, const int) {
         io_service.stop();
         updates_successful = success;
     });
@@ -2350,6 +2429,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
+             int rcode = 0;
              std::string error_message;
 
              if (ec || !error_str.empty()) {
@@ -2361,7 +2441,6 @@ HAService::asyncSendHAReset(HttpClient& http_client,
              } else {
                  // Handle third group of errors.
                  try {
-                    int rcode = 0;
                     auto args = verifyAsyncResponse(response, rcode);
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
@@ -2371,7 +2450,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
                  }
              }
 
-             post_request_action(error_message.empty(), error_message);
+             post_request_action(error_message.empty(), error_message, rcode);
    });
 }
 
@@ -2383,7 +2462,7 @@ HAService::sendHAReset() {
     bool reset_successful = true;
 
     asyncSendHAReset(client, remote_config,
-                     [&](const bool success, const std::string&) {
+                     [&](const bool success, const std::string&, const int) {
         io_service.stop();
         reset_successful = success;
     });
@@ -2677,6 +2756,98 @@ HAService::processMaintenanceCancel() {
                          "Server maintenance successfully canceled."));
 }
 
+void
+HAService::asyncSyncCompleteNotify(HttpClient& http_client,
+                                   const std::string& server_name,
+                                   PostRequestCallback post_request_action) {
+    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
+
+    // Create HTTP/1.1 request including our command.
+    PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
+        (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
+         HostHttpHeader(remote_config->getUrl().getHostname()));
+
+    remote_config->addBasicAuthHttpHeader(request);
+    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(server_type_));
+    request->finalize();
+
+    // Response object should also be created because the HTTP client needs
+    // to know the type of the expected response.
+    HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
+
+    // Schedule asynchronous HTTP request.
+    http_client.asyncSendRequest(remote_config->getUrl(),
+                                 remote_config->getTlsContext(),
+                                 request, response,
+        [this, remote_config, post_request_action]
+            (const boost::system::error_code& ec,
+             const HttpResponsePtr& response,
+             const std::string& error_str) {
+
+             // There are three possible groups of errors. One is the IO error
+             // causing issues in communication with the peer. Another one is an
+             // HTTP parsing error. The last type of error is when non-success
+             // error code is returned in the response carried in the HTTP message
+             // or if the JSON response is otherwise broken.
+
+             int rcode = 0;
+             std::string error_message;
+
+             // Handle first two groups of errors.
+             if (ec || !error_str.empty()) {
+                 error_message = (ec ? ec.message() : error_str);
+                 LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(remote_config->getLogLabel())
+                     .arg(error_message);
+
+             } else {
+
+                 // Handle third group of errors.
+                 try {
+                     static_cast<void>(verifyAsyncResponse(response, rcode));
+
+                 } catch (const CommandUnsupportedError& ex) {
+                     rcode = CONTROL_RESULT_COMMAND_UNSUPPORTED;
+
+                 } catch (const std::exception& ex) {
+                     error_message = ex.what();
+                     LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_FAILED)
+                         .arg(remote_config->getLogLabel())
+                         .arg(error_message);
+                 }
+             }
+
+             // If there was an error communicating with the partner, mark the
+             // partner as unavailable.
+             if (!error_message.empty()) {
+                 communication_state_->setPartnerState("unavailable");
+             }
+
+             // Invoke post request action if it was specified.
+             if (post_request_action) {
+                 post_request_action(error_message.empty(),
+                                     error_message,
+                                     rcode);
+             }
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        std::bind(&HAService::clientConnectHandler, this, ph::_1, ph::_2),
+        std::bind(&HAService::clientHandshakeHandler, this, ph::_1),
+        std::bind(&HAService::clientCloseHandler, this, ph::_1)
+    );
+}
+
+ConstElementPtr
+HAService::processSyncCompleteNotify() {
+    if (getCurrState() == HA_PARTNER_DOWN_ST) {
+        sync_complete_notified_ = true;
+    } else {
+        localEnableDHCPService();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "Server successfully notified about the synchronization completion."));
+}
+
 ConstElementPtr
 HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     // Set the return code to error in case of early throw.
@@ -2729,7 +2900,12 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
         }
         // Include an error code.
         s << "error code " << rcode;
-        isc_throw(CtrlChannelError, s.str());
+
+        if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
+            isc_throw(CommandUnsupportedError, s.str());
+        } else {
+            isc_throw(CtrlChannelError, s.str());
+        }
     }
 
     return (args);

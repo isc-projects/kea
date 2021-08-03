@@ -64,6 +64,10 @@ public:
     /// ha-maintenance-cancel command received.
     static const int HA_MAINTENANCE_CANCEL_EVT = SM_DERIVED_EVENT_MIN + 7;
 
+    /// The heartbeat command failed after receiving ha-sync-complete-notify
+    /// command from the partner.
+    static const int HA_SYNCED_PARTNER_UNAVAILABLE_EVT = SM_DERIVED_EVENT_MIN + 8;
+
     /// Control result returned in response to ha-maintenance-notify.
     static const int HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED = 1001;
 
@@ -74,7 +78,8 @@ protected:
     ///
     /// The first argument indicates if the operation passed (when true).
     /// The second argument holds error message.
-   typedef std::function<void(const bool, const std::string&)> PostRequestCallback;
+    /// The third argument holds control status returned.
+   typedef std::function<void(const bool, const std::string&, const int)> PostRequestCallback;
 
     /// @brief Callback invoked when lease database synchronization is complete.
     ///
@@ -855,6 +860,10 @@ protected:
     ///
     /// It instructs the server to disable the DHCP service on the HA peer,
     /// fetch all leases from the peer and update the local lease database.
+    /// It sends ha-sync-complete-notify command to the partner when the
+    /// synchronization completes successfully. If the partner does not
+    /// support this command, it sends dhcp-enable command to enable
+    /// the DHCP service on the partner.
     ///
     /// This method creates its own instances of the HttpClient and IOService and
     /// invokes IOService::run().
@@ -1009,6 +1018,36 @@ public:
     /// any of the worker threads.
     void checkPermissionsClientAndListener();
 
+protected:
+
+    /// @brief Schedules asynchronous "ha-sync-complete-notify" command to the
+    /// specified server.
+    ///
+    /// @param http_client reference to the client to be used to communicate
+    /// with the other server.
+    /// @param server_name name of the server to which the command should be
+    /// sent.
+    /// @param post_request_action pointer to the function to be executed when
+    /// the request is completed.
+    void asyncSyncCompleteNotify(http::HttpClient& http_client,
+                                 const std::string& server_name,
+                                 PostRequestCallback post_request_action);
+
+public:
+
+    /// @brief Process ha-sync-complete-notify command and returns a response.
+    ///
+    /// A server finishing a lease database synchronization may notify its
+    /// partner about it with this command. This function implements reception
+    /// and processing of the command.
+    ///
+    /// It enables DHCP service unless the server is in the partner-down state.
+    /// In this state, the server will first have to check connectivity with
+    /// the partner and transition to a state in which it will send lease updates.
+    ///
+    /// @return Pointer to the response to the ha-sync-complete-notify command.
+    data::ConstElementPtr processSyncCompleteNotify();
+
     /// @brief Start the client and(or) listener instances.
     ///
     /// When HA+MT is enabled it starts the client's thread pool
@@ -1052,6 +1091,7 @@ protected:
     /// @param [out] rcode result found in the response.
     /// @return Pointer to the response arguments.
     /// @throw CtrlChannelError if response is invalid or contains an error.
+    /// @throw CommandUnsupportedError if sent command is unsupported.
     data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response,
                                               int& rcode);
 
@@ -1241,6 +1281,15 @@ protected:
     /// the communication-recovery state and is temporarily unable to send
     /// lease updates to the partner.
     LeaseUpdateBacklog lease_update_backlog_;
+
+    /// @brief An indicator that a partner sent ha-sync-complete-notify command.
+    ///
+    /// This indicator is set when the partner finished synchronization. It blocks
+    /// enabling DHCP service in the partner-down state. The server will first
+    /// send heartbeat to the partner to ensure that the communication is
+    /// re-established. If the communication remains broken, the server clears
+    /// this flag and enables DHCP service to continue the service.
+    bool sync_complete_notified_;
 };
 
 /// @brief Pointer to the @c HAService class.

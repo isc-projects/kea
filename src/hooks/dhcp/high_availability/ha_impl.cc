@@ -490,5 +490,11 @@ HAImpl::haResetHandler(hooks::CalloutHandle& callout_handle) {
     callout_handle.setArgument("response", response);
 }
 
+void
+HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
+    ConstElementPtr response = service_->processSyncCompleteNotify();
+    callout_handle.setArgument("response", response);
+}
+
 } // end of namespace isc::ha
 } // end of namespace isc
