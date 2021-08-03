@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -451,11 +451,15 @@ TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
 /// @param name new server's host name of the server
 /// @param ip new server's ip address
 /// @param port new server's port
+/// @param tsig_key_info pointer to the TSIGInfog key for this server.
+/// Defaults to an empty pointer, meaning this server has no key.
 ///
 /// @throw Underlying methods may throw.
 extern void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
                             const std::string& ip = TEST_DNS_SERVER_IP,
-                            const size_t port = TEST_DNS_SERVER_PORT);
+                            const size_t port = TEST_DNS_SERVER_PORT,
+                            const TSIGKeyInfoPtr&
+                            tsig_key_info = TSIGKeyInfoPtr());
 
 /// @brief Creates a hex text dump of the given data buffer.
 ///

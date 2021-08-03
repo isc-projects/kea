@@ -110,6 +110,7 @@ const SimpleDefaults D2SimpleParser::DDNS_DOMAIN_DEFAULTS = {
 const SimpleDefaults D2SimpleParser::DNS_SERVER_DEFAULTS = {
     { "hostname", Element::string, "" },
     { "port",     Element::integer, "53" },
+    { "key-name", Element::string, "" }
 };
 
 /// @}

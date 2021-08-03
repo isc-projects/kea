@@ -122,7 +122,8 @@ namespace d2 {
 ///        "key-name": "d2_key.tmark.org" ,
 ///        "dns-servers" :
 ///        [
-///          { "ip-address": "127.0.0.101" , "port": 100 }
+///          { "ip-address": "127.0.0.101" , "port": 100 ,
+///            "key-name": "d2_key.tmark.org" }
 ///        ]
 ///      }
 ///    ]
@@ -434,10 +435,17 @@ public:
     /// the default.)
     /// @param enabled is a flag that indicates whether this server is
     /// enabled for use. It defaults to true.
+    /// @param tsig_key_info pointer to the TSIGKeyInfo for the server's key
+    /// It defaults to an empty pointer, signifying the server has no key.
+    /// @param inherited_key is a flag that indicates whether the key was
+    /// inherited from the domain or not. It defaults to false i.e. not
+    /// inherited.
     DnsServerInfo(const std::string& hostname,
                   isc::asiolink::IOAddress ip_address,
                   uint32_t port = STANDARD_DNS_PORT,
-                  bool enabled=true);
+                  bool enabled = true,
+                  const TSIGKeyInfoPtr& tsig_key_info = TSIGKeyInfoPtr(),
+                  bool inherited_key = false);
 
     /// @brief Destructor
     virtual ~DnsServerInfo();
@@ -481,6 +489,20 @@ public:
         enabled_ = false;
     }
 
+    /// @brief Convenience method which returns the server's TSIG key name.
+    ///
+    /// @return returns the key name in an std::string. If server has no
+    /// TSIG key, the string will empty.
+    const std::string getKeyName() const;
+
+    /// @brief Getter which returns the server's TSIGKey info
+    ///
+    /// @return returns the pointer to the server storage.  If the server
+    /// is not configured to use TSIG the pointer will be empty.
+    const TSIGKeyInfoPtr& getTSIGKeyInfo() {
+        return (tsig_key_info_);
+    }
+
     /// @brief Returns a text representation for the server.
     std::string toText() const;
 
@@ -505,6 +527,14 @@ private:
     /// @param enabled is a flag that indicates whether this server is
     /// enabled for use. It defaults to true.
     bool enabled_;
+
+    /// @brief Pointer to domain's the TSIGKeyInfo.
+    /// Value is empty if the domain is not configured for TSIG.
+    TSIGKeyInfoPtr tsig_key_info_;
+
+    /// @brief Inherited key. When true the key was inherited from the domain,
+    /// when false the key was not inherited from the domain.
+    bool inherited_key_;
 };
 
 std::ostream&
@@ -533,11 +563,9 @@ public:
     ///
     /// @param name is the domain name of the domain.
     /// @param servers is the list of server(s) supporting this domain.
-    /// @param tsig_key_info pointer to the TSIGKeyInfo for the domain's key
-    /// It defaults to an empty pointer, signifying the domain has no key.
-    DdnsDomain(const std::string& name,
-               DnsServerInfoStoragePtr servers,
-               const TSIGKeyInfoPtr& tsig_key_info = TSIGKeyInfoPtr());
+    /// @param key_name is the TSIG key name of the domain.
+    DdnsDomain(const std::string& name, DnsServerInfoStoragePtr servers,
+               const std::string& key_name = "");
 
     /// @brief Destructor
     virtual ~DdnsDomain();
@@ -549,25 +577,21 @@ public:
         return (name_);
     }
 
-    /// @brief Convenience method which returns the domain's TSIG key name.
+    /// @brief Getter which returns the domain's TSIG key name.
+    ///
+    /// @note: TSIG key infos are in servers.
     ///
     /// @return returns the key name in an std::string. If domain has no
     /// TSIG key, the string will empty.
-    const std::string getKeyName() const;
+    const std::string getKeyName() const {
+        return (key_name_);
+    }
 
     /// @brief Getter which returns the domain's list of servers.
     ///
     /// @return returns the pointer to the server storage.
     const DnsServerInfoStoragePtr& getServers() {
         return (servers_);
-    }
-
-    /// @brief Getter which returns the domain's TSIGKey info
-    ///
-    /// @return returns the pointer to the server storage.  If the domain
-    /// is not configured to use TSIG the pointer will be empty.
-    const TSIGKeyInfoPtr& getTSIGKeyInfo() {
-        return (tsig_key_info_);
     }
 
     /// @brief Unparse a configuration object
@@ -582,9 +606,8 @@ private:
     /// @brief The list of server(s) supporting this domain.
     DnsServerInfoStoragePtr servers_;
 
-    /// @brief Pointer to domain's the TSIGKeyInfo.
-    /// Value is empty if the domain is not configured for TSIG.
-    TSIGKeyInfoPtr tsig_key_info_;
+    /// @brief The TSIG key name (empty when there is no key for the domain).
+    std::string key_name_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.
@@ -778,6 +801,7 @@ public:
     ///   3. Add the new TSIGKeyInfo instance to the key map
     ///
     /// @param key_list_config is the list of "tsig_key" elements to parse.
+    /// @param keys map of defined TSIG keys
     ///
     /// @return a map containing the TSIGKeyInfo instances
     TSIGKeyInfoMapPtr parse(data::ConstElementPtr key_list_config);
@@ -796,6 +820,8 @@ public:
     /// and returns it.
     ///
     /// @param server_config is the "dns-server" configuration to parse
+    /// @param domain_config the parent domain's configuration
+    /// @param keys map of defined TSIG keys
     ///
     /// @return a pointer to the newly created server instance
     ///
@@ -803,7 +829,9 @@ public:
     /// -# hostname is not blank, hostname is not yet supported
     /// -# ip_address is invalid
     /// -# port is 0
-    DnsServerInfoPtr parse(data::ConstElementPtr server_config);
+    DnsServerInfoPtr parse(data::ConstElementPtr server_config,
+                           data::ConstElementPtr domain_config,
+                           const TSIGKeyInfoMapPtr keys);
 };
 
 /// @brief Parser for a list of DnsServerInfos
@@ -811,7 +839,7 @@ public:
 /// This class parses a list of "dns-server" configuration elements.
 /// The DnsServerInfo instances are added
 /// to the given storage upon commit.
-class DnsServerInfoListParser : public data::SimpleParser{
+class DnsServerInfoListParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given list "dns-server"
     /// elements.
@@ -823,8 +851,12 @@ public:
     ///   2. Adds the server to the server list
     ///
     /// @param server_list_config is the list of "dns-server" elements to parse.
+    /// @param domain_config the parent domain's configuration
+    /// @param keys map of defined TSIG keys
     /// @return A pointer to the new, populated server list
-    DnsServerInfoStoragePtr parse(data::ConstElementPtr server_list_config);
+    DnsServerInfoStoragePtr parse(data::ConstElementPtr server_list_config,
+                                  data::ConstElementPtr domain_config,
+                                  const TSIGKeyInfoMapPtr keys);
 };
 
 /// @brief Parser for  DdnsDomain
@@ -891,8 +923,7 @@ public:
                                const TSIGKeyInfoMapPtr keys);
 };
 
-
-}; // end of isc::d2 namespace
-}; // end of isc namespace
+} // end of isc::d2 namespace
+} // end of isc namespace
 
 #endif // D2_CONFIG_H

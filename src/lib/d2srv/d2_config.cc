@@ -201,13 +201,26 @@ TSIGKeyInfo::toElement() const {
 
 // *********************** DnsServerInfo  *************************
 DnsServerInfo::DnsServerInfo(const std::string& hostname,
-                             isc::asiolink::IOAddress ip_address, uint32_t port,
-                             bool enabled)
-    :hostname_(hostname), ip_address_(ip_address), port_(port),
-    enabled_(enabled) {
+                             isc::asiolink::IOAddress ip_address,
+                             uint32_t port,
+                             bool enabled,
+                             const TSIGKeyInfoPtr& tsig_key_info,
+                             bool inherited_key)
+    : hostname_(hostname), ip_address_(ip_address), port_(port),
+      enabled_(enabled), tsig_key_info_(tsig_key_info),
+      inherited_key_(inherited_key) {
 }
 
 DnsServerInfo::~DnsServerInfo() {
+}
+
+const std::string
+DnsServerInfo::getKeyName() const {
+    if (tsig_key_info_) {
+        return (tsig_key_info_->getName());
+    }
+
+    return ("");
 }
 
 std::string
@@ -228,10 +241,13 @@ DnsServerInfo::toElement() const {
     result->set("ip-address", Element::create(ip_address_.toText()));
     // Set port
     result->set("port", Element::create(static_cast<int64_t>(port_)));
+    // Set key-name
+    if (tsig_key_info_ && !inherited_key_) {
+        result->set("key-name", Element::create(tsig_key_info_->getName()));
+    }
 
     return (result);
 }
-
 
 std::ostream&
 operator<<(std::ostream& os, const DnsServerInfo& server) {
@@ -243,21 +259,11 @@ operator<<(std::ostream& os, const DnsServerInfo& server) {
 
 DdnsDomain::DdnsDomain(const std::string& name,
                        DnsServerInfoStoragePtr servers,
-                       const TSIGKeyInfoPtr& tsig_key_info)
-    : name_(name), servers_(servers),
-      tsig_key_info_(tsig_key_info) {
+                       const std::string& key_name)
+    : name_(name), servers_(servers), key_name_(key_name) {
 }
 
 DdnsDomain::~DdnsDomain() {
-}
-
-const std::string
-DdnsDomain::getKeyName() const {
-    if (tsig_key_info_) {
-        return (tsig_key_info_->getName());
-    }
-
-    return ("");
 }
 
 ElementPtr
@@ -279,8 +285,8 @@ DdnsDomain::toElement() const {
         result->set("dns-servers", servers);
     }
     // Set key-name
-    if (tsig_key_info_) {
-        result->set("key-name", Element::create(tsig_key_info_->getName()));
+    if (!key_name_.empty()) {
+        result->set("key-name", Element::create(key_name_));
     }
 
     return (result);
@@ -477,11 +483,46 @@ TSIGKeyInfoListParser::parse(ConstElementPtr key_list) {
 // *********************** DnsServerInfoParser  *************************
 
 DnsServerInfoPtr
-DnsServerInfoParser::parse(ConstElementPtr server_config) {
+DnsServerInfoParser::parse(ConstElementPtr server_config,
+                           ConstElementPtr domain_config,
+                           const TSIGKeyInfoMapPtr keys) {
     std::string hostname = getString(server_config, "hostname");
     std::string ip_address = getString(server_config, "ip-address");
     uint32_t port = getInteger(server_config, "port");
+    std::string key_name = getString(server_config, "key-name");
     ConstElementPtr user_context = server_config->get("user-context");
+
+    // Key name is optional. If it is not blank, then find the key in the
+    // list of defined keys.
+    TSIGKeyInfoPtr tsig_key_info;
+    bool inherited_key = false;
+    if (key_name.empty()) {
+        std::string domain_key_name = getString(domain_config, "key-name");
+        if (!domain_key_name.empty()) {
+            key_name = domain_key_name;
+            inherited_key = true;
+        }
+    }
+    if (!key_name.empty()) {
+        if (keys) {
+            TSIGKeyInfoMap::iterator kit = keys->find(key_name);
+            if (kit != keys->end()) {
+                tsig_key_info = kit->second;
+            }
+        }
+
+        if (!tsig_key_info) {
+            if (inherited_key) {
+                isc_throw(D2CfgError, "DdnsDomain : specifies an "
+                          << "undefined key: " << key_name << " ("
+                          << getPosition("key-name", domain_config) << ")");
+            } else {
+                isc_throw(D2CfgError, "Dns Server : specifies an "
+                          << "undefined key: " << key_name << " ("
+                          << getPosition("key-name", server_config) << ")");
+            }
+        }
+    }
 
     // The configuration must specify one or the other.
     if (hostname.empty() == ip_address.empty()) {
@@ -512,7 +553,9 @@ DnsServerInfoParser::parse(ConstElementPtr server_config) {
             // Create an IOAddress from the IP address string given and then
             // create the DnsServerInfo.
             isc::asiolink::IOAddress io_addr(ip_address);
-            server_info.reset(new DnsServerInfo(hostname, io_addr, port));
+            server_info.reset(new DnsServerInfo(hostname, io_addr, port,
+                                                true, tsig_key_info,
+                                                inherited_key));
         } catch (const isc::asiolink::IOError& ex) {
             isc_throw(D2CfgError, "Dns Server : invalid IP address : "
                       << ip_address
@@ -531,12 +574,15 @@ DnsServerInfoParser::parse(ConstElementPtr server_config) {
 // *********************** DnsServerInfoListParser  *************************
 
 DnsServerInfoStoragePtr
-DnsServerInfoListParser::parse(ConstElementPtr server_list) {
+DnsServerInfoListParser::parse(ConstElementPtr server_list,
+                               ConstElementPtr domain_config,
+                               const TSIGKeyInfoMapPtr keys) {
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
     ConstElementPtr server_config;
     DnsServerInfoParser parser;
     BOOST_FOREACH(server_config, server_list->listValue()) {
-        DnsServerInfoPtr server = parser.parse(server_config);
+        DnsServerInfoPtr server =
+            parser.parse(server_config, domain_config, keys);
         servers->push_back(server);
     }
 
@@ -551,24 +597,6 @@ DdnsDomainPtr DdnsDomainParser::parse(ConstElementPtr domain_config,
     std::string key_name = getString(domain_config, "key-name");
     ConstElementPtr user_context = domain_config->get("user-context");
 
-    // Key name is optional. If it is not blank, then find the key in the
-    // list of defined keys.
-    TSIGKeyInfoPtr tsig_key_info;
-    if (!key_name.empty()) {
-        if (keys) {
-            TSIGKeyInfoMap::iterator kit = keys->find(key_name);
-            if (kit != keys->end()) {
-                tsig_key_info = kit->second;
-            }
-        }
-
-        if (!tsig_key_info) {
-            isc_throw(D2CfgError, "DdnsDomain : " << name
-                      << " specifies an undefined key: " << key_name
-                      << " (" << getPosition("key-name", domain_config) << ")");
-        }
-    }
-
     // Parse the list of DNS servers
     ConstElementPtr servers_config;
     try {
@@ -579,14 +607,15 @@ DdnsDomainPtr DdnsDomainParser::parse(ConstElementPtr domain_config,
     }
 
     DnsServerInfoListParser server_parser;
-    DnsServerInfoStoragePtr servers =  server_parser.parse(servers_config);
+    DnsServerInfoStoragePtr servers =
+        server_parser.parse(servers_config, domain_config, keys);
     if (servers->size() == 0) {
         isc_throw(D2CfgError, "DNS server list cannot be empty"
                     << servers_config->getPosition());
     }
 
     // Instantiate the new domain and add it to domain storage.
-    DdnsDomainPtr domain(new DdnsDomain(name, servers, tsig_key_info));
+    DdnsDomainPtr domain(new DdnsDomain(name, servers, key_name));
 
     // Add user-context
     if (user_context) {
@@ -640,5 +669,5 @@ DdnsDomainListMgrParser::parse(ConstElementPtr mgr_config,
     return(mgr);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

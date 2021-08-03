@@ -425,7 +425,8 @@ public:
     /// @param config element to parse
     virtual void parseElement(data::ConstElementPtr config) {
         DnsServerInfoParser parser;
-        server_ = parser.parse(config);
+        std::string domain = "{ \"key-name\": \"\" }";
+        server_ = parser.parse(config, Element::fromJSON(domain), {});
     }
 
     /// @brief Retains the DnsServerInfo created by a successful parsing
@@ -470,7 +471,8 @@ public:
     /// @param config element to parse
     virtual void parseElement(data::ConstElementPtr config) {
         DnsServerInfoListParser parser;
-        servers_ = parser.parse(config);
+        std::string domain = "{ \"key-name\": \"\" }";
+        servers_ = parser.parse(config, Element::fromJSON(domain), {});
     }
 
     /// @brief Retains the DnsServerInfos created by a successful parsing
@@ -977,7 +979,7 @@ TEST_F(DdnsDomainParserTest, invalidDomain) {
              "  \"dns-servers\" : [ "
              "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": 300 } ] } ";
-    PARSE_FAIL(config, "DdnsDomain : example.com specifies"
+    PARSE_FAIL(config, "DdnsDomain : specifies"
                 " an undefined key: d2_key.example.com (<string>:1:41)");
 }
 
@@ -1006,30 +1008,34 @@ TEST_F(DdnsDomainParserTest, validDomain) {
     // Verify the name and key_name values.
     EXPECT_EQ("example.com", domain_->getName());
     EXPECT_EQ("d2_key.example.com", domain_->getKeyName());
-    ASSERT_TRUE(domain_->getTSIGKeyInfo());
-    ASSERT_TRUE(domain_->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify that the server list exists and contains the correct number of
     // servers.
     const DnsServerInfoStoragePtr& servers = domain_->getServers();
-    EXPECT_TRUE(servers);
+    ASSERT_TRUE(servers);
     EXPECT_EQ(3, servers->size());
 
     // Fetch each server and verify its contents.
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.2", 200));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.3", 300));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify unparsing.
     ElementPtr json;
@@ -1094,27 +1100,36 @@ TEST_F(DdnsDomainListParserTest, validList) {
     EXPECT_EQ("example.com", domain->getName());
     EXPECT_EQ("d2_key.example.com", domain->getKeyName());
 
-    // Verify the TSIGKeyInfo name and that the actual key was created
-    ASSERT_TRUE(domain->getTSIGKeyInfo());
-    EXPECT_EQ(domain->getKeyName(), domain->getTSIGKeyInfo()->getName());
-    EXPECT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
-
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
-    EXPECT_TRUE(servers);
+    ASSERT_TRUE(servers);
     EXPECT_EQ(3, servers->size());
 
     DnsServerInfoPtr server = (*servers)[0];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.1", 100));
 
+    // Verify the TSIGKeyInfo name and that the actual key was created
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
+
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.2", 200));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.3", 300));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify second domain
     gotit = domains_->find("billcat.net");
@@ -1124,27 +1139,35 @@ TEST_F(DdnsDomainListParserTest, validList) {
     // Verify the name and key_name values of the second domain.
     EXPECT_EQ("billcat.net", domain->getName());
     EXPECT_EQ("d2_key.billcat.net", domain->getKeyName());
-    ASSERT_TRUE(domain->getTSIGKeyInfo());
-    EXPECT_EQ(domain->getKeyName(), domain->getTSIGKeyInfo()->getName());
-    EXPECT_TRUE(domain->getTSIGKeyInfo()->getTSIGKey());
 
     // Verify the each of second domain's servers
     servers = domain->getServers();
-    EXPECT_TRUE(servers);
-    servers->size();
+    ASSERT_TRUE(servers);
     EXPECT_EQ(3, servers->size());
 
     server = (*servers)[0];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.4", 400));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     server = (*servers)[1];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.5", 500));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 
     server = (*servers)[2];
-    EXPECT_TRUE(server);
+    ASSERT_TRUE(server);
     EXPECT_TRUE(checkServer(server, "", "127.0.0.6", 600));
+    ASSERT_TRUE(server->getTSIGKeyInfo());
+    EXPECT_EQ(domain->getKeyName(), server->getKeyName());
+    EXPECT_EQ(domain->getKeyName(), server->getTSIGKeyInfo()->getName());
+    EXPECT_TRUE(server->getTSIGKeyInfo()->getTSIGKey());
 }
 
 /// @brief Tests that a domain list configuration cannot contain duplicates.
@@ -1168,4 +1191,4 @@ TEST_F(DdnsDomainListParserTest, duplicateDomain) {
                "Duplicate domain specified:example.com (<string>:1:115)");
 }
 
-};
+}

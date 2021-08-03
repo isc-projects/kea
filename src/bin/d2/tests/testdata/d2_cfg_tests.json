@@ -878,7 +878,7 @@
 #------ "D2.forward-ddns.dhcp-ddns, key-name tests
 ,{
 "description" : "D2.forward-ddns, no matching key name",
-"logic-error" : "DdnsDomain : four.example.com. specifies an undefined key: no.such.key (<string>:1:104)",
+"logic-error" : "DdnsDomain : specifies an undefined key: no.such.key (<string>:1:104)",
 "data" :
     {
     "forward-ddns" :
@@ -1272,7 +1272,7 @@
 #------ "D2.reverse-ddns.dhcp-ddns, key-name tests
 ,{
 "description" : "D2.reverse-ddns, no matching key name",
-"logic-error" : "DdnsDomain : 2.0.192.in-addr.arpa. specifies an undefined key: no.such.key (<string>:1:126)",
+"logic-error" : "DdnsDomain : specifies an undefined key: no.such.key (<string>:1:126)",
 "data" :
     {
     "forward-ddns" : {},
