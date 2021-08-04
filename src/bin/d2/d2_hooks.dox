@@ -66,4 +66,17 @@ to the end of this list.
    considers the configuration is incorrect and rejects it using the error
    string as an error message.
 
+ @subsection d2HooksSelectKey select_key
+ - @b Arguments:
+   - name: @b current_server, type: isc::d2::DnsServerInfoPtr, direction: <b>in</b>
+   - name: @b tsig_key, type: isc::dns::TSIGKeyPtr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when the DNS server to send the
+   next DNS update was selected and a TSIG key to protect the DNS update
+   is looking for. Pointers to the selected DNS server and the current TSIG
+   key are provided. If a hook library wants to use another TSIG key the
+   pointer must be updated.
+
+ - <b>Next step status</b>: IF any callout sets the status to value different
+   from CONTINUE the selected server is skipped.
 */

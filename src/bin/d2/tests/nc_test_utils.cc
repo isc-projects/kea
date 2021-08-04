@@ -500,7 +500,7 @@ void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
                      const std::string& ip, const size_t port,
                      const TSIGKeyInfoPtr &tsig_key_info) {
     DnsServerInfoPtr server(new DnsServerInfo(name, asiolink::IOAddress(ip),
-                                              port, true, tsig_key_info, true));
+                                              port, true, tsig_key_info));
     domain->getServers()->push_back(server);
 }
 

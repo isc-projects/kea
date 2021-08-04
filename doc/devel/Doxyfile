@@ -898,7 +898,6 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/util \
                          ../../src/lib/util/encode \
                          ../../src/lib/util/io \
-                         ../../src/lib/util/random \
                          ../../src/lib/util/unittests \
                          ../../src/lib/yang \
                          .

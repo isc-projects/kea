@@ -10,10 +10,34 @@
 #include <d2srv/d2_log.h>
 #include <dns/qid_gen.h>
 #include <dns/rdata.h>
+#include <hooks/hooks.h>
+#include <hooks/hooks_manager.h>
 
 #include <sstream>
 
+using namespace isc::hooks;
 using namespace isc::util;
+
+namespace {
+
+/// Structure that holds registered hook indexes.
+struct NcTransHooks {
+    int hooks_index_select_key_;
+
+    /// Constructor that registers hook points for the D2 server.
+    NcTransHooks() {
+        hooks_index_select_key_ = HooksManager::registerHook("select_key");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+
+NcTransHooks Hooks;
+
+}
 
 namespace isc {
 namespace d2 {
@@ -437,32 +461,64 @@ NameChangeTransaction::initServerSelection(const DdnsDomainPtr& domain) {
 
 bool
 NameChangeTransaction::selectNextServer() {
-    if ((current_server_list_) &&
-        (next_server_pos_ < current_server_list_->size())) {
-        current_server_  = (*current_server_list_)[next_server_pos_];
-        // Toss out any previous response.
-        dns_update_response_.reset();
+    for (;;) {
+        if ((current_server_list_) &&
+            (next_server_pos_ < current_server_list_->size())) {
+            current_server_  = (*current_server_list_)[next_server_pos_];
+            // Toss out any previous response.
+            dns_update_response_.reset();
 
-        // Set the tsig_key to that of the current server..
-        TSIGKeyInfoPtr tsig_key_info = current_server_->getTSIGKeyInfo();
-        if (tsig_key_info) {
-            tsig_key_ = tsig_key_info->getTSIGKey();
-        } else {
-            tsig_key_.reset();
+            // Set the tsig_key to that of the current server..
+            if (!selectTSIGKey()) {
+                ++next_server_pos_;
+                continue;
+            }
+
+            // @todo  Protocol is set on DNSClient constructor.  We need
+            // to propagate a configuration value downward, probably starting
+            // at global, then domain, then server
+            // Once that is supported we need to add it here.
+            dns_client_.reset(new DNSClient(dns_update_response_ , this,
+                                            DNSClient::UDP));
+            ++next_server_pos_;
+            return (true);
         }
 
-        // @todo  Protocol is set on DNSClient constructor.  We need
-        // to propagate a configuration value downward, probably starting
-        // at global, then domain, then server
-        // Once that is supported we need to add it here.
-        dns_client_.reset(new DNSClient(dns_update_response_ , this,
-                                        DNSClient::UDP));
-        ++next_server_pos_;
-        return (true);
+        return (false);
+    }
+}
+
+bool
+NameChangeTransaction::selectTSIGKey() {
+    TSIGKeyInfoPtr tsig_key_info = current_server_->getTSIGKeyInfo();
+    if (tsig_key_info) {
+        tsig_key_ = tsig_key_info->getTSIGKey();
+    } else {
+        tsig_key_.reset();
     }
 
-    return (false);
+    // This hook point allows hooks libraries to overwrite the TSIG key.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_select_key_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("current_server", current_server_);
+        callout_handle->setArgument("tsig_key", tsig_key_);
+
+        HooksManager::callCallouts(Hooks.hooks_index_select_key_,
+                                   *callout_handle);
+
+        // This server is skipped not NEXT_STEP_CONTINUE status.
+        if (callout_handle->getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
+            return (false);
+        }
+
+        // Reread the TSIG key.
+        callout_handle->getArgument("tsig_key", tsig_key_);
+    }
+
+    return (true);
 }
+
 
 const DNSClientPtr&
 NameChangeTransaction::getDNSClient() const {

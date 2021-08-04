@@ -24,7 +24,7 @@ namespace {
 struct D2ProcessHooks {
     int hooks_index_d2_srv_configured_;
 
-    /// Constructor that registers hook points for the DHCPv4 server.
+    /// Constructor that registers hook points for the D2 server.
     D2ProcessHooks() {
         hooks_index_d2_srv_configured_ = HooksManager::registerHook("d2_srv_configured");
     }

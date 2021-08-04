@@ -438,14 +438,13 @@ public:
     /// @param tsig_key_info pointer to the TSIGKeyInfo for the server's key
     /// It defaults to an empty pointer, signifying the server has no key.
     /// @param inherited_key is a flag that indicates whether the key was
-    /// inherited from the domain or not. It defaults to false i.e. not
-    /// inherited.
+    /// inherited from the domain or not. It defaults to true i.e. inherited.
     DnsServerInfo(const std::string& hostname,
                   isc::asiolink::IOAddress ip_address,
                   uint32_t port = STANDARD_DNS_PORT,
                   bool enabled = true,
                   const TSIGKeyInfoPtr& tsig_key_info = TSIGKeyInfoPtr(),
-                  bool inherited_key = false);
+                  bool inherited_key = true);
 
     /// @brief Destructor
     virtual ~DnsServerInfo();
@@ -801,7 +800,6 @@ public:
     ///   3. Add the new TSIGKeyInfo instance to the key map
     ///
     /// @param key_list_config is the list of "tsig_key" elements to parse.
-    /// @param keys map of defined TSIG keys
     ///
     /// @return a map containing the TSIGKeyInfo instances
     TSIGKeyInfoMapPtr parse(data::ConstElementPtr key_list_config);

@@ -343,6 +343,14 @@ protected:
     /// servers from which to select.
     bool selectNextServer();
 
+    /// @brief Selects the TSIG key.
+    ///
+    /// This method uses the current server and the select_key callout.
+    /// When no TSIG key is selected the tsig_key_ pointer is null.
+    ///
+    /// @return False when the current server should be skipped.
+    bool selectTSIGKey();
+
     /// @brief Sets the update attempt count to the given value.
     ///
     /// @param value is the new value to assign.

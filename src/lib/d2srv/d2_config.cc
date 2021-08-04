@@ -495,13 +495,14 @@ DnsServerInfoParser::parse(ConstElementPtr server_config,
     // Key name is optional. If it is not blank, then find the key in the
     // list of defined keys.
     TSIGKeyInfoPtr tsig_key_info;
-    bool inherited_key = false;
+    bool inherited_key = true;
     if (key_name.empty()) {
         std::string domain_key_name = getString(domain_config, "key-name");
         if (!domain_key_name.empty()) {
             key_name = domain_key_name;
-            inherited_key = true;
         }
+    } else {
+        inherited_key = false;
     }
     if (!key_name.empty()) {
         if (keys) {
