@@ -213,7 +213,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    uint32_t getIndex() const { return ifindex_; }
+    int64_t getIndex() const { return ifindex_; }
 
     /// @brief Returns interface name.
     ///
@@ -400,7 +400,7 @@ protected:
     std::string name_;
 
     /// Interface index (a value that uniquely identifies an interface).
-    int ifindex_;
+    int64_t ifindex_;
 
     /// List of assigned addresses.
     AddressCollection addrs_;
@@ -487,7 +487,7 @@ public:
             boost::multi_index::hashed_unique<
                 // Use the interface index as the key.
                 boost::multi_index::const_mem_fun<
-                    Iface, uint32_t, &Iface::getIndex
+                    Iface, int64_t, &Iface::getIndex
                 >
             >,
             // Start definition of index #2.
