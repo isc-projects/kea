@@ -378,6 +378,12 @@ Lease Database Configuration
    The servers store their information independently, so each server can
    use a separate database or both servers can use the same database.
 
+.. note::
+
+   Kea requires the database timezone to match the system timezone.
+   For more details, see :ref:`mysql-database-create` and
+   :ref:`pgsql-database-create`.
+
 Lease database configuration is controlled through the
 Dhcp6/lease-database parameters. The database type must be set to
 "memfile", "mysql", "postgresql", or "cql", e.g.:
@@ -585,6 +591,12 @@ configuration file, although this leads to a restriction in ordering in
 the case of a host reservation addition; read-only stores must be
 configured after a (required) read-write store, or the addition will
 fail.
+
+.. note::
+
+   Kea requires the database timezone to match the system timezone.
+   For more details, see :ref:`mysql-database-create` and
+   :ref:`pgsql-database-create`.
 
 .. _hosts-databases-configuration6:
 

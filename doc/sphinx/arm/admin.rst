@@ -177,6 +177,40 @@ if the data will be stored in other backends.
 First-Time Creation of the MySQL Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Before preparing any Kea specific database and tables, the MySQL database
+must be configured to use the system timezone. Is is recommended to use UTC
+timezone for both the system and the MySQL database.
+
+To check the system timezone:
+
+   .. code-block:: console
+
+      date +%Z
+
+To check the MySQL timezone:
+
+   .. code-block:: mysql
+
+      mysql> SELECT @@system_time_zone;
+      mysql> SELECT @@global.time_zone;
+      mysql> SELECT @@session.time_zone;
+
+To configure the MySQL timezone for your server, please reffer to the
+installed version documentation.
+
+Usually the setting is configured in the [mysqld] section in /etc/mysql/my.cnf,
+/etc/mysql/mysql.cnf, /etc/mysql/mysqld.cnf or
+/etc/mysql/mysql.conf.d/mysqld.cnf
+
+   .. code-block:: ini
+
+      [mysqld]
+      # using default-time-zone
+      default-time-zone='+00:00'
+
+      # or using timezone
+      timezone='UTC'
+
 When setting up the MySQL database for the first time, the
 database area must be created within MySQL, and the MySQL user ID under
 which Kea will access the database must be set up. This needs to be done manually,
@@ -378,6 +412,33 @@ other database backends will be used.
 First-Time Creation of the PostgreSQL Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Before preparing any Kea specific database and tables, the PostgreSQL database
+must be configured to use the system timezone. Is is recommended to use UTC
+timezone for both the system and the PostgreSQL database.
+
+To check the system timezone:
+
+   .. code-block:: console
+
+      date +%Z
+
+To check the PostgreSQL timezone:
+
+   .. code-block:: psql
+
+      postgres=# show timezone;
+      postgres=# SELECT * FROM pg_timezone_names WHERE name = current_setting('TIMEZONE');
+
+To configure the PostgreSQL timezone for your server, please reffer to the
+installed version documentation.
+
+Usually the setting is configured in the postgresql.conf with the varying
+version path /etc/postgresql/<version>/main/postgresql.conf.
+
+   .. code-block:: ini
+
+      timezone = 'UTC'
+
 The first task is to create both the database and the user under
 which the servers will access it. A number of steps are required:
 
@@ -460,8 +521,8 @@ which the servers will access it. A number of steps are required:
    the appropriate entries added to PostgreSQL's pg_hba.conf file. This
    file is normally located in the primary data directory for the
    PostgreSQL server. The precise path may vary depending on the
-   operating system and version, but the default location for PostgreSQL
-   9.3 on Centos 6.5 is: ``/var/lib/pgsql/9.3/data/pg_hba.conf``.
+   operating system and version, but the default location for PostgreSQL is
+   ``/etc/postgresql/*/main/postgresql.conf``.
 
    Assuming Kea is running on the same host as PostgreSQL, adding lines
    similar to the following should be sufficient to provide
