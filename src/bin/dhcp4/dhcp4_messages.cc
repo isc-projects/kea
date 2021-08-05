@@ -62,6 +62,7 @@ extern const isc::log::MessageID DHCP4_DHCP4O6_RECEIVING = "DHCP4_DHCP4O6_RECEIV
 extern const isc::log::MessageID DHCP4_DHCP4O6_RESPONSE_DATA = "DHCP4_DHCP4O6_RESPONSE_DATA";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION = "DHCP4_DYNAMIC_RECONFIGURATION";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL = "DHCP4_DYNAMIC_RECONFIGURATION_FAIL";
+extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS";
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME = "DHCP4_EMPTY_HOSTNAME";
 extern const isc::log::MessageID DHCP4_FLEX_ID = "DHCP4_FLEX_ID";
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN = "DHCP4_GENERATE_FQDN";
@@ -216,6 +217,7 @@ const char* values[] = {
     "DHCP4_DHCP4O6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",
     "DHCP4_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
+    "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
     "DHCP4_FLEX_ID", "flexible identifier generated for incoming packet: %1",
     "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be generated for the client",

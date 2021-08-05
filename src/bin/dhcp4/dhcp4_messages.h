@@ -63,6 +63,7 @@ extern const isc::log::MessageID DHCP4_DHCP4O6_RECEIVING;
 extern const isc::log::MessageID DHCP4_DHCP4O6_RESPONSE_DATA;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL;
+extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME;
 extern const isc::log::MessageID DHCP4_FLEX_ID;
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN;

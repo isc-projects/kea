@@ -60,6 +60,7 @@ extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVING = "DHCP6_DHCP4O6_RECEIV
 extern const isc::log::MessageID DHCP6_DHCP4O6_SEND_FAIL = "DHCP6_DHCP4O6_SEND_FAIL";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION = "DHCP6_DYNAMIC_RECONFIGURATION";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL = "DHCP6_DYNAMIC_RECONFIGURATION_FAIL";
+extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS";
 extern const isc::log::MessageID DHCP6_FLEX_ID = "DHCP6_FLEX_ID";
 extern const isc::log::MessageID DHCP6_HANDLE_SIGNAL_EXCEPTION = "DHCP6_HANDLE_SIGNAL_EXCEPTION";
 extern const isc::log::MessageID DHCP6_HOOKS_LIBS_RELOAD_FAIL = "DHCP6_HOOKS_LIBS_RELOAD_FAIL";
@@ -215,6 +216,7 @@ const char* values[] = {
     "DHCP6_DHCP4O6_SEND_FAIL", "failed to send DHCPv4o6 packet: %1",
     "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
+    "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP6_FLEX_ID", "flexible identifier generated for incoming packet: %1",
     "DHCP6_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
     "DHCP6_HOOKS_LIBS_RELOAD_FAIL", "reload of hooks libraries failed",

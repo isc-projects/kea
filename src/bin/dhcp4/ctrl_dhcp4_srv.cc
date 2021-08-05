@@ -257,7 +257,9 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
     std::string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
     try {
         LOG_INFO(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION).arg(file);
-        return (loadConfigFile(file));
+        auto result = loadConfigFile(file);
+        LOG_INFO(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS).arg(file);
+        return (result);
     } catch (const std::exception& ex) {
         // Log the unsuccessful reconfiguration. The reason for failure
         // should be already logged. Don't rethrow an exception so as
