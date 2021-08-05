@@ -999,6 +999,77 @@ def _install_gtest_sources():
         os.unlink('/tmp/gtest.tar.gz')
 
 
+def _install_libyang_from_sources():
+    """Install libyang from sources."""
+    for prefix in ['/usr', '/usr/local']:
+        if os.path.exists('%s/include/libyang/libyang.h' % prefix):
+            return
+
+    execute('rm -rf /tmp/libyang')
+    try:
+        execute('git clone https://github.com/CESNET/libyang.git /tmp/libyang')
+        execute('git checkout v1.0.240', cwd='/tmp/libyang')
+        execute('mkdir /tmp/libyang/build')
+        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/libyang/build')
+        execute('make -j $(nproc || gnproc)', cwd='/tmp/libyang/build')
+        execute('sudo make install', cwd='/tmp/libyang/build')
+    finally:
+        execute('rm -rf /tmp/libyang')
+
+
+def _install_sysrepo_from_sources():
+    """Install sysrepo from sources."""
+    for prefix in ['/usr', '/usr/local']:
+        if os.path.exists('%s/include/sysrepo.h' % prefix):
+            return
+
+    # sysrepo is picky about the libyang version it uses. If the wrong version
+    # is used, you'll get an error like this:
+    # Could NOT find LibYANG: Found unsuitable version "1.10.7", but required is
+    # at least "1.10.29" (found /usr/lib/libyang.so)
+    # Let's adjust the sysrepo version based on what libyang version we
+    # have available. This is a dictionary of sysrepo versions indexed by
+    # libyang versions:
+    versions = {
+        '1.6.5': '1.4.2',
+        '1.7.9': '1.4.66',
+        '1.9.0': '1.4.70',
+        '1.9.2': '1.4.70',  # fedora 33
+        '1.9.11': '1.4.122',
+        '1.10.7': '1.4.122',  # alpine 3.13
+        '1.10.17': '1.4.122',  # fedora 34
+        '1.10.29': '1.4.140',
+        '1.10.240': '1.4.140',
+    }
+
+    # Retrieve libyang version and find the respective sysrepo version.
+    for prefix in ['/usr', '/usr/local']:
+        _, libyang_version = execute(
+            ''' cat %s/include/libyang/libyang.h 2>/dev/null | grep '#define LY_VERSION ' | cut -d ' ' -f 3 | sed 's/"//g' ''' % prefix,
+            capture=True,
+        )
+        if len(libyang_version) > 0:
+            libyang_version = libyang_version.rstrip()
+            break
+    if libyang_version in versions:
+        sysrepo_version = versions[libyang_version]
+    else:
+        # Let's try the latest v1.x version. If it complains, please add the
+        # right version pair to the dictionary above.
+        sysrepo_version = '1.4.140'
+
+    execute('rm -rf /tmp/sysrepo')
+    try:
+        execute('git clone https://github.com/sysrepo/sysrepo.git /tmp/sysrepo')
+        execute('git checkout v%s' % sysrepo_version, cwd='/tmp/sysrepo')
+        execute('mkdir /tmp/sysrepo/build')
+        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/sysrepo/build')
+        execute('make -j $(nproc || gnproc)', cwd='/tmp/sysrepo/build')
+        execute('sudo make install', cwd='/tmp/sysrepo/build')
+    finally:
+        execute('rm -rf /tmp/sysrepo')
+
+
 def _get_local_timezone():
     _, output = execute('''
       # timedatectl
@@ -1270,8 +1341,12 @@ def prepare_system_local(features, check_times):
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
+    # Actions decided before installing packages, but run afterwards
+    deferred_functions = []
+
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s', system, revision)
+
 
     # prepare fedora
     if system == 'fedora':
@@ -1303,6 +1378,10 @@ def prepare_system_local(features, check_times):
 
         if 'ccache' in features:
             packages.extend(['ccache'])
+
+        if 'netconf' in features:
+            packages.extend(['cmake', 'libyang', 'libyang-devel', 'libyang-cpp', 'libyang-cpp-devel'])
+            deferred_functions.append(_install_sysrepo_from_sources)
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -1346,6 +1425,21 @@ def prepare_system_local(features, check_times):
         if 'ccache' in features:
             packages.extend(['ccache'])
 
+        if 'netconf' in features:
+            # CentOS 8+ systems have the libyang package, but they are missing
+            # libyang-cpp which results in this error when building sysrepo:
+            # "Required libyang C++ bindings not found!"
+            # So until it is added, install libyang from sources.
+            packages.extend(['cmake', 'pcre-devel'])
+            deferred_functions.extend([
+                _install_libyang_from_sources,
+                _install_sysrepo_from_sources,
+            ])
+
+        if 'unittest' in features:
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
+
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
@@ -1353,9 +1447,6 @@ def prepare_system_local(features, check_times):
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx==3.5.4 sphinx-rtd-theme==0.5.2',
                     env=env, timeout=120, check_times=check_times)
-
-        if 'unittest' in features:
-            _install_gtest_sources()
 
         if 'cql' in features:
             _install_cassandra_rpm(system, revision, env, check_times)
@@ -1384,10 +1475,22 @@ def prepare_system_local(features, check_times):
         if 'ccache' in features:
             packages.extend(['ccache'])
 
-        install_pkgs(packages, env=env, timeout=120, check_times=check_times)
+        if 'netconf' in features:
+            # RHEL 8+ systems have the libyang package, but they are missing
+            # libyang-cpp which results in this error when building sysrepo:
+            # "Required libyang C++ bindings not found!"
+            # So until it is added, install libyang from sources.
+            packages.extend(['cmake', 'pcre-devel'])
+            deferred_functions.extend([
+                _install_libyang_from_sources,
+                _install_sysrepo_from_sources,
+            ])
 
         if 'unittest' in features:
-            _install_gtest_sources()
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
+
+        install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
         if 'cql' in features:
             _install_cassandra_rpm(system, revision, env, check_times)
@@ -1411,7 +1514,7 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
             packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
-            if revision >= '20.04':
+            if 20.04 <= float(revision):
                 packages.extend(['dh-python'])
 
         if 'mysql' in features:
@@ -1435,6 +1538,18 @@ def prepare_system_local(features, check_times):
         if 'ccache' in features:
             packages.extend(['ccache'])
 
+        if 'netconf' in features:
+            if float(revision) <= 20.04:
+                packages.extend(['cmake', 'libpcre3-dev'])
+                deferred_functions.append(_install_libyang_from_sources)
+            else:
+                packages.extend(['libyang-dev', 'libyang-cpp-dev'])
+            if float(revision) <= 20.10:
+                packages.extend(['cmake', 'libpcre3-dev'])
+                deferred_functions.append(_install_sysrepo_from_sources)
+            else:
+                packages.extend(['libsysrepo-dev', 'libsysrepo-cpp-dev'])
+
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
@@ -1453,6 +1568,16 @@ def prepare_system_local(features, check_times):
                 _install_gtest_sources()
             else:
                 packages.append('googletest')
+
+        if 'netconf' in features:
+            if int(revision) <= 10:
+                packages.append(['cmake', 'libpcre3-dev'])
+                deferred_functions.extend([
+                    _install_libyang_from_sources,
+                    _install_sysrepo_from_sources,
+                ])
+            else:
+                packages.extend(['libyang-dev', 'libyang-cpp-dev', 'libsysrepo-dev', 'libsysrepo-cpp-dev'])
 
         if 'docs' in features:
             if revision == '8':
@@ -1509,7 +1634,10 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
-            packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
+            if float(revision.split('.')[0]) < 12.0:
+                packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
@@ -1531,6 +1659,17 @@ def prepare_system_local(features, check_times):
 
         if 'ccache' in features:
             packages.extend(['ccache'])
+
+        if 'netconf' in features:
+            # FreeBSD systems have the libyang package, but they are missing
+            # libyang-cpp which results in this error when building sysrepo:
+            # "Required libyang C++ bindings not found!"
+            # So until it is added, install libyang from sources.
+            packages.append('cmake')
+            deferred_functions.extend([
+                _install_libyang_from_sources,
+                _install_sysrepo_from_sources,
+            ])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
@@ -1561,6 +1700,17 @@ def prepare_system_local(features, check_times):
 
         if 'unittest' in features:
             _install_gtest_sources()
+
+        if 'netconf' in features:
+            # Alpine systems have the libyang-dev package, but they are missing
+            # libyang-cpp-dev which results in this error when building sysrepo:
+            # "Required libyang C++ bindings not found!"
+            # So until it is added, install libyang from sources.
+            packages.append('cmake')
+            deferred_functions.extend([
+                _install_libyang_from_sources,
+                _install_sysrepo_from_sources,
+            ])
 
         if 'mysql' in features:
             packages.extend(['mariadb-dev', 'mariadb', 'mariadb-client'])
@@ -1604,6 +1754,10 @@ def prepare_system_local(features, check_times):
 
     else:
         raise NotImplementedError('no implementation for %s' % system)
+
+    # Packages required by these functions have been installed. Now call them.
+    for f in deferred_functions:
+        f()
 
     if 'mysql' in features:
         _configure_mysql(system, revision, features)
@@ -1713,9 +1867,23 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --enable-shell'
     if 'perfdhcp' in features:
         cmd += ' --enable-perfdhcp'
+    if 'netconf' in features:
+        cmd += ' --with-libyang --with-sysrepo'
 
     # do ./configure
     execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
+
+    if 'netconf' in features:
+        # Make sure sysrepoctl can find its libraries. Some systems don't look
+        # in /usr/local.
+        if 'LD_LIBRARY_PATH' not in env:
+            env['LD_LIBRARY_PATH'] = ''
+        if len(env['LD_LIBRARY_PATH']):
+            env['LD_LIBRARY_PATH'] += ':'
+        env['LD_LIBRARY_PATH'] += '/usr/local/lib:/usr/local/lib64'
+
+        # ./configure has created reinstall.sh from reinstall.sh.in. Call it.
+        execute('./src/share/yang/modules/utils/reinstall.sh', cwd=src_path, env=env)
 
     # estimate number of processes (jobs) to use in compilation if jobs are not provided
     if jobs == 0:
@@ -2232,7 +2400,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
 ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
-                'radius', 'gssapi', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
+                'radius', 'gssapi', 'netconf', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
 
 
 def parse_args():
