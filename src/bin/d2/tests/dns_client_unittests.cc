@@ -34,7 +34,7 @@ namespace ph = std::placeholders;
 namespace {
 
 const char* TEST_ADDRESS = "127.0.0.1";
-const uint16_t TEST_PORT = 5301;
+const uint16_t TEST_PORT = 5381;
 const size_t MAX_SIZE = 1024;
 const long TEST_TIMEOUT = 5 * 1000;
 /// @brief Test Fixture class
@@ -357,7 +357,7 @@ public:
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
         // Once socket is created, we can post an IO request to receive some
-        // a packet from this socket. This is asynchronous operation and
+        // packet from this socket. This is asynchronous operation and
         // nothing is received until another IO request to send a query is
         // posted and the run() is invoked on this IO. A callback function is
         // attached to this asynchronous read. This callback function requires
