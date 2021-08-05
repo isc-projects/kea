@@ -1428,7 +1428,7 @@ public:
     PgSqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
-    ~PgSqlHostDataSourceImpl() = default;
+    ~PgSqlHostDataSourceImpl();
 
     /// @brief Attempts to reconnect the server to the host DB backend manager.
     ///
@@ -2284,6 +2284,9 @@ PgSqlHostDataSourceImpl::createContext() const {
     return (ctx);
 }
 
+PgSqlHostDataSourceImpl::~PgSqlHostDataSourceImpl() {
+}
+
 bool
 PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     MultiThreadingCriticalSection cs;
@@ -2562,6 +2565,9 @@ PgSqlHostDataSourceImpl::checkReadOnly(PgSqlHostContextPtr& ctx) const {
 
 PgSqlHostDataSource::PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new PgSqlHostDataSourceImpl(parameters)) {
+}
+
+PgSqlHostDataSource::~PgSqlHostDataSource() {
 }
 
 DatabaseConnection::ParameterMap

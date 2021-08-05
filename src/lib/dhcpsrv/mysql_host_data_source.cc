@@ -2067,7 +2067,7 @@ public:
     MySqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
-    ~MySqlHostDataSourceImpl() = default;
+    ~MySqlHostDataSourceImpl();
 
     /// @brief Attempts to reconnect the server to the host DB backend manager.
     ///
@@ -2849,6 +2849,9 @@ MySqlHostDataSourceImpl::createContext() const {
     return (ctx);
 }
 
+MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
+}
+
 bool
 MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     MultiThreadingCriticalSection cs;
@@ -3154,6 +3157,9 @@ MySqlHostDataSourceImpl::checkReadOnly(MySqlHostContextPtr& ctx) const {
 
 MySqlHostDataSource::MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new MySqlHostDataSourceImpl(parameters)) {
+}
+
+MySqlHostDataSource::~MySqlHostDataSource() {
 }
 
 DatabaseConnection::ParameterMap

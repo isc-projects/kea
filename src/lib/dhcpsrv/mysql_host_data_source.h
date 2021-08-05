@@ -68,7 +68,7 @@ public:
     /// @brief Virtual destructor.
     ///
     /// Releases prepared MySQL statements used by the backend.
-    virtual ~MySqlHostDataSource() = default;
+    virtual ~MySqlHostDataSource();
 
     /// @brief Return backend parameters
     ///

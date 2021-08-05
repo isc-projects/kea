@@ -73,7 +73,7 @@ public:
     ///
     /// Frees database resources and closes the database connection through
     /// the destruction of member impl_.
-    virtual ~PgSqlHostDataSource() = default;
+    virtual ~PgSqlHostDataSource();
 
     /// @brief Return backend parameters
     ///
