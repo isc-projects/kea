@@ -965,6 +965,7 @@ TEST_F(IfaceMgrTest, getIfaceByPkt) {
     pkt6->setIndex(ifacemgr.getIface("eth0")->getIndex() + 1);
     iface = ifacemgr.getIface(pkt6);
     ASSERT_TRUE(iface);
+    EXPECT_TRUE(pkt6->indexSet());
 
     // Index has precedence when both name and index are available.
     EXPECT_EQ("eth1", iface->getName());
@@ -982,6 +983,18 @@ TEST_F(IfaceMgrTest, getIfaceByPkt) {
     pkt6->setIndex(3);
     iface = ifacemgr.getIface(pkt6);
     ASSERT_FALSE(iface);
+
+    // Test that resetting the index is verifiable.
+    pkt4->resetIndex();
+    EXPECT_FALSE(pkt4->indexSet());
+    pkt6->resetIndex();
+    EXPECT_FALSE(pkt6->indexSet());
+
+    // Test that you can also reset the index via setIndex().
+    pkt4->setIndex(-1);
+    EXPECT_FALSE(pkt4->indexSet());
+    pkt6->setIndex(-1);
+    EXPECT_FALSE(pkt6->indexSet());
 }
 
 // Test that the IPv4 address can be retrieved for the interface.
