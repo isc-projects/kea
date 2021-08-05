@@ -2271,6 +2271,12 @@ client_class_param: client_class_name
                   | option_data_list
                   | user_context
                   | comment
+                  | preferred_lifetime
+                  | min_preferred_lifetime
+                  | max_preferred_lifetime
+                  | valid_lifetime
+                  | min_valid_lifetime
+                  | max_valid_lifetime
                   | unknown_map_entry
                   ;
 

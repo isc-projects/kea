@@ -22,7 +22,25 @@
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
-                "test": "member('HA_server1')"
+                "test": "member('HA_server1')",
+
+                // Class valid lifetime.
+                "valid-lifetime": 6000,
+
+                // Class min valid lifetime.
+                "min-valid-lifetime": 4000,
+
+                // Class max valid lifetime.
+                "max-valid-lifetime": 8000,
+
+                // Class preferred lifetime.
+                "preferred-lifetime": 7000,
+
+                // Class min preferred lifetime.
+                "min-preferred-lifetime": 5000,
+
+                // Class max preferred lifetime.
+                "max-preferred-lifetime": 9000
             },
             {
                 // Second class name.

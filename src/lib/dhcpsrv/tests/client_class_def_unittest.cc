@@ -83,6 +83,7 @@ TEST(ClientClassDef, copyConstruction) {
     cclass->setSname("ufo");
     cclass->setFilename("ufo.efi");
     cclass->setValid(Triplet<uint32_t>(10, 20, 30));
+    cclass->setPreferred(Triplet<uint32_t>(11, 21, 31));
 
     // Copy the client class.
     boost::scoped_ptr<ClientClassDef> cclass_copy;
@@ -105,6 +106,9 @@ TEST(ClientClassDef, copyConstruction) {
     EXPECT_EQ(cclass->getValid().get(), cclass_copy->getValid().get());
     EXPECT_EQ(cclass->getValid().getMin(), cclass_copy->getValid().getMin());
     EXPECT_EQ(cclass->getValid().getMax(), cclass_copy->getValid().getMax());
+    EXPECT_EQ(cclass->getPreferred().get(), cclass_copy->getPreferred().get());
+    EXPECT_EQ(cclass->getPreferred().getMin(), cclass_copy->getPreferred().getMin());
+    EXPECT_EQ(cclass->getPreferred().getMax(), cclass_copy->getPreferred().getMax());
 
     // Ensure that the option was copied into a new structure.
     ASSERT_TRUE(cclass_copy->getCfgOption());

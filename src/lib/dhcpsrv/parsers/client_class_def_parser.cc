@@ -205,6 +205,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     // Parse valid lifetime triplet.
     Triplet<uint32_t> valid_lft = parseIntTriplet(class_def_cfg, "valid-lifetime");
 
+    Triplet<uint32_t> preferred_lft;
+    if (family != AF_INET) {
+        // Parse preferred lifetime triplet.
+        preferred_lft = parseIntTriplet(class_def_cfg, "preferred-lifetime");
+    }
+
     // Sanity checks on built-in classes
     for (auto bn : builtinNames) {
         if (name == bn) {
@@ -232,7 +238,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     try {
         class_dictionary->addClass(name, match_expr, test, required,
                                    depend_on_known, options, defs,
-                                   user_context, next_server, sname, filename, valid_lft);
+                                   user_context, next_server, sname, filename,
+                                   valid_lft, preferred_lft);
     } catch (const std::exception& ex) {
         std::ostringstream s;
         s << "Can't add class: " << ex.what();
@@ -257,7 +264,11 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                       "test",
                                                       "option-data",
                                                       "user-context",
-                                                      "only-if-required" };
+                                                      "only-if-required",
+                                                      "valid-lifetime",
+                                                      "min-valid-lifetime",
+                                                      "max-valid-lifetime" };
+
 
     // The v4 client class supports additional parameters.
     static std::set<std::string> supported_params_v4 = { "option-def",
@@ -265,12 +276,17 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                          "server-hostname",
                                                          "boot-file-name" };
 
+    // The v6 client class supports additional parameters.
+    static std::set<std::string> supported_params_v6 = { "preferred-lifetime",
+                                                         "min-preferred-lifetime",
+                                                         "max-preferred-lifetime" };
+
     // Iterate over the specified parameters and check if they are all supported.
     for (auto name_value_pair : class_def_cfg->mapValue()) {
         if ((supported_params.count(name_value_pair.first) > 0) ||
-            ((family == AF_INET) && (supported_params_v4.count(name_value_pair.first) > 0))) {
+            ((family == AF_INET) && (supported_params_v4.count(name_value_pair.first) > 0)) ||
+            ((family != AF_INET) && (supported_params_v6.count(name_value_pair.first) > 0))) {
             continue;
-
         } else {
             isc_throw(DhcpConfigError, "unsupported client class parameter '"
                       << name_value_pair.first << "'");

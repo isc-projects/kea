@@ -5238,6 +5238,262 @@ TEST_F(AllocEngine6Test, renewCacheHostname6) {
     detailCompareLease(lease, from_mgr);
 }
 
+// Verifies that AllocEngine::getLifetimes6() returns the appropriate
+// valid lifetime value based on the context content.
+TEST_F(AllocEngine6Test, getValidLifetime) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Let's make three classes, two with valid-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = 
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+
+    ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));
+    Triplet<uint32_t> valid_one(50, 100, 150);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("valid_two", ExpressionPtr()));
+    Triplet<uint32_t>valid_two(200, 250, 300);
+    class_def->setValid(valid_two);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("valid_unspec", ExpressionPtr()));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setValid(Triplet<uint32_t>(500, 1000, 1500));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t exp_valid_;                // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "no classes, no hint",
+            {},
+            0,
+            subnet_->getValid()
+        },
+        {
+            "no classes, hint",
+            {},
+            subnet_->getValid().getMin() + 50,
+            subnet_->getValid().getMin() + 50
+        },
+        {
+            "no classes, hint too small",
+            {},
+            subnet_->getValid().getMin() - 50,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, hint too big",
+            {},
+            subnet_->getValid().getMax() + 50,
+            subnet_->getValid().getMax()
+        },
+        {
+            "class unspecified, no hint",
+            { "valid_unspec" },
+            0,
+            subnet_->getValid()
+        },
+        {
+            "from last class, no hint",
+            { "valid_unspec", "valid_one" },
+            0,
+            valid_one.get()
+        },
+        {
+            "from first class, no hint",
+            { "valid_two", "valid_one" },
+            0,
+            valid_two.get()
+        },
+        {
+            "class plus hint",
+            { "valid_one" },
+            valid_one.getMin() + 25,
+            valid_one.getMin() + 25
+        },
+        {
+            "class plus hint too small",
+            { "valid_one" },
+            valid_one.getMin() - 25,
+            valid_one.getMin()
+        },
+        {
+            "class plus hint too big",
+            { "valid_one" },
+            valid_one.getMax() + 25,
+            valid_one.getMax()
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
+                                            Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
+            // Add client classes (if any)
+            for (auto class_name : scenario.classes_) {
+                ctx.query_->addClass(class_name);
+            }
+
+            // Add hint
+            ctx.currentIA().iaid_ = iaid_;
+
+            // prefix,prefixlen, preferred, valid
+            ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
+
+            Lease6Ptr lease;
+            ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_);
+        }
+    }
+}
+
+// Verifies that AllocEngine::getLifetimes6() returns the appropriate
+// preferred lifetime value based on the context content.
+TEST_F(AllocEngine6Test, getPreferredLifetime) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Let's make three classes, two with preferred-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary =
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+
+    ClientClassDefPtr class_def(new ClientClassDef("preferred_one", ExpressionPtr()));
+    Triplet<uint32_t> preferred_one(50, 100, 150);
+    class_def->setPreferred(preferred_one);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("preferred_two", ExpressionPtr()));
+    Triplet<uint32_t>preferred_two(200, 250, 300);
+    class_def->setPreferred(preferred_two);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("preferred_unspec", ExpressionPtr()));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setPreferred(Triplet<uint32_t>(500, 1000, 1500));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t exp_preferred_;                // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "no classes, no hint",
+            {},
+            0,
+            subnet_->getPreferred()
+        },
+        {
+            "no classes, hint",
+            {},
+            subnet_->getPreferred().getMin() + 50,
+            subnet_->getPreferred().getMin() + 50
+        },
+        {
+            "no classes, hint too small",
+            {},
+            subnet_->getPreferred().getMin() - 50,
+            subnet_->getPreferred().getMin()
+        },
+        {
+            "no classes, hint too big",
+            {},
+            subnet_->getPreferred().getMax() + 50,
+            subnet_->getPreferred().getMax()
+        },
+        {
+            "class unspecified, no hint",
+            { "preferred_unspec" },
+            0,
+            subnet_->getPreferred()
+        },
+        {
+            "from last class, no hint",
+            { "preferred_unspec", "preferred_one" },
+            0,
+            preferred_one.get()
+        },
+        {
+            "from first class, no hint",
+            { "preferred_two", "preferred_one" },
+            0,
+            preferred_two.get()
+        },
+        {
+            "class plus hint",
+            { "preferred_one" },
+            preferred_one.getMin() + 25,
+            preferred_one.getMin() + 25
+        },
+        {
+            "class plus hint too small",
+            { "preferred_one" },
+            preferred_one.getMin() - 25,
+            preferred_one.getMin()
+        },
+        {
+            "class plus hint too big",
+            { "preferred_one" },
+            preferred_one.getMax() + 25,
+            preferred_one.getMax()
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
+                                            Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
+            // Add client classes (if any)
+            for (auto class_name : scenario.classes_) {
+                ctx.query_->addClass(class_name);
+            }
+
+            // Add hint
+            ctx.currentIA().iaid_ = iaid_;
+
+            // prefix,prefixlen, preferred, preferred
+            ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
+
+            Lease6Ptr lease;
+            ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->preferred_lft_, scenario.exp_preferred_);
+        }
+    }
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

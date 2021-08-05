@@ -1906,6 +1906,64 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     return (expired);
 }
 
+void
+AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& valid) {
+    // If the triplets are specified in one of our classes use it.
+    // We use the first one we find for each lifetime.
+    Triplet<uint32_t> candidate_preferred;
+    Triplet<uint32_t> candidate_valid;
+    const ClientClasses classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        // Let's get class definitions
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+
+        // Iterate over the assigned class defintions.
+        int cnt = 0;
+        for (ClientClasses::const_iterator name = classes.cbegin();
+             name != classes.cend() && cnt < 2; ++name) {
+            ClientClassDefPtr cl = dict->findClass(*name);
+            if (candidate_preferred.unspecified() &&
+                (cl && (!cl->getPreferred().unspecified()))) {
+                candidate_preferred = cl->getPreferred();
+                ++cnt;
+            }
+
+            if (candidate_valid.unspecified() &&
+                (cl && (!cl->getValid().unspecified()))) {
+                candidate_valid = cl->getValid();
+                ++cnt;
+            }
+        }
+    }
+
+    // If no classes specified preferred lifetime, get it from the subnet.
+    if (!candidate_preferred) {
+        candidate_preferred = ctx.subnet_->getPreferred();
+    }
+
+    // If no classes specified valid lifetime, get it from the subnet.
+    if (!candidate_valid) {
+        candidate_valid = ctx.subnet_->getValid();
+    }
+
+    // Set the outbound parameters to the values we have so far.
+    preferred = candidate_preferred;
+    valid = candidate_valid;
+
+    // If client requested either value, use the requested value(s) bounded by
+    // the candidate triplet(s).
+    if (!ctx.currentIA().hints_.empty()) {
+        if (ctx.currentIA().hints_[0].getPreferred()) {
+            preferred = candidate_preferred.get(ctx.currentIA().hints_[0].getPreferred());
+        }
+
+        if (ctx.currentIA().hints_[0].getValid()) {
+            valid = candidate_valid.get(ctx.currentIA().hints_[0].getValid());
+        }
+    }
+}
+
 Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     const IOAddress& addr,
                                     uint8_t prefix_len,
@@ -1915,18 +1973,10 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
-    uint32_t preferred = ctx.subnet_->getPreferred();
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getPreferred()) {
-        preferred = ctx.currentIA().hints_[0].getPreferred();
-        preferred = ctx.subnet_->getPreferred().get(preferred);
-    }
-    uint32_t valid = ctx.subnet_->getValid();
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getValid()) {
-        valid = ctx.currentIA().hints_[0].getValid();
-        valid = ctx.subnet_->getValid().get(valid);
-    }
+    uint32_t preferred = 0;
+    uint32_t valid = 0;
+    getLifetimes6(ctx, preferred, valid);
+
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
                                ctx.currentIA().iaid_, preferred,
                                valid, ctx.subnet_->getID(),

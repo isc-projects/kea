@@ -996,6 +996,25 @@ public:
         return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
     }
 
+public:
+    /// @brief Determines the preferred and valid v6 lease lifetimes.
+    ///
+    /// A candidate triplet for both preferred and valid lifetimes will be 
+    /// selected from the first class matched to the query which defines the
+    /// value or from the subnet if none do. Classes are searched in the order 
+    /// they are assigned to the query.
+    ///
+    /// If the client requested a lifetime IA hint, then the
+    /// lifetime values returned will be the requested values bounded by
+    /// the candidate triplets.  If the client did not request a value, then
+    /// it simply returns the candidate triplet's default value.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param [out] preferred set to the preferred lifetime that should be used.
+    /// @param [out] valid set to the valid lifetime that should be used.
+    static void getLifetimes6(ClientContext6& ctx, uint32_t& preferred,
+                              uint32_t& valid);
 private:
 
     /// @brief Creates a lease and inserts it in LeaseMgr if necessary

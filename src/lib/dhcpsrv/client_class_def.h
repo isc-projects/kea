@@ -208,6 +208,20 @@ public:
         valid_ = valid;
     }
 
+    /// @brief Return preferred-lifetime value
+    ///
+    /// @return a triplet containing the preferred lifetime.
+    Triplet<uint32_t> getPreferred() const {
+        return (preferred_);
+    }
+
+    /// @brief Sets new preferred lifetime
+    ///
+    /// @param preferred New valid lifetime in seconds.
+    void setPreferred(const Triplet<uint32_t>& preferred) {
+        preferred_ = preferred;
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -266,6 +280,9 @@ private:
 
     /// @brief a Triplet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
+
+    /// @brief a Triplet (min/default/max) holding allowed preferred lifetime values
+    Triplet<uint32_t> preferred_;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -309,6 +326,7 @@ public:
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
     /// @param valid valid-lifetime triplet (optional)
+    /// @param preferred preferred-lifetime triplet (optional)
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
@@ -321,7 +339,8 @@ public:
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string(),
-                  const Triplet<uint32_t>&valid = Triplet<uint32_t>());
+                  const Triplet<uint32_t>&valid = Triplet<uint32_t>(),
+                  const Triplet<uint32_t>&preferred = Triplet<uint32_t>());
 
     /// @brief Adds a new class to the list
     ///

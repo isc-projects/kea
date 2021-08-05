@@ -29,6 +29,7 @@
 #include <hooks/hooks_manager.h>
 #include <process/config_ctl_info.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 #include <util/chrono_time_utils.h>
 
@@ -8088,6 +8089,68 @@ TEST_F(Dhcp6ParserTest, multiThreadingSettings) {
     ASSERT_TRUE(param->equals(*cfg))
                 << "expected: " << *(param) << std::endl
                 << "  actual: " << *(cfg) << std::endl;
+}
+
+// Verifies that client class definitions may specify
+// valid and preferred lifetime triplets.
+TEST_F(Dhcp6ParserTest, clientClassValidPreferredLifetime) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"client-classes\" : [ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"min-valid-lifetime\": 1000, \n"
+        "       \"valid-lifetime\": 2000, \n"
+        "       \"max-valid-lifetime\": 3000, \n"
+        "       \"min-preferred-lifetime\": 4000, \n"
+        "       \"preferred-lifetime\": 5000, \n"
+        "       \"max-preferred-lifetime\": 6000 \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\" \n"
+        "   } \n"
+        "], \n"
+        "\"subnet6\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW_LOG(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // We check staging config because CfgMgr::commit hasn't been executed.
+    ClientClassDictionaryPtr dictionary;
+    dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(2, dictionary->getClasses()->size());
+
+    // Execute the commit
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Verify that after commit, the current config has the correct dictionary
+    dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(2, dictionary->getClasses()->size());
+
+    ClientClassDefPtr class_def = dictionary->findClass("one");
+    ASSERT_TRUE(class_def);
+    EXPECT_EQ(class_def->getValid().getMin(), 1000);
+    EXPECT_EQ(class_def->getValid().get(), 2000);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+
+    EXPECT_EQ(class_def->getPreferred().getMin(), 4000);
+    EXPECT_EQ(class_def->getPreferred().get(), 5000);
+    EXPECT_EQ(class_def->getPreferred().getMax(), 6000);
+
+    class_def = dictionary->findClass("two");
+    ASSERT_TRUE(class_def);
+    EXPECT_TRUE(class_def->getValid().unspecified());
 }
 
 }  // namespace

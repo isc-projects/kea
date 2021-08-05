@@ -1313,7 +1313,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
     EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
-// Verify the ability to configure lease lifetime triplet.
+// Verify the ability to configure valid lifetime triplet.
 TEST_F(ClientClassDefParserTest, validLifetimeTests) {
 
     struct Scenario {
@@ -1373,5 +1373,69 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
         }
     }
 }
+
+// Verify the ability to configure lease preferred lifetime triplet.
+TEST_F(ClientClassDefParserTest, preferredLifetimeTests) {
+
+    struct Scenario {
+        std::string desc_;
+        std::string cfg_txt_;
+        Triplet<uint32_t> exp_triplet_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unspecified",
+            "",
+            Triplet<uint32_t>()
+        },
+        {
+            "preferred only",
+            "\"preferred-lifetime\": 100",
+            Triplet<uint32_t>(100)
+        },
+        {
+            "min only",
+            "\"min-preferred-lifetime\": 50",
+            Triplet<uint32_t>(50, 50, 50)
+        },
+        {
+            "max only",
+            "\"max-preferred-lifetime\": 75",
+            Triplet<uint32_t>(75, 75, 75)
+        },
+        {
+            "all three",
+            "\"min-preferred-lifetime\": 25,"
+            "\"preferred-lifetime\": 50,"
+            "\"max-preferred-lifetime\": 75",
+            Triplet<uint32_t>(25, 50, 75)
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            std::stringstream oss;
+            oss << "{ \"name\": \"foo\"";
+            if (!scenario.cfg_txt_.empty()) {
+                oss << ",\n" << scenario.cfg_txt_;
+            }
+            oss << "\n}\n";
+
+            ClientClassDefPtr class_def;
+            ASSERT_NO_THROW_LOG(class_def = parseClientClassDef(oss.str(), AF_INET6));
+            ASSERT_TRUE(class_def);
+            if (scenario.exp_triplet_.unspecified()) {
+                EXPECT_TRUE(class_def->getPreferred().unspecified());
+            } else {
+                EXPECT_EQ(class_def->getPreferred(), scenario.exp_triplet_);
+                EXPECT_EQ(class_def->getPreferred().getMin(), scenario.exp_triplet_.getMin());
+                EXPECT_EQ(class_def->getPreferred().get(), scenario.exp_triplet_.get());
+                EXPECT_EQ(class_def->getPreferred().getMax(), scenario.exp_triplet_.getMax());
+            }
+        }
+    }
+}
+
 
 } // end of anonymous namespace

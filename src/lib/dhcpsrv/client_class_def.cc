@@ -24,7 +24,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
     : UserContext(), CfgToElement(), StampedElement(), name_(name),
       match_expr_(match_expr), required_(false), depend_on_known_(false),
       cfg_option_(cfg_option), next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-      valid_() {
+      valid_(), preferred_() {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -44,7 +44,7 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
       match_expr_(ExpressionPtr()), test_(rhs.test_), required_(rhs.required_),
       depend_on_known_(rhs.depend_on_known_), cfg_option_(new CfgOption()),
       next_server_(rhs.next_server_), sname_(rhs.sname_),
-      filename_(rhs.filename_), valid_(rhs.valid_) {
+      filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
@@ -180,16 +180,33 @@ ClientClassDef:: toElement() const {
     }
     // Set option-data
     result->set("option-data", cfg_option_->toElement());
-    if (family != AF_INET) {
-        // Other parameters are DHCPv4 specific
-        return (result);
+
+    if (family == AF_INET) {
+        // V4 only
+        // Set next-server
+        result->set("next-server", Element::create(next_server_.toText()));
+        // Set server-hostname
+        result->set("server-hostname", Element::create(sname_));
+        // Set boot-file-name
+        result->set("boot-file-name", Element::create(filename_));
+    } else {
+        // V6 only
+        // Set preferred-lifetime
+        if (!preferred_.unspecified()) {
+            result->set("preferred-lifetime",
+                        Element::create(static_cast<long long>(preferred_.get())));
+        }
+
+        if (preferred_.getMin() < preferred_.get()) {
+            result->set("min-preferred-lifetime",
+                        Element::create(static_cast<long long>(preferred_.getMin())));
+        }
+
+        if (preferred_.getMax() > preferred_.get()) {
+            result->set("max-preferred-lifetime",
+                        Element::create(static_cast<long long>(preferred_.getMax())));
+        }
     }
-    // Set next-server
-    result->set("next-server", Element::create(next_server_.toText()));
-    // Set server-hostname
-    result->set("server-hostname", Element::create(sname_));
-    // Set boot-file-name
-    result->set("boot-file-name", Element::create(filename_));
 
     // Set valid-lifetime
     if (!valid_.unspecified()) {
@@ -244,7 +261,8 @@ ClientClassDictionary::addClass(const std::string& name,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename,
-                                const Triplet<uint32_t>& valid) {
+                                const Triplet<uint32_t>& valid,
+                                const Triplet<uint32_t>& preferred) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
     cclass->setRequired(required);
@@ -255,6 +273,7 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setSname(sname);
     cclass->setFilename(filename);
     cclass->setValid(valid);
+    cclass->setPreferred(preferred);
     addClass(cclass);
 }
 
