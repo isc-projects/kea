@@ -6461,8 +6461,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "        \"ip-address\": \"5.6.7.8\"\n"
         "    },\n"
         "    \"reservations-global\": false,\n"
-        "    \"reservations-in-subnet\": true,\n"
-        "    \"reservations-out-of-pool\": true,\n"
+        "    \"reservations-in-subnet\": false,\n"
         "    \"renew-timer\": 10,\n"
         "    \"rebind-timer\": 20,\n"
         "    \"valid-lifetime\": 40,\n"
@@ -6489,8 +6488,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "            \"ip-address\": \"55.66.77.88\"\n"
         "        },\n"
         "        \"reservations-global\": false,\n"
-        "        \"reservations-in-subnet\": false,\n"
-        "        \"reservations-out-of-pool\": false\n"
+        "        \"reservations-in-subnet\": true,\n"
+        "        \"reservations-out-of-pool\": true\n"
         "    }\n"
         "    ]\n"
         " },\n"
@@ -6542,8 +6541,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("bar", s->getFilename().get());
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("5.6.7.8")));
     EXPECT_FALSE(s->getReservationsGlobal());
-    EXPECT_TRUE(s->getReservationsInSubnet());
-    EXPECT_TRUE(s->getReservationsOutOfPool());
+    EXPECT_FALSE(s->getReservationsInSubnet());
+    EXPECT_FALSE(s->getReservationsOutOfPool());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived
@@ -6561,8 +6560,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("bootfile.efi", s->getFilename().get());
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("55.66.77.88")));
     EXPECT_FALSE(s->getReservationsGlobal());
-    EXPECT_FALSE(s->getReservationsInSubnet());
-    EXPECT_FALSE(s->getReservationsOutOfPool());
+    EXPECT_TRUE(s->getReservationsInSubnet());
+    EXPECT_TRUE(s->getReservationsOutOfPool());
 
     // Ok, now check the second shared subnet.
     net = nets->at(1);
