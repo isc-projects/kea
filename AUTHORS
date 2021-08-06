@@ -222,3 +222,8 @@ We have received the following contributions:
 
  - Khem Raj
    2021-05: gcc11 compilation fixes.
+
+ - Sriram Rajagopalan
+   2021-08: fix for a type mismatch in libdhcp which could have lead to an
+            an interface with index of MAX_UINT32_T to be set in a Pkt when the
+            index was meant to be reset instead
