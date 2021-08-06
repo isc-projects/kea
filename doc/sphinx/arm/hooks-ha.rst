@@ -1457,6 +1457,12 @@ load-balancing and the hot-standby cases presented in previous sections.
    {
    "Control-agent": {
        "http-host": "192.168.56.33",
+       // If enabling HA and multi-threading, the 8000 port is used by the HA
+       // hook library http listener. The control-agent is not required any
+       // longer for HA hook library with multi-threading to function because
+       // it uses it's own http listener on the same port, but it can still be
+       // used to handle other commands. In this case, a different port
+       // (eg. 8800) must be used for the control-agent.
        "http-port": 8000,
 
        "control-sockets": {
