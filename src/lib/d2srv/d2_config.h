@@ -490,7 +490,7 @@ public:
 
     /// @brief Convenience method which returns the server's TSIG key name.
     ///
-    /// @return the key name in an std::string. If server has no TSIG key,
+    /// @return the key name in a std::string. If server has no TSIG key,
     /// the string will be empty.
     const std::string getKeyName() const;
 
@@ -526,7 +526,7 @@ private:
     /// enabled for use. It defaults to true.
     bool enabled_;
 
-    /// @brief Pointer to the server TSIGKeyInfo..
+    /// @brief Pointer to the server TSIGKeyInfo.
     /// Value is empty if the server is not configured for TSIG.
     TSIGKeyInfoPtr tsig_key_info_;
 
@@ -552,7 +552,7 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// This class specifies a DNS domain and the list of DNS servers that support
 /// it.  Its primary use is to map a domain to the DNS server(s) responsible
 /// for it.
-/// @todo Currently the name entry for a domain is just an std::string. It
+/// @todo Currently the name entry for a domain is just a std::string. It
 /// may be worthwhile to change this to a dns::Name for purposes of better
 /// validation and matching capabilities.
 class DdnsDomain : public isc::data::UserContext, public isc::data::CfgToElement {
@@ -570,7 +570,7 @@ public:
 
     /// @brief Getter which returns the domain's name.
     ///
-    /// @return returns the name in an std::string.
+    /// @return returns the name in a std::string.
     const std::string getName() const {
         return (name_);
     }
@@ -579,7 +579,7 @@ public:
     ///
     /// @note: TSIG key infos are in servers.
     ///
-    /// @return returns the key name in an std::string. If domain has no
+    /// @return returns the key name in a std::string. If domain has no
     /// TSIG key, the string will be empty.
     const std::string getKeyName() const {
         return (key_name_);
