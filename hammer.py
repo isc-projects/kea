@@ -1571,7 +1571,7 @@ def prepare_system_local(features, check_times):
 
         if 'netconf' in features:
             if int(revision) <= 10:
-                packages.append(['cmake', 'libpcre3-dev'])
+                packages.extend(['cmake', 'libpcre3-dev'])
                 deferred_functions.extend([
                     _install_libyang_from_sources,
                     _install_sysrepo_from_sources,
@@ -1706,7 +1706,7 @@ def prepare_system_local(features, check_times):
             # libyang-cpp-dev which results in this error when building sysrepo:
             # "Required libyang C++ bindings not found!"
             # So until it is added, install libyang from sources.
-            packages.append('cmake')
+            packages.extend(['cmake', 'pcre-dev'])
             deferred_functions.extend([
                 _install_libyang_from_sources,
                 _install_sysrepo_from_sources,
