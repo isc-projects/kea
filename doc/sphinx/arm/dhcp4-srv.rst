@@ -6804,12 +6804,13 @@ Known RFC Violations
 In principle Kea seeks to be a reference implementation aiming to implement 100% of the RFC standards.
 However, in some cases there are practical aspects that make Kea not adhere completely to the text of the RFC documents.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming REQUEST packet has no
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming DHCPREQUEST packet has no
   `requested IP address` option and `ciaddr` is not set, the server is supposed to respond with NAK. However, there
-  are broken clients out there that will always send a REQUEST without those. As such, Kea accepts such REQUESTs,
+  are broken clients out there that will always send a DHCPREQUEST without those. As such, Kea accepts such DHCPREQUESTs,
   will assign an address and will respond with an ACK.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ table 5 says that a DECLINE message must have the server-id set and
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ table 5 says that messages
+  of type DHCPDECLINE or DHCPRELEASE must have the server identifier set and
   should be dropped if that option is missing. However, ISC DHCP does not enforce this, presumably as a compatibility
   effort for broken clients. The Kea team decided to follow suit.
 
