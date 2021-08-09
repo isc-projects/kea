@@ -451,7 +451,7 @@ public:
 
     /// @brief Getter which returns the server's hostname.
     ///
-    /// @return the hostname as as std::string.
+    /// @return the hostname as a std::string.
     const std::string getHostname() const {
         return (hostname_);
     }
@@ -510,7 +510,6 @@ public:
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;
 
-
 private:
     /// @brief The resolvable name of the server. If not blank, then the
     /// server's IP address should be dynamically resolved at runtime.
@@ -527,12 +526,12 @@ private:
     /// enabled for use. It defaults to true.
     bool enabled_;
 
-    /// @brief Pointer to domain's the TSIGKeyInfo.
-    /// Value is empty if the domain is not configured for TSIG.
+    /// @brief Pointer to the server TSIGKeyInfo..
+    /// Value is empty if the server is not configured for TSIG.
     TSIGKeyInfoPtr tsig_key_info_;
 
     /// @brief Inherited key. When true the key was inherited from the domain,
-    /// when false the key was not inherited from the domain.
+    /// false otherwise.
     bool inherited_key_;
 };
 

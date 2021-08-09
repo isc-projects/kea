@@ -507,7 +507,7 @@ NameChangeTransaction::selectTSIGKey() {
         HooksManager::callCallouts(Hooks.hooks_index_select_key_,
                                    *callout_handle);
 
-        // This server is skipped because of status is not NEXT_STEP_CONTINUE.
+        // This server is skipped because the status is not NEXT_STEP_CONTINUE.
         if (callout_handle->getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
             return (false);
         }
