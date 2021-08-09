@@ -464,21 +464,21 @@ NameChangeTransaction::selectNextServer() {
     for (;;) {
         if ((current_server_list_) &&
             (next_server_pos_ < current_server_list_->size())) {
-            current_server_  = (*current_server_list_)[next_server_pos_];
+            current_server_ = (*current_server_list_)[next_server_pos_];
             // Toss out any previous response.
             dns_update_response_.reset();
 
-            // Set the tsig_key to that of the current server..
+            // Set the tsig_key to that of the current server.
             if (!selectTSIGKey()) {
                 ++next_server_pos_;
                 continue;
             }
 
-            // @todo  Protocol is set on DNSClient constructor.  We need
+            // @todo Protocol is set on DNSClient constructor. We need
             // to propagate a configuration value downward, probably starting
-            // at global, then domain, then server
+            // at global, then domain, finishing by server.
             // Once that is supported we need to add it here.
-            dns_client_.reset(new DNSClient(dns_update_response_ , this,
+            dns_client_.reset(new DNSClient(dns_update_response_, this,
                                             DNSClient::UDP));
             ++next_server_pos_;
             return (true);
@@ -507,7 +507,7 @@ NameChangeTransaction::selectTSIGKey() {
         HooksManager::callCallouts(Hooks.hooks_index_select_key_,
                                    *callout_handle);
 
-        // This server is skipped not NEXT_STEP_CONTINUE status.
+        // This server is skipped because of status is not NEXT_STEP_CONTINUE.
         if (callout_handle->getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
             return (false);
         }

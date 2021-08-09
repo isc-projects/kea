@@ -451,21 +451,21 @@ public:
 
     /// @brief Getter which returns the server's hostname.
     ///
-    /// @return returns the hostname as as std::string.
+    /// @return the hostname as as std::string.
     const std::string getHostname() const {
         return (hostname_);
     }
 
     /// @brief Getter which returns the server's port number.
     ///
-    /// @return returns the port number as a unsigned integer.
+    /// @return the port number as a unsigned integer.
     uint32_t getPort() const {
         return (port_);
     }
 
     /// @brief Getter which returns the server's ip_address.
     ///
-    /// @return returns the address as an IOAddress reference.
+    /// @return the address as an IOAddress reference.
     const isc::asiolink::IOAddress& getIpAddress() const {
         return (ip_address_);
     }
@@ -473,7 +473,7 @@ public:
     /// @brief Convenience method which returns whether or not the
     /// server is enabled.
     ///
-    /// @return returns true if the server is enabled, false otherwise.
+    /// @return true if the server is enabled, false otherwise.
     bool isEnabled() const {
         return (enabled_);
     }
@@ -490,13 +490,13 @@ public:
 
     /// @brief Convenience method which returns the server's TSIG key name.
     ///
-    /// @return returns the key name in an std::string. If server has no
-    /// TSIG key, the string will empty.
+    /// @return the key name in an std::string. If server has no TSIG key,
+    /// the string will be empty.
     const std::string getKeyName() const;
 
-    /// @brief Getter which returns the server's TSIGKey info
+    /// @brief Getter which returns the server's TSIGKey info.
     ///
-    /// @return returns the pointer to the server storage.  If the server
+    /// @return the pointer to the server storage. If the server
     /// is not configured to use TSIG the pointer will be empty.
     const TSIGKeyInfoPtr& getTSIGKeyInfo() {
         return (tsig_key_info_);
@@ -581,7 +581,7 @@ public:
     /// @note: TSIG key infos are in servers.
     ///
     /// @return returns the key name in an std::string. If domain has no
-    /// TSIG key, the string will empty.
+    /// TSIG key, the string will be empty.
     const std::string getKeyName() const {
         return (key_name_);
     }
