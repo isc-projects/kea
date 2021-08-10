@@ -480,7 +480,7 @@ public:
     /// @brief Sets interface index.
     ///
     /// @param ifindex specifies interface index.
-    void setIndex(int64_t ifindex) {
+    void setIndex(int ifindex) {
         ifindex_ = ifindex;
     };
 
@@ -492,7 +492,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    int64_t getIndex() const {
+    int getIndex() const {
         return (ifindex_);
     };
 
