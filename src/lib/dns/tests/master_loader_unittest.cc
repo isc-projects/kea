@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1317,7 +1317,8 @@ TEST_F(MasterLoaderTest, ttlOverflow) {
     stringstream zone_stream;
     zone_stream << "example.org. IN SOA . . 0 0 0 0 2147483648\n";
     zone_stream << "$TTL 3600\n"; // reset to an in-range value
-    zone_stream << "$TTL 2147483649\n" << "a.example.org. IN A 192.0.2.1\n";
+    zone_stream << "$TTL 2147483649\n";
+    zone_stream << "a.example.org. IN A 192.0.2.1\n";
     zone_stream << "$TTL 3600\n"; // reset to an in-range value
     zone_stream << "b.example.org. 2147483650 IN A 192.0.2.2\n";
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),

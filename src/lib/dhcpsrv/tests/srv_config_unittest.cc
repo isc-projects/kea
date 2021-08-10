@@ -142,7 +142,7 @@ void
 SrvConfigTest::addSubnet4(const unsigned int index) {
     if (index >= TEST_SUBNETS_NUM) {
         FAIL() << "Subnet index " << index << "out of range (0.."
-               << TEST_SUBNETS_NUM << "): " << "unable to add IPv4 subnet";
+               << TEST_SUBNETS_NUM << "): unable to add IPv4 subnet";
     }
     // std::advance is not available for this iterator.
     auto it = test_subnets4_.begin();
@@ -156,7 +156,7 @@ void
 SrvConfigTest::addSubnet6(const unsigned int index) {
     if (index >= TEST_SUBNETS_NUM) {
         FAIL() << "Subnet index " << index << "out of range (0.."
-               << TEST_SUBNETS_NUM << "): " << "unable to add IPv6 subnet";
+               << TEST_SUBNETS_NUM << "): unable to add IPv6 subnet";
     }
     // std::advance is not available for this iterator.
     auto it = test_subnets6_.begin();

@@ -80,7 +80,7 @@ bool wipeCqlData(bool show_err) {
     std::ostringstream version;
     version << CQL_SCHEMA_VERSION_MAJOR  << "." << CQL_SCHEMA_VERSION_MINOR;
 
-    cmd << "cql/wipe_data.sh" << " " << version.str()
+    cmd << "cql/wipe_data.sh " << version.str()
         << " -u keatest -p keatest -k keatest --request-timeout=6000";
 
     if (!show_err) {

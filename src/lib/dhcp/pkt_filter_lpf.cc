@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -206,7 +206,7 @@ PktFilterLPF::openSocket(Iface& iface,
         close(fallback);
         isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
                   " LPF socket '" << sock << "' to interface '"
-                  << iface.getName() << "'" << ", reason: " << errmsg);
+                  << iface.getName() << "', reason: " << errmsg);
     }
 
     return (SocketInfo(addr, port, sock, fallback));

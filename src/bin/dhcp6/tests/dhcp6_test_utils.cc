@@ -44,7 +44,7 @@ BaseServerTest::~BaseServerTest() {
 
     // Remove default lease file.
     std::ostringstream s2;
-    s2 << CfgMgr::instance().getDataDir() << "/" << "kea-leases6.csv";
+    s2 << CfgMgr::instance().getDataDir() << "/kea-leases6.csv";
     static_cast<void>(::remove(s2.str().c_str()));
 
     // Revert to original data directory.

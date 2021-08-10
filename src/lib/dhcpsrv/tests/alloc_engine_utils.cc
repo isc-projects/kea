@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +49,7 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
             if (observation->getInteger().first != exp_value) {
                 ADD_FAILURE()
                     << "value of the observed statistics '"
-                    << name << "' " << "("
+                    << name << "' ("
                     << observation->getInteger().first << ") "
                     << "doesn't match expected value (" << exp_value << ")";
             }

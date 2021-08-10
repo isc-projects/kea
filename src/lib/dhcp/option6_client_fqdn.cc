@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -427,7 +427,7 @@ std::string
 Option6ClientFqdn::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
-    stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << ", "
+    stream << in  << "type=" << type_ << "(CLIENT_FQDN), "
            << "flags: ("
            << "N=" << (getFlag(FLAG_N) ? "1" : "0") << ", "
            << "O=" << (getFlag(FLAG_O) ? "1" : "0") << ", "

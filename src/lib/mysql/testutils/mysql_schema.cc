@@ -52,7 +52,7 @@ bool wipeMySQLData(bool show_err) {
     std::ostringstream version;
     version << MYSQL_SCHEMA_VERSION_MAJOR  << "." << MYSQL_SCHEMA_VERSION_MINOR;
 
-    cmd << "mysql/wipe_data.sh" << " " << version.str()
+    cmd << "mysql/wipe_data.sh " << version.str()
         << " -N -B --user=keatest --password=keatest keatest";
     if (!show_err) {
         cmd << " 2>/dev/null ";

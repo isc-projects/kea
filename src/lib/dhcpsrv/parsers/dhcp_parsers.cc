@@ -199,7 +199,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
         // Arrays can't be used together with sub-options.
         if (array_type) {
             isc_throw(DhcpConfigError, "option '" << space << "."
-                      << "name" << "', comprising an array of data"
+                      << name << "', comprising an array of data"
                       << " fields may not encapsulate any option space ("
                       << option_def->getPosition() << ")");
 
@@ -770,8 +770,8 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
-                  << ") is greater than the value of rebind-timer" << " ("
+        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
+                  << ") is greater than the value of rebind-timer ("
                   << rebind << ")");
     }
 
@@ -1272,8 +1272,8 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
-                  << ") is greater than the value of rebind-timer" << " ("
+        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
+                  << ") is greater than the value of rebind-timer ("
                   << rebind << ")");
     }
 

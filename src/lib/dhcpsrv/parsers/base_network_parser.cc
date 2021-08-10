@@ -62,7 +62,7 @@ BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
     if (has_renew) {
         renew = getInteger(network_data, "renew-timer");
         if (renew < 0) {
-            isc_throw(DhcpConfigError, "the value of renew-timer" << " ("
+            isc_throw(DhcpConfigError, "the value of renew-timer ("
                       << renew << ") must be a positive number");
         }
         network->setT1(renew);
@@ -71,15 +71,15 @@ BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
     if (has_rebind) {
         rebind = getInteger(network_data, "rebind-timer");
         if (rebind < 0) {
-            isc_throw(DhcpConfigError, "the value of rebind-timer" << " ("
+            isc_throw(DhcpConfigError, "the value of rebind-timer ("
                       << rebind << ") must be a positive number");
         }
         network->setT2(rebind);
     }
 
     if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer" << " (" << renew
-                  << ") is greater than the value of rebind-timer" << " ("
+        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
+                  << ") is greater than the value of rebind-timer ("
                   << rebind << ")");
     }
 

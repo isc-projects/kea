@@ -184,7 +184,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     // Allow 1% of clock skew
     EXPECT_TRUE(test_runtime >= boost::posix_time::milliseconds(99)) <<
                 "test runtime " << test_runtime.total_milliseconds() <<
-                "msec " << ">= 100";
+                "msec >= 100";
 }
 
 TEST_F(IntervalTimerTest, destructIntervalTimer) {

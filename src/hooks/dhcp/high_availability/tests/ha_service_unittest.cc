@@ -5010,7 +5010,7 @@ public:
         EXPECT_EQ(final_state.state_, service_->getCurrState())
             << "expected transition to the '"
             << service_->getStateLabel(final_state.state_)
-            << "' state" << ", but transitioned to the '"
+            << "' state, but transitioned to the '"
             << service_->getStateLabel(service_->getCurrState())
             << "' state";
     }

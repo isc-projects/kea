@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -349,7 +349,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 
         // Apparently it wasn't fatal, so we throw with a helpful message.
         const char* error_message = PQerrorMessage(conn_);
-        isc_throw(DbOperationError, "Statement exec failed:" << " for: "
+        isc_throw(DbOperationError, "Statement exec failed for: "
                   << statement.name << ", status: " << s
                   << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
                   << " ], reason: " << error_message);
