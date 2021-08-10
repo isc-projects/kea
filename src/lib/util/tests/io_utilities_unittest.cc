@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ using namespace isc::util;
 TEST(asioutil, readUint16) {
 
     // Reference buffer
-    uint8_t data[2];
+    uint8_t data[2] = {0, 0};
     InputBuffer buffer(data, sizeof(data));
 
     // Avoid possible compiler warnings by only setting uint8_t variables to

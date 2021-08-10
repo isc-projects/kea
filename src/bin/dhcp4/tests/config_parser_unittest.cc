@@ -1966,8 +1966,8 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
     EXPECT_EQ("type=V4, 192.0.3.128-192.0.3.255",
               pools2[1]->toText());
     // There shouldn't be any TA or PD pools
-    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA).empty(), BadValue);
-    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD).empty(), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD), BadValue);
 }
 
 // Test verifies that a subnet with pool values that do not belong to that

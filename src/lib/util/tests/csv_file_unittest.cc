@@ -642,7 +642,7 @@ TEST_F(CSVFileTest, parseContentWithoutTrailingBlankLine) {
 
 // Check that blank lines are skipped when reading from a file.
 TEST_F(CSVFileTest, parseContentWithBlankLines) {
-    for (std::string const& content : {
+    for (char const* const& content : {
         // Single intermediary blank line
         "animal,age,color\n"
         "cat,4,white\n"

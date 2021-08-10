@@ -669,7 +669,6 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
 /// qualifying suffix.
 TEST_F(D2ClientMgrParamsTest, qualifyNameWithoutDuplicatingSuffix) {
     D2ClientMgr mgr;
-    bool do_not_dot = false;
     bool do_dot = true;
 
     // Create enabled configuration
