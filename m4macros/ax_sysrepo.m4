@@ -205,6 +205,12 @@ AC_DEFUN([AX_SYSREPO], [
   else
     HAVE_SYSREPO=false
   fi
+
+  # Report error if sysrepo was requested but not enabled.
+  if test -n "${with_sysrepo}" && test "${with_sysrepo}" != 'no' && ! "${HAVE_SYSREPO}"; then
+    AC_MSG_ERROR([Could not enable NETCONF support.])
+  fi
+
   AM_CONDITIONAL(HAVE_SYSREPO, "${HAVE_SYSREPO}")
   AC_SUBST(HAVE_SYSREPO)
   AC_SUBST(SYSREPO_CPPFLAGS)
