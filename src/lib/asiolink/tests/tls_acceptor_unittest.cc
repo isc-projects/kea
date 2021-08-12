@@ -47,7 +47,8 @@ public:
     /// @param length Length of received data.
     void operator()(boost::system::error_code ec, size_t length = 0) {
         if (ec) {
-            ADD_FAILURE() << "error occurred for a socket: " << ec.message();
+            ADD_FAILURE() << "error occurred for a socket with data of length "
+                          << length << ": " << ec.message();
         }
     }
 

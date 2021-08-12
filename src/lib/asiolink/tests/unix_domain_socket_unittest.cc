@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -267,7 +267,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     bool send_handler_invoked = false;
     socket.asyncSend(outbound_data.c_str(), outbound_data.size(),
         [&send_handler_invoked]
-        (const boost::system::error_code& ec, size_t length) {
+        (const boost::system::error_code& ec, size_t /* length */) {
         send_handler_invoked = true;
         EXPECT_TRUE(ec);
     });
@@ -280,7 +280,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     std::array<char, 1024> read_buf;
     socket.asyncReceive(&read_buf[0], read_buf.size(),
         [&receive_handler_invoked]
-        (const boost::system::error_code& ec, size_t length) {
+        (const boost::system::error_code& ec, size_t /* length */) {
         receive_handler_invoked = true;
         EXPECT_TRUE(ec);
     });

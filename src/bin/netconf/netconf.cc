@@ -99,12 +99,12 @@ public:
         }
     }
 
-    void event_notif(sysrepo::S_Session session,
+    void event_notif(sysrepo::S_Session /* session */,
                      sr_ev_notif_type_t const notification_type,
-                     char const* path,
+                     char const* /* path */,
                      sysrepo::S_Vals const vals,
-                     time_t timestamp,
-                     void* private_data) {
+                     time_t /* timestamp */,
+                     void* /* private_data */) {
         string n;
         switch (notification_type) {
         case SR_EV_NOTIF_REALTIME:

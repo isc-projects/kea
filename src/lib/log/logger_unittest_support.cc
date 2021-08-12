@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,7 +87,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     setenv("KEA_LOCKFILE_DIR", TOP_BUILDDIR, 0);
 
     // Initialize logging
-    initLogger(root, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, localfile);
+    initLogger(root, severity, dbglevel, localfile);
 
     // Now set reset the output destination of the root logger, overriding
     // the default severity, debug level and destination with those specified
@@ -95,7 +95,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // setUnitTestRootLoggerCharacteristics() function is used in several
     // places in the Kea tests, and it avoid duplicating code.)
     isc::log::setDefaultLoggingOutput();
-} 
+}
 
 } // namespace log
 } // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,8 @@ public:
     /// @param length Length of received data.
     void operator()(boost::system::error_code ec, size_t length = 0) {
         if (ec) {
-            ADD_FAILURE() << "error occurred for a socket: " << ec.message();
+            ADD_FAILURE() << "error occurred for a socket with data of length "
+                          << length << ": " << ec.message();
         }
     }
 
