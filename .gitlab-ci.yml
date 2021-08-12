@@ -10,6 +10,12 @@ variables:
   # SC3043: In POSIX sh, 'local' is undefined.
   SHELLCHECK_OPTS: "--exclude=SC1117 --exclude=SC2039 --exclude=SC3043"
 
+  # Setting this variable will affect all Security templates
+  # (SAST, Dependency Scanning, ...)
+  SECURE_ANALYZERS_PREFIX: "registry.gitlab.com/gitlab-org/security-products/analyzers"
+
+  # Leave only bandit, flawfinder, semgrep.
+  SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
 stages:
   - test
@@ -150,3 +156,35 @@ missing-git-attribute:
     - ./tools/print-generated-files.sh -a
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\n.gitattributes are missing a generated file. Please run "./tools/print-generated-files.sh -a" and commit the resulting change to fix them.\n' "${git_diff}"; exit 1; fi
+
+############################### SAST ################################
+# Read more about this feature here: https://docs.gitlab.com/ee/user/application_security/sast/
+#
+# Configure SAST with CI/CD variables (https://docs.gitlab.com/ee/ci/variables/index.html).
+# List of available variables: https://docs.gitlab.com/ee/user/application_security/sast/index.html#available-variables
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+.sast-analyzer:
+  extends: sast
+  allow_failure: true
+  script:
+    - /analyzer run
+
+flawfinder-sast:
+  extends: .sast-analyzer
+  image:
+    name: "$SAST_ANALYZER_IMAGE"
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: latest
+    SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/flawfinder:$SAST_ANALYZER_IMAGE_TAG"
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $SAST_EXCLUDED_ANALYZERS =~ /flawfinder/
+      when: never
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - '**/*.cc'
+        - '**/*.h'
