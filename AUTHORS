@@ -227,3 +227,6 @@ We have received the following contributions:
    2021-08: fix for a type mismatch in libdhcp which could have lead to an
             an interface with index of MAX_UINT32_T to be set in a Pkt when the
             index was meant to be reset instead
+
+ - Brad Smith
+   2021-08: compilation fix for upcoming boost 1.77
