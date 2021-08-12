@@ -29,8 +29,22 @@ struct SysrepoSetup {
     /// is the equivalent of running "make shm_clean" in sysrepo:
     /// https://github.com/sysrepo/sysrepo/blob/v1.4.140/CMakeLists.txt#L329-L334
     static void cleanSharedMemory() {
-        system("rm -rf /dev/shm/sr_*");
-        system("rm -rf /dev/shm/srsub_*");
+        call_system("rm -rf /dev/shm/sr_*");
+        call_system("rm -rf /dev/shm/srsub_*");
+    }
+
+private:
+    /// @brief Wrapper over a system() call that also checks the return value.
+    ///
+    /// @brief command the command to be run
+    static void call_system(char const* command) {
+        int return_value(system(command));
+        if (return_value != 0) {
+            std::cerr << "\"" << command << "\" exited with " << return_value
+                      << ". Unit tests may be influenced by previous abnormaly "
+                         "terminated unit tests or sysrepo uses."
+                      << std::endl;
+        }
     }
 };
 
