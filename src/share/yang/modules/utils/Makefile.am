@@ -5,14 +5,11 @@ yangdir = ${datarootdir}/${PACKAGE_NAME}/yang/modules/utils
 yang_list  =
 yang_list += check-hashes.sh
 yang_list += check-revisions.sh
-yang_list += reinstall.sh
 
 EXTRA_DIST = ${yang_list}
 
 if HAVE_SYSREPO
 
-# Add to the tarball.
-yang_DATA = reinstall.sh
 yang_SCRIPTS = reinstall.sh
 
 # Shell tests
