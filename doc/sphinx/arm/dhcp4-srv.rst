@@ -2640,23 +2640,22 @@ specified:
 -  ``code`` - the server requires either an option name or an option code to
    identify an option. This parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option has a definition (either as a standard option
-   or an administrator-created definition for the option using an
+   particular option has a definition (either as a standard option or
+   an administrator-created definition for the option using an
    'option-def' structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
    for which there is no definition (unspecified option format).
    Configuration of such options requires the use of the option code.
 
 -  ``space`` - if the option space is unspecified it will default to
-   'dhcp4', which is an option space holding standard DHCPv4
-   options.
+   'dhcp4', which is an option space holding standard DHCPv4 options.
 
 -  ``data`` - if the option data is unspecified it defaults to an empty
    value. The empty value is mostly used for the options which have no
    payload (boolean options), but it is legal to specify empty values
    for some options which carry variable-length data and for which the
-   specification allows a length of 0. For such options, the
-   data parameter may be omitted in the configuration.
+   specification allows a length of 0. For such options, the data
+   parameter may be omitted in the configuration.
 
 -  ``csv-format`` - if this value is not specified, the server will
    assume that the option data is specified as a list of comma-separated
@@ -2958,7 +2957,8 @@ specified subnet is used:
        ...
    }
 
-Required evaluation can be used to express complex dependencies like subnet membership. It can also be used to reverse the
+Required evaluation can be used to express complex dependencies like
+subnet membership. It can also be used to reverse the
 precedence; if an option-data is set in a subnet, it takes precedence
 over an option-data in a class. If the option-data is moved to a
 required class and required in the subnet, a class evaluated earlier
@@ -3038,7 +3038,7 @@ DDNS related parameters were split into two groups:
     what has occurred.  Specifying these values within ``dhcp-ddns`` is
     deprecated and support for it will be removed at some future date.
 
-The default configuration would appear as follows:
+The default configuration and values would appear as follows:
 
 ::
 
@@ -3069,7 +3069,7 @@ The default configuration would appear as follows:
         ...
    }
 
-As of Kea 1.7.1, there are two parameters which determine whether kea-dhcp4
+As of Kea 1.7.1, there are two parameters which determine if kea-dhcp4
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
 parameter, which now only controls whether kea-dhcp4 connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
@@ -3142,14 +3142,13 @@ conflict with existing entries owned by other DHCP4 clients.
     FQDN while new entries for Client-B will still be added.
 
     Disabling conflict resolution should be done only after careful review of
-    specific use cases.  The best way to avoid unwanted DNS entries is to
+    specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the lease-del4 command, prior to
     reassigning either FQDNs or IP addresses.  Doing so will cause kea-dhcp4
     to generate DNS removal requests to D2.
 
 .. note::
-
 
     The DNS entries Kea creates contain a value for TTL (time to live).  As of
     Kea 1.9.3, kea-dhcp4 calculates that value based on
@@ -3322,11 +3321,11 @@ To override client delegation, issue the following commands:
 
 ::
 
-   "Dhcp4": {
-       ...
-       "ddns-override-no-update": true,
-       ...
-   }
+    "Dhcp4": {
+        ...
+        "ddns-override-no-update": true,
+        ...
+    }
 
 kea-dhcp4 will always generate DDNS update requests if the client
 request only contains the Host Name option. In addition, it will include
@@ -3390,11 +3389,11 @@ follows:
 
 ::
 
-   "Dhcp4": {
+    "Dhcp4": {
         ...
         "ddns-replace-client-name": "always",
         ...
-   }
+    }
 
 The prefix used in the generation of an FQDN is specified by the
 ``generated-prefix`` parameter. The default value is "myhost". To alter
@@ -3402,11 +3401,11 @@ its value, simply set it to the desired string:
 
 ::
 
-   "Dhcp4": {
-       ...
+    "Dhcp4": {
+        ...
         "ddns-generated-prefix": "another.host",
-       ...
-   }
+        ...
+    }
 
 The suffix used when generating an FQDN, or when qualifying a partial
 name, is specified by the ``ddns-qualifying-suffix`` parameter. It is
@@ -3458,8 +3457,8 @@ and '-'. This may be accomplished with the following two parameters:
 
     Starting with Kea 1.7.5, the default values are as follows:
 
-    -   "hostname-char-set": "[^A-Za-z0-9.-]",
-    -   "hostname-char-replacement": ""
+    - "hostname-char-set": "[^A-Za-z0-9.-]",
+    - "hostname-char-replacement": ""
 
     This enables sanitizing and omits any character that is not
     a letter, digit, hyphen, dot, or null.
@@ -3468,12 +3467,12 @@ The following configuration replaces anything other than a letter,
 digit, hyphen, or dot with the letter 'x':
 ::
 
-   "Dhcp4": {
+    "Dhcp4": {
         ...
         "hostname-char-set": "[^A-Za-z0-9.-]",
         "hostname-char-replacement": "x",
         ...
-   }
+    }
 
 Thus, a client-supplied value of "myhost-$[123.org" would become
 "myhost-xx123.org". Sanitizing is performed only on the portion of the
@@ -3807,6 +3806,7 @@ The following configuration was used during some tests:
 
    # DHCPv4 conf
    "Dhcp4": {
+
        "interfaces-config": {
            "interfaces": [ "eno33554984" ]
        },
@@ -4133,9 +4133,9 @@ specific requirements, e.g. a printer that needs additional DHCP
 options. Yet another possible use case is to define unique names for
 hosts.
 
-Note that there may be
-cases when a new reservation has been made for a client for an address
-currently in use by another client. We call this situation a "conflict."
+Note that there may be cases when a new reservation has been made for a
+client for an address currently in use by another client. We call this
+situation a "conflict."
 These conflicts get resolved automatically over time as described in
 subsequent sections. Once the conflict is resolved, the correct client will
 receive the reserved configuration when it renews.
@@ -4246,7 +4246,7 @@ another.
 .. note::
 
    Global reservations, while useful in certain circumstances, have aspects
-   that must be given due consideration when using them, please see
+   that must be given due consideration when using them. Please see
    :ref:`reservation4-conflict` for more details.
 
 .. note::
@@ -4542,7 +4542,7 @@ to them.
            }
            ]
        } ]
-   }
+    }
 
 In some cases the host reservations can be used in conjunction with client
 classes specified within the Kea configuration. In particular, when a
@@ -4590,7 +4590,6 @@ reserved class has been also assigned.
    :ref:`subnet-selection-with-class-reservations4`
    for the specific use cases.
 
-
 .. _reservations4-mysql-pgsql-cql:
 
 Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
@@ -4636,11 +4635,11 @@ different constraints for the checks to be performed by the server when
 allocating or renewing a lease for the client. Allowed values are:
 
 -  ``all`` - enables both in-pool and out-of-pool host reservation
-   types. This setting is the default value, and is the safest and
-   most flexible. However, as all checks are conducted, it is also the slowest.
+   types. This setting is the default value, and is the safest and most
+   flexible. However, as all checks are conducted, it is also the slowest.
    It does not check against global reservations.
 
--  ``out-of-pool`` - allows only out-of- pool host reservations. With
+-  ``out-of-pool`` - allows only out-of-pool host reservations. With
    this setting in place, the server may assume that all host
    reservations are for addresses that do not belong to the dynamic
    pool. Therefore, it can skip the reservation checks when dealing with
@@ -4830,7 +4829,6 @@ The correspondence of old values are:
       }
     }
 
-
 ``out-of-pool``:
 
 .. code-block:: json
@@ -4867,7 +4865,6 @@ To activate both ``global`` and ``all``, the following combination can be used:
       }
     }
 
-
 To activate both ``global`` and ``out-of-pool``, the following combination can
 be used:
 
@@ -4903,7 +4900,6 @@ An example configuration that disables reservations looks as follows:
         ]
       }
     }
-
 
 An example configuration using global reservations is shown below:
 
@@ -5008,7 +5004,8 @@ following can be used:
 ::
 
    "Dhcp4:" {
-       # This specifies global reservations. They will apply to all subnets that
+       # This specifies global reservations.
+       # They will apply to all subnets that
        # have global reservations enabled.
 
        "reservations": [
@@ -5020,9 +5017,10 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          # Use of IP addresses in global reservations is risky. If used outside
-          # of a matching subnet, such as 192.0.1.0/24, it will result in a broken
-          # configuration being handed to the client.
+          # Use of IP addresses in global reservations is risky.
+          # If used outside of a matching subnet, such as 192.0.1.0/24,
+          # it will result in a broken configuration being handed
+          # to the client.
           "ip-address": "192.0.1.77"
        },
        {
@@ -5604,7 +5602,7 @@ shared network.
        {
            "name": "kakapo",
            "relay": {
-                # This relay address is inherited by both subnets.
+               # This relay address is inherited by both subnets.
                "ip-addresses": [ "192.1.1.1" ]
            },
            "subnet4": [
@@ -5936,10 +5934,8 @@ selects that subnet for a relay with address 10.0.0.1.
                "relay": {
                    "ip-addresses": [ "10.0.0.1" ]
                },
-               ...
            }
        ],
-       ...
    }
 
 If "relay" is specified, the "ip-addresses" parameter within it is
@@ -6036,13 +6032,13 @@ default, the following syntax can be used:
 The parameter is expressed in seconds, so the example above will
 instruct the server to recycle declined leases after one hour.
 
-There are several statistics and hook points associated with the Decline
+There are several statistics and hook points associated with the decline
 handling procedure. The lease4_decline hook is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
 to decline the lease. The declined-addresses statistic is increased
 after the hook returns (both global and subnet-specific variants). (See
-:ref:`dhcp4-stats` and :ref:`hooks-libraries` for more details on DHCPv4 statistics and Kea
-hook points.)
+:ref:`dhcp4-stats` and :ref:`hooks-libraries`
+for more details on DHCPv4 statistics and Kea hook points.)
 
 Once the probation time elapses, the declined lease is recovered using
 the standard expired-lease reclamation procedure, with several
@@ -6051,7 +6047,7 @@ additional steps. In particular, both declined-addresses statistics
 reclaimed-declined-addresses statistics (again in two variants, global
 and subnet-specific) are increased.
 
-A note about statistics: the server does not decrease the
+A note about statistics: The server does not decrease the
 assigned-addresses statistics when a DHCPDECLINE is received and
 processed successfully. While technically a declined address is no
 longer assigned, the primary usage of the assigned-addresses statistic
@@ -6075,6 +6071,7 @@ The DHCPv4 server supports the following statistics:
 .. table:: DHCPv4 Statistics
    :class: longtable
    :widths: 20 10 70
+
 
    +-------------------------------------------+----------------+------------------------------------+
    | Statistic                                 | Data Type      | Description                        |
@@ -6570,6 +6567,7 @@ the default maximum sample count to 1 so only one sample is kept:
 Statistics can be retrieved periodically to gain more insight into Kea operations. One tool that
 leverages that capability is ISC Stork. See :ref:`stork` for details.
 
+
 .. _dhcp4-ctrl-channel:
 
 Management API for the DHCPv4 Server
@@ -6679,7 +6677,7 @@ of LED devices could be configured in the following way:
                "pool": "192.0.2.10 - 192.0.2.20",
                # This is pool specific user context
                "user-context": { "color": "red" }
-           }],
+           } ],
 
            # This is a subnet-specific user context. Any type
            # of information can be entered here as long as it is valid JSON.
@@ -6691,7 +6689,7 @@ of LED devices could be configured in the following way:
                "devices-registered": 42,
                "billing": false
            }
-       }],
+       } ]
    }
 
 Kea does not interpret or use the user-context information; it simply stores it and makes it
@@ -7077,6 +7075,7 @@ enabled in order to enable uncommon practices:
         }
       }
     }
+
 
 Lenient Option Parsing
 ----------------------

@@ -2172,7 +2172,7 @@ as it may result in configuration errors. The list below explains the
 behavior of the server when a particular parameter is not explicitly
 specified:
 
--  ``name`` - the server requires an option name or an option code to
+-  ``name`` - the server requires either an option name or an option code to
    identify an option. If this parameter is unspecified, the option code
    must be specified.
 
@@ -2651,8 +2651,8 @@ specified subnet is used:
 
 Required evaluation can be used to express complex dependencies like
 subnet membership. It can also be used to reverse the
-precedence; if an option-data is set in a subnet it takes precedence
-over an option-data in a class. When option-data is moved to a
+precedence; if an option-data is set in a subnet, it takes precedence
+over an option-data in a class. If the option-data is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
@@ -2788,13 +2788,12 @@ together:
    |                 |                    | false for ddns-enable-updates |
    +-----------------+--------------------+-------------------------------+
 
-
-Kea 1.9.1 adds two new parameters.  The first new parameter is ``ddns-update-on-renew``.
-Normally, when leases are renewed the server will only update DNS if the DNS
+Kea 1.9.1 adds two new parameters. The first new parameter is ``ddns-update-on-renew``.
+Normally, when leases are renewed the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
 Setting ``ddns-update-on-renew`` to true instructs the server to always update
 the DNS information when a lease is renewed even if its DNS information has not
-changed.  This allows Kea to "self-heal" if it was previously unable
+changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
@@ -3151,7 +3150,7 @@ accomplished with the following two parameters:
    considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
-   with which to replace each invalid character in the host name.  An empty
+   with which to replace each invalid character in the host name. An empty
    string causes invalid characters to be OMITTED rather than replaced.
 
 .. note::
@@ -3716,16 +3715,16 @@ another.
 .. note::
 
    Global reservations, while useful in certain circumstances, have aspects
-   that must be given due consideration. Please see
+   that must be given due consideration when using them. Please see
    :ref:`reservation6-conflict` for more details.
 
 .. note::
 
    Beginning with Kea 1.9.1 reservation mode was replaced by three
    boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
-   and ``"reservations-out-of-pool"`` which allow to configure host
-   reservations both global and in a subnet. In such a case a subnet
-   host reservation has the preference on a global reservation
+   and ``"reservations-out-of-pool"`` which allows the configuration of
+   host reservations both globally and in a subnet. In such cases a subnet
+   host reservation has preference over a global reservation
    when both exist for the same client.
 
 .. _reservation6-conflict:
@@ -3935,8 +3934,8 @@ to them.
               "data": "2001:db8:1::50"
           }
           ]
-      },
-      {
+       },
+       {
           "name": "reserved-class2",
           "option-data": [
           {
@@ -3955,8 +3954,9 @@ to them.
 
                "client-classes": [ "reserved-class1", "reserved-class2" ]
 
-            } ]
-        } ]
+           }
+           ]
+       } ]
     }
 
 In some cases the host reservations can be used in conjunction with client
@@ -4052,8 +4052,8 @@ allocating or renewing a lease for the client. Allowed values are:
 
 -  ``all`` - enables both in-pool and out-of-pool host reservation
    types. This setting is the default value, and is the safest and most
-   flexible. However, as all checks are conducted, it is also the
-   slowest. It does not check against global reservations.
+   flexible. However, as all checks are conducted, it is also the slowest.
+   It does not check against global reservations.
 
 -  ``out-of-pool`` - allows only out-of-pool host reservations. With
    this setting in place, the server may assume that all host
@@ -4067,8 +4067,8 @@ allocating or renewing a lease for the client. Allowed values are:
 -  ``global`` - allows only global host reservations. With this setting
    in place, the server searches for reservations for a client only
    among the defined global reservations. If an address is specified,
-   the server skips the reservation checks carried out when dealing
-   in other modes, thus improving performance. Caution is advised when
+   the server skips the reservation checks carried out when dealing in
+   other modes, thus improving performance. Caution is advised when
    using this setting; Kea does not sanity-check the reservations when
    ``global`` and misconfiguration may cause problems.
 
@@ -4208,9 +4208,9 @@ The meaning of the reservation flags are:
 - ``reservations-global``: fetch global reservations.
 
 - ``reservations-in-subnet``: fetch subnet reservations. For a shared network
-  this includes all subnets member of the shared network.
+  this includes all subnet members of the shared network.
 
-- ``reservations-out-of-pool``: the makes sense only when the
+- ``reservations-out-of-pool``: this makes sense only when the
   ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
   is true the server may assume that all host reservations are for addresses
   that do not belong to the dynamic pool. Therefore, it can skip the reservation
@@ -4615,7 +4615,7 @@ subnet level rather than pool level yielding the same effect.
 
 .. _multiple-reservations-same-ip6:
 
-Multiple Reservations for the same IP
+Multiple Reservations for the Same IP
 -------------------------------------
 
 Host Reservations were designed to preclude creation of multiple
@@ -4651,8 +4651,8 @@ configuration error.
 
    When ``ip-reservations-unique`` is set to ``true`` (the default value)
    the server ensures that IP reservations are unique for a subnet within
-   a single host backend and/or Kea configuration file. It does not guarantee
-   that the reservations are unique across multiple backends.
+   a single host backend and/or Kea configuration file. It does not
+   guarantee that the reservations are unique across multiple backends.
 
 
 The following is the example configuration with two reservations for
@@ -5008,15 +5008,15 @@ subnets in the shared network. The following configuration is wrong.
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
-                    "subnet": "3ffe:abcd::/64",
-                    "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
-                    "relay": {
+                   "subnet": "3ffe:abcd::/64",
+                   "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
+                   "relay": {
                        # Specifying a different relay address for this
                        # subnet is a configuration error. In this case
                        # it should be 2001:db8::1234 or the relay address
                        # in the previous subnet should be 3ffe:abcd::cafe.
                        "ip-addresses": [ "3ffe:abcd::cafe" ]
-                    }
+                   }
                }
            ]
        }
@@ -5631,10 +5631,10 @@ selects that subnet for a relay with address 3000::1.
                     {
                         "pool": "2001:db8:1::1-2001:db8:1::ffff"
                     }
-                ],
-                "relay": {
-                    "ip-addresses": [ "3000::1" ]
-                }
+               ],
+               "relay": {
+                   "ip-addresses": [ "3000::1" ]
+               }
            }
        ]
    }
@@ -5679,17 +5679,16 @@ The following configuration can serve that configuration:
                    "ip-addresses": [ "3000::1" ]
                }
            },
-
            {
                "subnet": "2001:db8:1::/64",
                "pools": [
                     {
                         "pool": "2001:db8:1::1-2001:db8:1::ffff"
                     }
-                ],
-                "relay": {
-                    "ip-addresses": [ "3000::1" ]
-                }
+               ],
+               "relay": {
+                   "ip-addresses": [ "3000::1" ]
+               }
            }
        ]
    }
@@ -6659,8 +6658,7 @@ option is actually needed. An example configuration looks as follows:
                "billing-department": 42,
                "contact-points": [ "Alice", "Bob" ]
            }
-       } ],
-       ...
+       } ]
    }
 
 Kea does not interpret or use the user context information; it simply
