@@ -18,11 +18,12 @@ Primary developers:
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading)
  - Michal Nowikowski (testing, hammer, release engineering)
- - Razvan Becheriu (cassandra, sysrepo, multi-threading, forensic logging,
+ - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability)
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
- - Andrei Pavel (shell scripts)
+ - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
+                 release engineering, shell scripts, testing)
  - Peter Davies (documentation)
 
 Former developers who are no longer active:
