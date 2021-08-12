@@ -94,7 +94,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         libraries_found=true
         for i in ${list_of_headers}; do
           if test ! -f "${p}/include/${i}"; then
-            AX_ADD_TO_LIBRARY_WARNINGS([${library} headers not found in "${p}"])
+            AX_ADD_TO_LIBRARY_WARNINGS([${library} header ${i} not found in ${p}])
             headers_found=false
             break
           fi
@@ -107,7 +107,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
         for i in ${list_of_libraries}; do
           if test ! -f "${p}/lib/${i}"; then
-            AX_ADD_TO_LIBRARY_WARNINGS([${library} libraries not found in "${p}"])
+            AX_ADD_TO_LIBRARY_WARNINGS([${library} library ${i} not found in ${p}])
             libraries_found=false
             break
           fi
