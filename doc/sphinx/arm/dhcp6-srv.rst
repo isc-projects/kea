@@ -4157,45 +4157,51 @@ An example configuration that disables reservations looks as follows:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-           "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "reservation-mode": "disabled",
-               "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
-           }
-           ]
-       }
-   }
+    {
+      "Dhcp6": {
+        "subnet6": [
+          {
+            "pools": [
+              {
+                "pool": "2001:db8:1::-2001:db8:1::100"
+              }
+            ],
+            "reservation-mode": "disabled",
+            "subnet": "2001:db8:1::/64"
+          }
+        ]
+      }
+    }
 
 An example configuration using global reservations is shown below:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservation-mode": "global",
-           "reservations": [
+    {
+      "Dhcp6": {
+        "reservation-mode": "global",
+        "reservations": [
+          {
+            "duid": "00:03:00:01:11:22:33:44:55:66",
+            "hostname": "host-one"
+          },
+          {
+            "duid": "00:03:00:01:99:88:77:66:55:44",
+            "hostname": "host-two"
+          }
+        ],
+        "subnet6": [
+          {
+            "pools": [
               {
-               "duid": "00:03:00:01:11:22:33:44:55:66",
-               "hostname": "host-one"
-              },
-              {
-               "duid": "00:03:00:01:99:88:77:66:55:44",
-               "hostname": "host-two"
+                "pool": "2001:db8:1::-2001:db8:1::100"
               }
-           ],
-
-           "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
-           }
-           ]
-       }
-   }
+            ],
+            "subnet": "2001:db8:1::/64"
+          }
+        ]
+      }
+    }
 
 The meaning of the reservation flags are:
 
@@ -4222,78 +4228,72 @@ The correspondence of old values are:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": false
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": false,
+        "reservations-in-subnet": false
+      }
+    }
 
 ``global``:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": false
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": true,
+        "reservations-in-subnet": false
+      }
+    }
 
 ``out-of-pool``:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": true
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": false,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": true
+      }
+    }
 
 ``all``:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": false
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": false,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": false
+      }
+    }
 
 To activate both ``global`` and ``all``, the following combination can be used:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": false
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": true,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": false
+      }
+    }
 
 To activate both ``global`` and ``out-of-pool``, the following combination can
 be used:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": true
-       }
-   }
+    {
+      "Dhcp6": {
+        "reservations-global": true,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": true
+      }
+    }
 
 Note that enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
 is not recommended because ``out-of-pool`` is about host reservations in a
@@ -4306,46 +4306,48 @@ An example configuration that disables reservations looks as follows:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-           "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "reservations-global": false,
-               "reservations-in-subnet": false
-           }
-           ]
-       }
-   }
+    {
+      "Dhcp6": {
+        "subnet6": [
+          {
+            "reservations-global": false,
+            "reservations-in-subnet": false,
+            "subnet": "2001:db8:1::/64"
+          }
+        ]
+      }
+    }
 
 An example configuration using global reservations is shown below:
 
 .. code-block:: json
 
-   {
-       "Dhcp6": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": false,
-           "reservations": [
+    {
+      "Dhcp6": {
+        "reservations": [
+          {
+            "duid": "00:03:00:01:11:22:33:44:55:66",
+            "hostname": "host-one"
+          },
+          {
+            "duid": "00:03:00:01:99:88:77:66:55:44",
+            "hostname": "host-two"
+          }
+        ],
+        "reservations-global": true,
+        "reservations-in-subnet": false,
+        "subnet6": [
+          {
+            "pools": [
               {
-               "duid": "00:03:00:01:11:22:33:44:55:66",
-               "hostname": "host-one"
-              },
-              {
-               "duid": "00:03:00:01:99:88:77:66:55:44",
-               "hostname": "host-two"
+                "pool": "2001:db8:1::-2001:db8:1::100"
               }
-           ],
-
-           "subnet6": [
-           {
-               "subnet": "2001:db8:1::/64",
-               "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
-           }
-           ]
-       }
-   }
+            ],
+            "subnet": "2001:db8:1::/64"
+          }
+        ]
+      }
+    }
 
 For more details regarding global reservations, see :ref:`global-reservations6`.
 
@@ -4570,7 +4572,7 @@ following example:
         "reservations-in-subnet": false,
         # Specify if the server can assume that all reserved addresses
         # are out-of-pool. It can be ignored because "reservations-in-subnet"
-        # is false, but if it is specified, it is inherited to "shared-networks"
+        # is false, but if specified, it is inherited by "shared-networks"
         # and "subnet6" levels.
         # "reservations-out-of-pool": false,
         "shared-networks": [{

@@ -64,7 +64,7 @@
 // Specify if server can assume that all reserved addresses
 // are out-of-pool.
 // Ignored when reservations-in-subnet is false.
-// If it is specified, it is inherited to "shared-networks" and "subnet4" levels.
+// If specified, it is inherited by "shared-networks" and "subnet4" levels.
   "reservations-out-of-pool": false,
 
 // Define several global host reservations.

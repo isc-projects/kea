@@ -680,7 +680,7 @@
                 // Specify if server can assume that all reserved addresses
                 // are out-of-pool.
                 // Ignored when reservations-in-subnet is false.
-                // If it is specified, it is inherited to "subnet6" levels.
+                // If specified, it is inherited by "subnet6" levels.
                 "reservations-out-of-pool": false,
 
                 // List of client classes which must be evaluated when this shared
@@ -1019,7 +1019,7 @@
         // Specify if server can assume that all reserved addresses
         // are out-of-pool.
         // Ignored when reservations-in-subnet is false.
-        // If it is specified, it is inherited to "shared-networks" and
+        // If specified, it is inherited by "shared-networks" and
         // "subnet6" levels.
         "reservations-out-of-pool": false,
 

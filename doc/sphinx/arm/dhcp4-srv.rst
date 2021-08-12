@@ -4741,45 +4741,51 @@ An example configuration that disables reservations looks as follows:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-           "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "reservation-mode": "disabled",
-               "pools": [ { "pool": "192.0.2.10-192.0.2.100" } ]
-           }
-           ]
-       }
-   }
+    {
+      "Dhcp4": {
+        "subnet4": [
+          {
+            "pools": [
+              {
+                "pool": "192.0.2.10-192.0.2.100"
+              }
+            ],
+            "reservation-mode": "disabled",
+            "subnet": "192.0.2.0/24"
+          }
+        ]
+      }
+    }
 
 An example configuration using global reservations is shown below:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservation-mode": "global",
-           "reservations": [
+    {
+      "Dhcp4": {
+        "reservation-mode": "global",
+        "reservations": [
+          {
+            "hostname": "host-one",
+            "hw-address": "01:bb:cc:dd:ee:ff"
+          },
+          {
+            "hostname": "host-two",
+            "hw-address": "02:bb:cc:dd:ee:ff"
+          }
+        ],
+        "subnet4": [
+          {
+            "pools": [
               {
-               "hw-address": "01:bb:cc:dd:ee:ff",
-               "hostname": "host-one"
-              },
-              {
-               "hw-address": "02:bb:cc:dd:ee:ff",
-               "hostname": "host-two"
+                "pool": "192.0.2.10-192.0.2.100"
               }
-           ],
-
-           "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "pools": [ { "pool": "192.0.2.10-192.0.2.100" } ]
-           }
-           ]
-       }
-   }
+            ],
+            "subnet": "192.0.2.0/24"
+          }
+        ]
+      }
+    }
 
 The meaning of the reservation flags are:
 
@@ -4806,78 +4812,74 @@ The correspondence of old values are:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": false
-       }
-   }
+    {
+      "Dhcp4": {
+        "reservations-global": false,
+        "reservations-in-subnet": false
+      }
+    }
 
 ``global``:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
+    {
+      "Dhcp4": {
+        "reservations-global": true,
+        "reservations-in-subnet": false
+      }
+    }
 
-           "reservations-global": true,
-           "reservations-in-subnet": false
-       }
-   }
 
 ``out-of-pool``:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": true
-       }
-   }
+    {
+      "Dhcp4": {
+        "reservations-global": false,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": true
+      }
+    }
 
 ``all``:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservations-global": false,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": false
-       }
-   }
+    {
+      "Dhcp4": {
+        "reservations-global": false,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": false
+      }
+    }
 
 To activate both ``global`` and ``all``, the following combination can be used:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
+    {
+      "Dhcp4": {
+        "reservations-global": true,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": false
+      }
+    }
 
-           "reservations-global": true,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": false
-       }
-   }
 
 To activate both ``global`` and ``out-of-pool``, the following combination can
 be used:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": true,
-           "reservations-out-of-pool": true
-       }
-   }
+    {
+      "Dhcp4": {
+        "reservations-global": true,
+        "reservations-in-subnet": true,
+        "reservations-out-of-pool": true
+      }
+    }
 
 Note that enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
 is not recommended because ``out-of-pool`` is about host reservations in a
@@ -4890,46 +4892,49 @@ An example configuration that disables reservations looks as follows:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-           "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "reservations-global": false,
-               "reservations-in-subnet": false
-           }
-           ]
-       }
-   }
+    {
+      "Dhcp4": {
+        "subnet4": [
+          {
+            "reservations-global": false,
+            "reservations-in-subnet": false,
+            "subnet": "192.0.2.0/24"
+          }
+        ]
+      }
+    }
+
 
 An example configuration using global reservations is shown below:
 
 .. code-block:: json
 
-   {
-       "Dhcp4": {
-
-           "reservations-global": true,
-           "reservations-in-subnet": false,
-           "reservations": [
+    {
+      "Dhcp4": {
+        "reservations": [
+          {
+            "hostname": "host-one",
+            "hw-address": "01:bb:cc:dd:ee:ff"
+          },
+          {
+            "hostname": "host-two",
+            "hw-address": "02:bb:cc:dd:ee:ff"
+          }
+        ],
+        "reservations-global": true,
+        "reservations-in-subnet": false,
+        "subnet4": [
+          {
+            "pools": [
               {
-               "hw-address": "01:bb:cc:dd:ee:ff",
-               "hostname": "host-one"
-              },
-              {
-               "hw-address": "02:bb:cc:dd:ee:ff",
-               "hostname": "host-two"
+                "pool": "192.0.2.10-192.0.2.100"
               }
-           ],
-
-           "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "pools": [ { "pool": "192.0.2.10-192.0.2.100" } ]
-           }
-           ]
-       }
-   }
+            ],
+            "subnet": "192.0.2.0/24"
+          }
+        ]
+      }
+    }
 
 For more details regarding global reservations, see :ref:`global-reservations4`.
 
@@ -5158,7 +5163,7 @@ following example:
         "reservations-in-subnet": false,
         # Specify if the server can assume that all reserved addresses
         # are out-of-pool. It can be ignored because "reservations-in-subnet"
-        # is false, but if it is specified, it is inherited to "shared-networks"
+        # is false, but if specified, it is inherited by "shared-networks"
         # and "subnet4" levels.
         # "reservations-out-of-pool": false,
         "shared-networks": [{
