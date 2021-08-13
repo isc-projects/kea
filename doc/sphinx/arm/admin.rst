@@ -432,8 +432,9 @@ To check the PostgreSQL timezone:
 To configure the PostgreSQL timezone for your server, please reffer to the
 installed version documentation.
 
-Usually the setting is configured in the postgresql.conf with the varying
-version path /etc/postgresql/<version>/main/postgresql.conf.
+Usually the setting is configured in the ``postgresql.conf`` with the varying
+version path ``/etc/postgresql/<version>/main/postgresql.conf``, but on some systems
+the files may be located in ``/var/lib/pgsql/data``.
 
    .. code-block:: ini
 
@@ -522,7 +523,8 @@ which the servers will access it. A number of steps are required:
    file is normally located in the primary data directory for the
    PostgreSQL server. The precise path may vary depending on the
    operating system and version, but the default location for PostgreSQL is
-   ``/etc/postgresql/*/main/postgresql.conf``.
+   ``/etc/postgresql/*/main/postgresql.conf``. However, on some systems
+   (notably CentOS 8) the file may reside in ``/var/lib/pgsql/data``.
 
    Assuming Kea is running on the same host as PostgreSQL, adding lines
    similar to the following should be sufficient to provide
