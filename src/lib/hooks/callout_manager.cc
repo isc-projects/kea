@@ -176,8 +176,8 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                         .arg(stopwatch.logFormatLastDuration());
                 } else {
                     LOG_ERROR(callouts_logger, HOOKS_CALLOUT_ERROR)
-                        .arg(callout_handle.getCurrentLibrary())
                         .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
+                        .arg(callout_handle.getCurrentLibrary())
                         .arg(PointerConverter(i->second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 }
@@ -187,8 +187,8 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 stopwatch.stop();
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
-                    .arg(callout_handle.getCurrentLibrary())
                     .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
+                    .arg(callout_handle.getCurrentLibrary())
                     .arg(PointerConverter(i->second).dlsymPtr())
                     .arg(e.what())
                     .arg(stopwatch.logFormatLastDuration());
