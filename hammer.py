@@ -1397,8 +1397,15 @@ def prepare_system_local(features, check_times):
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
+        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++',
                     'log4cplus-devel', 'boost-devel', 'mariadb-devel', 'postgresql-devel']
+
+        if revision == '7':
+            # openssl-devel is version 1.0.2k which is out of support.
+            # Install 1.1.1g instead.
+            packages.append('openssl11-devel')
+        else:
+            packages.append('openssl-devel')
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1453,9 +1460,15 @@ def prepare_system_local(features, check_times):
 
     # prepare rhel
     elif system == 'rhel':
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel', 'boost-devel',
-                    'mariadb-devel', 'postgresql-devel']
-        packages.extend(['rpm-build'])
+        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'boost-devel',
+                    'mariadb-devel', 'postgresql-devel', 'rpm-build']
+
+        if revision == '7':
+            # openssl-devel is version 1.0.2k which is out of support.
+            # Install 1.1.1g instead.
+            packages.append('openssl11-devel')
+        else:
+            packages.append('openssl-devel')
 
         if 'docs' in features and not revision == '8':
             packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
