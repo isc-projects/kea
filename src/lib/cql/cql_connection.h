@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2015-2017 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -156,7 +156,7 @@ public:
     ///
     /// Opens the database using the information supplied in the parameters
     /// passed to the constructor. If no parameters are supplied, the default
-    /// values will be used. The parameters supported as as follows (default
+    /// values will be used. The parameters supported are as follows (default
     /// values specified in parentheses):
     /// - keyspace: name of the database to which to connect (keatest)
     /// - contact-points: IP addresses of the nodes to connect to (127.0.0.1)

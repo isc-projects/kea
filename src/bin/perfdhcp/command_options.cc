@@ -687,7 +687,7 @@ CommandOptions::initClientsNum() {
         "value of -R <value> must be non-negative integer";
 
     try {
-        // Declare clients_num as as 64-bit signed value to
+        // Declare clients_num as a 64-bit signed value to
         // be able to detect negative values provided
         // by user. We would not detect negative values
         // if we casted directly to unsigned value.

@@ -195,7 +195,7 @@ To check the MySQL timezone:
       mysql> SELECT @@global.time_zone;
       mysql> SELECT @@session.time_zone;
 
-To configure the MySQL timezone for your server, please reffer to the
+To configure the MySQL timezone for your server, please refer to the
 installed version documentation.
 
 Usually the setting is configured in the [mysqld] section in /etc/mysql/my.cnf,
@@ -429,7 +429,7 @@ To check the PostgreSQL timezone:
       postgres=# show timezone;
       postgres=# SELECT * FROM pg_timezone_names WHERE name = current_setting('TIMEZONE');
 
-To configure the PostgreSQL timezone for your server, please reffer to the
+To configure the PostgreSQL timezone for your server, please refer to the
 installed version documentation.
 
 Usually the setting is configured in the ``postgresql.conf`` with the varying

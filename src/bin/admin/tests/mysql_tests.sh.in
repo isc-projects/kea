@@ -1692,7 +1692,7 @@ mysql_shrink_server_tag_test() {
     # Now upgrade to schema 9.6.
     mysql_upgrade_schema_to_version 9.6
 
-    # Unfortunatelly, this schema version already contains 64 character
+    # Unfortunately, this schema version already contains 64 character
     # long server tags. Let's extend it back, but not to 256 characters
     # because it is proven to cause errors in some configurations.
     sql=\

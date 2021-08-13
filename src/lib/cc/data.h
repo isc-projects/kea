@@ -548,7 +548,7 @@ public:
                     // The options are limited. I've tried templating, moving
                     // this function from a member function to free-standing and
                     // taking the Element template as argument. I've tried
-                    // making it a virtual function with overriden
+                    // making it a virtual function with overridden
                     // implementations in ListElement and MapElement. Nothing
                     // works.
                     child = boost::const_pointer_cast<Element>(get(key));
@@ -686,7 +686,7 @@ public:
 
     /// @brief Sorts the elements inside the list.
     ///
-    /// The list must contain elments of the same type.
+    /// The list must contain elements of the same type.
     /// Call with the key by which you want to sort when the list contains maps.
     /// Nested lists are not supported.
     /// Call without a parameter when sorting any other type.

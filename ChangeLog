@@ -61,7 +61,7 @@ Kea 1.9.10 (development) released on Jul 30, 2021
 
 1921.	[func]		fdupont
 	The D2 d2_srv_configured hook point used DROP status to notify
-	the D2 server that an error has occured and the configuration
+	the D2 server that an error has occurred and the configuration
 	is rejected. The error message is passed to the D2 server
 	through the new 'error' hook parameter.
 	(Gitlab #1950)

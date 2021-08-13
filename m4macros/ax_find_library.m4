@@ -128,9 +128,9 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 ])
 
 # You usually want to call this after you have called AC_MSG_RESULT so that the
-# warnings don't interefere between the text displayed by AC_MSG_CHECKING
+# warnings don't interfere between the text displayed by AC_MSG_CHECKING
 # "checking library..." and the text displayed by AC_MSG_RESULT "yes" or "no"
-# that sould be on the same line.
+# that should be on the same line.
 AC_DEFUN([AX_DISPLAY_LIBRARY_WARNINGS], [
   if test -n "${LIBRARY_WARNINGS}"; then
     printf '%s\n' "${LIBRARY_WARNINGS}" | while read -r line; do

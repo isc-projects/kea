@@ -254,7 +254,7 @@ After installation the result should be similar to this:
     Features: ! - Means that the feature is effectively disabled because of its false if-feature(s)
 
 To reinstall a module, if the revision YANG entry was bumped, simply installing
-it will update it automatically. Othweise, it must first be uninstalled:
+it will update it automatically. Otherwise, it must first be uninstalled:
 
 .. code-block:: console
 
@@ -1033,7 +1033,7 @@ happens between exporting them.
 Unfortunately, sysrepo v0.x does not support import/export of all YANG modules.
 This was added in sysrepo v1.x. You will need to do per-module backup. It's
 probably for the best, for isolating potential failures and preventing them from
-affecintg all your modules.
+affecting all your modules.
 
 With sysrepo v0.x:
 

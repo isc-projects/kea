@@ -1081,7 +1081,7 @@ TEST_F(NetconfAgentTest, validate) {
     sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
-    // Check that the fakse server received the second request.
+    // Check that the fake server received the second request.
     ASSERT_EQ(2, requests_.size());
     request_str = requests_[1];
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));

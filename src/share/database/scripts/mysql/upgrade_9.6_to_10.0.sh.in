@@ -87,7 +87,7 @@ shrink_tag_column() {
         sql="ALTER TABLE $table MODIFY COLUMN tag VARCHAR(64) NOT NULL"
         if ! mysql -N -B "${@}" -e "${sql}"
         then
-            printf 'shrink_tag_column: alter quary failed [%s]\n' "${sql}"
+            printf 'shrink_tag_column: alter query failed [%s]\n' "${sql}"
             exit 255
         fi
     fi
