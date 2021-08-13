@@ -1,3 +1,9 @@
+1931.	[bug]		tomek
+	Two hook messages HOOKS_CALLOUT_ERROR and HOOKS_CALLOUT_MESSAGES
+	are now printing the hook name and index properly. Thank you to
+	Shawn Routhier for reporting the issue.
+	(Gitlab #2020)
+
 1930.	[doc]		razvan
 	Extended documentation section about setting up the timezones in
 	MySQL and PostgreSQL databases.
