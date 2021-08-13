@@ -50,12 +50,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 
       if test -f "${library_pc}"; then
         if test -n "${PKG_CONFIG}"; then
-          # Check that pkg-config is able to interpret the file.
-          if "${PKG_CONFIG}" "${library_pc}" > /dev/null 2>&1; then
-            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
-          else
-            AX_ADD_TO_LIBRARY_WARNINGS(["pkg-config ${library_pc}" doesn't work properly. It seems like a bad pkg-config file.])
-          fi
+          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
         else
           AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
         fi
@@ -168,6 +163,13 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
 
     # Save the previous PKG_CONFIG_PATH.
     save_pkg_config_path="${PKG_CONFIG_PATH}"
+
+    # If file was given, append its residing directory to PKG_CONFIG_PATH.
+    # Some old versions of pkg-config (e.g. 0.29.1 in Ubuntu 20.04) seem to
+    # require it when searching for dependencies.
+    if test -f "${library_pc_or_name}"; then
+      pkg_config_paths="${pkg_config_paths}:$(dirname "${library_pc_or_name}")"
+    fi
 
     # Append some usual paths and the requested paths.
     export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:${pkg_config_paths}"
