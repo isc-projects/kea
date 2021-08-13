@@ -1,3 +1,8 @@
+1930.	[doc]		razvan
+	Extended documentation section about setting up the timezones in
+	MySQL and PostgreSQL databases.
+	(Gitlab #1978)
+
 1929.	[build]		andrei
 	Compatibility with upcoming boost 1.77 has been improved.
 	Thanks to Brad Smith for the patch!
