@@ -86,7 +86,7 @@ if test -z "${modules+x}"; then
 fi
 
 # sysrepoctl does not set its rpath. Set LD_LIBRARY_PATH instead.
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${sysrepo}/lib"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${sysrepo}/lib"
 
 # Check if model is installed.
 is_model_installed() {
