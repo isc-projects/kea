@@ -529,7 +529,6 @@ running at "172.88.99.10", set the Forward DNS Server as follows:
                    "key-name": "",
                    "dns-servers": [
                        {
-                           "hostname": "",
                            "ip-address": "172.88.99.10",
                            "port": 53
                        }
@@ -665,7 +664,6 @@ service is running at "172.88.99.10", then set it as follows:
                    "key-name": "",
                    "dns-servers": [
                        {
-                           "hostname": "",
                            "ip-address": "172.88.99.10",
                            "port": 53
                        }
@@ -681,6 +679,84 @@ service is running at "172.88.99.10", then set it as follows:
 
    Since "hostname" is not yet supported, the parameter "ip-address"
    must be set to the address of the DNS server.
+
+.. _per-server-keys:
+
+Per DNS server TSIG keys
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since Kea version 2.0.0 a TSIG key can be specified in a DNS server
+configuration. The priority rule is:
+
+-  if a not empty key name is specified in a DNS server entry this TSIG
+   key will protect DNS updates sent to this server.
+
+-  if empty or no key name is specified in a DNS server entry but a not
+   empty key name is specified in the parent domain entry, the domain
+   TSIG key will protect DNS updates sent to this server.
+
+-  if empty or no key name is specified in a DNS server entry and its parent
+   domain entry, no TSIG will protect DNS updates sent to this server.
+
+Fon instance in this configuration:
+
+::
+
+   "DhcpDdns": {
+       "forward-ddns": {
+           "ddns-domains": [
+               {
+                   "name": "other.example.com.",
+                   "key-name": "foo",
+                   "dns-servers": [
+                       {
+                           "ip-address": "172.88.99.10",
+                           "port": 53
+                       },
+                       {
+                           "ip-address": "172.88.99.11",
+                           "port": 53,
+                           "key-name": "bar"
+                       }
+                   ]
+               }
+           ]
+       },
+       "reverse-ddns": {
+           "ddns-domains": [
+               {
+                   "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
+                   "dns-servers": [
+                       {
+                           "ip-address": "172.88.99.12",
+                           "port": 53
+                       },
+                       {
+                           "ip-address": "172.88.99.13",
+                           "port": 53,
+                           "key-name": "bar"
+                       }
+                   ]
+               }
+           ]
+       },
+       "tsig-keys": [
+           {
+               "name": "foo",
+               "algorithm": "HMAC-MD5",
+               "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
+           },
+           {
+               "name": "bar",
+               "algorithm": "HMAC-SHA224",
+               "secret": "bZEG7Ow8OgAUPfLWV3aAUQ=="
+           }
+       ]
+   }
+
+
+The 172.88.99.10 server will use the foo TSIG key, 172.88.99.11 and
+172.88.99.13 servers the bar one and 172.88.99.12 will not use TSIG.
 
 .. _d2-user-contexts:
 
