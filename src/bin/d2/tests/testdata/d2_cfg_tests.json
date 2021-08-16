@@ -1112,6 +1112,40 @@
     }
 }
 
+#-----
+,{
+"description" : "D2.forward-ddns.dhcp-ddns.dns-servers.key-name, no matching key name",
+"logic-error" : "Dns Server : specifies an undefined key: no.such.key (<string>:1:100)",
+"data" :
+    {
+    "forward-ddns" :
+    {
+        "ddns-domains" :
+        [
+            {
+            "name" : "four.example.com.",
+            "dns-servers" :
+            [
+                {
+                "ip-address" : "172.16.1.1",
+                "key-name" : "no.such.key"
+                }
+            ]
+            }
+        ]
+    },
+    "reverse-ddns" : {},
+    "tsig-keys" :
+        [
+            {
+            "name" : "d2.md5.key",
+            "algorithm" : "HMAC-MD5",
+            "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
+            }
+        ]
+    }
+}
+
 #----- D2.reverse-ddns tests
 ,{
 "description" : "D2.reverse-ddns, valid, empty ddns-domains",
@@ -1502,6 +1536,40 @@
         ]
     },
     "tsig-keys" : []
+    }
+}
+
+#-----
+,{
+"description" : "D2.reverse-ddns.dhcp-ddns.dns-servers.key-name, no matching key name",
+"logic-error" : "Dns Server : specifies an undefined key: no.such.key (<string>:1:122)",
+"data" :
+    {
+    "forward-ddns" : {},
+    "reverse-ddns" :
+    {
+        "ddns-domains" :
+        [
+            {
+            "name" : "2.0.192.in-addr.arpa.",
+            "dns-servers" :
+            [
+                {
+                "ip-address" : "172.16.1.1",
+                "key-name" : "no.such.key"
+                }
+            ]
+            }
+        ]
+    },
+    "tsig-keys" :
+        [
+            {
+            "name" : "d2.md5.key",
+            "algorithm" : "HMAC-MD5",
+            "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
+            }
+        ]
     }
 }
 
