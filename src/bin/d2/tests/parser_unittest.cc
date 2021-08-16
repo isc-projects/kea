@@ -703,7 +703,7 @@ TEST(ParserTest, mapEntries) {
     }
     syntax_file.close();
 
-    // Get keywords from the exsample files
+    // Get keywords from the example files.
     string sample_dir(CFG_EXAMPLES);
     sample_dir += "/";
     ElementPtr sample_json = Element::createList();
