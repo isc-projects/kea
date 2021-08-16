@@ -1011,7 +1011,7 @@ def _install_libyang_from_sources():
         execute('git checkout v1.0.240', cwd='/tmp/libyang')
         execute('mkdir /tmp/libyang/build')
         execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/libyang/build')
-        execute('make -j $(nproc || gnproc)', cwd='/tmp/libyang/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/libyang/build')
         execute('sudo make install', cwd='/tmp/libyang/build')
     finally:
         execute('rm -rf /tmp/libyang')
@@ -1064,7 +1064,7 @@ def _install_sysrepo_from_sources():
         execute('git checkout v%s' % sysrepo_version, cwd='/tmp/sysrepo')
         execute('mkdir /tmp/sysrepo/build')
         execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/sysrepo/build')
-        execute('make -j $(nproc || gnproc)', cwd='/tmp/sysrepo/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo/build')
         execute('sudo make install', cwd='/tmp/sysrepo/build')
     finally:
         execute('rm -rf /tmp/sysrepo')
@@ -1539,16 +1539,15 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            if float(revision) <= 20.04:
+            if float(revision) <= 21.04:
                 packages.extend(['cmake', 'libpcre3-dev'])
-                deferred_functions.append(_install_libyang_from_sources)
+                deferred_functions.extend([
+                    _install_libyang_from_sources,
+                    _install_sysrepo_from_sources,
+                ])
             else:
-                packages.extend(['libyang-dev', 'libyang-cpp-dev'])
-            if float(revision) <= 20.10:
-                packages.extend(['cmake', 'libpcre3-dev'])
-                deferred_functions.append(_install_sysrepo_from_sources)
-            else:
-                packages.extend(['libsysrepo-dev', 'libsysrepo-cpp-dev'])
+                packages.extend(['libyang-dev', 'libyang-cpp-dev',
+                                 'libsysrepo-dev', 'libsysrepo-cpp-dev'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
