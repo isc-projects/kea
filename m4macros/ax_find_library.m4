@@ -72,13 +72,15 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     # If not found, then search in usual paths for a .pc file.
     if ! "${LIBRARY_FOUND}"; then
       for p in /usr /usr/local; do
-        library_pc="${p}/lib/pkgconfig/${library}.pc"
-        if test -f "${library_pc}"; then
-          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
-          if "${LIBRARY_FOUND}"; then
-            break
+        for l in lib lib64; do
+          library_pc="${p}/${l}/pkgconfig/${library}.pc"
+          if test -f "${library_pc}"; then
+            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
+            if "${LIBRARY_FOUND}"; then
+              break 2
+            fi
           fi
-        fi
+        done
       done
     fi
 
@@ -101,13 +103,15 @@ AC_DEFUN([AX_FIND_LIBRARY], [
 
         LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
         for i in ${list_of_libraries}; do
-          if test ! -f "${p}/lib/${i}"; then
-            AX_ADD_TO_LIBRARY_WARNINGS([${library} library ${i} not found in ${p}])
-            libraries_found=false
-            break
-          fi
-          l=$(printf '%s' "${i}" | sed 's/^lib//g;s/.so$//g')
-          LIBRARY_LIBS="${LIBRARY_LIBS} -l${l}"
+          for l in lib lib64; do
+            if test ! -f "${p}/${l}/${i}"; then
+              AX_ADD_TO_LIBRARY_WARNINGS([${library} library ${i} not found in ${p}/${l}])
+              libraries_found=false
+              break 2
+            fi
+            lib=$(printf '%s' "${i}" | sed 's/^lib//g;s/.so$//g')
+            LIBRARY_LIBS="${LIBRARY_LIBS} -l${lib}"
+          done
         done
 
         if "${headers_found}" && "${libraries_found}"; then
@@ -172,7 +176,7 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
     fi
 
     # Append some usual paths and the requested paths.
-    export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:${pkg_config_paths}"
+    export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/local/lib64/pkgconfig:${pkg_config_paths}"
 
     # Check that pkg-config is able to interpret the file.
     if "${PKG_CONFIG}" "${library_pc_or_name}" > /dev/null 2>&1; then
