@@ -246,7 +246,7 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    ASSERT_NO_THROW(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file
@@ -272,6 +272,8 @@ void testFile(const std::string& fname) {
 // the second time with D2Parser. Both JSON trees are then compared.
 TEST(ParserTest, file) {
     vector<string> configs;
+    configs.push_back("all-keys.json");
+    configs.push_back("all-keys-netconf.json");
     configs.push_back("comments.json");
     configs.push_back("gss-tsig.json");
     configs.push_back("sample1.json");
@@ -701,12 +703,15 @@ TEST(ParserTest, mapEntries) {
     }
     syntax_file.close();
 
-    // Get keywords from the sample file
-    string sample_dir(D2_TEST_DATA_DIR);
+    // Get keywords from the exsample files
+    string sample_dir(CFG_EXAMPLES);
     sample_dir += "/";
     ElementPtr sample_json = Element::createList();
-    loadFile(sample_dir + "get_config.json", sample_json);
-    KeywordSet sample_keys;
+    loadFile(sample_dir + "all-keys.json", sample_json);
+    loadFile(sample_dir + "all-keys-netconf.json", sample_json);
+    KeywordSet sample_keys = {
+        "hostname"
+    };
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
         [] (ConstElementPtr json, KeywordSet& set) {
@@ -755,8 +760,8 @@ void testDuplicate(ConstElementPtr json) {
 // This test checks that duplicate entries make parsing to fail.
 TEST(ParserTest, duplicateMapEntries) {
     // Get the config to work with from the sample file.
-    string sample_fname(D2_TEST_DATA_DIR);
-    sample_fname += "/get_config.json";
+    string sample_fname(CFG_EXAMPLES);
+    sample_fname += "/all-keys.json";
     D2ParserContext ctx;
     ElementPtr sample_json;
     EXPECT_NO_THROW(sample_json =

@@ -1,0 +1,174 @@
+// WARNING: This example configuration is not meant for production use.
+// The Kea Kea's DHCP-DDNS server can refuse this configuration because
+// it may contain mutually exclusive configuration parameters.
+//
+// The primary purpose of the example file is to provide a comprehensive
+// list of parameters supported by Kea DHCP-DDNS server along with the
+// brief description of each parameter.
+//
+// This stable version is used for YANG as we do not want to update code
+// and models each time a keyword is added to the syntax.
+{
+    // Kea DHCP-DDNS server configuration begins here.
+    "DhcpDdns": {
+
+    // Global Parameters
+
+    // IP address D2 will listen for update requests at.
+    // Default is 127.0.0.1
+    "ip-address": "127.0.0.1",
+
+    // Port D2 will listen for update requests on.
+    // Default is 53001.
+    "port": 53001,
+
+    // Maximum time to we will wait for a DNS server to respond to us.
+    // Unit is the millisecond, default is 100ms.
+    "dns-server-timeout" : 100,
+
+    // Protocol to use for Name Change Requests from a Kea DHCP server.
+    // Currently only 'UDP' is supported.
+    "ncr-protocol": "UDP",
+
+    // Format to use for Name Change Requests from a Kea DHCP server.
+    // Currently only 'JSON' is supported.
+    "ncr-format": "JSON",
+
+    // Command control socket configuration parameters for Kea DHCP-DDNS server.
+    "control-socket": {
+
+        // Location of the unix domain socket file the DHCP-DDNS server uses
+        // to receive control commands from the Kea Control Agent or the
+        // local server administrator.
+        "socket-name": "/tmp/kea-ddns-ctrl-socket",
+
+        // Control socket type used by the Kea DHCP-DDNS server.
+        // The 'unix' socket is currently the only supported type.
+        "socket-type": "unix"
+    },
+
+    // List of hooks libraries and their specific configuration parameters
+    // to be loaded by Kea DHCP-DDNS server.
+    "hooks-libraries": [
+        {
+            // Location of the hooks library to be loaded.
+            "library": "/opt/local/ddns-server-commands.so",
+
+            // Hook library specific configuration parameters.
+            "parameters": { }
+        }
+    ],
+
+    // Forward DDNS (Dynamic DNS).
+    "forward-ddns": {
+
+        // List of DDNS domains.
+        "ddns-domains": [
+            {
+                // Name of the zone (required).
+                "name": "example.com.",
+
+                // Name of the TSIG key used to protect DNS updates.
+                "key-name": "d2.md5.key",
+
+                // List of DNS servers where to send DNS updates.
+                "dns-servers": [
+                    {
+                        // DNS server IP address (required).
+                        "ip-address": "2001:db8:1::10",
+
+                        // DNS server UDP port. Default is 53 (DNS service).
+                        "port": 7802
+                    }
+                ]
+            }
+        ]
+    },
+
+    // Reverse DDNS (Dynamic DNS).
+    "reverse-ddns": {
+
+        // List of DDNS domains.
+        "ddns-domains": [
+            {
+                // Name of the zone (required).
+                "name": "2.0.192.in-addr.arpa.",
+
+                // Name of the TSIG key used to protect DNS updates.
+                "key-name": "d2.sha1.key",
+
+                // List of DNS servers where to send DNS updates.
+                "dns-servers": [
+                    {
+                        // DNS server IP address (required).
+                        "ip-address": "172.16.1.1",
+
+                        // DNS server UDP port. Default is 53 (DNS service).
+                        "port": 5301
+                    }
+                ]
+            }
+        ]
+    },
+
+    // List of TSIG keys used to protect DNS updates.
+    "tsig-keys": [
+        {
+            // Name of the TSIG key (required).
+            "name": "d2.md5.key",
+
+            // Algorithm of the TSIG key (required).
+            // The value must be a valid algorithm name e.g.
+            // HMAC-MD5, HMAC-SHA1, HMAC-SHA224, ...
+            "algorithm": "HMAC-MD5",
+
+            // Number of bits in the digest. Default is 0 which means
+            // to use all bits provided by the algorithm. Too short values
+            // (depending on the algorithm) are rejected.
+            "digest-bits": 0,
+
+            // Secret of the TSIG key (required) in base-64.
+            "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
+        }
+    ],
+
+    // List of loggers used by the servers using this configuration file.
+    "loggers": [
+        {
+            // Debug level, a value between 0..99. The greater the value
+            // the more detailed debug log.
+            "debuglevel": 99,
+
+            // Name of the logger.
+            "name": "kea-dhcp-ddns",
+
+            // Configures how the log should be output.
+            "output_options": [
+                {
+                    // Determines whether the log should flushed to a file.
+                    "flush": true,
+
+                    // Specifies maximum filesize before the file is being rotated.
+                    "maxsize": 10240000,
+
+                    // Specifies the maximum number of rotated files being kept.
+                    "maxver": 1,
+
+                    // Specifies logging destination.
+                    "output": "stdout",
+
+                    // Specifies log entry content
+                    "pattern": "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n"
+                }
+            ],
+
+            // Specifies logging severity, i.e. "ERROR", "WARN", "INFO", "DEBUG".
+            "severity": "INFO"
+        }
+    ],
+
+    // Look at sample1 example for the use of user-contexts.
+    "user-context": { }
+}
+
+}

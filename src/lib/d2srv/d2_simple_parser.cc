@@ -82,7 +82,7 @@ namespace d2 {
 const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
     { "ip-address",         Element::string, "127.0.0.1" },
     { "port",               Element::integer, "53001" },
-    { "dns-server-timeout", Element::integer, "100" }, // in seconds
+    { "dns-server-timeout", Element::integer, "100" }, // in milliseconds
     { "ncr-protocol",       Element::string, "UDP" },
     { "ncr-format",         Element::string, "JSON" }
 };
