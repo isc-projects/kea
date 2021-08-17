@@ -1754,48 +1754,48 @@ AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh],
 AC_CONFIG_FILES([src/share/database/scripts/cql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/cql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/Makefile])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.0_to_9.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.1_to_9.2.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.2_to_9.3.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.3_to_9.4.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.4_to_9.5.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.5_to_9.6.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_9.6_to_10.0.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_9.6_to_10.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_x_00010_to_00011.sh],
-                [chmod +x src/share/database/scripts/mysql/upgrade_x_00010_to_00011.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_001.0_to_002.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_001.0_to_002.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_002.0_to_003.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_002.0_to_003.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_003.0_to_004.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_003.0_to_004.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_004.0_to_004.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_004.0_to_004.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_004.1_to_005.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_004.1_to_005.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_005.0_to_005.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_005.0_to_005.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_005.1_to_005.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_005.1_to_005.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_005.2_to_006.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_005.2_to_006.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_006.0_to_007.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_006.0_to_007.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_007.0_to_008.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_007.0_to_008.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_008.0_to_008.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_008.0_to_008.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_008.1_to_008.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_008.1_to_008.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_008.2_to_009.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_008.2_to_009.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.0_to_009.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.0_to_009.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.1_to_009.2.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.1_to_009.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.2_to_009.3.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.2_to_009.3.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.3_to_009.4.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.3_to_009.4.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.4_to_009.5.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.4_to_009.5.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.5_to_009.6.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.5_to_009.6.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.6_to_010.0.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_009.6_to_010.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_010_to_011.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_010_to_011.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
