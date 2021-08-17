@@ -762,7 +762,10 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
-    "  s.tag " \
+    "  s.tag, " \
+    "  c.preferred_lifetime," \
+    "  c.min_preferred_lifetime, " \
+    "  c.max_preferred_lifetime " \
     "FROM dhcp6_client_class AS c " \
     "INNER JOIN dhcp6_client_class_order AS o " \
     "  ON c.id = o.class_id " \
@@ -1088,7 +1091,10 @@ namespace {
     "  max_valid_lifetime = ?," \
     "  depend_on_known_directly = ?," \
     follow_class_name_set \
-    "  modification_ts = ? " \
+    "  modification_ts = ?, " \
+    "  preferred_lifetime = ?, " \
+    "  min_preferred_lifetime = ?, " \
+    "  max_preferred_lifetime = ? " \
     "WHERE name = ?"
 #endif
 

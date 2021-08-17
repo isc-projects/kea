@@ -2860,7 +2860,10 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server tag
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH),// server tag
+            MySqlBinding::createInteger<uint32_t>(), // preferred lifetime
+            MySqlBinding::createInteger<uint32_t>(), // min preferred lifetime
+            MySqlBinding::createInteger<uint32_t>() // max preferred lifetime
         };
 
         std::list<ClientClassDefPtr> class_list;
@@ -2914,6 +2917,9 @@ public:
 
                 // modification_ts
                 last_client_class->setModificationTime(out_bindings[9]->getTimestamp());
+
+                // preferred lifetime: default, min, max
+                last_client_class->setPreferred(createTriplet(out_bindings[33], out_bindings[34], out_bindings[35]));
 
                 class_list.push_back(last_client_class);
             }
@@ -3066,6 +3072,9 @@ public:
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMin()),
+            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMax()),
         };
 
         MySqlTransaction transaction(conn_);
@@ -3753,8 +3762,11 @@ TaggedStatementArray tagged_statements = { {
       "  max_valid_lifetime,"
       "  depend_on_known_directly,"
       "  follow_class_name,"
-      "  modification_ts"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "  modification_ts,"
+      "  preferred_lifetime,"
+      "  min_preferred_lifetime,"
+      "  max_preferred_lifetime"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
     // Insert association of a client class with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6_SERVER,

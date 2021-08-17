@@ -24,6 +24,7 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <testutils/multi_threading_utils.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -4336,7 +4337,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
     }
     // Create first class.
     auto class1 = test_client_classes_[0];
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
     {
         SCOPED_TRACE("client class foo is created");
         testNewAuditEntry("dhcp6_client_class",
@@ -4346,7 +4347,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
     }
     // Create second class.
     auto class2 = test_client_classes_[1];
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class2, ""));
     {
         SCOPED_TRACE("client class bar is created");
         testNewAuditEntry("dhcp6_client_class",
@@ -4356,7 +4357,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
     }
     // Create third class.
     auto class3 = test_client_classes_[2];
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
     {
         SCOPED_TRACE("client class foobar is created");
         testNewAuditEntry("dhcp6_client_class",
@@ -4366,7 +4367,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6) {
     }
     // Update the third class to depend on the second class.
     class3->setTest("member('foo')");
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
     {
         SCOPED_TRACE("client class bar is updated");
         testNewAuditEntry("dhcp6_client_class",
@@ -4429,7 +4430,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getClientClass6) {
 
     // Get the first client class and validate its contents.
     ClientClassDefPtr client_class;
-    EXPECT_NO_THROW(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
+    ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
     EXPECT_EQ("foo", client_class->getName());
     EXPECT_TRUE(client_class->getRequired());
