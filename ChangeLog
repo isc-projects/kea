@@ -1,3 +1,11 @@
+1932.	[func]		tmark
+	MySQL indexing of leases database has been improved. It now
+	behaves better on older MySQL versions. In particular, the lease
+	reclamation no longer causes full scans to be performed. This
+	fix introduces MySQL schema update to 11.0. This should reduce
+	the periodic performance slowdowns.
+	(Gitlab #2030)
+
 1931.	[bug]		tomek
 	Two hook messages HOOKS_CALLOUT_ERROR and HOOKS_CALLOUT_MESSAGES
 	are now printing the hook name and index properly. Thank you to
