@@ -1,3 +1,10 @@
+1934.	[func]		tmark
+	Kea-dhcp6 now supports specifying valid-lifetime and
+	preferred-lifetime values in client classes.  Prior to this
+	it could only be specified at the global, shared-network,
+	and subnet scopes.
+	(Gitlab #1710)
+
 1933.	[doc]		fdupont, tomek
 	Added a new ARM section about GSS-TSIG. Currently it describes
 	how to build Kea with GSS-API support. It will be expanded in
