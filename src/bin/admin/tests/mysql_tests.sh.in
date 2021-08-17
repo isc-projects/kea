@@ -847,6 +847,12 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     count=$(echo "${OUTPUT}" | grep -Fci lease6_by_expire_state)
     assert_eq 2 "${count}" "lease6_by_expire_state wrong or missing. (expected count %d, actual %d)"
 
+    # Verify preferred lifetime columns exist.
+    qry="select preferred_lifetime,min_preferred_lifetime,max_preferred_lifetime from dhcp6_client_class where name=''"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "$qry failed. dhcp6_client_classes preferred lifetime columns missing?"
+
     # Verify upgraded schema reports version 11.0
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "11.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
