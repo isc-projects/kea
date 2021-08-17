@@ -2240,6 +2240,8 @@ single values to triplets with minimum, default and maximum values using:
 
 - ``max-valid-lifetime`` - specifies the maximum valid lifetime (optional).
 
+As of Kea 1.9.11, these values may be specified within client classes.
+
 When the client does not specify lifetimes the default is used. When
 it specifies a lifetime using IAADDR or IAPREFIX sub option with
 non-zero values, these values are used when they are between configured
