@@ -43,8 +43,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
    arm/ctrl-channel
    arm/logging
    arm/shell
-   arm/netconf
-   arm/gss-tsig
+   arm/integrations
    arm/stork
    arm/security
 
