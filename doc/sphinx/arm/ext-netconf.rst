@@ -1,21 +1,23 @@
 .. _netconf:
 
-********************
-YANG/NETCONF Support
-********************
+YANG/NETCONF
+============
 
 .. _netconf-overview:
 
 Overview
-========
+--------
 
-Kea provides optional support for a YANG/NETCONF interface with the
-``kea-netconf`` NETCONF agent.
+The Network Configuration Protocol, or NETCONF, is a network management protocol defined
+in `RFC 4741 <https://tools.ietf.org/html/rfc4741>`__. It uses YANG modeling language,
+defined in `RFC 6020 <https://tools.ietf.org/html/rfc6020>`__, to provide a uniform way
+of handling configuration syntax of varied networking devices. Kea provides optional
+support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 
 .. _netconf-install:
 
 Installing NETCONF
-==================
+------------------
 
 To get its NETCONF capabilities, Kea uses libyang v1.0.240 and sysrepo v1.4.140.
 Use packages if they are provided on your system. There is always the
@@ -25,7 +27,7 @@ OSs:
 .. _libyang-install-sources:
 
 Installing libyang From Sources
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
@@ -41,7 +43,7 @@ Installing libyang From Sources
 .. _sysrepo-install-sources:
 
 Installing sysrepo From Sources
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
@@ -57,7 +59,7 @@ Installing sysrepo From Sources
 .. _sysrepo-overview:
 
 Quick Sysrepo Overview
-======================
+----------------------
 
 This section offers a rather brief overview of a subset of available
 functions in Sysrepo. For more complete information, see the `Sysrepo
@@ -268,7 +270,7 @@ reverse-dependency order accordingly.
 .. _netconf-models:
 
 Supported YANG Models
-=====================
+---------------------
 
 The only currently supported models are ``kea-dhcp4-server`` and
 ``kea-dhcp6-server``. There is partial support for
@@ -279,7 +281,7 @@ are currently not supported.
 .. _using-netconf:
 
 Using the NETCONF Agent
-=======================
+-----------------------
 
 The NETCONF agent follows this algorithm:
 
@@ -307,7 +309,7 @@ The NETCONF agent follows this algorithm:
 .. _netconf-configuration:
 
 Configuration
-=============
+-------------
 
 The behavior described in :ref:`using-netconf`
 is controlled by a few configuration flags, which can be set in the
@@ -451,7 +453,7 @@ given in the example above.
 .. _netconf-example:
 
 A kea-netconf Configuration Example
-===================================
+-----------------------------------
 
 The following example demonstrates the basic NETCONF configuration. More
 examples are available in the ``doc/examples/netconf`` directory in the
@@ -578,7 +580,7 @@ Kea sources.
 .. _netconf-start-stop:
 
 Starting and Stopping the NETCONF Agent
-=======================================
+---------------------------------------
 
 kea-netconf accepts the following command-line switches:
 
@@ -611,7 +613,7 @@ kea-netconf accepts the following command-line switches:
 .. _operation-example:
 
 A Step-by-Step NETCONF Agent Operation Example
-==============================================
+----------------------------------------------
 
 .. note::
 
@@ -622,7 +624,7 @@ A Step-by-Step NETCONF Agent Operation Example
 .. _operation-example-setup:
 
 Setup of NETCONF Agent Operation Example
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The test box has an Ethernet interface named eth1. On some systems it is
 possible to rename interfaces, for instance on a Linux with an ens38
@@ -755,7 +757,7 @@ datastore, i.e. changes are not permanent.
 .. _operation-example-errors:
 
 Error Handling in NETCONF Operation Example
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are four classes of issues with the configurations applied via
 NETCONF:
@@ -855,7 +857,7 @@ a backup.
 .. _operation-example-2pools:
 
 NETCONF Operation Example with Two Pools
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example adds a second pool to the initial (i.e. startup)
 configuration in the ``twopools.xml`` file:
@@ -895,7 +897,7 @@ This configuration is installed by:
 .. _operation-example-2subnets:
 
 NETCONF Operation Example with Two Subnets
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example specifies two subnets in the ``twosubnets.xml`` file:
 
@@ -938,7 +940,7 @@ This configuration is installed by:
 .. _operation-example-logging:
 
 NETCONF Operation Example with Logging
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example adds a logger entry to the initial (i.e. startup)
 configuration in the ``logging.xml`` file:
@@ -1024,7 +1026,7 @@ or by using a NETCONF client like ``netopeer2-cli`` from the
 .. _migrating-yang-v0-to-v1:
 
 Migrating YANG data from sysrepo v0.x to v1.x
----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Start the migration after turning off kea-netconf to make sure that backups done
 for both datastores are done at the same configuration state and no change
