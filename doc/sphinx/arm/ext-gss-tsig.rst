@@ -1,56 +1,54 @@
+
 .. _gss-tsig:
 
-****************
-GSS-TSIG Support
-****************
+GSS-TSIG
+========
 
 .. _gss-tsig-overview:
 
 GSS-TSIG Overview
-=================
+-----------------
 
-Kea provides in a premium hook the support of GSS-TSIG to protect DNS
-updates sent by the Kea DHCP-DDNS (aka D2) server.
+Kea provides a support for DNS updates (as defined in `RFC 2136 <https://tools.ietf.org/html/rfc2136>`__),
+which can be protected using Transaction Signatures (or TSIG) as defined in
+`RFC 2845 <https://tools.ietf.org/html/rfc2845>`__). This protection
+is often adequate. However, some systems, in particular Active Directory (AD)
+on Microsoft Windows systems, chose to adopt more complex GSS-TSIG
+approach that offers additional capabilities.
 
-GSS-TSIG uses a GSS-API for Kerberos 5 with SPENO library such as
-the MIT Kerberos 5 or the Heimdal libraries.
+Kea provides the support of GSS-TSIG to protect DNS updates sent by
+the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss-tsig`.
+The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
+The GSS-TSIG protocol itself is an implementation of a generic GSS-API v2
+services, defined in `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__.
+
+The Kea implementation of GSS-TSIG uses a GSS-API for Kerberos 5 with SPENO library.
+Two implementations meet this criteria: MIT Kerberos 5 and the Heimdal libraries.
 
 .. note:
 
-    This is a work in progress.
+    This capability is a work in progress.
 
 .. _gss-tsig-install:
 
-Installing GSS-TSIG
-===================
+GSS-TSIG Compilation
+--------------------
 
-This is a page explaining how to install Kea with GSS-TSIG support.
+The following procedure was tested on Ubuntu 20.10 and 21.04. Similar approach can
+be applied to other systems.
 
-This procedure was tested on Ubuntu 20.10 and 21.04:
+1.  Obtain the kea sources and premium packages, extract kea sources, then extract premium
+    packages into `premium/` directory within Kea source tree.
 
-1.  Get the kea sources, this will do the trick extracting to ``kea/``
-    directory:
-
-.. code-block:: console
-
-    $ git clone https://gitlab.isc.org/isc-projects/kea.git
-
-2.  Get the premium sources - go to
-    https://gitlab.isc.org/isc-external/kea-gss-tsig and click download
-    or clone from there, using either https or git. Using git requires
-    setting up SSH keys which you can do on your own in your
-    `gitlab preferences <https://gitlab.isc.org/-/profile/keys>`__.
-    Extract to ``kea/premium/`` directory.
-
-3. Run autoreconf:
+2. Run autoreconf:
 
 .. code-block:: console
 
     autoreconf -i
 
-4. Make sure ``./configure --help`` shows the ``--with-gssapi`` option.
+3. Make sure ``./configure --help`` shows the ``--with-gssapi`` option.
 
-5. Install either MIT (``libkrb5-dev``) or Heimdal (``heimdal-dev``) library,
+4. Install either MIT (``libkrb5-dev``) or Heimdal (``heimdal-dev``) library,
    for instance:
 
 .. code-block:: console
@@ -72,9 +70,8 @@ The ``--with-gssapi`` requires ``krb5-config`` tool to be present. This
 tool is provided by both MIT Kerberos 5 and Heimdal, on some systems
 where both Kerberos 5 and Heimdal are installed it is a symbolic link
 to one of them. If it's not in your standard location, you may specify
-it with ``--with-gssapi=/path/to/krb5-config``. Since this is an early
-prototype, it is strongly recommended to use default installation
-locations as provided by packages.
+it with ``--with-gssapi=/path/to/krb5-config``. It is strongly recommended
+to use default installation locations as provided by packages.
 
 The ``./configure`` script should complete with a successful GSS-API
 detection, similar to this:
@@ -89,13 +86,14 @@ detection, similar to this:
     available.
 
 8.  After compilation, the gss_tsig hook is available in the
-    ``premium/src/hooks/d2/gss_tsig`` directory.
-    It can be loaded by the D2.
+    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
+    the DHCP-DDNS (D2) daemon.
+
 
 The gss_tsig was developed using the MIT Kerberos 5 implementation but
 Heimdal is supported too. Note that Heimdal is picky about security
-sensitive file permissions but emits an unclear error message. Anyway
-it is a good idea to keep these files as plain, with one link and and
+sensitive file permissions and is known to emit an unclear error message.
+It is a good idea to keep these files as plain, with one link and and
 no access for the group or other users.
 
 The krb5-config script should provide an ``--all`` option which
@@ -106,6 +104,141 @@ to configure Kea.
 .. _gss-tsig-using:
 
 Using GSS-TSIG
-==============
+--------------
 
-To be done.
+There is a number of steps required to enable the GSS-TSIG mechanism:
+
+1. the gss-tsig has to be loaded by the D2 server
+2. the GSS-TSIG capable DNS servers have to be specified with their parameters
+
+An excerpt from D2 server is provided below. More examples are available in the
+``doc/examples/ddns`` directory in the Kea sources.
+
+.. code-block:: javascript
+   :linenos:
+   :emphasize-lines: 52-92
+
+    {
+    "DhcpDdns": {
+        // The following parameters are used to receive NCRs (NameChangeRequests) from the
+        // local Kea DHCP server. Make sure your kea-dhcp4 and kea-dhcp6 matches this.
+        "ip-address": "127.0.0.1",
+        "port": 53001,
+        "dns-server-timeout" : 1000,
+
+        // Forward zone: secure.example.org. It uses GSS-TSIG. It is served by two DNS servers,
+        // which listen for DDNS requests at 192.0.2.1 and 192.0.2.2.
+        "forward-ddns":
+        {
+            "ddns-domains":
+            [
+                // DdnsDomain for zone "secure.example.org."
+                {
+                    "name": "secure.example.org.",
+                    "comment": "DdnsDomain example",
+                    "dns-servers":
+                    [
+                        { // This server has an entry in gss/servers and thus will use GSS-TSIG.
+                            "ip-address": "192.0.2.1"
+                        },
+                        { // This server also has an entry there, so will use GSS-TSIG, too.
+                            "ip-address": "192.0.2.2"
+                        }
+                    ]
+                }
+            ]
+        },
+
+        // Reverse zone: we want to update the reverse zone "2.0.192.in-addr-arpa".
+        "reverse-ddns":
+        {
+            "ddns-domains":
+            [
+                {
+                    "name": "2.0.192.in-addr.arpa.",
+                    "dns-servers":
+                    [
+                        {
+                            // There is GSS definition for this server (see
+                            // DhcpDdns/gss/servers), so it will use Krb/GSS-TSIG.
+                            "ip-address": "192.0.2.1"
+                        }
+                    ]
+                }
+            ]
+        },
+
+        // Need to add gss-tsig hook here
+        "hooks-libraries": [
+        {
+            "library": "/opt/lib/gss_tsig.so",
+            "parameters": {
+                // This section governs the GSS-TSIG integration. Each server mentioned
+                // in forward-ddns and/or reverse-ddns needs to have an entry here to
+                // be able to use GSS-TSIG.
+
+                // defaults (optional, if specified they apply to all the GSS servers,
+                // unless overwritten on specific server level).
+
+                "server-principal": "DNS/server.example.org@REALM",
+                "client-principal": "DHCP/admin.example.org@REALM",
+                "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+                "credentials-cache": "FILE:/etc/ccache", // toplevel only
+                "tkey-lifetime": 3600,
+                "tkey-protocol": "TCP",
+
+                // The list of GSS-TSIG capable servers
+                "servers": [
+                    {
+                        // First server (identification is required)
+                        "domain-names": [ ], // if not specified or empty, will match all domains
+                                             // that want to use this IP+port tuple
+                        "ip-address": "192.0.2.1",
+                        "port": 53,
+                        "server-principal": "DNS/server1.example.org@REALM",
+                        "client-principal": "DHCP/admin1.example.org@REALM",
+                        "tkey-lifetime": 86400, // 24h
+                        "tkey-protocol": "TCP"
+                    },
+                    {
+                        // The second server (it has most of the parameters missing
+                        // as those are using the defaults specified above)
+                        "ip-address": "192.0.2.2",
+                        "port": 5300
+                    }
+                ]
+            }
+        }
+        ]
+
+        // Additional parameters, such as logging, control socket and others omited for clarity.
+    }
+
+    }
+
+This configuration file contains a number of extra elements.
+
+First, a list of forward and/or reverse domains with related DNS servers identified by their
+IP+port tuples. If port is not specified, the default of 53 is assumed. This is similar to basic
+mode with no authentication or authentication done using TSIG keys, with the exception that static
+TSIG keys are not referenced by name.
+
+Second, the `gss_tsig.so` library has to be specified on the `hooks-libraries` list. This hook takes
+many parameters. The most important one is `servers`, which is a list of GSS-TSIG capable servers.
+If there are several servers and they share some characteristics, the values can be specified in
+`parameters` scope as defaults. In the example above, the defaults that apply to all servers unless
+otherwise specified on per server scope, are defined in lines 63 through 68. The defaults can be
+skipped if there is only one server defined or all servers have different values.
+
+- ``server-principal`` is ...
+
+- ``client-principal`` is ...
+
+- ``client-keytab`` is ..
+
+- ``credentials-cache`` is ..
+
+- ``tkey-protocol`` determines which protocol is used to establish the security context with the DNS servers.
+  Currently the only supported value is TCP.
+
+- ``tkey-lifetime`` determines the lifetime of the TKEY session, expressed in seconds.
