@@ -223,20 +223,27 @@ IP+port tuples. If port is not specified, the default of 53 is assumed. This is 
 mode with no authentication or authentication done using TSIG keys, with the exception that static
 TSIG keys are not referenced by name.
 
-Second, the `gss_tsig.so` library has to be specified on the `hooks-libraries` list. This hook takes
+Second, the ``gss_tsig.so`` library has to be specified on the ``hooks-libraries`` list. This hook takes
 many parameters. The most important one is `servers`, which is a list of GSS-TSIG capable servers.
 If there are several servers and they share some characteristics, the values can be specified in
 `parameters` scope as defaults. In the example above, the defaults that apply to all servers unless
 otherwise specified on per server scope, are defined in lines 63 through 68. The defaults can be
 skipped if there is only one server defined or all servers have different values.
 
-- ``server-principal`` is ...
+- ``client-keytab`` is pointer to the location of the Kerberos key tab. This is usually a single file
+  that is located in ``/etc/krb5.keytab``. However, some implementations support schemes other than
+  ``FILE:`` and whole directory can be specified using ``DIR:``. This parameter can be specified only once,
+  in the parameters scope.
 
-- ``client-principal`` is ...
+- ``credentials-cache`` is Kerberos credentials cache file. As there is only one cache for the whole
+  system, this parameter can be specified only once, in the parameters scope.
 
-- ``client-keytab`` is ..
+- ``server-principal`` is the Kerberos principal name of the DNS server that will receive the updates.
+  In plain words, this is the DNS server's name in the Kerberos system. This parameter is mandatory.
+  It uses the typical Kerberos notation: ``<SERVICE-NAME>/domain@REALM``.
 
-- ``credentials-cache`` is ..
+- ``client-principal`` is the Kerberos principal name of the Kea D2 service. It is optional. It uses
+  the typical Kerberos notation: ``<SERVICE-NAME>/domain@REALM``.
 
 - ``tkey-protocol`` determines which protocol is used to establish the security context with the DNS servers.
   Currently the only supported value is TCP.
