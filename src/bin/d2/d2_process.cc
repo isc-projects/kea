@@ -12,6 +12,7 @@
 #include <d2/d2_process.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_log.h>
+#include <d2srv/d2_tsig_key.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -67,6 +68,9 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     // Instantiate stats manager.
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
     stats_mgr.setMaxSampleCountDefault(0);
+    for (const auto& name : D2TsigKey::globalStats) {
+        stats_mgr.setValue("global." + name, static_cast<int64_t>(0));
+    }
 };
 
 void

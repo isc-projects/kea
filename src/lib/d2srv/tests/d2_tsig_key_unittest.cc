@@ -42,7 +42,7 @@ public:
 /// @brief Check TSIG key life.
 TEST_F(D2TsigKeyTest, key) {
     // Statistics names.
-    ASSERT_EQ(5, D2TsigKey::keyStats.size());
+    ASSERT_EQ(4, D2TsigKey::keyStats.size());
     ASSERT_EQ(6, D2TsigKey::globalStats.size());
 
     // Get the statistics manager.
@@ -52,7 +52,7 @@ TEST_F(D2TsigKeyTest, key) {
     // Create a key.
     const string& key_spec = "foo.bar.::test";
     D2TsigKeyPtr key(new D2TsigKey(key_spec));
-    EXPECT_EQ(5, stat_mgr.count());
+    EXPECT_EQ(4, stat_mgr.count());
 
     // Get the 'sent' statistics.
     const string& stat_name = "key[foo.bar.].sent";

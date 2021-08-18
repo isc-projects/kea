@@ -583,18 +583,18 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
 TEST_F(D2UpdateMessageTest, validTSIG) {
     // Create a TSIG Key and context
     std::string secret("this key will match");
-    TSIGKeyPtr right_key;
+    D2TsigKeyPtr right_key;
     ASSERT_NO_THROW(right_key.reset(new
-                                    TSIGKey(Name("right.com"),
-                                            TSIGKey::HMACMD5_NAME(),
-                                            secret.c_str(), secret.size())));
+                                    D2TsigKey(Name("right.com"),
+                                              TSIGKey::HMACMD5_NAME(),
+                                              secret.c_str(), secret.size())));
 
-    TSIGKeyPtr wrong_key;
+    D2TsigKeyPtr wrong_key;
     secret = "this key will not match";
     ASSERT_NO_THROW(wrong_key.reset(new
-                                    TSIGKey(Name("wrong.com"),
-                                            TSIGKey::HMACMD5_NAME(),
-                                            secret.c_str(), secret.size())));
+                                    D2TsigKey(Name("wrong.com"),
+                                              TSIGKey::HMACMD5_NAME(),
+                                              secret.c_str(), secret.size())));
 
 
     // Build a request message
@@ -658,9 +658,9 @@ TEST_F(D2UpdateMessageTest, allValidTSIG) {
     dns::Name key_name("test_key");
     std::string secret("random text for secret");
     for (int i = 0; i < algorithms.size(); ++i) {
-        dns::TSIGKey key(key_name,
-                         TSIGKeyInfo::stringToAlgorithmName(algorithms[i]),
-                         secret.c_str(), secret.size());
+        D2TsigKey key(key_name,
+                      TSIGKeyInfo::stringToAlgorithmName(algorithms[i]),
+                      secret.c_str(), secret.size());
 
         // Build a request message
         D2UpdateMessage msg;

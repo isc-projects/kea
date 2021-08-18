@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 #include <util/buffer.h>
 
 #include <asiodns/io_fetch.h>
-#include <dns/tsig.h>
+#include <d2srv/d2_tsig_key.h>
 
 namespace isc {
 namespace d2 {
@@ -138,7 +138,7 @@ public:
     /// @param wait A timeout (in milliseconds) for the response. If a response
     /// is not received within the timeout, exchange is interrupted. This value
     /// must not exceed maximal value for 'int' data type.
-    /// @param tsig_key A pointer to an @c isc::dns::TSIGKey object that will
+    /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
     /// (if not null) be used to sign the DNS Update message and verify the
     /// response.
     void doUpdate(asiolink::IOService& io_service,
@@ -146,7 +146,7 @@ public:
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
                   const unsigned int wait,
-                  const dns::TSIGKeyPtr& tsig_key = dns::TSIGKeyPtr());
+                  const D2TsigKeyPtr& tsig_key = D2TsigKeyPtr());
 
 private:
     DNSClientImpl* impl_;  ///< Pointer to DNSClient implementation.

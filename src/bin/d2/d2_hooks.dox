@@ -69,7 +69,7 @@ to the end of this list.
  @subsection d2HooksSelectKey select_key
  - @b Arguments:
    - name: @b current_server, type: isc::d2::DnsServerInfoPtr, direction: <b>in</b>
-   - name: @b tsig_key, type: isc::dns::TSIGKeyPtr, direction: <b>in/out</b>
+   - name: @b tsig_key, type: isc::d2::D2TsigKeyPtr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when the D2 is selecting for
    a TSIG key to protect the next DNS update to the already chosen DNS

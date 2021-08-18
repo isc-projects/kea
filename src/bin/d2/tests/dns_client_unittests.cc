@@ -205,8 +205,8 @@ public:
     // signing with the wrong key.
     void TSIGReceiveHandler(udp::socket* socket, udp::endpoint* remote,
                             size_t receive_length,
-                            TSIGKeyPtr client_key,
-                            TSIGKeyPtr server_key) {
+                            D2TsigKeyPtr client_key,
+                            D2TsigKeyPtr server_key) {
 
         TSIGContextPtr context;
         if (client_key) {
@@ -413,7 +413,7 @@ public:
     // @param server_key TSIG key the "server" should use to sign the response.
     // If this is NULL, then client_key is used.
     // @param should_pass indicates if the test should pass.
-    void runTSIGTest(TSIGKeyPtr client_key, TSIGKeyPtr server_key,
+    void runTSIGTest(D2TsigKeyPtr client_key, D2TsigKeyPtr server_key,
                      bool should_pass = true) {
         // Tell operator() method if we expect an invalid response.
         corrupt_response_ = !should_pass;
@@ -485,18 +485,18 @@ TEST_F(DNSClientTest, invalidTimeout) {
 // Verifies that TSIG can be used to sign requests and verify responses.
 TEST_F(DNSClientTest, runTSIGTest) {
     std::string secret ("key number one");
-    TSIGKeyPtr key_one;
+    D2TsigKeyPtr key_one;
     ASSERT_NO_THROW(key_one.reset(new
-                                    TSIGKey(Name("one.com"),
-                                            TSIGKey::HMACMD5_NAME(),
-                                            secret.c_str(), secret.size())));
+                                    D2TsigKey(Name("one.com"),
+                                              TSIGKey::HMACMD5_NAME(),
+                                              secret.c_str(), secret.size())));
     secret = "key number two";
-    TSIGKeyPtr key_two;
+    D2TsigKeyPtr key_two;
     ASSERT_NO_THROW(key_two.reset(new
-                                    TSIGKey(Name("two.com"),
-                                            TSIGKey::HMACMD5_NAME(),
-                                            secret.c_str(), secret.size())));
-    TSIGKeyPtr nokey;
+                                    D2TsigKey(Name("two.com"),
+                                              TSIGKey::HMACMD5_NAME(),
+                                              secret.c_str(), secret.size())));
+    D2TsigKeyPtr nokey;
 
     // Should be able to send and receive with no keys.
     // Neither client nor server will attempt to sign or verify.

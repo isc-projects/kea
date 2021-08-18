@@ -173,11 +173,11 @@ FauxServer::requestHandler(const boost::system::error_code& error,
     if (response_mode == INVALID_TSIG) {
         // Create a different key to sign the response.
         std::string secret ("key that doesn't match");
-        dns::TSIGKeyPtr key;
+        D2TsigKeyPtr key;
         ASSERT_NO_THROW(key.reset(new
-                                  dns::TSIGKey(dns::Name("badkey"),
-                                               dns::TSIGKey::HMACMD5_NAME(),
-                                               secret.c_str(), secret.size())));
+                                  D2TsigKey(dns::Name("badkey"),
+                                            dns::TSIGKey::HMACMD5_NAME(),
+                                            secret.c_str(), secret.size())));
         context.reset(new dns::TSIGContext(*key));
     }
 

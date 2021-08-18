@@ -26,8 +26,24 @@ public:
     ///
     /// Initialize the key statistics.
     ///
-    /// @param key_name Domain name of the key.
-    D2TsigKey(const std::string& key_name);
+    /// @param key_spec Specification of the key
+    /// (name:secret[:algorithm][:digestbits])
+    explicit D2TsigKey(const std::string& key_spec);
+
+    /// @brief Constructor.
+    ///
+    /// Initialize the key statistics.
+    ///
+    /// @param key_name The name of the key as a domain name.
+    /// @param algorithm_name The hash algorithm used for this key in the
+    /// form of domain name.
+    /// @param secret Point to a binary sequence of the shared secret to be
+    /// used for this key.
+    /// @param secret_len The size of the binary %data (@c secret) in bytes.
+    /// @param digestbits The number of bits to include in the digest
+    /// (0 means to include all)
+    D2TsigKey(const dns::Name& key_name, const dns::Name& algorithm_name,
+              const void* secret, size_t secret_len, size_t digestbits = 0);
 
     /// @brief Destructor.
     ///
@@ -47,6 +63,10 @@ public:
     ///
     /// The list of global statistic names.
     static std::set<std::string> globalStats;
+
+private:
+    /// @brief Initialize key statistics.
+    void initStats();
 };
 
 /// @brief Type of pointer to a D2 TSIG key.

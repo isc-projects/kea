@@ -165,7 +165,7 @@ void
 TSIGKeyInfo::remakeKey() {
     try {
         // Since our secret value is base64 encoded already, we need to
-        // build the input string for the appropriate TSIGKey constructor.
+        // build the input string for the appropriate D2TsigKey constructor.
         // If secret isn't a valid base64 value, the constructor will throw.
         std::ostringstream stream;
         stream << dns::Name(name_).toText() << ":"
@@ -175,9 +175,9 @@ TSIGKeyInfo::remakeKey() {
             stream << ":" << digestbits_;
         }
 
-        tsig_key_.reset(new dns::TSIGKey(stream.str()));
+        tsig_key_.reset(new D2TsigKey(stream.str()));
     } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "Cannot make TSIGKey: " << ex.what());
+        isc_throw(D2CfgError, "Cannot make D2TsigKey: " << ex.what());
     }
 }
 
@@ -439,7 +439,7 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
         }
 
     // Everything should be valid, so create the key instance.
-    // It is possible for the asiodns::dns::TSIGKey create to fail such as
+    // It is possible for the D2TsigKey constructor to fail such as
     // with an invalid secret content.
     TSIGKeyInfoPtr key_info;
     try {

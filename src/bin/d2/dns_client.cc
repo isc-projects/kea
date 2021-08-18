@@ -8,6 +8,7 @@
 #include <d2/dns_client.h>
 #include <d2srv/d2_log.h>
 #include <dns/messagerenderer.h>
+#include <stats/stats_mgr.h>
 #include <limits>
 
 namespace isc {
@@ -26,6 +27,7 @@ using namespace isc::util;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::dns;
+using namespace isc::stats;
 
 // This class provides the implementation for the DNSClient. This allows for
 // the separation of the DNSClient interface from the implementation details.
@@ -55,6 +57,8 @@ public:
     DNSClient::Protocol proto_;
     // TSIG context used to sign outbound and verify inbound messages.
     dns::TSIGContextPtr tsig_context_;
+    // TSIG key name for stats.
+    std::string tsig_key_name_;
 
     // Constructor and Destructor
     DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
@@ -74,10 +78,13 @@ public:
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
                   const unsigned int wait,
-                  const dns::TSIGKeyPtr& tsig_key);
+                  const D2TsigKeyPtr& tsig_key);
 
     // This function maps the IO error to the DNSClient error.
     DNSClient::Status getStatus(const asiodns::IOFetch::Result);
+
+    // This function updates statistics.
+    void incrStats(const std::string& stat, bool update_key = true);
 };
 
 DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
@@ -137,17 +144,22 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
         try {
             response_->fromWire(in_buf_->getData(), in_buf_->getLength(),
                                 tsig_context_.get());
+            incrStats("success");
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
             LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
-
+            incrStats("error");
         }
 
         if (tsig_context_) {
             // Context is a one-shot deal, get rid of it.
             tsig_context_.reset();
         }
+    } else if (status == DNSClient::TIMEOUT) {
+        incrStats("timeout");
+    } else {
+        incrStats("error");
     }
 
     // Once we are done with internal business, let's call a callback supplied
@@ -174,13 +186,14 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
     }
     return (DNSClient::OTHER);
 }
+
 void
 DNSClientImpl::doUpdate(asiolink::IOService& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
                         const unsigned int wait,
-                        const dns::TSIGKeyPtr& tsig_key) {
+                        const D2TsigKeyPtr& tsig_key) {
     // The underlying implementation which we use to send DNS Updates uses
     // signed integers for timeout. If we want to avoid overflows we need to
     // respect this limitation here.
@@ -195,8 +208,10 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     // that TSIG should be used.
     if (tsig_key) {
         tsig_context_.reset(new TSIGContext(*tsig_key));
+        tsig_key_name_ = tsig_key->getKeyName().toText();
     } else {
         tsig_context_.reset();
+        tsig_key_name_.clear();
     }
 
     // A renderer is used by the toWire function which creates the on-wire data
@@ -227,6 +242,24 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
     io_service.post(io_fetch);
+
+    // Update sent statistics.
+    incrStats("sent");
+    if (tsig_key) {
+        incrStats("signed", false);
+    } else {
+        incrStats("unsigned", false);
+    }
+}
+
+void
+DNSClientImpl::incrStats(const std::string& stat, bool update_key) {
+    StatsMgr& mgr = StatsMgr::instance();
+    mgr.addValue("global." + stat, static_cast<int64_t>(1));
+    if (update_key && !tsig_key_name_.empty()) {
+        mgr.addValue(StatsMgr::generateName("key", tsig_key_name_, stat),
+                     static_cast<int64_t>(1));
+    }
 }
 
 DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
@@ -250,7 +283,7 @@ DNSClient::doUpdate(asiolink::IOService& io_service,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,
                     const unsigned int wait,
-                    const dns::TSIGKeyPtr& tsig_key) {
+                    const D2TsigKeyPtr& tsig_key) {
     impl_->doUpdate(io_service, ns_addr, ns_port, update, wait, tsig_key);
 }
 

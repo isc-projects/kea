@@ -21,8 +21,6 @@ namespace d2 {
 set<string>
 D2TsigKey::keyStats = {
     "sent",
-    "signed",
-//  "unsigned",
     "success",
     "timeout",
     "error"
@@ -38,7 +36,18 @@ D2TsigKey::globalStats = {
     "error"
 };
 
-D2TsigKey::D2TsigKey(const std::string& key_name) : TSIGKey(key_name) {
+D2TsigKey::D2TsigKey(const std::string& key_spec) : TSIGKey(key_spec) {
+    initStats();
+}
+
+D2TsigKey::D2TsigKey(const Name& key_name, const Name& algorithm_name,
+                     const void* secret, size_t secret_len, size_t digestbits)
+    : TSIGKey(key_name, algorithm_name, secret, secret_len, digestbits) {
+    initStats();
+}
+
+void
+D2TsigKey::initStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
     for (const auto& name : keyStats) {

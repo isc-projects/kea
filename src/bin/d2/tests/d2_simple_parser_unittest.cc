@@ -641,7 +641,7 @@ TEST_F(TSIGKeyInfoParserTest, invalidEntry) {
               " \"digest-bits\": 120 , "
               " \"secret\": \"bogus\" "
               "}";
-    PARSE_FAIL(config, "Cannot make TSIGKey: Incomplete input for base64:"
+    PARSE_FAIL(config, "Cannot make D2TsigKey: Incomplete input for base64:"
                        " bogus (<string>:1:1)");
 }
 

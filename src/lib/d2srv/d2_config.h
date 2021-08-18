@@ -12,8 +12,8 @@
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <d2srv/d2_tsig_key.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <dns/tsig.h>
 #include <exceptions/exceptions.h>
 #include <process/d_cfg_mgr.h>
 
@@ -343,8 +343,8 @@ public:
     /// @brief Getter which returns the TSIG key used to sign and verify
     /// messages
     ///
-    /// @return const pointer reference to dns::TSIGKey.
-    const dns::TSIGKeyPtr& getTSIGKey() const {
+    /// @return const pointer reference to @c D2TsigKeyPtr
+    const D2TsigKeyPtr& getTSIGKey() const {
         return (tsig_key_);
     }
 
@@ -397,7 +397,7 @@ private:
     uint32_t digestbits_;
 
     /// @brief The actual TSIG key.
-    dns::TSIGKeyPtr tsig_key_;
+    D2TsigKeyPtr tsig_key_;
 };
 
 /// @brief Defines a pointer for TSIGKeyInfo instances.

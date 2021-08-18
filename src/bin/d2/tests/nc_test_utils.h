@@ -61,7 +61,7 @@ public:
     bool perpetual_receive_;
     // TSIG Key to use to verify requests and sign responses.  If its
     // NULL TSIG is not used.
-    dns::TSIGKeyPtr tsig_key_;
+    D2TsigKeyPtr tsig_key_;
 
     /// @brief Constructor
     ///
@@ -117,7 +117,7 @@ public:
     ///
     /// @param tsig_key Pointer to the TSIG key to use.  If the pointer is
     /// empty, TSIG will not be used.
-    void setTSIGKey (const dns::TSIGKeyPtr& tsig_key) {
+    void setTSIGKey(const D2TsigKeyPtr& tsig_key) {
         tsig_key_ = tsig_key;
     }
 };

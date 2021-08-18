@@ -702,7 +702,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid secret",
-"logic-error" : "Cannot make TSIGKey: Incomplete input for base64: bogus (<string>:1:62)",
+"logic-error" : "Cannot make D2TsigKey: Incomplete input for base64: bogus (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},

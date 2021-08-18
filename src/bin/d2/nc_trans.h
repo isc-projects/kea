@@ -12,8 +12,8 @@
 #include <asiolink/io_service.h>
 #include <d2/dns_client.h>
 #include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/d2_tsig_key.h>
 #include <dhcp_ddns/ncr_msg.h>
-#include <dns/tsig.h>
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
 
@@ -589,7 +589,7 @@ private:
     D2CfgMgrPtr cfg_mgr_;
 
     /// @brief Pointer to the TSIG key which should be used (if any).
-    dns::TSIGKeyPtr tsig_key_;
+    D2TsigKeyPtr tsig_key_;
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.
