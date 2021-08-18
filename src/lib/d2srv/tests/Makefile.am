@@ -19,7 +19,7 @@ if HAVE_GTEST
 TESTS += libd2srv_unittests
 
 libd2srv_unittests_SOURCES  = run_unittests.cc
-# Currently no unit test file was moved even partially.
+libd2srv_unittests_SOURCES += d2_tsig_key_unittest.cc
 
 libd2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -27,6 +27,7 @@ libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 libd2srv_unittests_LDADD  = $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libd2srv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

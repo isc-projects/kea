@@ -11,11 +11,13 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <stats/stats_mgr.h>
 
 #include <stdlib.h>
 
 using namespace isc::config;
 using namespace isc::process;
+using namespace isc::stats;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -80,6 +82,19 @@ D2Controller::registerCommands() {
 
     CommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
         std::bind(&D2Controller::versionGetHandler, this, ph::_1, ph::_2));
+
+    // Register statistic related commands.
+    CommandMgr::instance().registerCommand("statistic-get",
+        std::bind(&StatsMgr::statisticGetHandler, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("statistic-get-all",
+        std::bind(&StatsMgr::statisticGetAllHandler, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("statistic-reset",
+        std::bind(&StatsMgr::statisticResetHandler, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("statistic-reset-all",
+        std::bind(&StatsMgr::statisticResetAllHandler, ph::_1, ph::_2));
 }
 
 void
@@ -96,6 +111,10 @@ D2Controller::deregisterCommands() {
         CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_WRITE_COMMAND);
         CommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);
+        CommandMgr::instance().deregisterCommand("statistic-get");
+        CommandMgr::instance().deregisterCommand("statistic-get-all");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
         CommandMgr::instance().deregisterCommand(STATUS_GET_COMMAND);
         CommandMgr::instance().deregisterCommand(VERSION_GET_COMMAND);
 
@@ -103,8 +122,6 @@ D2Controller::deregisterCommands() {
         // What to do? Simply ignore...
     }
 }
-
-
 
 isc::data::ConstElementPtr
 D2Controller::parseFile(const std::string& file_name) {
@@ -135,5 +152,5 @@ D2Controller::getVersionAddendum() {
 
 }
 
-}; // end namespace isc::d2
-}; // end namespace isc
+} // end namespace isc::d2
+} // end namespace isc

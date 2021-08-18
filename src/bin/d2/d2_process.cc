@@ -14,6 +14,7 @@
 #include <d2srv/d2_log.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc::hooks;
 using namespace isc::process;
@@ -62,6 +63,10 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     // Pass in IOService for DNS update transaction IO event processing.
     D2CfgMgrPtr tmp = getD2CfgMgr();
     update_mgr_.reset(new D2UpdateMgr(queue_mgr_,  tmp,  getIoService()));
+
+    // Instantiate stats manager.
+    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+    stats_mgr.setMaxSampleCountDefault(0);
 };
 
 void

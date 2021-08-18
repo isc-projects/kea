@@ -16,6 +16,7 @@ libkea_d2srv_la_SOURCES += d2_config.cc d2_config.h
 libkea_d2srv_la_SOURCES += d2_log.cc d2_log.h
 libkea_d2srv_la_SOURCES += d2_messages.cc d2_messages.h
 libkea_d2srv_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
+libkea_d2srv_la_SOURCES += d2_tsig_key.cc d2_tsig_key.h
 EXTRA_DIST += d2_messages.mes
 
 libkea_d2srv_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -25,6 +26,7 @@ libkea_d2srv_la_LIBADD  =
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

@@ -540,6 +540,10 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -628,6 +632,11 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
+    checkListCommands(rsp, "statistic-get");
+    checkListCommands(rsp, "statistic-get-all");
+    checkListCommands(rsp, "statistic-reset");
+    checkListCommands(rsp, "statistic-reset-all");
+    checkListCommands(rsp, "status-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "version-get");
 }
