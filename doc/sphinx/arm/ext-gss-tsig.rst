@@ -230,6 +230,8 @@ If there are several servers and they share some characteristics, the values can
 otherwise specified on per server scope, are defined in lines 63 through 68. The defaults can be
 skipped if there is only one server defined or all servers have different values.
 
+The parameters have the following meaning:
+
 - ``client-keytab`` is pointer to the location of the Kerberos key tab. This is usually a single file
   that is located in ``/etc/krb5.keytab``. However, some implementations support schemes other than
   ``FILE:`` and whole directory can be specified using ``DIR:``. This parameter can be specified only once,
