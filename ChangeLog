@@ -1,7 +1,7 @@
 1933.	[doc]		fdupont, tomek
-	Added a new ARM section about GSS-TSIG. Currently it describes how
-	to build Kea with GSS-API support. It will be expanded in the
-	future.
+	Added a new ARM section about GSS-TSIG. Currently it describes
+	how to build Kea with GSS-API support. It will be expanded in
+	the future.
 	(Gitlab #2018)
 
 1932.	[func]		tmark
