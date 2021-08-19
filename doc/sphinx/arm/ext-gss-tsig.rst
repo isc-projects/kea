@@ -306,13 +306,13 @@ defined or all servers have different values.
 The parameters have the following meaning:
 
 - ``client-keytab`` specifies the Kerberos **client** key table.
-  For instance if using a file ``FILE:<filename>``.
+  For instance, ``FILE:<filename>`` can be used to point to specific file.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5_CLIENT_KTNAME`` environment
   variable.
 
 - ``credentials-cache`` specifies the Kerberos credentials cache.
-  For instance if using a file ``FILE:<filename>`` or if using a
+  For instance ``FILE:<filename>`` can be used to a file or if using a
   directory which supports more than one principal ``DIR:<directory-path>``.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5CCNAME`` environment
