@@ -25,6 +25,7 @@ rst_arm_sources += arm/hooks-run-script.rst
 rst_arm_sources += arm/hooks-stat-cmds.rst
 rst_arm_sources += arm/hooks.rst
 rst_arm_sources += arm/install.rst
+rst_arm_sources += arm/integrations.rst
 rst_arm_sources += arm/intro.rst
 rst_arm_sources += arm/keactrl.rst
 rst_arm_sources += arm/lease-expiration.rst
