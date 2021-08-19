@@ -98,6 +98,8 @@ exclude_patterns = [
     'arm/hooks-run-script.rst',
     'arm/hooks-stat-cmds.rst',
     'arm/hammer.rst',
+    'arm/ext-netconf.rst',
+    'arm/ext-gss-tsig.rst',
     'grammar/grammar-ca-parser.rst',
     'grammar/grammar-d2-parser.rst',
     'grammar/grammar-dhcp4-parser.rst',

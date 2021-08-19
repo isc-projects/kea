@@ -14,16 +14,17 @@ which can be protected using Transaction Signatures (or TSIG) as defined in
 `RFC 2845 <https://tools.ietf.org/html/rfc2845>`__). This protection
 is often adequate. However, some systems, in particular Active Directory (AD)
 on Microsoft Windows systems, chose to adopt more complex GSS-TSIG
-approach that offers additional capabilities.
+approach that offers additional capabilities as using negotiated dynamic keys.
 
 Kea provides the support of GSS-TSIG to protect DNS updates sent by
-the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss-tsig`.
+the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss_tsig`.
 The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
-The GSS-TSIG protocol itself is an implementation of a generic GSS-API v2
+The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
 services, defined in `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__.
 
-The Kea implementation of GSS-TSIG uses a GSS-API for Kerberos 5 with SPENO library.
-Two implementations meet this criteria: MIT Kerberos 5 and the Heimdal libraries.
+The Kea implementation of GSS-TSIG uses a GSS-API for Kerberos 5 with
+SPNEGO library.  Two implementations meet this criteria: MIT Kerberos
+5 and the Heimdal libraries.
 
 .. note:
 
@@ -34,11 +35,12 @@ Two implementations meet this criteria: MIT Kerberos 5 and the Heimdal libraries
 GSS-TSIG Compilation
 --------------------
 
-The following procedure was tested on Ubuntu 20.10 and 21.04. Similar approach can
-be applied to other systems.
+The following procedure was tested on Ubuntu 20.10 and 21.04. Similar
+approach can be applied to other systems.
 
-1.  Obtain the kea sources and premium packages, extract kea sources, then extract premium
-    packages into `premium/` directory within Kea source tree.
+1.  Obtain the kea sources and premium packages, extract kea sources,
+    then extract premium packages into `premium/` directory within Kea
+    source tree.
 
 2. Run autoreconf:
 
@@ -55,7 +57,7 @@ be applied to other systems.
 
     sudo apt install libkrb5-dev
 
-6. Run configure with the ``--with-gssapi`` option:
+5. Run configure with the ``--with-gssapi`` option:
 
 .. code-block:: console
 
@@ -82,10 +84,10 @@ detection, similar to this:
       GSSAPI_CFLAGS:         -isystem /usr/include/mit-krb5
       GSSAPI_LIBS:           -L/usr/lib/x86_64-linux-gnu/mit-krb5 -Wl,-Bsymbolic-functions -Wl,-z,relro -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
 
-7.  Compile as usual ``make -jX`` where X is the number of CPU cores
+6.  Compile as usual ``make -jX`` where X is the number of CPU cores
     available.
 
-8.  After compilation, the gss_tsig hook is available in the
+7.  After compilation, the gss_tsig hook is available in the
     ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
     the DHCP-DDNS (D2) daemon.
 
@@ -108,7 +110,7 @@ Using GSS-TSIG
 
 There is a number of steps required to enable the GSS-TSIG mechanism:
 
-1. the gss-tsig has to be loaded by the D2 server
+1. the gss_tsig DSO has to be loaded by the D2 server
 2. the GSS-TSIG capable DNS servers have to be specified with their parameters
 
 An excerpt from D2 server is provided below. More examples are available in the
@@ -171,7 +173,7 @@ An excerpt from D2 server is provided below. More examples are available in the
         // Need to add gss-tsig hook here
         "hooks-libraries": [
         {
-            "library": "/opt/lib/gss_tsig.so",
+            "library": "/opt/lib/libdhcp_gss_tsig.so",
             "parameters": {
                 // This section governs the GSS-TSIG integration. Each server mentioned
                 // in forward-ddns and/or reverse-ddns needs to have an entry here to
@@ -218,36 +220,48 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 This configuration file contains a number of extra elements.
 
-First, a list of forward and/or reverse domains with related DNS servers identified by their
-IP+port tuples. If port is not specified, the default of 53 is assumed. This is similar to basic
-mode with no authentication or authentication done using TSIG keys, with the exception that static
-TSIG keys are not referenced by name.
+First, a list of forward and/or reverse domains with related DNS
+servers identified by their IP+port tuples. If port is not specified,
+the default of 53 is assumed. This is similar to basic mode with no
+authentication or authentication done using TSIG keys, with the
+exception that static TSIG keys are not referenced by name.
 
-Second, the ``gss_tsig.so`` library has to be specified on the ``hooks-libraries`` list. This hook takes
-many parameters. The most important one is `servers`, which is a list of GSS-TSIG capable servers.
-If there are several servers and they share some characteristics, the values can be specified in
-`parameters` scope as defaults. In the example above, the defaults that apply to all servers unless
-otherwise specified on per server scope, are defined in lines 63 through 68. The defaults can be
-skipped if there is only one server defined or all servers have different values.
+Second, the ``gss_tsig.so`` library has to be specified on the
+``hooks-libraries`` list. This hook takes many parameters. The most
+important one is `servers`, which is a list of GSS-TSIG capable
+servers.  If there are several servers and they share some
+characteristics, the values can be specified in `parameters` scope as
+defaults. In the example above, the defaults that apply to all servers
+unless otherwise specified on per server scope, are defined in lines
+63 through 68. The defaults can be skipped if there is only one server
+defined or all servers have different values.
 
 The parameters have the following meaning:
 
-- ``client-keytab`` is pointer to the location of the Kerberos key tab. This is usually a single file
-  that is located in ``/etc/krb5.keytab``. However, some implementations support schemes other than
-  ``FILE:`` and whole directory can be specified using ``DIR:``. This parameter can be specified only once,
-  in the parameters scope.
+- ``client-keytab`` is pointer to the location of the Kerberos key
+  tab. This is usually a single file that is located in
+  ``/etc/krb5.keytab``. However, some implementations support schemes
+  other than ``FILE:`` and whole directory can be specified using
+  ``DIR:``. This parameter can be specified only once, in the
+  parameters scope.
 
-- ``credentials-cache`` is Kerberos credentials cache file. As there is only one cache for the whole
-  system, this parameter can be specified only once, in the parameters scope.
+- ``credentials-cache`` is Kerberos credentials cache file. As there
+  is only one cache for the whole system, this parameter can be
+  specified only once, in the parameters scope.
 
-- ``server-principal`` is the Kerberos principal name of the DNS server that will receive the updates.
-  In plain words, this is the DNS server's name in the Kerberos system. This parameter is mandatory.
-  It uses the typical Kerberos notation: ``<SERVICE-NAME>/domain@REALM``.
+- ``server-principal`` is the Kerberos principal name of the DNS
+  server that will receive the updates.  In plain words, this is the
+  DNS server's name in the Kerberos system. This parameter is
+  mandatory.  It uses the typical Kerberos notation:
+  ``<SERVICE-NAME>/domain@REALM``.
 
-- ``client-principal`` is the Kerberos principal name of the Kea D2 service. It is optional. It uses
-  the typical Kerberos notation: ``<SERVICE-NAME>/domain@REALM``.
+- ``client-principal`` is the Kerberos principal name of the Kea D2
+  service. It is optional. It uses the typical Kerberos notation:
+  ``<SERVICE-NAME>/domain@REALM``.
 
-- ``tkey-protocol`` determines which protocol is used to establish the security context with the DNS servers.
-  Currently the only supported value is TCP.
+- ``tkey-protocol`` determines which protocol is used to establish the
+  security context with the DNS servers.  Currently the only supported
+  value is TCP.
 
-- ``tkey-lifetime`` determines the lifetime of the TKEY session, expressed in seconds.
+- ``tkey-lifetime`` determines the lifetime of the TKEY session,
+  expressed in seconds.
