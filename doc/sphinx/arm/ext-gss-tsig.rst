@@ -6,6 +6,11 @@ GSS-TSIG
 
 .. _gss-tsig-overview:
 
+
+.. note::
+
+   This capability is a work in progress.
+
 GSS-TSIG Overview
 -----------------
 
@@ -21,46 +26,43 @@ The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
 services, defined in `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__.
 
-More exactly many protocols are involved:
+Many protocols are involved in this mechanism:
+
  - Kerberos 5 `RFC 4120 <https://tools.ietf.org/html/rfc4120>`__ which
-   provides the security framework
+   provides the security framework;
  - GSS-API (Generic Security Services Application Program Interface)
    `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__ for the API,
    `RFC 2744 <https://tools.ietf.org/html/rfc2743>`__ for C bindings and
    `RFC 4121 <https://tools.ietf.org/html/rfc4121>`__ for the application
-   to Kerberos 5
+   to Kerberos 5;
  - SPNEGO (Simple and Protected GSS-API Negotiation Mechanism)
-   `RFC 4178 <https://tools.ietf.org/html/rfc4178>`__ for the negotation
- - DNS update `RFC 2136 <https://tools.ietf.org/html/rfc2136>`__
+   `RFC 4178 <https://tools.ietf.org/html/rfc4178>`__ for the negotiation;
+ - DNS update `RFC 2136 <https://tools.ietf.org/html/rfc2136>`__;
  - TSIG (Secret Key Transaction Authentication for DNS)
    `RFC 8945 <https://tools.ietf.org/html/rfc8945>`__ which
-   protects DNS exchanges
+   protects DNS exchanges;
  - Secure Domain Name System (DNS) Dynamic Update
    `RFC 3007 <https://tools.ietf.org/html/rfc3007>`__ which is the
-   application of TSIG to the DNS update protection
+   application of TSIG to the DNS update protection;
  - TKEY (Secret Key Establishment for DNS)
    `RFC 2930 <https://tools.ietf.org/html/rfc2930>`__ which establishes
    secret keys for TSIG by transmitting crypto payloads between DNS
-   parties
+   parties;
  - GSS-TSIG `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__ which
-   is the application of GSS-API to TSIG
+   is the application of GSS-API to TSIG.
 
-To summary GSS-API for Kerberos 5 with SPNEGO and TKEY are used to
+To summarize, GSS-API for Kerberos 5 with SPNEGO and TKEY are used to
 negotiate a security context between the Kea D2 server and a DNS server:
 
 .. figure:: ../uml/tkey.*
 
-The security context is used by GSS-TSIG to protect updates:
+The security context is then used by GSS-TSIG to protect updates:
 
 .. figure:: ../uml/update.*
 
 The Kea implementation of GSS-TSIG uses a GSS-API for Kerberos 5 with
 SPNEGO library.  Two implementations meet this criteria: MIT Kerberos
-5 and the Heimdal libraries.
-
-.. note:
-
-    This capability is a work in progress.
+5 and Heimdal.
 
 .. _gss-tsig-install:
 
@@ -137,11 +139,12 @@ to configure Kea.
 
 .. _gss-tsig-deploy:
 
-Deploy GSS-TSIG
----------------
+GSS-TSIG Deployment
+-------------------
 
-Before using GSS-TSIG Kerberos 5 and a GSS-TSIG capable DNS server,
-or alternatively Microsoft Active Directory must be deployed.
+Before using GSS-TSIG, a GSS-TSIG capable DNS server, such as BIND 9
+or alternatively Microsoft Active Directory, must be deployed. Other
+GSS-TSIG capable implementations may work, but were not tested.
 
 Kerberos 5 Setup
 ~~~~~~~~~~~~~~~~
@@ -159,7 +162,7 @@ To be done.
 Microsoft Active Directory Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To be done...
+To be done.
 
 .. _gss-tsig-using:
 
@@ -213,7 +216,7 @@ An excerpt from D2 server is provided below. More examples are available in the
             ]
         },
 
-        // Reverse zone: we want to update the reverse zone "2.0.192.in-addr-arpa".
+        // Reverse zone: we want to update the reverse zone "2.0.192.in-addr.arpa".
         "reverse-ddns":
         {
             "ddns-domains":
