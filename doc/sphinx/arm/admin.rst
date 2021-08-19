@@ -381,7 +381,9 @@ Simple MySQL tweak to gain performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changing the MySQL internal value ``innodb_flush_log_at_trx_commit`` from the default value
- of ``1`` to ``2`` can result in a huge gain in Kea performance. It can be set per-session for testing:
+of ``1`` to ``2`` can result in a huge gain in Kea performance. In some deploments, the
+gain was over 1000% (10 times faster when set to 2, compared to the default value of 1).
+It can be set per-session for testing:
 
 .. code-block:: mysql
 
@@ -396,7 +398,15 @@ or permanently in ``/etc/mysql/my.cnf``:
     innodb_flush_log_at_trx_commit=2
 
 Be aware that changing this value can cause problems during data recovery
-after a crash, so we strongly recommend checking the `MySQL documentation <https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit>`__.
+after a crash, so we recommend checking the `MySQL documentation
+<https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit>`__.
+With the default value of 1, MySQL writes changes to disk after every INSERT or UPDATE query
+(in Kea terms, every time a client get a new or renews existing lease). When
+``innodb_flush_log_at_trx_commit`` is set to 2, MySQL does write the changes at intervals
+no longer than 1 second. Batching writes gives substantial performance boost. The trade-off,
+however, is that in the worst case scenario all changes in the last second before crash
+could be lost. Given the fact that Kea is a stable software and crashes very rarely,
+most deployments find it a beneficial trade-off.
 
 .. _pgsql-database:
 
