@@ -103,6 +103,32 @@ identifies the implementation: in any report about the GSS-TSIG report
 please add the result of the ``--all`` option of the krb5-config used
 to configure Kea.
 
+.. _gss-tsig-deploy:
+
+Deploy GSS-TSIG
+---------------
+
+Before using GSS-TSIG Kerberos 5 and a GSS-TSIG capable DNS server,
+or alternatively Microsoft Active Directory must be deployed.
+
+Kerberos 5 Setup
+~~~~~~~~~~~~~~~~
+
+To be done. One critical detail: there are two kinds of key tables
+(keytab files): the system one used by servers and client tables
+used by clients. For Kerberos 5 Kea is a **client**.
+
+Bind 9 with GSS-TSIG Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To be done.
+
+
+Microsoft Active Directory Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To be done...
+
 .. _gss-tsig-using:
 
 Using GSS-TSIG
