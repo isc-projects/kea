@@ -273,6 +273,7 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("comments.json");
+    configs.push_back("gss-tsig.json");
     configs.push_back("sample1.json");
     configs.push_back("template.json");
 

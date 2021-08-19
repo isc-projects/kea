@@ -6,6 +6,7 @@ nobase_dist_doc_DATA  = examples/agent/comments.json
 nobase_dist_doc_DATA += examples/agent/https.json
 nobase_dist_doc_DATA += examples/agent/simple.json
 nobase_dist_doc_DATA += examples/ddns/comments.json
+nobase_dist_doc_DATA += examples/ddns/gss-tsig.json
 nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 nobase_dist_doc_DATA += examples/https/httpd2/kea-httpd2.conf

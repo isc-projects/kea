@@ -118,18 +118,20 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 52-92
+   :emphasize-lines: 57-97
 
     {
     "DhcpDdns": {
-        // The following parameters are used to receive NCRs (NameChangeRequests) from the
-        // local Kea DHCP server. Make sure your kea-dhcp4 and kea-dhcp6 matches this.
+        // The following parameters are used to receive NCRs (NameChangeRequests)
+        // from the local Kea DHCP server. Make sure your kea-dhcp4 and kea-dhcp6
+        // matches this.
         "ip-address": "127.0.0.1",
         "port": 53001,
         "dns-server-timeout" : 1000,
 
-        // Forward zone: secure.example.org. It uses GSS-TSIG. It is served by two DNS servers,
-        // which listen for DDNS requests at 192.0.2.1 and 192.0.2.2.
+        // Forward zone: secure.example.org. It uses GSS-TSIG. It is served
+        // by two DNS servers, which listen for DDNS requests at 192.0.2.1
+        // and 192.0.2.2.
         "forward-ddns":
         {
             "ddns-domains":
@@ -140,10 +142,12 @@ An excerpt from D2 server is provided below. More examples are available in the
                     "comment": "DdnsDomain example",
                     "dns-servers":
                     [
-                        { // This server has an entry in gss/servers and thus will use GSS-TSIG.
+                        { // This server has an entry in gss/servers and
+                          // thus will use GSS-TSIG.
                             "ip-address": "192.0.2.1"
                         },
-                        { // This server also has an entry there, so will use GSS-TSIG, too.
+                        { // This server also has an entry there, so will
+                          // use GSS-TSIG, too.
                             "ip-address": "192.0.2.2"
                         }
                     ]
@@ -161,8 +165,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                     "dns-servers":
                     [
                         {
-                            // There is GSS definition for this server (see
-                            // DhcpDdns/gss/servers), so it will use Krb/GSS-TSIG.
+                            // There is GSS-TSIG definition for this server (see
+                            // DhcpDdns/gss-tsig/servers), so it will use
+                            // Krb/GSS-TSIG.
                             "ip-address": "192.0.2.1"
                         }
                     ]
@@ -175,15 +180,14 @@ An excerpt from D2 server is provided below. More examples are available in the
         {
             "library": "/opt/lib/libdhcp_gss_tsig.so",
             "parameters": {
-                // This section governs the GSS-TSIG integration. Each server mentioned
-                // in forward-ddns and/or reverse-ddns needs to have an entry here to
-                // be able to use GSS-TSIG.
+                // This section governs the GSS-TSIG integration. Each server
+                // mentioned in forward-ddns and/or reverse-ddns needs to have
+                // an entry here to be able to use GSS-TSIG defaults (optional,
+                // if specified they apply to all the GSS-TSIG servers, unless
+                // overwritten on specific server level).
 
-                // defaults (optional, if specified they apply to all the GSS servers,
-                // unless overwritten on specific server level).
-
-                "server-principal": "DNS/server.example.org@REALM",
-                "client-principal": "DHCP/admin.example.org@REALM",
+                "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
+                "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
                 "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "tkey-lifetime": 3600,
@@ -193,12 +197,13 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "servers": [
                     {
                         // First server (identification is required)
-                        "domain-names": [ ], // if not specified or empty, will match all domains
-                                             // that want to use this IP+port tuple
+                        "domain-names": [ ], // if not specified or empty, will
+                                             // match all domains that want to
+                                             // use this IP+port pair
                         "ip-address": "192.0.2.1",
                         "port": 53,
-                        "server-principal": "DNS/server1.example.org@REALM",
-                        "client-principal": "DHCP/admin1.example.org@REALM",
+                        "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
+                        "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
                         "tkey-lifetime": 86400, // 24h
                         "tkey-protocol": "TCP"
                     },
@@ -213,7 +218,8 @@ An excerpt from D2 server is provided below. More examples are available in the
         }
         ]
 
-        // Additional parameters, such as logging, control socket and others omited for clarity.
+        // Additional parameters, such as logging, control socket and
+        // others omited for clarity.
     }
 
     }
@@ -238,30 +244,32 @@ defined or all servers have different values.
 
 The parameters have the following meaning:
 
-- ``client-keytab`` is pointer to the location of the Kerberos key
-  tab. This is usually a single file that is located in
-  ``/etc/krb5.keytab``. However, some implementations support schemes
-  other than ``FILE:`` and whole directory can be specified using
-  ``DIR:``. This parameter can be specified only once, in the
-  parameters scope.
+- ``client-keytab`` specifies the Kerberos **client** key table.
+  For instance if using a file ``FILE:<filename>``.
+  This parameter can be specified only once, in the parameters scope,
+  and is the equivalent of setting the ``KRB5_CLIENT_KTNAME`` environment
+  variable.
 
-- ``credentials-cache`` is Kerberos credentials cache file. As there
-  is only one cache for the whole system, this parameter can be
-  specified only once, in the parameters scope.
+- ``credentials-cache`` specifies the Kerberos credentials cache.
+  For instance if using a file ``FILE:<filename>`` or if using a
+  directory which supports more than one principal ``DIR:<directory-path>``.
+  This parameter can be specified only once, in the parameters scope,
+  and is the equivalent of setting the ``KRB5CCNAME`` environment
+  variable.
 
 - ``server-principal`` is the Kerberos principal name of the DNS
-  server that will receive the updates.  In plain words, this is the
+  server that will receive updates.  In plain words, this is the
   DNS server's name in the Kerberos system. This parameter is
   mandatory.  It uses the typical Kerberos notation:
-  ``<SERVICE-NAME>/domain@REALM``.
+  ``<SERVICE-NAME>/<server-domain-name>@<REALM>``.
 
 - ``client-principal`` is the Kerberos principal name of the Kea D2
   service. It is optional. It uses the typical Kerberos notation:
-  ``<SERVICE-NAME>/domain@REALM``.
+  ``<SERVICE-NAME>/<server-domain-name>@<REALM>``.
 
 - ``tkey-protocol`` determines which protocol is used to establish the
   security context with the DNS servers.  Currently the only supported
-  value is TCP.
+  values are TCP (the default) and UDP.
 
-- ``tkey-lifetime`` determines the lifetime of the TKEY session,
-  expressed in seconds.
+- ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
+  TKEY protocol, expressed in seconds. Default value is 3600 (one hour).

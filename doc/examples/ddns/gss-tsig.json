@@ -1,0 +1,105 @@
+// This is an example configuration file for D2, Kea's DHCP-DDNS processor.
+// It uses the GSS-TSIG hook library.
+{
+"DhcpDdns": {
+    // The following parameters are used to receive NCRs (NameChangeRequests)
+    // from the local Kea DHCP server. Make sure your kea-dhcp4 and kea-dhcp6
+    // matches this.
+    "ip-address": "127.0.0.1",
+    "port": 53001,
+    "dns-server-timeout" : 1000,
+
+    // Forward zone: secure.example.org. It uses GSS-TSIG. It is served
+    // by two DNS servers, which listen for DDNS requests at 192.0.2.1
+    // and 192.0.2.2.
+    "forward-ddns":
+    {
+        "ddns-domains":
+        [
+            // DdnsDomain for zone "secure.example.org."
+            {
+                "name": "secure.example.org.",
+                "comment": "DdnsDomain example",
+                "dns-servers":
+                [
+                    { // This server has an entry in gss/servers and
+                      // thus will use GSS-TSIG.
+                        "ip-address": "192.0.2.1"
+                    },
+                    { // This server also has an entry there, so will
+                      // use GSS-TSIG, too.
+                        "ip-address": "192.0.2.2"
+                    }
+                ]
+            }
+        ]
+    },
+
+    // Reverse zone: we want to update the reverse zone "2.0.192.in-addr-arpa".
+    "reverse-ddns":
+    {
+        "ddns-domains":
+        [
+            {
+                "name": "2.0.192.in-addr.arpa.",
+                "dns-servers":
+                [
+                    {
+                        // There is GSS-TSIG definition for this server (see
+                        // DhcpDdns/gss-tsig/servers), so it will use
+                        // Krb/GSS-TSIG.
+                        "ip-address": "192.0.2.1"
+                    }
+                ]
+            }
+        ]
+    },
+
+    // Need to add gss-tsig hook here
+    "hooks-libraries": [
+    {
+        "library": "/opt/lib/libdhcp_gss_tsig.so",
+        "parameters": {
+            // This section governs the GSS-TSIG integration. Each server
+            // mentioned in forward-ddns and/or reverse-ddns needs to have
+            // an entry here to be able to use GSS-TSIG defaults (optional,
+            // if specified they apply to all the GSS-TSIG servers, unless
+            // overwritten on specific server level).
+
+            "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
+            "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
+            "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+            "credentials-cache": "FILE:/etc/ccache", // toplevel only
+            "tkey-lifetime": 3600,
+            "tkey-protocol": "TCP",
+
+            // The list of GSS-TSIG capable servers
+            "servers": [
+                {
+                    // First server (identification is required)
+                    "domain-names": [ ], // if not specified or empty, will
+                                         // match all domains that want to
+                                         // use this IP+port pair
+                    "ip-address": "192.0.2.1",
+                    "port": 53,
+                    "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
+                    "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
+                    "tkey-lifetime": 86400, // 24h
+                    "tkey-protocol": "TCP"
+                },
+                {
+                    // The second server (it has most of the parameters missing
+                    // as those are using the defaults specified above)
+                    "ip-address": "192.0.2.2",
+                    "port": 5300
+                }
+            ]
+        }
+    }
+    ]
+
+    // Additional parameters, such as logging, control socket and
+    // others omited for clarity.
+}
+
+}
