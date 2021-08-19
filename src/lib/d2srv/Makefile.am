@@ -16,6 +16,7 @@ libkea_d2srv_la_SOURCES += d2_config.cc d2_config.h
 libkea_d2srv_la_SOURCES += d2_log.cc d2_log.h
 libkea_d2srv_la_SOURCES += d2_messages.cc d2_messages.h
 libkea_d2srv_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
+libkea_d2srv_la_SOURCES += d2_stats.cc d2_stats.h 
 libkea_d2srv_la_SOURCES += d2_tsig_key.cc d2_tsig_key.h
 EXTRA_DIST += d2_messages.mes
 

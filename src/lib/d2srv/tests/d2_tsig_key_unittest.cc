@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <d2srv/d2_stats.h>
 #include <d2srv/d2_tsig_key.h>
 #include <stats/stats_mgr.h>
 
@@ -21,6 +22,13 @@ using namespace isc::stats;
 using namespace std;
 
 namespace {
+
+/// @brief Check statistics names.
+TEST(D2StatsTest, names) {
+    ASSERT_EQ(3, D2Stats::ncr.size());
+    ASSERT_EQ(6, D2Stats::update.size());
+    ASSERT_EQ(4, D2Stats::key.size());
+}
 
 /// @brief Fixture class for TSIG key / DNS update statictics.
 class D2TsigKeyTest : public ::testing::Test {
@@ -41,10 +49,6 @@ public:
 
 /// @brief Check TSIG key life.
 TEST_F(D2TsigKeyTest, key) {
-    // Statistics names.
-    ASSERT_EQ(4, D2TsigKey::keyStats.size());
-    ASSERT_EQ(6, D2TsigKey::globalStats.size());
-
     // Get the statistics manager.
     StatsMgr& stat_mgr = StatsMgr::instance();
     ASSERT_EQ(0, stat_mgr.count());
@@ -55,7 +59,7 @@ TEST_F(D2TsigKeyTest, key) {
     EXPECT_EQ(4, stat_mgr.count());
 
     // Get the 'sent' statistics.
-    const string& stat_name = "key[foo.bar.].sent";
+    const string& stat_name = "key[foo.bar.].update-sent";
     EXPECT_EQ(1, stat_mgr.getSize(stat_name));
     ObservationPtr stat = stat_mgr.getObservation(stat_name);
     ASSERT_TRUE(stat);

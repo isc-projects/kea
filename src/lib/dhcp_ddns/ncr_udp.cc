@@ -8,6 +8,7 @@
 
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_udp.h>
+#include <stats/stats_mgr.h>
 
 #include <functional>
 
@@ -161,9 +162,13 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
 
         try {
             ncr = NameChangeRequest::fromFormat(format_, input_buffer);
+            isc::stats::StatsMgr::instance().addValue("ncr-received",
+                                                      static_cast<int64_t>(0));
         } catch (const NcrMessageError& ex) {
             // log it and go back to listening
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_INVALID_NCR).arg(ex.what());
+            isc::stats::StatsMgr::instance().addValue("ncr-invalid",
+                                                      static_cast<int64_t>(0));
 
             // Queue up the next receive.
             // NOTE: We must call the base class, NEVER doReceive
@@ -181,6 +186,8 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
         } else {
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
                       .arg(error_code.message());
+            isc::stats::StatsMgr::instance().addValue("ncr-error",
+                                                      static_cast<int64_t>(0));
             result = ERROR;
         }
     }
@@ -376,5 +383,5 @@ NameChangeUDPSender::closeWatchSocket() {
     }
 }
 
-}; // end of isc::dhcp_ddns namespace
-}; // end of isc namespace
+} // end of isc::dhcp_ddns namespace
+} // end of isc namespace

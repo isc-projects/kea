@@ -144,12 +144,12 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
         try {
             response_->fromWire(in_buf_->getData(), in_buf_->getLength(),
                                 tsig_context_.get());
-            incrStats("success");
+            incrStats("update-success");
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
             LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
-            incrStats("error");
+            incrStats("update-error");
         }
 
         if (tsig_context_) {
@@ -157,9 +157,9 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
             tsig_context_.reset();
         }
     } else if (status == DNSClient::TIMEOUT) {
-        incrStats("timeout");
+        incrStats("update-timeout");
     } else {
-        incrStats("error");
+        incrStats("update-error");
     }
 
     // Once we are done with internal business, let's call a callback supplied
@@ -244,18 +244,18 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     io_service.post(io_fetch);
 
     // Update sent statistics.
-    incrStats("sent");
+    incrStats("update-sent");
     if (tsig_key) {
-        incrStats("signed", false);
+        incrStats("update-signed", false);
     } else {
-        incrStats("unsigned", false);
+        incrStats("update-unsigned", false);
     }
 }
 
 void
 DNSClientImpl::incrStats(const std::string& stat, bool update_key) {
     StatsMgr& mgr = StatsMgr::instance();
-    mgr.addValue("global." + stat, static_cast<int64_t>(1));
+    mgr.addValue(stat, static_cast<int64_t>(1));
     if (update_key && !tsig_key_name_.empty()) {
         mgr.addValue(StatsMgr::generateName("key", tsig_key_name_, stat),
                      static_cast<int64_t>(1));

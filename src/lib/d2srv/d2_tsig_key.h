@@ -11,8 +11,6 @@
 #include <dns/tsigkey.h>
 #include <boost/shared_ptr.hpp>
 
-#include <set>
-
 namespace isc {
 namespace d2 {
 
@@ -53,16 +51,6 @@ public:
     /// @brief Reset statistics.
     ///
     virtual void resetStats();
-
-    /// @brief Statistics names (key).
-    ///
-    /// The list of statistic names for keys.
-    static std::set<std::string> keyStats;
-
-    /// @brief Statistics names (global).
-    ///
-    /// The list of global statistic names.
-    static std::set<std::string> globalStats;
 
 private:
     /// @brief Initialize key statistics.

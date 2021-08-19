@@ -8,6 +8,7 @@
 
 #include <config.h>
 
+#include <d2srv/d2_stats.h>
 #include <d2srv/d2_tsig_key.h>
 #include <stats/stats_mgr.h>
 
@@ -17,24 +18,6 @@ using namespace std;
 
 namespace isc {
 namespace d2 {
-
-set<string>
-D2TsigKey::keyStats = {
-    "sent",
-    "success",
-    "timeout",
-    "error"
-};
-
-set<string>
-D2TsigKey::globalStats = {
-    "sent",
-    "signed",
-    "unsigned",
-    "success",
-    "timeout",
-    "error"
-};
 
 D2TsigKey::D2TsigKey(const std::string& key_spec) : TSIGKey(key_spec) {
     initStats();
@@ -50,7 +33,7 @@ void
 D2TsigKey::initStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : keyStats) {
+    for (const auto& name : D2Stats::key) {
         const string& sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.setValue(sname, static_cast<int64_t>(0));
     }
@@ -59,7 +42,7 @@ D2TsigKey::initStats() {
 D2TsigKey::~D2TsigKey() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : keyStats) {
+    for (const auto& name : D2Stats::key) {
         string sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.del(sname);
     }
@@ -69,7 +52,7 @@ void
 D2TsigKey::resetStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : keyStats) {
+    for (const auto& name : D2Stats::key) {
         string sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.reset(sname);
     }

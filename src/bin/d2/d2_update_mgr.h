@@ -69,18 +69,6 @@ public:
     /// implementation.
     static const size_t MAX_TRANSACTIONS_DEFAULT = 32;
 
-    // @todo This structure is not yet used. It is here in anticipation of
-    // enabled statistics capture.
-    struct Stats {
-        uint64_t start_time_;
-        uint64_t stop_time_;
-        uint64_t update_count_;
-        uint64_t min_update_time_;
-        uint64_t max_update_time_;
-        uint64_t server_rejects_;
-        uint64_t server_timeouts_;
-    };
-
     /// @brief Constructor
     ///
     /// @param queue_mgr reference to the queue manager receiving requests

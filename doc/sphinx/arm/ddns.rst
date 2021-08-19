@@ -298,6 +298,14 @@ The D2 server supports the following operational commands:
 -  status-get
 -  version-get
 
+Starting with Kea version 2.0.0 the D2 server supports too the following
+operational commands for statistics:
+
+-  statistic-get
+-  statistic-get-all
+-  statistic-reset
+-  statistic-reset-all
+
 The ``shutdown`` command supports the extra ``type`` argument which controls the
 way the D2 server cleans up on exit.
 The supported shutdown types are:
@@ -907,6 +915,67 @@ These Reverse DDNS Domains are specified as follows:
            ]
        }
    }
+
+DHCP-DDNS Server Statistics
+===========================
+
+Kea version 2.0.0 introduced statistics support for the DHCP-DDNS.
+
+Statistics are divided in three groups: Name Change Request, DNS update
+and per TSIG key DNS updates. If the statistics of the first two groups
+are cummulative, i.e. not affected by configuration change or reload,
+per key statistics are reset to 0 when the underlying object is
+(re)created.
+
+Currently the statistics management is limited:
+
+-  only integer samples (i.e. a counter and a timestamp) are used
+-  the maximum sample count is 1
+-  there is no API to remove one or all statistics
+-  there is no API to set the maxium sample count or age
+
+.. note::
+
+    Hook libraries like the GSS-TSIG add new statistics.
+
+A reference about Kea statistics can be found at :ref:`stats`.
+
+NCR Statistics
+--------------
+
+The Name Change Request statistics are:
+
+-  ``ncr-received`` - received valid NCRs
+-  ``ncr-invalid`` - received invalid NCRs
+-  ``ncr-error`` - errors in NCR receptions other than I/) cancel on shutdown
+
+DNS Update Statistics
+---------------------
+
+The global DNS update statistics are:
+
+-  ``update-sent`` - sent DNS updates
+-  ``update-signed`` - sent DNS updates protected by TSIG
+-  ``update-unsigned`` - sent DNS updates not protected by TSIG
+-  ``update-success`` - DNS updates which completed with a success
+-  ``update-timeout`` - DNS updates which completed on timeout
+-  ``update-error`` - DNS updates which completed with an error other than
+   timeout
+
+Per TSIG key DNS Update Statistics
+----------------------------------
+
+The per TSIG key DNS update statistics are:
+
+-  ``update-sent`` - sent DNS updates
+-  ``update-success`` - DNS updates which completed with a success
+-  ``update-timeout`` - DNS updates which completed on timeout
+-  ``update-error`` - DNS updates which completed with an error other than
+   timeout
+
+The name of a per key statistics is ``key[<key-DNS-name>].<stat-name>``,
+for instance he name of the ``update-sent`` statistics for the
+``key.example.com.`` TSIG key is ``key[key.example.com.].update-sent``.
 
 DHCP-DDNS Server Limitations
 ============================
