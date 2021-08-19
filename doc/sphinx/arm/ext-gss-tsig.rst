@@ -9,9 +9,8 @@ GSS-TSIG
 GSS-TSIG Overview
 -----------------
 
-Kea provides a support for DNS updates (as defined in `RFC 2136 <https://tools.ietf.org/html/rfc2136>`__),
-which can be protected using Transaction Signatures (or TSIG) as defined in
-`RFC 2845 <https://tools.ietf.org/html/rfc2845>`__). This protection
+Kea provides a support for DNS updates, which can be protected using
+Transaction Signatures (or TSIG). This protection
 is often adequate. However, some systems, in particular Active Directory (AD)
 on Microsoft Windows systems, chose to adopt more complex GSS-TSIG
 approach that offers additional capabilities as using negotiated dynamic keys.
@@ -21,6 +20,39 @@ the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss_tsig`.
 The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
 services, defined in `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__.
+
+More exactly many protocols are involved:
+ - Kerberos 5 `RFC 4120 <https://tools.ietf.org/html/rfc4120>`__ which
+   provides the security framework
+ - GSS-API (Generic Security Services Application Program Interface)
+   `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__ for the API,
+   `RFC 2744 <https://tools.ietf.org/html/rfc2743>`__ for C bindings and
+   `RFC 4121 <https://tools.ietf.org/html/rfc4121>`__ for the application
+   to Kerberos 5
+ - SPNEGO (Simple and Protected GSS-API Negotiation Mechanism)
+   `RFC 4178 <https://tools.ietf.org/html/rfc4178>`__ for the negotation
+ - DNS update `RFC 2136 <https://tools.ietf.org/html/rfc2136>`__
+ - TSIG (Secret Key Transaction Authentication for DNS)
+   `RFC 8945 <https://tools.ietf.org/html/rfc8945>`__ which
+   protects DNS exchanges
+ - Secure Domain Name System (DNS) Dynamic Update
+   `RFC 3007 <https://tools.ietf.org/html/rfc3007>`__ which is the
+   application of TSIG to the DNS update protection
+ - TKEY (Secret Key Establishment for DNS)
+   `RFC 2930 <https://tools.ietf.org/html/rfc2930>`__ which establishes
+   secret keys for TSIG by transmitting crypto payloads between DNS
+   parties
+ - GSS-TSIG `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__ which
+   is the application of GSS-API to TSIG
+
+To summary GSS-API for Kerberos 5 with SPNEGO and TKEY are used to
+negotiate a security context between the Kea D2 server and a DNS server:
+
+.. figure:: ../uml/tkey.*
+
+The security context is used by GSS-TSIG to protect updates:
+
+.. figure:: ../uml/update.*
 
 The Kea implementation of GSS-TSIG uses a GSS-API for Kerberos 5 with
 SPNEGO library.  Two implementations meet this criteria: MIT Kerberos

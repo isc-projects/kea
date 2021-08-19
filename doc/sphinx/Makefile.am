@@ -137,6 +137,12 @@ EXTRA_DIST += uml/requestLease4.uml
 EXTRA_DIST += uml/select4.png
 EXTRA_DIST += uml/select4.svg
 EXTRA_DIST += uml/select4.uml
+EXTRA_DIST += uml/tkey.png
+EXTRA_DIST += uml/tkey.svg
+EXTRA_DIST += uml/tkey.uml
+EXTRA_DIST += uml/update.png
+EXTRA_DIST += uml/update.svg
+EXTRA_DIST += uml/update.uml
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 

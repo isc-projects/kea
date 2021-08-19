@@ -1,0 +1,11 @@
+@startuml
+
+title TKEY Exchange (GSS-TSIG hook)
+
+participant "Kea D2 server" as Kea
+participant "DNS server" as DNS
+
+Kea -> DNS: TKEY request
+DNS -> Kea: TKEY response (signed)
+
+@enduml

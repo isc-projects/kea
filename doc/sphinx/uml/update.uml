@@ -1,0 +1,11 @@
+@startuml
+
+title DNS Update Exchange (GSS-TSIG hook)
+
+participant "Kea D2 server" as Kea
+participant "DNS server" as DNS
+
+Kea -> DNS: DNS update request (signed)
+DNS -> Kea: DNS update response (signed)
+
+@enduml

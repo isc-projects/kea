@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="197px" preserveAspectRatio="none" style="width:308px;height:197px;background:#FFFFFF;" version="1.1" viewBox="0 0 308 197" width="308px" zoomAndPan="magnify"><defs><filter height="300%" id="fz1ehskz14z05" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="283" x="9" y="29.4023">TKEY Exchange (GSS-TSIG hook)</text><line style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:5.0,5.0;" x1="70.5" x2="70.5" y1="75.6875" y2="154.3086"/><line style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:5.0,5.0;" x1="240.5" x2="240.5" y1="75.6875" y2="154.3086"/><rect fill="#FEFECE" filter="url(#fz1ehskz14z05)" height="30.4883" style="stroke:#A80036;stroke-width:1.5;" width="108" x="14.5" y="40.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94" x="21.5" y="60.7344">Kea D2 server</text><rect fill="#FEFECE" filter="url(#fz1ehskz14z05)" height="30.4883" style="stroke:#A80036;stroke-width:1.5;" width="108" x="14.5" y="153.3086"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94" x="21.5" y="173.8438">Kea D2 server</text><rect fill="#FEFECE" filter="url(#fz1ehskz14z05)" height="30.4883" style="stroke:#A80036;stroke-width:1.5;" width="88" x="194.5" y="40.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="74" x="201.5" y="60.7344">DNS server</text><rect fill="#FEFECE" filter="url(#fz1ehskz14z05)" height="30.4883" style="stroke:#A80036;stroke-width:1.5;" width="88" x="194.5" y="153.3086"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="74" x="201.5" y="173.8438">DNS server</text><polygon fill="#A80036" points="228.5,102.998,238.5,106.998,228.5,110.998,232.5,106.998" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="70.5" x2="234.5" y1="106.998" y2="106.998"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="82" x="77.5" y="102.2559">TKEY request</text><polygon fill="#A80036" points="81.5,132.3086,71.5,136.3086,81.5,140.3086,77.5,136.3086" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="75.5" x2="239.5" y1="136.3086" y2="136.3086"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="146" x="87.5" y="131.5664">TKEY response (signed)</text><!--MD5=[7d4889a5feeb1588c9f7e0e768327f46]
+@startuml
+
+title TKEY Exchange (GSS-TSIG hook)
+
+participant "Kea D2 server" as Kea
+participant "DNS server" as DNS
+
+Kea -> DNS: TKEY request
+DNS -> Kea: TKEY response (signed)
+
+@enduml
+
+PlantUML version 1.2021.9(Sun Jul 25 12:13:56 CEST 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>
