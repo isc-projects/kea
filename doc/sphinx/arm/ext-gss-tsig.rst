@@ -227,7 +227,7 @@ An excerpt from D2 server is provided below. More examples are available in the
 This configuration file contains a number of extra elements.
 
 First, a list of forward and/or reverse domains with related DNS servers
-identified by their IP+port tuples is defined. If port is not
+identified by their IP+port pairs is defined. If port is not
 specified, the default of 53 is assumed. This is similar to basic mode with no
 authentication or authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
