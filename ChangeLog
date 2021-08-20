@@ -1,6 +1,7 @@
 1934.	[func]		tmark
 	Kea-dhcp6 now supports specifying valid-lifetime and
-	preferred-lifetime values in client classes.  Prior to this
+	preferred-lifetime values in client classes (via both
+	configuration file and Config Backend).  Prior to this
 	it could only be specified at the global, shared-network,
 	and subnet scopes.
 	(Gitlab #1710)

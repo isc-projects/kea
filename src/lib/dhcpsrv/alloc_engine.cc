@@ -1919,20 +1919,20 @@ AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& v
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
 
         // Iterate over the assigned class defintions.
-        int cnt = 0;
-        for (ClientClasses::const_iterator name = classes.cbegin();
-             name != classes.cend() && cnt < 2; ++name) {
+        int have_both = 0;
+        for (auto name = classes.cbegin();
+             name != classes.cend() && have_both < 2; ++name) {
             ClientClassDefPtr cl = dict->findClass(*name);
             if (candidate_preferred.unspecified() &&
                 (cl && (!cl->getPreferred().unspecified()))) {
                 candidate_preferred = cl->getPreferred();
-                ++cnt;
+                ++have_both;
             }
 
             if (candidate_valid.unspecified() &&
                 (cl && (!cl->getValid().unspecified()))) {
                 candidate_valid = cl->getValid();
-                ++cnt;
+                ++have_both;
             }
         }
     }
