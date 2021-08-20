@@ -790,7 +790,7 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     if (auth) {
         setItem(xpath + "/authoritative", auth, SR_BOOL_T);
     }
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOLEAN_T);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 void
@@ -882,7 +882,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
             setItem(xpath + "/server-id/user-context", repr, SR_STRING_T);
         }
     }
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOLEAN_T);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 }  // namespace yang
