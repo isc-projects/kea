@@ -17,19 +17,19 @@ namespace yang {
 static const std::map<std::string, std::string> YANG_REVISIONS = {
 #ifdef KEATEST_MODULE
     { "keatest-module", "2018-11-20" },
-#endif // KEATEST_MODULE
+#endif  // KEATEST_MODULE
     { "ietf-dhcpv6-types", "2018-09-04" },
     { "ietf-dhcpv6-options", "2018-09-04" },
     { "ietf-dhcpv6-server", "2018-09-04" },
-    { "kea-types", "2021-07-28" },
-    { "kea-dhcp-types", "2019-08-12" },
-    { "kea-dhcp4-server", "2021-07-28" },
-    { "kea-dhcp6-server", "2021-07-28" },
+    { "kea-types", "2019-08-12" },
+    { "kea-dhcp-types", "2021-08-25" },
+    { "kea-dhcp4-server", "2021-08-25" },
+    { "kea-dhcp6-server", "2021-08-25" },
     { "kea-ctrl-agent", "2019-08-12" },
     { "kea-dhcp-ddns", "2019-08-12" }
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_YANG_REVISIONS_H

@@ -8,11 +8,11 @@ module kea-dhcp4-server {
   }
   import kea-types {
     prefix kea;
-    revision-date 2021-07-28;
+    revision-date 2019-08-12;
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2019-08-12;
+    revision-date 2021-08-25;
   }
 
   organization "Internet Systems Consortium";
@@ -20,9 +20,12 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2021-07-28 {
-    description "Initial revision + added store-extended-info";
-    reference "";
+  revision 2021-08-25 {
+    description "Added store-extended-info";
+  }
+
+  revision 2019-08-12 {
+    description "Initial revision";
   }
 
   /*
@@ -209,7 +212,7 @@ module kea-dhcp4-server {
       }
       uses authoritative;
       uses dhcp:subnet-user-context;
-      uses kea:store-extended-info;
+      uses dhcp:store-extended-info;
     }
   }
 
@@ -517,6 +520,6 @@ module kea-dhcp4-server {
       }
     }
 
-    uses kea:store-extended-info;
+    uses dhcp:store-extended-info;
   }
 }
