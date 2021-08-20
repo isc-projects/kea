@@ -88,10 +88,10 @@ public:
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
     /// @param type the sysrepo node type
-    void checkAndSetLeaf(isc::data::ElementPtr const& from,
+    void checkAndSetLeaf(isc::data::ConstElementPtr const& from,
                          std::string const& xpath,
                          std::string const& name,
-                         sr_type_t const& type);
+                         sr_type_t const type);
 
 
     /// @brief Delete basic value from YANG.
