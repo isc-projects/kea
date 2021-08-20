@@ -1031,12 +1031,6 @@ def _install_sysrepo_from_sources():
     # have available. This is a dictionary of sysrepo versions indexed by
     # libyang versions:
     versions = {
-        '1.6.5': '1.4.2',
-        '1.7.9': '1.4.66',
-        '1.9.0': '1.4.70',
-        # '1.9.2': '1.4.70',    # fedora 33
-        '1.9.11': '1.4.122',
-        # '1.10.7': '1.4.122',  # alpine 3.13
         '1.10.17': '1.4.122',   # fedora 34
         '1.10.29': '1.4.140',
         '1.10.240': '1.4.140',
