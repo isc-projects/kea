@@ -1034,10 +1034,10 @@ def _install_sysrepo_from_sources():
         '1.6.5': '1.4.2',
         '1.7.9': '1.4.66',
         '1.9.0': '1.4.70',
-        '1.9.2': '1.4.70',  # fedora 33
+        # '1.9.2': '1.4.70',    # fedora 33
         '1.9.11': '1.4.122',
-        '1.10.7': '1.4.122',  # alpine 3.13
-        '1.10.17': '1.4.122',  # fedora 34
+        # '1.10.7': '1.4.122',  # alpine 3.13
+        '1.10.17': '1.4.122',   # fedora 34
         '1.10.29': '1.4.140',
         '1.10.240': '1.4.140',
     }
@@ -1380,8 +1380,15 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'libyang', 'libyang-devel', 'libyang-cpp', 'libyang-cpp-devel'])
-            deferred_functions.append(_install_sysrepo_from_sources)
+            if int(revision) <= 33:
+                packages.extend(['cmake', 'pcre2-devel'])
+                deferred_functions.extend([
+                    _install_libyang_from_sources,
+                    _install_sysrepo_from_sources,
+                ])
+            else:
+                packages.extend(['cmake', 'libyang', 'libyang-devel', 'libyang-cpp', 'libyang-cpp-devel'])
+                deferred_functions.append(_install_sysrepo_from_sources)
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
