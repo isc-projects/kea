@@ -100,7 +100,7 @@ if test "x$enable_gtest" = "xyes" ; then
 
 # Versions starting from 1.8.0 are put in the googletest directory. If the basename
 # returns googletest string, we need to cut it off and try baseline again.
-        if test "$GTEST_VERSION" == "googletest"; then
+        if test "$GTEST_VERSION" = "googletest"; then
             GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
             GTEST_VERSION=`basename $GTEST_VERSION`
         fi
@@ -135,15 +135,16 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
-                    if ! test -f "$dir/lib/libgtest.a"; then
+                    if test -f "$dir/lib/libgtest.a" || \
+                       test -f "$dir/lib/libgtest.so"; then
+                        GTEST_INCLUDES="-I$dir/include"
+                        GTEST_LDFLAGS="-L$dir/lib"
+                        GTEST_LDADD="-lgtest"
+                        GTEST_FOUND="true"
+                        break
+                    else
                         AC_MSG_WARN([Found Google Test include but not the library in $dir.])
-                        continue
                     fi
-                    GTEST_INCLUDES="-I$dir/include"
-                    GTEST_LDFLAGS="-L$dir/lib"
-                    GTEST_LDADD="-lgtest"
-                    GTEST_FOUND="true"
-                    break
                 fi
             done
         fi
