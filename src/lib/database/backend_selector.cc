@@ -1,12 +1,14 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <database/backend_selector.h>
 #include <exceptions/exceptions.h>
-#include <climits>
+#include <limits>
 #include <sstream>
 
 using namespace isc::data;
