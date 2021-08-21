@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.6.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -103,9 +103,9 @@ using namespace isc::eval;
 #endif
 # include "location.hh"
 #include <typeinfo>
-#ifndef YY_ASSERT
+#ifndef EVAL_ASSERT
 # include <cassert>
-# define YY_ASSERT assert
+# define EVAL_ASSERT assert
 #endif
 
 
@@ -127,9 +127,9 @@ using namespace isc::eval;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -231,7 +231,7 @@ namespace isc { namespace eval {
     semantic_type (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (sizeof (T) <= size);
       new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
@@ -245,7 +245,7 @@ namespace isc { namespace eval {
     /// Destruction, allowed only if empty.
     ~semantic_type () YY_NOEXCEPT
     {
-      YY_ASSERT (!yytypeid_);
+      EVAL_ASSERT (!yytypeid_);
     }
 
 # if 201103L <= YY_CPLUSPLUS
@@ -254,8 +254,8 @@ namespace isc { namespace eval {
     T&
     emplace (U&&... u)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (!yytypeid_);
+      EVAL_ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (std::forward <U>(u)...);
     }
@@ -265,8 +265,8 @@ namespace isc { namespace eval {
     T&
     emplace ()
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (!yytypeid_);
+      EVAL_ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T ();
     }
@@ -276,8 +276,8 @@ namespace isc { namespace eval {
     T&
     emplace (const T& t)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (!yytypeid_);
+      EVAL_ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
     }
@@ -306,9 +306,9 @@ namespace isc { namespace eval {
     T&
     as () YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (yytypeid_);
+      EVAL_ASSERT (*yytypeid_ == typeid (T));
+      EVAL_ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -317,9 +317,9 @@ namespace isc { namespace eval {
     const T&
     as () const YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      EVAL_ASSERT (yytypeid_);
+      EVAL_ASSERT (*yytypeid_ == typeid (T));
+      EVAL_ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -335,8 +335,8 @@ namespace isc { namespace eval {
     void
     swap (self_type& that) YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == *that.yytypeid_);
+      EVAL_ASSERT (yytypeid_);
+      EVAL_ASSERT (*yytypeid_ == *that.yytypeid_);
       std::swap (as<T> (), that.as<T> ());
     }
 
@@ -674,45 +674,45 @@ namespace isc { namespace eval {
       {
         switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (std::move (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (std::move (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (std::move (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (std::move (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (std::move (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (std::move (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (std::move (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (std::move (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (std::move (that.value));
         break;
 
@@ -726,7 +726,7 @@ namespace isc { namespace eval {
       /// Copy constructor.
       basic_symbol (const basic_symbol& that);
 
-      /// Constructor for valueless symbols, and symbols from each type.
+      /// Constructors for typed symbols.
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, location_type&& l)
         : Base (t)
@@ -738,6 +738,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, TokenOption::RepresentationType&& v, location_type&& l)
         : Base (t)
@@ -751,6 +752,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, TokenPkt4::FieldType&& v, location_type&& l)
         : Base (t)
@@ -764,6 +766,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, TokenPkt6::FieldType&& v, location_type&& l)
         : Base (t)
@@ -777,6 +780,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, TokenPkt::MetadataType&& v, location_type&& l)
         : Base (t)
@@ -790,6 +794,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, TokenRelay6Field::FieldType&& v, location_type&& l)
         : Base (t)
@@ -803,6 +808,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, int8_t&& v, location_type&& l)
         : Base (t)
@@ -816,6 +822,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
@@ -829,6 +836,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, uint16_t&& v, location_type&& l)
         : Base (t)
@@ -842,6 +850,7 @@ namespace isc { namespace eval {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, uint32_t&& v, location_type&& l)
         : Base (t)
@@ -863,7 +872,7 @@ namespace isc { namespace eval {
       }
 
       /// Destroy contents, and record that is empty.
-      void clear ()
+      void clear () YY_NOEXCEPT
       {
         // User destructor.
         symbol_kind_type yykind = this->kind ();
@@ -878,45 +887,45 @@ namespace isc { namespace eval {
         // Value type destructor.
 switch (yykind)
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.template destroy< TokenPkt::MetadataType > ();
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.template destroy< int8_t > ();
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.template destroy< std::string > ();
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.template destroy< uint16_t > ();
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.template destroy< uint32_t > ();
         break;
 
@@ -976,7 +985,7 @@ switch (yykind)
       by_kind (kind_type t);
 
       /// Record that this symbol is empty.
-      void clear ();
+      void clear () YY_NOEXCEPT;
 
       /// Steal the symbol kind from \a that.
       void move (by_kind& that);
@@ -1009,29 +1018,24 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_EVALerror || tok == token::TOKEN_EVALUNDEF || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
-      }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_EVALerror || tok == token::TOKEN_EVALUNDEF || tok == token::TOKEN_LPAREN || tok == token::TOKEN_RPAREN || tok == token::TOKEN_NOT || tok == token::TOKEN_AND || tok == token::TOKEN_OR || tok == token::TOKEN_EQUAL || tok == token::TOKEN_OPTION || tok == token::TOKEN_RELAY4 || tok == token::TOKEN_RELAY6 || tok == token::TOKEN_MEMBER || tok == token::TOKEN_PEERADDR || tok == token::TOKEN_LINKADDR || tok == token::TOKEN_LBRACKET || tok == token::TOKEN_RBRACKET || tok == token::TOKEN_DOT || tok == token::TOKEN_TEXT || tok == token::TOKEN_HEX || tok == token::TOKEN_EXISTS || tok == token::TOKEN_PKT || tok == token::TOKEN_IFACE || tok == token::TOKEN_SRC || tok == token::TOKEN_DST || tok == token::TOKEN_LEN || tok == token::TOKEN_PKT4 || tok == token::TOKEN_CHADDR || tok == token::TOKEN_HLEN || tok == token::TOKEN_HTYPE || tok == token::TOKEN_CIADDR || tok == token::TOKEN_GIADDR || tok == token::TOKEN_YIADDR || tok == token::TOKEN_SIADDR || tok == token::TOKEN_SUBSTRING || tok == token::TOKEN_ALL || tok == token::TOKEN_COMA || tok == token::TOKEN_CONCAT || tok == token::TOKEN_IFELSE || tok == token::TOKEN_TOHEXSTRING || tok == token::TOKEN_PKT6 || tok == token::TOKEN_MSGTYPE || tok == token::TOKEN_TRANSID || tok == token::TOKEN_VENDOR_CLASS || tok == token::TOKEN_VENDOR || tok == token::TOKEN_ANY || tok == token::TOKEN_DATA || tok == token::TOKEN_ENTERPRISE || tok == token::TOKEN_TOPLEVEL_BOOL || tok == token::TOKEN_TOPLEVEL_STRING);
-      }
 #endif
+      {
+        EVAL_ASSERT (tok == token::TOKEN_END
+                   || (token::TOKEN_EVALerror <= tok && tok <= token::TOKEN_TOPLEVEL_STRING));
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING || tok == token::TOKEN_INTEGER || tok == token::TOKEN_HEXSTRING || tok == token::TOKEN_OPTION_NAME || tok == token::TOKEN_IP_ADDRESS);
-      }
 #else
       symbol_type (int tok, const std::string& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING || tok == token::TOKEN_INTEGER || tok == token::TOKEN_HEXSTRING || tok == token::TOKEN_OPTION_NAME || tok == token::TOKEN_IP_ADDRESS);
-      }
 #endif
+      {
+        EVAL_ASSERT ((token::TOKEN_STRING <= tok && tok <= token::TOKEN_IP_ADDRESS));
+      }
     };
 
     /// Build a parser object.
@@ -1911,9 +1915,9 @@ switch (yykind)
     {
     public:
       context (const EvalParser& yyparser, const symbol_type& yyla);
-      const symbol_type& lookahead () const { return yyla_; }
-      symbol_kind_type token () const { return yyla_.kind (); }
-      const location_type& location () const { return yyla_.location; }
+      const symbol_type& lookahead () const YY_NOEXCEPT { return yyla_; }
+      symbol_kind_type token () const YY_NOEXCEPT { return yyla_.kind (); }
+      const location_type& location () const YY_NOEXCEPT { return yyla_.location; }
 
       /// Put in YYARG at most YYARGN of the expected tokens, and return the
       /// number of tokens stored in YYARG.  If YYARG is null, return the
@@ -1986,7 +1990,7 @@ switch (yykind)
     static const short yypgoto_[];
 
     // YYDEFGOTO[NTERM-NUM].
-    static const short yydefgoto_[];
+    static const unsigned char yydefgoto_[];
 
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
@@ -2056,7 +2060,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -2288,11 +2292,12 @@ switch (yykind)
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54
     };
-    const int user_token_number_max_ = 309;
+    // Last valid token kind.
+    const int code_max = 309;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -2307,45 +2312,45 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.copy< TokenOption::RepresentationType > (YY_MOVE (that.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.copy< TokenPkt4::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.copy< TokenPkt6::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (YY_MOVE (that.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.copy< int8_t > (YY_MOVE (that.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.copy< uint16_t > (YY_MOVE (that.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.copy< uint32_t > (YY_MOVE (that.value));
         break;
 
@@ -2378,45 +2383,45 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 63: // option_repr_type
+      case symbol_kind::S_option_repr_type: // option_repr_type
         value.move< TokenOption::RepresentationType > (YY_MOVE (s.value));
         break;
 
-      case 67: // pkt4_field
+      case symbol_kind::S_pkt4_field: // pkt4_field
         value.move< TokenPkt4::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 68: // pkt6_field
+      case symbol_kind::S_pkt6_field: // pkt6_field
         value.move< TokenPkt6::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 65: // pkt_metadata
+      case symbol_kind::S_pkt_metadata: // pkt_metadata
         value.move< TokenPkt::MetadataType > (YY_MOVE (s.value));
         break;
 
-      case 69: // relay6_field
+      case symbol_kind::S_relay6_field: // relay6_field
         value.move< TokenRelay6Field::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 64: // nest_level
+      case symbol_kind::S_nest_level: // nest_level
         value.move< int8_t > (YY_MOVE (s.value));
         break;
 
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
+      case symbol_kind::S_STRING: // "constant string"
+      case symbol_kind::S_INTEGER: // "integer"
+      case symbol_kind::S_HEXSTRING: // "constant hexstring"
+      case symbol_kind::S_OPTION_NAME: // "option name"
+      case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case 61: // option_code
-      case 62: // sub_option_code
+      case symbol_kind::S_option_code: // option_code
+      case symbol_kind::S_sub_option_code: // sub_option_code
         value.move< uint16_t > (YY_MOVE (s.value));
         break;
 
-      case 60: // integer_expr
-      case 66: // enterprise_id
+      case symbol_kind::S_integer_expr: // integer_expr
+      case symbol_kind::S_enterprise_id: // enterprise_id
         value.move< uint32_t > (YY_MOVE (s.value));
         break;
 
@@ -2454,7 +2459,7 @@ switch (yykind)
 
   inline
   void
-  EvalParser::by_kind::clear ()
+  EvalParser::by_kind::clear () YY_NOEXCEPT
   {
     kind_ = symbol_kind::S_YYEMPTY;
   }
@@ -2483,8 +2488,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2487 "parser.h"
-
+#line 2492 "parser.h"
 
 
 

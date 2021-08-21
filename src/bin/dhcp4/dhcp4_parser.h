@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.6.4.
+// A Bison parser, made by GNU Bison 3.7.6.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -104,9 +104,9 @@ using namespace std;
 #endif
 # include "location.hh"
 #include <typeinfo>
-#ifndef YY_ASSERT
+#ifndef PARSER4__ASSERT
 # include <cassert>
-# define YY_ASSERT assert
+# define PARSER4__ASSERT assert
 #endif
 
 
@@ -128,9 +128,9 @@ using namespace std;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -232,7 +232,7 @@ namespace isc { namespace dhcp {
     semantic_type (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (sizeof (T) <= size);
       new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
@@ -246,7 +246,7 @@ namespace isc { namespace dhcp {
     /// Destruction, allowed only if empty.
     ~semantic_type () YY_NOEXCEPT
     {
-      YY_ASSERT (!yytypeid_);
+      PARSER4__ASSERT (!yytypeid_);
     }
 
 # if 201103L <= YY_CPLUSPLUS
@@ -255,8 +255,8 @@ namespace isc { namespace dhcp {
     T&
     emplace (U&&... u)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (!yytypeid_);
+      PARSER4__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (std::forward <U>(u)...);
     }
@@ -266,8 +266,8 @@ namespace isc { namespace dhcp {
     T&
     emplace ()
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (!yytypeid_);
+      PARSER4__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T ();
     }
@@ -277,8 +277,8 @@ namespace isc { namespace dhcp {
     T&
     emplace (const T& t)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (!yytypeid_);
+      PARSER4__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
     }
@@ -307,9 +307,9 @@ namespace isc { namespace dhcp {
     T&
     as () YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (yytypeid_);
+      PARSER4__ASSERT (*yytypeid_ == typeid (T));
+      PARSER4__ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -318,9 +318,9 @@ namespace isc { namespace dhcp {
     const T&
     as () const YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER4__ASSERT (yytypeid_);
+      PARSER4__ASSERT (*yytypeid_ == typeid (T));
+      PARSER4__ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -336,8 +336,8 @@ namespace isc { namespace dhcp {
     void
     swap (self_type& that) YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == *that.yytypeid_);
+      PARSER4__ASSERT (yytypeid_);
+      PARSER4__ASSERT (*yytypeid_ == *that.yytypeid_);
       std::swap (as<T> (), that.as<T> ());
     }
 
@@ -558,121 +558,123 @@ namespace isc { namespace dhcp {
     TOKEN_DDNS_REPLACE_CLIENT_NAME = 327, // "ddns-replace-client-name"
     TOKEN_DDNS_GENERATED_PREFIX = 328, // "ddns-generated-prefix"
     TOKEN_DDNS_QUALIFYING_SUFFIX = 329, // "ddns-qualifying-suffix"
-    TOKEN_STORE_EXTENDED_INFO = 330, // "store-extended-info"
-    TOKEN_SUBNET4 = 331,           // "subnet4"
-    TOKEN_SUBNET_4O6_INTERFACE = 332, // "4o6-interface"
-    TOKEN_SUBNET_4O6_INTERFACE_ID = 333, // "4o6-interface-id"
-    TOKEN_SUBNET_4O6_SUBNET = 334, // "4o6-subnet"
-    TOKEN_OPTION_DEF = 335,        // "option-def"
-    TOKEN_OPTION_DATA = 336,       // "option-data"
-    TOKEN_NAME = 337,              // "name"
-    TOKEN_DATA = 338,              // "data"
-    TOKEN_CODE = 339,              // "code"
-    TOKEN_SPACE = 340,             // "space"
-    TOKEN_CSV_FORMAT = 341,        // "csv-format"
-    TOKEN_ALWAYS_SEND = 342,       // "always-send"
-    TOKEN_RECORD_TYPES = 343,      // "record-types"
-    TOKEN_ENCAPSULATE = 344,       // "encapsulate"
-    TOKEN_ARRAY = 345,             // "array"
-    TOKEN_SHARED_NETWORKS = 346,   // "shared-networks"
-    TOKEN_POOLS = 347,             // "pools"
-    TOKEN_POOL = 348,              // "pool"
-    TOKEN_USER_CONTEXT = 349,      // "user-context"
-    TOKEN_COMMENT = 350,           // "comment"
-    TOKEN_SUBNET = 351,            // "subnet"
-    TOKEN_INTERFACE = 352,         // "interface"
-    TOKEN_ID = 353,                // "id"
-    TOKEN_RESERVATION_MODE = 354,  // "reservation-mode"
-    TOKEN_DISABLED = 355,          // "disabled"
-    TOKEN_OUT_OF_POOL = 356,       // "out-of-pool"
-    TOKEN_GLOBAL = 357,            // "global"
-    TOKEN_ALL = 358,               // "all"
-    TOKEN_HOST_RESERVATION_IDENTIFIERS = 359, // "host-reservation-identifiers"
-    TOKEN_CLIENT_CLASSES = 360,    // "client-classes"
-    TOKEN_REQUIRE_CLIENT_CLASSES = 361, // "require-client-classes"
-    TOKEN_TEST = 362,              // "test"
-    TOKEN_ONLY_IF_REQUIRED = 363,  // "only-if-required"
-    TOKEN_CLIENT_CLASS = 364,      // "client-class"
-    TOKEN_RESERVATIONS = 365,      // "reservations"
-    TOKEN_DUID = 366,              // "duid"
-    TOKEN_HW_ADDRESS = 367,        // "hw-address"
-    TOKEN_CIRCUIT_ID = 368,        // "circuit-id"
-    TOKEN_CLIENT_ID = 369,         // "client-id"
-    TOKEN_HOSTNAME = 370,          // "hostname"
-    TOKEN_FLEX_ID = 371,           // "flex-id"
-    TOKEN_RELAY = 372,             // "relay"
-    TOKEN_IP_ADDRESS = 373,        // "ip-address"
-    TOKEN_IP_ADDRESSES = 374,      // "ip-addresses"
-    TOKEN_HOOKS_LIBRARIES = 375,   // "hooks-libraries"
-    TOKEN_LIBRARY = 376,           // "library"
-    TOKEN_PARAMETERS = 377,        // "parameters"
-    TOKEN_EXPIRED_LEASES_PROCESSING = 378, // "expired-leases-processing"
-    TOKEN_RECLAIM_TIMER_WAIT_TIME = 379, // "reclaim-timer-wait-time"
-    TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 380, // "flush-reclaimed-timer-wait-time"
-    TOKEN_HOLD_RECLAIMED_TIME = 381, // "hold-reclaimed-time"
-    TOKEN_MAX_RECLAIM_LEASES = 382, // "max-reclaim-leases"
-    TOKEN_MAX_RECLAIM_TIME = 383,  // "max-reclaim-time"
-    TOKEN_UNWARNED_RECLAIM_CYCLES = 384, // "unwarned-reclaim-cycles"
-    TOKEN_DHCP4O6_PORT = 385,      // "dhcp4o6-port"
-    TOKEN_DHCP_MULTI_THREADING = 386, // "multi-threading"
-    TOKEN_ENABLE_MULTI_THREADING = 387, // "enable-multi-threading"
-    TOKEN_THREAD_POOL_SIZE = 388,  // "thread-pool-size"
-    TOKEN_PACKET_QUEUE_SIZE = 389, // "packet-queue-size"
-    TOKEN_CONTROL_SOCKET = 390,    // "control-socket"
-    TOKEN_SOCKET_TYPE = 391,       // "socket-type"
-    TOKEN_SOCKET_NAME = 392,       // "socket-name"
-    TOKEN_DHCP_QUEUE_CONTROL = 393, // "dhcp-queue-control"
-    TOKEN_ENABLE_QUEUE = 394,      // "enable-queue"
-    TOKEN_QUEUE_TYPE = 395,        // "queue-type"
-    TOKEN_CAPACITY = 396,          // "capacity"
-    TOKEN_DHCP_DDNS = 397,         // "dhcp-ddns"
-    TOKEN_ENABLE_UPDATES = 398,    // "enable-updates"
-    TOKEN_QUALIFYING_SUFFIX = 399, // "qualifying-suffix"
-    TOKEN_SERVER_IP = 400,         // "server-ip"
-    TOKEN_SERVER_PORT = 401,       // "server-port"
-    TOKEN_SENDER_IP = 402,         // "sender-ip"
-    TOKEN_SENDER_PORT = 403,       // "sender-port"
-    TOKEN_MAX_QUEUE_SIZE = 404,    // "max-queue-size"
-    TOKEN_NCR_PROTOCOL = 405,      // "ncr-protocol"
-    TOKEN_NCR_FORMAT = 406,        // "ncr-format"
-    TOKEN_OVERRIDE_NO_UPDATE = 407, // "override-no-update"
-    TOKEN_OVERRIDE_CLIENT_UPDATE = 408, // "override-client-update"
-    TOKEN_REPLACE_CLIENT_NAME = 409, // "replace-client-name"
-    TOKEN_GENERATED_PREFIX = 410,  // "generated-prefix"
-    TOKEN_TCP = 411,               // "tcp"
-    TOKEN_JSON = 412,              // "JSON"
-    TOKEN_WHEN_PRESENT = 413,      // "when-present"
-    TOKEN_NEVER = 414,             // "never"
-    TOKEN_ALWAYS = 415,            // "always"
-    TOKEN_WHEN_NOT_PRESENT = 416,  // "when-not-present"
-    TOKEN_HOSTNAME_CHAR_SET = 417, // "hostname-char-set"
-    TOKEN_HOSTNAME_CHAR_REPLACEMENT = 418, // "hostname-char-replacement"
-    TOKEN_LOGGERS = 419,           // "loggers"
-    TOKEN_OUTPUT_OPTIONS = 420,    // "output_options"
-    TOKEN_OUTPUT = 421,            // "output"
-    TOKEN_DEBUGLEVEL = 422,        // "debuglevel"
-    TOKEN_SEVERITY = 423,          // "severity"
-    TOKEN_FLUSH = 424,             // "flush"
-    TOKEN_MAXSIZE = 425,           // "maxsize"
-    TOKEN_MAXVER = 426,            // "maxver"
-    TOKEN_PATTERN = 427,           // "pattern"
-    TOKEN_TOPLEVEL_JSON = 428,     // TOPLEVEL_JSON
-    TOKEN_TOPLEVEL_DHCP4 = 429,    // TOPLEVEL_DHCP4
-    TOKEN_SUB_DHCP4 = 430,         // SUB_DHCP4
-    TOKEN_SUB_INTERFACES4 = 431,   // SUB_INTERFACES4
-    TOKEN_SUB_SUBNET4 = 432,       // SUB_SUBNET4
-    TOKEN_SUB_POOL4 = 433,         // SUB_POOL4
-    TOKEN_SUB_RESERVATION = 434,   // SUB_RESERVATION
-    TOKEN_SUB_OPTION_DEFS = 435,   // SUB_OPTION_DEFS
-    TOKEN_SUB_OPTION_DEF = 436,    // SUB_OPTION_DEF
-    TOKEN_SUB_OPTION_DATA = 437,   // SUB_OPTION_DATA
-    TOKEN_SUB_HOOKS_LIBRARY = 438, // SUB_HOOKS_LIBRARY
-    TOKEN_SUB_DHCP_DDNS = 439,     // SUB_DHCP_DDNS
-    TOKEN_SUB_CONFIG_CONTROL = 440, // SUB_CONFIG_CONTROL
-    TOKEN_STRING = 441,            // "constant string"
-    TOKEN_INTEGER = 442,           // "integer"
-    TOKEN_FLOAT = 443,             // "floating point"
-    TOKEN_BOOLEAN = 444            // "boolean"
+    TOKEN_DDNS_UPDATE_ON_RENEW = 330, // "ddns-update-on-renew"
+    TOKEN_DDNS_USE_CONFLICT_RESOLUTION = 331, // "ddns-use-conflict-resolution"
+    TOKEN_STORE_EXTENDED_INFO = 332, // "store-extended-info"
+    TOKEN_SUBNET4 = 333,           // "subnet4"
+    TOKEN_SUBNET_4O6_INTERFACE = 334, // "4o6-interface"
+    TOKEN_SUBNET_4O6_INTERFACE_ID = 335, // "4o6-interface-id"
+    TOKEN_SUBNET_4O6_SUBNET = 336, // "4o6-subnet"
+    TOKEN_OPTION_DEF = 337,        // "option-def"
+    TOKEN_OPTION_DATA = 338,       // "option-data"
+    TOKEN_NAME = 339,              // "name"
+    TOKEN_DATA = 340,              // "data"
+    TOKEN_CODE = 341,              // "code"
+    TOKEN_SPACE = 342,             // "space"
+    TOKEN_CSV_FORMAT = 343,        // "csv-format"
+    TOKEN_ALWAYS_SEND = 344,       // "always-send"
+    TOKEN_RECORD_TYPES = 345,      // "record-types"
+    TOKEN_ENCAPSULATE = 346,       // "encapsulate"
+    TOKEN_ARRAY = 347,             // "array"
+    TOKEN_SHARED_NETWORKS = 348,   // "shared-networks"
+    TOKEN_POOLS = 349,             // "pools"
+    TOKEN_POOL = 350,              // "pool"
+    TOKEN_USER_CONTEXT = 351,      // "user-context"
+    TOKEN_COMMENT = 352,           // "comment"
+    TOKEN_SUBNET = 353,            // "subnet"
+    TOKEN_INTERFACE = 354,         // "interface"
+    TOKEN_ID = 355,                // "id"
+    TOKEN_RESERVATION_MODE = 356,  // "reservation-mode"
+    TOKEN_DISABLED = 357,          // "disabled"
+    TOKEN_OUT_OF_POOL = 358,       // "out-of-pool"
+    TOKEN_GLOBAL = 359,            // "global"
+    TOKEN_ALL = 360,               // "all"
+    TOKEN_HOST_RESERVATION_IDENTIFIERS = 361, // "host-reservation-identifiers"
+    TOKEN_CLIENT_CLASSES = 362,    // "client-classes"
+    TOKEN_REQUIRE_CLIENT_CLASSES = 363, // "require-client-classes"
+    TOKEN_TEST = 364,              // "test"
+    TOKEN_ONLY_IF_REQUIRED = 365,  // "only-if-required"
+    TOKEN_CLIENT_CLASS = 366,      // "client-class"
+    TOKEN_RESERVATIONS = 367,      // "reservations"
+    TOKEN_DUID = 368,              // "duid"
+    TOKEN_HW_ADDRESS = 369,        // "hw-address"
+    TOKEN_CIRCUIT_ID = 370,        // "circuit-id"
+    TOKEN_CLIENT_ID = 371,         // "client-id"
+    TOKEN_HOSTNAME = 372,          // "hostname"
+    TOKEN_FLEX_ID = 373,           // "flex-id"
+    TOKEN_RELAY = 374,             // "relay"
+    TOKEN_IP_ADDRESS = 375,        // "ip-address"
+    TOKEN_IP_ADDRESSES = 376,      // "ip-addresses"
+    TOKEN_HOOKS_LIBRARIES = 377,   // "hooks-libraries"
+    TOKEN_LIBRARY = 378,           // "library"
+    TOKEN_PARAMETERS = 379,        // "parameters"
+    TOKEN_EXPIRED_LEASES_PROCESSING = 380, // "expired-leases-processing"
+    TOKEN_RECLAIM_TIMER_WAIT_TIME = 381, // "reclaim-timer-wait-time"
+    TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 382, // "flush-reclaimed-timer-wait-time"
+    TOKEN_HOLD_RECLAIMED_TIME = 383, // "hold-reclaimed-time"
+    TOKEN_MAX_RECLAIM_LEASES = 384, // "max-reclaim-leases"
+    TOKEN_MAX_RECLAIM_TIME = 385,  // "max-reclaim-time"
+    TOKEN_UNWARNED_RECLAIM_CYCLES = 386, // "unwarned-reclaim-cycles"
+    TOKEN_DHCP4O6_PORT = 387,      // "dhcp4o6-port"
+    TOKEN_DHCP_MULTI_THREADING = 388, // "multi-threading"
+    TOKEN_ENABLE_MULTI_THREADING = 389, // "enable-multi-threading"
+    TOKEN_THREAD_POOL_SIZE = 390,  // "thread-pool-size"
+    TOKEN_PACKET_QUEUE_SIZE = 391, // "packet-queue-size"
+    TOKEN_CONTROL_SOCKET = 392,    // "control-socket"
+    TOKEN_SOCKET_TYPE = 393,       // "socket-type"
+    TOKEN_SOCKET_NAME = 394,       // "socket-name"
+    TOKEN_DHCP_QUEUE_CONTROL = 395, // "dhcp-queue-control"
+    TOKEN_ENABLE_QUEUE = 396,      // "enable-queue"
+    TOKEN_QUEUE_TYPE = 397,        // "queue-type"
+    TOKEN_CAPACITY = 398,          // "capacity"
+    TOKEN_DHCP_DDNS = 399,         // "dhcp-ddns"
+    TOKEN_ENABLE_UPDATES = 400,    // "enable-updates"
+    TOKEN_QUALIFYING_SUFFIX = 401, // "qualifying-suffix"
+    TOKEN_SERVER_IP = 402,         // "server-ip"
+    TOKEN_SERVER_PORT = 403,       // "server-port"
+    TOKEN_SENDER_IP = 404,         // "sender-ip"
+    TOKEN_SENDER_PORT = 405,       // "sender-port"
+    TOKEN_MAX_QUEUE_SIZE = 406,    // "max-queue-size"
+    TOKEN_NCR_PROTOCOL = 407,      // "ncr-protocol"
+    TOKEN_NCR_FORMAT = 408,        // "ncr-format"
+    TOKEN_OVERRIDE_NO_UPDATE = 409, // "override-no-update"
+    TOKEN_OVERRIDE_CLIENT_UPDATE = 410, // "override-client-update"
+    TOKEN_REPLACE_CLIENT_NAME = 411, // "replace-client-name"
+    TOKEN_GENERATED_PREFIX = 412,  // "generated-prefix"
+    TOKEN_TCP = 413,               // "tcp"
+    TOKEN_JSON = 414,              // "JSON"
+    TOKEN_WHEN_PRESENT = 415,      // "when-present"
+    TOKEN_NEVER = 416,             // "never"
+    TOKEN_ALWAYS = 417,            // "always"
+    TOKEN_WHEN_NOT_PRESENT = 418,  // "when-not-present"
+    TOKEN_HOSTNAME_CHAR_SET = 419, // "hostname-char-set"
+    TOKEN_HOSTNAME_CHAR_REPLACEMENT = 420, // "hostname-char-replacement"
+    TOKEN_LOGGERS = 421,           // "loggers"
+    TOKEN_OUTPUT_OPTIONS = 422,    // "output_options"
+    TOKEN_OUTPUT = 423,            // "output"
+    TOKEN_DEBUGLEVEL = 424,        // "debuglevel"
+    TOKEN_SEVERITY = 425,          // "severity"
+    TOKEN_FLUSH = 426,             // "flush"
+    TOKEN_MAXSIZE = 427,           // "maxsize"
+    TOKEN_MAXVER = 428,            // "maxver"
+    TOKEN_PATTERN = 429,           // "pattern"
+    TOKEN_TOPLEVEL_JSON = 430,     // TOPLEVEL_JSON
+    TOKEN_TOPLEVEL_DHCP4 = 431,    // TOPLEVEL_DHCP4
+    TOKEN_SUB_DHCP4 = 432,         // SUB_DHCP4
+    TOKEN_SUB_INTERFACES4 = 433,   // SUB_INTERFACES4
+    TOKEN_SUB_SUBNET4 = 434,       // SUB_SUBNET4
+    TOKEN_SUB_POOL4 = 435,         // SUB_POOL4
+    TOKEN_SUB_RESERVATION = 436,   // SUB_RESERVATION
+    TOKEN_SUB_OPTION_DEFS = 437,   // SUB_OPTION_DEFS
+    TOKEN_SUB_OPTION_DEF = 438,    // SUB_OPTION_DEF
+    TOKEN_SUB_OPTION_DATA = 439,   // SUB_OPTION_DATA
+    TOKEN_SUB_HOOKS_LIBRARY = 440, // SUB_HOOKS_LIBRARY
+    TOKEN_SUB_DHCP_DDNS = 441,     // SUB_DHCP_DDNS
+    TOKEN_SUB_CONFIG_CONTROL = 442, // SUB_CONFIG_CONTROL
+    TOKEN_STRING = 443,            // "constant string"
+    TOKEN_INTEGER = 444,           // "integer"
+    TOKEN_FLOAT = 445,             // "floating point"
+    TOKEN_BOOLEAN = 446            // "boolean"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -689,7 +691,7 @@ namespace isc { namespace dhcp {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 190, ///< Number of tokens.
+        YYNTOKENS = 192, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -766,525 +768,529 @@ namespace isc { namespace dhcp {
         S_DDNS_REPLACE_CLIENT_NAME = 72,         // "ddns-replace-client-name"
         S_DDNS_GENERATED_PREFIX = 73,            // "ddns-generated-prefix"
         S_DDNS_QUALIFYING_SUFFIX = 74,           // "ddns-qualifying-suffix"
-        S_STORE_EXTENDED_INFO = 75,              // "store-extended-info"
-        S_SUBNET4 = 76,                          // "subnet4"
-        S_SUBNET_4O6_INTERFACE = 77,             // "4o6-interface"
-        S_SUBNET_4O6_INTERFACE_ID = 78,          // "4o6-interface-id"
-        S_SUBNET_4O6_SUBNET = 79,                // "4o6-subnet"
-        S_OPTION_DEF = 80,                       // "option-def"
-        S_OPTION_DATA = 81,                      // "option-data"
-        S_NAME = 82,                             // "name"
-        S_DATA = 83,                             // "data"
-        S_CODE = 84,                             // "code"
-        S_SPACE = 85,                            // "space"
-        S_CSV_FORMAT = 86,                       // "csv-format"
-        S_ALWAYS_SEND = 87,                      // "always-send"
-        S_RECORD_TYPES = 88,                     // "record-types"
-        S_ENCAPSULATE = 89,                      // "encapsulate"
-        S_ARRAY = 90,                            // "array"
-        S_SHARED_NETWORKS = 91,                  // "shared-networks"
-        S_POOLS = 92,                            // "pools"
-        S_POOL = 93,                             // "pool"
-        S_USER_CONTEXT = 94,                     // "user-context"
-        S_COMMENT = 95,                          // "comment"
-        S_SUBNET = 96,                           // "subnet"
-        S_INTERFACE = 97,                        // "interface"
-        S_ID = 98,                               // "id"
-        S_RESERVATION_MODE = 99,                 // "reservation-mode"
-        S_DISABLED = 100,                        // "disabled"
-        S_OUT_OF_POOL = 101,                     // "out-of-pool"
-        S_GLOBAL = 102,                          // "global"
-        S_ALL = 103,                             // "all"
-        S_HOST_RESERVATION_IDENTIFIERS = 104,    // "host-reservation-identifiers"
-        S_CLIENT_CLASSES = 105,                  // "client-classes"
-        S_REQUIRE_CLIENT_CLASSES = 106,          // "require-client-classes"
-        S_TEST = 107,                            // "test"
-        S_ONLY_IF_REQUIRED = 108,                // "only-if-required"
-        S_CLIENT_CLASS = 109,                    // "client-class"
-        S_RESERVATIONS = 110,                    // "reservations"
-        S_DUID = 111,                            // "duid"
-        S_HW_ADDRESS = 112,                      // "hw-address"
-        S_CIRCUIT_ID = 113,                      // "circuit-id"
-        S_CLIENT_ID = 114,                       // "client-id"
-        S_HOSTNAME = 115,                        // "hostname"
-        S_FLEX_ID = 116,                         // "flex-id"
-        S_RELAY = 117,                           // "relay"
-        S_IP_ADDRESS = 118,                      // "ip-address"
-        S_IP_ADDRESSES = 119,                    // "ip-addresses"
-        S_HOOKS_LIBRARIES = 120,                 // "hooks-libraries"
-        S_LIBRARY = 121,                         // "library"
-        S_PARAMETERS = 122,                      // "parameters"
-        S_EXPIRED_LEASES_PROCESSING = 123,       // "expired-leases-processing"
-        S_RECLAIM_TIMER_WAIT_TIME = 124,         // "reclaim-timer-wait-time"
-        S_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 125, // "flush-reclaimed-timer-wait-time"
-        S_HOLD_RECLAIMED_TIME = 126,             // "hold-reclaimed-time"
-        S_MAX_RECLAIM_LEASES = 127,              // "max-reclaim-leases"
-        S_MAX_RECLAIM_TIME = 128,                // "max-reclaim-time"
-        S_UNWARNED_RECLAIM_CYCLES = 129,         // "unwarned-reclaim-cycles"
-        S_DHCP4O6_PORT = 130,                    // "dhcp4o6-port"
-        S_DHCP_MULTI_THREADING = 131,            // "multi-threading"
-        S_ENABLE_MULTI_THREADING = 132,          // "enable-multi-threading"
-        S_THREAD_POOL_SIZE = 133,                // "thread-pool-size"
-        S_PACKET_QUEUE_SIZE = 134,               // "packet-queue-size"
-        S_CONTROL_SOCKET = 135,                  // "control-socket"
-        S_SOCKET_TYPE = 136,                     // "socket-type"
-        S_SOCKET_NAME = 137,                     // "socket-name"
-        S_DHCP_QUEUE_CONTROL = 138,              // "dhcp-queue-control"
-        S_ENABLE_QUEUE = 139,                    // "enable-queue"
-        S_QUEUE_TYPE = 140,                      // "queue-type"
-        S_CAPACITY = 141,                        // "capacity"
-        S_DHCP_DDNS = 142,                       // "dhcp-ddns"
-        S_ENABLE_UPDATES = 143,                  // "enable-updates"
-        S_QUALIFYING_SUFFIX = 144,               // "qualifying-suffix"
-        S_SERVER_IP = 145,                       // "server-ip"
-        S_SERVER_PORT = 146,                     // "server-port"
-        S_SENDER_IP = 147,                       // "sender-ip"
-        S_SENDER_PORT = 148,                     // "sender-port"
-        S_MAX_QUEUE_SIZE = 149,                  // "max-queue-size"
-        S_NCR_PROTOCOL = 150,                    // "ncr-protocol"
-        S_NCR_FORMAT = 151,                      // "ncr-format"
-        S_OVERRIDE_NO_UPDATE = 152,              // "override-no-update"
-        S_OVERRIDE_CLIENT_UPDATE = 153,          // "override-client-update"
-        S_REPLACE_CLIENT_NAME = 154,             // "replace-client-name"
-        S_GENERATED_PREFIX = 155,                // "generated-prefix"
-        S_TCP = 156,                             // "tcp"
-        S_JSON = 157,                            // "JSON"
-        S_WHEN_PRESENT = 158,                    // "when-present"
-        S_NEVER = 159,                           // "never"
-        S_ALWAYS = 160,                          // "always"
-        S_WHEN_NOT_PRESENT = 161,                // "when-not-present"
-        S_HOSTNAME_CHAR_SET = 162,               // "hostname-char-set"
-        S_HOSTNAME_CHAR_REPLACEMENT = 163,       // "hostname-char-replacement"
-        S_LOGGERS = 164,                         // "loggers"
-        S_OUTPUT_OPTIONS = 165,                  // "output_options"
-        S_OUTPUT = 166,                          // "output"
-        S_DEBUGLEVEL = 167,                      // "debuglevel"
-        S_SEVERITY = 168,                        // "severity"
-        S_FLUSH = 169,                           // "flush"
-        S_MAXSIZE = 170,                         // "maxsize"
-        S_MAXVER = 171,                          // "maxver"
-        S_PATTERN = 172,                         // "pattern"
-        S_TOPLEVEL_JSON = 173,                   // TOPLEVEL_JSON
-        S_TOPLEVEL_DHCP4 = 174,                  // TOPLEVEL_DHCP4
-        S_SUB_DHCP4 = 175,                       // SUB_DHCP4
-        S_SUB_INTERFACES4 = 176,                 // SUB_INTERFACES4
-        S_SUB_SUBNET4 = 177,                     // SUB_SUBNET4
-        S_SUB_POOL4 = 178,                       // SUB_POOL4
-        S_SUB_RESERVATION = 179,                 // SUB_RESERVATION
-        S_SUB_OPTION_DEFS = 180,                 // SUB_OPTION_DEFS
-        S_SUB_OPTION_DEF = 181,                  // SUB_OPTION_DEF
-        S_SUB_OPTION_DATA = 182,                 // SUB_OPTION_DATA
-        S_SUB_HOOKS_LIBRARY = 183,               // SUB_HOOKS_LIBRARY
-        S_SUB_DHCP_DDNS = 184,                   // SUB_DHCP_DDNS
-        S_SUB_CONFIG_CONTROL = 185,              // SUB_CONFIG_CONTROL
-        S_STRING = 186,                          // "constant string"
-        S_INTEGER = 187,                         // "integer"
-        S_FLOAT = 188,                           // "floating point"
-        S_BOOLEAN = 189,                         // "boolean"
-        S_YYACCEPT = 190,                        // $accept
-        S_start = 191,                           // start
-        S_192_1 = 192,                           // $@1
-        S_193_2 = 193,                           // $@2
-        S_194_3 = 194,                           // $@3
-        S_195_4 = 195,                           // $@4
-        S_196_5 = 196,                           // $@5
-        S_197_6 = 197,                           // $@6
-        S_198_7 = 198,                           // $@7
-        S_199_8 = 199,                           // $@8
-        S_200_9 = 200,                           // $@9
-        S_201_10 = 201,                          // $@10
-        S_202_11 = 202,                          // $@11
-        S_203_12 = 203,                          // $@12
-        S_204_13 = 204,                          // $@13
-        S_value = 205,                           // value
-        S_sub_json = 206,                        // sub_json
-        S_map2 = 207,                            // map2
-        S_208_14 = 208,                          // $@14
-        S_map_value = 209,                       // map_value
-        S_map_content = 210,                     // map_content
-        S_not_empty_map = 211,                   // not_empty_map
-        S_list_generic = 212,                    // list_generic
-        S_213_15 = 213,                          // $@15
-        S_list_content = 214,                    // list_content
-        S_not_empty_list = 215,                  // not_empty_list
-        S_list_strings = 216,                    // list_strings
-        S_217_16 = 217,                          // $@16
-        S_list_strings_content = 218,            // list_strings_content
-        S_not_empty_list_strings = 219,          // not_empty_list_strings
-        S_unknown_map_entry = 220,               // unknown_map_entry
-        S_syntax_map = 221,                      // syntax_map
-        S_222_17 = 222,                          // $@17
-        S_global_objects = 223,                  // global_objects
-        S_global_object = 224,                   // global_object
-        S_dhcp4_object = 225,                    // dhcp4_object
-        S_226_18 = 226,                          // $@18
-        S_sub_dhcp4 = 227,                       // sub_dhcp4
-        S_228_19 = 228,                          // $@19
-        S_global_params = 229,                   // global_params
-        S_global_param = 230,                    // global_param
-        S_valid_lifetime = 231,                  // valid_lifetime
-        S_min_valid_lifetime = 232,              // min_valid_lifetime
-        S_max_valid_lifetime = 233,              // max_valid_lifetime
-        S_renew_timer = 234,                     // renew_timer
-        S_rebind_timer = 235,                    // rebind_timer
-        S_calculate_tee_times = 236,             // calculate_tee_times
-        S_t1_percent = 237,                      // t1_percent
-        S_t2_percent = 238,                      // t2_percent
-        S_decline_probation_period = 239,        // decline_probation_period
-        S_server_tag = 240,                      // server_tag
-        S_241_20 = 241,                          // $@20
-        S_echo_client_id = 242,                  // echo_client_id
-        S_match_client_id = 243,                 // match_client_id
-        S_authoritative = 244,                   // authoritative
-        S_ddns_send_updates = 245,               // ddns_send_updates
-        S_ddns_override_no_update = 246,         // ddns_override_no_update
-        S_ddns_override_client_update = 247,     // ddns_override_client_update
-        S_ddns_replace_client_name = 248,        // ddns_replace_client_name
-        S_249_21 = 249,                          // $@21
-        S_ddns_replace_client_name_value = 250,  // ddns_replace_client_name_value
-        S_ddns_generated_prefix = 251,           // ddns_generated_prefix
-        S_252_22 = 252,                          // $@22
-        S_ddns_qualifying_suffix = 253,          // ddns_qualifying_suffix
-        S_254_23 = 254,                          // $@23
-        S_hostname_char_set = 255,               // hostname_char_set
-        S_256_24 = 256,                          // $@24
-        S_hostname_char_replacement = 257,       // hostname_char_replacement
-        S_258_25 = 258,                          // $@25
-        S_store_extended_info = 259,             // store_extended_info
-        S_statistic_default_sample_count = 260,  // statistic_default_sample_count
-        S_statistic_default_sample_age = 261,    // statistic_default_sample_age
-        S_interfaces_config = 262,               // interfaces_config
-        S_263_26 = 263,                          // $@26
-        S_interfaces_config_params = 264,        // interfaces_config_params
-        S_interfaces_config_param = 265,         // interfaces_config_param
-        S_sub_interfaces4 = 266,                 // sub_interfaces4
-        S_267_27 = 267,                          // $@27
-        S_interfaces_list = 268,                 // interfaces_list
-        S_269_28 = 269,                          // $@28
-        S_dhcp_socket_type = 270,                // dhcp_socket_type
-        S_271_29 = 271,                          // $@29
-        S_socket_type = 272,                     // socket_type
-        S_outbound_interface = 273,              // outbound_interface
-        S_274_30 = 274,                          // $@30
-        S_outbound_interface_value = 275,        // outbound_interface_value
-        S_re_detect = 276,                       // re_detect
-        S_lease_database = 277,                  // lease_database
-        S_278_31 = 278,                          // $@31
-        S_sanity_checks = 279,                   // sanity_checks
-        S_280_32 = 280,                          // $@32
-        S_sanity_checks_params = 281,            // sanity_checks_params
-        S_sanity_checks_param = 282,             // sanity_checks_param
-        S_lease_checks = 283,                    // lease_checks
-        S_284_33 = 284,                          // $@33
-        S_hosts_database = 285,                  // hosts_database
-        S_286_34 = 286,                          // $@34
-        S_hosts_databases = 287,                 // hosts_databases
-        S_288_35 = 288,                          // $@35
-        S_database_list = 289,                   // database_list
-        S_not_empty_database_list = 290,         // not_empty_database_list
-        S_database = 291,                        // database
-        S_292_36 = 292,                          // $@36
-        S_database_map_params = 293,             // database_map_params
-        S_database_map_param = 294,              // database_map_param
-        S_database_type = 295,                   // database_type
-        S_296_37 = 296,                          // $@37
-        S_db_type = 297,                         // db_type
-        S_user = 298,                            // user
-        S_299_38 = 299,                          // $@38
-        S_password = 300,                        // password
-        S_301_39 = 301,                          // $@39
-        S_host = 302,                            // host
-        S_303_40 = 303,                          // $@40
-        S_port = 304,                            // port
-        S_name = 305,                            // name
-        S_306_41 = 306,                          // $@41
-        S_persist = 307,                         // persist
-        S_lfc_interval = 308,                    // lfc_interval
-        S_readonly = 309,                        // readonly
-        S_connect_timeout = 310,                 // connect_timeout
-        S_request_timeout = 311,                 // request_timeout
-        S_tcp_keepalive = 312,                   // tcp_keepalive
-        S_tcp_nodelay = 313,                     // tcp_nodelay
-        S_contact_points = 314,                  // contact_points
-        S_315_42 = 315,                          // $@42
-        S_keyspace = 316,                        // keyspace
-        S_317_43 = 317,                          // $@43
-        S_consistency = 318,                     // consistency
-        S_319_44 = 319,                          // $@44
-        S_serial_consistency = 320,              // serial_consistency
-        S_321_45 = 321,                          // $@45
-        S_max_reconnect_tries = 322,             // max_reconnect_tries
-        S_reconnect_wait_time = 323,             // reconnect_wait_time
-        S_max_row_errors = 324,                  // max_row_errors
-        S_host_reservation_identifiers = 325,    // host_reservation_identifiers
-        S_326_46 = 326,                          // $@46
-        S_host_reservation_identifiers_list = 327, // host_reservation_identifiers_list
-        S_host_reservation_identifier = 328,     // host_reservation_identifier
-        S_duid_id = 329,                         // duid_id
-        S_hw_address_id = 330,                   // hw_address_id
-        S_circuit_id = 331,                      // circuit_id
-        S_client_id = 332,                       // client_id
-        S_flex_id = 333,                         // flex_id
-        S_dhcp_multi_threading = 334,            // dhcp_multi_threading
-        S_335_47 = 335,                          // $@47
-        S_multi_threading_params = 336,          // multi_threading_params
-        S_multi_threading_param = 337,           // multi_threading_param
-        S_enable_multi_threading = 338,          // enable_multi_threading
-        S_thread_pool_size = 339,                // thread_pool_size
-        S_packet_queue_size = 340,               // packet_queue_size
-        S_hooks_libraries = 341,                 // hooks_libraries
-        S_342_48 = 342,                          // $@48
-        S_hooks_libraries_list = 343,            // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 344,  // not_empty_hooks_libraries_list
-        S_hooks_library = 345,                   // hooks_library
-        S_346_49 = 346,                          // $@49
-        S_sub_hooks_library = 347,               // sub_hooks_library
-        S_348_50 = 348,                          // $@50
-        S_hooks_params = 349,                    // hooks_params
-        S_hooks_param = 350,                     // hooks_param
-        S_library = 351,                         // library
-        S_352_51 = 352,                          // $@51
-        S_parameters = 353,                      // parameters
-        S_354_52 = 354,                          // $@52
-        S_expired_leases_processing = 355,       // expired_leases_processing
-        S_356_53 = 356,                          // $@53
-        S_expired_leases_params = 357,           // expired_leases_params
-        S_expired_leases_param = 358,            // expired_leases_param
-        S_reclaim_timer_wait_time = 359,         // reclaim_timer_wait_time
-        S_flush_reclaimed_timer_wait_time = 360, // flush_reclaimed_timer_wait_time
-        S_hold_reclaimed_time = 361,             // hold_reclaimed_time
-        S_max_reclaim_leases = 362,              // max_reclaim_leases
-        S_max_reclaim_time = 363,                // max_reclaim_time
-        S_unwarned_reclaim_cycles = 364,         // unwarned_reclaim_cycles
-        S_subnet4_list = 365,                    // subnet4_list
-        S_366_54 = 366,                          // $@54
-        S_subnet4_list_content = 367,            // subnet4_list_content
-        S_not_empty_subnet4_list = 368,          // not_empty_subnet4_list
-        S_subnet4 = 369,                         // subnet4
-        S_370_55 = 370,                          // $@55
-        S_sub_subnet4 = 371,                     // sub_subnet4
-        S_372_56 = 372,                          // $@56
-        S_subnet4_params = 373,                  // subnet4_params
-        S_subnet4_param = 374,                   // subnet4_param
-        S_subnet = 375,                          // subnet
-        S_376_57 = 376,                          // $@57
-        S_subnet_4o6_interface = 377,            // subnet_4o6_interface
-        S_378_58 = 378,                          // $@58
-        S_subnet_4o6_interface_id = 379,         // subnet_4o6_interface_id
-        S_380_59 = 380,                          // $@59
-        S_subnet_4o6_subnet = 381,               // subnet_4o6_subnet
-        S_382_60 = 382,                          // $@60
-        S_interface = 383,                       // interface
-        S_384_61 = 384,                          // $@61
-        S_client_class = 385,                    // client_class
-        S_386_62 = 386,                          // $@62
-        S_require_client_classes = 387,          // require_client_classes
-        S_388_63 = 388,                          // $@63
-        S_reservation_mode = 389,                // reservation_mode
-        S_390_64 = 390,                          // $@64
-        S_hr_mode = 391,                         // hr_mode
-        S_id = 392,                              // id
-        S_shared_networks = 393,                 // shared_networks
-        S_394_65 = 394,                          // $@65
-        S_shared_networks_content = 395,         // shared_networks_content
-        S_shared_networks_list = 396,            // shared_networks_list
-        S_shared_network = 397,                  // shared_network
-        S_398_66 = 398,                          // $@66
-        S_shared_network_params = 399,           // shared_network_params
-        S_shared_network_param = 400,            // shared_network_param
-        S_option_def_list = 401,                 // option_def_list
-        S_402_67 = 402,                          // $@67
-        S_sub_option_def_list = 403,             // sub_option_def_list
-        S_404_68 = 404,                          // $@68
-        S_option_def_list_content = 405,         // option_def_list_content
-        S_not_empty_option_def_list = 406,       // not_empty_option_def_list
-        S_option_def_entry = 407,                // option_def_entry
-        S_408_69 = 408,                          // $@69
-        S_sub_option_def = 409,                  // sub_option_def
-        S_410_70 = 410,                          // $@70
-        S_option_def_params = 411,               // option_def_params
-        S_not_empty_option_def_params = 412,     // not_empty_option_def_params
-        S_option_def_param = 413,                // option_def_param
-        S_option_def_name = 414,                 // option_def_name
-        S_code = 415,                            // code
-        S_option_def_code = 416,                 // option_def_code
-        S_option_def_type = 417,                 // option_def_type
-        S_418_71 = 418,                          // $@71
-        S_option_def_record_types = 419,         // option_def_record_types
-        S_420_72 = 420,                          // $@72
-        S_space = 421,                           // space
-        S_422_73 = 422,                          // $@73
-        S_option_def_space = 423,                // option_def_space
-        S_option_def_encapsulate = 424,          // option_def_encapsulate
-        S_425_74 = 425,                          // $@74
-        S_option_def_array = 426,                // option_def_array
-        S_option_data_list = 427,                // option_data_list
-        S_428_75 = 428,                          // $@75
-        S_option_data_list_content = 429,        // option_data_list_content
-        S_not_empty_option_data_list = 430,      // not_empty_option_data_list
-        S_option_data_entry = 431,               // option_data_entry
-        S_432_76 = 432,                          // $@76
-        S_sub_option_data = 433,                 // sub_option_data
-        S_434_77 = 434,                          // $@77
-        S_option_data_params = 435,              // option_data_params
-        S_not_empty_option_data_params = 436,    // not_empty_option_data_params
-        S_option_data_param = 437,               // option_data_param
-        S_option_data_name = 438,                // option_data_name
-        S_option_data_data = 439,                // option_data_data
-        S_440_78 = 440,                          // $@78
-        S_option_data_code = 441,                // option_data_code
-        S_option_data_space = 442,               // option_data_space
-        S_option_data_csv_format = 443,          // option_data_csv_format
-        S_option_data_always_send = 444,         // option_data_always_send
-        S_pools_list = 445,                      // pools_list
-        S_446_79 = 446,                          // $@79
-        S_pools_list_content = 447,              // pools_list_content
-        S_not_empty_pools_list = 448,            // not_empty_pools_list
-        S_pool_list_entry = 449,                 // pool_list_entry
-        S_450_80 = 450,                          // $@80
-        S_sub_pool4 = 451,                       // sub_pool4
-        S_452_81 = 452,                          // $@81
-        S_pool_params = 453,                     // pool_params
-        S_pool_param = 454,                      // pool_param
-        S_pool_entry = 455,                      // pool_entry
-        S_456_82 = 456,                          // $@82
-        S_user_context = 457,                    // user_context
-        S_458_83 = 458,                          // $@83
-        S_comment = 459,                         // comment
-        S_460_84 = 460,                          // $@84
-        S_reservations = 461,                    // reservations
-        S_462_85 = 462,                          // $@85
-        S_reservations_list = 463,               // reservations_list
-        S_not_empty_reservations_list = 464,     // not_empty_reservations_list
-        S_reservation = 465,                     // reservation
-        S_466_86 = 466,                          // $@86
-        S_sub_reservation = 467,                 // sub_reservation
-        S_468_87 = 468,                          // $@87
-        S_reservation_params = 469,              // reservation_params
-        S_not_empty_reservation_params = 470,    // not_empty_reservation_params
-        S_reservation_param = 471,               // reservation_param
-        S_next_server = 472,                     // next_server
-        S_473_88 = 473,                          // $@88
-        S_server_hostname = 474,                 // server_hostname
-        S_475_89 = 475,                          // $@89
-        S_boot_file_name = 476,                  // boot_file_name
-        S_477_90 = 477,                          // $@90
-        S_ip_address = 478,                      // ip_address
-        S_479_91 = 479,                          // $@91
-        S_ip_addresses = 480,                    // ip_addresses
-        S_481_92 = 481,                          // $@92
-        S_duid = 482,                            // duid
-        S_483_93 = 483,                          // $@93
-        S_hw_address = 484,                      // hw_address
-        S_485_94 = 485,                          // $@94
-        S_client_id_value = 486,                 // client_id_value
-        S_487_95 = 487,                          // $@95
-        S_circuit_id_value = 488,                // circuit_id_value
-        S_489_96 = 489,                          // $@96
-        S_flex_id_value = 490,                   // flex_id_value
-        S_491_97 = 491,                          // $@97
-        S_hostname = 492,                        // hostname
-        S_493_98 = 493,                          // $@98
-        S_reservation_client_classes = 494,      // reservation_client_classes
-        S_495_99 = 495,                          // $@99
-        S_relay = 496,                           // relay
-        S_497_100 = 497,                         // $@100
-        S_relay_map = 498,                       // relay_map
-        S_client_classes = 499,                  // client_classes
-        S_500_101 = 500,                         // $@101
-        S_client_classes_list = 501,             // client_classes_list
-        S_client_class_entry = 502,              // client_class_entry
-        S_503_102 = 503,                         // $@102
-        S_client_class_params = 504,             // client_class_params
-        S_not_empty_client_class_params = 505,   // not_empty_client_class_params
-        S_client_class_param = 506,              // client_class_param
-        S_client_class_name = 507,               // client_class_name
-        S_client_class_test = 508,               // client_class_test
-        S_509_103 = 509,                         // $@103
-        S_only_if_required = 510,                // only_if_required
-        S_dhcp4o6_port = 511,                    // dhcp4o6_port
-        S_control_socket = 512,                  // control_socket
-        S_513_104 = 513,                         // $@104
-        S_control_socket_params = 514,           // control_socket_params
-        S_control_socket_param = 515,            // control_socket_param
-        S_control_socket_type = 516,             // control_socket_type
-        S_517_105 = 517,                         // $@105
-        S_control_socket_name = 518,             // control_socket_name
-        S_519_106 = 519,                         // $@106
-        S_dhcp_queue_control = 520,              // dhcp_queue_control
-        S_521_107 = 521,                         // $@107
-        S_queue_control_params = 522,            // queue_control_params
-        S_queue_control_param = 523,             // queue_control_param
-        S_enable_queue = 524,                    // enable_queue
-        S_queue_type = 525,                      // queue_type
-        S_526_108 = 526,                         // $@108
-        S_capacity = 527,                        // capacity
-        S_arbitrary_map_entry = 528,             // arbitrary_map_entry
-        S_529_109 = 529,                         // $@109
-        S_dhcp_ddns = 530,                       // dhcp_ddns
-        S_531_110 = 531,                         // $@110
-        S_sub_dhcp_ddns = 532,                   // sub_dhcp_ddns
-        S_533_111 = 533,                         // $@111
-        S_dhcp_ddns_params = 534,                // dhcp_ddns_params
-        S_dhcp_ddns_param = 535,                 // dhcp_ddns_param
-        S_enable_updates = 536,                  // enable_updates
-        S_server_ip = 537,                       // server_ip
-        S_538_112 = 538,                         // $@112
-        S_server_port = 539,                     // server_port
-        S_sender_ip = 540,                       // sender_ip
-        S_541_113 = 541,                         // $@113
-        S_sender_port = 542,                     // sender_port
-        S_max_queue_size = 543,                  // max_queue_size
-        S_ncr_protocol = 544,                    // ncr_protocol
-        S_545_114 = 545,                         // $@114
-        S_ncr_protocol_value = 546,              // ncr_protocol_value
-        S_ncr_format = 547,                      // ncr_format
-        S_548_115 = 548,                         // $@115
-        S_dep_qualifying_suffix = 549,           // dep_qualifying_suffix
-        S_550_116 = 550,                         // $@116
-        S_dep_override_no_update = 551,          // dep_override_no_update
-        S_dep_override_client_update = 552,      // dep_override_client_update
-        S_dep_replace_client_name = 553,         // dep_replace_client_name
-        S_554_117 = 554,                         // $@117
-        S_dep_generated_prefix = 555,            // dep_generated_prefix
-        S_556_118 = 556,                         // $@118
-        S_dep_hostname_char_set = 557,           // dep_hostname_char_set
-        S_558_119 = 558,                         // $@119
-        S_dep_hostname_char_replacement = 559,   // dep_hostname_char_replacement
-        S_560_120 = 560,                         // $@120
-        S_config_control = 561,                  // config_control
-        S_562_121 = 562,                         // $@121
-        S_sub_config_control = 563,              // sub_config_control
-        S_564_122 = 564,                         // $@122
-        S_config_control_params = 565,           // config_control_params
-        S_config_control_param = 566,            // config_control_param
-        S_config_databases = 567,                // config_databases
-        S_568_123 = 568,                         // $@123
-        S_config_fetch_wait_time = 569,          // config_fetch_wait_time
-        S_loggers = 570,                         // loggers
-        S_571_124 = 571,                         // $@124
-        S_loggers_entries = 572,                 // loggers_entries
-        S_logger_entry = 573,                    // logger_entry
-        S_574_125 = 574,                         // $@125
-        S_logger_params = 575,                   // logger_params
-        S_logger_param = 576,                    // logger_param
-        S_debuglevel = 577,                      // debuglevel
-        S_severity = 578,                        // severity
-        S_579_126 = 579,                         // $@126
-        S_output_options_list = 580,             // output_options_list
-        S_581_127 = 581,                         // $@127
-        S_output_options_list_content = 582,     // output_options_list_content
-        S_output_entry = 583,                    // output_entry
-        S_584_128 = 584,                         // $@128
-        S_output_params_list = 585,              // output_params_list
-        S_output_params = 586,                   // output_params
-        S_output = 587,                          // output
-        S_588_129 = 588,                         // $@129
-        S_flush = 589,                           // flush
-        S_maxsize = 590,                         // maxsize
-        S_maxver = 591,                          // maxver
-        S_pattern = 592,                         // pattern
-        S_593_130 = 593                          // $@130
+        S_DDNS_UPDATE_ON_RENEW = 75,             // "ddns-update-on-renew"
+        S_DDNS_USE_CONFLICT_RESOLUTION = 76,     // "ddns-use-conflict-resolution"
+        S_STORE_EXTENDED_INFO = 77,              // "store-extended-info"
+        S_SUBNET4 = 78,                          // "subnet4"
+        S_SUBNET_4O6_INTERFACE = 79,             // "4o6-interface"
+        S_SUBNET_4O6_INTERFACE_ID = 80,          // "4o6-interface-id"
+        S_SUBNET_4O6_SUBNET = 81,                // "4o6-subnet"
+        S_OPTION_DEF = 82,                       // "option-def"
+        S_OPTION_DATA = 83,                      // "option-data"
+        S_NAME = 84,                             // "name"
+        S_DATA = 85,                             // "data"
+        S_CODE = 86,                             // "code"
+        S_SPACE = 87,                            // "space"
+        S_CSV_FORMAT = 88,                       // "csv-format"
+        S_ALWAYS_SEND = 89,                      // "always-send"
+        S_RECORD_TYPES = 90,                     // "record-types"
+        S_ENCAPSULATE = 91,                      // "encapsulate"
+        S_ARRAY = 92,                            // "array"
+        S_SHARED_NETWORKS = 93,                  // "shared-networks"
+        S_POOLS = 94,                            // "pools"
+        S_POOL = 95,                             // "pool"
+        S_USER_CONTEXT = 96,                     // "user-context"
+        S_COMMENT = 97,                          // "comment"
+        S_SUBNET = 98,                           // "subnet"
+        S_INTERFACE = 99,                        // "interface"
+        S_ID = 100,                              // "id"
+        S_RESERVATION_MODE = 101,                // "reservation-mode"
+        S_DISABLED = 102,                        // "disabled"
+        S_OUT_OF_POOL = 103,                     // "out-of-pool"
+        S_GLOBAL = 104,                          // "global"
+        S_ALL = 105,                             // "all"
+        S_HOST_RESERVATION_IDENTIFIERS = 106,    // "host-reservation-identifiers"
+        S_CLIENT_CLASSES = 107,                  // "client-classes"
+        S_REQUIRE_CLIENT_CLASSES = 108,          // "require-client-classes"
+        S_TEST = 109,                            // "test"
+        S_ONLY_IF_REQUIRED = 110,                // "only-if-required"
+        S_CLIENT_CLASS = 111,                    // "client-class"
+        S_RESERVATIONS = 112,                    // "reservations"
+        S_DUID = 113,                            // "duid"
+        S_HW_ADDRESS = 114,                      // "hw-address"
+        S_CIRCUIT_ID = 115,                      // "circuit-id"
+        S_CLIENT_ID = 116,                       // "client-id"
+        S_HOSTNAME = 117,                        // "hostname"
+        S_FLEX_ID = 118,                         // "flex-id"
+        S_RELAY = 119,                           // "relay"
+        S_IP_ADDRESS = 120,                      // "ip-address"
+        S_IP_ADDRESSES = 121,                    // "ip-addresses"
+        S_HOOKS_LIBRARIES = 122,                 // "hooks-libraries"
+        S_LIBRARY = 123,                         // "library"
+        S_PARAMETERS = 124,                      // "parameters"
+        S_EXPIRED_LEASES_PROCESSING = 125,       // "expired-leases-processing"
+        S_RECLAIM_TIMER_WAIT_TIME = 126,         // "reclaim-timer-wait-time"
+        S_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 127, // "flush-reclaimed-timer-wait-time"
+        S_HOLD_RECLAIMED_TIME = 128,             // "hold-reclaimed-time"
+        S_MAX_RECLAIM_LEASES = 129,              // "max-reclaim-leases"
+        S_MAX_RECLAIM_TIME = 130,                // "max-reclaim-time"
+        S_UNWARNED_RECLAIM_CYCLES = 131,         // "unwarned-reclaim-cycles"
+        S_DHCP4O6_PORT = 132,                    // "dhcp4o6-port"
+        S_DHCP_MULTI_THREADING = 133,            // "multi-threading"
+        S_ENABLE_MULTI_THREADING = 134,          // "enable-multi-threading"
+        S_THREAD_POOL_SIZE = 135,                // "thread-pool-size"
+        S_PACKET_QUEUE_SIZE = 136,               // "packet-queue-size"
+        S_CONTROL_SOCKET = 137,                  // "control-socket"
+        S_SOCKET_TYPE = 138,                     // "socket-type"
+        S_SOCKET_NAME = 139,                     // "socket-name"
+        S_DHCP_QUEUE_CONTROL = 140,              // "dhcp-queue-control"
+        S_ENABLE_QUEUE = 141,                    // "enable-queue"
+        S_QUEUE_TYPE = 142,                      // "queue-type"
+        S_CAPACITY = 143,                        // "capacity"
+        S_DHCP_DDNS = 144,                       // "dhcp-ddns"
+        S_ENABLE_UPDATES = 145,                  // "enable-updates"
+        S_QUALIFYING_SUFFIX = 146,               // "qualifying-suffix"
+        S_SERVER_IP = 147,                       // "server-ip"
+        S_SERVER_PORT = 148,                     // "server-port"
+        S_SENDER_IP = 149,                       // "sender-ip"
+        S_SENDER_PORT = 150,                     // "sender-port"
+        S_MAX_QUEUE_SIZE = 151,                  // "max-queue-size"
+        S_NCR_PROTOCOL = 152,                    // "ncr-protocol"
+        S_NCR_FORMAT = 153,                      // "ncr-format"
+        S_OVERRIDE_NO_UPDATE = 154,              // "override-no-update"
+        S_OVERRIDE_CLIENT_UPDATE = 155,          // "override-client-update"
+        S_REPLACE_CLIENT_NAME = 156,             // "replace-client-name"
+        S_GENERATED_PREFIX = 157,                // "generated-prefix"
+        S_TCP = 158,                             // "tcp"
+        S_JSON = 159,                            // "JSON"
+        S_WHEN_PRESENT = 160,                    // "when-present"
+        S_NEVER = 161,                           // "never"
+        S_ALWAYS = 162,                          // "always"
+        S_WHEN_NOT_PRESENT = 163,                // "when-not-present"
+        S_HOSTNAME_CHAR_SET = 164,               // "hostname-char-set"
+        S_HOSTNAME_CHAR_REPLACEMENT = 165,       // "hostname-char-replacement"
+        S_LOGGERS = 166,                         // "loggers"
+        S_OUTPUT_OPTIONS = 167,                  // "output_options"
+        S_OUTPUT = 168,                          // "output"
+        S_DEBUGLEVEL = 169,                      // "debuglevel"
+        S_SEVERITY = 170,                        // "severity"
+        S_FLUSH = 171,                           // "flush"
+        S_MAXSIZE = 172,                         // "maxsize"
+        S_MAXVER = 173,                          // "maxver"
+        S_PATTERN = 174,                         // "pattern"
+        S_TOPLEVEL_JSON = 175,                   // TOPLEVEL_JSON
+        S_TOPLEVEL_DHCP4 = 176,                  // TOPLEVEL_DHCP4
+        S_SUB_DHCP4 = 177,                       // SUB_DHCP4
+        S_SUB_INTERFACES4 = 178,                 // SUB_INTERFACES4
+        S_SUB_SUBNET4 = 179,                     // SUB_SUBNET4
+        S_SUB_POOL4 = 180,                       // SUB_POOL4
+        S_SUB_RESERVATION = 181,                 // SUB_RESERVATION
+        S_SUB_OPTION_DEFS = 182,                 // SUB_OPTION_DEFS
+        S_SUB_OPTION_DEF = 183,                  // SUB_OPTION_DEF
+        S_SUB_OPTION_DATA = 184,                 // SUB_OPTION_DATA
+        S_SUB_HOOKS_LIBRARY = 185,               // SUB_HOOKS_LIBRARY
+        S_SUB_DHCP_DDNS = 186,                   // SUB_DHCP_DDNS
+        S_SUB_CONFIG_CONTROL = 187,              // SUB_CONFIG_CONTROL
+        S_STRING = 188,                          // "constant string"
+        S_INTEGER = 189,                         // "integer"
+        S_FLOAT = 190,                           // "floating point"
+        S_BOOLEAN = 191,                         // "boolean"
+        S_YYACCEPT = 192,                        // $accept
+        S_start = 193,                           // start
+        S_194_1 = 194,                           // $@1
+        S_195_2 = 195,                           // $@2
+        S_196_3 = 196,                           // $@3
+        S_197_4 = 197,                           // $@4
+        S_198_5 = 198,                           // $@5
+        S_199_6 = 199,                           // $@6
+        S_200_7 = 200,                           // $@7
+        S_201_8 = 201,                           // $@8
+        S_202_9 = 202,                           // $@9
+        S_203_10 = 203,                          // $@10
+        S_204_11 = 204,                          // $@11
+        S_205_12 = 205,                          // $@12
+        S_206_13 = 206,                          // $@13
+        S_value = 207,                           // value
+        S_sub_json = 208,                        // sub_json
+        S_map2 = 209,                            // map2
+        S_210_14 = 210,                          // $@14
+        S_map_value = 211,                       // map_value
+        S_map_content = 212,                     // map_content
+        S_not_empty_map = 213,                   // not_empty_map
+        S_list_generic = 214,                    // list_generic
+        S_215_15 = 215,                          // $@15
+        S_list_content = 216,                    // list_content
+        S_not_empty_list = 217,                  // not_empty_list
+        S_list_strings = 218,                    // list_strings
+        S_219_16 = 219,                          // $@16
+        S_list_strings_content = 220,            // list_strings_content
+        S_not_empty_list_strings = 221,          // not_empty_list_strings
+        S_unknown_map_entry = 222,               // unknown_map_entry
+        S_syntax_map = 223,                      // syntax_map
+        S_224_17 = 224,                          // $@17
+        S_global_objects = 225,                  // global_objects
+        S_global_object = 226,                   // global_object
+        S_dhcp4_object = 227,                    // dhcp4_object
+        S_228_18 = 228,                          // $@18
+        S_sub_dhcp4 = 229,                       // sub_dhcp4
+        S_230_19 = 230,                          // $@19
+        S_global_params = 231,                   // global_params
+        S_global_param = 232,                    // global_param
+        S_valid_lifetime = 233,                  // valid_lifetime
+        S_min_valid_lifetime = 234,              // min_valid_lifetime
+        S_max_valid_lifetime = 235,              // max_valid_lifetime
+        S_renew_timer = 236,                     // renew_timer
+        S_rebind_timer = 237,                    // rebind_timer
+        S_calculate_tee_times = 238,             // calculate_tee_times
+        S_t1_percent = 239,                      // t1_percent
+        S_t2_percent = 240,                      // t2_percent
+        S_decline_probation_period = 241,        // decline_probation_period
+        S_server_tag = 242,                      // server_tag
+        S_243_20 = 243,                          // $@20
+        S_echo_client_id = 244,                  // echo_client_id
+        S_match_client_id = 245,                 // match_client_id
+        S_authoritative = 246,                   // authoritative
+        S_ddns_send_updates = 247,               // ddns_send_updates
+        S_ddns_override_no_update = 248,         // ddns_override_no_update
+        S_ddns_override_client_update = 249,     // ddns_override_client_update
+        S_ddns_replace_client_name = 250,        // ddns_replace_client_name
+        S_251_21 = 251,                          // $@21
+        S_ddns_replace_client_name_value = 252,  // ddns_replace_client_name_value
+        S_ddns_generated_prefix = 253,           // ddns_generated_prefix
+        S_254_22 = 254,                          // $@22
+        S_ddns_qualifying_suffix = 255,          // ddns_qualifying_suffix
+        S_256_23 = 256,                          // $@23
+        S_ddns_update_on_renew = 257,            // ddns_update_on_renew
+        S_ddns_use_conflict_resolution = 258,    // ddns_use_conflict_resolution
+        S_hostname_char_set = 259,               // hostname_char_set
+        S_260_24 = 260,                          // $@24
+        S_hostname_char_replacement = 261,       // hostname_char_replacement
+        S_262_25 = 262,                          // $@25
+        S_store_extended_info = 263,             // store_extended_info
+        S_statistic_default_sample_count = 264,  // statistic_default_sample_count
+        S_statistic_default_sample_age = 265,    // statistic_default_sample_age
+        S_interfaces_config = 266,               // interfaces_config
+        S_267_26 = 267,                          // $@26
+        S_interfaces_config_params = 268,        // interfaces_config_params
+        S_interfaces_config_param = 269,         // interfaces_config_param
+        S_sub_interfaces4 = 270,                 // sub_interfaces4
+        S_271_27 = 271,                          // $@27
+        S_interfaces_list = 272,                 // interfaces_list
+        S_273_28 = 273,                          // $@28
+        S_dhcp_socket_type = 274,                // dhcp_socket_type
+        S_275_29 = 275,                          // $@29
+        S_socket_type = 276,                     // socket_type
+        S_outbound_interface = 277,              // outbound_interface
+        S_278_30 = 278,                          // $@30
+        S_outbound_interface_value = 279,        // outbound_interface_value
+        S_re_detect = 280,                       // re_detect
+        S_lease_database = 281,                  // lease_database
+        S_282_31 = 282,                          // $@31
+        S_sanity_checks = 283,                   // sanity_checks
+        S_284_32 = 284,                          // $@32
+        S_sanity_checks_params = 285,            // sanity_checks_params
+        S_sanity_checks_param = 286,             // sanity_checks_param
+        S_lease_checks = 287,                    // lease_checks
+        S_288_33 = 288,                          // $@33
+        S_hosts_database = 289,                  // hosts_database
+        S_290_34 = 290,                          // $@34
+        S_hosts_databases = 291,                 // hosts_databases
+        S_292_35 = 292,                          // $@35
+        S_database_list = 293,                   // database_list
+        S_not_empty_database_list = 294,         // not_empty_database_list
+        S_database = 295,                        // database
+        S_296_36 = 296,                          // $@36
+        S_database_map_params = 297,             // database_map_params
+        S_database_map_param = 298,              // database_map_param
+        S_database_type = 299,                   // database_type
+        S_300_37 = 300,                          // $@37
+        S_db_type = 301,                         // db_type
+        S_user = 302,                            // user
+        S_303_38 = 303,                          // $@38
+        S_password = 304,                        // password
+        S_305_39 = 305,                          // $@39
+        S_host = 306,                            // host
+        S_307_40 = 307,                          // $@40
+        S_port = 308,                            // port
+        S_name = 309,                            // name
+        S_310_41 = 310,                          // $@41
+        S_persist = 311,                         // persist
+        S_lfc_interval = 312,                    // lfc_interval
+        S_readonly = 313,                        // readonly
+        S_connect_timeout = 314,                 // connect_timeout
+        S_request_timeout = 315,                 // request_timeout
+        S_tcp_keepalive = 316,                   // tcp_keepalive
+        S_tcp_nodelay = 317,                     // tcp_nodelay
+        S_contact_points = 318,                  // contact_points
+        S_319_42 = 319,                          // $@42
+        S_keyspace = 320,                        // keyspace
+        S_321_43 = 321,                          // $@43
+        S_consistency = 322,                     // consistency
+        S_323_44 = 323,                          // $@44
+        S_serial_consistency = 324,              // serial_consistency
+        S_325_45 = 325,                          // $@45
+        S_max_reconnect_tries = 326,             // max_reconnect_tries
+        S_reconnect_wait_time = 327,             // reconnect_wait_time
+        S_max_row_errors = 328,                  // max_row_errors
+        S_host_reservation_identifiers = 329,    // host_reservation_identifiers
+        S_330_46 = 330,                          // $@46
+        S_host_reservation_identifiers_list = 331, // host_reservation_identifiers_list
+        S_host_reservation_identifier = 332,     // host_reservation_identifier
+        S_duid_id = 333,                         // duid_id
+        S_hw_address_id = 334,                   // hw_address_id
+        S_circuit_id = 335,                      // circuit_id
+        S_client_id = 336,                       // client_id
+        S_flex_id = 337,                         // flex_id
+        S_dhcp_multi_threading = 338,            // dhcp_multi_threading
+        S_339_47 = 339,                          // $@47
+        S_multi_threading_params = 340,          // multi_threading_params
+        S_multi_threading_param = 341,           // multi_threading_param
+        S_enable_multi_threading = 342,          // enable_multi_threading
+        S_thread_pool_size = 343,                // thread_pool_size
+        S_packet_queue_size = 344,               // packet_queue_size
+        S_hooks_libraries = 345,                 // hooks_libraries
+        S_346_48 = 346,                          // $@48
+        S_hooks_libraries_list = 347,            // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 348,  // not_empty_hooks_libraries_list
+        S_hooks_library = 349,                   // hooks_library
+        S_350_49 = 350,                          // $@49
+        S_sub_hooks_library = 351,               // sub_hooks_library
+        S_352_50 = 352,                          // $@50
+        S_hooks_params = 353,                    // hooks_params
+        S_hooks_param = 354,                     // hooks_param
+        S_library = 355,                         // library
+        S_356_51 = 356,                          // $@51
+        S_parameters = 357,                      // parameters
+        S_358_52 = 358,                          // $@52
+        S_expired_leases_processing = 359,       // expired_leases_processing
+        S_360_53 = 360,                          // $@53
+        S_expired_leases_params = 361,           // expired_leases_params
+        S_expired_leases_param = 362,            // expired_leases_param
+        S_reclaim_timer_wait_time = 363,         // reclaim_timer_wait_time
+        S_flush_reclaimed_timer_wait_time = 364, // flush_reclaimed_timer_wait_time
+        S_hold_reclaimed_time = 365,             // hold_reclaimed_time
+        S_max_reclaim_leases = 366,              // max_reclaim_leases
+        S_max_reclaim_time = 367,                // max_reclaim_time
+        S_unwarned_reclaim_cycles = 368,         // unwarned_reclaim_cycles
+        S_subnet4_list = 369,                    // subnet4_list
+        S_370_54 = 370,                          // $@54
+        S_subnet4_list_content = 371,            // subnet4_list_content
+        S_not_empty_subnet4_list = 372,          // not_empty_subnet4_list
+        S_subnet4 = 373,                         // subnet4
+        S_374_55 = 374,                          // $@55
+        S_sub_subnet4 = 375,                     // sub_subnet4
+        S_376_56 = 376,                          // $@56
+        S_subnet4_params = 377,                  // subnet4_params
+        S_subnet4_param = 378,                   // subnet4_param
+        S_subnet = 379,                          // subnet
+        S_380_57 = 380,                          // $@57
+        S_subnet_4o6_interface = 381,            // subnet_4o6_interface
+        S_382_58 = 382,                          // $@58
+        S_subnet_4o6_interface_id = 383,         // subnet_4o6_interface_id
+        S_384_59 = 384,                          // $@59
+        S_subnet_4o6_subnet = 385,               // subnet_4o6_subnet
+        S_386_60 = 386,                          // $@60
+        S_interface = 387,                       // interface
+        S_388_61 = 388,                          // $@61
+        S_client_class = 389,                    // client_class
+        S_390_62 = 390,                          // $@62
+        S_require_client_classes = 391,          // require_client_classes
+        S_392_63 = 392,                          // $@63
+        S_reservation_mode = 393,                // reservation_mode
+        S_394_64 = 394,                          // $@64
+        S_hr_mode = 395,                         // hr_mode
+        S_id = 396,                              // id
+        S_shared_networks = 397,                 // shared_networks
+        S_398_65 = 398,                          // $@65
+        S_shared_networks_content = 399,         // shared_networks_content
+        S_shared_networks_list = 400,            // shared_networks_list
+        S_shared_network = 401,                  // shared_network
+        S_402_66 = 402,                          // $@66
+        S_shared_network_params = 403,           // shared_network_params
+        S_shared_network_param = 404,            // shared_network_param
+        S_option_def_list = 405,                 // option_def_list
+        S_406_67 = 406,                          // $@67
+        S_sub_option_def_list = 407,             // sub_option_def_list
+        S_408_68 = 408,                          // $@68
+        S_option_def_list_content = 409,         // option_def_list_content
+        S_not_empty_option_def_list = 410,       // not_empty_option_def_list
+        S_option_def_entry = 411,                // option_def_entry
+        S_412_69 = 412,                          // $@69
+        S_sub_option_def = 413,                  // sub_option_def
+        S_414_70 = 414,                          // $@70
+        S_option_def_params = 415,               // option_def_params
+        S_not_empty_option_def_params = 416,     // not_empty_option_def_params
+        S_option_def_param = 417,                // option_def_param
+        S_option_def_name = 418,                 // option_def_name
+        S_code = 419,                            // code
+        S_option_def_code = 420,                 // option_def_code
+        S_option_def_type = 421,                 // option_def_type
+        S_422_71 = 422,                          // $@71
+        S_option_def_record_types = 423,         // option_def_record_types
+        S_424_72 = 424,                          // $@72
+        S_space = 425,                           // space
+        S_426_73 = 426,                          // $@73
+        S_option_def_space = 427,                // option_def_space
+        S_option_def_encapsulate = 428,          // option_def_encapsulate
+        S_429_74 = 429,                          // $@74
+        S_option_def_array = 430,                // option_def_array
+        S_option_data_list = 431,                // option_data_list
+        S_432_75 = 432,                          // $@75
+        S_option_data_list_content = 433,        // option_data_list_content
+        S_not_empty_option_data_list = 434,      // not_empty_option_data_list
+        S_option_data_entry = 435,               // option_data_entry
+        S_436_76 = 436,                          // $@76
+        S_sub_option_data = 437,                 // sub_option_data
+        S_438_77 = 438,                          // $@77
+        S_option_data_params = 439,              // option_data_params
+        S_not_empty_option_data_params = 440,    // not_empty_option_data_params
+        S_option_data_param = 441,               // option_data_param
+        S_option_data_name = 442,                // option_data_name
+        S_option_data_data = 443,                // option_data_data
+        S_444_78 = 444,                          // $@78
+        S_option_data_code = 445,                // option_data_code
+        S_option_data_space = 446,               // option_data_space
+        S_option_data_csv_format = 447,          // option_data_csv_format
+        S_option_data_always_send = 448,         // option_data_always_send
+        S_pools_list = 449,                      // pools_list
+        S_450_79 = 450,                          // $@79
+        S_pools_list_content = 451,              // pools_list_content
+        S_not_empty_pools_list = 452,            // not_empty_pools_list
+        S_pool_list_entry = 453,                 // pool_list_entry
+        S_454_80 = 454,                          // $@80
+        S_sub_pool4 = 455,                       // sub_pool4
+        S_456_81 = 456,                          // $@81
+        S_pool_params = 457,                     // pool_params
+        S_pool_param = 458,                      // pool_param
+        S_pool_entry = 459,                      // pool_entry
+        S_460_82 = 460,                          // $@82
+        S_user_context = 461,                    // user_context
+        S_462_83 = 462,                          // $@83
+        S_comment = 463,                         // comment
+        S_464_84 = 464,                          // $@84
+        S_reservations = 465,                    // reservations
+        S_466_85 = 466,                          // $@85
+        S_reservations_list = 467,               // reservations_list
+        S_not_empty_reservations_list = 468,     // not_empty_reservations_list
+        S_reservation = 469,                     // reservation
+        S_470_86 = 470,                          // $@86
+        S_sub_reservation = 471,                 // sub_reservation
+        S_472_87 = 472,                          // $@87
+        S_reservation_params = 473,              // reservation_params
+        S_not_empty_reservation_params = 474,    // not_empty_reservation_params
+        S_reservation_param = 475,               // reservation_param
+        S_next_server = 476,                     // next_server
+        S_477_88 = 477,                          // $@88
+        S_server_hostname = 478,                 // server_hostname
+        S_479_89 = 479,                          // $@89
+        S_boot_file_name = 480,                  // boot_file_name
+        S_481_90 = 481,                          // $@90
+        S_ip_address = 482,                      // ip_address
+        S_483_91 = 483,                          // $@91
+        S_ip_addresses = 484,                    // ip_addresses
+        S_485_92 = 485,                          // $@92
+        S_duid = 486,                            // duid
+        S_487_93 = 487,                          // $@93
+        S_hw_address = 488,                      // hw_address
+        S_489_94 = 489,                          // $@94
+        S_client_id_value = 490,                 // client_id_value
+        S_491_95 = 491,                          // $@95
+        S_circuit_id_value = 492,                // circuit_id_value
+        S_493_96 = 493,                          // $@96
+        S_flex_id_value = 494,                   // flex_id_value
+        S_495_97 = 495,                          // $@97
+        S_hostname = 496,                        // hostname
+        S_497_98 = 497,                          // $@98
+        S_reservation_client_classes = 498,      // reservation_client_classes
+        S_499_99 = 499,                          // $@99
+        S_relay = 500,                           // relay
+        S_501_100 = 501,                         // $@100
+        S_relay_map = 502,                       // relay_map
+        S_client_classes = 503,                  // client_classes
+        S_504_101 = 504,                         // $@101
+        S_client_classes_list = 505,             // client_classes_list
+        S_client_class_entry = 506,              // client_class_entry
+        S_507_102 = 507,                         // $@102
+        S_client_class_params = 508,             // client_class_params
+        S_not_empty_client_class_params = 509,   // not_empty_client_class_params
+        S_client_class_param = 510,              // client_class_param
+        S_client_class_name = 511,               // client_class_name
+        S_client_class_test = 512,               // client_class_test
+        S_513_103 = 513,                         // $@103
+        S_only_if_required = 514,                // only_if_required
+        S_dhcp4o6_port = 515,                    // dhcp4o6_port
+        S_control_socket = 516,                  // control_socket
+        S_517_104 = 517,                         // $@104
+        S_control_socket_params = 518,           // control_socket_params
+        S_control_socket_param = 519,            // control_socket_param
+        S_control_socket_type = 520,             // control_socket_type
+        S_521_105 = 521,                         // $@105
+        S_control_socket_name = 522,             // control_socket_name
+        S_523_106 = 523,                         // $@106
+        S_dhcp_queue_control = 524,              // dhcp_queue_control
+        S_525_107 = 525,                         // $@107
+        S_queue_control_params = 526,            // queue_control_params
+        S_queue_control_param = 527,             // queue_control_param
+        S_enable_queue = 528,                    // enable_queue
+        S_queue_type = 529,                      // queue_type
+        S_530_108 = 530,                         // $@108
+        S_capacity = 531,                        // capacity
+        S_arbitrary_map_entry = 532,             // arbitrary_map_entry
+        S_533_109 = 533,                         // $@109
+        S_dhcp_ddns = 534,                       // dhcp_ddns
+        S_535_110 = 535,                         // $@110
+        S_sub_dhcp_ddns = 536,                   // sub_dhcp_ddns
+        S_537_111 = 537,                         // $@111
+        S_dhcp_ddns_params = 538,                // dhcp_ddns_params
+        S_dhcp_ddns_param = 539,                 // dhcp_ddns_param
+        S_enable_updates = 540,                  // enable_updates
+        S_server_ip = 541,                       // server_ip
+        S_542_112 = 542,                         // $@112
+        S_server_port = 543,                     // server_port
+        S_sender_ip = 544,                       // sender_ip
+        S_545_113 = 545,                         // $@113
+        S_sender_port = 546,                     // sender_port
+        S_max_queue_size = 547,                  // max_queue_size
+        S_ncr_protocol = 548,                    // ncr_protocol
+        S_549_114 = 549,                         // $@114
+        S_ncr_protocol_value = 550,              // ncr_protocol_value
+        S_ncr_format = 551,                      // ncr_format
+        S_552_115 = 552,                         // $@115
+        S_dep_qualifying_suffix = 553,           // dep_qualifying_suffix
+        S_554_116 = 554,                         // $@116
+        S_dep_override_no_update = 555,          // dep_override_no_update
+        S_dep_override_client_update = 556,      // dep_override_client_update
+        S_dep_replace_client_name = 557,         // dep_replace_client_name
+        S_558_117 = 558,                         // $@117
+        S_dep_generated_prefix = 559,            // dep_generated_prefix
+        S_560_118 = 560,                         // $@118
+        S_dep_hostname_char_set = 561,           // dep_hostname_char_set
+        S_562_119 = 562,                         // $@119
+        S_dep_hostname_char_replacement = 563,   // dep_hostname_char_replacement
+        S_564_120 = 564,                         // $@120
+        S_config_control = 565,                  // config_control
+        S_566_121 = 566,                         // $@121
+        S_sub_config_control = 567,              // sub_config_control
+        S_568_122 = 568,                         // $@122
+        S_config_control_params = 569,           // config_control_params
+        S_config_control_param = 570,            // config_control_param
+        S_config_databases = 571,                // config_databases
+        S_572_123 = 572,                         // $@123
+        S_config_fetch_wait_time = 573,          // config_fetch_wait_time
+        S_loggers = 574,                         // loggers
+        S_575_124 = 575,                         // $@124
+        S_loggers_entries = 576,                 // loggers_entries
+        S_logger_entry = 577,                    // logger_entry
+        S_578_125 = 578,                         // $@125
+        S_logger_params = 579,                   // logger_params
+        S_logger_param = 580,                    // logger_param
+        S_debuglevel = 581,                      // debuglevel
+        S_severity = 582,                        // severity
+        S_583_126 = 583,                         // $@126
+        S_output_options_list = 584,             // output_options_list
+        S_585_127 = 585,                         // $@127
+        S_output_options_list_content = 586,     // output_options_list_content
+        S_output_entry = 587,                    // output_entry
+        S_588_128 = 588,                         // $@128
+        S_output_params_list = 589,              // output_params_list
+        S_output_params = 590,                   // output_params
+        S_output = 591,                          // output
+        S_592_129 = 592,                         // $@129
+        S_flush = 593,                           // flush
+        S_maxsize = 594,                         // maxsize
+        S_maxver = 595,                          // maxver
+        S_pattern = 596,                         // pattern
+        S_597_130 = 597                          // $@130
       };
     };
 
@@ -1321,30 +1327,30 @@ namespace isc { namespace dhcp {
       {
         switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1358,7 +1364,7 @@ namespace isc { namespace dhcp {
       /// Copy constructor.
       basic_symbol (const basic_symbol& that);
 
-      /// Constructor for valueless symbols, and symbols from each type.
+      /// Constructors for typed symbols.
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, location_type&& l)
         : Base (t)
@@ -1370,6 +1376,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, ElementPtr&& v, location_type&& l)
         : Base (t)
@@ -1383,6 +1390,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
         : Base (t)
@@ -1396,6 +1404,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
         : Base (t)
@@ -1409,6 +1418,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, int64_t&& v, location_type&& l)
         : Base (t)
@@ -1422,6 +1432,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
@@ -1443,7 +1454,7 @@ namespace isc { namespace dhcp {
       }
 
       /// Destroy contents, and record that is empty.
-      void clear ()
+      void clear () YY_NOEXCEPT
       {
         // User destructor.
         symbol_kind_type yykind = this->kind ();
@@ -1458,30 +1469,30 @@ namespace isc { namespace dhcp {
         // Value type destructor.
 switch (yykind)
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1541,7 +1552,7 @@ switch (yykind)
       by_kind (kind_type t);
 
       /// Record that this symbol is empty.
-      void clear ();
+      void clear () YY_NOEXCEPT;
 
       /// Steal the symbol kind from \a that.
       void move (by_kind& that);
@@ -1574,68 +1585,54 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_PARSER4_error || tok == token::TOKEN_PARSER4_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_DHCP_SOCKET_TYPE || tok == token::TOKEN_RAW || tok == token::TOKEN_UDP || tok == token::TOKEN_OUTBOUND_INTERFACE || tok == token::TOKEN_SAME_AS_INBOUND || tok == token::TOKEN_USE_ROUTING || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_ECHO_CLIENT_ID || tok == token::TOKEN_MATCH_CLIENT_ID || tok == token::TOKEN_AUTHORITATIVE || tok == token::TOKEN_NEXT_SERVER || tok == token::TOKEN_SERVER_HOSTNAME || tok == token::TOKEN_BOOT_FILE_NAME || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET4 || tok == token::TOKEN_SUBNET_4O6_INTERFACE || tok == token::TOKEN_SUBNET_4O6_INTERFACE_ID || tok == token::TOKEN_SUBNET_4O6_SUBNET || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_ID || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_CIRCUIT_ID || tok == token::TOKEN_CLIENT_ID || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_DHCP_MULTI_THREADING || tok == token::TOKEN_ENABLE_MULTI_THREADING || tok == token::TOKEN_THREAD_POOL_SIZE || tok == token::TOKEN_PACKET_QUEUE_SIZE || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP4 || tok == token::TOKEN_SUB_DHCP4 || tok == token::TOKEN_SUB_INTERFACES4 || tok == token::TOKEN_SUB_SUBNET4 || tok == token::TOKEN_SUB_POOL4 || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_CONFIG_CONTROL);
-      }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_PARSER4_error || tok == token::TOKEN_PARSER4_UNDEF || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_DHCP_SOCKET_TYPE || tok == token::TOKEN_RAW || tok == token::TOKEN_UDP || tok == token::TOKEN_OUTBOUND_INTERFACE || tok == token::TOKEN_SAME_AS_INBOUND || tok == token::TOKEN_USE_ROUTING || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_ECHO_CLIENT_ID || tok == token::TOKEN_MATCH_CLIENT_ID || tok == token::TOKEN_AUTHORITATIVE || tok == token::TOKEN_NEXT_SERVER || tok == token::TOKEN_SERVER_HOSTNAME || tok == token::TOKEN_BOOT_FILE_NAME || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_CQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_CONTACT_POINTS || tok == token::TOKEN_KEYSPACE || tok == token::TOKEN_CONSISTENCY || tok == token::TOKEN_SERIAL_CONSISTENCY || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_REQUEST_TIMEOUT || tok == token::TOKEN_TCP_KEEPALIVE || tok == token::TOKEN_TCP_NODELAY || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET4 || tok == token::TOKEN_SUBNET_4O6_INTERFACE || tok == token::TOKEN_SUBNET_4O6_INTERFACE_ID || tok == token::TOKEN_SUBNET_4O6_SUBNET || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_ID || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_CIRCUIT_ID || tok == token::TOKEN_CLIENT_ID || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_DHCP_MULTI_THREADING || tok == token::TOKEN_ENABLE_MULTI_THREADING || tok == token::TOKEN_THREAD_POOL_SIZE || tok == token::TOKEN_PACKET_QUEUE_SIZE || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP4 || tok == token::TOKEN_SUB_DHCP4 || tok == token::TOKEN_SUB_INTERFACES4 || tok == token::TOKEN_SUB_SUBNET4 || tok == token::TOKEN_SUB_POOL4 || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_CONFIG_CONTROL);
-      }
 #endif
+      {
+        PARSER4__ASSERT (tok == token::TOKEN_END
+                   || (token::TOKEN_PARSER4_error <= tok && tok <= token::TOKEN_SUB_CONFIG_CONTROL));
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, bool v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_BOOLEAN);
-      }
 #else
       symbol_type (int tok, const bool& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_BOOLEAN);
-      }
 #endif
+      {
+        PARSER4__ASSERT (tok == token::TOKEN_BOOLEAN);
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, double v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_FLOAT);
-      }
 #else
       symbol_type (int tok, const double& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_FLOAT);
-      }
 #endif
+      {
+        PARSER4__ASSERT (tok == token::TOKEN_FLOAT);
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, int64_t v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_INTEGER);
-      }
 #else
       symbol_type (int tok, const int64_t& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_INTEGER);
-      }
 #endif
+      {
+        PARSER4__ASSERT (tok == token::TOKEN_INTEGER);
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING);
-      }
 #else
       symbol_type (int tok, const std::string& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING);
-      }
 #endif
+      {
+        PARSER4__ASSERT (tok == token::TOKEN_STRING);
+      }
     };
 
     /// Build a parser object.
@@ -2807,6 +2804,36 @@ switch (yykind)
       make_DDNS_QUALIFYING_SUFFIX (const location_type& l)
       {
         return symbol_type (token::TOKEN_DDNS_QUALIFYING_SUFFIX, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DDNS_UPDATE_ON_RENEW (location_type l)
+      {
+        return symbol_type (token::TOKEN_DDNS_UPDATE_ON_RENEW, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DDNS_UPDATE_ON_RENEW (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DDNS_UPDATE_ON_RENEW, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DDNS_USE_CONFLICT_RESOLUTION (location_type l)
+      {
+        return symbol_type (token::TOKEN_DDNS_USE_CONFLICT_RESOLUTION, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DDNS_USE_CONFLICT_RESOLUTION (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DDNS_USE_CONFLICT_RESOLUTION, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -4540,9 +4567,9 @@ switch (yykind)
     {
     public:
       context (const Dhcp4Parser& yyparser, const symbol_type& yyla);
-      const symbol_type& lookahead () const { return yyla_; }
-      symbol_kind_type token () const { return yyla_.kind (); }
-      const location_type& location () const { return yyla_.location; }
+      const symbol_type& lookahead () const YY_NOEXCEPT { return yyla_; }
+      symbol_kind_type token () const YY_NOEXCEPT { return yyla_.kind (); }
+      const location_type& location () const YY_NOEXCEPT { return yyla_.location; }
 
       /// Put in YYARG at most YYARGN of the expected tokens, and return the
       /// number of tokens stored in YYARG.  If YYARG is null, return the
@@ -4685,7 +4712,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -4864,8 +4891,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 1160,     ///< Last index in yytable_.
-      yynnts_ = 404,  ///< Number of nonterminal symbols.
+      yylast_ = 1175,     ///< Last index in yytable_.
+      yynnts_ = 406,  ///< Number of nonterminal symbols.
       yyfinal_ = 28 ///< Termination state number.
     };
 
@@ -4929,13 +4956,14 @@ switch (yykind)
      155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
      165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
      175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
-     185,   186,   187,   188,   189
+     185,   186,   187,   188,   189,   190,   191
     };
-    const int user_token_number_max_ = 444;
+    // Last valid token kind.
+    const int code_max = 446;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -4950,30 +4978,30 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -5006,30 +5034,30 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 205: // value
-      case 209: // map_value
-      case 250: // ddns_replace_client_name_value
-      case 272: // socket_type
-      case 275: // outbound_interface_value
-      case 297: // db_type
-      case 391: // hr_mode
-      case 546: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_socket_type: // socket_type
+      case symbol_kind::S_outbound_interface_value: // outbound_interface_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 189: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 188: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 187: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 186: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -5067,7 +5095,7 @@ switch (yykind)
 
   inline
   void
-  Dhcp4Parser::by_kind::clear ()
+  Dhcp4Parser::by_kind::clear () YY_NOEXCEPT
   {
     kind_ = symbol_kind::S_YYEMPTY;
   }
@@ -5096,8 +5124,7 @@ switch (yykind)
 
 #line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 5100 "dhcp4_parser.h"
-
+#line 5128 "dhcp4_parser.h"
 
 
 
