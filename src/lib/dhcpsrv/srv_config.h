@@ -122,6 +122,34 @@ public:
     /// @throw BadValue if the compilation fails.
     isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
 
+    /// @brief Returns whether or not DNS should be updated when leases renew.
+    ///
+    /// If this is true, DNS should always be updated when leases are 
+    /// extended (i.e. renewed/rebound) even if the DNS information
+    /// has not changed.
+    ///
+    /// @return True if updates should always be performed.
+    bool getUpdateOnRenew() const;
+
+    /// @brief Returns whether or not keah-dhcp-ddns should use conflict resolution
+    ///
+    /// This value is communicated to D2 via the NCR.  When true, D2 should follow
+    /// follow conflict resolution steps described in RFC 4703.  If not, it should
+    /// simple add or remove entries.
+    ///
+    /// @return True if conflict resolution should be used.
+    bool getUseConflictResolution() const;
+
+    /// @brief Returns the subnet-id of the subnet associated with these parameters
+    /// @return value of subnet-id (or 0 if no subnet is associated)
+    SubnetID getSubnetId() const {
+        if (subnet_){
+            return subnet_->getID();
+        } else {
+            return 0;
+        }
+    }
+
 private:
     /// @brief Subnet from which values should be fetched.
     SubnetPtr subnet_;
@@ -789,6 +817,17 @@ public:
     ///
     /// @param srv_elem server top level map to alter
     static void moveDdnsParams(isc::data::ElementPtr srv_elem);
+
+    /// @brief Configures the server to allow or disallow specifying multiple
+    /// hosts with the same IP address/subnet.
+    ///
+    /// This setting is applied in @c CfgDbAccess and @c CfgHosts. This function
+    /// should be called when the server is being configured using the configuration
+    /// file, config-set command or via the configuration backend.
+    ///
+    /// @param unique Boolean value indicating if it is allowed (when false)
+    /// or disallowed to specify multiple hosts with the same IP reservation.
+    void setIPReservationsUnique(const bool unique);
 
     /// @brief Unparse a configuration object
     ///

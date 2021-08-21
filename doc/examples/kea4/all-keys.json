@@ -143,6 +143,20 @@
         // to kea-dhcp-ddns.
         "ddns-send-updates": true,
 
+        // Boolean flag, which when true instructs the server to always
+        // update DNS when leases are renewed, even if the DNS information
+        // has not changed.  The server's default behavior (i.e. flag is false)
+        // is to only update DNS if the DNS information has changed.  It
+        // may be specified at the global, shared-network and subnet levels.
+        "ddns-update-on-renew": true,
+
+        // Boolean flag, which is passed to kea-dhcp-ddns with each DDNS
+        // update request to indicate whether or not DNS update conflict 
+        // resolution as described in RFC 4703 should be employed for the
+        // given update request.  The default value for this flag is true.  
+        // It may be specified at the global, shared-network and subnet levels.
+        "ddns-use-conflict-resolution": true,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -588,6 +602,12 @@
                 "ddns-send-updates": true,
 
                 // Shared network level value. See description at the global level.
+                "ddns-update-on-renew": true,
+
+                // Shared network level value. See description at the global level.
+                "ddns-use-conflict-resolution": true,
+
+                // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared network level value. See description at the global level.
@@ -685,6 +705,12 @@
 
                         // Subnet level value. See description at the global level.
                         "ddns-send-updates": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-update-on-renew": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-use-conflict-resolution": true,
 
                         // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",

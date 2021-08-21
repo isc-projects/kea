@@ -280,6 +280,23 @@ Network::toElement() const {
         map->set("store-extended-info", Element::create(store_extended_info_));
     }
 
+    if (!cache_threshold_.unspecified()) {
+        map->set("cache-threshold", Element::create(cache_threshold_));
+    }
+
+    if (!cache_max_age_.unspecified()) {
+        map->set("cache-max-age",
+                 Element::create(static_cast<long long>(cache_max_age_)));
+    }
+
+    if (!ddns_update_on_renew_.unspecified()) {
+        map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
+    }
+
+    if (!ddns_use_conflict_resolution_.unspecified()) {
+        map->set("ddns-use-conflict-resolution", Element::create(ddns_use_conflict_resolution_));
+    }
+
     return (map);
 }
 

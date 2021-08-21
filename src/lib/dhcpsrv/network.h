@@ -207,7 +207,9 @@ public:
           calculate_tee_times_(), t1_percent_(), t2_percent_(),
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
-          hostname_char_set_(), hostname_char_replacement_(), store_extended_info_() {
+          hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
+          cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
+          ddns_use_conflict_resolution_() {
     }
 
     /// @brief Virtual destructor.
@@ -251,7 +253,7 @@ public:
     util::Optional<std::string>
     getIface(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getIface, iface_name_,
-                                     inheritance, "interface"));
+                                     inheritance));
     };
 
     /// @brief Sets information about relay
@@ -698,6 +700,73 @@ public:
         store_extended_info_ = store_extended_info;
     }
 
+    /// @brief Returns percentage to use as cache threshold.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<double>
+    getCacheThreshold(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getCacheThreshold,
+                                     cache_threshold_,
+                                     inheritance, "cache-threshold"));
+    }
+
+    /// @brief Sets cache threshold for a network.
+    ///
+    /// @param cache_threshold New cache threshold percentage to use.
+    void setCacheThreshold(const util::Optional<double>& cache_threshold) {
+        cache_threshold_ = cache_threshold;
+    }
+
+    /// @brief Returns value in seconds to use as cache maximum age.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getCacheMaxAge(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getCacheMaxAge, cache_max_age_,
+                                     inheritance, "cache-max-age"));
+    }
+
+    /// @brief Sets cache max for a network.
+    ///
+    /// @param cache_max_age New cache maximum value in seconds to use.
+    void setCacheMaxAge(const util::Optional<uint32_t>& cache_max_age) {
+        cache_max_age_ = cache_max_age;
+    }
+
+    /// @brief Returns ddns-update-on-renew
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsUpdateOnRenew(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsUpdateOnRenew,
+                                     ddns_update_on_renew_,
+                                     inheritance, "ddns-update-on-renew"));
+    }
+
+    /// @brief Sets new ddns-update-on-renew
+    ///
+    /// @param ddns_update_on_renew New value to use.
+    void setDdnsUpdateOnRenew(const util::Optional<bool>& ddns_update_on_renew) {
+        ddns_update_on_renew_ = ddns_update_on_renew;
+    }
+
+    /// @brief Returns ddns-use-conflict-resolution
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsUseConflictResolution(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsUseConflictResolution,
+                                     ddns_use_conflict_resolution_,
+                                     inheritance, "ddns-use-conflict-resolution"));
+    }
+
+    /// @brief Sets new ddns-use-conflict-resolution
+    ///
+    /// @param ddns_use_conflict_resolution New value to use.
+    void setDdnsUseConflictResolution(const util::Optional<bool>& ddns_use_conflict_resolution) {
+        ddns_use_conflict_resolution_ = ddns_use_conflict_resolution;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -991,6 +1060,18 @@ protected:
     /// @brief Should Kea store addtional client query data (e.g. relay-agent-info)
     /// on the lease.
     util::Optional<bool> store_extended_info_;
+
+    /// @brief Percentage of the lease lifetime to use as cache threshold.
+    util::Optional<double> cache_threshold_;
+
+    /// @brief Value in seconds to use as cache maximal age.
+    util::Optional<uint32_t> cache_max_age_;
+
+    /// @brief Should Kea perform updates when leases are extended 
+    util::Optional<bool> ddns_update_on_renew_;
+
+    /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
+    util::Optional<bool> ddns_use_conflict_resolution_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

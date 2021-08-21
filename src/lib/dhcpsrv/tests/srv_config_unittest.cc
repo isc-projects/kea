@@ -1294,6 +1294,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Configure global host sanitizing.
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+    // Enable conflict resolution globally.
+    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1331,6 +1333,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
     subnet2->setHostnameCharSet("");
+    subnet2->setDdnsUpdateOnRenew(true);
+    subnet2->setDdnsUseConflictResolution(false);
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1344,6 +1348,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
+    EXPECT_FALSE(params->getUpdateOnRenew());
+    EXPECT_TRUE(params->getUseConflictResolution());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1364,6 +1370,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ("example.com.", params->getQualifyingSuffix());
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
+    EXPECT_TRUE(params->getUpdateOnRenew());
+    EXPECT_FALSE(params->getUseConflictResolution());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1409,6 +1417,8 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     conf.addConfiguredGlobal("ddns-qualifying-suffix", Element::create("example.com"));
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+    conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
+    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
 
     // Get DDNS params for no subnet.
     Subnet4Ptr subnet4;
@@ -1423,6 +1433,8 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_TRUE(params->getHostnameCharSet().empty());
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+    EXPECT_FALSE(params->getUpdateOnRenew());
+    EXPECT_TRUE(params->getUseConflictResolution());
 }
 
 // Verifies that the scoped values for DDNS parameters can be fetched
@@ -1442,6 +1454,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Configure global host sanitizing.
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+    // Enable conflict resolution globally.
+    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
+
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64,
@@ -1478,6 +1493,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
     subnet2->setHostnameCharSet("");
+    subnet2->setDdnsUpdateOnRenew(true);
+    subnet2->setDdnsUseConflictResolution(false);
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1491,6 +1508,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
+    EXPECT_FALSE(params->getUpdateOnRenew());
+    EXPECT_TRUE(params->getUseConflictResolution());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1501,7 +1520,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Get DDNS params for subnet2.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
 
-    // Verify subnet1 values are right. Note, updates should be disabled,
+    // Verify subnet2 values are right. Note, updates should be disabled,
     // because D2Client is disabled.
     EXPECT_FALSE(params->getEnableUpdates());
     EXPECT_TRUE(params->getOverrideNoUpdate());
@@ -1511,6 +1530,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ("example.com.", params->getQualifyingSuffix());
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
+    EXPECT_TRUE(params->getUpdateOnRenew());
+    EXPECT_FALSE(params->getUseConflictResolution());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1556,6 +1577,8 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     conf.addConfiguredGlobal("ddns-qualifying-suffix", Element::create("example.com"));
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
+    conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
+    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
 
     // Get DDNS params for no subnet.
     Subnet6Ptr subnet6;

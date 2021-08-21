@@ -850,11 +850,13 @@ protected:
     ///
     /// @param lease A pointer to the new lease which has been acquired.
     /// @param old_lease A pointer to the instance of the old lease which has
+    /// @param ddns_params DDNS configuration parameters
     /// been replaced by the new lease passed in the first argument. The NULL
     /// value indicates that the new lease has been allocated, rather than
     /// lease being renewed.
     void createNameChangeRequests(const Lease4Ptr& lease,
-                                  const Lease4Ptr& old_lease);
+                                  const Lease4Ptr& old_lease,
+                                  const DdnsParams& ddns_params);
 
     /// @brief Attempts to renew received addresses
     ///

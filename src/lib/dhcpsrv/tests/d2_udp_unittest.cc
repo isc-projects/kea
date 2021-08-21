@@ -180,7 +180,8 @@ public:
             " \"ip-address\" : \"192.168.2.1\" , "
             " \"dhcid\" : \"010203040A7F8E3D\" , "
             " \"lease-expires-on\" : \"20140121132405\" , "
-            " \"lease-length\" : 1300 "
+            " \"lease-length\" : 1300, "
+            " \"use-conflict-resolution\" : true "
             "}";
 
         return (dhcp_ddns::NameChangeRequest::fromJSON(ncr_str));

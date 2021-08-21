@@ -47,6 +47,8 @@ libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
 libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libd2_la_SOURCES += d2_messages.h d2_messages.cc
+libd2_la_SOURCES += simple_add.cc simple_add.h
+libd2_la_SOURCES += simple_remove.cc simple_remove.h
 EXTRA_DIST += d2_messages.mes
 
 sbin_PROGRAMS = kea-dhcp-ddns

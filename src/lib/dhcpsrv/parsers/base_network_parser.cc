@@ -250,6 +250,14 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
                       << "' is not a valid regular expression");
         }
     }
+
+    if (network_data->contains("ddns-update-on-renew")) {
+        network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-update-on-renew"));
+    }
+
+    if (network_data->contains("ddns-use-conflict-resolution")) {
+        network->setDdnsUseConflictResolution(getBoolean(network_data, "ddns-use-conflict-resolution"));
+    }
 }
 
 } // end of namespace isc::dhcp

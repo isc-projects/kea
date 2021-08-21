@@ -352,6 +352,7 @@ public:
                                               : D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
+        subnet_->setDdnsUseConflictResolution(true);
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -717,6 +718,7 @@ public:
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
     /// equal to CLTT plus lease length.
+    /// @param exp_use_cr expected value of conflict resolution flag
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -724,7 +726,8 @@ public:
                                  const std::string& dhcid,
                                  const time_t cltt,
                                  const uint16_t len,
-                                 const bool not_strict_expire_check = false) {
+                                 const bool not_strict_expire_check = false,
+                                 const bool exp_use_cr = true) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -751,6 +754,7 @@ public:
         }
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -1028,7 +1032,9 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
                                   true, true);
     Lease4Ptr old_lease;
 
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
@@ -1038,20 +1044,128 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
                             lease->cltt_, 100);
 }
 
-// Test that no NameChangeRequest is generated when a lease is renewed and
-// the FQDN data hasn't changed.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
+// Verify that conflict resolution is disabled in the NCR when it is
+// disabled for the lease's subnet.
+TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsUseConflictResolution(false);
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, false);
+}
+
+
+// Verifies that createNameChange request only generates requests
+// if the situation dictates that it should. It checks:
+//
+// -# enable-updates true or false
+// -# update-on-renew true or false
+// -# Whether or not there is an old lease
+// -# Whether or not the FQDN has changed between old and new lease
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
+
+    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"), "one.example.com.",
+                                   true, true);
     // Comparison should be case insensitive, so turning some of the
     // characters of the old lease hostname to upper case should not
     // trigger NCRs.
-    Lease4Ptr old_lease = createLease(IOAddress("192.0.2.3"),
-                                      "Myhost.Example.Com.", true, true);
-    old_lease->valid_lft_ += 100;
+    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.3"),
+                                   "two.example.com.", true, true);
+    struct Scenario {
+        std::string description_;
+        bool send_updates_;
+        bool update_on_renew_;
+        Lease4Ptr old_lease_;
+        Lease4Ptr new_lease_;
+        size_t remove_;
+        size_t add_;
+    };
 
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    // Mnemonic constants.
+    const bool send_updates = true;
+    const bool update_on_renew = true;
+    const size_t remove = 1;
+    const size_t add = 1;
+
+    const std::vector<Scenario> scenarios = {
+        {
+        "#1 update-on-renew false, no old lease",
+        send_updates, !update_on_renew, Lease4Ptr(), lease1, !remove, add
+        },
+        {
+        "#2 update-on-renew false, no change in fqdn",
+        send_updates, !update_on_renew, lease1, lease1, !remove, !add
+        },
+        {
+        "#3 update-on-renew is false, change in fqdn",
+        send_updates, !update_on_renew, lease1, lease2, remove, add
+        },
+        {
+        "#4 update-on-renew is true, no old lease",
+        send_updates, update_on_renew, Lease4Ptr(), lease1, !remove, add
+        },
+        {
+        "#5 update-on-renew is true, no change in fqdn",
+        send_updates, update_on_renew, lease1, lease1, remove, add
+        },
+        {
+        "#6 update-on-renew is true, change in fqdn",
+        send_updates, update_on_renew, lease1, lease2, remove, add
+        },
+        // All prior scenarios test with send-updates true.  We really
+        // only need one with it false.
+        {
+        "#7 send-updates false, update-on-renew is true, change in fqdn",
+        !send_updates, update_on_renew, lease1, lease2, !remove, !add
+        }
+    };
+
+    // Iterate over test scenarios.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_); {
+            // Set and verify DDNS params flags
+            subnet_->setDdnsSendUpdates(scenario.send_updates_);
+            subnet_->setDdnsUpdateOnRenew(scenario.update_on_renew_);
+
+            ASSERT_EQ(scenario.send_updates_, getDdnsParams()->getEnableUpdates());
+            ASSERT_EQ(scenario.update_on_renew_, getDdnsParams()->getUpdateOnRenew());
+
+            // Call createNameChangeRequests()
+            ASSERT_NO_THROW(srv_->createNameChangeRequests(scenario.new_lease_,
+                                                           scenario.old_lease_,
+                                                           *getDdnsParams()));
+            // Verify queue count is correct.
+            ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
+
+            // If we expect a remove, check it.
+            if (scenario.remove_ > 0) {
+                // Verify NCR content
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                        scenario.old_lease_->addr_.toText(),
+                                        scenario.old_lease_->hostname_, "", time(NULL),
+                                        scenario.old_lease_->valid_lft_, true);
+            }
+
+            // If we expect an add, check it.
+            if (scenario.add_ > 0) {
+                // Verify NCR content
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                        scenario.new_lease_->addr_.toText(),
+                                        scenario.new_lease_->hostname_, "", time(NULL),
+                                        scenario.new_lease_->valid_lft_, true);
+            }
+        }
+    }
 }
 
 // Test that the OFFER message generated as a result of the DISCOVER message

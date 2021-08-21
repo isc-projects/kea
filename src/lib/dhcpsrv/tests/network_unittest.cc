@@ -160,7 +160,6 @@ TEST_F(NetworkTest, hrModeFromString) {
 // network parameters.
 TEST_F(NetworkTest, inheritanceSupport4) {
     // Set global values for each parameter.
-    globals_->set("interface", Element::create("g"));
     globals_->set("valid-lifetime", Element::create(80));
     globals_->set("renew-timer", Element::create(80));
     globals_->set("rebind-timer", Element::create(80));
@@ -182,15 +181,14 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
+    globals_->set("cache-threshold", Element::create(.25));
+    globals_->set("cache-max-age", Element::create(20));
+    globals_->set("ddns-update-on-renew", Element::create(true));
+    globals_->set("ddns-use-conflict-resolution", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
 
-    {
-        SCOPED_TRACE("interface");
-        testNetworkInheritance<TestNetwork>(&Network::getIface, &Network::setIface,
-                                            "n", "g");
-    }
     {
         SCOPED_TRACE("client_class");
         testNetworkInheritance<TestNetwork>(&Network::getClientClass,
@@ -292,7 +290,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
                                              &Network4::setDdnsReplaceClientNameMode,
                                              D2ClientConfig::RCM_WHEN_PRESENT,
-                                             D2ClientConfig::RCM_ALWAYS); 
+                                             D2ClientConfig::RCM_ALWAYS);
     }
     {
         SCOPED_TRACE("ddns-generated-prefix");
@@ -324,6 +322,30 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network4::setStoreExtendedInfo,
                                              false, true);
     }
+    {
+        SCOPED_TRACE("cache-threshold");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheThreshold,
+                                             &Network::setCacheThreshold,
+                                             .1, .25);
+    }
+    {
+        SCOPED_TRACE("cache-max-age");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheMaxAge,
+                                             &Network::setCacheMaxAge,
+                                             10, 20);
+    }
+    {
+        SCOPED_TRACE("ddns-update-on-renew");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUpdateOnRenew,
+                                             &Network4::setDdnsUpdateOnRenew,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-use-conflict-resolution");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUseConflictResolution,
+                                             &Network4::setDdnsUseConflictResolution,
+                                             false, true);
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -341,6 +363,8 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
+    globals_->set("ddns-update-on-renew", Element::create(true));
+    globals_->set("ddns-use-conflict-resolution", Element::create(true));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -359,40 +383,40 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     }
     {
         SCOPED_TRACE("ddns-send-updates");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsSendUpdates,
-                                             &Network4::setDdnsSendUpdates,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsSendUpdates,
+                                             &Network6::setDdnsSendUpdates,
                                              false, true);
     }
     {
         SCOPED_TRACE("ddns-override-no-update");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideNoUpdate,
-                                             &Network4::setDdnsOverrideNoUpdate,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsOverrideNoUpdate,
+                                             &Network6::setDdnsOverrideNoUpdate,
                                              false, true);
     }
     {
         SCOPED_TRACE("ddns-override-client-update");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideClientUpdate,
-                                             &Network4::setDdnsOverrideClientUpdate,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsOverrideClientUpdate,
+                                             &Network6::setDdnsOverrideClientUpdate,
                                              false, true);
     }
 
     {
         SCOPED_TRACE("ddns-replace-client-name");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
-                                             &Network4::setDdnsReplaceClientNameMode,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsReplaceClientNameMode,
+                                             &Network6::setDdnsReplaceClientNameMode,
                                              D2ClientConfig::RCM_WHEN_PRESENT,
-                                             D2ClientConfig::RCM_ALWAYS); 
+                                             D2ClientConfig::RCM_ALWAYS);
     }
     {
         SCOPED_TRACE("ddns-generated-prefix");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsGeneratedPrefix,
-                                             &Network4::setDdnsGeneratedPrefix,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsGeneratedPrefix,
+                                             &Network6::setDdnsGeneratedPrefix,
                                              "np", "gp");
     }
     {
         SCOPED_TRACE("ddns-qualifying-suffix");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsQualifyingSuffix,
-                                             &Network4::setDdnsQualifyingSuffix,
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsQualifyingSuffix,
+                                             &Network6::setDdnsQualifyingSuffix,
                                              "ns", "gs");
     }
     {
@@ -409,8 +433,20 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     }
     {
         SCOPED_TRACE("store-extended-info");
-        testNetworkInheritance<TestNetwork4>(&Network6::getStoreExtendedInfo,
+        testNetworkInheritance<TestNetwork6>(&Network6::getStoreExtendedInfo,
                                              &Network6::setStoreExtendedInfo,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-update-on-renew");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUpdateOnRenew,
+                                             &Network6::setDdnsUpdateOnRenew,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-use-conflict-resolution");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
+                                             &Network6::setDdnsUseConflictResolution,
                                              false, true);
     }
 
@@ -458,62 +494,62 @@ TEST_F(NetworkTest, inheritanceSupport6) {
 // parent no global value exists.
 TEST_F(NetworkTest, getPropertyNoParentNoChild) {
     NetworkPtr net_child(new Network());
-    EXPECT_TRUE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getValid().unspecified());
 }
 
 // Test that child network returns specified value.
 TEST_F(NetworkTest, getPropertyNoParentChild) {
     NetworkPtr net_child(new Network());
-    net_child->setIface("child_iface");
+    net_child->setValid(12345);
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("child_iface", net_child->getIface(Network::Inheritance::NONE).get());
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    EXPECT_EQ(12345, net_child->getValid(Network::Inheritance::NONE).get());
+    EXPECT_EQ(12345, net_child->getValid().get());
 }
 
 // Test that parent specific value is returned when the value
 // is not specified for the child network.
 TEST_F(NetworkTest, getPropertyParentNoChild) {
     TestNetworkPtr net_child(new TestNetwork());
-    EXPECT_TRUE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getValid().unspecified());
 
     TestNetworkPtr net_parent(new TestNetwork());
-    net_parent->setIface("parent_iface");
-    EXPECT_EQ("parent_iface", net_parent->getIface().get());
+    net_parent->setValid(23456);
+    EXPECT_EQ(23456, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("parent_iface", net_child->getIface().get());
+    EXPECT_EQ(23456, net_child->getValid().get());
 }
 
 // Test that value specified for the child network takes
 // precedence over the value specified for the parent network.
 TEST_F(NetworkTest, getPropertyParentChild) {
     TestNetworkPtr net_child(new TestNetwork());
-    net_child->setIface("child_iface");
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    net_child->setValid(12345);
+    EXPECT_EQ(12345, net_child->getValid().get());
 
     TestNetworkPtr net_parent(new TestNetwork());
-    net_parent->setIface("parent_iface");
-    EXPECT_EQ("parent_iface", net_parent->getIface().get());
+    net_parent->setValid(23456);
+    EXPECT_EQ(23456, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("child_iface", net_child->getIface().get());
+    EXPECT_EQ(12345, net_child->getValid().get());
 }
 
 // Test that global value is inherited if there is no network
@@ -521,16 +557,16 @@ TEST_F(NetworkTest, getPropertyParentChild) {
 TEST_F(NetworkTest, getPropertyGlobalNoParentNoChild) {
     TestNetworkPtr net_child(new TestNetwork());
 
-    globals_->set("interface", Element::create("global_iface"));
+    globals_->set("valid-lifetime", Element::create(34567));
 
     net_child->setFetchGlobalsFn(getFetchGlobalsFn());
 
-    EXPECT_FALSE(net_child->getIface().unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
-    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_FALSE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_FALSE(net_child->getValid().unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_FALSE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ("global_iface", net_child->getIface().get());
+    EXPECT_EQ(34567, net_child->getValid().get());
 }
 
 // Test that getSiaddr() never fails.

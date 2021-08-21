@@ -108,6 +108,8 @@ using namespace std;
   DDNS_REPLACE_CLIENT_NAME "ddns-replace-client-name"
   DDNS_GENERATED_PREFIX "ddns-generated-prefix"
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
+  DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
+  DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
@@ -504,6 +506,8 @@ global_param: data_directory
             | ddns_replace_client_name
             | ddns_generated_prefix
             | ddns_qualifying_suffix
+            | ddns_update_on_renew
+            | ddns_use_conflict_resolution
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
@@ -634,6 +638,18 @@ ddns_qualifying_suffix: DDNS_QUALIFYING_SUFFIX {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ddns-qualifying-suffix", s);
     ctx.leave();
+};
+
+ddns_update_on_renew: DDNS_UPDATE_ON_RENEW COLON BOOLEAN {
+    ctx.unique("ddns-update-on-renew", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-update-on-renew", b);
+};
+
+ddns_use_conflict_resolution: DDNS_USE_CONFLICT_RESOLUTION COLON BOOLEAN {
+    ctx.unique("ddns-use-conflict-resolution", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-use-conflict-resolution", b);
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
@@ -1295,6 +1311,8 @@ subnet6_param: preferred_lifetime
              | ddns_replace_client_name
              | ddns_generated_prefix
              | ddns_qualifying_suffix
+             | ddns_update_on_renew
+             | ddns_use_conflict_resolution
              | store_extended_info
              | unknown_map_entry
              ;
@@ -1429,6 +1447,8 @@ shared_network_param: name
                     | ddns_replace_client_name
                     | ddns_generated_prefix
                     | ddns_qualifying_suffix
+                    | ddns_update_on_renew
+                    | ddns_use_conflict_resolution
                     | store_extended_info
                     | unknown_map_entry
                     ;

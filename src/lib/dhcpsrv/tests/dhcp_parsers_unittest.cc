@@ -2790,6 +2790,12 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getStoreExtendedInfo().unspecified());
     EXPECT_FALSE(subnet->getStoreExtendedInfo().get());
+
+    EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2870,6 +2876,12 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getStoreExtendedInfo().unspecified());
     EXPECT_FALSE(subnet->getStoreExtendedInfo().get());
+
+    EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2891,7 +2903,6 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     ASSERT_TRUE(network);
 
     EXPECT_TRUE(network->hasFetchGlobalsFn());
-
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
@@ -2945,6 +2956,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getStoreExtendedInfo().unspecified());
     EXPECT_FALSE(network->getStoreExtendedInfo().get());
+
+    EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3020,6 +3037,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getStoreExtendedInfo().unspecified());
     EXPECT_FALSE(network->getStoreExtendedInfo().get());
+
+    EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
+
+    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
+    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code

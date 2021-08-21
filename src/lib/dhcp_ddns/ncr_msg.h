@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -253,12 +253,15 @@ public:
     /// expires.
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
+    /// @param conflict_resolution indicates whether or not conflict resolution
+    /// (per RFC 4703) is enabled.
     NameChangeRequest(const NameChangeType change_type,
                       const bool forward_change, const bool reverse_change,
                       const std::string& fqdn, const std::string& ip_address,
                       const D2Dhcid& dhcid,
                       const uint64_t lease_expires_on,
-                      const uint32_t lease_length);
+                      const uint32_t lease_length,
+                      const bool conflict_resolution = true);
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// buffer containing a marshalled request in a given format.
@@ -321,7 +324,8 @@ public:
     ///      "ip-address" : "<address>",
     ///      "dhcid" : "<hex_string>",
     ///      "lease-expires-on" : "<yyyymmddHHMMSS>",
-    ///      "lease-length" : <secs>
+    ///      "lease-length" : <secs>,
+    ///      "use-conflict-resolution": <boolean>
     ///     }
     /// @endcode
     ///
@@ -357,6 +361,8 @@ public:
     ///     - SS - seconds of the minute (0-59)
     /// - lease-length - the length of the lease in seconds.  This is an
     ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
+    /// - use-conflict-resolution - when true, follow RFC 4703 which uses
+    ///   DHCID records to prohibit multiple clients from updating an FQDN
     ///
     /// Examples:
     ///
@@ -371,7 +377,8 @@ public:
     ///     "ip-address" : "192.168.2.1" ,
     ///     "dhcid" : "010203040A7F8E3D" ,
     ///     "lease-expires-on" : "20130121132405",
-    ///     "lease-length" : 1300
+    ///     "lease-length" : 1300,
+    ///     "use-conflict-resolution": true
     ///  }
     /// @endcode
     ///
@@ -386,7 +393,8 @@ public:
     ///     "ip-address" : "2001::db8:1::2",
     ///     "dhcid" : "010203040A7F8E3D" , "
     ///     "lease-expires-on" : "20130121132405",
-    ///     "lease-length" : 27400
+    ///     "lease-length" : 27400,
+    ///     "use-conflict-resolution": true
     ///   }
     /// @endcode
     ///
@@ -649,6 +657,28 @@ public:
     /// Element
     void setLeaseLength(isc::data::ConstElementPtr element);
 
+    /// @brief Checks if conflict resolution is enabled
+    ///
+    /// @return a true if the conflict resolution is enabled.
+    bool useConflictResolution() const {
+        return (conflict_resolution_);
+    }
+
+    /// @brief Sets the conflict resolution flag to the given value.
+    ///
+    /// @param value contains the new value to assign to the conflict
+    /// resolution flag
+    void setConflictResolution(const bool value);
+
+    /// @brief Sets the conflict resolution flag to the value of the given Element.
+    ///
+    /// @param element is a boolean Element containing the conflict resolution flag
+    /// value.
+    ///
+    /// @throw NcrMessageError if the element is not a boolean
+    /// Element
+    void setConflictResolution(isc::data::ConstElementPtr element);
+
     /// @brief Fetches the request status.
     ///
     /// @return the request status as a NameChangeStatus
@@ -716,6 +746,9 @@ private:
 
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
     uint32_t lease_length_;
+
+    /// @brief Indicates if conflict resolution is enabled.
+    bool conflict_resolution_;
 
     /// @brief The processing status of the request.  Used internally.
     NameChangeStatus status_;

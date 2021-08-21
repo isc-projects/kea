@@ -37,7 +37,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\" : true "
      "}",
     // Valid Remove.
      "{"
@@ -48,7 +49,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\" : true "
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -59,7 +61,8 @@ const char *valid_msgs[] =
      " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300 "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolution\" : true "
      "}"
 };
 

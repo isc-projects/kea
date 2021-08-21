@@ -19,6 +19,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -314,16 +315,16 @@ TEST_P(Dhcp4GetConfigTest, run) {
             std::cerr << ",\n";
         }
         std::cerr << "    // CONFIGURATION " << config_counter;
-        ASSERT_NO_THROW(expected = prettyPrint(dhcp));
-        ASSERT_NO_THROW(outputFormatted(dhcp->str()));
+        ASSERT_NO_THROW_LOG(expected = prettyPrint(dhcp));
+        ASSERT_NO_THROW_LOG(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
         // get the expected config using the dhcpv4 syntax parser
         ElementPtr jsond;
-        ASSERT_NO_THROW(jsond = parseDHCP4(expected, true));
+        ASSERT_NO_THROW_LOG(jsond = parseDHCP4(expected, true));
         ElementPtr jsonj;
         // get the expected config using the generic JSON syntax parser
-        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        ASSERT_NO_THROW_LOG(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         // check that unparsed and expected values match
@@ -344,7 +345,7 @@ TEST_P(Dhcp4GetConfigTest, run) {
     // is it a fixed point?
     ConstSrvConfigPtr extracted2 = CfgMgr::instance().getStagingCfg();
     ConstElementPtr unparsed2;
-    ASSERT_NO_THROW(unparsed2 = extracted2->toElement());
+    ASSERT_NO_THROW_LOG(unparsed2 = extracted2->toElement());
     ASSERT_TRUE(unparsed2);
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }

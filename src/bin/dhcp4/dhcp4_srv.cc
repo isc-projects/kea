@@ -2193,12 +2193,19 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
 
 void
 Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
-                                    const Lease4Ptr& old_lease) {
+                                    const Lease4Ptr& old_lease,
+                                    const DdnsParams& ddns_params) {
     if (!lease) {
         isc_throw(isc::Unexpected,
                   "NULL lease specified when creating NameChangeRequest");
+    }
 
-    } else if (!old_lease || !lease->hasIdenticalFqdn(*old_lease)) {
+    // Nothing to do if updates are not enabled.
+    if (!ddns_params.getEnableUpdates()) {
+        return;
+    }
+
+    if (!old_lease || ddns_params.getUpdateOnRenew() || !lease->hasIdenticalFqdn(*old_lease)) {
         if (old_lease) {
             // Queue's up a remove of the old lease's DNS (if needed)
             queueNCR(CHG_REMOVE, old_lease);
@@ -2552,14 +2559,13 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Set T1 and T2 per configuration.
         setTeeTimes(lease, subnet, resp);
 
-        // Create NameChangeRequests if DDNS is enabled and this is a
-        // real allocation.
-        if (!fake_allocation && (ex.getContext()->getDdnsParams()->getEnableUpdates())) {
+        // Create NameChangeRequests if this is a real allocation.
+        if (!fake_allocation) {
             try {
                 LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());
-                createNameChangeRequests(lease, ctx->old_lease_);
-
+                createNameChangeRequests(lease, ctx->old_lease_,
+                                         *ex.getContext()->getDdnsParams());
             } catch (const Exception& ex) {
                 LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())

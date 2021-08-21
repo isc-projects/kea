@@ -1,50 +1,177 @@
-Kea 1.8.2 (stable) released on Dec 16, 2020
+1824.	[func]		tmark
+	Added a new parameter, ddns-use-conflict-resolution, to
+	kea-dhcp4 and kea-dhcp6. This parameter is passed per request
+	to kea-dhcp-ddns which uses it to determine whether or not
+	conflict resolution rules (see RFC 4703) are followed for that
+	request.  The default value is true. Disabling conflict
+	resolution should only be used after careful consideration.
+	(Gitlab #1386)
 
-1803.	[build]		razvan
-	Library version numbers bumped for Kea 1.8.2 stable release
-	version.
-	(Gitlab #1583)
+1823.	[doc]		tomek
+	Updated options documentation for DHCPv4 and DHCPv6.
+	(Gitlab #1436, #1460)
 
-1802.	[bug]		andrei, razvan
-	Fix trivial logic error in handling the "lease4-update" command
-	manifesting itself on v4 if multi-threading is enabled.
-	Notable affected environment is a HA with the
-	"send-lease-updates" configuration setting explicitly set to
-	true. Prior to this fix, lease updates would not go through to
-	other HA nodes, even though some log lines would say they would.
-	A simple workaround prior to this fix is to disable
-	multi-threading.
-	(Gitlab #1542,#1572)
+1822.	[func]		fdupont
+	When multi-threading is enabled the status-get command displays
+	the average lenght of the multi-threading packet queue for last
+	10, 100 and 1000 packets.
+	(Gitlab #1306)
 
-Kea 1.8.1 (stable) released on Nov 12, 2020
+1821.	[func]		anonymous, fdupont
+	The forensic log hook library now logs release and decline
+	events.
+	(Gitlab #1445)
 
-1801.   [build]         razvan
-	Library version numbers bumped for Kea 1.8.1 stable release
-	version.
-	(Gitlab #1530)
-
-1800.	[bug]		razvan
+1820.	[bug]		razvan
 	Fixed lease update when using HA and lease_cmds hooks with
 	database backend. Previously, HA updates were rejected because
 	the database backend rejects operations on the lease if the old
 	expiration time is different than what it is already stored, to
 	act as a protection mechanism for parallel updates from several
 	threads or processes.
-	(Gitlab #1434,#1488)
+	(Gitlab #1434)
 
-1799.	[bug]		tmark
+1819.	[func]		fdupont
+	Improved error messages for bad escapes in JSON strings.
+	(Gitlab #151)
+
+1818.	[doc]		andrei
+	Add to the reservation documentation:
+	* instructions on how to choose "reservation-mode"
+	* priority of "reservation-mode" specified at all levels
+	* priority of file reservations vs database reservations
+	(Gitlab #1299)
+
+1817.	[func]		fdupont
+	Redact control agent logs to hide basic HTTP authentication
+	passwords from the configuration files. Note that when HTTP
+	headers are logged credentials are present in clear text.
+	(Gitlab #1459)
+
+1816.	[func]		fdupont
+	The message logged when basic HTTP authentication succeed is
+	now informative (was DEBUG, is INFO now).
+	(Gitlab #1450)
+
+1815.	[bug]		marcin
+	Fixed libdhcpsrv build failures when building without database
+	backends.
+	(Gitlab #1468)
+
+1814.	[func]		marcin
+	Added ip-reservations-unique global parameter which controls
+	whether or not it is allowed to create multiple host reservations
+	for the same IP address or delegated prefix. By default, it is
+	not allowed to create multiple reservations for the same lease
+	within the same subnet. This change facilitates the use case
+	in which a single host can communicate with the DHCP server over
+	multiple network interfaces but should be assigned the same
+	reserved lease regardless of which interface is used.
+	(Gitlab #1428)
+
+1813.	[func]		tmark
+	A new parameter, ddns-update-on-renew, has been added to
+	kea-dhcp4 and kea-dhcp6 configuration.  When true, the server
+	will always update DNS when a lease is renewed even if the DNS
+	information for the lease has not changed. The prior, and now
+	default, behavior is for the server to only update DNS for a
+	renewing lease if its DNS information has changed.
+	(Gitlab #1385)
+
+1812.	[doc]		andrei
+	Document how MAC addresses can be formatted for use as attributes
+	in RADIUS authentication
+	(Gitlab #1441)
+
+1811.	[func]		fdupont
+	Two new parameters were added: cache-threshold and cache-max-age
+	to the DHCPv4 and DHCPv6 global scopes. They will govern the
+	upcoming cache thresfold feature. The parameters can be set and
+	retrieved, but they're not used yet.
+	(Gitlab #1418)
+
+Kea 1.9.0 (development) released on Sep 30, 2020
+
+1810.	[build]		fdupont, razvan
+	Bump up libs version for Kea 1.9.0 release.
+	(Gitlab #1400)
+
+1809.	[func]		razvan
+	Added csv-format option to flex_option hook to be able to insert
+	option data in csv format. The implicit value is false,
+	maintaining compatibility with the previous default raw format.
+	(Gitlab #1373)
+
+1808.	[func]		razvan
+	Support for new IPv6-only-preferred option for DHCPv4 has been
+	added. It lets Kea to signal to compatible devices that the
+	IPv6 connectivity is available and they can disable their
+	IPv4 stack. This implements support for draft-ietf-dhc-v6only-08,
+	which is expected to be soon published by IETF as an RFC.
+	(Gitlab #1351)
+
+1807.	[doc]		tomek
+	Added separate table with DHCPv4 options that are governed by Kea
+	itself, rather than configured by administrator.
+	(Gitlab #1323, #1398)
+
+1806.	[bug]		tmark
+	The DNS update code behaving better when there is a shared
+	network and the code initially selected one subnet, but then
+	later determined that a different subnet will be used. There
+	is still a corner-case in DHCPv6 if the client requests multiple
+	addresses or multiple prefixes and some of them is serviced from
+	one subnet and some from another.
+	(Gitlab #1389)
+
+1805.	[doc]		tomek
+	API documentation for lease4-get-* and lease6-get-* commands
+	has been updated.
+	(Gitlab #1392)
+
+1804.	[func]		fdupont
+	Added a new reservation-get-by-id command to retrieve all host
+	reservations with an identifier value and type. Made the
+	subnet-id optional in the reservation-get-page command.
+	(Gitlab #1163)
+
+1803.	[doc]		fdupont
+	Corrected Kea ARM sections describing how to send DHCPv6
+	Vendor-specific Information Option (code 17) with sub-options.
+	(Gitlab #1025)
+
+1802.	[bug]		fdupont
+	Removed the bug which allowed for repeating the same
+	configuration parameter multiple times in the same scope.
+	The second occurrence of the parameter overwrote the first
+	occurrence causing server misconfiguration. Starting from
+	this change an error is raised when the same parameter occurs
+	multiple times in a given scope the location of the first value.
+	(Gitlab #1102)
+
+1801.	[doc]		fdupont
+	Moved JSON files describing commands to the share directory
+	and adding a new access entry taking read or write values.
+	(Gitlab #1240)
+
+1800.	[func]		fdupont
+	Added support of basic HTTP authentication in HTTP library,
+	control agent, kea shell and high availability hook.
+	(Gitlab #1304)
+
+1799.	[bug]		fdupont
+	Checked execution of queries to get schema versions of MySQL
+	and PostgreSQL database in kea-admin.
+	(Gitlab #828)
+
+1798.	[bug]		tmark
 	kea-dhcp4 now correctly updates DNS when a client
 	returns for lease after the lease has expired.  Prior
 	to this, the server would remove the entries but then
 	fail to add them unless the hostname (or FQDN) changed.
 	This change also eliminates redundant DNS removes when
 	expired leases are reclaimed and given to different clients.
-	(Gitlab #1419,#1409)
-
-1798.	[func]	razvan,tmark
-	Removed "Multithreading is experimental" warning log message
-	from kea-dhcp4 and kea-dhcp6 servers.
-	(Gitlab #1435,#1431)
+	(Gitlab #1409)
 
 Kea 1.8.0 (stable) released on Aug 26, 2020
 
@@ -56,7 +183,7 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	Kea HTTP client re-establishes connection with the HTTP server
 	when timeout occurs. Prior to this change the client tried to
 	reuse the connection after timeout often getting subsequent
-	timeouts.  Re-establishing the connection may help avoid further
+	timeouts. Re-establishing the connection may help avoid further
 	timeouts during the High Availability operation.
 	(Gitlab #1390)
 
@@ -66,10 +193,10 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #505)
 
 1794.	[func]		razvan
-	The 'status-get' command send to DHCPv4 or DHCPv6 servers will
-	return information about multi threading settings
-	('multi-threading-enabled', and only if this setting is active,
-	'thread-pool-size' and 'packet-queue-size').
+	The 'status-get' command send to DHCPv4 or DHCPv6 servers will return
+	information about multi threading settings ('multi-threading-enabled',
+	and only if this setting is active, 'thread-pool-size' and
+	'packet-queue-size').
 	(Gitlab #1305)
 
 1793.	[doc]		tmark
@@ -90,19 +217,18 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1384)
 
 1790.	[bug]		marcin
-	Fixed a bug in Kea Configuration Backend observed when using
-	certain MariaDB database versions. As a result of this bug the
-	Kea servers were unable to fetch configurations stored in the
-	database upon startup. The bug was related to the usage of
-	timestamps which in MariaDB must be set to 1970-01-01 00:00:01
-	UTC or later. In some cases the Kea CB used out of bounds
-	timestamp values. This bug was observed when using MariaDB
+	Fixed a bug in Kea Configuration Backend observed when using certain
+	MariaDB	database versions. As a result of this bug the Kea servers were
+	unable to fetch configurations stored in the database upon startup. The
+	bug was related to the usage of timestamps which in MariaDB must be
+	set to 1970-01-01 00:00:01 UTC or later. In some cases the Kea CB used
+	out of bounds timestamp values. This bug was observed when using MariaDB
 	10.4.13.
 	(Gitlab #1382)
 
 1789.	[bug]		razvan
-	Fixed a bug in the lease reclaim process which would not
-	reschedule the timer if the operation failed.
+	Fixed a bug in the lease reclaim process which would not reschedule the
+	timer if the operation failed.
 	(Gitlab #1335)
 
 1788.	[bug]*		fdupont
@@ -113,13 +239,12 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1254)
 
 1787.	[bug]		razvan
-	The recount leases functions consider leases in 'declined'
-	state as 'assigned' so that when the lease is reclaimed or
-	reused, no negative counters are generated. The
-	'subnet[X].reclaimed-leases' and 'reclaimed-leases' are now
-	cumulative counters and are never decremented or reset until
-	server restart. Removed references to non existent
-	'declined-reclaimed-addresses' counters.
+	The recount leases functions consider leases in 'declined' state as
+	'assigned' so that when the lease is reclaimed or reused, no negative
+	counters are generated. The 'subnet[X].reclaimed-leases' and
+	'reclaimed-leases' are now cumulative counters and are never
+	decremented or reset until server restart. Removed references to non
+	existent 'declined-reclaimed-addresses' counters.
 	(Gitlab #1336)
 
 1786.	[bug]		razvan
@@ -127,9 +252,9 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1065)
 
 1785.	[func]		fdupont
-	If enabled, the default value for queue capacity in congestion
-	control has been trimmed down from 500 to 64. The feature
-	continues to be disabled by default.
+	If enabled, the default value for queue capacity in congestion control
+	has been trimmed down from 500 to 64. The feature continues to be disabled
+	by default.
 	(Gitlab #285)
 
 1784.	[build]		wlodek
@@ -142,10 +267,9 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 	(Gitlab #1310)
 
 1782.	[bug]		tmark
-	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to
-	crash after losing connectivity to a configuration backend
-	database. The servers now correctly honor the
-	max-reconnect-tries parameter.
+	Corrected a bug that causes kea-dhcp4/kea-dhcp6 servers to crash after
+	losing connectivity to a configuration backend database. The servers
+	now correctly honor the max-reconnect-tries parameter.
 	(Gitlab #1369)
 
 1781.	[bug]		razvan

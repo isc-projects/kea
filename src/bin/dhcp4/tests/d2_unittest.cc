@@ -60,7 +60,8 @@ Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
         << dhcid_id_num << "\" , "
 
         " \"lease-expires-on\" : \"20140121132405\" , "
-        " \"lease-length\" : 1300 "
+        " \"lease-length\" : 1300, "
+        " \"use-conflict-resolution\" : true "
         "}";
 
     return (dhcp_ddns::NameChangeRequest::fromJSON(stream.str()));

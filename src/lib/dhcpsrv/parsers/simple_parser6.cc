@@ -87,7 +87,12 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "store-extended-info",            Element::boolean },
     { "statistic-default-sample-count", Element::integer },
     { "statistic-default-sample-age",   Element::integer },
-    { "multi-threading",                Element::map }
+    { "multi-threading",                Element::map },
+    { "cache-threshold",                Element::real },
+    { "cache-max-age",                  Element::integer },
+    { "ip-reservations-unique",         Element::boolean },
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -115,7 +120,10 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "hostname-char-replacement",      Element::string,  "" },
     { "store-extended-info",            Element::boolean, "false" },
     { "statistic-default-sample-count", Element::integer, "20" },
-    { "statistic-default-sample-age",   Element::integer, "0" }
+    { "statistic-default-sample-age",   Element::integer, "0" },
+    { "ip-reservations-unique",         Element::boolean, "true" },
+    { "ddns-update-on-renew",           Element::boolean, "false" },
+    { "ddns-use-conflict-resolution",   Element::boolean, "true" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -216,7 +224,11 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
     { "store-extended-info",            Element::boolean },
-    { "metadata",                       Element::map }
+    { "metadata",                       Element::map },
+    { "cache-threshold",                Element::real },
+    { "cache-max-age",                  Element::integer },
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -267,7 +279,9 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "calculate-tee-times",
     "t1-percent",
     "t2-percent",
-    "store-extended-info"
+    "store-extended-info",
+    "cache-threshold",
+    "cache-max-age"
 };
 
 /// @brief This table defines all pool parameters.
@@ -342,7 +356,11 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "hostname-char-set",              Element::string },
     { "hostname-char-replacement",      Element::string },
     { "store-extended-info",            Element::boolean },
-    { "metadata",                       Element::map }
+    { "metadata",                       Element::map },
+    { "cache-threshold",                Element::real },
+    { "cache-max-age",                  Element::integer },
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
