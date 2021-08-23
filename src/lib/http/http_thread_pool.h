@@ -130,6 +130,8 @@ private:
     /// -# Returns to caller.
     ///
     /// @param state new state for the pool.
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads.
     void setState(State state);
 
     /// @brief Thread-safe fetch of the pool's operational state.
