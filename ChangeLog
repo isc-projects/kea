@@ -1,3 +1,9 @@
+1936.	[build]		andrei
+	Kea attempts to first link with compatibility library OpenSSL 1.1
+	(usually found on CentOS 7) before falling back to the system
+	OpenSSL (1.0 on CentOS 7 which is out of support).
+	(Gitlab qa#261)
+
 1935.	[func]		andrei
 	The store-extended-info config entry was added to Kea YANG
 	modules at root-level and at subnet-level.
