@@ -259,52 +259,91 @@ else
    CRYPTO_NAME="OpenSSL"
    DISABLED_CRYPTO="Botan"
    CRYPTO_PACKAGE="openssl-1.1.0"
+   DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
    AC_DEFINE_UNQUOTED([WITH_OPENSSL], [], [Compile with OpenSSL crypto])
    AC_MSG_CHECKING(for OpenSSL library)
-   # from bind9
+   openssl_headers=
+   openssl_libraries=
 
-   if test "${use_openssl}" = "auto" ; then
-      use_openssl="yes"
-   fi
+   case "${use_openssl}" in
+      auto)
+         use_openssl="yes"
+         ;;
+      yes)
+         ;;
+      *)
+         # no was already handled
+         openssl_headers="${use_openssl}/include"
+         openssl_libraries="${use_openssl}/lib"
+         ;;
+   esac
+
+   # Search for an OpenSSL 11 compatibility library first. It should exist e.g. on CentOS 7.
    if test "${use_openssl}" = "yes" ; then
       for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
-          if test -f $d/include/openssl/opensslv.h; then
-             use_openssl=$d; break
-          fi
+         if test -f "${d}/include/openssl11/openssl/opensslv.h"; then
+            use_openssl="${d}"
+            openssl_headers="${d}/include/openssl11"
+            for l in lib lib64; do
+               if test -f "${d}/${l}/openssl11/libssl.so"; then
+                  openssl_libraries="${d}/${l}/openssl11"
+                  break
+               fi
+            done
+            if test -n "${openssl_headers}" && test -n "${openssl_libraries}"; then
+               break
+            fi
+         fi
       done
    fi
+
+   # Now search for the system OpenSSL library.
+   if test "${use_openssl}" = "yes" ; then
+      for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
+         if test -f $d/include/openssl/opensslv.h; then
+            use_openssl="${d}"
+            openssl_headers="${d}/include"
+            for l in lib lib64; do
+               if test -f "${d}/${l}/libssl.so"; then
+                  openssl_libraries="${d}/${l}"
+                  break
+               fi
+            done
+            if test -n "${openssl_headers}" && test -n "${openssl_libraries}"; then
+               break
+            fi
+         fi
+      done
+   fi
+
    if test "${use_openssl}" = "yes" ; then
       AC_MSG_ERROR([OpenSSL auto detection failed])
    fi
-   if ! test -f "${use_openssl}"/include/openssl/opensslv.h ; then
-      AC_MSG_ERROR([OpenSSL not found at ${use_openssl}])
-   fi
    AC_MSG_RESULT(yes)
-   if test "${use_openssl}" = "/usr" ; then
+
+   if test "${openssl_headers}" = "/usr/include" ; then
       CRYPTO_CFLAGS=""
       CRYPTO_INCLUDES=""
       CRYPTO_LIBS="-lssl -lcrypto"
-      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl"
    else
       CRYPTO_CFLAGS=""
-      CRYPTO_INCLUDES="-I${use_openssl}/include"
-      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
+      CRYPTO_INCLUDES="-I${openssl_headers}"
       case $host in
           *-solaris*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -R${use_openssl}/lib -lssl -lcrypto"
+              CRYPTO_LIBS="-L${openssl_libraries} -R${openssl_libraries} -lssl -lcrypto"
               ;;
           *-hp-hpux*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -Wl,+b: -lssl -lcrypto"
+              CRYPTO_LIBS="-L${openssl_libraries} -Wl,+b: -lssl -lcrypto"
               ;;
           *-apple-darwin*)
-              if test -f "${use_openssl}/lib/libcrypto.dylib" ; then
-                 CRYPTO_LIBS="-L${use_openssl}/lib -lssl -lcrypto"
+              if test -f "${openssl_libraries}/libcrypto.dylib" ; then
+                 CRYPTO_LIBS="-L${openssl_libraries} -lssl -lcrypto"
               else
-                 CRYPTO_LIBS="${use_openssl}/lib/libssl.a ${use_openssl}/lib/libcrypto.a"
+                 CRYPTO_LIBS="${openssl_libraries}/libssl.a ${openssl_libraries}/libcrypto.a"
               fi
               ;;
           *)
-              CRYPTO_LIBS="-L${use_openssl}/lib -lssl -lcrypto"
+              CRYPTO_LIBS="-L${openssl_libraries} -lssl -lcrypto"
               ;;
       esac
     fi
