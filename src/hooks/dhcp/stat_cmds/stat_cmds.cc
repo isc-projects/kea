@@ -676,16 +676,30 @@ LeaseStatCmdsImpl::getSubnetStat(const SubnetID& subnet_id, const std::string& n
 
 int
 StatCmds::statLease4GetHandler(CalloutHandle& handle) {
-    LeaseStatCmdsImpl impl;
-    MultiThreadingCriticalSection sc;
-    return(impl.statLease4GetHandler(handle));
+    try {
+        LeaseStatCmdsImpl impl;
+        MultiThreadingCriticalSection sc;
+        return (impl.statLease4GetHandler(handle));
+    } catch (const std::exception& ex) {
+
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE4_FAILED)
+                  .arg(ex.what());
+    }
+    return (1);
 }
 
 int
 StatCmds::statLease6GetHandler(CalloutHandle& handle) {
-    LeaseStatCmdsImpl impl;
-    MultiThreadingCriticalSection sc;
-    return(impl.statLease6GetHandler(handle));
+    try {
+        LeaseStatCmdsImpl impl;
+        MultiThreadingCriticalSection sc;
+        return (impl.statLease6GetHandler(handle));
+    } catch (const std::exception& ex) {
+
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE6_FAILED)
+                  .arg(ex.what());
+    }
+    return (1);
 }
 
 };
