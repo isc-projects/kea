@@ -320,6 +320,8 @@ public:
                 }
             }
 
+            // If running on multiple threads, threads should be prohibited from
+            // changing the thread pool state.
             if (num_threads_) {
                 ASSERT_THROW(client_->start(), MultiThreadingInvalidOperation);
                 ASSERT_THROW(client_->pause(), MultiThreadingInvalidOperation);
