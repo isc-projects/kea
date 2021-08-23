@@ -321,9 +321,9 @@ public:
             }
 
             if (num_threads_) {
-                EXPECT_THROW(client_->start(), MultiThreadingInvalidOperation);
-                EXPECT_THROW(client_->pause(), MultiThreadingInvalidOperation);
-                EXPECT_THROW(client_->resume(), MultiThreadingInvalidOperation);
+                ASSERT_THROW(client_->start(), MultiThreadingInvalidOperation);
+                ASSERT_THROW(client_->pause(), MultiThreadingInvalidOperation);
+                ASSERT_THROW(client_->resume(), MultiThreadingInvalidOperation);
             }
 
             // Get stringified thread-id.
