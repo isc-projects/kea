@@ -93,6 +93,11 @@ public:
     }
 
 private:
+    /// @brief Check specified thread id against own threads.
+    ///
+    /// @return true if thread is owned, false otherwise.
+    bool checkThreadId(std::thread::id id);
+
     /// @brief Thread-safe change of the pool's run state.
     ///
     /// Transitions a pool from one run state to another:
@@ -138,6 +143,12 @@ private:
     /// @return true if the change is valid, false otherwise.
     /// @note Must be called from a thread-safe context.
     bool validateStateChange(State state) const;
+
+    /// @brief Text representation of a given state.
+    ///
+    /// @param state The state for the pool.
+    /// @return The text representation of a given state.
+    static std::string stateToText(State state);
 
     /// @brief Work function executed by each thread in the pool.
     ///

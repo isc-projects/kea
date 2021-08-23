@@ -120,7 +120,7 @@ struct ThreadPool {
     void wait() {
         auto id = std::this_thread::get_id();
         if (checkThreadId(id)) {
-            isc_throw(InvalidOperation, "thread pool stop called by owned thread");
+            isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by owned thread");
         }
         queue_.wait();
     }
@@ -135,7 +135,7 @@ struct ThreadPool {
     bool wait(uint32_t seconds) {
         auto id = std::this_thread::get_id();
         if (checkThreadId(id)) {
-            isc_throw(InvalidOperation, "thread pool stop called by owned thread");
+            isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by owned thread");
         }
         return (queue_.wait(seconds));
     }
@@ -203,7 +203,7 @@ private:
     void stopInternal() {
         auto id = std::this_thread::get_id();
         if (checkThreadId(id)) {
-            isc_throw(InvalidOperation, "thread pool stop called by owned thread");
+            isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by owned thread");
         }
         queue_.disable();
         for (auto thread : threads_) {

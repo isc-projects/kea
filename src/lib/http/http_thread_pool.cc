@@ -85,12 +85,40 @@ HttpThreadPool::validateStateChange(State new_state) const {
     case State::PAUSED:
         return (new_state != State::PAUSED);
     }
+    return (false);
+}
 
+std::string
+HttpThreadPool::stateToText(State state) {
+    switch (state) {
+    case State::STOPPED:
+        return (std::string("stopped"));
+    case State::RUNNING:
+        return (std::string("running"));
+    case State::PAUSED:
+        return (std::string("paused"));
+    }
+    return (std::string("unknown-state"));
+}
+
+bool
+HttpThreadPool::checkThreadId(std::thread::id id) {
+    for (auto thread : threads_) {
+        if (id == thread->get_id()) {
+            return (true);
+        }
+    }
     return (false);
 }
 
 void
 HttpThreadPool::setState(State new_state) {
+    auto id = std::this_thread::get_id();
+    if (checkThreadId(id)) {
+        isc_throw(MultiThreadingInvalidOperation, "invalid thread pool state change to "
+                  << HttpThreadPool::stateToText(new_state) << " performed by owned thread");
+    }
+
     std::unique_lock<std::mutex> main_lck(mutex_);
 
     // Bail if the transition is invalid.

@@ -178,6 +178,14 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief Exception thrown when an owned thread is trying to stop or pause the
+/// respective thread pool (which would result in a dead-lock).
+class MultiThreadingInvalidOperation : public Exception {
+public:
+    MultiThreadingInvalidOperation(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {};
+};
+
 ///
 /// A shortcut macro to insert known values into exception arguments.
 ///

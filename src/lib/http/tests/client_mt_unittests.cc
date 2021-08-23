@@ -191,22 +191,22 @@ public:
 };
 
 /// @brief Test fixture class for testing threading modes of HTTP client.
-class MtHttpClientTest : public ::testing::Test {
+class MultiThreadingHttpClientTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
-    MtHttpClientTest()
+    MultiThreadingHttpClientTest()
         : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
           test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
           expected_requests_(0), num_in_progress_(0), num_finished_(0), paused_(false),
           pause_cnt_(0) {
-        test_timer_.setup(std::bind(&MtHttpClientTest::timeoutHandler, this, true),
+        test_timer_.setup(std::bind(&MultiThreadingHttpClientTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         MultiThreadingMgr::instance().setMode(true);
     }
 
     /// @brief Destructor.
-    ~MtHttpClientTest() {
+    ~MultiThreadingHttpClientTest() {
         // Stop the client.
         if (client_) {
             client_->stop();
@@ -811,7 +811,7 @@ public:
 
 // Verifies we can construct and destruct, in both single
 // and multi-threaded modes.
-TEST_F(MtHttpClientTest, basics) {
+TEST_F(MultiThreadingHttpClientTest, basics) {
     MultiThreadingMgr::instance().setMode(false);
     HttpClientPtr client;
 
@@ -879,7 +879,7 @@ TEST_F(MtHttpClientTest, basics) {
 }
 
 // Verifies we can construct with deferred start.
-TEST_F(MtHttpClientTest, deferredStart) {
+TEST_F(MultiThreadingHttpClientTest, deferredStart) {
     MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
@@ -923,7 +923,7 @@ TEST_F(MtHttpClientTest, deferredStart) {
 }
 
 // Verifies we can restart after stop.
-TEST_F(MtHttpClientTest, restartAfterStop) {
+TEST_F(MultiThreadingHttpClientTest, restartAfterStop) {
     MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
@@ -964,14 +964,14 @@ TEST_F(MtHttpClientTest, restartAfterStop) {
 // requests, and listeners.
 
 // Single-threaded, three batches, one listener.
-TEST_F(MtHttpClientTest, zeroByThreeByOne) {
+TEST_F(MultiThreadingHttpClientTest, zeroByThreeByOne) {
     size_t num_threads = 0; // Zero threads = ST mode.
     size_t num_batches = 3;
     threadRequestAndReceive(num_threads, num_batches);
 }
 
 // Single-threaded, three batches, three listeners.
-TEST_F(MtHttpClientTest, zeroByThreeByThree) {
+TEST_F(MultiThreadingHttpClientTest, zeroByThreeByThree) {
     size_t num_threads = 0; // Zero threads = ST mode.
     size_t num_batches = 3;
     size_t num_listeners = 3;
@@ -979,28 +979,28 @@ TEST_F(MtHttpClientTest, zeroByThreeByThree) {
 }
 
 // Multi-threaded with one thread, three batches, one listener
-TEST_F(MtHttpClientTest, oneByThreeByOne) {
+TEST_F(MultiThreadingHttpClientTest, oneByThreeByOne) {
     size_t num_threads = 1;
     size_t num_batches = 3;
     threadRequestAndReceive(num_threads, num_batches);
 }
 
 // Multi-threaded with three threads, three batches, one listener
-TEST_F(MtHttpClientTest, threeByThreeByOne) {
+TEST_F(MultiThreadingHttpClientTest, threeByThreeByOne) {
     size_t num_threads = 3;
     size_t num_batches = 3;
     threadRequestAndReceive(num_threads, num_batches);
 }
 
 // Multi-threaded with three threads, nine batches, one listener
-TEST_F(MtHttpClientTest, threeByNineByOne) {
+TEST_F(MultiThreadingHttpClientTest, threeByNineByOne) {
     size_t num_threads = 3;
     size_t num_batches = 9;
     threadRequestAndReceive(num_threads, num_batches);
 }
 
 // Multi-threaded with two threads, four batches, two listeners
-TEST_F(MtHttpClientTest, twoByFourByTwo) {
+TEST_F(MultiThreadingHttpClientTest, twoByFourByTwo) {
     size_t num_threads = 2;
     size_t num_batches = 4;
     size_t num_listeners = 2;
@@ -1008,7 +1008,7 @@ TEST_F(MtHttpClientTest, twoByFourByTwo) {
 }
 
 // Multi-threaded with four threads, four batches, two listeners
-TEST_F(MtHttpClientTest, fourByFourByTwo) {
+TEST_F(MultiThreadingHttpClientTest, fourByFourByTwo) {
     size_t num_threads = 4;
     size_t num_batches = 4;
     size_t num_listeners = 2;
@@ -1017,7 +1017,7 @@ TEST_F(MtHttpClientTest, fourByFourByTwo) {
 
 // Verifies that we can cleanly pause, resume, and shutdown while doing
 // multi-threaded work.
-TEST_F(MtHttpClientTest, workPauseResumeShutdown) {
+TEST_F(MultiThreadingHttpClientTest, workPauseResumeShutdown) {
     size_t num_threads = 4;
     size_t num_batches = 4;
     size_t num_listeners = 4;

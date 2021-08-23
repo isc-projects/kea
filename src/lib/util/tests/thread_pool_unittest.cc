@@ -60,10 +60,10 @@ public:
     /// @brief task function which tries to stop the thread pool and then calls
     /// @ref runAndWait
     void runStopResetAndWait(ThreadPool<CallBack>* thread_pool) {
-        EXPECT_THROW(thread_pool->stop(), InvalidOperation);
-        EXPECT_THROW(thread_pool->reset(), InvalidOperation);
-        EXPECT_THROW(thread_pool->wait(), InvalidOperation);
-        EXPECT_THROW(thread_pool->wait(0), InvalidOperation);
+        EXPECT_THROW(thread_pool->stop(), MultiThreadingInvalidOperation);
+        EXPECT_THROW(thread_pool->reset(), MultiThreadingInvalidOperation);
+        EXPECT_THROW(thread_pool->wait(), MultiThreadingInvalidOperation);
+        EXPECT_THROW(thread_pool->wait(0), MultiThreadingInvalidOperation);
         sigset_t nsset;
         pthread_sigmask(SIG_SETMASK, 0, &nsset);
         EXPECT_EQ(1, sigismember(&nsset, SIGCHLD));

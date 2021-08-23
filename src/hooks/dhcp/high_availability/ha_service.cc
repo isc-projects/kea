@@ -1268,9 +1268,9 @@ HAService::updatePendingRequestInternal(QueryPtrType& query) {
 template<typename QueryPtrType>
 void
 HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
-                          const HAConfig::PeerConfigPtr& config,
-                          const ConstElementPtr& command,
-                          const ParkingLotHandlePtr& parking_lot) {
+                                const HAConfig::PeerConfigPtr& config,
+                                const ConstElementPtr& command,
+                                const ParkingLotHandlePtr& parking_lot) {
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
@@ -2834,14 +2834,25 @@ HAService::pauseClientAndListener() {
     // Since we're used as CS callback we need to suppress
     // any exceptions, unlikely though they may be.
     try {
+        // The listener is the only one handling commands, so if any command
+        // uses @ref MultiThreadingCriticalSection, it should throw first.
+        // In this situation there is no need to resume the client's
+        // @ref HttpThreadPool because it does not get paused in the first place.
+        if (listener_) {
+            listener_->pause();
+        }
+
         if (client_) {
             client_->pause();
         }
 
-        if (listener_) {
-            listener_->pause();
-        }
-    } catch (std::exception& ex) {
+    } catch (const isc::MultiThreadingInvalidOperation& ex) {
+        LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_ILLEGAL)
+                  .arg(ex.what());
+        // The exception needs to be propagated to the caller of the
+        // @ref MultiThreadingCriticalSection constructor.
+        throw;
+    } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_FAILED)
                   .arg(ex.what());
     }
@@ -2870,12 +2881,12 @@ HAService::stopClientAndListener() {
     // Remove critical section callbacks.
     MultiThreadingMgr::instance().removeCriticalSectionCallbacks("HA_MT");
 
-    if (client_) {
-        client_->stop();
-    }
-
     if (listener_) {
         listener_->stop();
+    }
+
+    if (client_) {
+        client_->stop();
     }
 }
 

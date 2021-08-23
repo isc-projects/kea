@@ -129,18 +129,29 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 void
 MultiThreadingMgr::stopProcessing() {
     if (getMode() && !isInCriticalSectionInternal()) {
-        if (getThreadPoolSize()) {
-            thread_pool_.stop();
-        }
-
+        // First call the registered callback for entering the critical section
+        // so that if any exception is thrown, there is no need to stop and then
+        // start the service threads.
         for (const auto& cb : cs_callbacks_.getCallbackPairs()) {
             try {
                 (cb.entry_cb_)();
+            } catch (const isc::MultiThreadingInvalidOperation& ex) {
+                // If any registered callback throws, the exception needs to be
+                // propagated to the caller of the
+                // @ref MultiThreadingCriticalSection constructor.
+                // Because this function is called by the
+                // @ref MultiThreadingCriticalSection constructor, throwing here
+                // is safe.
+                throw;
             } catch (...) {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks
                 // must be exception-proof
             }
+        }
+
+        if (getThreadPoolSize()) {
+            thread_pool_.stop();
         }
     }
 }
@@ -159,6 +170,9 @@ MultiThreadingMgr::startProcessing() {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks
                 // must be exception-proof
+                // Because this function is called by the
+                // @ref MultiThreadingCriticalSection destructor, throwing here
+                // is not safe and will cause the process to crash.
             }
         }
     }
