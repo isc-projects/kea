@@ -320,6 +320,12 @@ public:
                 }
             }
 
+            if (num_threads_) {
+                EXPECT_THROW(client_->start(), MultiThreadingInvalidOperation);
+                EXPECT_THROW(client_->pause(), MultiThreadingInvalidOperation);
+                EXPECT_THROW(client_->resume(), MultiThreadingInvalidOperation);
+            }
+
             // Get stringified thread-id.
             std::stringstream ss;
             ss << std::this_thread::get_id();

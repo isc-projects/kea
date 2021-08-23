@@ -47,7 +47,7 @@ TEST_F(HttpThreadPoolTest, invalidConstruction) {
 
     // Constructing with pool size of 0 should fail.
     ASSERT_THROW_MSG(pool.reset(new HttpThreadPool(io_service_, 0)), BadValue,
-                     "HttpThreadPool::ctor pool_size must be > 0");
+                     "pool_size must be non 0");
 }
 
 // Verifies that a pool can be created without starting it.

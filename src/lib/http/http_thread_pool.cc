@@ -36,7 +36,7 @@ HttpThreadPool::HttpThreadPool(IOServicePtr io_service, size_t pool_size,
       run_state_(State::STOPPED), mutex_(), thread_cv_(),
       main_cv_(), paused_(0), running_(0), exited_(0)  {
     if (!pool_size) {
-        isc_throw(BadValue, "HttpThreadPool::ctor pool_size must be > 0");
+        isc_throw(BadValue, "pool_size must be non 0");
     }
 
     // If we weren't given an IOService, create our own.

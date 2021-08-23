@@ -142,6 +142,8 @@ MultiThreadingMgr::stopProcessing() {
                 // Because this function is called by the
                 // @ref MultiThreadingCriticalSection constructor, throwing here
                 // is safe.
+                // @note should we call the exit_cb_ here for all successful
+                // entry_cb_ already run?
                 throw;
             } catch (...) {
                 // We can't log it and throwing could be chaos.
@@ -173,6 +175,8 @@ MultiThreadingMgr::startProcessing() {
                 // Because this function is called by the
                 // @ref MultiThreadingCriticalSection destructor, throwing here
                 // is not safe and will cause the process to crash.
+                // @note should we call the exit_cb_ here in reverse order of
+                // the entry_cb_ calls?
             }
         }
     }

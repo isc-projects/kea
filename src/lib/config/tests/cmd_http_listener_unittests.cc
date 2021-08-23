@@ -241,10 +241,6 @@ public:
                                       const ConstElementPtr& /*command_arguments*/) {
         ElementPtr arguments = Element::createList();
         arguments->add(Element::create("bar"));
-        EXPECT_THROW(listener_->start(), InvalidOperation);
-        EXPECT_THROW(listener_->pause(), MultiThreadingInvalidOperation);
-        EXPECT_THROW(listener_->resume(), MultiThreadingInvalidOperation);
-        EXPECT_THROW(listener_->stop(), MultiThreadingInvalidOperation);
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
@@ -310,6 +306,11 @@ public:
                 }
             }
         }
+
+        EXPECT_THROW(listener_->start(), InvalidOperation);
+        EXPECT_THROW(listener_->pause(), MultiThreadingInvalidOperation);
+        EXPECT_THROW(listener_->resume(), MultiThreadingInvalidOperation);
+        EXPECT_THROW(listener_->stop(), MultiThreadingInvalidOperation);
 
         // We're done, ship it!
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
