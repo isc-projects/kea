@@ -1399,13 +1399,15 @@ def prepare_system_local(features, check_times):
         install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++',
-                    'log4cplus-devel', 'boost-devel', 'mariadb-devel', 'postgresql-devel']
+                    'log4cplus-devel', 'mariadb-devel', 'postgresql-devel']
 
         if revision == '7':
             # openssl-devel is version 1.0.2k which is out of support.
             # Install 1.1.1g instead.
+            packages.append('boost169-devel')
             packages.append('openssl11-devel')
         else:
+            packages.append('boost-devel')
             packages.append('openssl-devel')
 
         if 'native-pkg' in features:
