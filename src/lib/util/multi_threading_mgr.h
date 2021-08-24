@@ -261,7 +261,7 @@ private:
     bool isInCriticalSectionInternal();
 
     /// @brief Class method tests if current thread is allowed to enter the
-    /// @ref MultiThreadingCriticalSection and to invoke the stop and start
+    /// @ref MultiThreadingCriticalSection and to invoke the entry and exit
     /// callbacks.
     ///
     /// Has no effect in single-threaded mode.
