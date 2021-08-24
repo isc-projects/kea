@@ -249,6 +249,13 @@ public:
                           const CloseHandler& close_callback =
                           CloseHandler());
 
+    /// @brief Check if the current thread can perform thread pool state
+    /// transition.
+    ///
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPermissions();
+
     /// @brief Starts running the client's thread pool, if multi-threaded.
     void start();
 

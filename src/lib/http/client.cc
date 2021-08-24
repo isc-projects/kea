@@ -1778,6 +1778,17 @@ public:
         stop();
     }
 
+    /// @brief Check if the current thread can perform thread pool state
+    /// transition.
+    ///
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPermissions() {
+        if (thread_pool_) {
+            thread_pool_->checkPausePermissions();
+        }
+    }
+
     /// @brief Starts running the client's thread pool, if multi-threaded.
     void start() {
         if (thread_pool_) {
@@ -1961,6 +1972,11 @@ HttpClient::closeIfOutOfBand(int socket_fd)  {
 void
 HttpClient::start() {
     impl_->start();
+}
+
+void
+HttpClient::checkPermissions() {
+    impl_->checkPermissions();
 }
 
 void

@@ -38,6 +38,13 @@ public:
     /// @brief Destructor
     virtual ~CmdHttpListener();
 
+    /// @brief Check if the current thread can perform thread pool state
+    /// transition.
+    ///
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPermissions();
+
     /// @brief Starts running the listener's thread pool.
     void start();
 

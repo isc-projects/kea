@@ -1002,6 +1002,13 @@ public:
     /// @return Pointer to the response to the ha-maintenance-cancel.
     data::ConstElementPtr processMaintenanceCancel();
 
+    /// @brief Check client and(or) listener current thread permissions to
+    /// perform thread pool state transition.
+    ///
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPermissionsClientAndListener();
+
     /// @brief Start the client and(or) listener instances.
     ///
     /// When HA+MT is enabled it starts the client's thread pool

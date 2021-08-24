@@ -92,7 +92,20 @@ public:
         return (getState() == State::STOPPED);
     }
 
+    /// @brief Check current thread permissions to transition to the new PAUSED
+    /// state.
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPausePermissions();
+
 private:
+    /// @brief Check current thread permissions to transition to the new state.
+    ///
+    /// @param state The new transition state for the pool.
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the owned threads
+    void checkPermissions(State state);
+
     /// @brief Check specified thread id against own threads.
     ///
     /// @return true if thread is owned, false otherwise.
@@ -129,7 +142,7 @@ private:
     /// -# Waits until all threads have paused.
     /// -# Returns to caller.
     ///
-    /// @param state new state for the pool.
+    /// @param state The new transition state for the pool.
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
     /// any of the owned threads.
     void setState(State state);

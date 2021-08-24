@@ -101,6 +101,20 @@ HttpThreadPool::stateToText(State state) {
     return (std::string("unknown-state"));
 }
 
+void
+HttpThreadPool::checkPausePermissions() {
+    checkPermissions(State::PAUSED);
+}
+
+void
+HttpThreadPool::checkPermissions(State new_state) {
+    auto id = std::this_thread::get_id();
+    if (checkThreadId(id)) {
+        isc_throw(MultiThreadingInvalidOperation, "invalid thread pool state change to "
+                  << HttpThreadPool::stateToText(new_state) << " performed by owned thread");
+    }
+}
+
 bool
 HttpThreadPool::checkThreadId(std::thread::id id) {
     for (auto thread : threads_) {
@@ -113,11 +127,7 @@ HttpThreadPool::checkThreadId(std::thread::id id) {
 
 void
 HttpThreadPool::setState(State new_state) {
-    auto id = std::this_thread::get_id();
-    if (checkThreadId(id)) {
-        isc_throw(MultiThreadingInvalidOperation, "invalid thread pool state change to "
-                  << HttpThreadPool::stateToText(new_state) << " performed by owned thread");
-    }
+    checkPermissions(new_state);
 
     std::unique_lock<std::mutex> main_lck(mutex_);
 

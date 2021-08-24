@@ -21,11 +21,12 @@ namespace util {
 
 /// @brief Embodies a named pair of CriticalSection callbacks.
 ///
-/// This class associates a pair of callbacks, one to be invoked
-/// upon CriticalSection entry and the other invoked upon
-/// CriticalSection exit, with name.  The name allows the pair
-/// to be uniquely identified such that they can be added and
-/// removed as needed.
+/// This class associates with a name, a pair of callbacks, one to be invoked
+/// before CriticalSection entry and exit callbacks to validate current thread
+/// permissions to perform such actions, one to be invoked upon CriticalSection
+/// entry and one to be invoked upon CriticalSection exit,
+/// The name allows the pair to be uniquely identified such that they can be
+/// added and removed as needed.
 struct CSCallbackPair {
     /// @brief Defines a callback as a simple void() functor.
     typedef std::function<void()> Callback;
@@ -33,14 +34,20 @@ struct CSCallbackPair {
     /// @brief Constructor
     ///
     /// @param name Name by which the callbacks can be found.
+    /// @param entry_cb Callback to check current thread permissions to call
+    /// the CriticalSection entry and exit callbacks.
     /// @param entry_cb Callback to invoke upon CriticalSection entry.
     /// @param entry_cb Callback to invoke upon CriticalSection exit.
-    CSCallbackPair(const std::string& name, const Callback& entry_cb,
-                   const Callback& exit_cb)
-        : name_(name), entry_cb_(entry_cb), exit_cb_(exit_cb) {}
+    CSCallbackPair(const std::string& name, const Callback& check_cb,
+                   const Callback& entry_cb, const Callback& exit_cb)
+        : name_(name), check_cb_(check_cb), entry_cb_(entry_cb),
+          exit_cb_(exit_cb) {}
 
     /// @brief Name by which the callback can be found.
     std::string name_;
+
+    /// @brief Check permissions callback associated with name.
+    Callback check_cb_;
 
     /// @brief Entry point callback associated with name.
     Callback entry_cb_;
@@ -63,12 +70,14 @@ public:
     /// @brief Adds a callback pair to the list.
     ///
     /// @param name Name of the callback to add.
-    /// @param entry_cb Callback to add.
-    /// @param exit_cb Callback to add.
+    /// @param check_cb The check permissions callback to add.
+    /// @param entry_cb The CriticalSection entry callback to add.
+    /// @param exit_cb The CriticalSection exit callback to add.
     ///
     /// @throw BadValue if the name is already in the list,
     /// the name is blank, or either callback is empty.
     void addCallbackPair(const std::string& name,
+                         const CSCallbackPair::Callback& check_cb,
                          const CSCallbackPair::Callback& entry_cb,
                          const CSCallbackPair::Callback& exit_cb);
 
@@ -88,6 +97,8 @@ private:
     /// @brief The list of callback pairs.
     std::list<CSCallbackPair> cb_pairs_;
 };
+
+class MultiThreadingCriticalSection;
 
 /// @brief Multi Threading Manager.
 ///
@@ -119,7 +130,6 @@ private:
 /// @endcode
 class MultiThreadingMgr : public boost::noncopyable {
 public:
-
     /// @brief Returns a single instance of Multi Threading Manager.
     ///
     /// MultiThreadingMgr is a singleton and this method is the only way
@@ -212,11 +222,14 @@ public:
     ///
     /// @param name Name of the set of callbacks. This value is used by the
     /// callback owner to add and remove them. Duplicates are not allowed.
+    /// @param entry_cb Callback to check current thread permissions to call
+    /// the CriticalSection entry and exit callbacks.
     /// @param entry_cb Callback to invoke upon CriticalSection entry. Cannot be
     /// empty.
     /// @param exit_cb Callback to invoke upon CriticalSection exit. Cannot be
     /// empty.
     void addCriticalSectionCallbacks(const std::string& name,
+                                     const CSCallbackPair::Callback& check_cb,
                                      const CSCallbackPair::Callback& entry_cb,
                                      const CSCallbackPair::Callback& exit_cb);
 
@@ -248,6 +261,37 @@ private:
     ///
     /// @return The critical section flag.
     bool isInCriticalSectionInternal();
+
+    /// @brief Class method tests if current thread is allowed to enter the
+    /// @ref MultiThreadingCriticalSection and to invoke the stop and start
+    /// callbacks.
+    ///
+    /// Has no effect in single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by validate
+    /// callbacks without logging to avoid breaking the CS
+    /// chain.
+    /// @throw MultiThreadingInvalidOperation if current thread has no
+    /// permission to enter CriticalSection.
+    void checkCallbacksPermissions();
+
+    /// @brief Class method which invokes CriticalSection entry callbacks.
+    ///
+    /// Has no effect in single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by validate
+    /// callbacks without logging to avoid breaking the CS
+    /// chain.
+    void callEntryCallbacks();
+
+    /// @brief Class method which invokes CriticalSection entry callbacks.
+    ///
+    /// Has no effect in single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by validate
+    /// callbacks without logging to avoid breaking the CS
+    /// chain.
+    void callExitCallbacks();
 
     /// @brief Class method stops non-critical processing.
     ///

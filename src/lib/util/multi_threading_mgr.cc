@@ -36,6 +36,7 @@ MultiThreadingMgr::setMode(bool enabled) {
 
 void
 MultiThreadingMgr::enterCriticalSection() {
+    checkCallbacksPermissions();
     std::lock_guard<std::mutex> lk(mutex_);
     stopProcessing();
     ++critical_section_count_;
@@ -43,6 +44,7 @@ MultiThreadingMgr::enterCriticalSection() {
 
 void
 MultiThreadingMgr::exitCriticalSection() {
+    checkCallbacksPermissions();
     std::lock_guard<std::mutex> lk(mutex_);
     if (critical_section_count_ == 0) {
         isc_throw(InvalidOperation, "invalid negative value for override");
@@ -53,6 +55,7 @@ MultiThreadingMgr::exitCriticalSection() {
 
 bool
 MultiThreadingMgr::isInCriticalSection() {
+    checkCallbacksPermissions();
     std::lock_guard<std::mutex> lk(mutex_);
     return (isInCriticalSectionInternal());
 }
@@ -127,14 +130,11 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 }
 
 void
-MultiThreadingMgr::stopProcessing() {
-    if (getMode() && !isInCriticalSectionInternal()) {
-        // First call the registered callback for entering the critical section
-        // so that if any exception is thrown, there is no need to stop and then
-        // start the service threads.
+MultiThreadingMgr::checkCallbacksPermissions() {
+    if (getMode()) {
         for (const auto& cb : cs_callbacks_.getCallbackPairs()) {
             try {
-                (cb.entry_cb_)();
+                (cb.check_cb_)();
             } catch (const isc::MultiThreadingInvalidOperation& ex) {
                 // If any registered callback throws, the exception needs to be
                 // propagated to the caller of the
@@ -142,8 +142,6 @@ MultiThreadingMgr::stopProcessing() {
                 // Because this function is called by the
                 // @ref MultiThreadingCriticalSection constructor, throwing here
                 // is safe.
-                // @note should we call the exit_cb_ here for all successful
-                // entry_cb_ already run?
                 throw;
             } catch (...) {
                 // We can't log it and throwing could be chaos.
@@ -151,10 +149,51 @@ MultiThreadingMgr::stopProcessing() {
                 // must be exception-proof
             }
         }
+    }
+}
 
+void
+MultiThreadingMgr::callEntryCallbacks() {
+    if (getMode()) {
+        const auto& callbacks = cs_callbacks_.getCallbackPairs();
+        for (auto cb_it = callbacks.begin(); cb_it != callbacks.end(); cb_it++) {
+            try {
+                (cb_it->entry_cb_)();
+            } catch (...) {
+                // We can't log it and throwing could be chaos.
+                // We'll swallow it and tell people their callbacks
+                // must be exception-proof
+            }
+        }
+    }
+}
+
+void
+MultiThreadingMgr::callExitCallbacks() {
+    if (getMode()) {
+        const auto& callbacks = cs_callbacks_.getCallbackPairs();
+        for (auto cb_it = callbacks.rbegin(); cb_it != callbacks.rend(); cb_it++) {
+            try {
+                (cb_it->exit_cb_)();
+            } catch (...) {
+                // We can't log it and throwing could be chaos.
+                // We'll swallow it and tell people their callbacks
+                // must be exception-proof
+                // Because this function is called by the
+                // @ref MultiThreadingCriticalSection destructor, throwing here
+                // is not safe and will cause the process to crash.
+            }
+        }
+    }
+}
+
+void
+MultiThreadingMgr::stopProcessing() {
+    if (getMode() && !isInCriticalSectionInternal()) {
         if (getThreadPoolSize()) {
             thread_pool_.stop();
         }
+        callEntryCallbacks();
     }
 }
 
@@ -164,29 +203,16 @@ MultiThreadingMgr::startProcessing() {
         if (getThreadPoolSize()) {
             thread_pool_.start(getThreadPoolSize());
         }
-
-        for (const auto& cb : cs_callbacks_.getCallbackPairs()) {
-            try {
-                (cb.exit_cb_)();
-            } catch (...) {
-                // We can't log it and throwing could be chaos.
-                // We'll swallow it and tell people their callbacks
-                // must be exception-proof
-                // Because this function is called by the
-                // @ref MultiThreadingCriticalSection destructor, throwing here
-                // is not safe and will cause the process to crash.
-                // @note should we call the exit_cb_ here in reverse order of
-                // the entry_cb_ calls?
-            }
-        }
+        callExitCallbacks();
     }
 }
 
 void
 MultiThreadingMgr::addCriticalSectionCallbacks(const std::string& name,
+                                               const CSCallbackPair::Callback& check_cb,
                                                const CSCallbackPair::Callback& entry_cb,
                                                const CSCallbackPair::Callback& exit_cb) {
-    cs_callbacks_.addCallbackPair(name, entry_cb, exit_cb);
+    cs_callbacks_.addCallbackPair(name, check_cb, entry_cb, exit_cb);
 }
 
 void
@@ -209,10 +235,16 @@ MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
 
 void
 CSCallbackPairList::addCallbackPair(const std::string& name,
+                                    const CSCallbackPair::Callback& check_cb,
                                     const CSCallbackPair::Callback& entry_cb,
                                     const CSCallbackPair::Callback& exit_cb) {
     if (name.empty()) {
         isc_throw(BadValue, "CSCallbackPairList - name cannot be empty");
+    }
+
+    if (!check_cb) {
+        isc_throw(BadValue, "CSCallbackPairList - check callback for " << name
+                  << " cannot be empty");
     }
 
     if (!entry_cb) {
@@ -232,7 +264,7 @@ CSCallbackPairList::addCallbackPair(const std::string& name,
         }
     }
 
-    cb_pairs_.push_back(CSCallbackPair(name, entry_cb, exit_cb));
+    cb_pairs_.push_back(CSCallbackPair(name, check_cb, entry_cb, exit_cb));
 }
 
 void

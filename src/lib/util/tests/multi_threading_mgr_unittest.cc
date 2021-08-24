@@ -357,18 +357,15 @@ public:
         invocations_.push_back(4);
     }
 
-    /// @brief A callback that adds the value 5 to invocations lists and throws
-    /// isc::Exception which is ignored.
+    /// @brief A callback that throws @ref isc::Exception which is ignored.
     void ignoredException() {
-        invocations_.push_back(5);
         isc_throw(isc::Exception, "ignored");
     }
 
-    /// @brief A callback that adds the value 6 to invocations lists and throws
-    /// isc::MultiThreadingInvalidOperation which is propagated to the scope of
-    /// the @ref MultiThreadingCriticalSection constructor.
+    /// @brief A callback that throws @ref isc::MultiThreadingInvalidOperation
+    /// which is propagated to the scope of the
+    /// @ref MultiThreadingCriticalSection constructor.
     void observedException() {
-        invocations_.push_back(6);
         isc_throw(isc::MultiThreadingInvalidOperation, "observed");
     }
 
@@ -412,7 +409,7 @@ public:
             if (entries.size()) {
                 // We expect entry invocations.
                 ASSERT_EQ(invocations_.size(), entries.size());
-                ASSERT_TRUE(invocations_ == entries);
+                ASSERT_EQ(invocations_, entries);
             } else {
                 // We do not expect entry invocations.
                 ASSERT_FALSE(invocations_.size());
@@ -444,7 +441,7 @@ public:
             if (entries.size()) {
                 // We expect entry invocations.
                 ASSERT_EQ(invocations_.size(), entries.size());
-                ASSERT_TRUE(invocations_ == entries);
+                ASSERT_EQ(invocations_, entries);
             } else {
                 // We do not expect entry invocations.
                 ASSERT_FALSE(invocations_.size());
@@ -460,7 +457,7 @@ public:
 
         if (exits.size()) {
             // We expect exit invocations.
-            ASSERT_TRUE(invocations_ == exits);
+            ASSERT_EQ(invocations_, exits);
         } else {
             // We do not expect exit invocations.
             ASSERT_FALSE(invocations_.size());
@@ -477,26 +474,30 @@ TEST_F(CriticalSectionCallbackTest, addAndRemove) {
     auto& mgr = MultiThreadingMgr::instance();
 
     // Cannot add with a blank name.
-    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("", [](){}, [](){}),
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("", [](){}, [](){}, [](){}),
                      BadValue, "CSCallbackPairList - name cannot be empty");
 
-    // Cannot add with an empty entry callback.
-    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", nullptr, [](){}),
+    // Cannot add with an empty check callback.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", nullptr, [](){}, [](){}),
+                     BadValue, "CSCallbackPairList - check callback for bad cannot be empty");
+
+    // Cannot add with an empty exit callback.
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, nullptr, [](){}),
                      BadValue, "CSCallbackPairList - entry callback for bad cannot be empty");
 
     // Cannot add with an empty exit callback.
-    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, nullptr),
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, [](){}, nullptr),
                      BadValue, "CSCallbackPairList - exit callback for bad cannot be empty");
 
     // Should be able to add foo.
-    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}));
+    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}, [](){}));
 
     // Should not be able to add foo twice.
-    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}),
+    ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}, [](){}),
                      BadValue, "CSCallbackPairList - callbacks for foo already exist");
 
     // Should be able to add bar.
-    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("bar", [](){}, [](){}));
+    ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("bar", [](){}, [](){}, [](){}));
 
     // Should be able to remove foo.
     ASSERT_NO_THROW_LOG(mgr.removeCriticalSectionCallbacks("foo"));
@@ -517,10 +518,12 @@ TEST_F(CriticalSectionCallbackTest, invocations) {
 
     // Add two sets of CriticalSection call backs.
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("oneAndTwo",
+         std::bind(&CriticalSectionCallbackTest::ignoredException, this),
          std::bind(&CriticalSectionCallbackTest::one, this),
          std::bind(&CriticalSectionCallbackTest::two, this));
 
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("threeAndFour",
+         std::bind(&CriticalSectionCallbackTest::ignoredException, this),
          std::bind(&CriticalSectionCallbackTest::three, this),
          std::bind(&CriticalSectionCallbackTest::four, this));
 
@@ -531,7 +534,7 @@ TEST_F(CriticalSectionCallbackTest, invocations) {
     // callbacks execute at the appropriate times and we can do
     // so repeatedly.
     for (int i = 0; i < 3; ++i) {
-        runCriticalSections({1,3}, {2,4});
+        runCriticalSections({1 ,3}, {2, 4});
     }
 
     // Now remove the first set of callbacks.
@@ -557,11 +560,13 @@ TEST_F(CriticalSectionCallbackTest, invocationsWithExceptions) {
     // Add two sets of CriticalSection call backs.
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("observed",
          std::bind(&CriticalSectionCallbackTest::observedException, this),
-         std::bind(&CriticalSectionCallbackTest::observedException, this));
+         std::bind(&CriticalSectionCallbackTest::one, this),
+         std::bind(&CriticalSectionCallbackTest::two, this));
 
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("ignored",
          std::bind(&CriticalSectionCallbackTest::ignoredException, this),
-         std::bind(&CriticalSectionCallbackTest::ignoredException, this));
+         std::bind(&CriticalSectionCallbackTest::three, this),
+         std::bind(&CriticalSectionCallbackTest::four, this));
 
     // Apply multi-threading configuration with 16 threads and queue size 256.
     MultiThreadingMgr::instance().apply(true, 16, 256);
@@ -570,14 +575,14 @@ TEST_F(CriticalSectionCallbackTest, invocationsWithExceptions) {
     // callbacks execute at the appropriate times and we can do
     // so repeatedly.
     for (int i = 0; i < 3; ++i) {
-        runCriticalSections({6}, {}, true);
+        runCriticalSections({}, {}, true);
     }
 
     // Now remove the first set of callbacks.
     MultiThreadingMgr::instance().removeCriticalSectionCallbacks("observed");
 
     // Retest CriticalSections.
-    runCriticalSections({5}, {5});
+    runCriticalSections({3}, {4});
 
     // Now remove the remaining callbacks.
     MultiThreadingMgr::instance().removeAllCriticalSectionCallbacks();

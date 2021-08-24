@@ -83,6 +83,13 @@ CmdHttpListener::start() {
 }
 
 void
+CmdHttpListener::checkPermissions() {
+    if (thread_pool_) {
+        thread_pool_->checkPausePermissions();
+    }
+}
+
+void
 CmdHttpListener::pause() {
     if (thread_pool_) {
         thread_pool_->pause();
