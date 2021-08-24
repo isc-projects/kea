@@ -271,6 +271,14 @@ public:
         return (request);
     }
 
+    /// @brief Test that owned threads are not permitted to change thread pool
+    /// state.
+    void testIllegalThreadPoolActions() {
+        ASSERT_THROW(client_->start(), MultiThreadingInvalidOperation);
+        ASSERT_THROW(client_->pause(), MultiThreadingInvalidOperation);
+        ASSERT_THROW(client_->resume(), MultiThreadingInvalidOperation);
+    }
+
     /// @brief Initiates a single HTTP request.
     ///
     /// Constructs an HTTP post whose body is a JSON map containing a
@@ -323,9 +331,7 @@ public:
             // If running on multiple threads, threads should be prohibited from
             // changing the thread pool state.
             if (num_threads_) {
-                ASSERT_THROW(client_->start(), MultiThreadingInvalidOperation);
-                ASSERT_THROW(client_->pause(), MultiThreadingInvalidOperation);
-                ASSERT_THROW(client_->resume(), MultiThreadingInvalidOperation);
+                testIllegalThreadPoolActions();
             }
 
             // Get stringified thread-id.
