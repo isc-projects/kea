@@ -735,8 +735,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
             if (lease4) {
                 bool success;
-                if (MultiThreadingMgr::instance().getMode() &&
-                    !MultiThreadingMgr::instance().isInCriticalSection()) {
+                if (MultiThreadingMgr::instance().getMode()) {
                     bool use_cs = false;
                     {
                         // Try to avoid a race.
@@ -769,8 +768,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
             if (lease6) {
                 bool success;
-                if (MultiThreadingMgr::instance().getMode() &&
-                    !MultiThreadingMgr::instance().isInCriticalSection()) {
+                if (MultiThreadingMgr::instance().getMode()) {
                     bool use_cs = false;
                     {
                         // Try to avoid a race.
@@ -1653,8 +1651,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             for (auto lease : parsed_leases_list) {
 
                 try {
-                    if (MultiThreadingMgr::instance().getMode() &&
-                        !MultiThreadingMgr::instance().isInCriticalSection()) {
+                    if (MultiThreadingMgr::instance().getMode()) {
                         bool use_cs = false;
                         {
                             // Try to avoid a race.
@@ -1811,8 +1808,7 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         // subnet-id is valid, etc)
         lease4 = parser.parse(config, cmd_args_, force_create);
         bool added = false;
-        if (MultiThreadingMgr::instance().getMode() &&
-            !MultiThreadingMgr::instance().isInCriticalSection()) {
+        if (MultiThreadingMgr::instance().getMode()) {
             bool use_cs = false;
             {
                 // Try to avoid a race.
@@ -1864,8 +1860,7 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         // subnet-id is valid, etc)
         lease6 = parser.parse(config, cmd_args_, force_create);
         bool added;
-        if (MultiThreadingMgr::instance().getMode() &&
-            !MultiThreadingMgr::instance().isInCriticalSection()) {
+        if (MultiThreadingMgr::instance().getMode()) {
             bool use_cs = false;
             {
                 // Try to avoid a race.
