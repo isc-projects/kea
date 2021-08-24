@@ -102,12 +102,11 @@ provided above, the RESTful service will be available under the URL of
 ``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
-If enabling HA and multi-threading, the 8000 port is used by the HA
-hook library http listener. When using HA hook library with
-multi-threading to function, make sure the port used by dedicated
-listener is different (e.g. 8001) than the one used by CA. Note
-the commands should still be sent via CA. The dedicated listener
-is specifically for HA updates only.
+When using Kea's HA hook library with multi-threading, make sure
+that the address:port combination you use here for CA is
+different from the HA peer URLs.  The HA peer URLs are strictly
+for internal HA traffic between the peers. User commands should
+still be sent via CA.
 
 The ``trust-anchor``, ``cert-file``, ```key-file`` and ``cert-required``
 parameters specify the TLS setup for HTTP i.e. HTTPS. If these parameters
