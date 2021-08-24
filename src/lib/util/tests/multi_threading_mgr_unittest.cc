@@ -534,7 +534,7 @@ TEST_F(CriticalSectionCallbackTest, invocations) {
     // callbacks execute at the appropriate times and we can do
     // so repeatedly.
     for (int i = 0; i < 3; ++i) {
-        runCriticalSections({1 ,3}, {2, 4});
+        runCriticalSections({1 ,3}, {4, 2});
     }
 
     // Now remove the first set of callbacks.
@@ -557,6 +557,9 @@ TEST_F(CriticalSectionCallbackTest, invocationsWithExceptions) {
     // thread pool should be stopped
     EXPECT_EQ(thread_pool.size(), 0);
 
+    // Apply multi-threading configuration with 16 threads and queue size 256.
+    MultiThreadingMgr::instance().apply(true, 16, 256);
+
     // Add two sets of CriticalSection call backs.
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("observed",
          std::bind(&CriticalSectionCallbackTest::observedException, this),
@@ -567,9 +570,6 @@ TEST_F(CriticalSectionCallbackTest, invocationsWithExceptions) {
          std::bind(&CriticalSectionCallbackTest::ignoredException, this),
          std::bind(&CriticalSectionCallbackTest::three, this),
          std::bind(&CriticalSectionCallbackTest::four, this));
-
-    // Apply multi-threading configuration with 16 threads and queue size 256.
-    MultiThreadingMgr::instance().apply(true, 16, 256);
 
     // Make three passes over nested CriticalSections to ensure
     // callbacks execute at the appropriate times and we can do
