@@ -76,14 +76,14 @@ HttpThreadPool::getState() {
 }
 
 bool
-HttpThreadPool::validateStateChange(State new_state) const {
+HttpThreadPool::validateStateChange(State state) const {
     switch (run_state_) {
     case State::STOPPED:
-        return (new_state == State::RUNNING);
+        return (state == State::RUNNING);
     case State::RUNNING:
-        return (new_state != State::RUNNING);
+        return (state != State::RUNNING);
     case State::PAUSED:
-        return (new_state != State::PAUSED);
+        return (state != State::PAUSED);
     }
     return (false);
 }
@@ -107,11 +107,11 @@ HttpThreadPool::checkPausePermissions() {
 }
 
 void
-HttpThreadPool::checkPermissions(State new_state) {
+HttpThreadPool::checkPermissions(State state) {
     auto id = std::this_thread::get_id();
     if (checkThreadId(id)) {
         isc_throw(MultiThreadingInvalidOperation, "invalid thread pool state change to "
-                  << HttpThreadPool::stateToText(new_state) << " performed by owned thread");
+                  << HttpThreadPool::stateToText(state) << " performed by owned thread");
     }
 }
 
@@ -126,21 +126,21 @@ HttpThreadPool::checkThreadId(std::thread::id id) {
 }
 
 void
-HttpThreadPool::setState(State new_state) {
-    checkPermissions(new_state);
+HttpThreadPool::setState(State state) {
+    checkPermissions(state);
 
     std::unique_lock<std::mutex> main_lck(mutex_);
 
     // Bail if the transition is invalid.
-    if (!validateStateChange(new_state)) {
+    if (!validateStateChange(state)) {
         return;
     }
 
-    run_state_ = new_state;
+    run_state_ = state;
     // Notify threads of state change.
     thread_cv_.notify_all();
 
-    switch (new_state) {
+    switch (state) {
     case State::RUNNING: {
         // Restart the IOService.
         io_service_->restart();
