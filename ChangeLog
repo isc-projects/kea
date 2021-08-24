@@ -1,3 +1,8 @@
+1937.	[bug]		razvan
+	The Config Backend now now capable of reestablishing database
+	connection after a failure.
+	(Gitlab #1982)
+
 1936.	[build]		andrei
 	Kea attempts to first link with compatibility library OpenSSL 1.1
 	(usually found on CentOS 7) before falling back to the system
