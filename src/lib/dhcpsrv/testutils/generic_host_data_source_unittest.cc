@@ -207,6 +207,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
         VALID_PASSWORD, VALID_READONLY_DB));
 
     hdsptr_ = HostMgr::instance().getHostDataSource();
+    ASSERT_NE(hdsptr_->getParameters(), DatabaseConnection::ParameterMap());
 
     // Check that an attempt to insert new host would result in
     // exception.

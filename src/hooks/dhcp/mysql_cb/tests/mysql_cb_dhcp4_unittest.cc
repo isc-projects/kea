@@ -591,6 +591,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getType) {
     params["password"] = "keatest";
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     EXPECT_EQ("mysql", cbptr_->getType());
 }
 
@@ -602,6 +603,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getHost) {
     params["password"] = "keatest";
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     EXPECT_EQ("localhost", cbptr_->getHost());
 }
 
@@ -612,6 +614,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getPort) {
     params["name"] = "keatest";
     params["password"] = "keatest";
     params["user"] = "keatest";
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
     EXPECT_EQ(0, cbptr_->getPort());
 }

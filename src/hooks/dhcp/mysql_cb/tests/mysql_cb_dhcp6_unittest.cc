@@ -634,6 +634,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getType) {
     params["password"] = "keatest";
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv6(params)));
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     EXPECT_EQ("mysql", cbptr_->getType());
 }
 
@@ -645,6 +646,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getHost) {
     params["password"] = "keatest";
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv6(params)));
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     EXPECT_EQ("localhost", cbptr_->getHost());
 }
 
@@ -656,6 +658,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getPort) {
     params["password"] = "keatest";
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv6(params)));
+    ASSERT_NE(cbptr_->getParameters(), DatabaseConnection::ParameterMap());
     EXPECT_EQ(0, cbptr_->getPort());
 }
 
