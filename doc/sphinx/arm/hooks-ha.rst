@@ -1457,12 +1457,13 @@ load-balancing and the hot-standby cases presented in previous sections.
    {
    "Control-agent": {
        "http-host": "192.168.56.33",
-       // If enabling HA and multi-threading, the 8000 port is used by the HA
-       // hook library http listener. The control-agent is not required any
-       // longer for HA hook library with multi-threading to function because
-       // it uses it's own http listener on the same port, but it still should be
-       // used to handle other commands. In this case, a different port
-       // (eg. 8800) must be used for the control-agent.
+
+        // If enabling HA and multi-threading, the 8000 port is used by the HA
+        // hook library http listener. When using HA hook library with
+        // multi-threading to function, make sure the port used by dedicated
+        // listener is different (e.g. 8001) than the one used by CA. Note
+        // the commands should still be sent via CA. The dedicated listener
+        // is specifically for HA traffic only.
        "http-port": 8000,
 
        "control-sockets": {
@@ -1558,11 +1559,43 @@ as illustrated below:
                        },
                        ...
                        "peers": [
+                         // This is the configuration of this server instance.
+                         {
+                             "name": "server1",
+                             // This specifies the URL of our server instance. Since the
+                             // HA+MT uses direct connection, the DHCPv4 server open its own
+                             // socket. Note it must be different than the one used by the
+                             // CA (typically 8000). In this example, 8001 is used.
+                             "url": "http://192.0.2.1:8001/",
+                             // This server is primary. The other one must be secondary.
+                             "role": "primary"
+                         },
+                         // This is the configuration of our HA peer.
+                         {
+                             "name": "server2",
+                             // This specifies the URL of our server instance. Since the
+                             // HA+MT uses direct connection, the DHCPv4 server open its own
+                             // socket. Note it must be different than the one used by the
+                             // CA (typically 8000). In this example, 8001 is used.
+                             "url": "http://192.0.2.2:8001/",
+                             // The partner is a secondary. Our is primary.
+                             "role": "secondary"
+                         }
                        ...
 
 
 In the example above, HA+MT is enabled with four threads for the listener
 and four threads for the client.
+
+.. note::
+
+   It is essential to configure the ports correctly. One common mistake that is easy to miss
+   is to configure CA to listen on port 8000 and configure dedicated listeners also to port
+   8000. In such configuration, the DHCP server will fail to bind sockets, but the communication
+   will still work via CA, albeit slowly.Make sure your dedicated listeners use a different port
+   (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
+   performance bottlenecks caused by single threaded nature of CA and the sequential nature of
+   UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
 
 .. _ha-maintenance:
 

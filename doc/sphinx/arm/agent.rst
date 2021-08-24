@@ -102,11 +102,12 @@ provided above, the RESTful service will be available under the URL of
 ``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
-If enabling HA and multi-threading, the 8000 port is used by the HA hook library
-http listener. The CA is not required any longer for HA hook library with
-multi-threading to function because it uses it's own http listener on the same
-port, but it should still be used to handle other commands. In this case, a
-different port (eg. 8800) must be used for the CA.
+If enabling HA and multi-threading, the 8000 port is used by the HA
+hook library http listener. When using HA hook library with
+multi-threading to function, make sure the port used by dedicated
+listener is different (e.g. 8001) than the one used by CA. Note
+the commands should still be sent via CA. The dedicated listener
+is specifically for HA traffic only.
 
 The ``trust-anchor``, ``cert-file``, ```key-file`` and ``cert-required``
 parameters specify the TLS setup for HTTP i.e. HTTPS. If these parameters
