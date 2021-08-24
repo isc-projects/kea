@@ -34,10 +34,10 @@ struct CSCallbackPair {
     /// @brief Constructor
     ///
     /// @param name Name by which the callbacks can be found.
-    /// @param entry_cb Callback to check current thread permissions to call
+    /// @param check_cb Callback to check current thread permissions to call
     /// the CriticalSection entry and exit callbacks.
     /// @param entry_cb Callback to invoke upon CriticalSection entry.
-    /// @param entry_cb Callback to invoke upon CriticalSection exit.
+    /// @param exit_cb Callback to invoke upon CriticalSection exit.
     CSCallbackPair(const std::string& name, const Callback& check_cb,
                    const Callback& entry_cb, const Callback& exit_cb)
         : name_(name), check_cb_(check_cb), entry_cb_(entry_cb),
@@ -97,8 +97,6 @@ private:
     /// @brief The list of callback pairs.
     std::list<CSCallbackPair> cb_pairs_;
 };
-
-class MultiThreadingCriticalSection;
 
 /// @brief Multi Threading Manager.
 ///
@@ -222,7 +220,7 @@ public:
     ///
     /// @param name Name of the set of callbacks. This value is used by the
     /// callback owner to add and remove them. Duplicates are not allowed.
-    /// @param entry_cb Callback to check current thread permissions to call
+    /// @param check_cb Callback to check current thread permissions to call
     /// the CriticalSection entry and exit callbacks.
     /// @param entry_cb Callback to invoke upon CriticalSection entry. Cannot be
     /// empty.
