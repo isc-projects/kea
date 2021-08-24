@@ -1592,7 +1592,7 @@ and four threads for the client.
    It is essential to configure the ports correctly. One common mistake that is easy to miss
    is to configure CA to listen on port 8000 and configure dedicated listeners also to port
    8000. In such configuration, the DHCP server will fail to bind sockets, but the communication
-   will still work via CA, albeit slowly.Make sure your dedicated listeners use a different port
+   will still work via CA, albeit slowly. Make sure your dedicated listeners use a different port
    (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
    performance bottlenecks caused by single threaded nature of CA and the sequential nature of
    UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
