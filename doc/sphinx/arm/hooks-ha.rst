@@ -1463,7 +1463,7 @@ load-balancing and the hot-standby cases presented in previous sections.
         // multi-threading to function, make sure the port used by dedicated
         // listener is different (e.g. 8001) than the one used by CA. Note
         // the commands should still be sent via CA. The dedicated listener
-        // is specifically for HA traffic only.
+        // is specifically for HA updates only.
        "http-port": 8000,
 
        "control-sockets": {

@@ -107,7 +107,7 @@ hook library http listener. When using HA hook library with
 multi-threading to function, make sure the port used by dedicated
 listener is different (e.g. 8001) than the one used by CA. Note
 the commands should still be sent via CA. The dedicated listener
-is specifically for HA traffic only.
+is specifically for HA updates only.
 
 The ``trust-anchor``, ``cert-file``, ```key-file`` and ``cert-required``
 parameters specify the TLS setup for HTTP i.e. HTTPS. If these parameters
