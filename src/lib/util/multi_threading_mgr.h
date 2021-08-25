@@ -19,15 +19,21 @@ namespace isc {
 namespace util {
 
 
-/// @brief Embodies a named pair of CriticalSection callbacks.
+/// @brief Embodies a named set of CriticalSection callbacks.
 ///
-/// This class associates with a name, a pair of callbacks, one to be invoked
-/// before CriticalSection entry and exit callbacks to validate current thread
+/// This class associates with a name, a set of callbacks, one to be invoked
+/// before CriticalSection entry and exit callbacks to check current thread
 /// permissions to perform such actions, one to be invoked upon CriticalSection
-/// entry and one to be invoked upon CriticalSection exit,
-/// The name allows the pair to be uniquely identified such that they can be
+/// entry and one to be invoked upon CriticalSection exit.
+/// The name allows the set to be uniquely identified such that they can be
 /// added and removed as needed.
-struct CSCallbackPair {
+/// The check current thread permissions callback needs to throw
+/// @ref MultiThreadingInvalidOperation if the thread is not allowed to perform
+/// CriticalSection entry and exit. Any other exception thrown by the check
+/// permission callbacks will be silently ignored.
+/// The CriticalSection entry and exit callbacks exceptions will be silently
+/// ignored.
+struct CSCallbackSet {
     /// @brief Defines a callback as a simple void() functor.
     typedef std::function<void()> Callback;
 
@@ -38,8 +44,8 @@ struct CSCallbackPair {
     /// the CriticalSection entry and exit callbacks.
     /// @param entry_cb Callback to invoke upon CriticalSection entry.
     /// @param exit_cb Callback to invoke upon CriticalSection exit.
-    CSCallbackPair(const std::string& name, const Callback& check_cb,
-                   const Callback& entry_cb, const Callback& exit_cb)
+    CSCallbackSet(const std::string& name, const Callback& check_cb,
+                  const Callback& entry_cb, const Callback& exit_cb)
         : name_(name), check_cb_(check_cb), entry_cb_(entry_cb),
           exit_cb_(exit_cb) {}
 
@@ -56,18 +62,18 @@ struct CSCallbackPair {
     Callback exit_cb_;
 };
 
-/// @brief Maintains list of unique CSCallbackPairs.
+/// @brief Maintains list of unique CSCallbackSets.
 ///
 /// The list emphasizes iteration order and speed over
 /// retrieval by name. When iterating over the list of
-/// callback pairs, they are returned in the order they were
+/// callback sets, they are returned in the order they were
 /// added, not by name.
-class CSCallbackPairList {
+class CSCallbackSetList {
 public:
     /// @brief Constructor.
-    CSCallbackPairList() {}
+    CSCallbackSetList() {}
 
-    /// @brief Adds a callback pair to the list.
+    /// @brief Adds a callback set to the list.
     ///
     /// @param name Name of the callback to add.
     /// @param check_cb The check permissions callback to add.
@@ -76,26 +82,26 @@ public:
     ///
     /// @throw BadValue if the name is already in the list,
     /// the name is blank, or either callback is empty.
-    void addCallbackPair(const std::string& name,
-                         const CSCallbackPair::Callback& check_cb,
-                         const CSCallbackPair::Callback& entry_cb,
-                         const CSCallbackPair::Callback& exit_cb);
+    void addCallbackSet(const std::string& name,
+                        const CSCallbackSet::Callback& check_cb,
+                        const CSCallbackSet::Callback& entry_cb,
+                        const CSCallbackSet::Callback& exit_cb);
 
-    /// @brief Removes a callback pair from the list.
+    /// @brief Removes a callback set from the list.
     ///
     /// @param name Name of the callback to remove.
     /// If no such callback exists, it simply returns.
-    void removeCallbackPair(const std::string& name);
+    void removeCallbackSet(const std::string& name);
 
     /// @brief Removes all callbacks from the list.
     void removeAll();
 
-    /// @brief Fetches the list of callback pairs.
-    const std::list<CSCallbackPair>& getCallbackPairs();
+    /// @brief Fetches the list of callback sets.
+    const std::list<CSCallbackSet>& getCallbackSets();
 
 private:
-    /// @brief The list of callback pairs.
-    std::list<CSCallbackPair> cb_pairs_;
+    /// @brief The list of callback sets.
+    std::list<CSCallbackSet> cb_sets_;
 };
 
 /// @brief Multi Threading Manager.
@@ -214,7 +220,7 @@ public:
     /// configured, 0 for unlimited size
     void apply(bool enabled, uint32_t thread_count, uint32_t queue_size);
 
-    /// @brief Adds a pair of callbacks to the list of CriticalSection callbacks.
+    /// @brief Adds a set of callbacks to the list of CriticalSection callbacks.
     ///
     /// @note Callbacks must be exception-safe, handling any errors themselves.
     ///
@@ -227,9 +233,9 @@ public:
     /// @param exit_cb Callback to invoke upon CriticalSection exit. Cannot be
     /// empty.
     void addCriticalSectionCallbacks(const std::string& name,
-                                     const CSCallbackPair::Callback& check_cb,
-                                     const CSCallbackPair::Callback& entry_cb,
-                                     const CSCallbackPair::Callback& exit_cb);
+                                     const CSCallbackSet::Callback& check_cb,
+                                     const CSCallbackSet::Callback& entry_cb,
+                                     const CSCallbackSet::Callback& exit_cb);
 
     /// @brief Removes the set of callbacks associated with a given name
     /// from the list of CriticalSection callbacks.
@@ -266,9 +272,10 @@ private:
     ///
     /// Has no effect in single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by validate
-    /// callbacks without logging to avoid breaking the CS
-    /// chain.
+    /// @note This function swallows exceptions thrown by all check permissions
+    /// callbacks without logging to avoid breaking the CS chain, except for the
+    /// @ref MultiThreadingInvalidOperation which needs to be propagated to the
+    /// scope of the @ref MultiThreadingCriticalSection constructor.
     /// @throw MultiThreadingInvalidOperation if current thread has no
     /// permission to enter CriticalSection.
     void checkCallbacksPermissions();
@@ -277,46 +284,41 @@ private:
     ///
     /// Has no effect in single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by validate
-    /// callbacks without logging to avoid breaking the CS
-    /// chain.
+    /// @note This function swallows exceptions thrown by all entry callbacks
+    /// without logging to avoid breaking the CS chain.
     void callEntryCallbacks();
 
     /// @brief Class method which invokes CriticalSection entry callbacks.
     ///
     /// Has no effect in single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by validate
-    /// callbacks without logging to avoid breaking the CS
-    /// chain.
+    /// @note This function swallows exceptions thrown by all exit callbacks
+    /// without logging to avoid breaking the CS chain.
     void callExitCallbacks();
 
     /// @brief Class method stops non-critical processing.
     ///
-    /// Stops the DHCP thread pool if it's running and invokes
-    /// all CriticalSection entry callbacks.  Has no effect
-    /// in single-threaded mode.
+    /// Stops the DHCP thread pool if it's running and invokes all
+    /// CriticalSection entry callbacks. Has no effect in single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by exit
-    /// callbacks without logging to avoid breaking the CS
-    /// chain.
+    /// @note This function swallows exceptions thrown by all exit callbacks
+    /// without logging to avoid breaking the CS chain.
     void stopProcessing();
 
     /// @brief Class method (re)starts non-critical processing.
     ///
-    /// Starts the DHCP thread pool according to current configuration,
-    /// and invokes all CriticalSection exit callbacks. Has no effect
-    /// in single-threaded mode.
+    /// Starts the DHCP thread pool according to current configuration, and
+    /// invokes all CriticalSection exit callbacks. Has no effect in
+    /// single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by entry
-    /// callbacks without logging to avoid breaking the CS
-    /// chain.
+    /// @note This function swallows exceptions thrown by all entry callbacks
+    /// without logging to avoid breaking the CS chain.
     void startProcessing();
 
     /// @brief The current multi-threading mode.
     ///
     /// The multi-threading flag: true if multi-threading is enabled, false
-    /// otherwise
+    /// otherwise.
     bool enabled_;
 
     /// @brief The critical section count.
@@ -333,8 +335,8 @@ private:
     /// @brief Packet processing thread pool.
     ThreadPool<std::function<void()>> thread_pool_;
 
-    /// @brief List of CriticalSection entry and exit callback pairs.
-    CSCallbackPairList cs_callbacks_;
+    /// @brief List of CriticalSection entry and exit callback sets.
+    CSCallbackSetList cs_callbacks_;
 
     /// @brief Mutex to protect the internal state.
     std::mutex mutex_;

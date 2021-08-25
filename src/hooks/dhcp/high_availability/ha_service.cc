@@ -2815,8 +2815,11 @@ HAService::getPendingRequestInternal(const QueryPtrType& query) {
 
 void
 HAService::checkPermissionsClientAndListener() {
-    // Since we're used as CS callback we need to suppress
-    // any exceptions, unlikely though they may be.
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed (except the @ref MultiThreadingInvalidOperation), unlikely
+    // though they may be.
+    // The @ref MultiThreadingInvalidOperation is propagated to the scope of the
+    // @ref MultiThreadingCriticalSection constructor.
     try {
         if (client_) {
             client_->checkPermissions();
@@ -2856,8 +2859,8 @@ HAService::startClientAndListener() {
 
 void
 HAService::pauseClientAndListener() {
-    // Since we're used as CS callback we need to suppress
-    // any exceptions, unlikely though they may be.
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
     try {
         if (client_) {
             client_->pause();
@@ -2874,8 +2877,8 @@ HAService::pauseClientAndListener() {
 
 void
 HAService::resumeClientAndListener() {
-    // Since we're used as CS callback we need to suppress
-    // any exceptions, unlikely though they may be.
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
     try {
         if (client_) {
             client_->resume();

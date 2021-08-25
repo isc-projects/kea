@@ -178,7 +178,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// \brief Exception thrown when an owned thread is trying to stop or pause the
+/// \brief Exception thrown when a worker thread is trying to stop or pause the
 /// respective thread pool (which would result in a dead-lock).
 class MultiThreadingInvalidOperation : public Exception {
 public:

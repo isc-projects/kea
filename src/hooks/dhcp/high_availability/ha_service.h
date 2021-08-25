@@ -1006,7 +1006,7 @@ public:
     /// perform thread pool state transition.
     ///
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads
+    /// any of the worker threads.
     void checkPermissionsClientAndListener();
 
     /// @brief Start the client and(or) listener instances.

@@ -253,7 +253,7 @@ public:
     /// transition.
     ///
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads
+    /// any of the worker threads.
     void checkPermissions();
 
     /// @brief Starts running the client's thread pool, if multi-threaded.

@@ -44,7 +44,6 @@ MultiThreadingMgr::enterCriticalSection() {
 
 void
 MultiThreadingMgr::exitCriticalSection() {
-    checkCallbacksPermissions();
     std::lock_guard<std::mutex> lk(mutex_);
     if (critical_section_count_ == 0) {
         isc_throw(InvalidOperation, "invalid negative value for override");
@@ -132,7 +131,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 void
 MultiThreadingMgr::checkCallbacksPermissions() {
     if (getMode()) {
-        for (const auto& cb : cs_callbacks_.getCallbackPairs()) {
+        for (const auto& cb : cs_callbacks_.getCallbackSets()) {
             try {
                 (cb.check_cb_)();
             } catch (const isc::MultiThreadingInvalidOperation& ex) {
@@ -155,7 +154,7 @@ MultiThreadingMgr::checkCallbacksPermissions() {
 void
 MultiThreadingMgr::callEntryCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackPairs();
+        const auto& callbacks = cs_callbacks_.getCallbackSets();
         for (auto cb_it = callbacks.begin(); cb_it != callbacks.end(); cb_it++) {
             try {
                 (cb_it->entry_cb_)();
@@ -171,7 +170,7 @@ MultiThreadingMgr::callEntryCallbacks() {
 void
 MultiThreadingMgr::callExitCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackPairs();
+        const auto& callbacks = cs_callbacks_.getCallbackSets();
         for (auto cb_it = callbacks.rbegin(); cb_it != callbacks.rend(); cb_it++) {
             try {
                 (cb_it->exit_cb_)();
@@ -209,15 +208,15 @@ MultiThreadingMgr::startProcessing() {
 
 void
 MultiThreadingMgr::addCriticalSectionCallbacks(const std::string& name,
-                                               const CSCallbackPair::Callback& check_cb,
-                                               const CSCallbackPair::Callback& entry_cb,
-                                               const CSCallbackPair::Callback& exit_cb) {
-    cs_callbacks_.addCallbackPair(name, check_cb, entry_cb, exit_cb);
+                                               const CSCallbackSet::Callback& check_cb,
+                                               const CSCallbackSet::Callback& entry_cb,
+                                               const CSCallbackSet::Callback& exit_cb) {
+    cs_callbacks_.addCallbackSet(name, check_cb, entry_cb, exit_cb);
 }
 
 void
 MultiThreadingMgr::removeCriticalSectionCallbacks(const std::string& name) {
-    cs_callbacks_.removeCallbackPair(name);
+    cs_callbacks_.removeCallbackSet(name);
 }
 
 void
@@ -234,57 +233,57 @@ MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
 }
 
 void
-CSCallbackPairList::addCallbackPair(const std::string& name,
-                                    const CSCallbackPair::Callback& check_cb,
-                                    const CSCallbackPair::Callback& entry_cb,
-                                    const CSCallbackPair::Callback& exit_cb) {
+CSCallbackSetList::addCallbackSet(const std::string& name,
+                                  const CSCallbackSet::Callback& check_cb,
+                                  const CSCallbackSet::Callback& entry_cb,
+                                  const CSCallbackSet::Callback& exit_cb) {
     if (name.empty()) {
-        isc_throw(BadValue, "CSCallbackPairList - name cannot be empty");
+        isc_throw(BadValue, "CSCallbackSetList - name cannot be empty");
     }
 
     if (!check_cb) {
-        isc_throw(BadValue, "CSCallbackPairList - check callback for " << name
+        isc_throw(BadValue, "CSCallbackSetList - check callback for " << name
                   << " cannot be empty");
     }
 
     if (!entry_cb) {
-        isc_throw(BadValue, "CSCallbackPairList - entry callback for " << name
+        isc_throw(BadValue, "CSCallbackSetList - entry callback for " << name
                   << " cannot be empty");
     }
 
     if (!exit_cb) {
-        isc_throw(BadValue, "CSCallbackPairList - exit callback for " << name
+        isc_throw(BadValue, "CSCallbackSetList - exit callback for " << name
                   << " cannot be empty");
     }
 
-    for (auto const& callback : cb_pairs_) {
+    for (auto const& callback : cb_sets_) {
         if (callback.name_ == name) {
-            isc_throw(BadValue, "CSCallbackPairList - callbacks for " << name
+            isc_throw(BadValue, "CSCallbackSetList - callbacks for " << name
                       << " already exist");
         }
     }
 
-    cb_pairs_.push_back(CSCallbackPair(name, check_cb, entry_cb, exit_cb));
+    cb_sets_.push_back(CSCallbackSet(name, check_cb, entry_cb, exit_cb));
 }
 
 void
-CSCallbackPairList::removeCallbackPair(const std::string& name) {
-    for (auto it = cb_pairs_.begin(); it != cb_pairs_.end(); ++it) {
+CSCallbackSetList::removeCallbackSet(const std::string& name) {
+    for (auto it = cb_sets_.begin(); it != cb_sets_.end(); ++it) {
         if ((*it).name_ == name) {
-            cb_pairs_.erase(it);
+            cb_sets_.erase(it);
             break;
         }
     }
 }
 
 void
-CSCallbackPairList::removeAll() {
-    cb_pairs_.clear();
+CSCallbackSetList::removeAll() {
+    cb_sets_.clear();
 }
 
-const std::list<CSCallbackPair>&
-CSCallbackPairList::getCallbackPairs() {
-    return (cb_pairs_);
+const std::list<CSCallbackSet>&
+CSCallbackSetList::getCallbackSets() {
+    return (cb_sets_);
 }
 
 }  // namespace util

@@ -1782,7 +1782,7 @@ public:
     /// transition.
     ///
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads
+    /// any of the worker threads.
     void checkPermissions() {
         if (thread_pool_) {
             thread_pool_->checkPausePermissions();

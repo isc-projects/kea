@@ -487,10 +487,10 @@ listener threads. This error is highly unlikely and indicates a programmatic
 issue that should be reported as a defect.
 
 % HA_PAUSE_CLIENT_LISTENER_ILLEGAL Pausing multi-threaded HTTP processing failed: %1
-This error message is emitted when attempting to pause HA's HTTP client and
-listener threads from owned thread. This error indicates that a command run on
-the listener threads is trying to use a critical section which would result in
-a dead-lock.
+This error message is emitted when attempting to pause HA's HTTP client or
+listener thread pools from a worker thread. This error indicates that a command
+run on the listener threads is trying to use a critical section which would
+result in a dead-lock.
 
 % HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
 This warning message indicates a problem with communication with a HA peer

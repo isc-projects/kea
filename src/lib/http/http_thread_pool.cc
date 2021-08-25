@@ -111,7 +111,7 @@ HttpThreadPool::checkPermissions(State state) {
     auto id = std::this_thread::get_id();
     if (checkThreadId(id)) {
         isc_throw(MultiThreadingInvalidOperation, "invalid thread pool state change to "
-                  << HttpThreadPool::stateToText(state) << " performed by owned thread");
+                  << HttpThreadPool::stateToText(state) << " performed by worker thread");
     }
 }
 

@@ -475,26 +475,26 @@ TEST_F(CriticalSectionCallbackTest, addAndRemove) {
 
     // Cannot add with a blank name.
     ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("", [](){}, [](){}, [](){}),
-                     BadValue, "CSCallbackPairList - name cannot be empty");
+                     BadValue, "CSCallbackSetList - name cannot be empty");
 
     // Cannot add with an empty check callback.
     ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", nullptr, [](){}, [](){}),
-                     BadValue, "CSCallbackPairList - check callback for bad cannot be empty");
+                     BadValue, "CSCallbackSetList - check callback for bad cannot be empty");
 
     // Cannot add with an empty exit callback.
     ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, nullptr, [](){}),
-                     BadValue, "CSCallbackPairList - entry callback for bad cannot be empty");
+                     BadValue, "CSCallbackSetList - entry callback for bad cannot be empty");
 
     // Cannot add with an empty exit callback.
     ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("bad", [](){}, [](){}, nullptr),
-                     BadValue, "CSCallbackPairList - exit callback for bad cannot be empty");
+                     BadValue, "CSCallbackSetList - exit callback for bad cannot be empty");
 
     // Should be able to add foo.
     ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}, [](){}));
 
     // Should not be able to add foo twice.
     ASSERT_THROW_MSG(mgr.addCriticalSectionCallbacks("foo", [](){}, [](){}, [](){}),
-                     BadValue, "CSCallbackPairList - callbacks for foo already exist");
+                     BadValue, "CSCallbackSetList - callbacks for foo already exist");
 
     // Should be able to add bar.
     ASSERT_NO_THROW_LOG(mgr.addCriticalSectionCallbacks("bar", [](){}, [](){}, [](){}));

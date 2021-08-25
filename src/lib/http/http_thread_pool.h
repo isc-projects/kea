@@ -94,16 +94,26 @@ public:
 
     /// @brief Check current thread permissions to transition to the new PAUSED
     /// state.
+    ///
+    /// This function throws @ref MultiThreadingInvalidOperation if the calling
+    /// thread is one of the worker threads. This would prevent a dead-lock if
+    /// the calling thread would try to perform a thread pool state transition
+    /// to PAUSED state.
+    ///
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads
+    /// any of the worker threads.
     void checkPausePermissions();
 
 private:
     /// @brief Check current thread permissions to transition to the new state.
     ///
+    /// This function throws @ref MultiThreadingInvalidOperation if the calling
+    /// thread is one of the worker threads. This would prevent a dead-lock if
+    /// the calling thread would try to perform a thread pool state transition.
+    ///
     /// @param state The new transition state for the pool.
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads
+    /// any of the worker threads.
     void checkPermissions(State state);
 
     /// @brief Check specified thread id against own threads.
@@ -144,7 +154,7 @@ private:
     ///
     /// @param state The new transition state for the pool.
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the owned threads.
+    /// any of the worker threads.
     void setState(State state);
 
     /// @brief Thread-safe fetch of the pool's operational state.

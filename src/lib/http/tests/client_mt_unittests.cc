@@ -271,7 +271,7 @@ public:
         return (request);
     }
 
-    /// @brief Test that owned threads are not permitted to change thread pool
+    /// @brief Test that worker threads are not permitted to change thread pool
     /// state.
     void testIllegalThreadPoolActions() {
         ASSERT_THROW(client_->start(), MultiThreadingInvalidOperation);
