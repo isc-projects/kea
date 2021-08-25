@@ -13,6 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/resource_handler.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <stats/stats_mgr.h>
@@ -8704,6 +8705,239 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2Disabled) {
 TEST_F(LeaseCmdsTest, lease6DnsRemoveD2DisabledMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6DnsRemoveD2Disabled();
+}
+
+// Verify that v4 lease adds handle conflicts OK.
+TEST_F(LeaseCmdsTest, lease4ConflictingAdd) {
+    MultiThreadingTest mt(true);
+    // Initialize lease manager (false = v4, false = do not add leases)
+    initLeaseMgr(false, false);
+
+    // Make sure the lease doesn't exist.
+    IOAddress addr("192.0.2.1");
+    Lease4Ptr lease = lmptr_->getLease4(addr);
+    ASSERT_FALSE(lease);
+
+    // Verify stats show no leases.
+    checkLease4Stats(44, 0, 0);
+
+    // Lock the address.
+    ResourceHandler4 resource_handler;
+    ASSERT_TRUE(resource_handler.tryLock4(addr));
+
+    // Now let's try to add the lease.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be added.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Lease should not have been added.
+    lease = lmptr_->getLease4(addr);
+    ASSERT_FALSE(lease);
+
+    // Stats should not have changed.
+    checkLease4Stats(44, 0, 0);
+}
+
+// Verify that v4 lease updates handle conflicts OK.
+TEST_F(LeaseCmdsTest, lease4ConflictingUpdate) {
+    MultiThreadingTest mt(true);
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Make sure the lease exists.
+    IOAddress addr("192.0.2.1");
+    Lease4Ptr lease = lmptr_->getLease4(addr);
+    ASSERT_TRUE(lease);
+    // Save a copy of the original lease.
+    Lease4 original_lease = *lease;
+
+    // Lock the address.
+    ResourceHandler4 resource_handler;
+    ASSERT_TRUE(resource_handler.tryLock4(addr));
+
+    // Now let's try to update the lease.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"2a:2b:2c:2d:2e:2f\"\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be updated.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Fetch the lease again.
+    lease = lmptr_->getLease4(addr);
+    ASSERT_TRUE(lease);
+
+    // Lease should not have been changed.
+    EXPECT_EQ(original_lease, *lease);
+}
+
+// Verify that v6 add handles conflicts OK.
+TEST_F(LeaseCmdsTest, lease6ConflictingAdd) {
+    MultiThreadingTest mt(true);
+
+    // Initialize lease manager (true = v6, false = do not add leases)
+    initLeaseMgr(true, false);
+
+    // Make sure the lease doesn't exist.
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
+    ASSERT_FALSE(lease);
+
+    // Verify stats show no leases.
+    checkLease6Stats(66, 0, 0, 0);
+
+    // Lock the address.
+    ResourceHandler resource_handler;
+    ASSERT_TRUE(resource_handler.tryLock(Lease::TYPE_NA, addr));
+
+    // Now let's try to add the lease.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be added.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Lease should not have been added.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
+    ASSERT_FALSE(lease);
+
+    // Stats should not have changed.
+    checkLease6Stats(66, 0, 0, 0);
+}
+
+// Verify that v6 update handles conflicts.
+TEST_F(LeaseCmdsTest, lease6ConflictingUpdate) {
+    MultiThreadingTest mt(true);
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Verify lease stats show leases.
+    checkLease6Stats(66, 2, 0, 0);
+
+    // Make sure the lease exists.
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(lease);
+    Lease6 original_lease = *lease;
+
+    // Lock the address.
+    ResourceHandler resource_handler;
+    ASSERT_TRUE(resource_handler.tryLock(Lease::TYPE_NA, addr));
+
+    // Now let's try to update the lease.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"2a:2b:2c:2d:2e:2f\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be updated.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Fetch the lease again.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(lease);
+
+    // Lease should not have been changed.
+    EXPECT_EQ(original_lease, *lease);
+}
+
+// Verify that v6 bulk update handles conflicts.
+TEST_F(LeaseCmdsTest, testLease6BulkApplyAddConflict) {
+    MultiThreadingTest mt(true);
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Lock the address.
+    IOAddress locked_addr("2001:db8:2::77");
+    ResourceHandler resource_handler;
+    ASSERT_TRUE(resource_handler.tryLock(Lease::TYPE_NA, locked_addr));
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 99,\n"
+        "                \"ip-address\": \"2001:db8:2::77\",\n"
+        "                \"duid\": \"22:22:22:22:22:22\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::124\",\n"
+        "                \"duid\": \"33:33:33:33:33:33\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 2 IPv6 leases completed.";
+
+    // The status expected is success.
+    auto rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+    checkLease6Stats(99, 0, 0, 0);
+
+    //  Check that the leases we inserted are stored.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::124")));
+
+    // Check that the lease for 2001:db8:2::123 was not added.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, locked_addr));
+
+    auto args = rsp->get("arguments");
+    auto failed_leases = args->get("failed-leases");
+    ASSERT_TRUE(failed_leases);
+    ASSERT_EQ(Element::list, failed_leases->getType());
+    ASSERT_EQ(1, failed_leases->size());
+    checkFailedLease(failed_leases, "IA_NA", locked_addr.toText(),
+                     CONTROL_RESULT_ERROR,
+                     "ResourceBusy: IP address:2001:db8:2::77 could not be updated.");
 }
 
 } // end of anonymous namespace

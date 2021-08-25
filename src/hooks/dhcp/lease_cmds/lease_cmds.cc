@@ -735,62 +735,52 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
             if (lease4) {
                 bool success;
-                if (MultiThreadingMgr::instance().getMode()) {
-                    bool use_cs = false;
-                    {
-                        // Try to avoid a race.
-                        ResourceHandler4 resource_handler;
-                        use_cs = !resource_handler.tryLock4(lease4->addr_);
-                        if (!use_cs) {
-                            success = LeaseMgrFactory::instance().addLease(lease4);
-                        }
-                    }
-                    if (use_cs) {
-                        // Failed to avoid the race.
-                        MultiThreadingCriticalSection cs;
-                        success = LeaseMgrFactory::instance().addLease(lease4);
-                    }
-                } else {
-                    // No multi-threading.
+                if (!MultiThreadingMgr::instance().getMode()) {
                     success = LeaseMgrFactory::instance().addLease(lease4);
+                } else {
+                    // Multi-threading, try to lock first to avoid a race.
+                    ResourceHandler4 resource_handler;
+                    if (resource_handler.tryLock4(lease4->addr_)) {
+                        success = LeaseMgrFactory::instance().addLease(lease4);
+                    } else {
+                        isc_throw(ResourceBusy,
+                                  "ResourceBusy: IP address:" << lease4->addr_
+                                  << " could not be added.");
+                    }
                 }
+
                 if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv4 lease already exists.");
                 }
+
                 LeaseCmdsImpl::updateStatsOnAdd(lease4);
                 resp << "Lease for address " << lease4->addr_.toText()
                      << ", subnet-id " << lease4->subnet_id_ << " added.";
             }
-
         } else {
             Lease6Parser parser;
             lease6 = parser.parse(config, cmd_args_, force_create);
-
             if (lease6) {
                 bool success;
-                if (MultiThreadingMgr::instance().getMode()) {
-                    bool use_cs = false;
-                    {
-                        // Try to avoid a race.
-                        ResourceHandler resource_handler;
-                        use_cs = !resource_handler.tryLock(lease6->type_,
-                                                           lease6->addr_);
-                        if (!use_cs) {
-                            success = LeaseMgrFactory::instance().addLease(lease6);
-                        }
-                    }
-                    if (use_cs) {
-                        // Failed to avoid the race.
-                        MultiThreadingCriticalSection cs;
-                        success = LeaseMgrFactory::instance().addLease(lease6);
-                    }
-                } else {
-                    // No multi-threading.
+                if (!MultiThreadingMgr::instance().getMode()) {
+                    // Not multi-threading.
                     success = LeaseMgrFactory::instance().addLease(lease6);
+                } else {
+                    // Multi-threading, try to lock first to avoid a race.
+                    ResourceHandler resource_handler;
+                    if (resource_handler.tryLock(lease6->type_, lease6->addr_)) {
+                        success = LeaseMgrFactory::instance().addLease(lease6);
+                    } else {
+                        isc_throw(ResourceBusy,
+                                  "ResourceBusy: IP address:" << lease6->addr_
+                                  << " could not be added.");
+                    }
                 }
+
                 if (!success) {
                     isc_throw(db::DuplicateEntry, "IPv6 lease already exists.");
                 }
+
                 LeaseCmdsImpl::updateStatsOnAdd(lease6);
                 if (lease6->type_ == Lease::TYPE_NA) {
                     resp << "Lease for address " << lease6->addr_.toText()
@@ -1651,29 +1641,22 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             for (auto lease : parsed_leases_list) {
 
                 try {
-                    if (MultiThreadingMgr::instance().getMode()) {
-                        bool use_cs = false;
-                        {
-                            // Try to avoid a race.
-                            ResourceHandler resource_handler;
-                            use_cs = !resource_handler.tryLock(lease->type_,
-                                                               lease->addr_);
-                            if (!use_cs) {
-                                addOrUpdate6(lease, true);
-                            }
-                        }
-                        if (use_cs) {
-                            // Failed to avoid the race.
-                            MultiThreadingCriticalSection cs;
-                            addOrUpdate6(lease, true);
-                        }
-                    } else {
-                        // No multi-threading.
+                    if (!MultiThreadingMgr::instance().getMode()) {
+                        // Not multi-threading.
                         addOrUpdate6(lease, true);
+                    } else {
+                        // Multi-threading, try to lock first to avoid a race.
+                        ResourceHandler resource_handler;
+                        if (resource_handler.tryLock(lease->type_, lease->addr_)) {
+                            addOrUpdate6(lease, true);
+                        } else {
+                            isc_throw(ResourceBusy,
+                                      "ResourceBusy: IP address:" << lease->addr_
+                                      << " could not be updated.");
+                        }
                     }
 
                     ++success_count;
-
                 } catch (const std::exception& ex) {
                     // Lazy creation of the list of leases which failed to add/update.
                     if (!failed_leases_list) {
@@ -1702,7 +1685,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
             // failed-leases
             if (failed_leases_list) {
-                args->set("failed-deleted-leases", failed_leases_list);
+                args->set("failed-leases", failed_leases_list);
             }
         }
 
@@ -1808,25 +1791,21 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         // subnet-id is valid, etc)
         lease4 = parser.parse(config, cmd_args_, force_create);
         bool added = false;
-        if (MultiThreadingMgr::instance().getMode()) {
-            bool use_cs = false;
-            {
-                // Try to avoid a race.
-                ResourceHandler4 resource_handler;
-                use_cs = !resource_handler.tryLock4(lease4->addr_);
-                if (!use_cs) {
-                    added = addOrUpdate4(lease4, force_create);
-                }
-            }
-            if (use_cs) {
-                // Failed to avoid the race.
-                MultiThreadingCriticalSection cs;
-                added = addOrUpdate4(lease4, force_create);
-            }
-        } else {
-            // No multi-threading.
+        if (!MultiThreadingMgr::instance().getMode()) {
+            // Not multi-threading.
             added = addOrUpdate4(lease4, force_create);
+        } else {
+            // Multi-threading, try to lock first to avoid a race.
+            ResourceHandler4 resource_handler;
+            if (resource_handler.tryLock4(lease4->addr_)) {
+                added = addOrUpdate4(lease4, force_create);
+            } else {
+                isc_throw(ResourceBusy,
+                          "ResourceBusy: IP address:" << lease4->addr_
+                          << " could not be updated.");
+            }
         }
+
         if (added) {
             setSuccessResponse(handle, "IPv4 lease added.");
         } else {
@@ -1860,26 +1839,21 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         // subnet-id is valid, etc)
         lease6 = parser.parse(config, cmd_args_, force_create);
         bool added;
-        if (MultiThreadingMgr::instance().getMode()) {
-            bool use_cs = false;
-            {
-                // Try to avoid a race.
-                ResourceHandler resource_handler;
-                use_cs = !resource_handler.tryLock(lease6->type_,
-                                                   lease6->addr_);
-                if (!use_cs) {
-                    added = addOrUpdate6(lease6, force_create);
-                }
-            }
-            if (use_cs) {
-                // Failed to avoid the race.
-                MultiThreadingCriticalSection cs;
-                added = addOrUpdate6(lease6, force_create);
-            }
-        } else {
-            // No multi-threading.
+        if (!MultiThreadingMgr::instance().getMode()) {
+            // Not multi-threading.
             added = addOrUpdate6(lease6, force_create);
+        } else {
+            // Multi-threading, try to lock first to avoid a race.
+            ResourceHandler resource_handler;
+            if (resource_handler.tryLock(lease6->type_, lease6->addr_)) {
+                added = addOrUpdate6(lease6, force_create);
+            } else {
+                isc_throw(ResourceBusy,
+                          "ResourceBusy: IP address:" << lease6->addr_
+                          << " could not be updated.");
+            }
         }
+
         if (added) {
             setSuccessResponse(handle, "IPv6 lease added.");
         } else {
@@ -2238,8 +2212,6 @@ LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,
 
     return (failed_lease_map);
 }
-
-// Do lease changes in a critical section.
 
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {

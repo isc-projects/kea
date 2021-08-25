@@ -23,6 +23,13 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Thrown by lock users when a resource lock cannot be obtained.
+class ResourceBusy : public Exception {
+public:
+    ResourceBusy(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Resource race avoidance RAII handler.
 class ResourceHandler : public boost::noncopyable {
 public:
