@@ -272,7 +272,7 @@ private:
     ///
     /// Has no effect in single-threaded mode.
     ///
-    /// @note This function swallows exceptions thrown by all check permissions
+    /// @note This function swallows exceptions thrown by all check permission
     /// callbacks without logging to avoid breaking the CS chain, except for the
     /// @ref MultiThreadingInvalidOperation which needs to be propagated to the
     /// scope of the @ref MultiThreadingCriticalSection constructor.
