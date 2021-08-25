@@ -1,7 +1,7 @@
 1938.	[bug]		razvan
-	Fix dead locks caused by commands with CS on http listener threads
-	and CS on main thread racing with CS on other threads.
-	(Gitlab #2041)
+	Fix dead locks caused by commands with CS on http listener
+	threads and CS on main thread racing with CS on other threads.
+	(Gitlab #2041, #2043)
 
 1937.	[bug]		razvan
 	The Config Backend is now capable of reestablishing database

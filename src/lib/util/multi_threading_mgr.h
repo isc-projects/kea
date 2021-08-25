@@ -288,7 +288,7 @@ private:
     /// without logging to avoid breaking the CS chain.
     void callEntryCallbacks();
 
-    /// @brief Class method which invokes CriticalSection entry callbacks.
+    /// @brief Class method which invokes CriticalSection exit callbacks.
     ///
     /// Has no effect in single-threaded mode.
     ///
