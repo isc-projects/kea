@@ -143,8 +143,10 @@ struct ThreadPool {
     /// @brief pause threads
     ///
     /// Used to pause threads so that they stop processing tasks
-    void pause() {
-        queue_.pause();
+    ///
+    /// @param wait the flag indicating if should wait for threads to pause.
+    void pause(bool wait = true) {
+        queue_.pause(wait);
     }
 
     /// @brief resume threads
@@ -364,10 +366,15 @@ private:
         Item pop() {
             std::unique_lock<std::mutex> lock(mutex_);
             --working_;
-            // Wait for push or disable functions.
+            // Signal thread waiting for threads to pause.
+            if (working_ == 0 && paused_) {
+                wait_threads_cv_.notify_all();
+            }
+            // Signal thread waiting for tasks to finish.
             if (working_ == 0 && queue_.empty()) {
                 wait_cv_.notify_all();
             }
+            // Wait for push or disable functions.
             cv_.wait(lock, [&]() {return (!enabled_ || !queue_.empty());});
             pause_cv_.wait(lock, [&]() {return (!enabled_ || !paused_);});
             ++working_;
@@ -421,9 +428,15 @@ private:
         /// @brief pause threads
         ///
         /// Used to pause threads so that they stop processing tasks
-        void pause() {
+        ///
+        /// @param wait the flag indicating if should wait for threads to pause.
+        void pause(bool wait) {
             std::unique_lock<std::mutex> lock(mutex_);
             paused_ = true;
+            if (wait) {
+                // Wait for working threads to finish.
+                wait_threads_cv_.wait(lock, [&]() {return (working_ == 0);});
+            }
         }
 
         /// @brief resume threads
@@ -504,6 +517,9 @@ private:
 
         /// @brief condition variable used to wait for all items to be processed
         std::condition_variable wait_cv_;
+
+        /// @brief condition variable used to wait for all threads to be paused
+        std::condition_variable wait_threads_cv_;
 
         /// @brief condition variable used to pause threads
         std::condition_variable pause_cv_;
