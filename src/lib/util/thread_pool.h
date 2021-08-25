@@ -120,7 +120,7 @@ struct ThreadPool {
     void wait() {
         auto id = std::this_thread::get_id();
         if (checkThreadId(id)) {
-            isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by worker thread");
+            isc_throw(MultiThreadingInvalidOperation, "thread pool wait called by worker thread");
         }
         queue_.wait();
     }
@@ -135,7 +135,7 @@ struct ThreadPool {
     bool wait(uint32_t seconds) {
         auto id = std::this_thread::get_id();
         if (checkThreadId(id)) {
-            isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by worker thread");
+            isc_throw(MultiThreadingInvalidOperation, "thread pool wait with timeout called by worker thread");
         }
         return (queue_.wait(seconds));
     }
