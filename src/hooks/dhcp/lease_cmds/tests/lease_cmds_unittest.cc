@@ -8707,10 +8707,11 @@ TEST_F(LeaseCmdsTest, lease6DnsRemoveD2DisabledMultiThreading) {
     testLease6DnsRemoveD2Disabled();
 }
 
-// Verify that v4 lease adds handle conflicts OK.
+// Verify that v4 lease add handles conflict as expected.
 TEST_F(LeaseCmdsTest, lease4ConflictingAdd) {
     MultiThreadingTest mt(true);
-    // Initialize lease manager (false = v4, false = do not add leases)
+
+    // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
     // Make sure the lease doesn't exist.
@@ -8732,7 +8733,8 @@ TEST_F(LeaseCmdsTest, lease4ConflictingAdd) {
         "    \"arguments\": {"
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
-        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"comment\": \"a comment\"\n"
         "    }\n"
         "}";
 
@@ -8747,11 +8749,15 @@ TEST_F(LeaseCmdsTest, lease4ConflictingAdd) {
     checkLease4Stats(44, 0, 0);
 }
 
-// Verify that v4 lease updates handle conflicts OK.
+// Verify that v4 lease update handles conflict as expected.
 TEST_F(LeaseCmdsTest, lease4ConflictingUpdate) {
     MultiThreadingTest mt(true);
+
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    // Verify stats show no leases.
+    checkLease4Stats(44, 2, 0);
 
     // Make sure the lease exists.
     IOAddress addr("192.0.2.1");
@@ -8771,7 +8777,8 @@ TEST_F(LeaseCmdsTest, lease4ConflictingUpdate) {
         "    \"arguments\": {"
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
-        "        \"hw-address\": \"2a:2b:2c:2d:2e:2f\"\n"
+        "        \"hw-address\": \"2a:2b:2c:2d:2e:2f\",\n"
+        "        \"comment\": \"a comment\"\n"
         "    }\n"
         "}";
 
@@ -8786,11 +8793,11 @@ TEST_F(LeaseCmdsTest, lease4ConflictingUpdate) {
     EXPECT_EQ(original_lease, *lease);
 }
 
-// Verify that v6 add handles conflicts OK.
+// Verify that v6 lease add handles conflict as expected.
 TEST_F(LeaseCmdsTest, lease6ConflictingAdd) {
     MultiThreadingTest mt(true);
 
-    // Initialize lease manager (true = v6, false = do not add leases)
+    // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
 
     // Make sure the lease doesn't exist.
@@ -8829,7 +8836,7 @@ TEST_F(LeaseCmdsTest, lease6ConflictingAdd) {
     checkLease6Stats(66, 0, 0, 0);
 }
 
-// Verify that v6 update handles conflicts.
+// Verify that v6 lease update handles conflict as expected.
 TEST_F(LeaseCmdsTest, lease6ConflictingUpdate) {
     MultiThreadingTest mt(true);
 
@@ -8843,6 +8850,7 @@ TEST_F(LeaseCmdsTest, lease6ConflictingUpdate) {
     IOAddress addr("2001:db8:1::1");
     Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
     ASSERT_TRUE(lease);
+    // Save a copy of the original lease.
     Lease6 original_lease = *lease;
 
     // Lock the address.
@@ -8873,7 +8881,7 @@ TEST_F(LeaseCmdsTest, lease6ConflictingUpdate) {
     EXPECT_EQ(original_lease, *lease);
 }
 
-// Verify that v6 bulk update handles conflicts.
+// Verify that v6 lease bulk update handles conflict as expected.
 TEST_F(LeaseCmdsTest, testLease6BulkApplyAddConflict) {
     MultiThreadingTest mt(true);
 
