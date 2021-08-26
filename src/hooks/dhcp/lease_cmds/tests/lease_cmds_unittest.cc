@@ -8927,7 +8927,7 @@ TEST_F(LeaseCmdsTest, testLease6BulkApplyAddConflict) {
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::124")));
 
-    // Check that the lease for 2001:db8:2::123 was not added.
+    // Check that the lease for locked address was not added.
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, locked_addr));
 
     auto args = rsp->get("arguments");

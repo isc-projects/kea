@@ -732,10 +732,10 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
         if (v4) {
             Lease4Parser parser;
             lease4 = parser.parse(config, cmd_args_, force_create);
-
             if (lease4) {
                 bool success;
                 if (!MultiThreadingMgr::instance().getMode()) {
+                    // Not multi-threading.
                     success = LeaseMgrFactory::instance().addLease(lease4);
                 } else {
                     // Multi-threading, try to lock first to avoid a race.
@@ -1838,7 +1838,7 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
         lease6 = parser.parse(config, cmd_args_, force_create);
-        bool added;
+        bool added = false;
         if (!MultiThreadingMgr::instance().getMode()) {
             // Not multi-threading.
             added = addOrUpdate6(lease6, force_create);
