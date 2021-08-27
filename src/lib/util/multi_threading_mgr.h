@@ -159,6 +159,12 @@ public:
     /// counter so that any configuration change that might start the packet
     /// thread pool is delayed until exiting the respective section.
     /// If the internal counter is 0, then stop the thread pool.
+    ///
+    /// Invokes all CriticalSection entry callbacks. Has no effect in
+    /// single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by all entry callbacks
+    /// without logging to avoid breaking the CS chain.
     void enterCriticalSection();
 
     /// @brief Exit critical section.
@@ -167,6 +173,12 @@ public:
     /// counter so that the dhcp thread pool can be started according to the
     /// new configuration.
     /// If the internal counter is 0, then start the thread pool.
+    ///
+    /// Invokes all CriticalSection exit callbacks. Has no effect in
+    /// single-threaded mode.
+    ///
+    /// @note This function swallows exceptions thrown by all exit callbacks
+    /// without logging to avoid breaking the CS chain.
     void exitCriticalSection();
 
     /// @brief Is in critical section flag.
@@ -259,13 +271,6 @@ protected:
 
 private:
 
-    /// @brief Is in critical section flag.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// @return The critical section flag.
-    bool isInCriticalSectionInternal();
-
     /// @brief Class method tests if current thread is allowed to enter the
     /// @ref MultiThreadingCriticalSection and to invoke the entry and exit
     /// callbacks.
@@ -296,25 +301,6 @@ private:
     /// without logging to avoid breaking the CS chain.
     void callExitCallbacks();
 
-    /// @brief Class method stops non-critical processing.
-    ///
-    /// Stops the DHCP thread pool if it's running and invokes all
-    /// CriticalSection entry callbacks. Has no effect in single-threaded mode.
-    ///
-    /// @note This function swallows exceptions thrown by all exit callbacks
-    /// without logging to avoid breaking the CS chain.
-    void stopProcessing();
-
-    /// @brief Class method (re)starts non-critical processing.
-    ///
-    /// Starts the DHCP thread pool according to current configuration, and
-    /// invokes all CriticalSection exit callbacks. Has no effect in
-    /// single-threaded mode.
-    ///
-    /// @note This function swallows exceptions thrown by all entry callbacks
-    /// without logging to avoid breaking the CS chain.
-    void startProcessing();
-
     /// @brief The current multi-threading mode.
     ///
     /// The multi-threading flag: true if multi-threading is enabled, false
@@ -337,9 +323,6 @@ private:
 
     /// @brief List of CriticalSection entry and exit callback sets.
     CSCallbackSetList cs_callbacks_;
-
-    /// @brief Mutex to protect the internal state.
-    std::mutex mutex_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.

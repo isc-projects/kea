@@ -37,30 +37,45 @@ MultiThreadingMgr::setMode(bool enabled) {
 void
 MultiThreadingMgr::enterCriticalSection() {
     checkCallbacksPermissions();
-    std::lock_guard<std::mutex> lk(mutex_);
-    stopProcessing();
+    bool inside = isInCriticalSection();
+    // Increment the counter to allow CS to be created in the registered
+    // callbacks (in which case the new CS would not call callbacks again).
+    // The counter must be updated regardless of the MT mode because the MT mode
+    // can change between the constructor call and the destructor call.
     ++critical_section_count_;
+    if (getMode() && !inside) {
+        if (getThreadPoolSize()) {
+            thread_pool_.stop();
+        }
+        // Now it is safe to call callbacks which can also create other CSs.
+        callEntryCallbacks();
+    }
 }
 
 void
 MultiThreadingMgr::exitCriticalSection() {
-    std::lock_guard<std::mutex> lk(mutex_);
-    if (critical_section_count_ == 0) {
-        isc_throw(InvalidOperation, "invalid negative value for override");
+    // The number of CS destructors should match the number of CS constructors.
+    // The case when counter is 0 is only possible if calling this function
+    // explicitly, which is a programming error.
+    if (!isInCriticalSection()) {
+        isc_throw(InvalidOperation, "invalid value for critical section count");
     }
+    // Decrement the counter to allow the check for last CS destructor which
+    // would result in restarting the thread pool.
+    // The counter must be updated regardless of the MT mode because the MT mode
+    // can change between the constructor call and the destructor call.
     --critical_section_count_;
-    startProcessing();
+    if (getMode() && !isInCriticalSection()) {
+        if (getThreadPoolSize()) {
+            thread_pool_.start(getThreadPoolSize());
+        }
+        // Now it is safe to call callbacks which can also create other CSs.
+        callExitCallbacks();
+    }
 }
 
 bool
 MultiThreadingMgr::isInCriticalSection() {
-    checkCallbacksPermissions();
-    std::lock_guard<std::mutex> lk(mutex_);
-    return (isInCriticalSectionInternal());
-}
-
-bool
-MultiThreadingMgr::isInCriticalSectionInternal() {
     return (critical_section_count_ != 0);
 }
 
@@ -183,26 +198,6 @@ MultiThreadingMgr::callExitCallbacks() {
                 // is not safe and will cause the process to crash.
             }
         }
-    }
-}
-
-void
-MultiThreadingMgr::stopProcessing() {
-    if (getMode() && !isInCriticalSectionInternal()) {
-        if (getThreadPoolSize()) {
-            thread_pool_.stop();
-        }
-        callEntryCallbacks();
-    }
-}
-
-void
-MultiThreadingMgr::startProcessing() {
-    if (getMode() && !isInCriticalSectionInternal()) {
-        if (getThreadPoolSize()) {
-            thread_pool_.start(getThreadPoolSize());
-        }
-        callExitCallbacks();
     }
 }
 
