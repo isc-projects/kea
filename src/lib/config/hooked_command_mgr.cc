@@ -84,7 +84,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
     }
 
     // If we're here it means that the callouts weren't called. We need
-    // to handle the command using local Command Mananger.
+    // to handle the command using local Command Manager.
     ConstElementPtr response = BaseCommandMgr::handleCommand(cmd_name,
                                                              params,
                                                              original_cmd);

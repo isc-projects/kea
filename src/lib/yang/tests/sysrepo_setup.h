@@ -41,7 +41,7 @@ private:
         int return_value(system(command));
         if (return_value != 0) {
             std::cerr << "\"" << command << "\" exited with " << return_value
-                      << ". Unit tests may be influenced by previous abnormaly "
+                      << ". Unit tests may be influenced by previous abnormally "
                          "terminated unit tests or sysrepo uses."
                       << std::endl;
         }
