@@ -2725,40 +2725,42 @@ def prepare_system_cmd(args):
                               args.dry_run, args.check_times, args.clean_start,
                               ccache_dir)
 
+
 def upload_to_repo(args, pkgs_dir):
-   # NOTE: note the differences (if any) in system/revision vs args.system/revision
-   system, revision = get_system_revision()
-   repo_url = _get_full_repo_url(args.repository_url, system, revision, args.pkg_version)
-   assert repo_url is not None
-   upload_cmd = 'curl -v --netrc -f'
-   log.info('args.system %s, system = %s', args.system, system)
+    # NOTE: note the differences (if any) in system/revision vs args.system/revision
+    system, revision = get_system_revision()
+    repo_url = _get_full_repo_url(args.repository_url, system, revision, args.pkg_version)
+    assert repo_url is not None
+    upload_cmd = 'curl -v --netrc -f'
+    log.info('args.system %s, system = %s', args.system, system)
 
-   file_ext = ''
-   if system in ['ubuntu', 'debian']:
-       upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-       file_ext = '.deb'
+    file_ext = ''
+    if system in ['ubuntu', 'debian']:
+        upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
+        file_ext = '.deb'
 
-   elif system in ['fedora', 'centos', 'rhel']:
-       upload_cmd += ' --upload-file %s '
-       file_ext = '.rpm'
+    elif system in ['fedora', 'centos', 'rhel']:
+        upload_cmd += ' --upload-file %s '
+        file_ext = '.rpm'
 
-   elif system == 'alpine':
-       upload_cmd += ' --upload-file %s '
-       file_ext = ''
-       repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (args.pkg_isc_version, revision))
+    elif system == 'alpine':
+        upload_cmd += ' --upload-file %s '
+        file_ext = ''
+        repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (args.pkg_isc_version, revision))
 
-   upload_cmd += ' ' + repo_url
+    upload_cmd += ' ' + repo_url
 
-   for fn in os.listdir(pkgs_dir):
-       log.info("debug: fn = %s", fn)
-       if file_ext and not fn.endswith(file_ext):
-           log.info('File extension "%s" is not supported by upload_to_repo function', file_ext)
-           continue
-       fp = os.path.join(pkgs_dir, fn)
-       log.info("upload cmd: %s", upload_cmd)
-       log.info("fp: %s", fp)
-       cmd = upload_cmd % fp
-       execute(cmd)
+    for fn in os.listdir(pkgs_dir):
+        log.info("debug: fn = %s", fn)
+        if file_ext and not fn.endswith(file_ext):
+            log.info('File extension "%s" is not supported by upload_to_repo function', file_ext)
+            continue
+        fp = os.path.join(pkgs_dir, fn)
+        log.info("upload cmd: %s", upload_cmd)
+        log.info("fp: %s", fp)
+        cmd = upload_cmd % fp
+        execute(cmd)
+
 
 def build_cmd(args):
     """Check command args and run the build command."""
