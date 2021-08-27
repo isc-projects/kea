@@ -1,3 +1,15 @@
+1940.	[build]		razvan
+	Library version numbers bumped for Kea 1.9.11 development
+	version.
+	(Gitlab #2053)
+
+1939.	[bug]		tmark
+	Removed all MultiThreadingCriticalSections from lease_cmds
+	hooks library which can cause a dead-lock when running HA+MT.
+	The commands simply try to acquire the resource lock and fail
+	if the resource is unavailable also logging an error message.
+	(Gitlab #2051)
+
 1938.	[bug]		razvan
 	Fix dead locks caused by commands with CS on http listener
 	threads and CS on main thread racing with CS on other threads.
