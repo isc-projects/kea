@@ -187,30 +187,27 @@ class NetconfAgentLogTest : public dhcp::test::LogContentTest {
 public:
     /// @brief Constructor.
     NetconfAgentLogTest()
-        : io_service_(new IOService()),
+        : finished_(false),
+          io_service_(new IOService()),
           thread_(),
           agent_(new NakedNetconfAgent) {
     }
 
     /// @brief Destructor.
     virtual ~NetconfAgentLogTest() {
-        // io_service must be stopped to make the thread to return.
-        io_service_->stop();
-        io_service_.reset();
-        if (thread_) {
-            thread_->join();
-            thread_.reset();
-        }
         if (agent_) {
             clearYang(agent_);
             agent_->clear();
         }
         agent_.reset();
+        // io_service must be stopped to make the thread to return.
+        io_service_->stop();
+        if (thread_) {
+            thread_->join();
+            thread_.reset();
+        }
+        io_service_.reset();
     }
-
-
-    /// @brief To know when the callback was called.
-    bool finished_;
 
     /// @brief Default change callback (print changes and return OK).
     sr_error_t callback(sysrepo::S_Session sess,
@@ -232,6 +229,9 @@ public:
             usleep(1000);
         }
     }
+
+    /// @brief To know when the callback was called.
+    std::atomic<bool> finished_;
 
     /// @brief IOService object.
     IOServicePtr io_service_;

@@ -40,30 +40,15 @@ NetconfProcess::run() {
     LOG_INFO(netconf_logger, NETCONF_STARTED).arg(VERSION);
 
     try {
-        // Initialize netconf agent in a thread.
-        std::thread th([this]() {
-            try {
-                // Initialize sysrepo.
-                agent_.initSysrepo();
+        // Initialize netconf agent.
+        // Initialize sysrepo.
+        agent_.initSysrepo();
 
-                // Get the configuration manager.
-                NetconfCfgMgrPtr cfg_mgr(getNetconfCfgMgr());
+        // Get the configuration manager.
+        NetconfCfgMgrPtr cfg_mgr(getNetconfCfgMgr());
 
-                // Call init.
-                agent_.init(cfg_mgr);
-            } catch (...) {
-                // Should not happen but in case...
-                std::exception_ptr eptr = std::current_exception();
-                getIoService()->post([eptr] () {
-                    if (eptr) {
-                        std::rethrow_exception(eptr);
-                    }
-                });
-            }
-        });
-
-        // Detach the thread.
-        th.detach();
+        // Call init.
+        agent_.init(cfg_mgr);
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
