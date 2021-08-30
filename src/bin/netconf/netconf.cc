@@ -158,10 +158,11 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
         isc_throw(Unexpected, "missing configuration manager");
         return;
     }
+
+    // Retrieve configuration from existing running DHCP daemons.
     const CfgServersMapPtr& servers =
         cfg_mgr->getNetconfConfig()->getCfgServersMap();
     for (auto const& pair : *servers) {
-        // Retrieve configuration from existing running DHCP daemons.
         keaConfig(pair);
     }
 

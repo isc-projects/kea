@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
@@ -14,8 +15,8 @@
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
 #include <config/timeouts.h>
+
 #include <boost/pointer_cast.hpp>
-#include <thread>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -40,15 +41,8 @@ NetconfProcess::run() {
     LOG_INFO(netconf_logger, NETCONF_STARTED).arg(VERSION);
 
     try {
-        // Initialize netconf agent.
-        // Initialize sysrepo.
-        agent_.initSysrepo();
-
-        // Get the configuration manager.
-        NetconfCfgMgrPtr cfg_mgr(getNetconfCfgMgr());
-
         // Call init.
-        agent_.init(cfg_mgr);
+        agent_.init(getNetconfCfgMgr());
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
