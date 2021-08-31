@@ -15,8 +15,9 @@ Consortium (ISC).
 
 This is the reference guide for Kea version |release|.
 Links to the most up-to-date version of this document (in PDF, HTML,
-and plain text formats), along with other documents for
-Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
+and plain text formats) can be found on `Read the Docs <https://kea.readthedocs.io>`_.
+Other useful Kea information can be found in our
+`Knowledgebase <https://kb.isc.org>`_.
 
 
 .. toctree::
