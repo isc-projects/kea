@@ -290,25 +290,21 @@ keatest=>
 @endverbatim
 
   If instead of seeing keatest=> prompt, your login is refused with an error
-  code about failed peer or indent authentication, it means that PostgreSQL is
-  configured to check unix username and reject login attempts if PostgreSQL names
-  are different. To alter that, the PostgreSQL configuration must be changed -
-  the <tt>/etc/postgresql/9.1/main/pg_hba.conf</tt> config file
-  has to be altered. (It may be in a different location in your system.) The following
-  lines:
+  code about failed peer or
+  <tt>Ident authentication failed for user "keatest"</tt>, it means that
+  PostgreSQL is configured to check unix username and reject login attempts if
+  PostgreSQL names are different. To alter that, the PostgreSQL pg_hba.conf
+  configuration file must be changed. It usually resides at
+  <tt>/var/lib/postgresql/data/pg_hba.conf</tt> or at
+  <tt>/etc/postgresql/${version}/main/pg_hba.conf</tt>, but you can find out
+  for sure by running
+  <tt>printf 'SHOW hba_file' | sudo -u postgres psql -t postgres</tt>. Make sure
+  that all the authentication methods are changed to "md5" like this:
 
 @verbatim
-local   all             all                                     peer
+local   all             all                                     md5
 host    all             all             127.0.0.1/32            md5
 host    all             all             ::1/128                 md5
-@endverbatim
-
-need to be replaced with:
-
-@verbatim
-local   all             all                                     password
-host    all             all             127.0.0.1/32            password
-host    all             all             ::1/128                 password
 @endverbatim
 
   Another possible problem is that you get no password prompt. This is

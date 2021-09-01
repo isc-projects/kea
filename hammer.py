@@ -1163,8 +1163,18 @@ def _restart_postgresql(system):
         execute('sudo systemctl restart postgresql.service')
 
 
+def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
+    execute("sudo sed -i.bak 's/^{}\(.*\) [a-z0-9]*$/{}\\1 {}/g' '{}'".format(
+        connection_type, connection_type, auth_method, hba_file), cwd='/tmp')
+
+
 def _configure_pgsql(system, features):
     """ Configure PostgreSQL DB """
+
+    # execute() calls will set cwd='/tmp' when switching user to postgres to
+    # avoid the error:
+    #   could not change as postgres user directory to "/home/jenkins": Permission denied
+
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
@@ -1183,15 +1193,6 @@ def _configure_pgsql(system, features):
     _enable_postgresql(system)
     _restart_postgresql(system)
 
-    # Change auth-method to 'trust' on local connections.
-    cmd = "printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs"
-    _, output = execute(cmd, capture=True, cwd='/tmp') # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
-    hba_file = output.rstrip()
-    cmd = "sudo sed -i.bak 's/^local\(.*\) [a-z0-9]*$/local\\1 trust/g' '{}'".format(hba_file)
-    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
-
-    _restart_postgresql(system)
-
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
         DROP DATABASE IF EXISTS keatest;
         DROP USER IF EXISTS keatest;
@@ -1202,14 +1203,14 @@ def _configure_pgsql(system, features):
         GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
         ALTER DATABASE keatest SET TIMEZONE='{}';\n""".format(_get_local_timezone())
     cmd += 'EOF\n"'
-    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
+    execute(cmd, cwd='/tmp')
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
     cmd += 'EOF\n"'
     env = os.environ.copy()
     env['PGPASSWORD'] = 'keatest'
-    execute(cmd, cwd='/tmp', env=env)  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
+    execute(cmd, cwd='/tmp', env=env)
 
     if 'forge' in features:
         cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
@@ -1219,12 +1220,16 @@ def _configure_pgsql(system, features):
         cmd += "CREATE DATABASE keadb;\n"
         cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
         cmd += "EOF\n\""
-        execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as postgres user directory to "/home/jenkins": Permission denied
-        # TODO: in /etc/postgresql/10/main/pg_hba.conf
-        # change:
-        #    local   all             all                                     peer
-        # to:
-        #    local   all             all                                     md5
+        execute(cmd, cwd='/tmp')
+
+    # Change auth-method to 'md5' on all connections.
+    cmd = "printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs"
+    _, output = execute(cmd, capture=True, cwd='/tmp')
+    hba_file = output.rstrip()
+    _change_postgresql_auth_method('host', 'md5', hba_file)
+    _change_postgresql_auth_method('local', 'md5', hba_file)
+
+    _restart_postgresql(system)
 
     log.info('postgresql just configured')
 
