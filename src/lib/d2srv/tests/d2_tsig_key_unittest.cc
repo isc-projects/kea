@@ -30,7 +30,7 @@ TEST(D2StatsTest, names) {
     ASSERT_EQ(4, D2Stats::key.size());
 }
 
-/// @brief Fixture class for TSIG key / DNS update statictics.
+/// @brief Fixture class for TSIG key / DNS update statistics.
 class D2TsigKeyTest : public ::testing::Test {
 public:
     /// @brief Constructor.

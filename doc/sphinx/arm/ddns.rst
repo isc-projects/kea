@@ -923,7 +923,7 @@ Kea version 2.0.0 introduced statistics support for the DHCP-DDNS.
 
 Statistics are divided in three groups: Name Change Request, DNS update
 and per TSIG key DNS updates. If the statistics of the first two groups
-are cummulative, i.e. not affected by configuration change or reload,
+are cumulative, i.e. not affected by configuration change or reload,
 per key statistics are reset to 0 when the underlying object is
 (re)created.
 
@@ -932,7 +932,7 @@ Currently the statistics management is limited:
 -  only integer samples (i.e. a counter and a timestamp) are used
 -  the maximum sample count is 1
 -  there is no API to remove one or all statistics
--  there is no API to set the maxium sample count or age
+-  there is no API to set the maximum sample count or age
 
 .. note::
 
