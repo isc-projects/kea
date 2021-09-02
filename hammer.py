@@ -2759,7 +2759,16 @@ def upload_to_repo(args, pkgs_dir):
         log.info("upload cmd: %s", upload_cmd)
         log.info("fp: %s", fp)
         cmd = upload_cmd % fp
-        execute(cmd)
+
+        attempts=4
+        while attempts > 0:
+            exitcode, output = execute(cmd, capture=True)
+            if exitcode != 0 and '504 Gateway Time-out' in output:
+                log.info('Trying again after 8 seconds...')
+                attempts -= 1
+                time.sleep(8)
+            else:
+                break
 
 
 def build_cmd(args):
