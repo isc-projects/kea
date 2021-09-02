@@ -685,7 +685,7 @@ service is running at "172.88.99.10", then set it as follows:
 Per DNS server TSIG keys
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since Kea version 1.9.11 a TSIG key can be specified in a DNS server
+Since Kea version 2.0.0 a TSIG key can be specified in a DNS server
 configuration. The priority rule is:
 
 -  if a not empty key name is specified in a DNS server entry this TSIG
@@ -698,7 +698,7 @@ configuration. The priority rule is:
 -  if empty or no key name is specified in a DNS server entry and its parent
    domain entry, no TSIG will protect DNS updates sent to this server.
 
-Fon instance in this configuration:
+For instance in this configuration:
 
 ::
 

@@ -1,8 +1,7 @@
-1933.	[func]		fdupont
+1941.	[func]		fdupont
 	Per DNS server TSIG keys are now supported in the DHCP-DDNS
 	(aka D2) server configuration. A new callout point 'select_key'
-	gives access to the selected TSIG key before DNS update
-	sending.
+	gives access to the selected TSIG key before sending DNS updates.
 	(Gitlab #2011)
 
 Kea 1.9.11 (development) released on Aug 30, 2021
