@@ -501,6 +501,18 @@
         // scopes.
         "next-server": "192.0.2.123",
 
+        // Global value which limits the number of client packets (e.g.
+        // DHCPREQUESTs) that may be parked while waiting for hook library
+        // work to complete, prior to a response (e.g. DHCPACK) being sent
+        // back to the client.  A typical example is when kea-dhcp4 parks a
+        // DHCPREQUEST while it sends the requesite lease update(s) to its
+        // HA peer(s). The packet is unparked once the update(s) have been
+        // acknowledged.  This value limits the number of packets that can
+        // be held pending the updates. In times of heavy client traffic,
+        // this value can keep kea-dhcp4 from building an insurmountable
+        // backlog of updates.
+        "parked-packet-limit": 128,
+
         // List of global DHCP options that Kea DHCPv4 server assigns to the
         // clients.
         "option-data": [

@@ -7528,4 +7528,46 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
                 << "  actual: " << *(cfg) << std::endl;
 }
 
+// Check whether it is possible to parked-packet-limit
+TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
+    // Config without parked-packet-limit
+    string config_no_limit = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with parked-packet-limit
+    string config_limit = "{ " + genIfaceConfig() + "," +
+        "\"parked-packet-limit\": 777, "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with an invalid parked-packet-limit
+    string bad_limit = "{ " + genIfaceConfig() + "," +
+        "\"parked-packet-limit\": \"boo\", "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Should not exist after construction.
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->getConfiguredGlobal("parked-packet-limit"));
+
+    // Configuration with no limit should default to 256.
+    configure(config_no_limit, CONTROL_RESULT_SUCCESS, "");
+    ConstElementPtr ppl;
+    ASSERT_TRUE(ppl = CfgMgr::instance().getStagingCfg()->getConfiguredGlobal("parked-packet-limit"));
+    EXPECT_EQ(256, ppl->intValue());
+
+    // Clear the config
+    CfgMgr::instance().clear();
+
+    // Configuration with the limit should have the limit value.
+    configure(config_limit, CONTROL_RESULT_SUCCESS, "");
+
+    ASSERT_TRUE(ppl = CfgMgr::instance().getStagingCfg()->getConfiguredGlobal("parked-packet-limit"));
+    EXPECT_EQ(777, ppl->intValue());
+
+    // Make sure an invalid limit fails to parse.
+    ASSERT_THROW(parseDHCP4(bad_limit), std::exception);
+}
+
+
 }  // namespace

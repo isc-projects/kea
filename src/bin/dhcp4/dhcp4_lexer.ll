@@ -705,6 +705,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"parked-packet-limit\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_PARKED_PACKET_LIMIT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("parked-packet-limit", driver.loc_);
+    }
+}
+
 \"statistic-default-sample-count\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
