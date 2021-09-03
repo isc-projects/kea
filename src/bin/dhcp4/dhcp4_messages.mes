@@ -391,6 +391,14 @@ hook point sets the next step to DROP.
 This debug message is printed when a callout installed on the leases4_committed
 hook point sets the next step to PARK.
 
+% DHCP4_HOOK_LEASES4_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+This debug message occurs when the parking lot used to hold client queries
+while hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. HA) that implement the
+"leases4-committed" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
 % DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the next step to SKIP. For this particular hook point, the

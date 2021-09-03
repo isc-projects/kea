@@ -1356,6 +1356,31 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         callout_handle->setArgument("deleted_leases4", deleted_leases);
 
         if (allow_packet_park) {
+            // Get the parking limit. Parsing should ensure the value is present.
+            uint32_t parked_packet_limit = 0;
+            data::ConstElementPtr ppl = CfgMgr::instance().
+                getCurrentCfg()->getConfiguredGlobal("parked-packet-limit");
+            if (ppl) {
+                parked_packet_limit = ppl->intValue();
+            }
+
+            if (parked_packet_limit) {
+                const auto& parking_lot = ServerHooks::getServerHooks().
+                    getParkingLotPtr("leases4_committed");
+
+                if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
+                    // We can't park it so we're going to throw it on the floor.
+                    LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
+                              DHCP4_HOOK_LEASES4_PARKING_LOT_FULL)
+                              .arg(parked_packet_limit)
+                              .arg(query->getLabel());
+                    isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                              static_cast<int64_t>(1));
+                    rsp.reset();
+                    return;
+                }
+            }
+
             // We proactively park the packet. We'll unpark it without invoking
             // the callback (i.e. drop) unless the callout status is set to
             // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
