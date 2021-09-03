@@ -947,7 +947,7 @@ The Name Change Request statistics are:
 
 -  ``ncr-received`` - received valid NCRs
 -  ``ncr-invalid`` - received invalid NCRs
--  ``ncr-error`` - errors in NCR receptions other than I/) cancel on shutdown
+-  ``ncr-error`` - errors in NCR receptions other than I/O cancel on shutdown
 
 DNS Update Statistics
 ---------------------
@@ -974,7 +974,7 @@ The per TSIG key DNS update statistics are:
    timeout
 
 The name of a per key statistics is ``key[<key-DNS-name>].<stat-name>``,
-for instance he name of the ``update-sent`` statistics for the
+for instance the name of the ``update-sent`` statistics for the
 ``key.example.com.`` TSIG key is ``key[key.example.com.].update-sent``.
 
 DHCP-DDNS Server Limitations

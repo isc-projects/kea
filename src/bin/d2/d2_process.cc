@@ -47,7 +47,7 @@ namespace d2 {
 
 // Setting to 80% for now. This is an arbitrary choice and should probably
 // be configurable.
-const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
+const unsigned int D2Process::QUEUE_RESTART_PERCENT = 80;
 
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
@@ -64,9 +64,9 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     // Pass in both queue manager and configuration manager.
     // Pass in IOService for DNS update transaction IO event processing.
     D2CfgMgrPtr tmp = getD2CfgMgr();
-    update_mgr_.reset(new D2UpdateMgr(queue_mgr_,  tmp,  getIoService()));
+    update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIoService()));
 
-    // Instantiate  stats manager.
+    // Instantiate stats manager.
     // Initialize statistics.
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
     stats_mgr.setMaxSampleCountDefault(0);
@@ -103,7 +103,7 @@ D2Process::run() {
             // process finished ones.
             update_mgr_->sweep();
 
-            // Wait on IO event(s)  - block until one or more of the following
+            // Wait on IO event(s) - block until one or more of the following
             // has occurred:
             //   a. NCR message has been received
             //   b. Transaction IO has completed
@@ -147,7 +147,7 @@ D2Process::runIO() {
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
     asiolink::IOServicePtr& io = getIoService();
-    boost::asio::io_service& asio_io_service  = io->get_io_service();
+    boost::asio::io_service& asio_io_service = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
@@ -340,8 +340,8 @@ D2Process::checkQueueStatus() {
 
     case D2QueueMgr::STOPPED_QUEUE_FULL: {
             // Resume receiving once the queue has decreased by twenty
-            // percent.  This is an arbitrary choice. @todo this value should
-            // probably be configurable.
+            // percent.  This is an arbitrary choice.
+            // @todo this value should probably be configurable.
             size_t threshold = (((queue_mgr_->getMaxQueueSize()
                                 * QUEUE_RESTART_PERCENT)) / 100);
             if (queue_mgr_->getQueueSize() <= threshold) {
@@ -412,8 +412,8 @@ D2Process::reconfigureQueueMgr() {
         const D2ParamsPtr& d2_params = getD2CfgMgr()->getD2Params();
 
         // Warn the user if the server address is not the loopback.
-        /// @todo Remove this once we provide a secure mechanism.
-        std::string ip_address =  d2_params->getIpAddress().toText();
+        // @todo Remove this once we provide a secure mechanism.
+        std::string ip_address = d2_params->getIpAddress().toText();
         if (ip_address != "127.0.0.1" && ip_address != "::1") {
             LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
         }
@@ -424,7 +424,7 @@ D2Process::reconfigureQueueMgr() {
                                         d2_params->getPort(),
                                         d2_params->getNcrFormat(), true);
         } else {
-            /// @todo Add TCP/IP once it's supported
+            // @todo Add TCP/IP once it's supported
             // We should never get this far but if we do deal with it.
             isc_throw(DProcessBaseError, "Unsupported NCR listener protocol:"
                       << dhcp_ddns::ncrProtocolToString(d2_params->
@@ -432,8 +432,9 @@ D2Process::reconfigureQueueMgr() {
         }
 
         // Now start it. This assumes that starting is a synchronous,
-        // blocking call that executes quickly.  @todo Should that change then
-        // we will have to expand the state model to accommodate this.
+        // blocking call that executes quickly.
+        // @todo Should that change then we will have to expand the state model
+        // to accommodate this.
         queue_mgr_->startListening();
     } catch (const isc::Exception& ex) {
         // Queue manager failed to initialize and therefore not listening.
