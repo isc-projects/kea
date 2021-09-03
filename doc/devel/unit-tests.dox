@@ -298,7 +298,7 @@ keatest=>
   <tt>/var/lib/postgresql/data/pg_hba.conf</tt> or at
   <tt>/etc/postgresql/${version}/main/pg_hba.conf</tt>, but you can find out
   for sure by running
-  <tt>printf 'SHOW hba_file' | sudo -u postgres psql -t postgres</tt>. Make sure
+  <tt>sudo -u postgres psql -t -c 'SHOW hba_file'</tt>. Make sure
   that all the authentication methods are changed to "md5" like this:
 
 @verbatim

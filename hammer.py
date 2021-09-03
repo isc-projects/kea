@@ -1163,8 +1163,12 @@ def _restart_postgresql(system):
         execute('sudo systemctl restart postgresql.service')
 
 
+# Change authentication type for given connection type. Usual inputs for
+# connection type are 'host' or 'local'. Only affects entries with database
+# and user both set to 'all'. This is to not affect authentication of
+# `postgres` user which should have a separate entry.
 def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
-    execute("sudo sed -i.bak 's/^{}\(.*\) [a-z0-9]*$/{}\\1 {}/g' '{}'".format(
+    execute("sudo sed -i.bak 's/^{}\(.*\)all\(.*\)all\(.*\) [a-z0-9]*$/{}\\1all\\2all\\3 {}/g' '{}'".format(
         connection_type, connection_type, auth_method, hba_file), cwd='/tmp')
 
 
@@ -1191,6 +1195,15 @@ def _configure_pgsql(system, features):
         execute('sudo [ ! -f /var/db/postgres/data11/postmaster.opts ] && sudo service postgresql onestart > /dev/null')
 
     _enable_postgresql(system)
+    _restart_postgresql(system)
+
+    # Change auth-method to 'md5' on all connections.
+    cmd = "sudo -u postgres psql -t -c 'SHOW hba_file' | xargs"
+    _, output = execute(cmd, capture=True, cwd='/tmp')
+    hba_file = output.rstrip()
+    _change_postgresql_auth_method('host', 'md5', hba_file)
+    _change_postgresql_auth_method('local', 'md5', hba_file)
+
     _restart_postgresql(system)
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
@@ -1221,15 +1234,6 @@ def _configure_pgsql(system, features):
         cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
         cmd += "EOF\n\""
         execute(cmd, cwd='/tmp')
-
-    # Change auth-method to 'md5' on all connections.
-    cmd = "printf 'SHOW hba_file' | sudo -u postgres psql -t postgres | xargs"
-    _, output = execute(cmd, capture=True, cwd='/tmp')
-    hba_file = output.rstrip()
-    _change_postgresql_auth_method('host', 'md5', hba_file)
-    _change_postgresql_auth_method('local', 'md5', hba_file)
-
-    _restart_postgresql(system)
 
     log.info('postgresql just configured')
 
