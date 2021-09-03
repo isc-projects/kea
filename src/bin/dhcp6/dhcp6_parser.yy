@@ -129,6 +129,7 @@ using namespace std;
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
+  PARKED_PACKET_LIMIT "parked-packet-limit"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -528,6 +529,7 @@ global_param: data_directory
             | dhcp_multi_threading
             | ip_reservations_unique
             | compatibility
+            | parked_packet_limit
             | unknown_map_entry
             ;
 
@@ -742,6 +744,12 @@ server_tag: SERVER_TAG {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
+};
+
+parked_packet_limit: PARKED_PACKET_LIMIT COLON INTEGER {
+    ctx.unique("parked-packet-limit", ctx.loc2pos(@1));
+    ElementPtr ppl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("parked-packet-limit", ppl);
 };
 
 ip_reservations_unique: IP_RESERVATIONS_UNIQUE COLON BOOLEAN {

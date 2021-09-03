@@ -97,6 +97,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "compatibility",                  Element::map },
+    { "parked-packet-limit",            Element::integer },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -129,7 +130,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "statistic-default-sample-age",   Element::integer, "0" },
     { "ip-reservations-unique",         Element::boolean, "true" },
     { "ddns-update-on-renew",           Element::boolean, "false" },
-    { "ddns-use-conflict-resolution",   Element::boolean, "true" }
+    { "ddns-use-conflict-resolution",   Element::boolean, "true" },
+    { "parked-packet-limit",            Element::integer, "256" }
 };
 
 /// @brief This table defines all option definition parameters.

@@ -73,6 +73,7 @@ extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP = "DHCP6_HOOK
 extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP = "DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_LEASES6_COMMITTED_DROP = "DHCP6_HOOK_LEASES6_COMMITTED_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_LEASES6_COMMITTED_PARK = "DHCP6_HOOK_LEASES6_COMMITTED_PARK";
+extern const isc::log::MessageID DHCP6_HOOK_LEASES6_PARKING_LOT_FULL = "DHCP6_HOOK_LEASES6_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_RCVD_SKIP = "DHCP6_HOOK_PACKET_RCVD_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP = "DHCP6_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP = "DHCP6_HOOK_PACKET_SEND_SKIP";
@@ -229,6 +230,7 @@ const char* values[] = {
     "DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP", "%1: prefix lease was not released because a callout set the next step to SKIP",
     "DHCP6_HOOK_LEASES6_COMMITTED_DROP", "%1: packet is dropped, because a callout set the next step to DROP",
     "DHCP6_HOOK_LEASES6_COMMITTED_PARK", "%1: packet is parked, because a callout set the next step to PARK",
+    "DHCP6_HOOK_LEASES6_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP6_HOOK_PACKET_RCVD_SKIP", "%1: packet is dropped, because a callout set the next step to SKIP",
     "DHCP6_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP",
     "DHCP6_HOOK_PACKET_SEND_SKIP", "%1: prepared DHCPv6 response is not built because a callout set the next step to SKIP",

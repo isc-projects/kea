@@ -74,6 +74,7 @@ extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_LEASES6_COMMITTED_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_LEASES6_COMMITTED_PARK;
+extern const isc::log::MessageID DHCP6_HOOK_LEASES6_PARKING_LOT_FULL;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_RCVD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP;

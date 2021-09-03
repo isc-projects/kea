@@ -503,6 +503,18 @@
             }
         ],
 
+        // Global value which limits the number of client packets (e.g.
+        // REQUESTs,RENEWs...) that may be parked while waiting for
+        // hook library work to complete, prior to a response (e.g. REPLY)
+        // being sent back to the client.  A typical example is when kea-dhcp6
+        // parks a REQUEST while it sends the requisite lease update(s) to its
+        // HA peer(s). The packet is unparked once the update(s) have been
+        // acknowledged.  This value limits the number of packets that can
+        // be held pending the updates. In times of heavy client traffic,
+        // this value can keep kea-dhcp6 from building an insurmountable
+        // backlog of updates.
+        "parked-packet-limit": 128,
+
         // Global (default) value of the preferred lifetime.
         "preferred-lifetime": 50,
 
