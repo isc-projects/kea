@@ -1091,6 +1091,10 @@ def _configure_mysql(system, revision, features):
         execute('sudo systemctl start mariadb.service')
         time.sleep(5)
 
+    elif system in ['debian', 'ubuntu']:
+        execute('sudo systemctl enable mysql.service')
+        execute('sudo systemctl restart mysql.service')
+
     elif system == 'freebsd':
         cmd = "echo 'SET PASSWORD = \"\";' "
         cmd += "| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '^#')\" --connect-expired-password"
