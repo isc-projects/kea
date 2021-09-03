@@ -22,6 +22,7 @@
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/marker_file.h>
 #include <dhcp4/tests/test_libraries.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <vector>
@@ -34,6 +35,7 @@ using namespace isc::config;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::stats;
 
 // Checks if hooks are registered properly.
 TEST_F(Dhcpv4SrvTest, Hooks) {
@@ -117,6 +119,9 @@ public:
         resetCalloutBuffers();
 
         io_service_ = boost::make_shared<IOService>();
+
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief destructor (deletes Dhcpv4Srv)
@@ -141,6 +146,9 @@ public:
         if (!status) {
             cerr << "(fixture dtor) unloadLibraries failed" << endl;
         }
+
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief creates an option with specified option code
@@ -663,7 +671,6 @@ public:
     static int
     leases4_committed_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases4_committed");
-
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         Lease4CollectionPtr leases4;
@@ -799,6 +806,19 @@ public:
         callback_argument_names_.clear();
         callback_qry_options_copy_ = false;
         callback_resp_options_copy_ = false;
+    }
+
+    /// @brief Fetches the current value of the given statistic.
+    /// @param name name of the desired statistic.
+    /// @return Current value of the statistic, or zero if the
+    /// statistic is not found.
+    uint64_t getStatistic(const std::string& name) {
+        ObservationPtr stat = StatsMgr::instance().getObservation(name);
+        if (!stat) {
+            return (0);
+        }
+
+        return (stat->getInteger().first);
     }
 
     /// pointer to Dhcpv4Srv that is used in tests
@@ -2953,3 +2973,130 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
     EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
                                 "3io_contextjson_confignetwork_stateserver_config"));
 }
+
+// This test verifies that parked-packet-limit is properly enforced.
+TEST_F(HooksDhcpv4SrvTest, parkedPacketLimit) {
+    IfaceMgrTestConfig test_config(true);
+
+    // Configure 1 directly reachable subnet, parked-packet-limit of 1. 
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"parked-packet-limit\": 1,"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Commit the config
+    CfgMgr::instance().commit();
+    IfaceMgr::instance().openSockets4();
+
+    // This callout uses the provided IO service object to post a function
+    // that unparks the packet. Once the packet is parked, it can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_park_callout));
+
+    // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+
+    // Create a client and initiate a DORA cycle for it.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Check that the callback called is indeed the one we installed
+    ASSERT_EQ("leases4_committed", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Verify we have a packet parked. 
+    const auto& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("leases4_committed");
+    ASSERT_TRUE(parking_lot);
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Clear callout buffers.
+    resetCalloutBuffers();
+
+    // Create a second client and initiate a DORA for it.
+    // Since the parking lot limit has been reached, the packet
+    // should be dropped with no response.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // Check that no callback was called.
+    ASSERT_EQ("", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Verify we have not parked another packet.
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Statistic should show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+
+    // Invoking poll should run the scheduled action only for
+    // the first client.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client.receiveResponse());
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr rsp = client.getContext().response_;
+    EXPECT_EQ(DHCPACK, rsp->getType());
+    EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
+
+    // Verify we have no parked packets.
+    ASSERT_EQ(0, parking_lot->size());
+
+    resetCalloutBuffers();
+
+    // Try client2 again.
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // Check that the callback called is indeed the one we installed
+    ASSERT_EQ("leases4_committed", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Verify we parked the packet.
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Invoking poll should run the scheduled action.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPACK, rsp->getType());
+    EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
+
+    // Verify we have no parked packets.
+    ASSERT_EQ(0, parking_lot->size());
+
+    // Statistic should still show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+}
+
