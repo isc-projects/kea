@@ -1,3 +1,9 @@
+1943.	[bug]		marcin
+	Fixed a bug in fetching client classes from the Config Backend.
+	The bug resulted in failures during attempts to evaluate the
+	classes for a received packet.
+	(Gitlab #2077)
+
 1942.	[func]		fdupont
 	Added basic statistics to the DHCP-DDNS server.
 	(Gitlab #2040)
