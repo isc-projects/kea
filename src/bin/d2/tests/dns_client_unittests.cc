@@ -16,6 +16,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <nc_test_utils.h>
+#include <stats_test_utils.h>
 #include <functional>
 
 using namespace std;
@@ -23,9 +24,10 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::d2;
-
-using namespace isc;
+using namespace isc::d2::test;
+using namespace isc::data;
 using namespace isc::dns;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -51,7 +53,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 // properly handled a task may be hanging for a long time. In order to prevent
 // it, the asiolink::IntervalTimer is used to break a running test if test
 // timeout is hit. This will result in test failure.
-class DNSClientTest : public virtual ::testing::Test, DNSClient::Callback {
+class DNSClientTest : public virtual D2StatTest, DNSClient::Callback {
 public:
     IOService service_;
     D2UpdateMessagePtr response_;
@@ -484,19 +486,36 @@ TEST_F(DNSClientTest, invalidTimeout) {
 
 // Verifies that TSIG can be used to sign requests and verify responses.
 TEST_F(DNSClientTest, runTSIGTest) {
+    ConstElementPtr stats_all = StatsMgr::instance().getAll();
+    ASSERT_TRUE(stats_all);
+    EXPECT_TRUE(stats_all->empty());
     std::string secret ("key number one");
     D2TsigKeyPtr key_one;
     ASSERT_NO_THROW(key_one.reset(new
                                     D2TsigKey(Name("one.com"),
                                               TSIGKey::HMACMD5_NAME(),
                                               secret.c_str(), secret.size())));
+    StatMap stats_key = {
+        { "update-sent", 0},
+        { "update-success", 0},
+        { "update-timeout", 0},
+        { "update-error", 0}
+    };
+    checkStats("one.com.", stats_key);
     secret = "key number two";
     D2TsigKeyPtr key_two;
     ASSERT_NO_THROW(key_two.reset(new
                                     D2TsigKey(Name("two.com"),
                                               TSIGKey::HMACMD5_NAME(),
                                               secret.c_str(), secret.size())));
+    checkStats("two.com.", stats_key);
     D2TsigKeyPtr nokey;
+    StatsMgr::instance().setValue("update-sent", 0LL);
+    StatsMgr::instance().setValue("update-signed", 0LL);
+    StatsMgr::instance().setValue("update-unsigned", 0LL);
+    StatsMgr::instance().setValue("update-success", 0LL);
+    StatsMgr::instance().setValue("update-timeout", 0LL);
+    StatsMgr::instance().setValue("update-error", 0LL);
 
     // Should be able to send and receive with no keys.
     // Neither client nor server will attempt to sign or verify.
@@ -514,6 +533,26 @@ TEST_F(DNSClientTest, runTSIGTest) {
     // Client neither signs nor verifies, server responds with a signed answer
     // Since we are "liberal" in what we accept this should be ok.
     runTSIGTest(nokey, key_two);
+
+    // Check statistics.
+    stats_all = StatsMgr::instance().getAll();
+    StatMap stats_one = {
+        { "update-sent", 3},
+        { "update-success", 1},
+        { "update-timeout", 0},
+        { "update-error", 2}
+    };
+    checkStats("one.com.", stats_one);
+    checkStats("two.com.", stats_key);
+    StatMap stats_upd = {
+        { "update-sent", 5},
+        { "update-signed", 3},
+        { "update-unsigned", 2},
+        { "update-success", 3},
+        { "update-timeout", 0},
+        { "update-error", 2}
+    };
+    checkStats(stats_upd);
 }
 
 // Verify that the DNSClient receives the response from DNS and the received

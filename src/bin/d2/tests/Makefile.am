@@ -60,6 +60,7 @@ d2_unittests_SOURCES += get_config_unittest.cc
 d2_unittests_SOURCES += d2_command_unittest.cc
 d2_unittests_SOURCES += simple_add_unittests.cc
 d2_unittests_SOURCES += simple_remove_unittests.cc
+d2_unittests_SOURCES += stats_test_utils.cc stats_test_utils.h
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
