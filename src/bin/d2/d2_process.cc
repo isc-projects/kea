@@ -125,9 +125,9 @@ D2Process::run() {
                    "Process run method failed: " << ex.what());
     }
 
-    // @todo - if queue isn't empty, we may need to persist its contents
-    // this might be the place to do it, once there is a persistence mgr.
-    // This may also be better in checkQueueStatus.
+    /// @todo - if queue isn't empty, we may need to persist its contents
+    /// this might be the place to do it, once there is a persistence mgr.
+    /// This may also be better in checkQueueStatus.
 
     controller->deregisterCommands();
 
@@ -275,9 +275,9 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // the method we are in now is invoked as part of the configuration event
     // callback.  This means you can't wait for events here, you are already
     // in one.
-    // (@todo NOTE This could be turned into a bitmask of flags if we find other
-    // things that need reconfiguration.  It might also be useful if we
-    // did some analysis to decide what if anything we need to do.)
+    /// (@todo NOTE This could be turned into a bitmask of flags if we find other
+    /// things that need reconfiguration.  It might also be useful if we
+    /// did some analysis to decide what if anything we need to do.)
     reconf_queue_flag_ = true;
 
     // This hook point notifies hooks libraries that the configuration of the
@@ -320,10 +320,10 @@ D2Process::checkQueueStatus() {
     switch (queue_mgr_->getMgrState()){
     case D2QueueMgr::RUNNING:
         if (reconf_queue_flag_ || shouldShutdown()) {
-            // If we need to reconfigure the queue manager or we have been
-            // told to shutdown, then stop listening first.  Stopping entails
-            // canceling active listening which may generate an IO event, so
-            // instigate the stop and get out.
+            /// If we need to reconfigure the queue manager or we have been
+            /// told to shutdown, then stop listening first.  Stopping entails
+            /// canceling active listening which may generate an IO event, so
+            /// instigate the stop and get out.
             try {
                 LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
                           DHCP_DDNS_QUEUE_MGR_STOPPING)
@@ -339,9 +339,9 @@ D2Process::checkQueueStatus() {
         break;
 
     case D2QueueMgr::STOPPED_QUEUE_FULL: {
-            // Resume receiving once the queue has decreased by twenty
-            // percent.  This is an arbitrary choice.
-            // @todo this value should probably be configurable.
+            /// Resume receiving once the queue has decreased by twenty
+            /// percent.  This is an arbitrary choice.
+            /// @todo this value should probably be configurable.
             size_t threshold = (((queue_mgr_->getMaxQueueSize()
                                 * QUEUE_RESTART_PERCENT)) / 100);
             if (queue_mgr_->getQueueSize() <= threshold) {
@@ -359,13 +359,13 @@ D2Process::checkQueueStatus() {
         }
 
     case D2QueueMgr::STOPPED_RECV_ERROR:
-        // If the receive error is not due to some fallout from shutting
-        // down then we will attempt to recover by reconfiguring the listener.
-        // This will close and destruct the current listener and make a new
-        // one with new resources.
-        // @todo This may need a safety valve such as retry count or a timer
-        // to keep from endlessly retrying over and over, with little time
-        // in between.
+        /// If the receive error is not due to some fallout from shutting
+        /// down then we will attempt to recover by reconfiguring the listener.
+        /// This will close and destruct the current listener and make a new
+        /// one with new resources.
+        /// @todo This may need a safety valve such as retry count or a timer
+        /// to keep from endlessly retrying over and over, with little time
+        /// in between.
         if (!shouldShutdown()) {
             LOG_INFO (d2_logger, DHCP_DDNS_QUEUE_MGR_RECOVERING);
             reconfigureQueueMgr();
@@ -373,10 +373,10 @@ D2Process::checkQueueStatus() {
         break;
 
     case D2QueueMgr::STOPPING:
-        // We are waiting for IO to cancel, so this is a NOP.
-        // @todo Possible timer for self-defense?  We could conceivably
-        // get into a condition where we never get the event, which would
-        // leave us stuck in stopping.  This is hugely unlikely but possible?
+        /// We are waiting for IO to cancel, so this is a NOP.
+        /// @todo Possible timer for self-defense?  We could conceivably
+        /// get into a condition where we never get the event, which would
+        /// leave us stuck in stopping.  This is hugely unlikely but possible?
         break;
 
     default:
@@ -400,9 +400,9 @@ D2Process::reconfigureQueueMgr() {
     // queue manager in INITTED state, which is fine.
     // What we don't want is to continually attempt to reconfigure so set
     // the flag false now.
-    // @todo This method assumes only 1 type of listener.  This will change
-    // to support at least a TCP version, possibly some form of RDBMS listener
-    // as well.
+    /// @todo This method assumes only 1 type of listener.  This will change
+    /// to support at least a TCP version, possibly some form of RDBMS listener
+    /// as well.
     reconf_queue_flag_ = false;
     try {
         // Wipe out the current listener.
@@ -411,8 +411,8 @@ D2Process::reconfigureQueueMgr() {
         // Get the configuration parameters that affect Queue Manager.
         const D2ParamsPtr& d2_params = getD2CfgMgr()->getD2Params();
 
-        // Warn the user if the server address is not the loopback.
-        // @todo Remove this once we provide a secure mechanism.
+        /// Warn the user if the server address is not the loopback.
+        /// @todo Remove this once we provide a secure mechanism.
         std::string ip_address = d2_params->getIpAddress().toText();
         if (ip_address != "127.0.0.1" && ip_address != "::1") {
             LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
@@ -424,7 +424,7 @@ D2Process::reconfigureQueueMgr() {
                                         d2_params->getPort(),
                                         d2_params->getNcrFormat(), true);
         } else {
-            // @todo Add TCP/IP once it's supported
+            /// @todo Add TCP/IP once it's supported
             // We should never get this far but if we do deal with it.
             isc_throw(DProcessBaseError, "Unsupported NCR listener protocol:"
                       << dhcp_ddns::ncrProtocolToString(d2_params->
@@ -433,8 +433,8 @@ D2Process::reconfigureQueueMgr() {
 
         // Now start it. This assumes that starting is a synchronous,
         // blocking call that executes quickly.
-        // @todo Should that change then we will have to expand the state model
-        // to accommodate this.
+        /// @todo Should that change then we will have to expand the state model
+        /// to accommodate this.
         queue_mgr_->startListening();
     } catch (const isc::Exception& ex) {
         // Queue manager failed to initialize and therefore not listening.
