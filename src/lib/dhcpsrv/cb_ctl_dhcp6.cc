@@ -202,6 +202,9 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     if (audit_entries.empty() || !updated_entries.empty()) {
         ClientClassDictionary client_classes = getMgr().getPool()->getAllClientClasses6(backend_selector,
                                                                                         server_selector);
+        // Match expressions are not initialized for classes returned from the config backend.
+        // We have to ensure to initialize them before they can be used by the server.
+        client_classes.initMatchExpr(AF_INET6);
         external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
     }
 

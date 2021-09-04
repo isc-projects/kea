@@ -397,6 +397,12 @@ public:
     /// @return true if descriptors equal, false otherwise.
     bool equals(const ClientClassDictionary& other) const;
 
+    /// @brief Iterates over the classes in the dictionary and ensures that
+    /// that match expressions are initialized.
+    ///
+    /// @param family Class universe, e.g. AF_INET or AF_INET6.
+    void initMatchExpr(uint16_t family);
+
     /// @brief Equality operator.
     ///
     /// @param other Other client class dictionary to compare to.

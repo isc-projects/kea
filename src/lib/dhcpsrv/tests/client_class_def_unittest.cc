@@ -542,6 +542,62 @@ TEST(ClientClassDictionary, dependency) {
     EXPECT_EQ("cc4", depend);
 }
 
+// Tests that match expressions are set for all client classes in the
+// dictionary.
+TEST(ClientClassDictionary, initMatchExpr) {
+    ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // Add several classes.
+    ASSERT_NO_THROW(dictionary->addClass("foo", expr, "", false,
+                                         false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("bar", expr, "member('KNOWN') or member('foo')", false,
+                                         false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("baz", expr, "substring(option[61].hex,0,3) == 'foo'", false,
+                                         false, cfg_option));
+
+    // Create match expressions for all of them.
+    ASSERT_NO_THROW(dictionary->initMatchExpr(AF_INET));
+
+    // Ensure that the expressions were created.
+    auto classes = *(dictionary->getClasses());
+    EXPECT_TRUE(classes[0]->getMatchExpr());
+    EXPECT_EQ(0, classes[0]->getMatchExpr()->size());
+
+    EXPECT_TRUE(classes[1]->getMatchExpr());
+    EXPECT_EQ(3, classes[1]->getMatchExpr()->size());
+
+    EXPECT_TRUE(classes[2]->getMatchExpr());
+    EXPECT_EQ(6, classes[2]->getMatchExpr()->size());
+}
+
+// Tests that an error is returned when any of the test expressions is
+// invalid, and that no expressions are initialized if there is an error
+// for a single expresion.
+TEST(ClientClassDictionary, initMatchExprError) {
+    ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // Add several classes. One of them has invalid test expression.
+    ASSERT_NO_THROW(dictionary->addClass("foo", expr, "member('KNOWN')", false,
+                                         false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("bar", expr, "wrong expression", false,
+                                         false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("baz", expr, "substring(option[61].hex,0,3) == 'foo'", false,
+                                         false, cfg_option));
+
+    // An attempt to initialize match expressions should fail because the
+    // test expression for the second class is invalid.
+    ASSERT_THROW(dictionary->initMatchExpr(AF_INET), std::exception);
+
+    // Ensure that no classes have their match expressions modified.
+    for (auto c : (*dictionary->getClasses())) {
+        EXPECT_FALSE(c->getMatchExpr());
+    }
+}
+
 // Tests the default constructor regarding fixed fields
 TEST(ClientClassDef, fixedFieldsDefaults) {
     boost::scoped_ptr<ClientClassDef> cclass;

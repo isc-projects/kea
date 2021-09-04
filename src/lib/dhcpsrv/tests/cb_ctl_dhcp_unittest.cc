@@ -382,6 +382,7 @@ public:
         // Insert client classes into the database.
         auto expression = boost::make_shared<Expression>();
         ClientClassDefPtr client_class = boost::make_shared<ClientClassDef>("first-class", expression);
+        client_class->setTest("substring(option[1].hex, 0, 8) == 'my-value'");
         client_class->setId(1);
         client_class->setModificationTime(getTimestamp("dhcp4_client_class"));
         mgr.getPool()->createUpdateClientClass4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
@@ -592,6 +593,8 @@ public:
         if (hasConfigElement("dhcp4_client_class") &&
             (getTimestamp("dhcp4_client_class") > lb_modification_time)) {
             ASSERT_TRUE(found_class);
+            ASSERT_TRUE(found_class->getMatchExpr());
+            EXPECT_GT(found_class->getMatchExpr()->size(), 0);
             EXPECT_EQ("first-class", found_class->getName());
 
         } else {
@@ -1175,6 +1178,7 @@ public:
         // Insert client classes into the database.
         auto expression = boost::make_shared<Expression>();
         ClientClassDefPtr client_class = boost::make_shared<ClientClassDef>("first-class", expression);
+        client_class->setTest("substring(option[1].hex, 0, 8) == 'my-value'");
         client_class->setId(1);
         client_class->setModificationTime(getTimestamp("dhcp6_client_class"));
         mgr.getPool()->createUpdateClientClass6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
@@ -1385,6 +1389,8 @@ public:
         if (hasConfigElement("dhcp6_client_class") &&
             (getTimestamp("dhcp6_client_class") > lb_modification_time)) {
             ASSERT_TRUE(found_class);
+            ASSERT_TRUE(found_class->getMatchExpr());
+            EXPECT_GT(found_class->getMatchExpr()->size(), 0);
             EXPECT_EQ("first-class", found_class->getName());
 
         } else {
