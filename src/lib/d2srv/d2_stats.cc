@@ -9,8 +9,10 @@
 #include <config.h>
 
 #include <d2srv/d2_stats.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
+using namespace isc::stats;
 
 namespace isc {
 namespace d2 {
@@ -38,6 +40,18 @@ D2Stats::key = {
     "update-success",
     "update-timeout",
     "update-error"
+};
+
+void
+D2Stats::init() {
+    StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+    stats_mgr.setMaxSampleCountDefault(0);
+    for (const auto& name : D2Stats::ncr) {
+        stats_mgr.setValue(name, static_cast<int64_t>(0));
+    }
+    for (const auto& name : D2Stats::update) {
+        stats_mgr.setValue(name, static_cast<int64_t>(0));
+    }
 };
 
 } // namespace d2

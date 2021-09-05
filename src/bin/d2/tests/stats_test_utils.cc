@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <config.h>
 
+#include <d2srv/d2_stats.h>
 #include <stats_test_utils.h>
 
 using namespace isc::data;
@@ -17,6 +18,7 @@ namespace test {
 
 D2StatTest::D2StatTest() {
     StatsMgr::instance().removeAll();
+    D2Stats::init();
 }
 
 D2StatTest::~D2StatTest() {

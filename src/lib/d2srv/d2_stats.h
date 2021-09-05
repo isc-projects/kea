@@ -40,6 +40,11 @@ public:
     /// - update-timeout
     /// - update-error
     static std::set<std::string> key;
+
+    /// @brief Initialize D2 statistics.
+    ///
+    /// @note: Add default samples if needed.
+    static void init();
 };
 
 } // namespace d2

@@ -486,9 +486,6 @@ TEST_F(DNSClientTest, invalidTimeout) {
 
 // Verifies that TSIG can be used to sign requests and verify responses.
 TEST_F(DNSClientTest, runTSIGTest) {
-    ConstElementPtr stats_all = StatsMgr::instance().getAll();
-    ASSERT_TRUE(stats_all);
-    EXPECT_TRUE(stats_all->empty());
     std::string secret ("key number one");
     D2TsigKeyPtr key_one;
     ASSERT_NO_THROW(key_one.reset(new
@@ -510,12 +507,6 @@ TEST_F(DNSClientTest, runTSIGTest) {
                                               secret.c_str(), secret.size())));
     checkStats("two.com.", stats_key);
     D2TsigKeyPtr nokey;
-    StatsMgr::instance().setValue("update-sent", 0LL);
-    StatsMgr::instance().setValue("update-signed", 0LL);
-    StatsMgr::instance().setValue("update-unsigned", 0LL);
-    StatsMgr::instance().setValue("update-success", 0LL);
-    StatsMgr::instance().setValue("update-timeout", 0LL);
-    StatsMgr::instance().setValue("update-error", 0LL);
 
     // Should be able to send and receive with no keys.
     // Neither client nor server will attempt to sign or verify.
@@ -535,7 +526,6 @@ TEST_F(DNSClientTest, runTSIGTest) {
     runTSIGTest(nokey, key_two);
 
     // Check statistics.
-    stats_all = StatsMgr::instance().getAll();
     StatMap stats_one = {
         { "update-sent", 3},
         { "update-success", 1},
