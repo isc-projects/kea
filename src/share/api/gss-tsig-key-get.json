@@ -22,6 +22,7 @@
         "    \"text\": \"GSS-TSIG key '1234.sig-foo.com.' found\"",
         "    \"arguments\": {",
         "        \"name\": \"1234.sig-foo.com.\",",
+        "        \"server-id\": \"foo\",",
         "        \"inception-date\": \"2021-09-05 12:23:36.281176\",",
         "        \"expire-date\": \"2021-09-05 13:23:36.281176\",",
         "        \"status\": \"not yet ready\",",
