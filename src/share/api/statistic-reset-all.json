@@ -17,6 +17,7 @@
     "name": "statistic-reset-all",
     "support": [
         "kea-dhcp4",
-        "kea-dhcp6"
+        "kea-dhcp6",
+        "kea-dhcp-ddns"
     ]
 }

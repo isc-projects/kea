@@ -77,6 +77,7 @@
             "servers": [
                 {
                     // First server (identification is required)
+                    "id": "server1",
                     "domain-names": [ ], // if not specified or empty, will
                                          // match all domains that want to
                                          // use this IP+port pair
@@ -90,6 +91,7 @@
                 {
                     // The second server (it has most of the parameters missing
                     // as those are using the defaults specified above)
+                    "id": "server2",
                     "ip-address": "192.0.2.2",
                     "port": 5300
                 }
@@ -99,7 +101,7 @@
     ]
 
     // Additional parameters, such as logging, control socket and
-    // others omited for clarity.
+    // others omitted for clarity.
 }
 
 }

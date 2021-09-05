@@ -771,11 +771,6 @@ The 172.88.99.10 server will use the foo TSIG key, 172.88.99.11 and
 User Contexts in DDNS
 ---------------------
 
-.. note::
-
-   User contexts were designed for hook libraries, which are not yet
-   supported for DHCP-DDNS server configuration.
-
 See :ref:`user-context` for additional background regarding the user
 context idea.
 

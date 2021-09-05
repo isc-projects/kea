@@ -1,0 +1,43 @@
+{
+    "access": "read",
+    "avail": "2.0.0",
+    "brief": [
+        "This command retrieves information about the specified GSS-TSIG server."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-get\",",
+        "    \"arguments\": {",
+        "        \"id\": \"foo\"",
+        "    }",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-get\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-get",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"GSS-TSIG server[foo] found\",",
+        "    \"arguments\": {",
+        "        \"id\": \"foo\",",
+        "        \"ip-address\": \"192.1.2.3\",",
+        "        \"port\": 53,",
+        "        \"server-principal\": \"DNS/foo.com@FOO.COM\",",
+        "        \"key-name-suffix\": \"foo.com.\",",
+        "        \"tkey-lifetime\": 3600,",
+        "        \"tkey-protocol\": \"TCP\",",
+        "        \"keys\": [",
+        "            \"{",
+        "                \"name\": \"1234.sig-foo.com.\",",
+        "                \"inception-date\": \"2021-09-05 12:23:36.281176\",",
+        "                \"expire-date\": \"2021-09-05 13:23:36.281176\",",
+        "                \"status\": \"not yet ready\",",
+        "                \"tkey-exchange\": true",
+        "            }",
+        "        ]",
+        "    }",
+        "]"
+    ]
+}

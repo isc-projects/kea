@@ -258,6 +258,7 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "servers": [
                     {
                         // First server (identification is required)
+                        "id": "server1",
                         "domain-names": [ ], // if not specified or empty, will
                                              // match all domains that want to
                                              // use this IP+port pair
@@ -271,6 +272,7 @@ An excerpt from D2 server is provided below. More examples are available in the
                     {
                         // The second server (it has most of the parameters missing
                         // as those are using the defaults specified above)
+                        "id": "server2",
                         "ip-address": "192.0.2.2",
                         "port": 5300
                     }
@@ -280,7 +282,7 @@ An excerpt from D2 server is provided below. More examples are available in the
         ]
 
         // Additional parameters, such as logging, control socket and
-        // others omited for clarity.
+        // others omitted for clarity.
     }
 
     }
@@ -335,3 +337,87 @@ The parameters have the following meaning:
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
   TKEY protocol, expressed in seconds. Default value is 3600 (one hour).
+
+- ``user-context`` is an optional parameter (see :ref:`user-context`
+  for a general description of user contexts in Kea).
+
+- ``comment`` is allowed but currently ignored.
+
+- ``servers`` specifies the list of DNS servers where GSS-TSIG is enabled.
+
+The server map parameters are:
+
+- ``id`` assigns an identifier to a DNS server. It is used for statistics
+  and commands. It is required, must be not empty and unique.
+
+- ``domain-names`` governs the many to one relationship between D2 DNS
+  servers and GSS-TSIG DNS servers: for each domain name of this list,
+  a D2 DNS server for this domain with the IP address and port is
+  looked for. An empty list (the default) means that all domains
+  match.
+
+- ``ip-address`` specifies the IP address at which the GSS-TSIG DNS server
+  listens for DDNS and TKEY requests. It is a mandatory parameter.
+
+- ``port`` specifies the DNS transport port at which the GSS-TSIG DNS server
+  listens for DDNS and TKEY requests. It defaults to 53.
+
+- ``server-principal`` is the Kerberos principal name of the DNS server
+  that will receive updates. The per server server principal takes
+  precedence. It is a mandatory parameter which must be specified at
+  least at the global or the server level.
+
+- ``client-principal`` is the Kerberos principal name of the Kea D2
+  service for this DNS server. The per server client principal takes
+  precedence. It is an optional parameter i.e. to not specify it at
+  both the global and the server level is accepted.
+
+- ``tkey-protocol`` determines which protocol is used to establish the
+  security context with the DNS server. The per server TKEY protocol
+  takes precedence. Default and supported values are the same as for
+  the global level parameter.
+
+- ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
+  TKEY protocol for the DNS server. The per server TKEY lifetime takes
+  precedence. Default and supported values are the same as for
+  the global level parameter.
+
+- ``user-context`` is an optional parameter (see :ref:`user-context`
+  for a general description of user contexts in Kea).
+
+- ``comment`` is allowed but currently ignored.
+
+.. _command-gss-tsig:
+
+GSS-TSIG Commands
+-----------------
+
+The GSS-TSIG hook library supports some commands.
+
+To be done (only anchors for external references are provided).
+
+.. _command-gss-tsig-get-all:
+
+The gss-tsig-get-all Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-get:
+
+The gss-tsig-get Command
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-key-get:
+
+The gss-tsig-key-get Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-key-expire:
+
+The gss-tsig-key-expire Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-key-del:
+
+The gss-tsig-key-del Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

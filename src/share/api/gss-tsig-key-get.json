@@ -1,0 +1,32 @@
+{
+    "access": "read",
+    "avail": "2.0.0",
+    "brief": [
+        "This command retrieves information about the specified GSS-TSIG key."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-key-get\",",
+        "    \"arguments\": {",
+        "        \"key-name\": \"1234.sig-foo.com.\"",
+        "    }",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-key-get\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-key-get",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"GSS-TSIG key '1234.sig-foo.com.' found\"",
+        "    \"arguments\": {",
+        "        \"name\": \"1234.sig-foo.com.\",",
+        "        \"inception-date\": \"2021-09-05 12:23:36.281176\",",
+        "        \"expire-date\": \"2021-09-05 13:23:36.281176\",",
+        "        \"status\": \"not yet ready\",",
+        "        \"tkey-exchange\": true",
+        "    }",
+        "}"
+    ]
+}

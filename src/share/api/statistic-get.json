@@ -27,6 +27,7 @@
     "name": "statistic-get",
     "support": [
         "kea-dhcp4",
-        "kea-dhcp6"
+        "kea-dhcp6",
+        "kea-dhcp-ddns"
     ]
 }

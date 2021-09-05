@@ -1,0 +1,23 @@
+{
+    "access": "write",
+    "avail": "2.0.0",
+    "brief": [ "This command deletes the specified GSS-TSIG key." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-key-del\",",
+        "    \"arguments\": {",
+        "        \"key-name\": \"1234.sig-foo.com.\"",
+        "    }",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-key-del\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-key-del",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"GSS-TSIG key '1234.sig-foo.com.' deleted\"",
+        "}"
+    ]
+}

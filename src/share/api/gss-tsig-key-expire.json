@@ -1,0 +1,23 @@
+{
+    "access": "write",
+    "avail": "2.0.0",
+    "brief": [ "This command expires the specified GSS-TSIG key." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-key-expire\",",
+        "    \"arguments\": {",
+        "        \"key-name\": \"1234.sig-foo.com.\"",
+        "    }",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-key-expire\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-key-expire",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"GSS-TSIG key '1234.sig-foo.com.' expired\"",
+        "}"
+    ]
+}
