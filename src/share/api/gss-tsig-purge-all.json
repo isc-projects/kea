@@ -1,0 +1,20 @@
+{
+    "access": "write",
+    "avail": "2.0.0",
+    "brief": [ "This command removes not usable GSS-TSIG keys." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-purge-all\"",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig--purge-all\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-purge-all",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 purged GSS-TSIG keys\"",
+        "}"
+    ]
+}

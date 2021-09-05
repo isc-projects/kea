@@ -1,7 +1,7 @@
 {
     "access": "read",
     "avail": "2.0.0",
-    "brief": [ "This command lists GSS-TSIG servers." ],
+    "brief": [ "This command lists GSS-TSIG servers and keys." ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"gss-tsig-get-all\"",

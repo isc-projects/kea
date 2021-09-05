@@ -406,6 +406,11 @@ The gss-tsig-get-all Command
 The gss-tsig-get Command
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. _command-gss-tsig-list:
+
+The gss-tsig-list Command
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. _command-gss-tsig-key-get:
 
 The gss-tsig-key-get Command
@@ -420,4 +425,14 @@ The gss-tsig-key-expire Command
 
 The gss-tsig-key-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-purge-all:
+
+The gss-tsig-purge-all Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _command-gss-tsig-purge:
+
+The gss-tsig-purge Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 

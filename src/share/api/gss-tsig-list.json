@@ -1,0 +1,31 @@
+{
+    "access": "read",
+    "avail": "2.0.0",
+    "brief": [ "This command lists GSS-TSIG server IDs and key names." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"gss-tsig-list\"",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-list\"/>" ],
+    "hook": "gss_tsig",
+    "name": "gss-tsig-list",
+    "support": [ "kea-dhcp-ddns" ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 GSS-TSIG servers and 3 keys\",",
+        "    \"arguments\": {",
+        "        \"gss-tsig-servers\": [",
+        "            \"foo\",",
+        "            \"bar\"",
+        "        ],",
+        "        \"gss-tsig-keys\": [",
+        "            \"1234.example.com.\",",
+        "            \"5678.example.com.\",",
+        "            \"43888.example.org.\"",
+        "        ]",
+        "    }",
+        "}"
+    ]
+}
