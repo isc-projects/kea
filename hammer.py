@@ -2410,8 +2410,11 @@ def ensure_hammer_deps():
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
         execute('vagrant plugin install vagrant-lxc')
-    # install lxc-create on Ubuntu (part of lxc-utils)
+
+    # Install lxc-create.
     system, _ = get_system_revision()
+    if system == 'debian':
+        execute('sudo apt-get -y install lxc')
     if system in ['ubuntu']:
         execute('sudo apt-get -y install lxc-utils')
 
