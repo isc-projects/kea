@@ -1086,12 +1086,11 @@ def _get_local_timezone():
 
 def _configure_mysql(system, revision, features):
     """Configure MySQL database."""
-    if system in ['fedora', 'centos']:
+    if system in ['debian', 'fedora', 'centos']:
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl start mariadb.service')
-        time.sleep(5)
 
-    elif system in ['debian', 'ubuntu']:
+    elif system == 'ubuntu':
         execute('sudo systemctl enable mysql.service')
         execute('sudo systemctl restart mysql.service')
 
