@@ -207,7 +207,7 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     // pointer.  Message marshalling uses non-null context is the indicator
     // that TSIG should be used.
     if (tsig_key) {
-        tsig_context_.reset(new TSIGContext(*tsig_key));
+        tsig_context_ = DNSClient::factory(tsig_key);
         tsig_key_name_ = tsig_key->getKeyName().toText();
     } else {
         tsig_context_.reset();
@@ -261,6 +261,14 @@ DNSClientImpl::incrStats(const std::string& stat, bool update_key) {
                      static_cast<int64_t>(1));
     }
 }
+
+TSIGContextPtr
+DNSClient::defaultFactory(const D2TsigKeyPtr& tsig_key) {
+    return (TSIGContextPtr(new TSIGContext(*tsig_key)));
+}
+
+DNSClient::TSIGContextFactory
+DNSClient::factory = &DNSClient::defaultFactory;
 
 DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
                      Callback* callback, const DNSClient::Protocol proto)
