@@ -1208,6 +1208,14 @@ def _configure_pgsql(system, features):
     _change_postgresql_auth_method('host', 'md5', hba_file)
     _change_postgresql_auth_method('local', 'md5', hba_file)
 
+    # Make sure hba file has a postgres superuser entry. It needs to be placed
+    # before any other local auth method for higher priority. Let's simulate
+    # that by putting it just after the auth header.
+    if 0 != execute("sudo cat {} | grep -E '^local.*all.*postgres'".format(hba_file), raise_error=False):
+        auth_header='# TYPE  DATABASE        USER            ADDRESS                 METHOD'
+        postgres_auth_line='local   all             postgres                                ident'
+        execute("sudo sed -i.bak '/{}/a {}' '{}'".format(auth_header, postgres_auth_line, hba_file))
+
     _restart_postgresql(system)
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
