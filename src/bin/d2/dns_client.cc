@@ -263,7 +263,7 @@ DNSClientImpl::incrStats(const std::string& stat, bool update_key) {
 }
 
 TSIGContextPtr
-DNSClient::defaultFactory(const D2TsigKeyPtr& tsig_key) {
+DNSClient::defaultFactory(D2TsigKeyPtr tsig_key) {
     return (TSIGContextPtr(new TSIGContext(*tsig_key)));
 }
 

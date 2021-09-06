@@ -86,16 +86,16 @@ public:
     };
 
     /// @brief TSIGContext factory type.
-    typedef dns::TSIGContextPtr (*TSIGContextFactory)(const D2TsigKeyPtr&);
+    typedef dns::TSIGContextPtr (*TSIGContextFactory)(D2TsigKeyPtr);
 
-    /// @brief Pointer to the TSIGContext factory.
+    /// @brief The TSIGContext factory.
     static TSIGContextFactory factory;
 
     /// @brief Default TSIGContext factory.
     ///
     /// @param tsig_key a D2 TSIG key.
     /// @return a pointer to a TSIG context.
-    static dns::TSIGContextPtr defaultFactory(const D2TsigKeyPtr& tsig_key);
+    static dns::TSIGContextPtr defaultFactory(D2TsigKeyPtr tsig_key);
 
     /// @brief Constructor.
     ///
