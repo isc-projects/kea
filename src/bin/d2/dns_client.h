@@ -14,12 +14,10 @@
 
 #include <asiodns/io_fetch.h>
 #include <d2srv/d2_tsig_key.h>
-#include <dns/tsig.h>
 
 namespace isc {
 namespace d2 {
 
-/// @brief Forward declaration of DNSclient class.
 class DNSClient;
 typedef boost::shared_ptr<DNSClient> DNSClientPtr;
 
@@ -84,18 +82,6 @@ public:
         /// of DNSClient operation.
         virtual void operator()(DNSClient::Status status) = 0;
     };
-
-    /// @brief TSIGContext factory type.
-    typedef dns::TSIGContextPtr (*TSIGContextFactory)(D2TsigKeyPtr);
-
-    /// @brief The TSIGContext factory.
-    static TSIGContextFactory factory;
-
-    /// @brief Default TSIGContext factory.
-    ///
-    /// @param tsig_key a D2 TSIG key.
-    /// @return a pointer to a TSIG context.
-    static dns::TSIGContextPtr defaultFactory(D2TsigKeyPtr tsig_key);
 
     /// @brief Constructor.
     ///

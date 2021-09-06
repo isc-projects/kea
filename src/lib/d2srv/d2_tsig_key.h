@@ -8,7 +8,7 @@
 #define D2_TSIG_KEY_H
 
 #include <dns/name.h>
-#include <dns/tsigkey.h>
+#include <dns/tsig.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -59,6 +59,18 @@ private:
 
 /// @brief Type of pointer to a D2 TSIG key.
 typedef boost::shared_ptr<D2TsigKey> D2TsigKeyPtr;
+
+/// @brief TSIGContext factory type.
+typedef dns::TSIGContextPtr (*TSIGContextFactory)(D2TsigKeyPtr);
+
+/// @brief The TSIGContext factory.
+extern TSIGContextFactory tsigContextFactory;
+
+/// @brief Default TSIGContext factory.
+///
+/// @param tsig_key a D2 TSIG key.
+/// @return a pointer to a TSIG context.
+dns::TSIGContextPtr defaultTsigContextFactory(D2TsigKeyPtr tsig_key);
 
 } // namespace d2
 } // namespace isc
