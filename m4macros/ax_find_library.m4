@@ -101,7 +101,10 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         fi
 
         libraries_found=true
-        LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
+        LIBRARY_LIBS="-L${p}/lib"
+        if test -n "${ISC_RPATH_FLAG}"; then
+          LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${p}/lib"
+        fi
         for i in ${list_of_libraries}; do
           i_found=false
           for l in lib lib64; do
@@ -129,11 +132,17 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     fi
   fi
 
-  # Remove leading and trailing spaces.
   if "${LIBRARY_FOUND}"; then
+    # Remove leading and trailing spaces.
     LIBRARY_CPPFLAGS="$(printf '%s' "${LIBRARY_CPPFLAGS}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_INCLUDEDIR="$(printf '%s' "${LIBRARY_INCLUDEDIR}" | sed 's/^ *//g;s/ *$//g')"
     LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
+
+    # Add to the runtime search path if the flag is not already added.
+    if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -e "${ISC_RPATH_FLAG}")" = 0; then
+      library_location=$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Eo '\-L.*\b' | sed 's/-L//g')
+      LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${library_location}"
+    fi
   fi
 ])
 
