@@ -2978,7 +2978,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 TEST_F(HooksDhcpv4SrvTest, parkedPacketLimit) {
     IfaceMgrTestConfig test_config(true);
 
-    // Configure 1 directly reachable subnet, parked-packet-limit of 1. 
+    // Configure 1 directly reachable subnet, parked-packet-limit of 1.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -3027,7 +3027,7 @@ TEST_F(HooksDhcpv4SrvTest, parkedPacketLimit) {
     // Make sure that we have not received a response.
     ASSERT_FALSE(client.getContext().response_);
 
-    // Verify we have a packet parked. 
+    // Verify we have a packet parked.
     const auto& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("leases4_committed");
     ASSERT_TRUE(parking_lot);
     ASSERT_EQ(1, parking_lot->size());

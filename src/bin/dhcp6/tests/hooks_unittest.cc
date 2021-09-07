@@ -27,6 +27,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcp6/tests/marker_file.h>
 #include <dhcp6/tests/test_libraries.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -43,6 +44,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace std;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
@@ -136,6 +138,9 @@ public:
 
         // Reset the hook system in its original state
         HooksManager::unloadLibraries();
+
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief destructor (deletes Dhcpv6Srv)
@@ -154,6 +159,9 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_rebind");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host6_identifier");
+
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -912,8 +920,21 @@ public:
         callback_resp_options_copy_ = false;
     }
 
+    /// @brief Fetches the current value of the given statistic.
+    /// @param name name of the desired statistic.
+    /// @return Current value of the statistic, or zero if the
+    /// statistic is not found.
+    uint64_t getStatistic(const std::string& name) {
+        ObservationPtr stat = StatsMgr::instance().getObservation(name);
+        if (!stat) {
+            return (0);
+        }
+
+        return (stat->getInteger().first);
+    }
+
     /// Pointer to Dhcpv6Srv that is used in tests
-    boost::scoped_ptr<NakedDhcpv6Srv> srv_;
+    boost::shared_ptr<NakedDhcpv6Srv> srv_;
 
     /// Pointer to the IO service used in the tests.
     static IOServicePtr io_service_;
@@ -5223,5 +5244,136 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
     EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
                                 "3io_contextjson_confignetwork_stateserver_config"));
 }
+
+// This test verifies that parked-packet-limit is enforced.
+TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"parked-packet-limit\": 1,"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config, *srv_));
+
+    // Verify we have no packets parked.
+    const auto& parking_lot = ServerHooks::getServerHooks()
+                              .getParkingLotPtr("leases6_committed");
+    ASSERT_TRUE(parking_lot);
+    ASSERT_EQ(0, parking_lot->size());
+
+    // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is parked and can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_park_callout));
+
+    // Create first client and perform SARR.
+    Dhcp6Client client1(srv_);
+    client1.setInterface("eth1");
+    client1.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // We should be offered an address but the REPLY should not arrive
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Verify we have one parked packet and no drops.
+    ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp6Client client2(srv_);
+    client2.setInterface("eth1");
+    client2.requestAddress(0xabca, IOAddress("2001:db8:1::29"));
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // The ADVERTISE should have been returned but not REPLY, this
+    // packet should have been dropped.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that no callback was called.
+    EXPECT_EQ("", callback_name_);
+
+    // Verify we have one parked packet and one drop.
+    ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+
+    // There should now be one action scheduled on our IO service
+    // by the invoked callout. It should unpark the REPLY message
+    // for client1.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt6Ptr rsp = client1.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+
+    // Verify we have no parked packets and one drop.
+    ASSERT_EQ(0, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+
+    // Should not anything to receive for client2.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Retry the second client and verify that it is allowed to park
+    // and be responded to.
+    client2.requestAddress(0xabcb, IOAddress("2001:db8:1::29"));
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // The ADVERTISE should have been returned but not REPLY, that
+    // packet should have been parked.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback was called.
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Verify we again have one parked packet and one drop.
+    ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+
+    // There should now be one action scheduled on our IO service
+    // by the invoked callout. It should unpark the REPLY message
+    // for client2.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
+
+    // Verify we no parked packets and one drop.
+    ASSERT_EQ(0, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+}
+
 
 }  // namespace
