@@ -1057,7 +1057,7 @@ def _install_sysrepo_from_sources():
         execute('git clone https://github.com/sysrepo/sysrepo.git /tmp/sysrepo')
         execute('git checkout v%s' % sysrepo_version, cwd='/tmp/sysrepo')
         execute('mkdir /tmp/sysrepo/build')
-        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/sysrepo/build')
+        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF -DREPO_PATH=/etc/sysrepo', cwd='/tmp/sysrepo/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo/build')
         execute('sudo make install', cwd='/tmp/sysrepo/build')
     finally:
