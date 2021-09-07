@@ -1,3 +1,10 @@
+1944.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 both now support a global parameter,
+	parked-packet-limit, that can be used to limit the number
+	of client responses the server may park pending completion
+	of hook library callouts.
+	(Gitlab #1307)
+
 1943.	[bug]		marcin
 	Fixed a bug in fetching client classes from the Config Backend.
 	The bug resulted in failures during attempts to evaluate the

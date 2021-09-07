@@ -1539,7 +1539,6 @@ as illustrated below:
    "Dhcp4": {
 
        ...
-
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1596,6 +1595,57 @@ and four threads for the client.
    (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
    performance bottlenecks caused by single threaded nature of CA and the sequential nature of
    UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
+
+.. _ha-parked-packet-limit:
+
+Parked Packet Limit
+~~~~~~~~~~~~~~~~~~~
+
+Kea servers contain a mechanism by which the response to a client packet may
+be held, pending completion of Hook library work.  We refer to this as "parking"
+the packet.  The HA hook library makes use of this mechanism. When an HA server
+needs to send a lease update to its peer(s) to notify it of the change to the
+lease, it will "park" the client response until the peer acknowleges the lease
+update.  At that point, the server will "unpark" the response and send it to the
+client.  This applies to client queries which cause lease changes such as
+DHCPREQUEST for DHCPv4 and REQUEST, RENEW, REBIND for DHCPv6. It does not apply
+to DHPCDISCOVERs (v4) or SOLICITs (v6).
+
+There is a global parameter, ``parked-packet-limit``, that may be used to limit
+the number of responses that may be parked at any given time.  This acts as a
+form of congestion handling and protects the server from being swamped when
+the volume of client queries is outpacing the server's ability to respond. Once
+the limit is reached, the server will emit a log and drop any further responses
+until the parking spaces are available.
+
+In general, smaller values for the parking lot limit are likely to cause more
+drops but with response times. Larger values are likely to result in fewer drops
+but with longer response times.  Currently, the default value for
+parked-packet-limit is 256.
+
+::
+
+   "Dhcp6": {
+
+       ...
+       // Limit the number of concurrently parked packets to 128.
+       "parked-packet-limit": 128,
+       "hooks-libraries": [
+           {
+               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "parameters": { }
+           },
+           {
+               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "parameters": {
+                   "high-availability": [ {
+                       "this-server-name": "server1",
+                       ...
+
+.. note::
+
+   While parked-packet-limit is not specifically tied to HA, currently HA
+   is the only ISC hook that employs packet parking.
 
 .. _ha-maintenance:
 
