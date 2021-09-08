@@ -363,23 +363,23 @@ The server map parameters are:
   listens for DDNS and TKEY requests. It defaults to 53.
 
 - ``server-principal`` is the Kerberos principal name of the DNS server
-  that will receive updates. The per server server principal takes
-  precedence. It is a mandatory parameter which must be specified at
+  that will receive updates. The server principal parameter per server
+  takes precedence. It is a mandatory parameter which must be specified at
   least at the global or the server level.
 
 - ``client-principal`` is the Kerberos principal name of the Kea D2
-  service for this DNS server. The per server client principal takes
-  precedence. It is an optional parameter i.e. to not specify it at
+  service for this DNS server. The client principal parameter per server
+  takes precedence. It is an optional parameter i.e. to not specify it at
   both the global and the server level is accepted.
 
 - ``tkey-protocol`` determines which protocol is used to establish the
-  security context with the DNS server. The per server TKEY protocol
-  takes precedence. Default and supported values are the same as for
-  the global level parameter.
+  security context with the DNS server. The TKEY protocol parameter per
+  server takes precedence. Default and supported values are the same as
+  for the global level parameter.
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
-  TKEY protocol for the DNS server. The per server TKEY lifetime takes
-  precedence. Default and supported values are the same as for
+  TKEY protocol for the DNS server. The TKEY lifetime parameter per server
+  takes precedence. Default and supported values are the same as for
   the global level parameter.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
@@ -394,45 +394,281 @@ GSS-TSIG Commands
 
 The GSS-TSIG hook library supports some commands.
 
-To be done (only anchors for external references are provided).
-
 .. _command-gss-tsig-get-all:
 
 The gss-tsig-get-all Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command lists GSS-TSIG servers and keys.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-get-all"
+    }
+
+An example response returning 1 GSS-TSIG servers and 1 keys:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "1 GSS-TSIG servers and 1 keys",
+        "arguments": {
+            "gss-tsig-servers": [
+                {
+                    "id": "foo",
+                    "ip-address": "192.1.2.3",
+                    "port": 53,
+                    "server-principal": "DNS/foo.com@FOO.COM",
+                    "key-name-suffix": "foo.com.",
+                    "tkey-lifetime": 3600,
+                    "tkey-protocol": "TCP",
+                    "keys": [
+                        {
+                            "name": "1234.sig-foo.com.",
+                            "inception-date": "2021-09-05 12:23:36.281176",
+                            "server-id": "foo",
+                            "expire-date": "2021-09-05 13:23:36.281176",
+                            "status": "not yet ready",
+                            "tkey-exchange": true
+                        }
+                    ]
+                },
+                {
+                    "id": "bar",
+                    "ip-address": "192.1.2.4",
+                    "port": 53,
+                    "server-principal": "DNS/bar.com@FOO.COM",
+                    "key-name-suffix": "bar.com.",
+                    "tkey-lifetime": 7200,
+                    "tkey-protocol": "UDP",
+                    "keys": [ ]
+                }
+            ]
+        }
+    }
 
 .. _command-gss-tsig-get:
 
 The gss-tsig-get Command
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+This command retrieves information about the specified GSS-TSIG server.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-get",
+        "arguments": {
+            "server-id": "foo"
+        }
+    }
+
+An example response returning information about server 'foo':
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "GSS-TSIG server[foo] found",
+        "arguments": {
+            "id": "foo",
+            "ip-address": "192.1.2.3",
+            "port": 53,
+            "server-principal": "DNS/foo.com@FOO.COM",
+            "key-name-suffix": "foo.com.",
+            "tkey-lifetime": 3600,
+            "tkey-protocol": "TCP",
+            "keys": [
+                {
+                    "name": "1234.sig-foo.com.",
+                    "server-id": "foo",
+                    "inception-date": "2021-09-05 12:23:36.281176",
+                    "expire-date": "2021-09-05 13:23:36.281176",
+                    "status": "not yet ready",
+                    "tkey-exchange": true
+                }
+            ]
+        }
+    }
+
 .. _command-gss-tsig-list:
 
 The gss-tsig-list Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command lists GSS-TSIG server IDs and key names.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-list"
+    }
+
+An example response returning 2 GSS-TSIG servers and 3 keys:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "2 GSS-TSIG servers and 3 keys",
+        "arguments": {
+            "gss-tsig-servers": [
+                "foo",
+                "bar"
+            ],
+            "gss-tsig-keys": [
+                "1234.example.com.",
+                "5678.example.com.",
+                "43888.example.org."
+            ]
+        }
+    }
 
 .. _command-gss-tsig-key-get:
 
 The gss-tsig-key-get Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This command retrieves information about the specified GSS-TSIG key.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-key-get",
+        "arguments": {
+            "key-name": "1234.sig-foo.com."
+        }
+    }
+
+An example response returning information about GSS-TSIG key '1234.sig-foo.com.':
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "GSS-TSIG key '1234.sig-foo.com.' found",
+        "arguments": {
+            "name": "1234.sig-foo.com.",
+            "server-id": "foo",
+            "inception-date": "2021-09-05 12:23:36.281176",
+            "expire-date": "2021-09-05 13:23:36.281176",
+            "status": "not yet ready",
+            "tkey-exchange": true
+        }
+    }
+
 .. _command-gss-tsig-key-expire:
 
 The gss-tsig-key-expire Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command expires the specified GSS-TSIG key.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-key-expire",
+        "arguments": {
+            "key-name": "1234.sig-foo.com."
+        }
+    }
+
+An example response informing about GSS-TSIG key '1234.sig-foo.com.' being expired:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "GSS-TSIG key '1234.sig-foo.com.' expired"
+    }
 
 .. _command-gss-tsig-key-del:
 
 The gss-tsig-key-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This command deletes the specified GSS-TSIG key.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-key-del",
+        "arguments": {
+            "key-name": "1234.sig-foo.com."
+        }
+    }
+
+An example response informing about GSS-TSIG key '1234.sig-foo.com.' being deleted:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "GSS-TSIG key '1234.sig-foo.com.' deleted"
+    }
+
 .. _command-gss-tsig-purge-all:
 
 The gss-tsig-purge-all Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This command removes not usable GSS-TSIG keys.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-purge-all"
+    }
+
+An example response informing about 2 GSS-TSIG keys being purged:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "2 purged GSS-TSIG keys"
+    }
+
 .. _command-gss-tsig-purge:
 
 The gss-tsig-purge Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command removes not usable GSS-TSIG keys for the specified server.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-purge",
+        "arguments": {
+            "server-id": "foo"
+        }
+    }
+
+An example response informing about 2 GSS-TSIG keys for server 'foo' being purged:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "2 purged keys for GSS-TSIG server[foo]"
+    }
 

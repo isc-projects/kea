@@ -7,7 +7,7 @@
         "{",
         "    \"command\": \"gss-tsig-purge\",",
         "    \"arguments\": {",
-        "        \"id\": \"foo\"",
+        "        \"server-id\": \"foo\"",
         "    }",
         "}"
     ],
