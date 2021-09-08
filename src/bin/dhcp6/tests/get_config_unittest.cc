@@ -11,7 +11,6 @@
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
 #include <testutils/user_context_utils.h>
-#include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
