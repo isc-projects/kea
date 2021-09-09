@@ -59,11 +59,9 @@ D2TsigKey::resetStats() {
 }
 
 TSIGContextPtr
-defaultTsigContextFactory(D2TsigKeyPtr tsig_key) {
-    return (TSIGContextPtr(new TSIGContext(*tsig_key)));
+D2TsigKey::createContext() {
+    return (TSIGContextPtr(new TSIGContext(*this)));
 }
-
-TSIGContextFactory tsigContextFactory = &defaultTsigContextFactory;
 
 } // namespace d2
 } // namespace isc

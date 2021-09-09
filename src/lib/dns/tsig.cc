@@ -56,8 +56,7 @@ struct TSIGContext::TSIGContextImpl {
                     TSIGError error = TSIGError::NOERROR()) :
         state_(INIT), key_(key), error_(error),
         previous_timesigned_(0), digest_len_(0),
-        last_sig_dist_(-1)
-    {
+        last_sig_dist_(-1) {
         if (error == TSIGError::NOERROR()) {
             // In normal (NOERROR) case, the key should be valid, and we
             // should be able to pre-create a corresponding HMAC object,
@@ -192,8 +191,7 @@ void
 TSIGContext::TSIGContextImpl::digestTSIGVariables(
     HMACPtr hmac, uint16_t rrclass, uint32_t rrttl, uint64_t time_signed,
     uint16_t fudge, uint16_t error, uint16_t otherlen, const void* otherdata,
-    bool time_variables_only) const
-{
+    bool time_variables_only) const {
     // It's bit complicated, but we can still predict the necessary size of
     // the data to be digested.  So we precompute it to avoid possible
     // reallocation inside OutputBuffer (not absolutely necessary, but this
@@ -240,11 +238,11 @@ TSIGContext::TSIGContextImpl::digestTSIGVariables(
 namespace {
 const size_t MESSAGE_HEADER_LEN = 12;
 }
+
 void
 TSIGContext::TSIGContextImpl::digestDNSMessage(HMACPtr hmac,
                                                uint16_t qid, const void* data,
-                                               size_t data_len) const
-{
+                                               size_t data_len) const {
     OutputBuffer buffer(MESSAGE_HEADER_LEN);
     const uint8_t* msgptr = static_cast<const uint8_t*>(data);
 
@@ -266,13 +264,11 @@ TSIGContext::TSIGContextImpl::digestDNSMessage(HMACPtr hmac,
     hmac->update(msgptr, data_len - MESSAGE_HEADER_LEN);
 }
 
-TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key))
-{
+TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key)) {
 }
 
 TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
-                         const TSIGKeyRing& keyring) : impl_(NULL)
-{
+                         const TSIGKeyRing& keyring) : impl_(NULL) {
     const TSIGKeyRing::FindResult result(keyring.find(key_name,
                                                       algorithm_name));
     if (result.code == TSIGKeyRing::NOTFOUND) {
@@ -342,8 +338,7 @@ TSIGContext::getError() const {
 
 ConstTSIGRecordPtr
 TSIGContext::sign(const uint16_t qid, const void* const data,
-                  const size_t data_len)
-{
+                  const size_t data_len) {
     if (impl_->state_ == VERIFIED_RESPONSE) {
         isc_throw(TSIGContextError,
                   "TSIG sign attempt after verifying a response");
@@ -426,8 +421,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
 
 TSIGError
 TSIGContext::verify(const TSIGRecord* const record, const void* const data,
-                    const size_t data_len)
-{
+                    const size_t data_len) {
     if (impl_->state_ == SENT_RESPONSE) {
         isc_throw(TSIGContextError,
                   "TSIG verify attempt after sending a response");

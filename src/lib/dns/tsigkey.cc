@@ -98,8 +98,7 @@ TSIGKey::TSIGKeyImpl {
 
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                  const void* secret, size_t secret_len,
-                 size_t digestbits /*= 0*/) : impl_(NULL)
-{
+                 size_t digestbits /*= 0*/) : impl_(NULL) {
     const HashAlgorithm algorithm = convertAlgorithmName(algorithm_name);
     if ((secret != NULL && secret_len == 0) ||
         (secret == NULL && secret_len != 0)) {
@@ -190,8 +189,8 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
 }
 
 
-TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_))
-{}
+TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_)) {
+}
 
 TSIGKey&
 TSIGKey::operator=(const TSIGKey& source) {

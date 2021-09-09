@@ -207,7 +207,7 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     // pointer.  Message marshalling uses non-null context is the indicator
     // that TSIG should be used.
     if (tsig_key) {
-        tsig_context_ = tsigContextFactory(tsig_key);
+        tsig_context_ = tsig_key->createContext();
         tsig_key_name_ = tsig_key->getKeyName().toText();
     } else {
         tsig_context_.reset();

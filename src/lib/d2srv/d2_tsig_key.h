@@ -52,6 +52,13 @@ public:
     ///
     virtual void resetStats();
 
+    /// @brief Create TSIG context.
+    ///
+    /// @note Derived classes can implement their own specific context.
+    ///
+    /// @return The specific @ref TSIGContext of the @ref TSIGKey.
+    virtual dns::TSIGContextPtr createContext();
+
 private:
     /// @brief Initialize key statistics.
     void initStats();
@@ -59,18 +66,6 @@ private:
 
 /// @brief Type of pointer to a D2 TSIG key.
 typedef boost::shared_ptr<D2TsigKey> D2TsigKeyPtr;
-
-/// @brief TSIGContext factory type.
-typedef dns::TSIGContextPtr (*TSIGContextFactory)(D2TsigKeyPtr);
-
-/// @brief The TSIGContext factory.
-extern TSIGContextFactory tsigContextFactory;
-
-/// @brief Default TSIGContext factory.
-///
-/// @param tsig_key a D2 TSIG key.
-/// @return a pointer to a TSIG context.
-dns::TSIGContextPtr defaultTsigContextFactory(D2TsigKeyPtr tsig_key);
 
 } // namespace d2
 } // namespace isc
