@@ -15,7 +15,7 @@ and installed using the system available in a specific distribution (such
 as dpkg or rpm). The Kea repository can also be added to the system,
 making it easier to install updates. For details, please
 go to https://cloudsmith.io/~isc/repos, choose the repository of
-interest and then click the ``Set Me Up`` button for detailed
+interest, and then click the ``Set Me Up`` button for detailed
 instructions.
 
 .. _install-hierarchy:
@@ -24,7 +24,7 @@ Installation Hierarchy
 ======================
 
 The following is the directory layout of the complete Kea installation.
-(All directory paths are relative to the installation directory):
+(All directory paths are relative to the installation directory.)
 
 -  ``etc/kea/`` — configuration files.
 
@@ -36,7 +36,7 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``sbin/`` — server software and commands used by the system administrator.
 
--  ``share/doc/kea/`` — this guide, other supplementary documentation and examples.
+-  ``share/doc/kea/`` — this guide, other supplementary documentation, and examples.
 
 -  ``share/kea/`` — API command examples and database schema scripts.
 
@@ -68,12 +68,12 @@ Building from source code requires the following software installed on
 the system:
 
 -  Boost C++ libraries (https://www.boost.org/). The oldest Boost version
-   used for testing is 1.57 (although it may also work with older
+   used for testing is 1.57 (although Kea may also work with older
    versions). The Boost system library must also be installed.
-   Installing a header-only version of Boost is no longer recommended.
+   Installing a header-only version of Boost is not recommended.
 
 -  OpenSSL (at least version 1.0.2) or Botan (at least version 2).
-   Note that OpenSSL version 1.1.1 or later is strongly recommended.
+   OpenSSL version 1.1.1 or later is strongly recommended.
 
 -  log4cplus (at least version 1.0.3) development include headers.
 
@@ -84,46 +84,44 @@ the system:
 -  The development tools automake, libtool, and pkg-config.
 
 -  The MySQL client and the client development libraries, when using the
-   --with-mysql configuration flag to build the Kea MySQL database
+   ``--with-mysql`` configuration flag to build the Kea MySQL database
    backend. In this case, an instance of the MySQL server running
-   locally or on a machine reachable over a network is required. Note
-   that running the unit tests requires a local MySQL server.
+   locally or on a machine reachable over a network is required.
+   Running unit tests requires a local MySQL server.
 
 -  The PostgreSQL client and the client development libraries, when
-   using the --with-pgsql configuration flag to build the Kea PostgreSQL
-   database backend. In this case an instance of the PostgreSQL server
-   running locally or on some other machine, reachable over the network
-   from the machine running Kea, is required. Note that running the unit
-   tests requires a local PostgreSQL server.
+   using the ``--with-pgsql`` configuration flag to build the Kea PostgreSQL
+   database backend. In this case, an instance of the PostgreSQL server
+   running locally or on a machine reachable over a network is
+   required. Running unit tests requires a local PostgreSQL server.
 
--  The cpp-driver from DataStax is needed when using the --with-cql
+-  The cpp-driver from DataStax, when using the ``--with-cql``
    configuration flag to build Kea with the Cassandra database backend.
    In this case, an instance of the Cassandra server running locally or
-   on some other machine, reachable over the network from the machine
-   running Kea, is required. Note that running the unit tests requires a
-   local Cassandra server.
+   on a machine reachable over a network is required. Running unit
+   tests requires a local Cassandra server.
 
--  The FreeRADIUS client library is required to connect to a RADIUS server.
-   This is specified using the --with-freeradius configuration switch.
+-  The FreeRADIUS client library, if connecting to a RADIUS server.
+   This is specified using the ``--with-freeradius`` configuration switch.
 
--  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
-   datastore. Earlier versions are no longer supported. When compiling from
-   sources, the configure switches that can be used are --with-libyang and
-   --with-sysrepo without any parameters. If these dependencies were installed
-   in custom paths, point the switches to them.
+-  Sysrepo v1.4.140 and libyang v1.0.240, when connecting to a Sysrepo
+   datastore; earlier versions are no longer supported. When compiling from
+   sources, the configure switches that can be used are ``--with-libyang`` and
+   ``--with-sysrepo``, without any parameters. If these dependencies were installed
+   in custom paths, the switches must be pointed to them.
 
--  googletest (version 1.8 or later) is required when using the --with-gtest
+-  googletest (version 1.8 or later), when using the ``--with-gtest``
    configuration option to build the unit tests.
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
-   texlive with its extensions and Doxygen, if using the --enable-generate-docs
-   configuration option to create the documentation. Particularly,
-   in case of Fedora: python3-sphinx, texlive and texlive-collection-latexextra;
-   in case of Ubuntu: python3-sphinx, python3-sphinx-rtd-theme and texlive-binaries.
-   If LaTeX packages are missing, Kea will skip PDF generation and will produce
+   texlive with its extensions, and Doxygen, if using the ``--enable-generate-docs``
+   configuration option to create the documentation. Specifically,
+   with Fedora, python3-sphinx, texlive, and texlive-collection-latexextra are necessary;
+   with Ubuntu, python3-sphinx, python3-sphinx-rtd-theme, and texlive-binaries
+   are needed. If LaTeX packages are missing, Kea skips PDF generation and produces
    only HTML documents.
 
--  The Kerberos 5 libraries, when using the --with-gssapi configuration flag.
+-  The Kerberos 5 libraries, when using the ``--with-gssapi`` configuration flag.
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.
@@ -149,6 +147,10 @@ https://downloads.isc.org/isc/kea/.
 Retrieve From Git
 -----------------
 
+The latest development code is available on GitLab (see
+https://gitlab.isc.org/isc-projects/kea). The Kea source is public and
+development is done in the “master” branch.
+
 Downloading this "bleeding edge" code is recommended only for developers
 or advanced users. Using development code in a production environment is
 not recommended.
@@ -156,12 +158,8 @@ not recommended.
 .. note::
 
    When building from source code retrieved via git, additional software
-   will be required: automake (v1.11 or later), libtoolize, and autoconf
+   is required: automake (v1.11 or later), libtoolize, and autoconf
    (v2.69 or later). These may need to be installed.
-
-The latest development code is available on GitLab (see
-https://gitlab.isc.org/isc-projects/kea). The Kea source is public and
-development is done in the “master” branch.
 
 The code can be checked out from
 ``https://gitlab.isc.org/isc-projects/kea.git``:
@@ -171,7 +169,7 @@ The code can be checked out from
    $ git clone https://gitlab.isc.org/isc-projects/kea.git
 
 The code checked out from the git repository does not include the
-generated configure script, the Makefile.in files, nor their related build
+generated configure script or the Makefile.in files, nor their related build
 files. They can be created by running ``autoreconf`` with the
 ``--install`` switch. This will run ``autoconf``, ``aclocal``,
 ``libtoolize``, ``autoheader``, ``automake``, and related commands.
@@ -228,21 +226,21 @@ options. Some commonly used options are:
    cryptographic functions. It is preferable to use OpenSSL (see below).
 
  - ``--with-openssl``
-   Replace Botan by the OpenSSL cryptographic library. By default
-   ``configure`` searches for a valid Botan installation. If one is not
-   found, it searches for OpenSSL. Normally this is not necessary.
+   Use the OpenSSL cryptographic library instead of Botan. By default
+   ``configure`` searches for a valid Botan installation; if one is not
+   found, Kea searches for OpenSSL. Normally this is not necessary.
 
  - ``--enable-shell``
    Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
    The default is to not build it.
 
  - ``--with-site-packages``
-   Only useful when ``kea-shell`` is enabled. It causes the kea-shell
-   python packages to be installed in the specified directory. This is
-   mostly useful for Debian related distros. While most systems store
-   python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
+   Only useful when ``kea-shell`` is enabled, this switch causes the kea-shell
+   Python packages to be installed in the specified directory. This is
+   mostly useful for Debian-related distributions. While most systems store
+   Python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
    introduced a separate directory for packages installed from DEB. Such
-   python packages are expected to be installed in
+   Python packages are expected to be installed in
    ``/usr/lib/python3/dist-packages``.
 
  - ``--enable-perfdhcp``
@@ -251,63 +249,45 @@ options. Some commonly used options are:
 
  - ``--with-freeradius``
    Build the optional ``RADIUS`` hook. This option specifies the path to the
-   patched version of FreeRADIUS client. Available in subscriber only version.
-   This option requires the subscription-only RADIUS hook.
+   patched version of the FreeRADIUS client. This feature is available in
+   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
 
  - ``--with-freeradius-dictionary``
-   Specify a non-standard location for a FreeRADIUS dictionary file. That
-   file contains a list of supported RADIUS attributes. Available in subscriber
-   only version. This option requires the subscription-only RADIUS hook.
+   Specify a non-standard location for a FreeRADIUS dictionary file, which
+   contains a list of supported RADIUS attributes. This feature is available in
+   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
 
 If the RADIUS options are not available, ensure that the RADIUS hook sources are in
 the ``premium`` directory and rerun ``autoreconf -i``.
 
 .. note::
 
-   The ``--runstatedir`` in the installation directories is particular.
-   There are three cases:
-
-   - The system uses autoconf 2.70 or greater which supports this, but this autoconf
-     version has not been released yet.
-
-   - The system uses autoconf 2.69 patched to add this support. In this case and the
-     previous, simply use the ``--runstatedir`` configure parameter when needed.
-
-   - There is no support (the configure parameter is not recognized and configure
-     directly raises an error). For autoconf 2.69 the ``runstatedir`` environment
-     variable is supported, so simply remove the ``--`` before ``runstatedir``
-     in the configure script call, e.g.: ``./configure runstatedir=/opt/run ...``
-
-..
-
-.. note::
-
    For instructions concerning the installation and configuration of
    database backends for Kea, see :ref:`dhcp-install-configure`.
 
-There are also many additional options that are typically not necessary for
+There are many additional options that are typically not necessary for
 regular users. However, they may be useful for package maintainers,
 developers, or people who want to extend Kea code or send patches:
 
  - ``--with-gtest``, ``--with-gtest-source``
-   Enable the building of the C++ Unit Tests using the Google Test
+   Enable the building of C++ unit tests using the Google Test
    framework. This option specifies the path to the gtest source. (If
    the framework is not installed on the system, it can be downloaded
    from https://github.com/google/googletest.)
 
  - ``--enable-generate-docs``
-   Enable the rebuilding Kea documentation. ISC publishes Kea
+   Enable the rebuilding of Kea documentation. ISC publishes Kea
    documentation for each release; however, in some cases it may be
    desirable to rebuild it: for example, to change something in the
-   docs, or to generate new ones from git sources that are not
-   released yet.
+   docs, or to generate new ones from git sources that are not yet
+   released.
 
  - ``--enable-generate-parser``
-   Many Kea components have parsers implemented using flex (.ll files)
-   and bison (.yy files). Kea sources have C++/h files generated out
-   from them. By default Kea does not use flex or bison to avoid
+   Enable the generation of parsers using flex or bison. Kea sources include
+   .cc and .h parser files, pre-generated for users' convenience. By
+   default Kea does not use flex or bison, to avoid
    requiring installation of unnecessary dependencies for users.
-   However, if anything in the parses is changed (such as adding a new
+   However, if anything in the parsers is changed (such as adding a new
    parameter), flex and bison are required to regenerate
    parsers. This option permits that.
 
@@ -327,7 +307,7 @@ developers, or people who want to extend Kea code or send patches:
    can be downloaded from https://github.com/google/benchmark.)
    This support is experimental.
 
-For example, the following command configures Kea to find the Boost
+As an example, the following command configures Kea to find the Boost
 headers in /usr/pkg/include, specifies that PostgreSQL support should be
 enabled, and sets the installation location to /opt/kea:
 
@@ -351,7 +331,7 @@ commands:
 
 If ``configure`` fails, it may be due to missing or old dependencies.
 
-If ``configure`` succeeds, it displays a report with the parameters used
+When ``configure`` succeeds, it displays a report with the parameters used
 to build the code. This report is saved into the file ``config.report``
 and is also embedded into the executable binaries, e.g., ``kea-dhcp4``.
 
@@ -384,7 +364,7 @@ errors.
    The install step may require superuser privileges.
 
 If required, run ``ldconfig`` as root with ``/usr/local/lib`` (or with
-prefix/lib if configured with --prefix) in ``/etc/ld.so.conf`` (or the
+prefix/lib if configured with ``--prefix``) in ``/etc/ld.so.conf`` (or the
 relevant linker cache configuration file for the OS):
 
 .. code-block:: console
@@ -425,18 +405,18 @@ DHCP Database Installation and Configuration
 Kea stores its leases in a lease database. The software has been written
 in a way that makes it possible to choose which database product should
 be used to store the lease information. Kea supports four
-database backends: MySQL, PostgreSQL, Cassandra*, and memfile. To limit
+database backends: MySQL, PostgreSQL, Cassandra[1], and memfile. To limit
 external dependencies, MySQL, PostgreSQL, and Cassandra support are
 disabled by default and only memfile is available. Support for the
 optional external database backend must be explicitly included when Kea
 is built. This section covers the building of Kea with one of the
-optional backends and the creation of the lease database. (* Note that
-as of Kea 1.9.9 support for Cassandra is deprecated and will be removed
-in a future version.)
+optional backends and the creation of the lease database.
+
+[1] As of Kea 1.9.9, support for Cassandra is deprecated.
 
 .. note::
 
-   When unit tests are built with Kea (i.e. the --with-gtest configuration
+   When unit tests are built with Kea (i.e. the ``--with-gtest`` configuration
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
    found in the `Kea Developer's
@@ -451,7 +431,7 @@ development libraries must be installed.
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the MySQL database code, at
 the "configure" step (see :ref:`configure`),
-the --with-mysql switch should be specified:
+the ``--with-mysql`` switch should be specified:
 
 .. code-block:: console
 
@@ -459,7 +439,7 @@ the --with-mysql switch should be specified:
 
 If MySQL was not installed in the default location, the location of the
 MySQL configuration program "mysql_config" should be included with the
-switch, i.e.
+switch:
 
 .. code-block:: console
 
@@ -477,7 +457,7 @@ libraries are often packaged as "libpq".
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code,
-at the "configure" step (see :ref:`configure`), the --with-pgsql switch should be specified:
+at the "configure" step (see :ref:`configure`), the ``--with-pgsql`` switch should be specified:
 
 .. code-block:: console
 
@@ -485,7 +465,7 @@ at the "configure" step (see :ref:`configure`), the --with-pgsql switch should b
 
 If PostgreSQL was not installed in the default location, the location of
 the PostgreSQL configuration program "pg_config" should be included with
-the switch, i.e.
+the switch:
 
 .. code-block:: console
 
@@ -497,9 +477,9 @@ database configuration.
 Building with CQL (Cassandra) Support
 -------------------------------------
 
-Note that as of Kea 1.9.9, support for Cassandra is deprecated. At
-this time it still works, but the support will be removed in a future
-version, so new users are encouraged to choose an alternative.
+As of Kea 1.9.9, support for Cassandra is deprecated. It is still
+available for the moment, but the support will be removed in a future
+version; new users are encouraged to choose an alternative.
 
 Install Cassandra according to the instructions for the system. The
 Cassandra project website contains useful pointers:
@@ -514,16 +494,15 @@ Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), e
 
    $ ./configure [other-options] --with-cql=path-to-pkg-config
 
-Note that if ``pkg-config`` is at its standard location (and thus in the
+If ``pkg-config`` is at its standard location (and thus in the
 shell path), the path does not need to be specified. If it does not work
 (e.g. no pkg-config, package not available in pkg-config with the
-cassandra name), the ``cql_config`` script in tools/ can still be used
-as described below.
+cassandra name), the ``cql_config`` script in the tools/ directory
+can still be used as described below.
 
 Download and compile cpp-driver from DataStax. For details regarding
 dependencies for building cpp-driver, see the project homepage
-https://github.com/datastax/cpp-driver. In June 2016, the following
-commands were used:
+https://github.com/datastax/cpp-driver.
 
 .. code-block:: console
 
@@ -541,7 +520,7 @@ directory (there is an example available in cql_config_define.sh.sample;
 copy it over to cql_config_defines.sh and edit the path
 specified in it) and change the environment variable CPP_DRIVER_PATH to
 point to the directory where the cpp-driver sources are located. Make
-sure that appropriate access rights are set on this file. It should be
+sure that appropriate access rights are set on this file; it should be
 executable by the system user building Kea.
 
 Build and install Kea as described in :ref:`installation`,
@@ -574,7 +553,7 @@ First, a regular user account must be created:
 
 Then, change the binaries' ownership and group to the new user. Note that
 the specific path may be different. Please refer to the ``--prefix``
-parameter passed to the configure script.:
+parameter passed to the configure script:
 
 .. code-block:: console
 
@@ -601,27 +580,27 @@ more information.
    setcap 'cap_net_bind_service,cap_net_raw=+ep' /opt/kea/sbin/kea-dhcp4
    setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
 
-If using systemd, also add this to service file
+If using systemd, also add this to the service file
 (e.g. /etc/systemd/system/kea-dhcp6.service):
 
 .. code-block:: console
 
    ExecStartPre=setcap 'cap_net_bind_service=+ep' /opt/kea/sbin/kea-dhcp6
 
-After this step is complete, the admin user should be able to run Kea. Note that DHCPv4 server by
+After this step is complete, the admin user should be able to run Kea. Note that the DHCPv4 server by
 default opens raw sockets. If the network is only using relayed traffic, Kea can be instructed to
 use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
 :ref:`dhcp4-interface-configuration` section) and the ``cap_net_raw`` capability can be skipped.
 
 .. note::
 
-   An alternative approach to avoiding running Kea with root privileges assumes instructing Kea to
-   use non-privileged (greater than 1024) posts and redirecting traffic. This, however, will work
-   only for relayed traffic. This approach in general is considered experimental and not tested
-   enough for deployment in production environments. Use with caution!
+   It is possible to avoid running Kea with root privileges by instructing Kea to
+   use non-privileged (greater than 1024) ports and redirecting traffic. This, however, only works
+   for relayed traffic. This approach in general is considered experimental and has not been tested
+   for deployment in production environments. Use with caution!
 
 To use this approach, configure the server to listen on other non-privileged ports (e.g. 1547
-and 1548) by running the process with ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
+and 1548) by running the process with the ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
 
 .. code-block:: console
 
@@ -633,8 +612,8 @@ and ``/etc/systemd/system/kea-dhcp4.service``:
 
    ExecStart=/opt/kea/sbin/kea-dhcp6 -d -c /etc/kea/kea-dhcp6.conf -p 1547
 
-and then configure port redirection with iptables and ip6tables for new ports (e.g. 1547
-and 1548). Be sure to replace ens4 with the specific interface name.
+Then configure port redirection with iptables and ip6tables for new ports (e.g. 1547
+and 1548). Be sure to replace ``ens4`` with the specific interface name.
 
 .. code-block:: console
 
@@ -648,8 +627,8 @@ and 1548). Be sure to replace ens4 with the specific interface name.
 Deprecated Features
 ===================
 
-This section lists significant features that were supported in the past that have been,
-or will be removed. We will try to deprecate features before removing them to signal
+This section lists significant features that have been or will be removed. We try to 
+deprecate features before removing them to signal
 to current users to plan a migration. New users should not rely on deprecated features.
 
 Cassandra (CQL) Support
@@ -661,52 +640,48 @@ traction with users, particularly compared to the level of interest in and deplo
 the alternatives, MySQL and PostgreSQL.
 
 The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
-DHCP features, such as the configuration backend. The configuration backend requires over 20
+DHCP features, such as the configuration backend. The configuration backend requires more than 20
 tables of tightly coupled data that change over time and need to be kept in sync. With the
-Cassandra philosophy of data duplication, this would require creating and maintaining a massive
+Cassandra philosophy of data duplication, this required creating and maintaining a massive
 number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4
 code for the MySQL Configuration Backend. In the worst case, where each query required its
-own table, this implies a duplication factor of over 70. This would clearly be a very bad design.
+own table, this implies a duplication factor of over 70, which is clearly a very bad design.
 When we created the initial MySQL and PostgreSQL designs for the Configuration Backend, we also
-attempted to come up with a design for Cassandra. That attempt was a complete failure. We
-assessed that Cassandra is simply not the right technology for this task.
+attempted to come up with a design for Cassandra. That attempt was unsuccessful, and we
+determined that Cassandra is simply not the right technology for this task.
 
 Another problem with Cassandra is performance. In our performance tests MySQL and PostgreSQL
-were roughly 5-10 times faster than Cassandra, even though we did not do any special tuning
+were roughly 5-10 times faster than Cassandra, even without any special tuning
 for MySQL or PostgreSQL performance.
 
-Another concern with Cassandra is its complicated setup. As of June 2021, Cassandra is not
+Another concern with Cassandra is its complicated setup. As of June 2021, Cassandra was no longer
 available in many major distributions. It requires custom installation, with native packages
-now limited to Debian only. The quick introduction seems to favor Docker containers as a
-replacement. The Debian packages available require Python 2 (which reached end of life at
-1 Jan 2020) and will uninstall some python 3 packages. This is very risky step in a production
-environment, because it removes the current 3.8 or 3.9 python and installs an old, unsupported
-version. Support for python 3 is only available in alpha release of upcoming Cassandra 4.0,
-which is not released yet as of June 2021. The user has a tough choice between running antiquated
-version past its end of life or running unreleased alpha software. Neither option is reasonable
-in production environment.
+now limited to Debian only. The Debian packages available require Python 2 (which reached end-of-life on
+1 Jan 2020) and uninstall some Python 3 packages. This is a very risky step in a production
+environment, because it removes the current 3.8 or 3.9 Python and installs an old, unsupported
+version. Support for Python 3 is only available in the alpha release of Cassandra 4.0.
+Users have a tough choice between running antiquated
+version past its end-of-life or running unreleased alpha software; neither option is reasonable
+in a production environment.
 
-Cassandra is also very picky about the Java version. For example, on modern systems such as
-Ubuntu 21.04, it simply doesn't start and produces no logs. After running the Cassandra manually,
+Cassandra is also very picky about the version of Java it accepts. For example, on modern systems such as
+Ubuntu 21.04, Cassandra simply does not start and produces no logs. After running Cassandra manually,
 it produces a cryptic `Improperly specified VM option 'ThreadPriorityPolicy=42'` error message.
-This is an obscure information that the Java version is too new (11.x) and needs to be downgraded
-(to 8.x).
 
-To use C++ bindings (Kea is written in C++), a data driver is required. For a while, around
-2020 there was a message about it being in maintenance mode, but as of now (June 2021) this
-message disappeared. For a long time the data driver didn't not use the standard `pkg-config`
-approach and required custom hacking with regards to the software detection. Compared to
+To use C++ bindings (Kea is written in C++), a data driver is required. For a long time, the
+data driver did not use the standard `pkg-config`
+approach and required custom hacking with regards to software detection. Compared to
 MySQL and PostgreSQL, which are widely available in all popular Linux and BSD distributions,
 setting up Cassandra is complex and the complexity is not decreasing over time.
 
 Cassandra is also an ongoing maintenance burden. As we introduce new features to Kea, such
 as the ability to get database statistics that are synced between multiple Kea instances sharing
-the same database, we need to extend our API.  We want to maintain parity between backends.
+the same database, we need to extend our API. We want to maintain parity between backends.
 Porting solutions between MySQL and PostgreSQL is frequently very easy but is almost always a
-problem with Cassandra. That is not a Cassandra flaw on its own, the core problem here is that
+problem with Cassandra. That is not a Cassandra flaw on its own; the core problem here is that
 it is different than the other solutions Kea supports.
 
-For these reasons, we are deprecating Cassandra support as of Kea 1.9.9. The feature will
+For these reasons, Cassandra support is deprecated as of Kea 1.9.9. The feature will
 function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. We plan to
 remove the feature entirely in a future release, possibly as soon as Kea 2.2.0.
 
@@ -714,6 +689,6 @@ Sysrepo 0.x
 -----------
 
 Kea versions 1.9.9 and earlier required Sysrepo 0.7.x to run, when optional support for NETCONF was
-enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x and related libyang 1.x library to
+enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x and the related libyang 1.x library to
 run. The earlier Sysrepo versions are no longer supported. The latest Sysrepo 2.x version does not
-provide C++ bindings yet, and as such, is not usable for Kea yet.
+provide C++ bindings, and as such, is not usable for Kea.
