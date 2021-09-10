@@ -20,7 +20,7 @@ communicating between DHCP servers and the DDNS update daemon.
 
 Typical usage assumes that the servers are started from the command
 line, either directly or using a script, e.g. ``keactrl``. The
-configuration file is specified upon startup using the -c parameter.
+configuration file is specified upon startup using the ``-c`` parameter.
 
 .. _json-format:
 
@@ -34,19 +34,15 @@ defined in `RFC 7159 <https://tools.ietf.org/html/rfc7159>`__ and `ECMA
 In particular, the only boolean values allowed are true or false (all
 lowercase). The capitalized versions (True or False) are not accepted.
 
-Even if the JSON standard (ECMA 404) does not require JSON objects
-(i.e. name/value maps) to have unique entries Kea implements them
-using a C++ STL map with unique entries so:
+Even though the JSON standard (ECMA 404) does not require JSON objects
+(i.e. name/value maps) to have unique entries, Kea implements them
+using a C++ STL map with unique entries. Therefore, if there are multiple
+values for the same name in an object/map, the last value overwrites previous values.
+Since Kea 1.9.0, configuration file parsers raise a syntax error in such cases.
 
--  if there are multiple values for the same name in an object/map
-   the last value overwrites previous values
+Kea components use extended JSON with additional features allowed:
 
--  configuration file parsers since Kea 1.9.0 version raise a syntax error
-   in such cases
-
-Kea components use an extended JSON with additional features allowed:
-
--  shell comments: any text after the hash (#) character is ignored.
+-  Shell comments: any text after the hash (#) character is ignored.
 
 -  C comments: any text after the double slashes (//) character is
    ignored.
@@ -97,19 +93,16 @@ directory.
 
  .. note::
 
-   The "Logging" element is removed in Kea 1.6.0 and its contents (the
+   As of Kea 1.6.0, the "Logging" element was removed and its contents (the
    "loggers" object) moved inside the configuration objects (maps) for the
-   respective Kea modules. For example: the "Dhcp4" map contains the
-   "loggers" object specifying logging configuration for the DHCPv4
-   server. Backward compatibility is maintained until Kea 1.7.10
-   release; it will be possible to specify the "Logging" object at the top
-   configuration level and "loggers" objects at the module configuration
-   level. Finally, support for the top-level "Logging" object was
+   respective Kea modules. For example, the "Dhcp4" map contains the
+   "loggers" object, specifying logging configuration for the DHCPv4
+   server. Support for the top-level "Logging" object was
    removed in Kea 1.7.10.
 
    The specification for supporting several elements (e.g. "Dhcp4", "Dhcp6")
-   in one file has been removed in Kea 1.7.10, so that each component
-   requires one separate configuration file.
+   in one file was removed in Kea 1.7.10, so each component
+   now requires a separate configuration file.
 
 To avoid repetition of mostly similar structures, examples in the rest
 of this guide will showcase only the subset of parameters appropriate
@@ -131,12 +124,12 @@ the configuration is kept statically using a local file. However, since comments
 are not part of JSON syntax, most JSON tools detect them as
 errors. Another problem with them is that once Kea loads its configuration, the
 shell, C, and C++ style comments are ignored. If commands such as
-`config-get` or `config-write` are used, those comments are lost. An example of such
-comments has been presented in the previous section.
+``config-get`` or ``config-write`` are used, those comments are lost. An example of such
+comments was presented in the previous section.
 
 Historically, to address the problem, Kea code allowed the use of `comment` strings
 as valid JSON entities. This had the benefit of being retained through various
-operations (such as `config-get`), or allowing processing by JSON tools. An
+operations (such as ``config-get``), or allowing processing by JSON tools. An
 example JSON comment looks like this:
 
 ::
@@ -149,12 +142,13 @@ example JSON comment looks like this:
        }]
    }
 
-However, the fact that the comment could only be a single line, and that it was not
+However, the facts that the comment could only be a single line, and that it was not
 possible to add any other information in a more structured form, were frustrating. One specific
 example was a request to add floor levels and building numbers to subnets. This
-was one of the reasons why the concept of user context has been introduced. It
-allows adding arbitrary JSON structure to most Kea configuration structures. It
-has a number of benefits compared to earlier approaches. First, it is fully
+was one of the reasons why the concept of user context was introduced. It
+allows adding an arbitrary JSON structure to most Kea configuration structures.
+
+This has a number of benefits compared to earlier approaches. First, it is fully
 compatible with JSON tools and Kea commands. Second, it allows storing simple
 comment strings, but it can also store much more complex data, such as
 multiple lines (as a string array), extra typed data (such as floor numbers being
@@ -180,22 +174,19 @@ syntax and its top-level element is a map (i.e. the data must be enclosed in
 curly brackets). However, some hook libraries may expect specific formatting;
 please consult the specific hook library documentation for details.
 
-In a sense the user context mechanism has superseded the JSON comment
-capabilities. ISC would like to encourage people to use user-context in favor of
-the older mechanisms and we hope to deprecate JSON comments one day in the
-future. To promote this way of storing comments, Kea code is able to understand
-JSON comments, but converts them to user context on the fly. The
-comments entries in user-context were converted back to JSON comments to
-keep backward compatibility, but that conversion went away in version 1.7.9.
+In a sense the user-context mechanism has superseded the JSON comment
+capabilities; ISC encourages administrators to use user-context instead of
+the older mechanisms. To promote this way of storing comments, Kea compared
+converts JSON comments to user-context on the fly.
 
-There is one side effect, however. If the configuration uses the old JSON
-comment, the `config-get` command returns a slightly modified
-configuration. It is not uncommon for a call for `config-set` followed by a
-`config-get` to receive a slightly different structure.
+However, if the configuration uses the old JSON
+comment, the ``config-get`` command returns a slightly modified
+configuration. It is not uncommon for a call for ``config-set`` followed by a
+``config-get`` to receive a slightly different structure.
 The best way to avoid this problem is simply to abandon JSON comments and
-use user context.
+use user-context.
 
-For a discussion about user context used in hooks, see :ref:`user-context-hooks`.
+For a discussion about user-context used in hooks, see :ref:`user-context-hooks`.
 
 
 Simplified Notation
@@ -206,7 +197,7 @@ configuration hierarchy. Each hierarchy level is separated by a slash.
 If there is an array, a specific instance within that array is
 referenced by a number in square brackets (with numbering starting at
 zero). For example, in the above configuration the valid-lifetime in the
-Dhcp4 component can be referred to as Dhcp4/valid-lifetime and the pool
+Dhcp4 component can be referred to as Dhcp4/valid-lifetime, and the pool
 in the first subnet defined in the DHCPv4 configuration as
 Dhcp4/subnet4[0]/pool.
 
