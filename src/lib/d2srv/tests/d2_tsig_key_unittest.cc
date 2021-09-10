@@ -18,6 +18,7 @@
 
 using namespace isc::d2;
 using namespace isc::data;
+using namespace isc::dns;
 using namespace isc::stats;
 using namespace std;
 
@@ -57,6 +58,12 @@ TEST_F(D2TsigKeyTest, key) {
     const string& key_spec = "foo.bar.::test";
     D2TsigKeyPtr key(new D2TsigKey(key_spec));
     EXPECT_EQ(4, stat_mgr.count());
+
+    // Create a context.
+    TSIGContextPtr ctx;
+    ASSERT_NO_THROW(ctx = key->createContext());
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(TSIGContext::INIT, ctx->getState());
 
     // Get the 'sent' statistics.
     const string& stat_name = "key[foo.bar.].update-sent";
