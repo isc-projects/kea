@@ -161,9 +161,11 @@ public:
     }
 
 private:
-    static bool atexit_; ///< Flag to call atexit once.
+    /// @brief Variable used for its static property to call atexit() once.
+    static int atexit_;
 
-    MYSQL* mysql_;       ///< Initialization context
+    /// @brief Initialization context
+    MYSQL* mysql_;
 };
 
 /// @brief Forward declaration to @ref MySqlConnection.
