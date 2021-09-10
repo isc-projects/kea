@@ -278,25 +278,6 @@ else
          ;;
    esac
 
-   # Search for an OpenSSL 11 compatibility library first. It should exist e.g. on CentOS 7.
-   if test "${use_openssl}" = "yes" ; then
-      for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
-         if test -f "${d}/include/openssl11/openssl/opensslv.h"; then
-            use_openssl="${d}"
-            openssl_headers="${d}/include/openssl11"
-            for l in lib lib64; do
-               if test -f "${d}/${l}/openssl11/libssl.so"; then
-                  openssl_libraries="${d}/${l}/openssl11"
-                  break
-               fi
-            done
-            if test -n "${openssl_headers}" && test -n "${openssl_libraries}"; then
-               break
-            fi
-         fi
-      done
-   fi
-
    # Now search for the system OpenSSL library.
    if test "${use_openssl}" = "yes" ; then
       for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
