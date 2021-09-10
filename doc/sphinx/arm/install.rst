@@ -265,7 +265,7 @@ the ``premium`` directory and rerun ``autoreconf -i``.
    For instructions concerning the installation and configuration of
    database backends for Kea, see :ref:`dhcp-install-configure`.
 
-There are many additional options that are typically not necessary for
+There are many options that are typically not necessary for
 regular users. However, they may be useful for package maintainers,
 developers, or people who want to extend Kea code or send patches:
 
@@ -478,7 +478,7 @@ Building with CQL (Cassandra) Support
 -------------------------------------
 
 As of Kea 1.9.9, support for Cassandra is deprecated. It is still
-available for the moment, but the support will be removed in a future
+available in current versions, but the support will be removed in a future
 version; new users are encouraged to choose an alternative.
 
 Install Cassandra according to the instructions for the system. The
@@ -599,8 +599,8 @@ use regular UDP sockets (refer to ``dhcp-socket-type`` parameter in the
    for relayed traffic. This approach in general is considered experimental and has not been tested
    for deployment in production environments. Use with caution!
 
-To use this approach, configure the server to listen on other non-privileged ports (e.g. 1547
-and 1548) by running the process with the ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
+   To use this approach, configure the server to listen on other non-privileged ports (e.g. 1547
+   and 1548) by running the process with the ``-p`` option in ``/etc/systemd/system/kea-dhcp4.service``:
 
 .. code-block:: console
 
@@ -640,50 +640,12 @@ traction with users, particularly compared to the level of interest in and deplo
 the alternatives, MySQL and PostgreSQL.
 
 The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
-DHCP features, such as the configuration backend. The configuration backend requires more than 20
-tables of tightly coupled data that change over time and need to be kept in sync. With the
-Cassandra philosophy of data duplication, this required creating and maintaining a massive
-number of tables. To be specific, there are 36 different types of `get` queries in the DHCPv4
-code for the MySQL Configuration Backend. In the worst case, where each query required its
-own table, this implies a duplication factor of over 70, which is clearly a very bad design.
-When we created the initial MySQL and PostgreSQL designs for the Configuration Backend, we also
-attempted to come up with a design for Cassandra. That attempt was unsuccessful, and we
-determined that Cassandra is simply not the right technology for this task.
+DHCP features, such as the configuration backend. Cassandra also introduces performance degradation,
+is complicated to set up, and is an ongoing maintenance burden.
 
-Another problem with Cassandra is performance. In our performance tests MySQL and PostgreSQL
-were roughly 5-10 times faster than Cassandra, even without any special tuning
-for MySQL or PostgreSQL performance.
-
-Another concern with Cassandra is its complicated setup. As of June 2021, Cassandra was no longer
-available in many major distributions. It requires custom installation, with native packages
-now limited to Debian only. The Debian packages available require Python 2 (which reached end-of-life on
-1 Jan 2020) and uninstall some Python 3 packages. This is a very risky step in a production
-environment, because it removes the current 3.8 or 3.9 Python and installs an old, unsupported
-version. Support for Python 3 is only available in the alpha release of Cassandra 4.0.
-Users have a tough choice between running antiquated
-version past its end-of-life or running unreleased alpha software; neither option is reasonable
-in a production environment.
-
-Cassandra is also very picky about the version of Java it accepts. For example, on modern systems such as
-Ubuntu 21.04, Cassandra simply does not start and produces no logs. After running Cassandra manually,
-it produces a cryptic `Improperly specified VM option 'ThreadPriorityPolicy=42'` error message.
-
-To use C++ bindings (Kea is written in C++), a data driver is required. For a long time, the
-data driver did not use the standard `pkg-config`
-approach and required custom hacking with regards to software detection. Compared to
-MySQL and PostgreSQL, which are widely available in all popular Linux and BSD distributions,
-setting up Cassandra is complex and the complexity is not decreasing over time.
-
-Cassandra is also an ongoing maintenance burden. As we introduce new features to Kea, such
-as the ability to get database statistics that are synced between multiple Kea instances sharing
-the same database, we need to extend our API. We want to maintain parity between backends.
-Porting solutions between MySQL and PostgreSQL is frequently very easy but is almost always a
-problem with Cassandra. That is not a Cassandra flaw on its own; the core problem here is that
-it is different than the other solutions Kea supports.
-
-For these reasons, Cassandra support is deprecated as of Kea 1.9.9. The feature will
-function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. We plan to
-remove the feature entirely in a future release, possibly as soon as Kea 2.2.0.
+Cassandra support is deprecated as of Kea 1.9.9. The feature will
+function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. The
+feature will be removed entirely in a future release.
 
 Sysrepo 0.x
 -----------
