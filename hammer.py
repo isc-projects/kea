@@ -1492,9 +1492,6 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
-        if 'docs' in features and not revision == '8':
-            packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
-
         # TODO:
         # if 'mysql' in features:
         #     packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
@@ -1548,7 +1545,7 @@ def prepare_system_local(features, check_times):
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
+            packages.extend(['bison', 'debhelper', 'flex', 'libboost-dev', 'python3-dev'])
             if 20.04 <= float(revision):
                 packages.extend(['dh-python'])
 
@@ -1623,7 +1620,7 @@ def prepare_system_local(features, check_times):
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
+            packages.extend(['bison', 'debhelper', 'flex', 'libboost-dev', 'python3-dev'])
 
         if 'mysql' in features:
             if revision == '8':
@@ -1751,7 +1748,7 @@ def prepare_system_local(features, check_times):
 
         if 'pgsql' in features:
             packages.extend(['postgresql-dev', 'postgresql'])
-            packages.extend(['bison', 'flex', 'boost-dev', 'docbook-xsl', 'python3-dev'])
+            packages.extend(['bison', 'flex', 'boost-dev', 'python3-dev'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-dev'])

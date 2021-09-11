@@ -2,8 +2,6 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-# We now build doc after src/, because docgen, a tool to generate API
-# documentation requires libkea-exceptions and libkea-cc.
 SUBDIRS = tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@

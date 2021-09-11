@@ -11,27 +11,26 @@
  There are several types of documentation for Kea. The primary one, intended to
  be read by users, is User's Guide. It comes in HTML, PDF and txt format. All
  of them generated from the same sources. To generate this doc, you need to
- run configure script with --enable-generate-docs option. Several tools have to
- be present in the system: docbook environment, links and several others.
+ run configure script with --enable-generate-docs option. sphinx has to be
+ enabled in the system.
  You can generate this by doing:
 @code
 $ ./configure --enable-generate-docs
-$ cd doc/
-$ make guide
+$ make -C ./doc
 @endcode
 
-The output files will be generated in doc/guide/ directory.
+The output files will be generated in the ./doc/sphinx/_build directory.
 
-Since Kea 1.5, this doc has appendix A that lists all Kea commands. That
-appendix is generated using a small tool called docgen. The basic principle
+The ARM has an appendix that lists all Kea commands. The commands are integrated
+into RST using the tool located at doc/sphinx/api2doc.py. The basic principle
 is that for every command there is a JSON file that briefly describes the major
-aspects of the new command, such as name, short description, expected syntax,
-expected response, a hook that needs to be loaded, first Kea version where it
-appeared, etc. Those JSON files are loaded by docgen tool that will generate
-api.xml that will be used by make guide. There is no need to generate this,
-unless you alter description of existing commands or add a new one.
+aspects such as name, short description, expected syntax, expected response,
+a hook that needs to be loaded, first Kea version where it appeared, etc.
+Those JSON files are loaded by the api2doc.py tool that will generate api.txt
+that will be used by sphinx. There is no need to call this tool explicitly.
+It is called automatically when building the ARM.
 
-Since Kea 1.9.9, this doc has appendix with the grammar. If there were new
+Since Kea 1.9.9, the ARM has an appendix with the grammar. If there were new
 parameters added, you can regenerate the grammars and the appendix with the
 following procedure:
 
