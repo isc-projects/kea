@@ -1418,17 +1418,14 @@ def prepare_system_local(features, check_times):
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++',
-                    'log4cplus-devel', 'mariadb-devel', 'postgresql-devel']
+        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
+                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
+                    'openssl-devel', 'postgresql-devel']
 
         if revision == '7':
-            # openssl-devel is version 1.0.2k which is out of support.
-            # Install 1.1.1g instead.
+            # Install newer version of Boost in case users want to opt-in with:
+            # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
-            packages.append('openssl11-devel')
-        else:
-            packages.append('boost-devel')
-            packages.append('openssl-devel')
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1483,15 +1480,17 @@ def prepare_system_local(features, check_times):
 
     # prepare rhel
     elif system == 'rhel':
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'boost-devel',
-                    'mariadb-devel', 'postgresql-devel', 'rpm-build']
+        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
+                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
+                    'openssl-devel', 'postgresql-devel']
 
         if revision == '7':
-            # openssl-devel is version 1.0.2k which is out of support.
-            # Install 1.1.1g instead.
-            packages.append('openssl11-devel')
-        else:
-            packages.append('openssl-devel')
+            # Install newer version of Boost in case users want to opt-in with:
+            # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
+            packages.append('boost169-devel')
+
+        if 'native-pkg' in features:
+            packages.extend(['python3-devel', 'rpm-build'])
 
         if 'docs' in features and not revision == '8':
             packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
