@@ -8,14 +8,14 @@ Kea Configuration Backend
 Applicability
 -------------
 
-Kea Configuration Backend (abbreviated as CB) is a feature first
-introduced in the 1.6.0 release, which provides Kea servers with the ability
+Kea Configuration Backend (CB or config backend) is a feature, first
+introduced in Kea 1.6.0, that gives Kea servers the ability
 to manage and fetch their configuration from one or more databases. In
-the documentation, the term "Configuration Backend" may also refer to
+this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
 configuration information from the particular database type. For
-example: MySQL Configuration Backend is the logic implemented within the
-"mysql_cb" hooks library which provides a complete set of functions to
+example, MySQL Configuration Backend is the logic implemented within the
+``mysql_cb`` hook library, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
 
 In small deployments, e.g. those comprising a single DHCP server
@@ -26,14 +26,14 @@ configured - in particular the MySQL server and MySQL client. Once the
 number of DHCP servers and/or the number of managed subnets in the
 network grows, the usefulness of the CB becomes obvious.
 
-A good example of a use case for the CB is a pair of Kea DHCP servers which can be configured
+One use case for the CB is a pair of Kea DHCP servers that are configured
 to support High Availability as described in
 :ref:`high-availability-library`. The configurations of both servers
 (including the value of the ``server-tag`` parameter)
-are almost exactly the same. They may differ by the server identifier
-and designation of the server as a primary or standby (or secondary).
-They may also differ by their interfaces' configuration. Typically, the
-subnets, shared networks, option definitions, global parameters are the
+are almost exactly the same: they may differ by the server identifier
+and designation of the server as a primary or standby (or secondary), and/or
+by their interfaces' configuration. Typically, the
+subnets, shared networks, option definitions, and global parameters are the
 same for both servers and can be sourced from a single database instance
 to both Kea servers.
 
@@ -42,7 +42,7 @@ and/or other configuration information supported by the CB has the
 advantage that any modifications to the configuration in the database are
 automatically applied to both servers.
 
-Another case when the centralized configuration repository is desired is
+Another case when the centralized configuration repository is useful is
 in deployments including a large number of DHCP servers, possibly
 using a common lease database to provide redundancy. New servers can
 be added to the pool frequently to fulfill growing scalability
@@ -53,10 +53,10 @@ Using the database as a configuration repository for Kea servers also
 brings other benefits, such as:
 
 -  the ability to use database specific tools to access the configuration
-   information,
+   information;
 
 -  the ability to create customized statistics based on the information
-   stored in the database, and
+   stored in the database; and
 
 -  the ability to backup the configuration information using the database's
    built-in replication mechanisms.
@@ -66,76 +66,70 @@ brings other benefits, such as:
 CB Capabilities and Limitations
 -------------------------------
 
-Kea CB has some limitations as a result of its complexity and development
-time constraints:
-- supported for the MySQL database only,
+Currently, the Kea CB has the following limitations:
 
-- supported for DHCPv4 and DHCPv6 daemon; the Control Agent, D2 daemon and
-  the NETCONF  daemon cannot be configured from the database,
+- It is only supported for the MySQL database.
 
-- only a subset of the DHCP configuration parameters can be set in the
+- It is only supported for the DHCPv4 and DHCPv6 daemons; the Control Agent, D2 daemon, and
+  the NETCONF daemon cannot be configured from the database,
+
+- Only certain DHCP configuration parameters can be set in the
   database: global parameters, option definitions, global options, client
-  classes, shared networks, and subnets; other configuration parameters
+  classes, shared networks, and subnets. Other configuration parameters
   must be sourced from a JSON configuration file.
 
-The current CB limitations will be gradually removed in subsequent Kea releases.
-
-..
-
-.. note::
-
-   Kea CB stores data in a MySQL schema that is public. It's possible to
-   insert configuration data into the MySQL tables manually or automatically
-   using SQL scripts, but this requires reasonably good SQL and schema knowledge.
-   The supported method for managing the data is through our cb-cmds hook library,
-   which provides management commands for config backends. It simplifies many
-   typical operations, such as listing, adding, retrieving, and deleting global
-   parameters, shared networks, subnets, pools, options, option definitions, and
-   client classes. In addition, it provides essential business logic that ensures
-   the logical integrity of the data.  See commands starting with "remote-" in
-   Appendix A of the Kea Administrator Reference Manual for a complete list.
-   The cb_cmds hooks library is available to subscribers only. If you are not a
-   subscriber and would like to subscribe, please contact info@isc.org, and our
-   sales team will assist you.
-
-   The schema creation script can be found here `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
-   we have some related design documents in gitlab: `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__ and
-   `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
+Kea CB stores data in a MySQL schema that is public. It is possible to
+insert configuration data into the MySQL tables manually or automatically
+using SQL scripts, but this requires SQL and schema knowledge.
+The supported method for managing the data is through the ``cb-cmds`` hook library,
+which provides management commands for config backends. It simplifies many
+typical operations, such as listing, adding, retrieving, and deleting global
+parameters, shared networks, subnets, pools, options, option definitions, and
+client classes. In addition, it provides essential business logic that ensures
+the logical integrity of the data. See commands starting with ``remote-`` in
+Appendix A of this manual for a complete list.
 
 .. note::
 
-   We strongly recommend against duplication of the configuration information
-   in the file and the database. For example, when specifying subnets
-   for the DHCP server, please store them in either the configuration backend
-   or in the configuration file, not both. Storing some subnets in the database
-   and others in the file may put you at risk of potential configuration
-   conflicts. Note that the configuration instructions from the database take
-   precedence over instructions from the file, so parts of the configuration
-   specified in the file may be overridden if contradicted by information in
-   the database.
+   The ``cb_cmds`` hook library is available only to ISC support subscribers.
+   For more information on subscription options, please complete the form
+   at https://www.isc.org/contact.
+
+
+The schema creation script can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__;
+other related design documents are stored in our GitLab: `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__ and
+`Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
+
+We strongly recommend against duplication of configuration information
+in both the file and the database. For example, when specifying subnets
+for the DHCP server, please store them in either the configuration backend
+or in the configuration file, not both. Storing some subnets in the database
+and others in the file may put users at risk of potential configuration
+conflicts. Note that the configuration instructions from the database take
+precedence over instructions from the file, so parts of the configuration
+specified in the file may be overridden if contradicted by information in
+the database.
+
+Although it is not recommended, it is possible to specify certain parameter
+types both in a configuration file and the database. For example, a subnet
+can be specified in the configuration file and another subnet in the database;
+in this case, the server will use both subnets. DHCP client classes, however,
+must not be specified in both the configuration file and the database, even if
+they do not overlap. If any client classes are specified in the database
+for a particular DHCP server, this server will use these classes and ignore
+all classes present in its configuration file. This behavior was introduced
+to ensure that the server receives a consistent set of client classes
+specified in an expected order with all inter-class dependencies fulfilled.
+It is impossible to guarantee consistency when client classes are specified
+in two independent configuration sources.
 
 .. note::
 
-   Although it is not recommended, it is possible to specify certain parameter
-   types both in a configuration file and the database. For example, a subnet
-   can be specified in the configuration file and another subnet in the database.
-   As a result, the server will use both subnets. DHCP client classes, however,
-   must not be specified in the configuration file and the database, even if
-   they do not overlap. If any client classes are specified in the database
-   for a particular DHCP server, this server will use these classes and ignore
-   all classes present in its configuration file. This behavior was introduced
-   to ensure that the server receives a consistent set of client classes
-   specified in an expected order with all inter-class dependencies fulfilled.
-   It is impossible to guarantee consistency when client classes are specified
-   in two independent configuration sources.
-
-.. note::
-
-   It is recommended that the ``subnet_cmds`` hooks library not be used to
-   manage the subnets when the configuration backend is used as a source
-   of information about the subnets. The ``subnet_cmds`` hooks library
+   It is recommended that the ``subnet_cmds`` hook library not be used to
+   manage subnets when the configuration backend is used as a source
+   of information about the subnets. The ``subnet_cmds`` hook library
    modifies the local subnets configuration in the server's memory,
-   not in the database. Use the ``cb_cmds`` hooks library to manage the
+   not in the database. Use the ``cb_cmds`` hook library to manage the
    subnets information in the database instead.
 
 .. note::
@@ -161,10 +155,10 @@ The current CB limitations will be gradually removed in subsequent Kea releases.
 CB Components
 -------------
 
-Kea 1.6.0 version or later is required to use the Configuration Backend.
-The ``mysql_cb`` open source hooks library implementing the Configuration
-Backend for MySQL must be compiled and loaded by the DHCP servers. This
-hooks library is compiled when the ``--with-mysql`` configuration switch
+Kea 1.6.0 version or later is required to use the configuration backend.
+The ``mysql_cb`` open source hook library implementing the configuration
+backend for MySQL must be compiled and loaded by the DHCP servers. This
+hook library is compiled when the ``--with-mysql`` configuration switch
 is used during the Kea build. The MySQL C client libraries must be
 installed, as explained in :ref:`dhcp-install-configure`.
 
@@ -174,55 +168,56 @@ installed, as explained in :ref:`dhcp-install-configure`.
    required by the particular Kea version using the ``kea-admin`` tool,
    as described in :ref:`kea-admin`.
 
-The ``cb_cmds`` premium hooks library, which is available to ISC's paid support
+The ``cb_cmds`` premium hook library, which is available to ISC's paid support
 customers, provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
-be attached to both DHCPv4 and DHCPv6 server instances. It is still
+be attached to both DHCPv4 and DHCPv6 server instances. It is
 possible to manage the configuration information without the ``cb_cmds``
-hooks library with commonly available tools, such as MySQL Workbench or
+hook library with commonly available tools, such as MySQL Workbench or
 the command-line MySQL client, by directly working with the database.
 
 Refer to :ref:`cb-cmds-library` for the details regarding the
-``cb_cmds`` hooks library.
+``cb_cmds`` hook library.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
 the list of supported configuration parameters, can be found in
-:ref:`dhcp4-cb` and :ref:`dhcp6-cb` respectively.
+:ref:`dhcp4-cb` and :ref:`dhcp6-cb`, respectively.
 
 .. _cb-sharing:
 
 Configuration Sharing and Server Tags
 -------------------------------------
 
-
-The configuration database is designed to store the configuration information
+The configuration database is designed to store configuration information
 for multiple Kea servers. Depending on the use case, the entire configuration
-may be shared by all servers, parts of the configuration may be shared by
+may be shared by all servers; parts of the configuration may be shared by
 multiple servers and the rest of the configuration may be different for these
-servers or, finally, each server may have its own non-shared configuration.
+servers; or each server may have its own non-shared configuration.
 
 The configuration elements in the database are associated with the servers
-by "server tags". The server tag is an arbitrary string holding the name
+by "server tags." The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
-the DHCPv4 and the DHCPv6 server respectively. The value is configured
+both the DHCPv4 and the DHCPv6 server. The value is configured
 using the ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
-server-tag can be checked with the ``server-tag-get`` command.
+server tag can be checked with the ``server-tag-get`` command.
 
 The server definition, which consists of the server tag and the server
 description, must be stored in the configuration database prior to creating
 the dedicated configuration for that server. In cases when all servers use
-the same configuration, e.g. a pair of servers running as the High Availability
+the same configuration, e.g. a pair of servers running as High Availability
 peers, there is no need to configure the server tags for these
 servers in the database. The database by default includes the logical
 server `all`, which is used as a keyword to indicate that
-the particular piece of configuration must be shared between all servers
-connecting to the database. The `all` server can't be
-deleted or modified. It is not even returned among other servers
-as a result of the `remote-server[46]-get-all`
-commands. Also, slightly different rules may apply to "all" keyword
+a particular piece of configuration must be shared between all servers
+connecting to the database. The `all` server cannot be
+deleted or modified, and it is not returned among other servers
+as a result of the ``remote-server[46]-get-all``
+commands.
+
+Also, slightly different rules may apply to "all" keyword
 than to any user defined server when running the commands provided by
-the `cb_cmds` hooks library :ref:`cb-cmds-library`.
+the `cb_cmds` hook library :ref:`cb-cmds-library`.
 
 In the simplest case there are no server tags defined in the configuration
 database and all connecting servers will get the same configuration
@@ -267,7 +262,7 @@ subnet prefix. The subnet identifier is used in Kea to uniquely
 identify the subnet and to connect it with other configuration elements,
 e.g. in host reservations. The subnet identifier uniquely identifies
 the subnet within the network. Some commands provided by the
-`cb_cmds` hooks library allow for accessing the subnet
+`cb_cmds` hook library allow for accessing the subnet
 information by subnet identifier (or prefix) and explicitly prohibit
 using the server tag to access the subnet. This is because, in a
 general case, the subnet definition is associated with multiple servers
@@ -318,10 +313,10 @@ belong to "all" servers.
 .. note::
 
    Be very careful when associating the configuration elements with
-   different server tags. The configuration backend doesn't protect you
+   different server tags. The configuration backend doesn't protect
    against some possible misconfigurations that may arise from the
-   wrong server tags' assignments. For example: if you assign a shared
-   network to one server and the subnets belonging to this shared network
+   wrong server tags' assignments. For example: if a shared
+   network is assigned to one server and the subnets belonging to this shared network
    to another server, the servers will fail upon trying to fetch and
    use this configuration. The server fetching the subnets will be
    aware that the subnets are associated with the shared network but
