@@ -26,19 +26,19 @@ command-line switches:
 
 -  ``-p server-port`` - specifies the local UDP port on which the server
    will listen. This is only useful during testing, as a DHCPv4 server
-   listening on ports other than the standard ones will not be able to
+   listening on ports other than the standard ones is not able to
    handle regular DHCPv4 queries.
 
 -  ``-P client-port`` - specifies the remote UDP port to which the
    server will send all responses. This is only useful during testing,
    as a DHCPv4 server sending responses to ports other than the standard
-   ones will not be able to handle regular DHCPv4 queries.
+   ones is not able to handle regular DHCPv4 queries.
 
--  ``-t file`` - specifies a configuration file to be tested. Kea-dhcp4
-   will load it, check it, and exit. During the test, log messages are
+-  ``-t file`` - specifies a configuration file to be tested. ``kea-dhcp4``
+   loads it, checks it, and exits. During the test, log messages are
    printed to standard output and error messages to standard error. The
    result of the test is reported through the exit code (0 =
-   configuration looks ok, 1 = error encountered). The check is not
+   configuration looks OK, 1 = error encountered). The check is not
    comprehensive; certain checks are possible only when running the
    server.
 
@@ -52,33 +52,33 @@ command-line switches:
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
-On startup, the server will detect available network interfaces and will
-attempt to open UDP sockets on all interfaces mentioned in the
-configuration file. Since the DHCPv4 server opens privileged ports, it
-requires root access. This daemon must be run as root.
+On startup, the server detects available network interfaces and
+attempts to open UDP sockets on all interfaces mentioned in the
+configuration file. Since the DHCPv4 server opens privileged ports,
+this daemon must be run as root.
 
-During startup, the server will attempt to create a PID file of the
-form: [runstatedir]/kea/[conf name].kea-dhcp4.pid where:
+During startup, the server attempts to create a PID file of the
+form ``[runstatedir]/kea/[conf name].kea-dhcp4.pid``, where:
 
--  ``runstatedir``: The value as passed into the build configure
-   script; it defaults to "/usr/local/var/run". Note that this value may be
+-  ``runstatedir`` is the value as passed into the build configure
+   script; it defaults to ``/usr/local/var/run``. Note that this value may be
    overridden at runtime by setting the environment variable
    ``KEA_PIDFILE_DIR``, although this is intended primarily for testing
    purposes.
 
--  ``conf name``: The configuration file name used to start the server,
+-  ``conf name`` is the configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
-   a pathname of "/usr/local/etc/kea/myconf.txt", the portion used would
-   be "myconf".
+   a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
+   be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
-server will issue a DHCP4_ALREADY_RUNNING log message and exit. It is
+server issues a DHCP4_ALREADY_RUNNING log message and exits. It is
 possible, though unlikely, that the file is a remnant of a system crash
 and the process to which the PID belongs is unrelated to Kea. In such a
-case it would be necessary to manually delete the PID file.
+case, it would be necessary to manually delete the PID file.
 
 The server can be stopped using the ``kill`` command. When running in a
-console, the server can also be shut down by pressing ctrl-c. It detects
+console, the server can also be shut down by pressing ctrl-c. Kea detects
 the key combination and shuts down gracefully.
 
 .. _dhcp4-configuration:
@@ -89,8 +89,10 @@ DHCPv4 Server Configuration
 Introduction
 ------------
 
-This section explains how to configure the DHCPv4 server using a
-configuration file. Before DHCPv4 is started, its configuration file must
+This section explains how to configure the Kea DHCPv4 server using a
+configuration file.
+
+Before DHCPv4 is started, its configuration file must
 be created. The basic configuration is as follows:
 
 ::
@@ -142,14 +144,14 @@ server; they do not impact its operation in any way.
 The configuration starts in the first line with the initial opening
 curly bracket (or brace). Each configuration must contain an object
 specifying the configuration of the Kea module using it. In the example
-above this object is called ``Dhcp4``.
+above, this object is called ``Dhcp4``.
 
 .. note::
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it was removed in 1.7.10 release,
-   including the ``Logging`` object: its previous content, the list
+   not recommended. Support for this type of configuration was removed in the 1.7.10 release,
+   including the ``Logging`` object; its previous content, the list
    of loggers, must now be inside the ``Dhcp4`` object.
 
 The Dhcp4 configuration starts with the ``"Dhcp4": {`` line and ends
@@ -158,8 +160,8 @@ after the last comment). Everything defined between those lines is
 considered to be the Dhcp4 configuration.
 
 In general, the order in which those parameters appear does not
-matter, but there are two caveats. The first one is to remember that the
-configuration file must be well-formed JSON. That means that the
+matter, but there are two caveats. The first one is that the
+configuration file must be well-formed JSON, meaning that the
 parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
 configuration file, keep in mind that moving a parameter to or from the
@@ -173,49 +175,49 @@ in the configuration file.
 
 The first few DHCPv4 configuration elements
 define some global parameters. ``valid-lifetime`` defines how long the
-addresses (leases) given out by the server are valid. If nothing
-changes, a client that got an address is allowed to use it for 4000
+addresses (leases) given out by the server are valid; the default
+is for a client to be allowed to use a given address for 4000
 seconds. (Note that integer numbers are specified as is, without any
 quotes around them.) ``renew-timer`` and ``rebind-timer`` are values
-(also in seconds) that define T1 and T2 timers that govern when the
-client will begin the renewal and rebind procedures.
+(also in seconds) that define the T1 and T2 timers that govern when the
+client begins the renewal and rebind processes.
 
 .. note::
 
-   Beginning with Kea 1.6.0 the lease valid lifetime is extended from a
-   single value to a triplet with minimum, default and maximum values using
-   ``min-valid-lifetime``, ``valid-lifetime`` and ``max-valid-lifetime``.
-   As of Kea 1.9.5, these values may be specified in client classes. The recipe
+   Beginning with Kea 1.6.0, the lease valid-lifetime is extended from a
+   single value to a triplet with minimum, default, and maximum values using
+   ``min-valid-lifetime``, ``valid-lifetime``, and ``max-valid-lifetime``.
+   As of Kea 1.9.5, these values may be specified in client classes. The procedure
    the server uses to select which lifetime value to use is as follows:
 
-   If the client query is a BOOTP query, the server will always use the
-   infinite lease time (e.g. 0xffffffff). Otherwise the server must next
+   If the client query is a BOOTP query, the server always uses the
+   infinite lease time (e.g. 0xffffffff). Otherwise, the server must
    determine which configured triplet to use by first searching all
    classes assigned to the query, and then the subnet selected for
    the query.
 
-   Classes are searched in the order they were assigned to the query. The
-   server will use the triplet from the first class that specifies it.
-   If no classes specify the triplet then the server will use the triplet
+   Classes are searched in the order they were assigned to the query; the
+   server uses the triplet from the first class that specifies it.
+   If no classes specify the triplet, the server uses the triplet
    specified by the subnet selected for the client. If the subnet does not
-   explicitly specify it the server will look next at the subnet's
-   shared-network (if one), then for a global specification, and
+   explicitly specify it, the server next looks at the subnet's
+   shared-network (if one exists), then for a global specification, and
    finally the global default.
 
    If the client requested a lifetime value via DHCP option 51, then the
-   lifetime value used will be the requested value bounded by the configured
-   triplet.  In other words, if the requested lifetime is less than the
-   configured minimum the configured minimum will be used; if it is more
-   than the configured maximum the configured maximum will be used.  If
+   lifetime value used is the requested value bounded by the configured
+   triplet. In other words, if the requested lifetime is less than the
+   configured minimum, the configured minimum is used; if it is more
+   than the configured maximum, the configured maximum is used. If
    the client did not provide a requested value, the lifetime value used
-   will be the triplet default value.
+   is the triplet default value.
 
 .. note::
 
    Both ``renew-timer`` and ``rebind-timer``
-   are optional. The server will only send ``rebind-timer`` to the client,
+   are optional. The server only sends ``rebind-timer`` to the client,
    via DHCPv4 option code 59, if it is less than ``valid-lifetime``; and it
-   will only send ``renew-timer``, via DHCPv4 option code 58, if it is less
+   only sends ``renew-timer``, via DHCPv4 option code 58, if it is less
    than ``rebind-timer`` (or ``valid-lifetime`` if ``rebind-timer`` was not
    specified). In their absence, the client should select values for T1
    and T2 timers according to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`_.
@@ -238,9 +240,9 @@ like this:
 
 The next couple of lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
-server to use ``memfile``, which is the simplest (and fastest) database
+server to use ``memfile``, which is the simplest and fastest database
 backend. It uses an in-memory database and stores leases on disk in a
-CSV (comma-separated values) file. This is a very simple configuration; usually the lease
+CSV (comma-separated values) file. This is a very simple configuration example; usually the lease
 database configuration is more extensive and contains additional
 parameters. Note that ``lease-database`` is an object and opens up a new
 scope, using an opening brace. Its parameters (just one in this example:
@@ -256,9 +258,9 @@ specified with the ``subnet4`` parameter. It is a list, so it starts and
 ends with square brackets. Each subnet definition in the list has
 several attributes associated with it, so it is a structure and is
 opened and closed with braces. At a minimum, a subnet definition has to
-have at least two parameters: ``subnet`` (which defines the whole
-subnet) and ``pools`` (which is a list of dynamically allocated pools
-that are governed by the DHCP server).
+have at least two parameters: ``subnet``, which defines the whole
+subnet; and ``pools``, which is a list of dynamically allocated pools
+that are governed by the DHCP server.
 
 The example contains a single subnet. If more than one were defined,
 additional elements in the ``subnet4`` parameter would be specified and
@@ -285,33 +287,32 @@ syntax would be used:
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
-After all the parameters have been specified, we have two contexts open:
-global and Dhcp4; thus, we need two closing curly brackets to close
+After all the parameters have been specified, there are two contexts open:
+global and Dhcp4; thus, two closing curly brackets are needed to close
 them.
 
 Lease Storage
 -------------
 
 All leases issued by the server are stored in the lease database.
-Currently there are four database backends available: memfile (which is
-the default backend), MySQL, PostgreSQL, and Cassandra.
+Currently there are four database backends available: memfile
+(the default), MySQL, PostgreSQL, and Cassandra (deprecated).
 
 Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The server is able to store lease data in different repositories. Larger
-deployments may elect to store leases in a database.
+deployments may elect to store leases in a database;
 :ref:`database-configuration4` describes this option. In
-typical smaller deployments, though, the server will store lease
+typical smaller deployments, though, the server stores lease
 information in a CSV file rather than a database. As well as requiring
 less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
 
-The configuration of the file backend (memfile) is controlled through
+The configuration of the memfile backend is controlled through
 the Dhcp4/lease-database parameters. The ``type`` parameter is mandatory
-and it specifies which storage for leases the server should use. The
-value of ``"memfile"`` indicates that the file should be used as the
-storage. The following list gives additional optional parameters that
+and specifies which storage for leases the server should use, through
+the ``"memfile"`` value. The following list gives additional optional parameters that
 can be used to configure the memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
@@ -337,12 +338,13 @@ can be used to configure the memfile backend.
    value of the ``lfc-interval`` is ``3600``. A value of 0 disables the
    LFC.
 
--  ``max-row-errors``: when the server loads a lease file, it is processed
+-  ``max-row-errors``: specifies the number of row errors before the server
+   stops attempting to load a lease file. When the server loads a lease file, it is processed
    row by row, each row containing a single lease. If a row is flawed and
-   cannot be processed correctly the server will log it, discard the row,
-   and go on to the next row. This parameter can be used to set a limit on
-   the number of such discards that may occur after which the server will
-   abandon the effort and exit.  The default value of 0 disables the limit
+   cannot be processed correctly the server logs it, discards the row,
+   and goes on to the next row. This parameter can be used to set a limit on
+   the number of such discards that can occur, after which the server
+   abandons the effort and exits. The default value of 0 disables the limit
    and allows the server to process the entire file, regardless of how many
    rows are discarded.
 
@@ -358,24 +360,27 @@ can be used to configure the memfile backend.
        }
    }
 
-This configuration selects the ``/tmp/kea-leases4.csv`` as the storage
+This configuration selects ``/tmp/kea-leases4.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
-of the lease file every 30 minutes and sets the maximum number of row
+of the lease file every 1800 seconds (30 minutes) and sets the maximum number of row
 errors to 100.
+
+Why Is Lease File Cleanup Necessary?
+------------------------------------
 
 It is important to know how the lease file contents are organized to
 understand why the periodic lease file cleanup is needed. Every time the
-server updates a lease or creates a new lease for the client, the new
+server updates a lease or creates a new lease for a client, the new
 lease information must be recorded in the lease file. For performance
 reasons, the server does not update the existing client's lease in the
 file, as this would potentially require rewriting the entire file.
 Instead, it simply appends the new lease information to the end of the
 file; the previous lease entries for the client are not removed. When
-the server loads leases from the lease file, e.g. at the server startup,
+the server loads leases from the lease file, e.g. at server startup,
 it assumes that the latest lease entry for the client is the valid one.
-The previous entries are discarded, meaning that the server can
-re-construct the accurate information about the leases even though there
+Previous entries are discarded, meaning that the server can
+reconstruct accurate information about the leases even though there
 may be many lease entries for each client. However, storing many entries
 for each client results in a bloated lease file and impairs the
 performance of the server's startup and reconfiguration, as it needs to
@@ -390,9 +395,9 @@ however, that the LFC takes time and thus it is possible (although
 unlikely) that, if the ``lfc-interval`` is too short, a new cleanup may
 be started while the previous one is still running. The server would
 recover from this by skipping the new cleanup when it detected that the
-previous cleanup was still in progress. But it implies that the actual
-cleanups will be triggered more rarely than configured. Moreover,
-triggering a new cleanup adds overhead to the server, which will not be
+previous cleanup was still in progress, but it implies that the actual
+cleanups will be triggered more rarely than the configured interval. Moreover,
+triggering a new cleanup adds overhead to the server, which is not
 able to respond to new requests for a short period of time when the new
 cleanup process is spawned. Therefore, it is recommended that the
 ``lfc-interval`` value be selected in a way that allows the LFC
@@ -400,7 +405,7 @@ to complete the cleanup before a new cleanup is triggered.
 
 Lease file cleanup is performed by a separate process (in the
 background) to avoid a performance impact on the server process. To
-avoid conflicts between two processes both using the same lease
+avoid conflicts between two processes using the same lease
 files, the LFC process starts with Kea opening a new lease file; the
 actual LFC process operates on the lease file that is no longer used by
 the server. There are also other files created as a side effect of the
@@ -426,8 +431,8 @@ Lease Database Configuration
    :ref:`pgsql-database-create`.
 
 Lease database configuration is controlled through the
-Dhcp4/lease-database parameters. The database type must be set to
-"memfile", "mysql", "postgresql", or "cql", e.g.:
+Dhcp4/``lease-database`` parameters. The database type must be set to
+``memfile``, ``mysql``, ``postgresql``, or `cql``, e.g.:
 
 ::
 
@@ -437,6 +442,8 @@ Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
 :ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
 :ref:`cql-database-create`).
+
+For MySQL or PostgreSQL:
 
 ::
 
@@ -457,7 +464,7 @@ the database host name must also be specified:
 
 (It should be noted that this configuration may have a severe impact on server performance.)
 
-Normally, the database will be on the same machine as the DHCPv4 server.
+Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
 
 ::
@@ -482,7 +489,7 @@ The default value of five seconds should be more than adequate for local
 connections. If a timeout is given, though, it should be an integer
 greater than zero.
 
-The maximum number of times the server will automatically attempt to
+The maximum number of times the server automatically attempts to
 reconnect to the lease database after connectivity has been lost may be
 specified:
 
@@ -498,7 +505,7 @@ only). For Cassandra, Kea uses an interface that connects to
 all nodes in a cluster at the same time. Any connectivity issues should
 be handled by internal Cassandra mechanisms.
 
-The number of milliseconds the server will wait between attempts to
+The number of milliseconds the server waits between attempts to
 reconnect to the lease database after connectivity has been lost may
 also be specified:
 
@@ -516,15 +523,15 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 The possible values are:
 
--  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+-  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
 
--  ``serve-retry-exit`` DHCP service continues while trying to automatically
+-  ``serve-retry-exit`` - continues the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``.
 
--  ``serve-retry-continue`` DHCP service continues and does not shut down the
+-  ``serve-retry-continue`` - continues the DHCP service and does not shut down the
    server even if the recovery fails.
 
 .. note::
@@ -533,26 +540,25 @@ The possible values are:
    backend. This allows users to tailor the recovery parameters to each backend
    they use. We do suggest that users enable it either for all backends or none,
    so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is disabled will result
+
+   Losing connectivity to a backend for which reconnect is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
-   It is highly recommended to not change the ``stop-retry-exit`` default
-   setting for the lease manager as it is critical for the connection to be
+
+   It is highly recommended not to change the ``stop-retry-exit`` default
+   setting for the lease manager, as it is critical for the connection to be
    active while processing DHCP traffic. Change this only if the server is used
    exclusively as a configuration tool.
 
-..
+The host parameter is used by the MySQL and PostgreSQL backends.
+Cassandra has a concept of contact points that can be used to
+contact the cluster, instead of a single IP or hostname. It takes a
+list of comma-separated IP addresses, which may be specified as:
 
-.. note::
+::
 
-   Note that the host parameter is used by the MySQL and PostgreSQL backends.
-   Cassandra has a concept of contact points that can be used to
-   contact the cluster, instead of a single IP or hostname. It takes a
-   list of comma-separated IP addresses, which may be specified as:
-   ::
-
-      "Dhcp4": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
+    "Dhcp4": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
 
 Finally, the credentials of the account under which the server will
 access the database should be set:
@@ -565,7 +571,7 @@ access the database should be set:
               ... }
 
 If there is no password to the account, set the password to the empty
-string "". (This is also the default.)
+string ``""``. (This is the default.)
 
 .. _cassandra-database-configuration4:
 
@@ -605,16 +611,16 @@ Cassandra also supports a number of optional parameters:
    is disabled.
 
 -  ``tcp-nodelay`` - enables/disables Nagle's algorithm on connections.
-   The default is true.
+   The default is ``true``.
 
--  ``consistency`` - configures consistency level. The default is
+-  ``consistency`` - configures the consistency level. The default is
    "quorum". Supported values: any, one, two, three, quorum, all,
    local-quorum, each-quorum, serial, local-serial, local-one. See
    `Cassandra
    consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`__
    for more details.
 
--  ``serial-consistency`` - configures serial consistency level which
+-  ``serial-consistency`` - configures the serial consistency level, which
    manages lightweight transaction isolation. The default is "serial".
    Supported values: any, one, two, three, quorum, all, local-quorum,
    each-quorum, serial, local-serial, local-one. See `Cassandra serial
