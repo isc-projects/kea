@@ -60,7 +60,12 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     else
       AC_MSG_RESULT(["no"])
       AX_DISPLAY_LIBRARY_WARNINGS()
-      AC_MSG_ERROR(["${with_library}" needs to point to a .pc file or to the installation directory, but points to none of those])
+      # TODO: It can also point to a .pc file, but the current sysrepo
+      # implementation does not allow it because there are more .pc files than
+      # --with flags. After migration to sysrepo v2 has been done there will be
+      # four flags and four .pc files so change the error message to say that it
+      # can also point to a .pc file.
+      AC_MSG_ERROR(["${with_library}" needs to point to the installation directory])
     fi
 
   else

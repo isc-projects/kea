@@ -183,7 +183,7 @@ AC_DEFUN([AX_SYSREPO], [
              AC_MSG_ERROR([Using sysrepo <= 0.7.6 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
             [AC_MSG_RESULT([no])
              AX_DISPLAY_LIBRARY_WARNINGS()
-             AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.)])]
+             AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.])]
           )]
         )]
       )],
