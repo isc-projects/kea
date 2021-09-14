@@ -1,3 +1,7 @@
+1942.	[func]		fdupont
+	Added basic statistics to the DHCP-DDNS server.
+	(Gitlab #2040)
+
 1941.	[func]		fdupont
 	Per DNS server TSIG keys are now supported in the DHCP-DDNS
 	(aka D2) server configuration. A new callout point 'select_key'
