@@ -88,7 +88,6 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     if ! "${LIBRARY_FOUND}"; then
       for p in /usr /usr/local; do
         headers_found=true
-        libraries_found=true
         for i in ${list_of_headers}; do
           if test ! -f "${p}/include/${i}"; then
             AX_ADD_TO_LIBRARY_WARNINGS([${library} header ${i} not found in ${p}])
@@ -101,17 +100,24 @@ AC_DEFUN([AX_FIND_LIBRARY], [
           LIBRARY_INCLUDEDIR="-I${p}/include"
         fi
 
+        libraries_found=true
         LIBRARY_LIBS="-L${p}/lib -Wl,-rpath=${p}/lib"
         for i in ${list_of_libraries}; do
+          i_found=false
           for l in lib lib64; do
-            if test ! -f "${p}/${l}/${i}"; then
+            if test -f "${p}/${l}/${i}"; then
+              lib=$(printf '%s' "${i}" | sed 's/^lib//g;s/.so$//g')
+              LIBRARY_LIBS="${LIBRARY_LIBS} -l${lib}"
+              i_found=true
+              break
+            else
               AX_ADD_TO_LIBRARY_WARNINGS([${library} library ${i} not found in ${p}/${l}])
-              libraries_found=false
-              break 2
             fi
-            lib=$(printf '%s' "${i}" | sed 's/^lib//g;s/.so$//g')
-            LIBRARY_LIBS="${LIBRARY_LIBS} -l${lib}"
           done
+          if ! "${i_found}"; then
+            libraries_found=false
+            break
+          fi
         done
 
         if "${headers_found}" && "${libraries_found}"; then
