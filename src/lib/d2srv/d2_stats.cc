@@ -17,14 +17,14 @@ using namespace isc::stats;
 namespace isc {
 namespace d2 {
 
-set<string>
+const list<string>
 D2Stats::ncr = {
     "ncr-received",
     "ncr-invalid",
     "ncr-error"
 };
 
-set<string>
+const list<string>
 D2Stats::update = {
     "update-sent",
     "update-signed",
@@ -34,7 +34,7 @@ D2Stats::update = {
     "update-error"
 };
 
-set<string>
+const list<string>
 D2Stats::key = {
     "update-sent",
     "update-success",

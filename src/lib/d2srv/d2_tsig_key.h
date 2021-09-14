@@ -62,6 +62,9 @@ public:
 private:
     /// @brief Initialize key statistics.
     void initStats();
+
+    /// @brief Remove key statistics.
+    void removeStats();
 };
 
 /// @brief Type of pointer to a D2 TSIG key.

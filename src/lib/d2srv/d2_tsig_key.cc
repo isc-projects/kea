@@ -29,6 +29,10 @@ D2TsigKey::D2TsigKey(const Name& key_name, const Name& algorithm_name,
     initStats();
 }
 
+D2TsigKey::~D2TsigKey() {
+    removeStats();
+}
+
 void
 D2TsigKey::initStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
@@ -39,7 +43,8 @@ D2TsigKey::initStats() {
     }
 }
 
-D2TsigKey::~D2TsigKey() {
+void
+D2TsigKey::removeStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
     for (const auto& name : D2Stats::key) {

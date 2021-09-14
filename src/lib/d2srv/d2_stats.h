@@ -7,7 +7,7 @@
 #ifndef D2_STATS_H
 #define D2_STATS_H
 
-#include <set>
+#include <list>
 #include <string>
 
 namespace isc {
@@ -21,7 +21,7 @@ public:
     /// - ncr-received
     /// - ncr-invalid
     /// - ncr-error
-    static std::set<std::string> ncr;
+    static const std::list<std::string> ncr;
 
     /// @brief Global DNS update statistics names.
     ///
@@ -31,7 +31,7 @@ public:
     /// - update-success
     /// - update-timeout
     /// - update-error
-    static std::set<std::string> update;
+    static const std::list<std::string> update;
 
     /// @brief Key DNS update statistics names.
     ///
@@ -39,7 +39,7 @@ public:
     /// - update-success
     /// - update-timeout
     /// - update-error
-    static std::set<std::string> key;
+    static const std::list<std::string> key;
 
     /// @brief Initialize D2 statistics.
     ///
