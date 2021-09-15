@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,9 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -26,6 +29,10 @@ public:
     /// the system.
     SharedNetwork4Parser(bool check_iface = true);
 
+    /// @brief Virtual destructor.
+    virtual ~SharedNetwork4Parser() {
+    }
+
     /// @brief Parses shared configuration information for IPv4 shared network.
     ///
     /// @param shared_network_data Data element holding shared network
@@ -37,6 +44,25 @@ public:
     parse(const data::ConstElementPtr& shared_network_data);
 
 protected:
+
+    /// @brief Returns an instance of the @c OptionDataListParser to
+    /// be used in parsing the option-data structure.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for option data.
+    ///
+    /// @return an instance of the @c OptionDataListParser(AF_INET).
+    virtual boost::shared_ptr<OptionDataListParser> createOptionDataListParser() const;
+
+    /// @brief Returns an instance of the @c Subnets4ListConfigParser
+    /// to be used for parsing the subnets within the shared network.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for the subnets.
+    ///
+    /// @return an instance of the @c Subnets4ListConfigParser.
+    virtual boost::shared_ptr<Subnets4ListConfigParser> createSubnetsListParser() const;
+
     /// Check if the specified interface exists in the system.
     bool check_iface_;
 };
@@ -50,6 +76,10 @@ public:
     /// the system.
     SharedNetwork6Parser(bool check_iface = true);
 
+    /// @brief Virtual destructor.
+    virtual ~SharedNetwork6Parser() {
+    }
+
     /// @brief Parses shared configuration information for IPv6 shared network.
     ///
     /// @param shared_network_data Data element holding shared network
@@ -61,6 +91,25 @@ public:
     parse(const data::ConstElementPtr& shared_network_data);
 
 protected:
+
+    /// @brief Returns an instance of the @c OptionDataListParser to
+    /// be used in parsing the option-data structure.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for option data.
+    ///
+    /// @return an instance of the @c OptionDataListParser(AF_INET6).
+    virtual boost::shared_ptr<OptionDataListParser> createOptionDataListParser() const;
+
+    /// @brief Returns an instance of the @c Subnets6ListConfigParser
+    /// to be used for parsing the subnets within the shared network.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for the subnets.
+    ///
+    /// @return an instance of the @c Subnets6ListConfigParser.
+    virtual boost::shared_ptr<Subnets6ListConfigParser> createSubnetsListParser() const;
+
     /// Check if the specified interface exists in the system.
     bool check_iface_;
 };

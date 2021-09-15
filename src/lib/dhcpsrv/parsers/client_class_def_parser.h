@@ -11,6 +11,7 @@
 #include <cc/simple_parser.h>
 #include <eval/eval_context.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <functional>
 #include <list>
 
@@ -83,6 +84,10 @@ public:
 class ClientClassDefParser : public isc::data::SimpleParser {
 public:
 
+    /// @brief Virtual destructor.
+    virtual ~ClientClassDefParser() {
+    }
+
     /// @brief Parses an entry that describes single client class definition.
     ///
     /// Attempts to add the new class directly into the given dictionary.
@@ -115,6 +120,22 @@ public:
     /// @throw DhcpConfigError if any of the parameters is not supported.
     void checkParametersSupported(const isc::data::ConstElementPtr& class_def_cfg,
                                   const uint16_t family);
+
+protected:
+
+    /// @brief Returns an instance of the @c OptionDataListParser to
+    /// be used in parsing the option-data structure.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for option data.
+    ///
+    /// @param address_family @c AF_INET (for DHCPv4) or @c AF_INET6 (for DHCPv6).
+    /// @param cfg_option_def structure holding option definitions.
+    ///
+    /// @return an instance of the @c OptionDataListParser.
+    virtual boost::shared_ptr<OptionDataListParser>
+    createOptionDataListParser(const uint16_t address_family,
+                               CfgOptionDefPtr cfg_option_def) const;
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser

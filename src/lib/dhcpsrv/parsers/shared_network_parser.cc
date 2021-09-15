@@ -10,12 +10,12 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/shared_network.h>
+#include <boost/make_shared.hpp>
 #include <boost/pointer_cast.hpp>
 #include <string>
 
@@ -74,17 +74,17 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             auto json = shared_network_data->get("option-data");
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
-            OptionDataListParser parser(AF_INET);
-            parser.parse(cfg_option, json);
+            auto parser = createOptionDataListParser();
+            parser->parse(cfg_option, json);
         }
 
         if (shared_network_data->contains("subnet4")) {
             auto json = shared_network_data->get("subnet4");
 
             // Create parser instance of subnet4.
-            Subnets4ListConfigParser parser(check_iface_);
+            auto parser = createSubnetsListParser();
             Subnet4Collection subnets;
-            parser.parse(subnets, json);
+            parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
@@ -215,6 +215,18 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     return (shared_network);
 }
 
+boost::shared_ptr<OptionDataListParser>
+SharedNetwork4Parser::createOptionDataListParser() const {
+    auto parser = boost::make_shared<OptionDataListParser>(AF_INET);
+    return (parser);
+}
+
+boost::shared_ptr<Subnets4ListConfigParser>
+SharedNetwork4Parser::createSubnetsListParser() const {
+    auto parser = boost::make_shared<Subnets4ListConfigParser>(check_iface_);
+    return (parser);
+}
+
 SharedNetwork6Parser::SharedNetwork6Parser(bool check_iface)
     : check_iface_(check_iface) {
 }
@@ -303,8 +315,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             auto json = shared_network_data->get("option-data");
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
-            OptionDataListParser parser(AF_INET6);
-            parser.parse(cfg_option, json);
+            auto parser = createOptionDataListParser();
+            parser->parse(cfg_option, json);
         }
 
         if (shared_network_data->contains("client-class")) {
@@ -337,9 +349,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             auto json = shared_network_data->get("subnet6");
 
             // Create parser instance of subnet6.
-            Subnets6ListConfigParser parser(check_iface_);
+            auto parser = createSubnetsListParser();
             Subnet6Collection subnets;
-            parser.parse(subnets, json);
+            parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
@@ -378,6 +390,18 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
     });
 
     return (shared_network);
+}
+
+boost::shared_ptr<OptionDataListParser>
+SharedNetwork6Parser::createOptionDataListParser() const {
+    auto parser = boost::make_shared<OptionDataListParser>(AF_INET6);
+    return (parser);
+}
+
+boost::shared_ptr<Subnets6ListConfigParser>
+SharedNetwork6Parser::createSubnetsListParser() const {
+    auto parser = boost::make_shared<Subnets6ListConfigParser>(check_iface_);
+    return (parser);
 }
 
 } // end of namespace isc::dhcp

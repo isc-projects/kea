@@ -12,6 +12,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <boost/shared_ptr.hpp>
 #include <util/optional.h>
 #include <cstdint>
 #include <string>
@@ -47,6 +48,10 @@ public:
     OptionDataParser(const uint16_t address_family,
                      CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
+    /// @brief Virtual destructor.
+    virtual ~OptionDataParser() {
+    }
+
     /// @brief Parses ElementPtr containing option definition
     ///
     /// This method parses ElementPtr containing the option definition,
@@ -65,7 +70,7 @@ public:
     std::pair<OptionDescriptor, std::string>
     parse(isc::data::ConstElementPtr single_option);
 
-private:
+protected:
 
     /// @brief Finds an option definition within an option space
     ///
@@ -73,18 +78,19 @@ private:
     /// option definition within the option definition storage.
     ///
     /// @param option_space name of the parameter option space
-    /// @param search_key an option code or name to be used to lookup the
-    /// option definition.
-    /// @tparam A numeric type for searching using an option code or the
-    /// string for searching using the option name.
+    /// @param option_code option code to be used to find the option
+    /// definition, if the option name is unspecified.
+    /// @param option_name option name to be used to lookup the option
+    /// definition.
     ///
     /// @return OptionDefinitionPtr of the option definition or an
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
-    template<typename SearchKey>
-    OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
-                                             const SearchKey& search_key) const;
+    virtual OptionDefinitionPtr
+    findOptionDefinition(const std::string& option_space,
+                         const util::Optional<uint32_t>& option_code,
+                         const util::Optional<std::string>& option_name) const;
 
     /// @brief Create option instance.
     ///
@@ -185,6 +191,10 @@ public:
     OptionDataListParser(const uint16_t address_family,
                          CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
+    /// @brief Virtual destructor.
+    virtual ~OptionDataListParser() {
+    }
+
     /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
     /// This method expects to get a list of options in option_data_list,
@@ -195,7 +205,17 @@ public:
     /// @param option_data_list configuration that describes the options
     void parse(const CfgOptionPtr& cfg,
                isc::data::ConstElementPtr option_data_list);
-private:
+protected:
+
+    /// @brief Returns an instance of the @c OptionDataListParser to
+    /// be used in parsing options.
+    ///
+    /// This function can be overridden in the child classes to supply
+    /// a custom parser for option data.
+    ///
+    /// @return an instance of the @c OptionDataListParser.
+    virtual boost::shared_ptr<OptionDataParser> createOptionDataParser() const;
+
     /// @brief Address family: @c AF_INET or @c AF_INET6
     uint16_t address_family_;
 

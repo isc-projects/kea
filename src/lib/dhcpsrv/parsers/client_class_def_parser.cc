@@ -10,7 +10,6 @@
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <eval/eval_context.h>
@@ -136,8 +135,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     CfgOptionPtr options(new CfgOption());
     ConstElementPtr option_data = class_def_cfg->get("option-data");
     if (option_data) {
-        OptionDataListParser opts_parser(family, defs);
-        opts_parser.parse(options, option_data);
+        auto opts_parser = createOptionDataListParser(family, defs);
+        opts_parser->parse(options, option_data);
     }
 
     // Parse user context
@@ -294,6 +293,12 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
     }
 }
 
+boost::shared_ptr<OptionDataListParser>
+ClientClassDefParser::createOptionDataListParser(const uint16_t address_family,
+                                                 CfgOptionDefPtr cfg_option_def) const {
+    auto parser = boost::make_shared<OptionDataListParser>(address_family, cfg_option_def);
+    return (parser);
+}
 
 // ****************** ClientClassDefListParser ************************
 

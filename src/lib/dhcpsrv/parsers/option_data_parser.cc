@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 #include <limits>
 #include <vector>
 
@@ -185,19 +186,27 @@ OptionDataParser::extractPersistent(ConstElementPtr parent) const {
     return (Optional<bool>(persist));
 }
 
-template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
-                                       const SearchKey& search_key) const {
+                                       const Optional<uint32_t>& option_code,
+                                       const Optional<std::string>& option_name) const {
     OptionDefinitionPtr def;
     if (cfg_option_def_) {
         // Check if the definition was given in the constructor
-        def = cfg_option_def_->get(option_space, search_key);
+        if (option_code.unspecified()) {
+            def = cfg_option_def_->get(option_space, option_name);
+        } else {
+            def = cfg_option_def_->get(option_space, option_code);
+        }
     }
 
     if (!def) {
         // Check if this is a standard option.
-        def = LibDHCP::getOptionDef(option_space, search_key);
+        if (option_code.unspecified()) {
+            def = LibDHCP::getOptionDef(option_space, option_name);
+        } else {
+            def = LibDHCP::getOptionDef(option_space, option_code);
+        }
     }
 
     if (!def) {
@@ -207,7 +216,11 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         if (vendor_id) {
             const Option::Universe u = address_family_ == AF_INET ?
                 Option::V4 : Option::V6;
-            def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
+            if (option_code.unspecified()) {
+                def = LibDHCP::getVendorOptionDef(u, vendor_id, option_name);
+            } else {
+                def = LibDHCP::getVendorOptionDef(u, vendor_id, option_code);
+            }
         }
     }
 
@@ -221,12 +234,20 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         // the definitions from the current configuration in case there is
         // no staging configuration (after configuration commit). In other
         // words, runtime options are always the ones that we need here.
-        def = LibDHCP::getRuntimeOptionDef(option_space, search_key);
+        if (option_code.unspecified()) {
+            def = LibDHCP::getRuntimeOptionDef(option_space, option_name);
+        } else {
+            def = LibDHCP::getRuntimeOptionDef(option_space, option_code);
+        }
     }
 
     if (!def) {
         // Finish by last resort definitions.
-        def = LibDHCP::getLastResortOptionDef(option_space, search_key);
+        if (option_code.unspecified()) {
+            def = LibDHCP::getLastResortOptionDef(option_space, option_name);
+        } else {
+            def = LibDHCP::getLastResortOptionDef(option_space, option_code);
+        }
     }
 
     return (def);
@@ -254,9 +275,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
     // Try to find a corresponding option definition using option code or
     // option name.
-    OptionDefinitionPtr def = code_param.unspecified() ?
-        findOptionDefinition(space_param, name_param) :
-        findOptionDefinition(space_param, code_param);
+    OptionDefinitionPtr def = findOptionDefinition(space_param, code_param, name_param);
 
     // If there is no definition, the user must not explicitly enable the
     // use of csv-format.
@@ -407,14 +426,20 @@ OptionDataListParser::OptionDataListParser(//const std::string&,
 
 void OptionDataListParser::parse(const CfgOptionPtr& cfg,
                                  isc::data::ConstElementPtr option_data_list) {
-    OptionDataParser option_parser(address_family_, cfg_option_def_);
+    auto option_parser = createOptionDataParser();
     BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
         std::pair<OptionDescriptor, std::string> option =
-            option_parser.parse(data);
+            option_parser->parse(data);
         // Use the option description to keep the formatted value
         cfg->add(option.first, option.second);
         cfg->encapsulate();
     }
+}
+
+boost::shared_ptr<OptionDataParser>
+OptionDataListParser::createOptionDataParser() const {
+    auto parser = boost::make_shared<OptionDataParser>(address_family_, cfg_option_def_);
+    return (parser);
 }
 
 } // end of namespace isc::dhcp
