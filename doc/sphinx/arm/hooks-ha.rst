@@ -1602,10 +1602,10 @@ Parked Packet Limit
 ~~~~~~~~~~~~~~~~~~~
 
 Kea servers contain a mechanism by which the response to a client packet may
-be held, pending completion of Hook library work.  We refer to this as "parking"
+be held, pending completion of hook library work.  We refer to this as "parking"
 the packet.  The HA hook library makes use of this mechanism. When an HA server
 needs to send a lease update to its peer(s) to notify it of the change to the
-lease, it will "park" the client response until the peer acknowleges the lease
+lease, it will "park" the client response until the peer acknowledges the lease
 update.  At that point, the server will "unpark" the response and send it to the
 client.  This applies to client queries which cause lease changes such as
 DHCPREQUEST for DHCPv4 and REQUEST, RENEW, REBIND for DHCPv6. It does not apply
@@ -1619,8 +1619,8 @@ the limit is reached, the server will emit a log and drop any further responses
 until the parking spaces are available.
 
 In general, smaller values for the parking lot limit are likely to cause more
-drops but with response times. Larger values are likely to result in fewer drops
-but with longer response times.  Currently, the default value for
+drops but with shorter response times. Larger values are likely to result in
+fewer drops but with longer response times.  Currently, the default value for
 parked-packet-limit is 256.
 
 ::

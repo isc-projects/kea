@@ -7528,7 +7528,8 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
                 << "  actual: " << *(cfg) << std::endl;
 }
 
-// Check whether it is possible to parked-packet-limit
+// Verify that parsing for the global parameter, parked-packet-limit,
+// is correct.
 TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
     // Config without parked-packet-limit
     string config_no_limit = "{ " + genIfaceConfig() + "," +
