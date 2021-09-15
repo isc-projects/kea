@@ -87,6 +87,13 @@ to create and initialize its application instance.
 This error message is issued if the controller could not initialize the
 application and will exit.
 
+% DCTL_UNLOAD_LIBRARIES_ERROR error unloading hooks libraries during shutdown: %1
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
+
 % DCTL_NOT_RUNNING %1 application instance is not running
 A warning message is issued when an attempt is made to shut down the
 application when it is not running.

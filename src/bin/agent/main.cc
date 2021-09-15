@@ -43,5 +43,7 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     }
 
+    CtrlAgentController::instance().reset();
+
     return (ret);
 }

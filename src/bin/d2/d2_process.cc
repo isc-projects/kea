@@ -436,7 +436,7 @@ D2Process::reconfigureQueueMgr() {
 }
 
 D2Process::~D2Process() {
-};
+}
 
 D2CfgMgrPtr
 D2Process::getD2CfgMgr() {

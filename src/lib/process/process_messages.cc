@@ -35,6 +35,7 @@ extern const isc::log::MessageID DCTL_SHUTDOWN = "DCTL_SHUTDOWN";
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD = "DCTL_SHUTDOWN_SIGNAL_RECVD";
 extern const isc::log::MessageID DCTL_STANDALONE = "DCTL_STANDALONE";
 extern const isc::log::MessageID DCTL_STARTING = "DCTL_STARTING";
+extern const isc::log::MessageID DCTL_UNLOAD_LIBRARIES_ERROR = "DCTL_UNLOAD_LIBRARIES_ERROR";
 extern const isc::log::MessageID DCTL_UNSUPPORTED_SIGNAL = "DCTL_UNSUPPORTED_SIGNAL";
 
 } // namespace process
@@ -71,6 +72,7 @@ const char* values[] = {
     "DCTL_SHUTDOWN_SIGNAL_RECVD", "OS signal %1 received, starting shutdown",
     "DCTL_STANDALONE", "%1 skipping message queue, running standalone",
     "DCTL_STARTING", "%1 starting, pid: %2, version: %3 (%4)",
+    "DCTL_UNLOAD_LIBRARIES_ERROR", "error unloading hooks libraries during shutdown: %1",
     "DCTL_UNSUPPORTED_SIGNAL", "ignoring reception of unsupported signal: %1",
     NULL
 };

@@ -8,6 +8,7 @@
 #include <cc/command_interpreter.h>
 #include <cfgrpt/config_report.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
 #include <process/daemon.h>
@@ -23,6 +24,7 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::config;
+using namespace isc::hooks;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -805,6 +807,19 @@ DControllerBase::usage(const std::string & text) {
 }
 
 DControllerBase::~DControllerBase() {
+    // Explicitly unload hooks
+    HooksManager::prepareUnloadLibraries();
+    if (!HooksManager::unloadLibraries()) {
+        auto names = HooksManager::getLibraryNames();
+        std::string msg;
+        if (!names.empty()) {
+            msg = names[0];
+            for (size_t i = 1; i < names.size(); ++i) {
+                msg += std::string(", ") + names[i];
+            }
+        }
+        LOG_ERROR(dctl_logger, DCTL_UNLOAD_LIBRARIES_ERROR).arg(msg);
+    }
 }
 
 // Refer to config_report so it will be embedded in the binary

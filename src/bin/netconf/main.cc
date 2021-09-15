@@ -43,5 +43,7 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     }
 
+    NetconfController::instance().reset();
+
     return (ret);
 }

@@ -5,19 +5,22 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <d2/dns_client.h>
 #include <dns/opcode.h>
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
 #include <dns/messagerenderer.h>
+#include <nc_test_utils.h>
+#include <stats_test_utils.h>
+
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-#include <nc_test_utils.h>
-#include <stats_test_utils.h>
 #include <functional>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -178,7 +181,7 @@ public:
         }
         // A response message is now ready to send. Send it!
         socket->send_to(boost::asio::buffer(response_buf.getData(),
-                                     response_buf.getLength()),
+                                            response_buf.getLength()),
                         *remote);
     }
 
@@ -212,7 +215,7 @@ public:
 
         TSIGContextPtr context;
         if (client_key) {
-            context.reset(new TSIGContext(*client_key));
+            context = client_key->createContext();
         }
 
         isc::util::InputBuffer received_data_buffer(receive_buffer_,
@@ -287,7 +290,7 @@ public:
         // ensure that doUpdate doesn't throw an exception for valid timeouts.
         unsigned int timeout = DNSClient::getMaxTimeout();
         EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
-                                           TEST_PORT, message, timeout));
+                                              TEST_PORT, message, timeout));
 
         // Cross the limit and expect that exception is thrown this time.
         timeout = DNSClient::getMaxTimeout() + 1;
@@ -385,7 +388,7 @@ public:
         const int timeout = 500;
         expected_++;
         dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
-                             message, timeout);
+                              message, timeout);
 
         // It is possible to request that two packets are sent concurrently.
         if (two_sends) {
@@ -410,7 +413,7 @@ public:
     // Performs a single request-response exchange with or without TSIG
     //
     // @param client_key TSIG passed to dns_client and also used by the
-    // ""server" to verify the request.
+    // "server" to verify the request.
     // request.
     // @param server_key TSIG key the "server" should use to sign the response.
     // If this is NULL, then client_key is used.

@@ -52,5 +52,7 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     }
 
+    D2Controller::instance().reset();
+
     return (ret);
 }

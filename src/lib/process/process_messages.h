@@ -36,6 +36,7 @@ extern const isc::log::MessageID DCTL_SHUTDOWN;
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD;
 extern const isc::log::MessageID DCTL_STANDALONE;
 extern const isc::log::MessageID DCTL_STARTING;
+extern const isc::log::MessageID DCTL_UNLOAD_LIBRARIES_ERROR;
 extern const isc::log::MessageID DCTL_UNSUPPORTED_SIGNAL;
 
 } // namespace process
