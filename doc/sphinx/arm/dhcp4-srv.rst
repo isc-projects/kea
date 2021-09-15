@@ -656,13 +656,13 @@ Hosts Storage
 
 Kea is also able to store information about host reservations in the
 database. The hosts database configuration uses the same syntax as the
-lease database. In fact, a Kea server opens independent connections for
-each purpose, be it lease or hosts information. This arrangement gives
+lease database. In fact, the Kea server opens independent connections for
+each purpose, be it lease or hosts information, which gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
 supported hosts database types are MySQL, PostgreSQL, and Cassandra.
 
-For example, the following configuration can be used to configure a
+The following configuration can be used to configure a
 connection to MySQL:
 
 ::
@@ -682,12 +682,12 @@ Please note that usage of hosts storage is optional. A user can define
 all host reservations in the configuration file, and that is the
 recommended way if the number of reservations is small. However, when
 the number of reservations grows, it is more convenient to use host
-storage. Please note that both storage methods (configuration file and
+storage. Please note that both storage methods (the configuration file and
 one of the supported databases) can be used together. If hosts are
 defined in both places, the definitions from the configuration file are
 checked first and external storage is checked later, if necessary.
 
-In fact, host information can be placed in multiple stores. Operations
+Host information can be placed in multiple stores. Operations
 are performed on the stores in the order they are defined in the
 configuration file, although this leads to a restriction in ordering
 in the case of a host reservation addition; read-only stores must be
@@ -706,8 +706,8 @@ DHCPv4 Hosts Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hosts database configuration is controlled through the
-Dhcp4/hosts-database parameters. If enabled, the type of database must
-be set to "mysql" or "postgresql".
+Dhcp4/``hosts-database`` parameters. If enabled, the type of database must
+be set to ``mysql`` or ``postgresql``.
 
 ::
 
@@ -731,7 +731,7 @@ the database host name must also be specified:
 
 (Again, it should be noted that this configuration may have a severe impact on server performance.)
 
-Normally, the database will be on the same machine as the DHCPv4 server.
+Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
 
 ::
@@ -745,7 +745,7 @@ specified as well:
 
    "Dhcp4": { "hosts-database": { "port" : 12345, ... }, ... }
 
-The maximum number of times the server will automatically attempt to
+The maximum number of times the server automatically attempts to
 reconnect to the host database after connectivity has been lost may be
 specified:
 
@@ -759,7 +759,7 @@ default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
 only).
 
-The number of milliseconds the server will wait between attempts to
+The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
 be specified:
 
@@ -777,15 +777,15 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 The possible values are:
 
--  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+-  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
 
--  ``serve-retry-exit`` DHCP service continues while trying to automatically
+-  ``serve-retry-exit`` - continues the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``.
 
--  ``serve-retry-continue`` DHCP service continues and does not shut down the
+-  ``serve-retry-continue`` - continues the DHCP service and does not shut down the
    server even if the recovery fails.
 
 .. note::
@@ -794,7 +794,8 @@ The possible values are:
    backend. This allows users to tailor the recovery parameters to each backend
    they use. We do suggest that users enable it either for all backends or none,
    so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is disabled will result
+
+   Losing connectivity to a backend for which reconnect is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
@@ -810,18 +811,17 @@ access the database should be set:
               ... }
 
 If there is no password to the account, set the password to the empty
-string "". (This is also the default.)
+string ``""``. (This is the default.)
 
 The multiple storage extension uses a similar syntax; a configuration is
-placed into a "hosts-databases" list instead of into a "hosts-database"
+placed into a ``hosts-databases`` list instead of into a ``hosts-database``
 entry, as in:
 
 ::
 
    "Dhcp4": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
-For additional Cassandra-specific parameters, see
-:ref:`cassandra-database-configuration4`.
+For Cassandra-specific parameters, see :ref:`cassandra-database-configuration4`.
 
 If the same host is configured both in-file and in-database, Kea does not issue a warning,
 as it would if both were specified in the same data source.
@@ -830,10 +830,10 @@ in-database.
 
 .. _read-only-database-configuration4:
 
-Using Read-Only Databases for Host Reservations with DHCPv4
+Using Read-Only Databases for Host Reservations With DHCPv4
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In some deployments the database user whose name is specified in the
+In some deployments, the user whose name is specified in the
 database backend configuration may not have write privileges to the
 database. This is often required by the policy within a given network to
 secure the data from being unintentionally modified. In many cases
@@ -843,7 +843,7 @@ reservations assigned to them. The inventory database can be used to
 create a view of a Kea hosts database and such a view is often
 read-only.
 
-Kea host database backends operate with an implicit configuration to
+Kea host-database backends operate with an implicit configuration to
 both read from and write to the database. If the database user does not
 have write access to the host database, the backend will fail to start
 and the server will refuse to start (or reconfigure). However, if access
@@ -862,7 +862,7 @@ the parameter is not specified.
 
 .. note::
 
-   The ``readonly`` parameter is currently only supported for MySQL and
+   The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
 
 .. _dhcp4-interface-configuration:
@@ -898,7 +898,7 @@ interface names:
    }
 
 
-It is possible to use a wildcard interface name (asterisk) concurrently
+It is possible to use an interface wildcard (*) concurrently
 with explicit interface names:
 
 ::
@@ -911,7 +911,7 @@ with explicit interface names:
    }
 
 
-It is anticipated that this form of usage will only be used when it is
+This form of usage should only be used when it is
 desired to temporarily override a list of interface names and listen on
 all interfaces.
 
@@ -948,9 +948,9 @@ Alternatively, if the server should listen on all addresses for the
 particular interface, an interface name without any address should be
 specified.
 
-Kea supports responding to directly connected clients which don't have
+Kea supports responding to directly connected clients which do not have
 an address configured. This requires the server to inject the hardware
-address of the destination into the data link layer of the packet
+address of the destination into the data-link layer of the packet
 being sent to the client. The DHCPv4 server uses raw sockets to
 achieve this, and builds the entire IP/UDP stack for the outgoing
 packets. The downside of raw socket use, however, is that incoming and
@@ -967,7 +967,7 @@ connected (raw socket) or relayed (either raw or UDP socket).
 
 Therefore, in deployments where the server does not need to provision
 the directly connected clients and only receives the unicast packets
-from the relay agents, the DHCP server should be configured to use UDP
+from the relay agents, the Kea server should be configured to use UDP
 sockets instead of raw sockets. The following configuration
 demonstrates how this can be achieved:
 
@@ -982,9 +982,9 @@ demonstrates how this can be achieved:
    }
 
 
-The ``dhcp-socket-type`` specifies that the IP/UDP sockets will be
+The ``dhcp-socket-type`` parameter specifies that the IP/UDP sockets will be
 opened on all interfaces on which the server listens, i.e. "eth1" and
-"eth3" in our case. If ``dhcp-socket-type`` is set to ``raw``, it
+"eth3" in this example. If ``dhcp-socket-type`` is set to ``raw``, it
 configures the server to use raw sockets instead. If the
 ``dhcp-socket-type`` value is not specified, the default value ``raw``
 is used.
@@ -993,7 +993,9 @@ Using UDP sockets automatically disables the reception of broadcast
 packets from directly connected clients. This effectively means that UDP
 sockets can be used for relayed traffic only. When using raw sockets,
 both the traffic from the directly connected clients and the relayed
-traffic are handled. Caution should be taken when configuring the server
+traffic are handled.
+
+Caution should be taken when configuring the server
 to open multiple raw sockets on the interface with several IPv4
 addresses assigned. If the directly connected client sends the message
 to the broadcast address, all sockets on this link will receive this
@@ -1005,23 +1007,23 @@ that link. To use a single address on such an interface, the
 
 .. note::
 
-   Specifying the value ``raw`` as the socket type doesn't guarantee
-   that the raw sockets will be used! The use of raw sockets to handle
-   the traffic from the directly connected clients is currently
-   supported on Linux and BSD systems only. If the raw sockets are not
+   Specifying the value ``raw`` as the socket type does not guarantee
+   that raw sockets will be used! The use of raw sockets to handle
+   traffic from the directly connected clients is currently
+   supported on Linux and BSD systems only. If raw sockets are not
    supported on the particular OS in use, the server will issue a warning and
    fall back to using IP/UDP sockets.
 
 In a typical environment, the DHCP server is expected to send back a
 response on the same network interface on which the query was received.
 This is the default behavior. However, in some deployments it is desired
-that the outbound (response) packets will be sent as regular traffic and
-the outbound interface will be determined by the routing tables. This
+that the outbound (response) packets be sent as regular traffic and
+the outbound interface be determined by the routing tables. This
 kind of asymmetric traffic is uncommon, but valid. Kea supports a
 parameter called ``outbound-interface`` that controls this behavior. It
-supports two values; the first one, ``same-as-inbound``, tells Kea to
+supports two values: the first one, ``same-as-inbound``, tells Kea to
 send back the response on the same interface where the query packet was
-received. This is the default behavior. The second one, ``use-routing``,
+received. This is the default behavior. The second parameter, ``use-routing``,
 tells Kea to send regular UDP packets and let the kernel's routing table
 determine the most appropriate interface. This only works when
 ``dhcp-socket-type`` is set to ``udp``. An example configuration looks
@@ -1054,11 +1056,11 @@ disabled by setting the ``re-detect`` value to ``false``, for instance:
 
 Note that interfaces are not re-detected during ``config-test``.
 
-Usually loopback interfaces (e.g. the "lo" or "lo0" interface) may not
-be configured, but if a loopback interface is explicitly configured and
+Usually loopback interfaces (e.g. the `lo` or `lo0` interface) are not
+configured, but if a loopback interface is explicitly configured and
 IP/UDP sockets are specified, the loopback interface is accepted.
 
-For example, it can be used to run Kea in a FreeBSD jail having only a
+For example, this setup can be used to run Kea in a FreeBSD jail having only a
 loopback interface, to service a relayed DHCP request:
 
 ::
@@ -1073,7 +1075,7 @@ loopback interface, to service a relayed DHCP request:
 
 .. _dhcpinform-unicast-issues:
 
-Issues with Unicast Responses to DHCPINFORM
+Issues With Unicast Responses to DHCPINFORM
 -------------------------------------------
 
 The use of UDP sockets has certain benefits in deployments where the
@@ -1085,13 +1087,13 @@ sockets facilitates this. However, the administrator must also be aware
 of the implications related to filtering certain types of traffic, as it
 may impair the DHCP server's operation.
 
-In this section we are focusing on the case when the server receives the
+In this section we focus on the case when the server receives the
 DHCPINFORM message from the client via a relay. According to `RFC
 2131 <https://tools.ietf.org/html/rfc2131>`__, the server should unicast
-the DHCPACK response to the address carried in the "ciaddr" field. When
+the DHCPACK response to the address carried in the ``ciaddr`` field. When
 the UDP socket is in use, the DHCP server relies on the low-level
 functions of an operating system to build the data link, IP, and UDP
-layers of the outgoing message. Typically, the OS will first use ARP to
+layers of the outgoing message. Typically, the OS first uses ARP to
 obtain the client's link-layer address to be inserted into the frame's
 header, if the address is not cached from a previous transaction that
 the client had with the server. When the ARP exchange is successful, the
@@ -1108,14 +1110,14 @@ not log any error messages when the outgoing DHCP response is dropped.
 At the same time, all hooks pertaining to the packet-sending operation
 will be called, even though the message never reaches its destination.
 
-Note that the issue described in this section is not observed when the
+Note that the issue described in this section is not observed when
 raw sockets are in use, because, in this case, the DHCP server builds
 all the layers of the outgoing message on its own and does not use ARP.
-Instead, it inserts the value carried in the "chaddr" field of the
+Instead, it inserts the value carried in the ``chaddr`` field of the
 DHCPINFORM message into the link layer.
 
 Server administrators willing to support DHCPINFORM messages via relays
-should not block ARP traffic in their networks or should use raw sockets
+should not block ARP traffic in their networks, or should use raw sockets
 instead of UDP sockets.
 
 .. _ipv4-subnet-id:
@@ -1126,8 +1128,8 @@ IPv4 Subnet Identifier
 The subnet identifier is a unique number associated with a particular
 subnet. In principle, it is used to associate clients' leases with their
 respective subnets. When a subnet identifier is not specified for a
-subnet being configured, it will be automatically assigned by the
-configuration mechanism. The identifiers are assigned from 1 and are
+subnet being configured, it is automatically assigned by the
+configuration mechanism. The identifiers are assigned starting at 1 and are
 monotonically increased for each subsequent subnet: 1, 2, 3 ....
 
 If there are multiple subnets configured with auto-generated identifiers
@@ -1143,7 +1145,7 @@ manually specify a unique identifier for each subnet.
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
-The following configuration will assign the specified subnet identifier
+The following configuration assigns the specified subnet identifier
 to a newly configured subnet:
 
 ::
@@ -1158,7 +1160,7 @@ to a newly configured subnet:
        ]
    }
 
-This identifier will not change for this subnet unless the "id"
+This identifier will not change for this subnet unless the ``id``
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
 
@@ -1168,7 +1170,7 @@ IPv4 Subnet Prefix
 ------------------
 
 The subnet prefix is the second way to identify a subnet. It does not
-need to have the address part to match the prefix length, for instance
+need to have the address part to match the prefix length; for instance,
 this configuration is accepted:
 
 ::
@@ -1182,7 +1184,7 @@ this configuration is accepted:
        ]
    }
 
-Even there is another subnet with the "192.0.2.0/24" prefix: only the
+This works even if there is another subnet with the "192.0.2.0/24" prefix; only the
 textual form of subnets are compared to avoid duplicates.
 
 .. note::
@@ -1228,8 +1230,8 @@ gives the range of addresses in the pool.
 
 It is possible to define more than one pool in a subnet; continuing the
 previous example, further assume that 192.0.2.64/26 should also be
-managed by the server. It could be written as 192.0.2.64 to 192.0.2.127.
-Alternatively, it can be expressed more simply as 192.0.2.64/26. Both
+managed by the server. It could be written as 192.0.2.64 to 192.0.2.127,
+or it can be expressed more simply as 192.0.2.64/26. Both
 formats are supported by Dhcp4 and can be mixed in the pool list. For
 example, one could define the following pools:
 
@@ -1281,7 +1283,7 @@ The server may be configured to serve more than one subnet:
 
 When configuring a DHCPv4 server using prefix/length notation, please
 pay attention to the boundary values. When specifying that the server
-can use a given pool, it will also be able to allocate the first
+can use a given pool, it is also able to allocate the first
 (typically a network address) and the last (typically a broadcast
 address) address from that pool. In the aforementioned example of pool
 192.0.3.0/24, both the 192.0.3.0 and 192.0.3.255 addresses may be
@@ -1295,8 +1297,8 @@ Sending T1 (Option 58) and T2 (Option 59)
 
 According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__,
 servers should send values for T1 and T2 that are 50% and 87.5% of the
-lease lifetime, respectively. By default, kea-dhcp4 does not send
-either value. It can be configured to send values that are specified
+lease lifetime, respectively. By default, ``kea-dhcp4`` does not send
+either value; it can be configured to send values that are either specified
 explicitly or that are calculated as percentages of the lease time. The
 server's behavior is governed by a combination of configuration
 parameters, two of which have already been mentioned.
@@ -1306,34 +1308,34 @@ To send specific, fixed values use the following two parameters:
 
 -  ``rebind-timer`` - specifies the value of T2 in seconds.
 
-The server will only send T2 if it is less than the valid lease time. T1
-will only be sent if: T2 is being sent and T1 is less than T2; or T2
+The server only sends T2 if it is less than the valid lease time. T1
+is only sent if T2 is being sent and T1 is less than T2; or T2
 is not being sent and T1 is less than the valid lease time.
 
 Calculating the values is controlled by the following three parameters.
 
--  ``calculate-tee-times`` - when true, T1 and T2 will be calculated as
+-  ``calculate-tee-times`` - when true, T1 and T2 are calculated as
    percentages of the valid lease time. It defaults to false.
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be
-   less than t2-percent. The default value is 0.50 per RFC 2131.
+   less than ``t2-percent``. The default value is 0.50, per RFC 2131.
 
 -  ``t2-percent`` - the percentage of the valid lease time to use for
    T2. It is expressed as a real number between 0.0 and 1.0 and must be
-   greater than t1-percent. The default value is .875 per RFC 2131.
+   greater than ``t1-percent``. The default value is .875, per RFC 2131.
 
 ..
 
 .. note::
 
    In the event that both explicit values are specified and
-   calculate-tee-times is true, the server will use the explicit values.
-   Administrators with a setup where some subnets or share-networks
-   will use explicit values and some will use calculated values must
+   ``calculate-tee-times`` is true, the server will use the explicit values.
+   Administrators with a setup where some subnets or shared-networks
+   use explicit values and some use calculated values must
    not define the explicit values at any level higher than where they
    will be used. Inheriting them from too high a scope, such as
-   global, will cause them to have values at every level underneath
+   global, will cause them to have explicit values at every level underneath
    (shared-networks and subnets), effectively disabling calculated
    values.
 
@@ -1381,10 +1383,10 @@ subnets.
    }
 
 
-Note that either name or code is required; there is no need to
-specify both. Space has a default value of "dhcp4", so this can be skipped
+Note that either ``name`` or ``code`` is required; there is no need to
+specify both. ``space`` has a default value of "dhcp4", so this can be skipped
 as well if a regular (not encapsulated) DHCPv4 option is defined.
-Finally, csv-format defaults to true, so it too can be skipped, unless
+Finally, ``csv-format`` defaults to "true", so it too can be skipped, unless
 the option value is specified as a hexadecimal string. Therefore,
 the above example can be simplified to:
 
@@ -1401,9 +1403,9 @@ the above example can be simplified to:
    }
 
 
-Defined options are added to the response when the client requests them
-with a few exceptions, which are always added. To enforce the addition of
-a particular option, set the always-send flag to true as in:
+Defined options are added to the response when the client requests them,
+with a few exceptions which are always added. To enforce the addition of
+a particular option, set the ``always-send`` flag to "true" as in:
 
 ::
 
@@ -1451,7 +1453,7 @@ Parameter Request List option (or its equivalent for vendor options):
    }
 
 
-The Domain Name Servers option is always added to responses (the
+The ``domain-name-servers`` option is always added to responses (the
 always-send is "sticky"), but the value is the subnet one when the client
 is localized in the subnet.
 
@@ -1468,10 +1470,10 @@ clients. The data parameter is specified as normal text, with values separated b
 commas if more than one value is allowed.
 
 Options can also be configured as hexadecimal values. If ``csv-format``
-is set to false, option data must be specified as a hexadecimal string.
-The following commands configure the domain-name-servers option for all
+is set to "false", option data must be specified as a hexadecimal string.
+The following commands configure the ``domain-name-servers`` option for all
 subnets with the following addresses: 192.0.3.1 and 192.0.3.2. Note that
-``csv-format`` is set to false.
+``csv-format`` is set to "false".
 
 ::
 
@@ -1494,15 +1496,14 @@ Kea supports the following formats when specifying hexadecimal data:
 -  ``Delimited octets`` - one or more octets separated by either colons or
    spaces (':' or ' '). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
-   "ab:cd:ef" and "ab cd ef".
+   `ab:cd:ef` and `ab cd ef`.
 
 -  ``String of digits`` - a continuous string of hexadecimal digits with
-   or without a "0x" prefix. Valid examples are "0xabcdef" and "abcdef".
+   or without a `0x` prefix. Valid examples are `0xabcdef` and `abcdef`.
 
 Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
-
 
 As of Kea 1.6.0, it is also possible to specify data for binary options as
 a single-quoted text string within double quotes as shown (note that
@@ -1524,7 +1525,7 @@ a single-quoted text string within double quotes as shown (note that
        ...
    }
 
-Most of the parameters in the "option-data" structure are optional and
+Most of the parameters in the ``option-data`` structure are optional and
 can be omitted in some circumstances, as discussed in :ref:`dhcp4-option-data-defaults`.
 
 It is possible to specify or override options on a per-subnet basis. If
