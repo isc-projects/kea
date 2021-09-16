@@ -352,7 +352,7 @@ public:
         // and receives a response from the server, we have to emulate the
         // server's response in the test. A request will be sent via loopback
         // interface to 127.0.0.1 and known test port. Response must be sent
-        // to 127.0.0.1 and a source port which has been used to send the
+        // to 127.0.0.1 and the source port which has been used to send the
         // request. A new socket is created, specifically to handle sending
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address

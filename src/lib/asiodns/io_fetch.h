@@ -133,11 +133,11 @@ public:
     /// \param edns true if the request should be EDNS. The default value is
     ///        true.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
-        const isc::dns::Question& question,
-        const isc::asiolink::IOAddress& address,
-        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
-        int wait = -1,
-        bool edns = true);
+            const isc::dns::Question& question,
+            const isc::asiolink::IOAddress& address,
+            uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
+            int wait = -1,
+            bool edns = true);
 
     /// \brief Constructor
     ///  This constructor has one parameter "query_message", which
@@ -160,10 +160,10 @@ public:
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///        -1 indicates no timeout.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
-        isc::dns::ConstMessagePtr query_message,
-        const isc::asiolink::IOAddress& address,
-        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
-        int wait = -1);
+            isc::dns::ConstMessagePtr query_message,
+            const isc::asiolink::IOAddress& address,
+            uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
+            int wait = -1);
 
     /// \brief Constructor.
     ///
@@ -185,10 +185,10 @@ public:
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
-        isc::util::OutputBufferPtr& outpkt,
-        const isc::asiolink::IOAddress& address,
-        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
-        int wait = -1);
+            isc::util::OutputBufferPtr& outpkt,
+            const isc::asiolink::IOAddress& address,
+            uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
+            int wait = -1);
 
     /// \brief Return Current Protocol
     ///
@@ -218,10 +218,11 @@ private:
     /// parameter "query_message"
     /// \param query_message the message to be sent out.
     void initIOFetch(isc::dns::MessagePtr& query_message, Protocol protocol,
-            isc::asiolink::IOService& service, const isc::dns::Question& question,
-            const isc::asiolink::IOAddress& address, uint16_t port,
-            isc::util::OutputBufferPtr& buff, Callback* cb, int wait,
-            bool edns = true);
+                     isc::asiolink::IOService& service,
+                     const isc::dns::Question& question,
+                     const isc::asiolink::IOAddress& address, uint16_t port,
+                     isc::util::OutputBufferPtr& buff, Callback* cb, int wait,
+                     bool edns = true);
 
     /// \brief Log I/O Failure
     ///
@@ -233,9 +234,11 @@ private:
     // Member variables.  All data is in a structure pointed to by a shared
     // pointer.  The IOFetch object is copied a number of times during its
     // life, and only requiring a pointer to be copied reduces overhead.
-    boost::shared_ptr<IOFetchData>  data_;   ///< Private data
-
+    boost::shared_ptr<IOFetchData> data_;   ///< Private data
 };
+
+/// \brief Defines a pointer to an IOFetch.
+typedef boost::shared_ptr<IOFetch> IOFetchPtr;
 
 } // namespace asiodns
 } // namespace isc

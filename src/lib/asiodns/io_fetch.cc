@@ -105,8 +105,7 @@ struct IOFetchData {
     /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
     IOFetchData(IOFetch::Protocol proto, IOService& service,
         const IOAddress& address, uint16_t port, OutputBufferPtr& buff,
-        IOFetch::Callback* cb, int wait)
-        :
+        IOFetch::Callback* cb, int wait) :
         socket((proto == IOFetch::UDP) ?
             static_cast<IOAsioSocket<IOFetch>*>(
                 new UDPSocket<IOFetch>(service)) :
@@ -154,8 +153,7 @@ struct IOFetchData {
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
     const isc::dns::Question& question, const IOAddress& address,
-    uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
-{
+    uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
     MessagePtr query_msg(new Message(Message::RENDER));
     initIOFetch(query_msg, protocol, service, question, address, port, buff,
                 cb, wait, edns);
@@ -163,19 +161,16 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
     OutputBufferPtr& outpkt, const IOAddress& address, uint16_t port,
-    OutputBufferPtr& buff, Callback* cb, int wait)
-    :
+    OutputBufferPtr& buff, Callback* cb, int wait) :
     data_(new IOFetchData(protocol, service,
-          address, port, buff, cb, wait))
-{
+          address, port, buff, cb, wait)) {
     data_->msgbuf = outpkt;
     data_->packet = true;
 }
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
     ConstMessagePtr query_message, const IOAddress& address, uint16_t port,
-    OutputBufferPtr& buff, Callback* cb, int wait)
-{
+    OutputBufferPtr& buff, Callback* cb, int wait) {
     MessagePtr msg(new Message(Message::RENDER));
 
     msg->setHeaderFlag(Message::HEADERFLAG_RD,
@@ -193,8 +188,7 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
                      IOService& service,
                      const isc::dns::Question& question,
                      const IOAddress& address, uint16_t port,
-                     OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
-{
+                     OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
     data_ = boost::shared_ptr<IOFetchData>(new IOFetchData(
         protocol, service, address, port, buff, cb, wait));
 
@@ -228,7 +222,6 @@ IOFetch::getProtocol() const {
 
 void
 IOFetch::operator()(boost::system::error_code ec, size_t length) {
-
     if (data_->stopped) {
         return;
 
@@ -331,7 +324,6 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
 
 void
 IOFetch::stop(Result result) {
-
     if (!data_->stopped) {
 
         // Mark the fetch as stopped to prevent other completion callbacks
@@ -391,7 +383,6 @@ IOFetch::stop(Result result) {
 // Log an error - called on I/O failure
 
 void IOFetch::logIOFailure(boost::system::error_code ec) {
-
     // Should only get here with a known error code.
     if ((data_->origin != ASIODNS_OPEN_SOCKET) &&
         (data_->origin != ASIODNS_SEND_DATA) &&
