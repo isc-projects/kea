@@ -398,7 +398,7 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
         }
         expressions.push(match_expr);
     }
-    // All expressions successfully initialied. Let's set them for the
+    // All expressions successfully initialized. Let's set them for the
     // client classes in the dictionary.
     for (auto c : *list_) {
         c->setMatchExpr(expressions.front());
