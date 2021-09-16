@@ -4169,6 +4169,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, setAndGetAllClientClasses4) {
     }
     // Create first class.
     auto class1 = test_client_classes_[0];
+    class1->setTest("pkt4.msgtype == 1");
     ASSERT_NO_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, ""));
     {
         SCOPED_TRACE("client class foo is created");

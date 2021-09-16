@@ -3047,7 +3047,7 @@ public:
             // KNOWN/UNKNOWN built-ins. The callback always returns true to avoid
             // reporting the parsing error. The dependency check is performed later
             // at the database level.
-            parser.parse(expression, Element::create(client_class->getTest()), AF_INET,
+            parser.parse(expression, Element::create(client_class->getTest()), AF_INET6,
                          [&dependencies, &depend_on_known](const ClientClass& client_class) -> bool {
                 if (isClientClassBuiltIn(client_class)) {
                     if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
