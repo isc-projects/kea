@@ -88,10 +88,12 @@ API Reference
         rst += '.\n\n'
 
     for func in sorted(apis.values(), key=lambda f: f['name']):
-        # The dot is added to overcome an overlap of ordinal numbers and text
-        # in the table of contents.
-        name = '. ' + func['name']
+        # "name" is visible in the ARM. "real_name" is used to provide links
+        # to commands. Keep both even if they're the same for when you want to
+        # make changes to "name" to change the way it's seen in the ARM.
+        name = func['name']
         real_name = func['name']
+
         rst += '.. _ref-%s:\n\n' % real_name
         rst += name + '\n'
         rst += '-' * len(name) + '\n\n'
