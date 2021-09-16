@@ -574,7 +574,7 @@ TEST(ClientClassDictionary, initMatchExpr) {
 
 // Tests that an error is returned when any of the test expressions is
 // invalid, and that no expressions are initialized if there is an error
-// for a single expresion.
+// for a single expression.
 TEST(ClientClassDictionary, initMatchExprError) {
     ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
     ExpressionPtr expr;
