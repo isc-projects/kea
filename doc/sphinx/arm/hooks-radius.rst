@@ -97,7 +97,7 @@ Once installed, the FreeRADIUS client will be installed in
 It can be installed in a different directory; if so,
 make sure to add that path to the configure script when compiling Kea.
 
-STEP 3: Install recent BOOST version
+STEP 3: Install a recent BOOST version
 
 Kea requires a reasonably recent Boost version. Unfortunately, the
 version available in CentOS 7 is too old, so a newer Boost version is
@@ -110,7 +110,7 @@ To download and compile Boost 1.65, please use the following commands:
 
 .. code-block:: console
 
-   $ wget -nd https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+   $ wget -nd https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.gz
    $ tar -zxvf boost_1_65_1.tar.gz
    $ cd boost_1_65_1/
    $ ./bootstrap.sh
@@ -120,6 +120,14 @@ To download and compile Boost 1.65, please use the following commands:
 Note that the b2 script may optionally take extra parameters; one of
 them specifies the destination path where the sources are to be
 compiled.
+
+Alternatively, some systems provide newer boost packages. For example, 
+CentOS 7 provides ``boost169-devel``. If you install it with 
+``yum install boost169-devel``, you will need to point Kea to it with:
+
+.. code-block:: console
+
+   $ ./configure --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
 
 STEP 4: Compile and install Kea
 
