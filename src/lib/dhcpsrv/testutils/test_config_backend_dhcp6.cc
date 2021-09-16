@@ -318,17 +318,24 @@ TestConfigBackendDHCPv6::getAllOptionDefs6(const db::ServerSelector& server_sele
     OptionDefContainer option_defs;
     for (auto option_def : option_defs_) {
         bool got = false;
-        for (auto tag : tags) {
-            if (option_def->hasServerTag(ServerTag(tag))) {
+        if (server_selector.amUnassigned()) {
+            if (option_def->getServerTags().empty()) {
                 option_defs.push_back(option_def);
                 got = true;
-                break;
+            }
+        } else {
+            for (auto tag : tags) {
+                if (option_def->hasServerTag(ServerTag(tag))) {
+                    option_defs.push_back(option_def);
+                    got = true;
+                    break;
+                }
             }
         }
         if (got) {
             continue;
         }
-        if (option_def->hasAllServerTag()) {
+        if (option_def->hasAllServerTag() && !server_selector.amUnassigned()) {
             option_defs.push_back(option_def);
         }
     }
