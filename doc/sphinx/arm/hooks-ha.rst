@@ -1615,13 +1615,23 @@ There is a global parameter, ``parked-packet-limit``, that may be used to limit
 the number of responses that may be parked at any given time.  This acts as a
 form of congestion handling and protects the server from being swamped when
 the volume of client queries is outpacing the server's ability to respond. Once
-the limit is reached, the server will emit a log and drop any further responses
-until the parking spaces are available.
+the limit is reached, the server will emit a log and drop any new responses
+until parking spaces are available.
 
 In general, smaller values for the parking lot limit are likely to cause more
 drops but with shorter response times. Larger values are likely to result in
 fewer drops but with longer response times.  Currently, the default value for
 parked-packet-limit is 256.
+
+.. warning::
+
+   Using too small of a value may result in an unecessarily high drop rate,
+   while using too large of a value may lead to responses times that are
+   simply too long to be useful.  A value of 0, while allowed, disables the
+   limit altogether but this is highly discouraged as it may lead to Kea servers
+   becoming unresponsive to clients. Choosing the best value is very site specific
+   so we recommend you leasve it at the default value of 256 and observe how
+   your system behaves over time with varying load conditions.
 
 ::
 
