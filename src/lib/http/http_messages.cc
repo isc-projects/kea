@@ -13,6 +13,7 @@ extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS = "HTT
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED = "HTTP_BAD_SERVER_RESPONSE_RECEIVED";
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS = "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_CLIENT_MT_STARTED = "HTTP_CLIENT_MT_STARTED";
+extern const isc::log::MessageID HTTP_CLIENT_QUEUE_SIZE_GROWING = "HTTP_CLIENT_QUEUE_SIZE_GROWING";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED = "HTTP_CLIENT_REQUEST_RECEIVED";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED_DETAILS = "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND = "HTTP_CLIENT_REQUEST_SEND";
@@ -46,6 +47,7 @@ const char* values[] = {
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED", "bad response received when communicating with %1: %2",
     "HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about bad response received from %1:\n%2",
     "HTTP_CLIENT_MT_STARTED", "HttpClient has been started in multi-threaded mode running %1 threads",
+    "HTTP_CLIENT_QUEUE_SIZE_GROWING", "queue for URL: %1, now has %2 entries and may be growing too quickly",
     "HTTP_CLIENT_REQUEST_RECEIVED", "received HTTP request from %1",
     "HTTP_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about well-formed request received from %1:\n%2",
     "HTTP_CLIENT_REQUEST_SEND", "sending HTTP request %1 to %2",

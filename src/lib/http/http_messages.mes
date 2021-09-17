@@ -38,6 +38,15 @@ from the server. The first argument specifies an URL of the server. The
 second argument provides a response in the textual format. The request is
 truncated by the logger if it is too large to be printed.
 
+% HTTP_CLIENT_QUEUE_SIZE_GROWING queue for URL: %1, now has %2 entries and may be growing too quickly
+This warning message is issued when the queue of pending requests for the
+given URL appears to be growing more quickly than the requests can be handled.
+It will be emitted periodically as long as the queue size continues to grow.
+This may occur with a surge of client traffic creating a momemntary backlog
+which then subsides as the surge subsides.  If it happens continually then
+it most likely indicates a deployment configuration that cannot sustain the
+client load.
+
 % HTTP_CLIENT_MT_STARTED HttpClient has been started in multi-threaded mode running %1 threads
 This debug message is issued when a multi-threaded HTTP client instance has
 been created.  The argument specifies the maximum number of threads.

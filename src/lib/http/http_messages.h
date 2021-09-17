@@ -14,6 +14,7 @@ extern const isc::log::MessageID HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED;
 extern const isc::log::MessageID HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS;
 extern const isc::log::MessageID HTTP_CLIENT_MT_STARTED;
+extern const isc::log::MessageID HTTP_CLIENT_QUEUE_SIZE_GROWING;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_SEND;

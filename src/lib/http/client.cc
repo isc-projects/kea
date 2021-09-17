@@ -14,6 +14,7 @@
 #include <http/http_messages.h>
 #include <http/response_json.h>
 #include <http/response_parser.h>
+#include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/unlock_guard.h>
 
@@ -34,6 +35,8 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::util;
+using namespace boost::posix_time;
+
 namespace ph = std::placeholders;
 
 namespace {
@@ -805,6 +808,11 @@ private:
     /// @brief Encapsulates connections and requests for a given URL
     class Destination {
     public:
+        /// @brief Number of queued requests allowed without warnings being emitted.
+        const size_t QUEUE_SIZE_THRESHOLD = 2048;
+        /// @brief Interval between queue size warnings.
+        const int QUEUE_WARN_SECS = 5;
+
         /// @brief Constructor
         ///
         /// @param url server URL of this destination
@@ -813,7 +821,8 @@ private:
         /// allowed for in the list URL
         Destination(Url url, TlsContextPtr tls_context, size_t max_connections)
             : url_(url), tls_context_(tls_context),
-              max_connections_(max_connections), connections_(), queue_() {
+              max_connections_(max_connections), connections_(), queue_(),
+             last_queue_warn_time_(min_date_time), last_queue_size_(0) {
         }
 
         /// @brief Destructor
@@ -976,9 +985,28 @@ private:
 
         /// @brief Adds a request to the end of the request queue.
         ///
+        /// If the size of the queue exceeds a threhsold and appears
+        /// to be growing it will emit a warning log.
+        ///
         /// @param desc RequestDescriptor to queue.
         void pushRequest(RequestDescriptor desc) {
             queue_.push(desc);
+            size_t size = queue_.size();
+            // If the queue size is larger than the threshold and growing, issue a
+            // periodic warning.
+            if ((size > QUEUE_SIZE_THRESHOLD) && (size > last_queue_size_)) {
+                ptime now = microsec_clock::universal_time();
+                if ((now - last_queue_warn_time_) > seconds(QUEUE_WARN_SECS)) {
+                    LOG_WARN(http_logger, HTTP_CLIENT_QUEUE_SIZE_GROWING)
+                             .arg(url_.toText())
+                             .arg(size);
+                    // Remember the last time we warned.
+                    last_queue_warn_time_ = now;
+                }
+            }
+
+            // Remember the previous size.
+            last_queue_size_ = size;
         }
 
         /// @brief Removes a request from the front of the request queue.
@@ -1009,6 +1037,12 @@ private:
 
         /// @brief Holds the queue of request for this destination.
         std::queue<RequestDescriptor> queue_;
+
+        /// @brief Time the last queue size warning was issued.
+        ptime last_queue_warn_time_;
+
+        /// @brief Size of the queue after last push.
+        size_t last_queue_size_;
     };
 
     /// @brief Pointer to a Destination.
