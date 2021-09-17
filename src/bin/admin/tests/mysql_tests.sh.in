@@ -261,7 +261,7 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 11.0.
+    # Ok, we have a 1.0 database. Let's upgrade it to 12.0.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
@@ -853,9 +853,41 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "$qry failed. dhcp6_client_classes preferred lifetime columns missing?"
 
-    # Verify upgraded schema reports version 11.0
+    # Check upgrade from 11.0 to 12.0.
+
+    # Add classes with associated options.
+    qry="\
+SET @disable_audit = 1;\
+INSERT INTO dhcp4_client_class(name, modification_ts) VALUES ('foo', now());\
+INSERT INTO dhcp4_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
+INSERT INTO dhcp6_client_class(name, modification_ts) VALUES ('foo', now());\
+INSERT INTO dhcp6_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
+SET @disable_audit = 0;"
+    run_command \
+        mysql_execute "$qry"
+    assert_eq 0 "${EXIT_CODE}" "inserting classes and options failed, expected exit code %d, actual %d"
+
+    # Delete the classes.
+    qry="\
+SET @disable_audit = 1;\
+DELETE FROM dhcp4_client_class;\
+DELETE FROM dhcp6_client_class;\
+SET @disable_audit = 0;"
+    run_command \
+        mysql_execute "$qry"
+    assert_eq 0 "${EXIT_CODE}" "deleting classes failed, expected exit code %d, actual %d"
+
+    # Ensure that the DHCPv4 option was deleted.
+    qry="SELECT COUNT(*) from dhcp4_options"
+    run_statement "dhcp4_options count" "$qry" 0
+
+    # Ensure that the DHCPv6 option was deleted.
+    qry="SELECT COUNT(*) from dhcp6_options"
+    run_statement "dhcp6_options count" "$qry" 0
+
+    # Verify upgraded schema reports version 12.0
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "11.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "12.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe

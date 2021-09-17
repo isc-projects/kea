@@ -4014,6 +4014,8 @@ ALTER TABLE dhcp6_option_def
 UPDATE schema_version
     SET version = '10', minor = '0';
 
+# This line concludes database upgrade to version 10.
+
 # Reverse index order to improve reclamation query performance
 # Add a constraint that any state value added to the lease4 must
 # map to a value in the lease_state table.  Note we have to drop
@@ -4042,7 +4044,28 @@ ALTER TABLE dhcp6_client_class
 UPDATE schema_version
     SET version = '11', minor = '0';
 
-# This line concludes database upgrade to version 10.
+# This line concludes database upgrade to version 11.
+
+# Add a foreign keys referencing a client classes. If an option is
+# associated with a client class, the option will be deleted
+# along with the deleted client class.
+ALTER TABLE dhcp4_options
+    ADD CONSTRAINT fk_dhcp4_options_client_class
+        FOREIGN KEY (dhcp_client_class)
+    REFERENCES dhcp4_client_class (name)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_options
+    ADD CONSTRAINT fk_dhcp6_options_client_class
+        FOREIGN KEY (dhcp_client_class)
+    REFERENCES dhcp6_client_class (name)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+# Update the schema version number
+UPDATE schema_version
+    SET version = '12', minor = '0';
+
+# This line concludes database upgrade to version 12.
 
 # Notes:
 #

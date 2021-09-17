@@ -1796,6 +1796,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_009.6_to_010.0.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_009.6_to_010.0.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_010_to_011.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_010_to_011.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_011_to_012.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_011_to_012.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
