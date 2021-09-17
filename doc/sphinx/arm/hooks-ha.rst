@@ -1625,13 +1625,13 @@ parked-packet-limit is 256.
 
 .. warning::
 
-   Using too small of a value may result in an unecessarily high drop rate,
+   Using too small of a value may result in an unnecessarily high drop rate,
    while using too large of a value may lead to responses times that are
    simply too long to be useful.  A value of 0, while allowed, disables the
    limit altogether but this is highly discouraged as it may lead to Kea servers
-   becoming unresponsive to clients. Choosing the best value is very site specific
-   so we recommend you leasve it at the default value of 256 and observe how
-   your system behaves over time with varying load conditions.
+   becoming unresponsive to clients. Choosing the best value is very site
+   specific so we recommend you leave it at the default value of 256 and observe
+   how your system behaves over time with varying load conditions.
 
 ::
 
