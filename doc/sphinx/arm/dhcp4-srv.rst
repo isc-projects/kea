@@ -1530,8 +1530,7 @@ can be omitted in some circumstances, as discussed in :ref:`dhcp4-option-data-de
 
 It is possible to specify or override options on a per-subnet basis. If
 clients connected to most subnets are expected to get the same
-values of a given option, administrators should use global options; it is possible to
-override specific values for a small number of subnets. On the other
+values of a given option, administrators should use global options. On the other
 hand, if different values are used in each subnet, it does not make sense
 to specify global option values; rather, only
 subnet-specific ones should be set.
@@ -1563,13 +1562,13 @@ particular subnet, setting a single DNS server with address 192.0.2.3:
 
 In some cases it is useful to associate some options with an address
 pool from which a client is assigned a lease. Pool-specific option
-values override subnet-specific and global option values. The server's
-administrator must not try to prioritize assignment of pool-specific
-options by trying to order pool declarations in the server
+values override subnet-specific and global option values; it
+is not possible to prioritize assignment of pool-specific
+options via the order of pool declarations in the server
 configuration.
 
 The following configuration snippet demonstrates how to specify the DNS
-servers option, which will be assigned to a client only if the client
+servers option, which is assigned to a client only if the client
 obtains an address from the given pool:
 
 ::
@@ -1599,7 +1598,7 @@ obtains an address from the given pool:
    }
 
 Options can also be specified in class or host reservation scope. The
-current Kea options precedence order is (from most important): host
+current Kea options precedence order is (from most important to least): host
 reservation, pool, subnet, shared network, class, global.
 
 The currently supported standard DHCPv4 options are listed in
@@ -1611,7 +1610,7 @@ types are given in :ref:`dhcp-types`.
 When a data field is a string and that string contains the comma (,;
 U+002C) character, the comma must be escaped with two backslashes (\;
 U+005C). This double escape is required because both the routine
-splitting CSV data into fields and JSON use the same escape character; a
+splitting of CSV data into fields and JSON use the same escape character; a
 single escape (\,) would make the JSON invalid. For example, the string
 "foo,bar" must be represented as:
 
@@ -1639,7 +1638,7 @@ single escape (\,) would make the JSON invalid. For example, the string
    }
 
 Some options are designated as arrays, which means that more than one
-value is allowed in such an option. For example, the option time-servers
+value is allowed. For example, the option ``time-servers``
 allows the specification of more than one IPv4 address, enabling clients
 to obtain the addresses of multiple NTP servers.
 
@@ -1649,7 +1648,7 @@ Creation of custom definitions for standard options is generally not
 permitted, even if the definition being created matches the actual
 option format defined in the RFCs. There is an exception to this rule
 for standard options for which Kea currently does not provide a
-definition. In order to use such options, a server administrator must
+definition. To use such options, a server administrator must
 create a definition as described in
 :ref:`dhcp4-custom-options` in the "dhcp4" option space. This
 definition should match the option format described in the relevant RFC,
@@ -1658,7 +1657,7 @@ currently has no means to validate it.
 
 .. _dhcp4-std-options-list:
 
-.. table:: List of standard DHCPv4 options configurable by an administrator
+.. table:: List of Standard DHCPv4 Options Configurable by an Administrator
 
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | Name                                   | Code | Type                      | Array?      | Returned if |
@@ -1872,11 +1871,11 @@ currently has no means to validate it.
    | v4-access-domain                       | 213  | fqdn                      | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
 
-Kea supports more options than the listed above. The following list is mostly useful for readers who
-want to understand whether Kea is able to support certain options. The following options are
-returned by the Kea engine itself and in general should not be configured manually.
+Kea also supports other options than those listed above; the following options
+are returned by the Kea engine itself and in general should not be configured
+manually. 
 
-.. table:: List of standard DHCPv4 options managed by Kea on its own and not directly configurable by an administrator
+.. table:: List of Standard DHCPv4 Options Managed by Kea on Its Own and Not Directly Configurable by an Administrator
 
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | Name                           | Code  | Type                                  | Description                                                       |
@@ -1900,16 +1899,16 @@ returned by the Kea engine itself and in general should not be configured manual
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | dhcp-client-identifier         | 61    | binary                                | sent by client, echoed back with the value sent by the client.    |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | fqdn                           | 81    | record (uint8, uint8, uint8, fqdn)    | it's part of the DDNS and D2 configuration.                       |
+   | fqdn                           | 81    | record (uint8, uint8, uint8, fqdn)    | part of the DDNS and D2 configuration.                            |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | dhcp-agent-options             | 82    | empty                                 | sent by the relay agent. It's an empty container option, see      |
+   | dhcp-agent-options             | 82    | empty                                 | sent by the relay agent. This is an empty container option; see   |
    |                                |       |                                       | RAI option detail in later part of this section.                  |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | authenticate                   | 90    | binary                                | sent by client, kea does not validate it yet.                     |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | client-last-transaction-time   | 91    | uint32                                | sent by client, server does not set it                            |
+   | client-last-transaction-time   | 91    | uint32                                | sent by client, server does not set it.                           |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | associated-ip                  | 92    | ipv4-address array                    | sent by client, server responds with list of addresses            |
+   | associated-ip                  | 92    | ipv4-address array                    | sent by client, server responds with list of addresses.           |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | subnet-selection               | 118   | ipv4-address                          | if present in client's messages, will be used in the subnet       |
    |                                |       |                                       | selection process.                                                |
@@ -1974,7 +1973,7 @@ what values are accepted for them.
    |                 | only.                                                 |
    +-----------------+-------------------------------------------------------+
    | string          | Any text. Please note that Kea                        |
-   |                 | will silently discard any                             |
+   |                 | silently discards any                                 |
    |                 | terminating/trailing nulls from                       |
    |                 | the end of 'string' options when                      |
    |                 | unpacking received packets. This                      |
@@ -2007,13 +2006,13 @@ what values are accepted for them.
    |                 | 2147483647.                                           |
    +-----------------+-------------------------------------------------------+
 
-Kea also supports Relay Agent Information (RAI) option, sometimes referred to as relay option, agent
-option or simply option 82. The option itself is just a container and doesn't convey any information
+Kea also supports the Relay Agent Information (RAI) option, sometimes referred to as the relay option, agent
+option, or simply option 82. The option itself is just a container and does not convey any information
 on its own. The following table contains a list of RAI sub-options that Kea can understand. The RAI
-and its sub-options are inserted by the relay agent and received by Kea. There is no need for Kea
-to be configured with those options as Kea only receives them.
+and its sub-options are inserted by the relay agent and received by Kea; there is no need for Kea
+to be configured with those options.
 
-.. table:: List of RAI sub-options that Kea can understand.
+.. table:: List of RAI Sub-options That Kea Can Understand.
 
    +--------------------+------+----------------------------------------------------------------------+
    | Name               | Code | Comment                                                              |
@@ -2026,7 +2025,7 @@ to be configured with those options as Kea only receives them.
    +--------------------+------+----------------------------------------------------------------------+
    | subscriber-id      | 6    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
-   | relay-source-port  | 19   | If sent by the relay, Kea will send back its responses to this port. |
+   | relay-source-port  | 19   | If sent by the relay, Kea sends back its responses to this port.     |
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
@@ -2037,8 +2036,8 @@ and/or by flex-id to construct a unique device identifier.
 Custom DHCPv4 Options
 ---------------------
 
-Kea supports custom (non-standard) DHCPv4 options. Assume that we want
-to define a new DHCPv4 option called "foo" which will have code 222
+Kea supports custom (non-standard) DHCPv4 options. Let's say that we want
+to define a new DHCPv4 option called "foo", which will have code 222
 and will convey a single, unsigned, 32-bit integer value. We can define
 such an option by putting the following entry in the configuration file:
 
@@ -2074,7 +2073,7 @@ not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
 are optional. The ``array`` default value is ``false``. The
-``record-types`` and ``encapsulate`` default values are blank (i.e. "").
+``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is "dhcp4".
 
 Once the new option format is defined, its value is set in the same way
@@ -2096,11 +2095,11 @@ global value that applies to all subnets.
        ...
    }
 
-New options can take more complex forms than simple use of primitives
+New options can take more complex forms than the simple use of primitives
 (uint8, string, ipv4-address, etc.); it is possible to define an option
 comprising a number of existing primitives.
 
-For example, assume we want to define a new option that will consist of
+For example, say we want to define a new option that will consist of
 an IPv4 address, followed by an unsigned 16-bit integer, followed by a
 boolean value, followed by a text string. Such an option could be
 defined in the following way:
@@ -2178,8 +2177,6 @@ bit unsigned integers.
    without quotes. Some specific boolean parameters may also accept
    ``"true"``, ``"false"``, ``0``, ``1``, ``"0"``, and ``"1"``.
 
-..
-
 .. note::
 
    Numbers can be specified in decimal or hexadecimal format. The
@@ -2193,7 +2190,7 @@ DHCPv4 Private Options
 
 Options with a code between 224 and 254 are reserved for private use.
 They can be defined at the global scope or at the client-class local
-scope; this allows option definitions to be used depending on context
+scope; this allows option definitions to be used depending on context,
 and option data to be set accordingly. For instance, to configure an old
 PXEClient vendor:
 
@@ -2217,12 +2214,12 @@ PXEClient vendor:
        ...
    }
 
-As the Vendor-Specific Information option (code 43) has vendor-specific
+As the Vendor-Specific Information (VSI) option (code 43) has vendor-specific
 format, i.e. can carry either raw binary value or sub-options, this
-mechanism is available for this option too.
+mechanism is also available for this option.
 
 In the following example taken from a real configuration, two vendor
-classes use the option 43 for different and incompatible purposes:
+classes use option 43 for different and incompatible purposes:
 
 ::
 
@@ -2304,8 +2301,6 @@ The definition used to decode a VSI option is:
 3. If none, the last-resort definition described in the next section,
    :ref:`dhcp4-vendor-opts` (backward-compatible with previous Kea versions).
 
-..
-
 .. note::
 
    This last-resort definition for the Vendor-Specific Information
@@ -2317,8 +2312,8 @@ The definition used to decode a VSI option is:
 
 .. note::
 
-   By default, in the Vendor-Specific Information option (code 43)
-   sub-option code 0 and 255 mean PAD and END respectively according to
+   By default, in the Vendor-Specific Information option (code 43),
+   sub-option code 0 and 255 mean PAD and END respectively, according to
    `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. In other words, the
    sub-option code values of 0 and 255 are reserved. Kea does, however,
    allow users to define sub-option codes from 0 to 255. If
@@ -2328,25 +2323,25 @@ The definition used to decode a VSI option is:
 
    Option 43 input processing (also called unpacking) is deferred so that it
    happens after classification. This means clients cannot be classified
-   using option 43 suboptions. The definition used to unpack option 43
+   using option 43 sub-options. The definition used to unpack option 43
    is determined as follows:
 
-   - If defined at the global scope this definition is used
+   - If defined at the global scope, this definition is used.
    - If defined at client class scope and the packet belongs to this
-     class the client class definition is used
+     class, the client class definition is used.
    - If not defined at global scope nor in a client class to which the
      packet belongs, the built-in last resort definition is used. This
      definition only says the sub-option space is
-     "vendor-encapsulated-options-space"
+     "vendor-encapsulated-options-space".
 
    The output definition selection is a bit simpler:
 
    - If the packet belongs to a client class which defines the option
-     43 use this definition
-   - If defined at the global scope use this definition
-   - Otherwise use the built-in last-resort definition.
+     43, use this definition.
+   - If defined at the global scope, use this definition.
+   - Otherwise, use the built-in last-resort definition.
 
-   Note as they use a specific/per vendor option space the sub-options
+   Since they use a specific/per vendor option space, sub-options
    are defined at the global scope.
 
 .. note::
@@ -2407,8 +2402,8 @@ the next step is to define actual values for that option:
        ...
    }
 
-We also include the Vendor-Specific Information option, the option that
-conveys our suboption "foo". This is required; otherwise, the option
+In this example, we also include the Vendor-Specific Information option, which
+conveys our sub-option "foo". This is required; otherwise, the option
 will not be included in messages sent to the client.
 
 ::
@@ -2435,27 +2430,26 @@ Alternatively, the option can be specified using its code.
        ...
    }
 
-Another popular option that is often somewhat imprecisely called "vendor
-option" is option 125. Its proper name is vendor-independent
-vendor-specific information option or vivso. The idea behind those
+Another popular option that is often somewhat imprecisely called the "vendor
+option" is option 125. Its proper name is the "vendor-independent
+vendor-specific information option" or "vivso". The idea behind vivso
 options is that each vendor has its own unique set of options with their
 own custom formats. The vendor is identified by a 32-bit unsigned integer
-called enterprise-id or vendor-id. For example, vivso with vendor-id
+called `enterprise-id` or `vendor-id`. For example, vivso with vendor-id
 4491 represents DOCSIS options, and they are often seen
 when dealing with cable modems.
 
 In Kea each vendor is represented by its own vendor space. Since there
 are hundreds of vendors and sometimes they use different option
-definitions for different hardware, it's impossible for Kea to support
-them all out of the box. Fortunately, it's easy to define support for
+definitions for different hardware, it is impossible for Kea to support
+them all natively. Fortunately, it's easy to define support for
 new vendor options. Let's take an example of the Genexis home gateway. This
-device requires sending the vivso 125 option with a suboption 2 that
+device requires sending the vivso 125 option with a sub-option 2 that
 contains a string with the TFTP server URL. To support such a device, three
 steps are needed: first, we need to define option definitions that will
-explain how the option is supposed to be formed. Second, we will need to
-define option values. Third, we will need to tell Kea when to send those
-specific options. This last step will be accomplished with client
-classification.
+explain how the option is supposed to be formed. Second, we need to
+define option values. Third, we need to tell Kea when to send those
+specific options, which we can do via client classification.
 
 An example snippet of a configuration could look similar to the
 following:
@@ -2515,19 +2509,19 @@ following:
 By default Kea sends back
 only those options that are requested by a client, unless there are
 protocol rules that tell the DHCP server to always send an option. This
-approach works nicely for most cases and avoids problems with clients
+approach works nicely in most cases and avoids problems with clients
 refusing responses with options they don't understand. Unfortunately,
 this is more complex when we consider vendor options. Some vendors (such
-as docsis, identified by vendor option 4491) have a mechanism to
+as DOCSIS, identified by vendor option 4491) have a mechanism to
 request specific vendor options and Kea is able to honor those.
 Unfortunately, for many other vendors, such as Genexis (25167) as discussed
-above, Kea does not have such a mechanism, so it can't send any
+above, Kea does not have such a mechanism, so it cannot send any
 sub-options on its own. To solve this issue, we came up with the concept of
 persistent options. Kea can be told to always send options, even if the
 client did not request them. This can be achieved by adding
 ``"always-send": true`` to the option definition. Note that in this
-particular case an option is defined in vendor space 25167. With the
-"always-send" enabled, the option will be sent every time there is a
+particular case an option is defined in vendor space 25167. With
+``always-send`` enabled, the option is sent every time there is a
 need to deal with vendor space 25167.
 
 Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
@@ -2890,7 +2884,7 @@ example, modern cable modems will send this option with value
 This example shows a configuration using an automatically generated
 "VENDOR_CLASS\_" class. The administrator of the network has decided that
 addresses from range 192.0.2.10 to 192.0.2.20 are going to be managed by
-the Dhcp4 server and only clients belonging to the docsis3.0 client
+the Dhcp4 server and only clients belonging to the DOCSIS 3.0 client
 class are allowed to use that pool.
 
 ::
