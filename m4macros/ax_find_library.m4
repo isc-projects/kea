@@ -146,7 +146,9 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     # Add to the runtime search path if the flag is not already added.
     if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -e "${ISC_RPATH_FLAG}")" = 0; then
       library_location=$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Eo '\-L.*\b' | sed 's/-L//g')
-      LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${library_location}"
+      if test -n "${library_location}"; then
+        LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${library_location}"
+      fi
     fi
   fi
 ])
