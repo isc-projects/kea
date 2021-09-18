@@ -1052,6 +1052,11 @@ def _install_sysrepo_from_sources():
         # right version pair to the dictionary above.
         sysrepo_version = '1.4.140'
 
+    # Create repository for YANG modules and change ownership to current user.
+    # pw usershow command is for BSD OSs.
+    execute('sudo mkdir -p /etc/sysrepo')
+    execute('sudo chown -R "${USER}:$(stat -c %G "${HOME}" || pw usershow ${USER} | cut -d ":" -f 9)" /etc/sysrepo')
+
     execute('rm -rf /tmp/sysrepo')
     try:
         execute('git clone https://github.com/sysrepo/sysrepo.git /tmp/sysrepo')
