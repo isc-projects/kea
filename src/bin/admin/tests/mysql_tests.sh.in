@@ -1727,6 +1727,18 @@ mysql_client_class_test() {
              ON c.id = o.class_id WHERE c.name = 'foo'";
     run_statement "#get order index of class foo" "$sql" 1
 
+    sql=\
+"SET @disable_audit = 1; \
+ INSERT INTO ${table_prefix}_options(code, scope_id, dhcp_client_class, modification_ts) \
+     VALUES (222, 0, '', now()); \
+ SET @disable_audit = 0;"
+    run_statement "add option with an empty dhcp_client class" "$sql"
+
+    # Let's make sure that we can upgrade to version 12.0. This version
+    # introduces a foreign key between dhcpX_client_class and dhcpX_options
+    # table. The migration should set the dhcp_client_class to NULL.
+    mysql_upgrade_schema_to_version 12.0
+
     # Let's wipe the whole database
     mysql_wipe
 

@@ -4046,6 +4046,17 @@ UPDATE schema_version
 
 # This line concludes database upgrade to version 11.
 
+# Ensure that dhcp_client_class is NULL when an option does not
+# belong to any client class. Later, we will add foreign keys for
+# the dhcp_client_class columns, and it requires that the columns
+# are NULL when there are no corresponding client classes.
+SET @disable_audit = 1;
+UPDATE dhcp4_options SET dhcp_client_class = NULL
+    WHERE scope_id <> 2;
+UPDATE dhcp6_options SET dhcp_client_class = NULL
+    WHERE scope_id <> 2;
+SET @disable_audit = 0;
+
 # Add a foreign keys referencing a client classes. If an option is
 # associated with a client class, the option will be deleted
 # along with the deleted client class.
