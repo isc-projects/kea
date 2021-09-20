@@ -1710,13 +1710,19 @@ HAService::asyncSendHeartbeat() {
                         // if we failed here.
                     }
 
+                    // unsent-update-count was not present in earlier HA versions.
+                    // Let's check if the partner has sent the parameter. We initialized
+                    // the counter to 0, and it remains 0 if the partner doesn't send it.
+                    // It effectively means that we don't track partner's unsent updates
+                    // as in the earlier HA versions.
                     auto unsent_update_count = args->get("unsent-update-count");
                     if (unsent_update_count) {
                         if (unsent_update_count->getType() != Element::integer) {
                             isc_throw(CtrlChannelError, "unsent-update-count returned in"
                                       " the ha-heartbeat response is not an integer");
                         }
-                        communication_state_->setPartnerUnsentUpdateCount(static_cast<uint64_t>(unsent_update_count->intValue()));
+                        communication_state_->setPartnerUnsentUpdateCount(static_cast<uint64_t>
+                                                                          (unsent_update_count->intValue()));
                     }
 
                 } catch (const std::exception& ex) {
