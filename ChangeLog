@@ -1,3 +1,10 @@
+1945.	[build]		andrei
+	Reverted qa#261 changes, which forced linking with OpenSSL 1.1
+	when available. This caused a segfault, when Kea's crypto library
+	used OpenSSL 1.1, but the MySQL library it linked against, used
+	OpenSSL 1.0.
+	(Gitlab #2081)
+
 1944.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 both now support a global parameter,
 	parked-packet-limit, that can be used to limit the number
