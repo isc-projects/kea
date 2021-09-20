@@ -1754,8 +1754,8 @@ public:
     MySqlOptionExchange()
         : type_(0), value_len_(0), formatted_value_len_(0), space_(),
           space_len_(0), persistent_(false), user_context_(),
-          user_context_len_(0), client_class_(), client_class_len_(0),
-          subnet_id_(SUBNET_ID_UNUSED), host_id_(0), option_() {
+          user_context_len_(0), subnet_id_(SUBNET_ID_UNUSED),
+          host_id_(0), option_() {
 
         BOOST_STATIC_ASSERT(9 < OPTION_COLUMNS);
     }
@@ -1849,29 +1849,22 @@ public:
                 bind_[6].buffer_type = MYSQL_TYPE_NULL;
             }
 
-            // dhcp_client_class: VARCHAR(128) NULL
-            client_class_len_ = client_class_.size();
-            bind_[7].buffer_type = MYSQL_TYPE_STRING;
-            bind_[7].buffer = const_cast<char*>(client_class_.c_str());
-            bind_[7].buffer_length = client_class_len_;
-            bind_[7].length = &client_class_len_;
-
             // dhcp4_subnet_id: INT UNSIGNED NULL
             if (!subnet_id.unspecified()) {
                 subnet_id_ = subnet_id;
-                bind_[8].buffer_type = MYSQL_TYPE_LONG;
-                bind_[8].buffer = reinterpret_cast<char*>(subnet_id_);
-                bind_[8].is_unsigned = MLM_TRUE;
+                bind_[7].buffer_type = MYSQL_TYPE_LONG;
+                bind_[7].buffer = reinterpret_cast<char*>(subnet_id_);
+                bind_[7].is_unsigned = MLM_TRUE;
 
             } else {
-                bind_[8].buffer_type = MYSQL_TYPE_NULL;
+                bind_[7].buffer_type = MYSQL_TYPE_NULL;
             }
 
             // host_id: INT UNSIGNED NOT NULL
             host_id_ = host_id;
-            bind_[9].buffer_type = MYSQL_TYPE_LONG;
-            bind_[9].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[9].is_unsigned = MLM_TRUE;
+            bind_[8].buffer_type = MYSQL_TYPE_LONG;
+            bind_[8].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[8].is_unsigned = MLM_TRUE;
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1912,12 +1905,6 @@ private:
 
     /// @brief User context length.
     unsigned long user_context_len_;
-
-    /// @brief Client classes for the option.
-    std::string client_class_;
-
-    /// @brief Length of the string holding client classes for the option.
-    unsigned long client_class_len_;
 
     /// @brief Subnet identifier.
     uint32_t subnet_id_;
@@ -2694,15 +2681,15 @@ TaggedStatementArray tagged_statements = { {
     // Using fixed scope_id = 3, which associates an option with host.
     {MySqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
             "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
-                "persistent, user_context, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+                "persistent, user_context, dhcp4_subnet_id, host_id, scope_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
     {MySqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
             "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
-                "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+                "persistent, user_context, dhcp6_subnet_id, host_id, scope_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
     // Delete IPv4 reservations by subnet id and reserved address.
     {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
