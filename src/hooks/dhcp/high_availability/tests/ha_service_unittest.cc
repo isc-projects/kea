@@ -2520,7 +2520,8 @@ TEST_F(HAServiceTest, processHeartbeat) {
     TestHAService service(io_service_,  network_state_, config_storage);
     service.query_filter_.serveDefaultScopes();
 
-    for (auto i = 0; i < 6; ++i) {
+    int unsent_updates = 6;
+    for (auto i = 0; i < unsent_updates; ++i) {
         service.communication_state_->increaseUnsentUpdateCount();
     }
 
@@ -2574,7 +2575,7 @@ TEST_F(HAServiceTest, processHeartbeat) {
     ConstElementPtr unsent_update_count = args->get("unsent-update-count");
     ASSERT_TRUE(unsent_update_count);
     EXPECT_EQ(Element::integer, unsent_update_count->getType());
-    EXPECT_EQ(6, static_cast<uint64_t>(unsent_update_count->intValue()));
+    EXPECT_EQ(unsent_updates, static_cast<uint64_t>(unsent_update_count->intValue()));
 }
 
 // This test verifies that the correct value of the heartbeat-delay is used.
