@@ -660,7 +660,7 @@ CommunicationStateTest::getUnsentUpdateCountTest() {
     // Test that the method under test protects against an overflow
     // resetting the value to 0.
     state_.unsent_update_count_ = std::numeric_limits<uint64_t>::max();
-    state_.increaseUnsentUpdateCount();
+    EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
     EXPECT_EQ(1, state_.getUnsentUpdateCount());
 }
 
