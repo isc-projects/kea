@@ -1927,9 +1927,19 @@ to establish TCP connection to the Control Agent or the Control Agent reports
 issues with communication with the DHCP server, it is very likely that the server
 is not running.
 
-The ``date-time`` parameter conveys the server's notion of time. The
-``unsent-update-count`` is used internally by the partner receiving the heartbeat
-response to determine whether it should synchronize its lease database.
+The ``date-time`` parameter conveys the server's notion of time.
+
+The ``unsent-update-count`` value is incremented by the partner sending the heartbeat
+response when it cannot send the lease update. Suppose it is a result of the
+temporary communication interruption. In that case, the partner receiving the
+heartbeat response tracks the value changes and can determine whether there are
+any new lease updates that it did not receive. When the communication is
+re-established, the server uses this value to decide whether or not it should
+synchronize its lease database. The value is set to 0 when the server is started.
+It is never reset to 0 during the server operation, even after the partner
+synchronizes the database. It is a cumulative count of all unsent lease updates
+since the server boot. A non-zero value itself is not an indication of any present
+issues with lease updates. Constantly incrementing value is.
 
 The typical response returned by one of the servers when both servers are
 operational is:
