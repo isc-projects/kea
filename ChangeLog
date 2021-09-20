@@ -1,6 +1,7 @@
 1946.	[bug]		marcin
 	Fixes a bug in MySQL configuration backend schema. DHCP options
-	associated with deleted client classes are automatically deleted.
+	associated with deleted client classes are now automatically
+	deleted.
 	(Gitlab #2094)
 
 1945.	[build]		andrei
