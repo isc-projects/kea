@@ -488,7 +488,7 @@ public:
     /// @brief Checks if the partner allocated new leases for which it hasn't sent
     /// any lease updates.
     ///
-    /// It compares a previous and current value of the @c parent_unsent_update_count_.
+    /// It compares a previous and current value of the @c partner_unsent_update_count_.
     /// If the current value is 0 and the previous value is non-zero it indicates
     /// that the partner was restarted.
     ///
