@@ -1602,6 +1602,14 @@ HAService::processHAReset() {
 void
 HAService::asyncSendHeartbeat() {
     HAConfig::PeerConfigPtr partner_config = config_->getFailoverPeerConfig();
+
+    // If the sync_complete_notified_ is true it means that the partner
+    // notified us that it had completed lease database synchronization.
+    // We confirm that the partner is operational by sending the heartbeat
+    // to it. Regardless if the partner responds to our heartbeats or not,
+    // we should clear this flag. But, since we need the current value in
+    // the async call handler, we save it in the local variable before
+    // clearing it.
     bool sync_complete_notified = sync_complete_notified_;
     sync_complete_notified_ = false;
 
