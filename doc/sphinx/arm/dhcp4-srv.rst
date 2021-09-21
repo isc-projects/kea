@@ -1125,7 +1125,7 @@ instead of UDP sockets.
 IPv4 Subnet Identifier
 ----------------------
 
-The subnet identifier is a unique number associated with a particular
+The subnet identifier (subnet ID) is a unique number associated with a particular
 subnet. In principle, it is used to associate clients' leases with their
 respective subnets. When a subnet identifier is not specified for a
 subnet being configured, it is automatically assigned by the
@@ -4598,12 +4598,12 @@ evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
-   Be aware that the classes specified in non-global host reservations
+   The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
    ``only-if-required`` parameter set to ``false`` have been evaluated.
-   This has an implication that these classes must not depend on the
+   This means that these classes must not depend on the
    statically assigned classes from the host reservations. If there
-   is a need to create such dependency, the ``only-if-required`` must
+   is a need to create such a dependency, the ``only-if-required`` parameter must
    be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
@@ -4614,7 +4614,7 @@ reserved class has been also assigned.
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
    In such a case the ``only-if-required`` parameter is not needed.
-   Refer to the :ref:`pool-selection-with-class-reservations4` and
+   Refer to :ref:`pool-selection-with-class-reservations4` and
    :ref:`subnet-selection-with-class-reservations4`
    for the specific use cases.
 
@@ -4623,7 +4623,7 @@ reserved class has been also assigned.
 Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
 ------------------------------------------------------------
 
-It is possible to store host reservations in MySQL, PostgreSQL, or
+Kea can store host reservations in MySQL, PostgreSQL, or
 Cassandra. See :ref:`hosts4-storage` for information on how to
 configure Kea to use reservations stored in MySQL, PostgreSQL, or
 Cassandra. Kea provides a dedicated hook for managing reservations in a
@@ -4652,7 +4652,7 @@ client; it also must not be reserved for another client. Second, when
 renewing a lease, an additional check must be performed to see whether
 the address being renewed is reserved for another client. Finally, when
 a host renews an address, the server must check whether there is a
-reservation for this host, so the existing (dynamically allocated)
+reservation for this host, which would mean the existing (dynamically allocated)
 address should be revoked and the reserved one be used instead.
 
 Some of those checks may be unnecessary in certain deployments, and not
@@ -4681,19 +4681,19 @@ allocating or renewing a lease for the client. Allowed values are:
    among the defined global reservations. If an address is specified,
    the server skips the reservation checks carried out when dealing in
    other modes, thus improving performance. Caution is advised when
-   using this setting; Kea does not sanity-check the reservations when
-   ``global`` and misconfiguration may cause problems.
+   using this setting; Kea does not sanity-check reservations when
+   ``global`` is set, and misconfiguration may cause problems.
 
 -  ``disabled`` - host reservation support is disabled. As there are no
-   reservations, the server will skip all checks. Any reservations
-   defined will be completely ignored. As the checks are skipped, the
+   reservations, the server skips all checks. Any reservations
+   defined are completely ignored. As checks are skipped, the
    server may operate faster in this mode.
 
-Since Kea 1.9.1, the ``reservation-mode`` is replaced by the
-``reservations-global``, ``reservations-in-subnet`` and
+Since Kea 1.9.1, the ``reservation-mode`` parameter is replaced by the
+``reservations-global``, ``reservations-in-subnet``, and
 ``reservations-out-of-pool`` flags.
 The flags can be activated independently and can produce various combinations,
-some of them being unsupported by the deprecated ``reservation-mode``.
+some of which were not supported by the deprecated ``reservation-mode``.
 
 The ``reservation-mode`` parameter can be specified at:
 
@@ -4822,20 +4822,16 @@ The meaning of the reservation flags are:
   this includes all subnet members of the shared network.
 
 - ``reservations-out-of-pool``: this makes sense only when the
-  ``reservations-in-subnet`` flag is true. When ``reservations-out-of-pool``
-  is true the server may assume that all host reservations are for addresses
+  ``reservations-in-subnet`` flag is ``true``. When ``reservations-out-of-pool``
+  is ``true``, the server may assume that all host reservations are for addresses
   that do not belong to the dynamic pool. Therefore, it can skip the reservation
   checks when dealing with in-pool addresses, thus improving performance.
-  Also the server will not assign reserved addresses that are inside the dynamic
+  The server will not assign reserved addresses that are inside the dynamic
   pools to the respective clients. This also means that the addresses matching
   the respective reservations from inside the dynamic pools (if any) can be
   dynamically assigned to any client.
 
-The ``reservation-mode`` will be deprecated in a future Kea version.
-
-The correspondence of old values are:
-
-``disabled``:
+The ``disabled`` value from the deprecated ``reservation-mode`` corresponds to:
 
 .. code-block:: json
 
@@ -4846,7 +4842,7 @@ The correspondence of old values are:
       }
     }
 
-``global``:
+The ``global`` value from the deprecated ``reservation-mode`` corresponds to:
 
 .. code-block:: json
 
@@ -4857,7 +4853,7 @@ The correspondence of old values are:
       }
     }
 
-``out-of-pool``:
+The ``out-of-pool`` value from the deprecated ``reservation-mode`` corresponds to:
 
 .. code-block:: json
 
@@ -4869,7 +4865,7 @@ The correspondence of old values are:
       }
     }
 
-``all``:
+And the ``all`` value from the deprecated ``reservation-mode`` corresponds to:
 
 .. code-block:: json
 
@@ -4907,10 +4903,10 @@ be used:
     }
 
 Note that enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
-is not recommended because ``out-of-pool`` is about host reservations in a
-subnet which are fetched only when the ``in-subnet`` flag is true.
+is not recommended because ``out-of-pool`` applies to host reservations in a
+subnet, which are fetched only when the ``in-subnet`` flag is true.
 
-The parameter can be specified at global, subnet, and shared-network
+The parameter can be specified at the global, subnet, and shared-network
 levels.
 
 An example configuration that disables reservations looks as follows:
@@ -4964,7 +4960,7 @@ For more details regarding global reservations, see :ref:`global-reservations4`.
 
 Another aspect of host reservations is the different types of
 identifiers. Kea currently supports four types of identifiers:
-hw-address, duid, client-id, and circuit-id. This is beneficial from a
+``hw-address``, ``duid``, ``client-id``, and ``circuit-id``. This is beneficial from a
 usability perspective; however, there is one drawback. For each incoming
 packet, Kea has to extract each identifier type and then query the
 database to see if there is a reservation by this particular identifier.
@@ -4976,13 +4972,13 @@ slower.
 
 To address this problem, a parameter called
 ``host-reservation-identifiers`` is available. It takes a list of
-identifier types as a parameter. Kea will check only those identifier
-types enumerated in host-reservation-identifiers. From a performance
+identifier types as a parameter. Kea checks only those identifier
+types enumerated in ``host-reservation-identifiers``. From a performance
 perspective, the number of identifier types should be kept to a minimum,
 ideally one. If the deployment uses several reservation types, please
 enumerate them from most- to least-frequently used, as this increases
 the chances of Kea finding the reservation using the fewest queries. An
-example of host reservation identifiers looks as follows:
+example of a ``host-reservation-identifiers`` configuration looks as follows:
 
 ::
 
@@ -5007,22 +5003,22 @@ Global Reservations in DHCPv4
 
 In some deployments, such as mobile, clients can roam within the network
 and certain parameters must be specified regardless of the client's
-current location. To facilitate such a need, a global reservation
-mechanism has been implemented. The idea behind it is that regular host
+current location. To meet such a need, Kea offers a global reservation
+mechanism. The idea behind it is that regular host
 reservations are tied to specific subnets, by using a specific
-subnet-id. Kea can specify a global reservation that can be used in
+subnet ID. Kea can specify a global reservation that can be used in
 every subnet that has global reservations enabled.
 
 This feature can be used to assign certain parameters, such as hostname
 or other dedicated, host-specific options. It can also be used to assign
 addresses. However, global reservations that assign addresses bypass the
-whole topology determination provided by DHCP logic implemented in Kea.
+whole topology determination provided by the DHCP logic implemented in Kea.
 It is very easy to misuse this feature and get a configuration that is
 inconsistent. To give a specific example, imagine a global reservation
 for address 192.0.2.100 and two subnets 192.0.2.0/24 and 192.0.5.0/24.
 If global reservations are used in both subnets and a device matching
 global host reservations visits part of the network that is serviced by
-192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0
+192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0,
 and a default router 192.0.5.1. Obviously, such a configuration is
 unusable, as the client will not be able to reach its default gateway.
 
@@ -5084,7 +5080,7 @@ following can be used:
    }
 
 When using database backends, the global host reservations are
-distinguished from regular reservations by using a subnet-id value of
+distinguished from regular reservations by using a ``subnet-id`` value of
 zero.
 
 .. _pool-selection-with-class-reservations4:
@@ -5092,7 +5088,7 @@ zero.
 Pool Selection with Client Class Reservations
 ---------------------------------------------
 
-Client classes can be specified both in the Kea configuration file and/or
+Client classes can be specified in the Kea configuration file and/or via
 host reservations. The classes specified in the Kea configuration file are
 evaluated immediately after receiving the DHCP packet and therefore can be
 used to influence subnet selection using the ``client-class`` parameter
@@ -5103,11 +5099,11 @@ class specified within a host reservation cannot be used to influence
 subnet assignment for this client, unless the subnet belongs to a
 shared network. If the subnet belongs to a shared network, the server may
 dynamically change the subnet assignment while trying to allocate a lease.
-If the subnet does not belong to a shared network, once selected, the subnet
-is not changed.
+If the subnet does not belong to a shared network, the subnet
+is not changed once selected.
 
 If the subnet does not belong to a shared network, it is possible to
-use host reservation based client classification to select an address pool
+use host reservation-based client classification to select an address pool
 within the subnet as follows:
 
 ::
@@ -5144,13 +5140,13 @@ within the subnet as follows:
     }
 
 The ``reserved_class`` is declared without the ``test`` parameter because
-it may be only assigned to the client via host reservation mechanism. The
+it may only be assigned to the client via the host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to the clients which do not
 belong to the ``reserved_class``.  The first pool within the subnet is only
-used for the clients having a reservation for the ``reserved_class``. The
-second pool is used for the clients not having such reservation. The
+used for clients having a reservation for the ``reserved_class``. The
+second pool is used for clients not having such a reservation. The
 configuration snippet includes one host reservation which causes the client
-having the MAC address of aa:bb:cc:dd:ee:fe to be assigned to the
+with the MAC address aa:bb:cc:dd:ee:fe to be assigned to the
 ``reserved_class``. Thus, this client will be given an IP address from the
 first address pool.
 
@@ -5160,7 +5156,7 @@ Subnet Selection with Client Class Reservations
 -----------------------------------------------
 
 There is one specific use case when subnet selection may be influenced by
-client classes specified within host reservations. This is the case when the
+client classes specified within host reservations: when the
 client belongs to a shared network. In such a case it is possible to use
 classification to select a subnet within this shared network. Consider the
 following example:
@@ -5216,74 +5212,73 @@ following example:
         }]
     }
 
-This is similar to the example described in the
+This is similar to the example described in
 :ref:`pool-selection-with-class-reservations4`. This time, however, there
-are two subnets, each of them having a pool associated with a different
-class. The clients which don't have a reservation for the ``reserved_class``
-will be assigned an address from the subnet 192.0.3.0/24. Clients having
-a reservation for the ``reserved_class`` will be assigned an address from
+are two subnets, each of which has a pool associated with a different
+class. The clients that do not have a reservation for the ``reserved_class``
+are assigned an address from the subnet 192.0.3.0/24. Clients with
+a reservation for the ``reserved_class`` are assigned an address from
 the subnet 192.0.2.0/24. The subnets must belong to the same shared network.
 In addition, the reservation for the client class must be specified at the
-global scope (global reservation) and the ``reservations-global`` must be
-set to true.
+global scope (global reservation) and ``reservations-global`` must be
+set to ``true``.
 
-In the example above the ``client-class`` could also be specified at the
-subnet level rather than pool level yielding the same effect.
+In the example above, the ``client-class`` could also be specified at the
+subnet level rather than the pool level, and would yield the same effect.
 
 .. _multiple-reservations-same-ip4:
 
 Multiple Reservations for the Same IP
 -------------------------------------
 
-Host Reservations were designed to preclude creation of multiple
-reservations for the same IP address within a particular subnet to avoid
-the situation when two different clients compete for the same address.
+Host reservations were designed to preclude the creation of multiple
+reservations for the same IP address within a particular subnet, to avoid
+having two different clients compete for the same address.
 When using the default settings, the server returns a configuration error
 when it finds two or more reservations for the same IP address within
-a subnet in the Kea configuration file. The :ref:`host-cmds` hooks
+a subnet in the Kea configuration file. The :ref:`host-cmds` hook
 library returns an error in response to the ``reservation-add`` command
 when it detects that the reservation exists in the database for the IP
 address for which the new reservation is being added.
 
 In some deployments a single host can select one of several network
-interfaces to communicate with the DHCP server and the server must assign
+interfaces to communicate with the DHCP server, and the server must assign
 the same IP address to the host regardless of the interface used. Since
 each interface is assigned a different MAC address, it implies that
 several host reservations must be created to associate all of the MAC
-addresses present on this host with the IP addresses. Using different
+addresses present on this host with IP addresses. Using different
 IP addresses for each interface is impractical and is considered a waste
 of the IPv4 address space, especially since the host typically uses only one
 interface for communication with the server, hence only one IP address
 is in use.
 
-This causes a need for creating multiple host reservations for a single
-IP address within a subnet and it is supported beginning with Kea 1.9.1
-release as optional mode of operation enabled with the
+This causes a need to create multiple host reservations for a single
+IP address within a subnet; this is supported beginning with the Kea 1.9.1
+release as an optional mode of operation, enabled with the
 ``ip-reservations-unique`` global parameter.
 
-The ``ip-reservations-unique`` is a boolean parameter, which defaults to
+``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
 for the same IP address within a given subnet. Setting this parameter to
-``false`` allows for creating such reservations both in the Kea configuration
-file and in the host database backends via ``host-cmds`` hooks library.
+``false`` allows such reservations to be created both in the Kea configuration
+file and in the host database backend, via the ``host-cmds`` hook library.
 
 This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
-Host Cache (see :ref:`hooks-host-cache`) or Radius backend
+Host Cache (see :ref:`hooks-host-cache`), or the RADIUS backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
 to ``false`` when any of these three backends is in use yields a
 configuration error.
 
 .. note::
 
-   When ``ip-reservations-unique`` is set to ``true`` (the default value)
+   When ``ip-reservations-unique`` is set to ``true`` (the default value),
    the server ensures that IP reservations are unique for a subnet within
    a single host backend and/or Kea configuration file. It does not
    guarantee that the reservations are unique across multiple backends.
 
-
-The following is the example configuration with two reservations for
-the same IP address and for different MAC addresses:
+The following is an example configuration with two reservations for
+the same IP address but different MAC addresses:
 
 ::
 
@@ -5306,20 +5301,20 @@ the same IP address and for different MAC addresses:
        ]
    }
 
-It is possible to control the ``ip-reservations-unique`` via the
+It is possible to control the ``ip-reservations-unique`` parameter via the
 :ref:`dhcp4-cb`. If the new setting of this parameter conflicts with
 the currently used backends (backends do not support the new setting),
-the new setting is ignored and the warning log message is output.
-The backends continue to use the default setting, i.e. expecting that
+the new setting is ignored and a warning log message is generated.
+The backends continue to use the default setting, expecting that
 IP reservations are unique within each subnet. To allow the
 creation of non-unique IP reservations, the administrator must remove
 the backends which lack support for them from the configuration file.
 
 Administrators must be careful when they have been using multiple
 reservations for the same IP address and later decide to return to
-the default mode in which this is no longer allowed. The administrators
-must make sure that at most one reservation for the given IP address
-exists within a subnet prior to switching back to the default mode.
+the default mode in which this is no longer allowed. Admins
+must make sure that at most one reservation for a given IP address
+exists within a subnet, prior to switching back to the default mode.
 If such duplicates are left in the configuration file, the server
 reports a configuration error. Leaving such reservations in the host
 databases does not cause configuration errors but may lead to lease
@@ -5329,11 +5324,11 @@ finds multiple reservations for the same IP address.
 .. note::
 
    Currently the server does not verify whether multiple reservations for
-   the same IP address exist in the host databases (MySQL and/or
-   PostgreSQL) when ``ip-reservations-unique`` is updated from
+   the same IP address exist in MySQL and/or
+   PostgreSQL host databases when ``ip-reservations-unique`` is updated from
    ``true`` to ``false``. This may cause issues with lease allocations.
    The administrator must ensure that there is at most one reservation
-   for each IP address within each subnet prior to this configuration
+   for each IP address within each subnet, prior to the configuration
    update.
 
 .. _shared-network4:
