@@ -3480,8 +3480,12 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    // The server2 should receive all commands. The dhcp-disable was successful, so
-    // the dhcp-enable command must be sent to re-enable the service after failure.
+    // The server2 should receive dhcp-disable, lease4-get-page and dhcp-enable
+    // commands. The lease4-get-page command results in an error (configured at
+    // the beginning of this test), but the dhcp-enable command should be sent
+    // to enable the DHCP service after the error anyway. The
+    // ha-sync-complete-notify must not be sent after the error. It should only
+    // be sent after successful synchronization.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
@@ -3510,10 +3514,30 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
 
     // The server2 should receive four commands of which ha-sync-complete-notify
     // was unsupported.
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+
+    auto requests = factory2_->getResponseCreator()->getReceivedRequests();
+    ASSERT_GE(requests.size(), 3);
+
+    // The dhcp-disable should be the first request.
+    auto request = factory2_->getResponseCreator()->findRequest("dhcp-disable","20");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[0], request);
+
+    // There may be multiple lease4-get-page commands but the first one should
+    // follow the dhcp-disable request.
+    request = factory2_->getResponseCreator()->findRequest("lease4-get-page", "");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[1], request);
+
+    // The ha-sync-complete-notify should be last but one.
+    request = factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify", "");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[requests.size()-2], request);
+
+    // The dhcp-enable should be last.
+    request = factory2_->getResponseCreator()->findRequest("dhcp-enable", "");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[requests.size()-1], request);
 }
 
 // This test verifies that dhcp-enable command is not sent to the partner after
@@ -3531,9 +3555,27 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR);
 
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+    auto requests = factory2_->getResponseCreator()->getReceivedRequests();
+
+    ASSERT_GE(requests.size(), 3);
+
+    // The dhcp-disable should be the first request.
+    auto request = factory2_->getResponseCreator()->findRequest("dhcp-disable","20");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[0], request);
+
+    // There may be multiple lease4-get-page commands but the first one should
+    // follow the dhcp-disable request.
+    request = factory2_->getResponseCreator()->findRequest("lease4-get-page","");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(requests[1], request);
+
+    // The ha-sync-complete-notify should be last.
+    request = factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify","");
+    ASSERT_TRUE(request);
+    EXPECT_EQ(*(requests.rbegin()), request);
+
+    // The dhcp-enable should not be sent after ha-sync-complete-notify failure.
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
