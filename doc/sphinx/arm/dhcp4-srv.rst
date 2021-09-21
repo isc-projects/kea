@@ -3465,14 +3465,14 @@ Sanitizing Client Host Name and FQDN Names
 
 Some DHCP clients may provide values in the Host Name
 option (option code 12) or FQDN option (option code 81) that contain
-undesirable characters. It is possible to configure kea-dhcp4 to
+undesirable characters. It is possible to configure ``kea-dhcp4`` to
 sanitize these values. The most typical use case is ensuring that only
 characters that are permitted by RFC 1035 be included: A-Z, a-z, 0-9,
-and '-'. This may be accomplished with the following two parameters:
+and "-". This may be accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
-   extended expression syntax.  Embedded nulls (0x00) are always
+   extended expression syntax. Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
@@ -3518,9 +3518,9 @@ qualifying suffix (if one is defined and needed).
    needs.
 
    If clients include domain names in the Host Name option and the administrator
-   wants these preserved, they will need to make sure that the dot, '.',
-   is considered a valid character by the hostname-char-set expression,
-   such as this: "[^A-Za-z0-9.-]". This will not affect dots in FQDN
+   wants these preserved, they need to make sure that the dot, ".",
+   is considered a valid character by the ``hostname-char-set`` expression,
+   such as this: `"[^A-Za-z0-9.-]"`. This does not affect dots in FQDN
    Option values. When scrubbing FQDNs, dots are treated as delimiters
    and used to separate the option value into individual domain labels
    that are scrubbed and then re-assembled.
@@ -3533,37 +3533,37 @@ qualifying suffix (if one is defined and needed).
    Finally, given the latitude clients have in the values they send, it
    is virtually impossible to guarantee that a combination of these two
    parameters will always yield a name that is valid for use in DNS. For
-   example, using an empty value for hostname-char-replacement could
+   example, using an empty value for ``hostname-char-replacement`` could
    yield an empty domain label within a name, if that label consists
    only of invalid characters.
 
 .. note::
 
-   Since the 1.6.0 Kea release, it is possible to specify hostname-char-set
-   and/or hostname-char-replacement at the global scope. This allows
-   sanitizing host names without requiring a dhcp-ddns entry. When
-   a hostname-char parameter is defined at the global scope and
-   in a dhcp-ddns entry, the second (local) value is used.
+   Since the 1.6.0 Kea release, it is possible to specify ``hostname-char-set``
+   and/or ``hostname-char-replacement`` at the global scope. This allows
+   host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
+   a ``hostname-char`` parameter is defined at both the global scope and
+   in a ``dhcp-ddns`` entry, the second (local) value is used.
 
 .. _dhcp4-next-server:
 
-Next Server (siaddr)
---------------------
+Next Server (``siaddr``)
+------------------------
 
 In some cases, clients want to obtain configuration from a TFTP server.
 Although there is a dedicated option for it, some devices may use the
-siaddr field in the DHCPv4 packet for that purpose. That specific field
+``siaddr`` field in the DHCPv4 packet for that purpose. That specific field
 can be configured using the ``next-server`` directive. It is possible to
 define it in the global scope or for a given subnet only. If both are
-defined, the subnet value takes precedence. The value in subnet can be
-set to 0.0.0.0, which means that ``next-server`` should not be sent. It
-may also be set to an empty string, which means the same as if it were
-not defined at all; that is, use the global value.
+defined, the subnet value takes precedence. The value in the subnet can be
+set to `0.0.0.0`, which means that ``next-server`` should not be sent. It
+can also be set to an empty string, which is equivalent to it
+not being defined at all; that is, it uses the global value.
 
 The ``server-hostname`` (which conveys a server hostname, can be up to
-64 bytes long, and will be sent in the sname field) and
+64 bytes long, and is in the sname field) and
 ``boot-file-name`` (which conveys the configuration file, can be up to
-128 bytes long, and will be sent using the file field) directives are
+128 bytes long, and is sent using the file field) directives are
 handled the same way as ``next-server``.
 
 ::
@@ -3590,13 +3590,13 @@ Echoing Client-ID (RFC 6842)
 The original DHCPv4 specification (`RFC
 2131 <https://tools.ietf.org/html/rfc2131>`__) states that the DHCPv4
 server must not send back client-id options when responding to clients.
-However, in some cases that result confused clients that did not have a MAC
+However, in some cases that results in confused clients that do not have a MAC
 address or client-id; see `RFC
 6842 <https://tools.ietf.org/html/rfc6842>`__ for details. That behavior
 changed with the publication of `RFC
 6842 <https://tools.ietf.org/html/rfc6842>`__, which updated `RFC
 2131 <https://tools.ietf.org/html/rfc2131>`__. That update states that
-the server must send the client-id if the client sent it. That is Kea's
+the server must send the client-id if the client sent it, and that is Kea's
 default behavior. However, in some cases older devices that do not
 support `RFC 6842 <https://tools.ietf.org/html/rfc6842>`__ may refuse to
 accept responses that include the client-id option. To enable backward
@@ -3624,7 +3624,7 @@ ones are:
    server must store the client identification information in the lease
    database as a search key.
 
--  When the client is trying to renew or release the existing lease, the
+-  When the client tries to renew or release the existing lease, the
    server must be able to find the existing lease entry in the database
    for this client, using the client identification information as a
    search key.
@@ -3641,58 +3641,58 @@ ones are:
 
 DHCPv4 uses two distinct identifiers which are placed by the client in
 the queries sent to the server and copied by the server to its responses
-to the client: "chaddr" and "client identifier". The former was
+to the client: ``chaddr`` and ``client-identifier``. The former was
 introduced as a part of the BOOTP specification and it is also used by
 DHCP to carry the hardware address of the interface used to send the
 query to the server (MAC address for the Ethernet). The latter is
-carried in the Client-identifier option, introduced in `RFC
+carried in the client-identifier option, introduced in `RFC
 2132 <https://tools.ietf.org/html/rfc2132>`__.
 
 `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ indicates that the
 server may use both of these identifiers to identify the client but the
-"client identifier", if present, takes precedence over "chaddr". One of
-the reasons for this is that "client identifier" is independent from the
+client identifier, if present, takes precedence over ``chaddr``. One of
+the reasons for this is that the client identifier is independent from the
 hardware used by the client to communicate with the server. For example,
 if the client obtained the lease using one network card and then the
 network card is moved to another host, the server will wrongly identify
 this host as the one which obtained the lease. Moreover, `RFC
 4361 <https://tools.ietf.org/html/rfc4361>`__ gives the recommendation
 to use a DUID (see `RFC 8415 <https://tools.ietf.org/html/rfc8415>`__,
-the DHCPv6 specification) carried as a "client identifier" when dual-stack
+the DHCPv6 specification) carried as a client identifier when dual-stack
 networks are in use to provide consistent identification information for
 the client, regardless of the type of protocol it is using. Kea adheres to
-these specifications, and the "client identifier" by default takes
-precedence over the value carried in the "chaddr" field when the server
+these specifications, and the client identifier by default takes
+precedence over the value carried in the ``chaddr`` field when the server
 searches, creates, updates, or removes the client's lease.
 
 When the server receives a DHCPDISCOVER or DHCPREQUEST message from the
-client, it will try to find out if the client already has a lease in the
-database; if it does, the server will hand out that lease rather than allocate a new one.
-Each lease in the lease database is associated with the "client
-identifier" and/or "chaddr". The server will first use the "client
-identifier" (if present) to search for the lease. If the lease is found, the
-server will treat this lease as belonging to the client even if the
-current "chaddr" and the "chaddr" associated with the lease do not
+client, it tries to find out if the client already has a lease in the
+database; if it does, the server hands out that lease rather than allocates a new one.
+Each lease in the lease database is associated with the client
+identifier and/or ``chaddr``. The server first uses the client
+identifier (if present) to search for the lease; if one is found, the
+server treats this lease as belonging to the client, even if the
+current ``chaddr`` and the ``chaddr`` associated with the lease do not
 match. This facilitates the scenario when the network card on the client
 system has been replaced and thus the new MAC address appears in the
 messages sent by the DHCP client. If the server fails to find the lease
-using the "client identifier", it will perform another lookup using the
-"chaddr". If this lookup returns no result, the client is considered as
-not having a lease and a new lease will be created.
+using the client identifier, it performs another lookup using the
+``chaddr``. If this lookup returns no result, the client is considered to
+not have a lease and a new lease is created.
 
 A common problem reported by network operators is that poor client
 implementations do not use stable client identifiers, instead generating
-a new "client identifier" each time the client connects to the network.
-Another well-known case is when the client changes its "client
-identifier" during the multi-stage boot process (PXE). In such cases,
+a new client identifier each time the client connects to the network.
+Another well-known case is when the client changes its client
+identifier during the multi-stage boot process (PXE). In such cases,
 the MAC address of the client's interface remains stable, and using the
-"chaddr" field to identify the client guarantees that the particular
-system is considered to be the same client, even though its "client
-identifier" changes.
+``chaddr`` field to identify the client guarantees that the particular
+system is considered to be the same client, even though its client
+identifier changes.
 
 To address this problem, Kea includes a configuration option which
-enables client identification using "chaddr" only. This instructs the
-server to "ignore" the "client identifier" during lease lookups and allocations
+enables client identification using ``chaddr`` only. This instructs the
+server to ignore the client identifier during lease lookups and allocations
 for a particular subnet. Consider the following simplified server configuration:
 
 ::
@@ -3716,10 +3716,10 @@ for a particular subnet. Consider the following simplified server configuration:
 
 The ``match-client-id`` is a boolean value which controls this behavior.
 The default value of ``true`` indicates that the server will use the
-"client identifier" for lease lookups and "chaddr" if the first lookup
-returns no results. The ``false`` means that the server will only use
-the "chaddr" to search for the client's lease. Whether the DHCID for DNS
-updates is generated from the "client identifier" or "chaddr" is
+client identifier for lease lookups and ``chaddr`` if the first lookup
+returns no results. ``false`` means that the server will only use
+the ``chaddr`` to search for the client's lease. Whether the DHCID for DNS
+updates is generated from the client identifier or ``chaddr`` is
 controlled through the same parameter.
 
 The ``match-client-id`` parameter may appear both in the global
@@ -3728,7 +3728,7 @@ shown above, the effective value of the ``match-client-id`` will be
 ``false`` for the subnet 192.0.10.0/24, because the subnet-specific
 setting of the parameter overrides the global value of the parameter.
 The effective value of the ``match-client-id`` for the subnet 10.0.0.0/8
-will be set to ``true`` because the subnet declaration lacks this
+will be set to ``true``, because the subnet declaration lacks this
 parameter and the global setting is by default used for this subnet. In
 fact, the global entry for this parameter could be omitted in this case,
 because ``true`` is the default value.
@@ -3737,27 +3737,27 @@ It is important to understand what happens when the client obtains its
 lease for one setting of the ``match-client-id`` and then renews it when
 the setting has been changed. First, consider the case when the client
 obtains the lease and the ``match-client-id`` is set to ``true``. The
-server will store the lease information, including "client identifier"
-(if supplied) and "chaddr", in the lease database. When the setting is
+server stores the lease information, including the client identifier
+(if supplied) and ``chaddr``, in the lease database. When the setting is
 changed and the client renews the lease, the server will determine that
-it should use the "chaddr" to search for the existing lease. If the
-client hasn't changed its MAC address, the server should successfully
-find the existing lease. The "client identifier" associated with the
+it should use the ``chaddr`` to search for the existing lease. If the
+client has not changed its MAC address, the server should successfully
+find the existing lease. The client identifier associated with the
 returned lease will be ignored and the client will be allowed to use this lease.
-When the lease is renewed only the "chaddr" will be recorded for this lease,
+When the lease is renewed only the ``chaddr`` will be recorded for this lease,
 according to the new server setting.
 
-In the second case the client has the lease with only a "chaddr" value
+In the second case, the client has the lease with only a ``chaddr`` value
 recorded. When the ``match-client-id`` setting is changed to ``true``,
-the server will first try to use the "client identifier" to find the
-existing client's lease. This will return no results because the "client
-identifier" was not recorded for this lease. The server will then use
-the "chaddr" and the lease will be found. If the lease appears to have
-no "client identifier" recorded, the server will assume that this lease
+the server will first try to use the client identifier to find the
+existing client's lease. This will return no results because the client
+identifier was not recorded for this lease. The server will then use
+the ``chaddr`` and the lease will be found. If the lease appears to have
+no client identifier recorded, the server will assume that this lease
 belongs to the client and that it was created with the previous setting
-of the ``match-client-id``. However, if the lease contains a "client
-identifier" which is different from the "client identifier" used by the
-client, the lease will be assumed to belong to another client and the
+of the ``match-client-id``. However, if the lease contains a client
+identifier which is different from the client identifier used by the
+client, the lease will be assumed to belong to another client and a
 new lease will be allocated.
 
 .. _dhcp4-authoritative:
@@ -3767,10 +3767,10 @@ Authoritative DHCPv4 Server Behavior
 
 The original DHCPv4 specification (`RFC
 2131 <https://tools.ietf.org/html/rfc2131>`__) states that if a client
-requests an address in the INIT-REBOOT state, of which the server has no
+requests an address in the INIT-REBOOT state of which the server has no
 knowledge, the server must remain silent, except if the server knows
 that the client has requested an IP address from the wrong network. By
-default, Kea follows the behavior of the ISC dhcpd daemon instead of the
+default, Kea follows the behavior of the ISC ``dhcpd`` daemon instead of the
 specification and also remains silent if the client requests an IP
 address from the wrong network, because configuration information about
 a given network segment is not known to be correct. Kea only rejects a
@@ -3811,7 +3811,7 @@ the DHCPv6 and DHCPv4 servers. The DHCPv4 server is bound to ::1 on
 
 With DHCPv4-over-DHCPv6, the DHCPv4 server does not have access to
 several of the identifiers it would normally use to select a subnet. To
-address this issue, three new configuration entries have been added; the
+address this issue, three new configuration entries are available; the
 presence of any of these allows the subnet to be used with
 DHCPv4-over-DHCPv6. These entries are:
 
@@ -3873,7 +3873,7 @@ Sanity Checks in DHCPv4
 An important aspect of a well-running DHCP system is an assurance that
 the data remain consistent. However, in some cases it may be convenient
 to tolerate certain inconsistent data. For example, a network
-administrator that temporarily removed a subnet from a configuration
+administrator that temporarily removes a subnet from a configuration
 would not want all the leases associated with it to disappear from the
 lease database. Kea has a mechanism to control sanity checks such
 as this.
@@ -3883,16 +3883,18 @@ currently allows only a single parameter, called ``lease-checks``, which
 governs the verification carried out when a new lease is loaded from a
 lease file. This mechanism permits Kea to attempt to correct inconsistent data.
 
-Every subnet has a subnet-id value; this is how Kea internally
-identifies subnets. Each lease has a subnet-id parameter as well, which
+Every subnet has a ``subnet-id`` value; this is how Kea internally
+identifies subnets. Each lease has a ``subnet-id`` parameter as well, which
 identifies which subnet it belongs to. However, if the configuration has
-changed, it is possible that a lease could exist with a subnet-id, but
-without any subnet that matches it. Also, it may be possible that the
-subnet's configuration has changed and the subnet-id now belongs to a
-subnet that does not match the lease. Kea's corrective algorithm first
-checks to see if there is a subnet with the subnet-id specified by the
+changed, it is possible that a lease could exist with a ``subnet-id``, but
+without any subnet that matches it. Also, it is possible that the
+subnet's configuration has changed and the ``subnet-id`` now belongs to a
+subnet that does not match the lease.
+
+Kea's corrective algorithm first
+checks to see if there is a subnet with the ``subnet-id`` specified by the
 lease. If there is, it verifies whether the lease belongs to that
-subnet. If not, depending on the lease-checks setting, the lease is
+subnet. If not, depending on the ``lease-checks`` setting, the lease is
 discarded, a warning is displayed, or a new subnet is selected for the
 lease that matches it topologically.
 
@@ -3901,23 +3903,21 @@ There are five levels which are supported:
 -  ``none`` - do no special checks; accept the lease as is.
 
 -  ``warn`` - if problems are detected display a warning, but
-   accept the lease data anyway. This is the default value. If
-   not explicitly configured to some other value, this level will be
-   used.
+   accept the lease data anyway. This is the default value.
 
 -  ``fix`` - if a data inconsistency is discovered, try to
-   correct it. If the correction is not successful, the incorrect data
-   will be inserted anyway.
+   correct it. If the correction is not successful, insert the incorrect data
+   anyway.
 
 -  ``fix-del`` - if a data inconsistency is discovered, try to
    correct it. If the correction is not successful, reject the lease.
    This setting ensures the data's correctness, but some
    incorrect data may be lost. Use with care.
 
--  ``del`` - this is the strictest mode. If any inconsistency is
-   detected, reject the lease. Use with care.
+-  ``del`` - if any inconsistency is
+   detected, reject the lease. This is the strictest mode; use with care.
 
-This feature is currently implemented for the memfile backend. Note the
+This feature is currently implemented for the memfile backend. The
 sanity check applies to the lease database in memory, not to the lease file,
 i.e. inconsistent leases will stay in the lease file.
 
@@ -3936,13 +3936,18 @@ An example configuration that sets this parameter looks as follows:
 
 Storing Extended Lease Information
 ----------------------------------
-In order to support such features as DHCP LeaseQuery
-(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__) it is necessary to
-store additional information with each lease.  Because the amount
-of information stored for each lease has ramifications in terms of
+
+To support such features as DHCP LeaseQuery
+(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__)
+additional information must be stored with each lease. Kea does not
+currently offer a LeaseQuery hook library, but other hook libraries
+may already be using ``user-context``.
+
+Because the amount
+of information for each lease has ramifications in terms of
 performance and system resource consumption, storing this additional
-information is configurable through the "store-extended-info" parameter.
-It defaults to false and may be set at the global, shared-network, and
+information is configurable through the ``store-extended-info`` parameter.
+It defaults to ``false`` and may be set at the global, shared-network, and
 subnet levels.
 
 ::
@@ -3952,11 +3957,10 @@ subnet levels.
        ...
    }
 
-When enabled, information relevant to the DHCPREQUEST asking for the lease is
-added into the lease's user-context as a map element labeled "ISC".  Currently,
-the map will contain a single value, the relay-agent-info option (DHCP Option 82),
-when the DHCPREQUEST received contains it.  Other values may be added at a
-future date. Since DHCPREQUESTs sent as renewals will likely not contain this
+When set to ``true``, information relevant to the DHCPREQUEST asking for the lease is
+added into the lease's user-context as a map element labeled `"ISC"`.  Currently,
+the map contains a single value, the ``relay-agent-info`` option (DHCP Option 82),
+when the DHCPREQUEST received contains it. Since DHCPREQUESTs sent as renewals will likely not contain this
 information, the values taken from the last DHCPREQUEST that did contain it will
 be retained on the lease.  The lease's user-context will look something like this:
 
@@ -3965,15 +3969,11 @@ be retained on the lease.  The lease's user-context will look something like thi
   { "ISC": { "relay-agent-info": "0x52050104AABBCCDD" } }
 
 .. note::
-    This feature is intended to be used in conjunction with an upcoming LeaseQuery
-    hook library and at this time there is other use for this information within Kea.
-
-.. note::
-    It is possible that other hook libraries are already using user-context.
-    Enabling store-extended-info should not interfere with any other user-context
-    content, as long as it does not also use an element labeled "ISC". In other
-    words, user-context is intended to be a flexible container serving multiple
-    purposes.  As long as no other purpose also writes an "ISC" element to
+    As mentioned above, it is possible that other hook libraries are already using ``user-context``.
+    Enabling ``store-extended-info`` should not interfere with any other ``user-context``
+    content, as long as it does not also use an element labeled `"ISC"`. In other
+    words, ``user-context`` is intended to be a flexible container serving multiple
+    purposes. As long as no other purpose also writes an `"ISC"` element to
     user-context there should not be a conflict.
 
 .. _dhcp4-multi-threading-settings:
@@ -3982,21 +3982,21 @@ Multi-Threading Settings
 ------------------------
 
 The Kea server can be configured to process packets in parallel using multiple
-threads. These settings can be found under ``multi-threading`` structure and are
+threads. These settings can be found under the ``multi-threading`` structure and are
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
    parallel (default false).
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
-   parallel.  Supported values are: 0 (auto detect), any positive number sets
-   thread count explicitly (default 0).
+   parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
+   the thread count. The default is 0.
 
 -  ``packet-queue-size`` - specify the size of the queue used by the thread
-   pool to process packets.  Supported values are: 0 (unlimited), any positive
-   number sets queue size explicitly (default 64).
+   pool to process packets. It may be set to 0 (unlimited), or any positive
+   number explicitly sets the queue size. The default is 64.
 
-An example configuration that sets these parameter looks as follows:
+An example configuration that sets these parameters looks as follows:
 
 ::
 
@@ -4012,8 +4012,8 @@ An example configuration that sets these parameter looks as follows:
 Multi-Threading Settings in Different Backends
 ----------------------------------------------
 
-Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
-gave the best performance. Although this section describes our results, those are just
+Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested internally to determine which settings
+give the best performance. Although this section describes our results, they are just
 recommendations and are very dependent on the particular hardware that was used
 for testing. We strongly advise that administrators run their own performance tests.
 
@@ -4022,9 +4022,9 @@ A full report of performance results for the latest stable Kea can be found
 This includes hardware and test scenario descriptions, as well as
 current results.
 
-After enabling multi-threading, the number of threads is set by ``thread-pool-size``
-parameter, and results from our tests show that best configurations for
-kea-dhcp4 are:
+After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
+parameter. Results from our tests show that the best settings for
+``kea-dhcp4`` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
 
@@ -4032,41 +4032,41 @@ kea-dhcp4 are:
 
 -  ``thread-pool-size``: 8 when using ``postgresql``.
 
-Another very important parameter is ``packet-queue-size`` and in our tests we
+Another very important parameter is ``packet-queue-size``; in our tests we
 used it as a multiplier of ``thread-pool-size``. So the actual setting strongly depends
 on ``thread-pool-size``.
 
-Our tests reported best results when:
+We saw the best results in our tests with the following settings:
 
 -  ``packet-queue-size``: 7 * ``thread-pool-size`` when using ``memfile`` for
-   storing leases. In our case it's 7 * 4 = 28. This means that at any given
+   storing leases; in our case it was 7 * 4 = 28. This means that at any given
    time, up to 28 packets could be queued.
 
 -  ``packet-queue-size``: 66 * ``thread-pool-size`` when using ``mysql`` for
-   storing leases. In our case it's 66 * 12 = 792. This means that up to
+   storing leases; in our case it was 66 * 12 = 792. This means that up to
    792 packets could be queued.
 
 -  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
-   storing leases. In our case it's 11 * 8 = 88.
+   storing leases; in our case it was 11 * 8 = 88.
 
-IPv6-only Preferred Networks
+IPv6-Only Preferred Networks
 ----------------------------
 
-A `RFC8925 <https://tools.ietf.org/html/rfc8925>`_ recently published by IETF
+`RFC8925 <https://tools.ietf.org/html/rfc8925>`_, recently published by the IETF,
 specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
 forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
-a network administrator can enable this option to signal to compatible dual-stack devices that the
+a network administrator can enable this option to signal to compatible dual-stack devices that
 IPv6 connectivity is available and they can shut down their IPv4 stack. The new option
-`v6-only-preferred` content is a 32 bit unsigned integer and specifies for how long the device
-should disable its stack for. The value is expressed in seconds.
+``v6-only-preferred`` content is a 32-bit unsigned integer and specifies for how long the device
+should disable its stack. The value is expressed in seconds.
 
-The RFC mentions V6ONLY_WAIT timer. This is implemented in Kea by setting the value of
-v6-only-preferred option. This follows the usual practice of setting options. The
-option value can be specified on pool, subnet, shared network, or global levels, or even
+The RFC mentions the ``V6ONLY_WAIT`` timer. This is implemented in Kea by setting the value of
+the ``v6-only-preferred`` option. This follows the usual practice of setting options; the
+option value can be specified on the pool, subnet, shared network, or global levels, or even
 via host reservations.
 
-Note there is no special processing involved. This follows the standard Kea option processing
-regime. The option will not be sent back, unless the client explicitly requests it. For example, to
+There is no special processing involved; it follows the standard Kea option processing
+regime. The option is not sent back unless the client explicitly requests it. For example, to
 enable the option for the whole subnet, the following configuration can be used:
 
 ::
@@ -4089,20 +4089,20 @@ enable the option for the whole subnet, the following configuration can be used:
 Lease Caching
 -------------
 
-Clients that attempt renewal frequently can cause the server to update
-and write to the database frequently resulting in a performance impact
+Clients that attempt multiple renewals in a short period can cause the server to update
+and write to the database frequently, resulting in a performance impact
 on the server. The cache parameters instruct the DHCP server to avoid
-updating leases too frequently thus avoiding this behavior. Instead
+updating leases too frequently, thus avoiding this behavior. Instead,
 the server assigns the same lease (i.e. reuses it) with no
-modifications except for CLTT (Client Last Transmission Time) which
+modifications except for CLTT (Client Last Transmission Time), which
 does not require disk operations.
 
 The two parameters are the ``cache-threshold`` double and the
-``cache-max-age`` integer and have no default, i.e. the lease caching
+``cache-max-age`` integer; they have no default setting, i.e. the lease caching
 feature must be explicitly enabled. These parameters can be configured
-at the global, shared network and subnet levels. The subnet level has
-the precedence on the shared network level, the global level is used
-as last resort. For example:
+at the global, shared network, and subnet levels. The subnet level has
+precedence over the shared network level, while the global level is used
+as a last resort. For example:
 
 ::
 
@@ -4119,30 +4119,30 @@ as last resort. For example:
 
 When an already assigned lease can fulfill a client query:
 
-  - any important change e.g. for DDNS parameter, hostname or
-    valid lifetime reduction makes the lease not reusable
+  - any important change, e.g. for DDNS parameter, hostname, or
+    valid lifetime reduction, makes the lease not reusable.
 
-  - lease age i.e. the difference between the creation or last modification
-    time and the current time is computed (elapsed duration)
+  - lease age, i.e. the difference between the creation or last modification
+    time and the current time, is computed (elapsed duration).
 
-  - if ``cache-max-age`` is explicitly configured, it is compared with the age
-    and leases that are too old are not reusable (this means that the value 0
-    for ``cache-max-age`` disables the lease cache feature)
+  - if ``cache-max-age`` is explicitly configured, it is compared with the lease age;
+    leases that are too old are not reusable. This means that the value 0
+    for ``cache-max-age`` disables the lease cache feature.
 
   - if ``cache-threshold`` is explicitly configured and is between 0.0 and 1.0,
     it expresses the percentage of the lease valid lifetime which is
     allowed for the lease age. Values below and including 0.0 and
     values greater than 1.0 disable the lease cache feature.
 
-In the example a lease with a valid lifetime of 2000 seconds can be
+In our example, a lease with a valid lifetime of 2000 seconds can be
 reused if it was committed less than 500 seconds ago. With a lifetime
-of 3000 seconds the maximum age of 600 seconds applies.
+of 3000 seconds, the maximum age of 600 seconds applies.
 
-In outbound client responses (e.g. DHCPACK messages) the
-``dhcp-lease-time`` option is set to the reusable valid lifetime
+In outbound client responses (e.g. DHCPACK messages), the
+``dhcp-lease-time`` option is set to the reusable valid lifetime,
 i.e. the expiration date does not change. Other options based on the
-valid lifetime e.g. ``dhcp-renewal-time`` and ``dhcp-rebinding-time``
-also use the reusable lifetime.
+valid lifetime e.g. ``dhcp-renewal-time`` and ``dhcp-rebinding-time``,
+also depend on the reusable lifetime.
 
 .. _host-reservation-v4:
 
@@ -4152,14 +4152,14 @@ Host Reservation in DHCPv4
 There are many cases where it is useful to provide a configuration on a
 per-host basis. The most obvious one is to reserve a specific, static
 address for exclusive use by a given client (host); the returning client
-will receive the same address from the server every time, and other
-clients will generally not receive that address. Another situation when
+receives the same address from the server every time, and other
+clients generally do not receive that address. Another situation when
 host reservations are applicable is when a host has
 specific requirements, e.g. a printer that needs additional DHCP
 options. Yet another possible use case is to define unique names for
 hosts.
 
-Note that there may be cases when a new reservation has been made for a
+There may be cases when a new reservation has been made for a
 client for an address currently in use by another client. We call this
 situation a "conflict."
 These conflicts get resolved automatically over time as described in
@@ -4175,12 +4175,12 @@ structure must have a unique host identifier. In
 the DHCPv4 context, the identifier is usually a hardware or MAC address.
 In most cases an IP address will be specified. It is also possible to
 specify a hostname, host-specific options, or fields carried within the
-DHCPv4 message such as siaddr, sname, or file.
+DHCPv4 message such as ``siaddr``, ``sname``, or ``file``.
 
 .. note::
 
-   Kea requires that the reserved address must be within the subnet.
-   Kea 1.7.10 is the last release that does not enforce this.
+   Kea versions 1.7.10 and newer require that the reserved address must
+   be within the subnet.
 
 The following example shows how to reserve addresses for specific hosts
 in a subnet:
@@ -4216,12 +4216,12 @@ in a subnet:
 
 The first entry reserves the 192.0.2.202 address for the client that
 uses a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the
-address 192.0.2.100 and the hostname of alice-laptop for the client
-using a DUID 0a:0b:0c:0d:0e:0f. (Note that if DNS updates are planned,
+address 192.0.2.100 and the hostname of `alice-laptop` for the client
+using a DUID 0a:0b:0c:0d:0e:0f. (If DNS updates are planned,
 it is strongly recommended that the hostnames be unique.) The
 third example reserves address 192.0.3.203 for a client whose request
-would be relayed by a relay agent that inserts a circuit-id option with
-the value "charter950". The fourth entry reserves address 192.0.2.204
+would be relayed by a relay agent that inserts a ``circuit-id`` option with
+the value `"charter950"`. The fourth entry reserves address 192.0.2.204
 for a client that uses a client identifier with value
 01:11:22:33:44:55:66.
 
@@ -4264,7 +4264,7 @@ Kea supports global host reservations. These are reservations that are
 specified at the global level within the configuration and that do not
 belong to any specific subnet. Kea will still match inbound client
 packets to a subnet as before, but when the subnet's reservation mode is
-set to ``"global"``, Kea will look for host reservations only among the
+set to ``"global"``, Kea looks for host reservations only among the
 global reservations defined. Typically, such reservations would be used
 to reserve hostnames for clients which may move from one subnet to
 another.
@@ -4277,9 +4277,9 @@ another.
 
 .. note::
 
-   Beginning with Kea 1.9.1 reservation mode was replaced by three
-   boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
-   and ``"reservations-out-of-pool"`` which allows the configuration of
+   Since Kea 1.9.1, reservation mode has been replaced by three
+   boolean flags, ``"reservations-global"``, ``"reservations-in-subnet"``,
+   and ``"reservations-out-of-pool"``, which allow the configuration of
    host reservations both globally and in a subnet. In such cases a subnet
    host reservation has preference over a global reservation
    when both exist for the same client.
@@ -4312,13 +4312,15 @@ When Host A renews its address, the server will discover that the
 address being renewed is now reserved for another host - Host B.
 The server will inform Host A that it is no longer allowed to
 use it by sending a DHCPNAK message. The server will not remove the
-lease, though, as there's a small chance that the DHCPNAK may be lost if
+lease, though, as there's a small chance that the DHCPNAK will not be delivered if
 the network is lossy. If that happens, the client will not receive any
 responses, so it will retransmit its DHCPREQUEST packet. Once the
 DHCPNAK is received by Host A, it will revert to server discovery and
 will eventually get a different address. Besides allocating a new lease,
 the server will also remove the old one. As a result, address 192.0.2.10
-will become free. When Host B tries to renew its temporarily assigned
+will become free.
+
+When Host B tries to renew its temporarily assigned
 address, the server will detect that it has a valid lease, but will note
 that there is a reservation for a different address. The server will
 send DHCPNAK to inform Host B that its address is no longer usable, but
@@ -4336,10 +4338,10 @@ reservation is made, the server will either offer a different address
 (when responding to DHCPDISCOVER) or send DHCPNAK (when responding to
 DHCPREQUEST).
 
-The recovery mechanism allows the server to fully recover from a case
+This mechanism allows the server to fully recover from a case
 where reservations conflict with existing leases; however, this procedure
-will take roughly as long as the value set for renew-timer. The
-best way to avoid such recovery is not to define new reservations that
+takes roughly as long as the value set for ``renew-timer``. The
+best way to avoid such a recovery is not to define new reservations that
 conflict with existing leases. Another recommendation is to use
 out-of-pool reservations. If the reserved address does not belong to a
 pool, there is no way that other clients can get it.
