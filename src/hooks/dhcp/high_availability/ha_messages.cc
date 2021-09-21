@@ -96,6 +96,9 @@ extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED = "HA_STATE_MACHINE_
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED = "HA_STATE_MACHINE_PAUSED";
 extern const isc::log::MessageID HA_STATE_TRANSITION = "HA_STATE_TRANSITION";
 extern const isc::log::MessageID HA_STATE_TRANSITION_PASSIVE_BACKUP = "HA_STATE_TRANSITION_PASSIVE_BACKUP";
+extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED = "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_FAILED = "HA_SYNC_COMPLETE_NOTIFY_FAILED";
+extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED = "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED";
 extern const isc::log::MessageID HA_SYNC_FAILED = "HA_SYNC_FAILED";
 extern const isc::log::MessageID HA_SYNC_HANDLER_FAILED = "HA_SYNC_HANDLER_FAILED";
 extern const isc::log::MessageID HA_SYNC_START = "HA_SYNC_START";
@@ -198,6 +201,9 @@ const char* values[] = {
     "HA_STATE_MACHINE_PAUSED", "state machine paused in state %1",
     "HA_STATE_TRANSITION", "server transitions from %1 to %2 state, partner state is %3",
     "HA_STATE_TRANSITION_PASSIVE_BACKUP", "server transitions from %1 to %2 state",
+    "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED", "failed to send ha-sync-complete-notify to %1: %2",
+    "HA_SYNC_COMPLETE_NOTIFY_FAILED", "error processing ha-sync-complete-notify command on %1: %2",
+    "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED", "ha-sync-complete-notify command failed: %1",
     "HA_SYNC_FAILED", "lease database synchronization with %1 failed: %2",
     "HA_SYNC_HANDLER_FAILED", "ha-sync command failed: %1",
     "HA_SYNC_START", "starting lease database synchronization with %1",
