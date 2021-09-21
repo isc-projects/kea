@@ -351,7 +351,7 @@ The following is the list of all possible server states:
    issues the ``ha-sync-complete-notify`` command to notify the partner.
    In most states, the partner re-enables its DHCP service to continue
    responding to the DHCP queries. In the ``partner-down`` state, the
-   partner first reassures that the communication between the servers
+   partner first ensures that the communication between the servers
    is re-established before enabling the DHCP service.
    The syncing operation is synchronous; the server waits for an answer
    from the partner and does nothing else while the lease
