@@ -4787,21 +4787,6 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     // normal state.
     EXPECT_FALSE(service.network_state_->isServiceEnabled());
 
-    factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_ERROR);
-
-    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
-
-    ASSERT_TRUE(rsp);
-    checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
-                "Server successfully notified about the synchronization completion.");
-
-    // The server should remain in the partner-down state.
-    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
-
-    // The service should be disabled to avoid allocating new leases before
-    // the server transitions to the normal state.
-    EXPECT_FALSE(service.network_state_->isServiceEnabled());
-
     // It is possible that the connection from this server to the partner
     // is still broken. In that case, the HA_SYNCED_PARTNER_UNAVAILABLE_EVT
     // is emitted and the server should enable DHCP service to continue
