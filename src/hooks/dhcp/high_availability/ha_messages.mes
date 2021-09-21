@@ -555,7 +555,7 @@ failed. The first argument provides the partner server's name. The second argume
 provides a reason for the failure.
 
 % HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-sync-complete-notify to %1: %2
-This warning message indicates that there was a problem in communication with a
+This warning message indicates that there was a problem in communication with an
 HA peer while sending the ha-sync-complete-notify command. The first argument
 provides the remote server's name. The second argument provides a reason for
 failure.
