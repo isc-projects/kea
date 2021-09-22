@@ -1091,9 +1091,9 @@ be minimal.
    and seeing them sporadically during times of heavy traffic load does not
    necessarily indicate a problem.  If, however, they occur continually during
    times of routine traffic load they likely indicate potential mismatches in
-   server capibilities and/or configuration and this should be investigate as the
-   size of the queues may eventually impair an active server's ability to respond
-   to clients in a timely manner.
+   server capibilities and/or configuration and this should be investigated as
+   the size of the queues may eventually impair an active server's ability to
+   respond to clients in a timely manner.
 
 .. _ha-sharing-lease-info:
 
