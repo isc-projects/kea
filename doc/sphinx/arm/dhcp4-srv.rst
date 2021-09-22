@@ -3937,10 +3937,10 @@ An example configuration that sets this parameter looks as follows:
 Storing Extended Lease Information
 ----------------------------------
 
-To support such features as DHCP LeaseQuery
+To support such features as DHCP Leasequery
 (`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__)
 additional information must be stored with each lease. Kea does not
-currently offer a LeaseQuery hook library, but other hook libraries
+currently offer a Leasequery hook library, but other hook libraries
 may already be using ``user-context``.
 
 Because the amount
@@ -6096,7 +6096,7 @@ The DHCPv4 server supports the following statistics:
    | Statistic                                 | Data Type      | Description                        |
    +===========================================+================+====================================+
    | pkt4-received                             | integer        | Number of DHCPv4 packets           |
-   |                                           |                | received.  This includes all       |
+   |                                           |                | received. This includes all        |
    |                                           |                | packets: valid, bogus,             |
    |                                           |                | corrupted, rejected, etc. This     |
    |                                           |                | statistic is expected to grow      |
@@ -6216,7 +6216,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | discovered that the                |
    |                                           |                | address is currently               |
    |                                           |                | used by an unknown                 |
-   |                                           |                | device in the                      |
+   |                                           |                | device elsewhere in the            |
    |                                           |                | network.                           |
    +-------------------------------------------+----------------+------------------------------------+
    | pkt4-inform-received                      | integer        | Number of DHCPINFORM               |
@@ -6241,12 +6241,12 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | this statistic                     |
    |                                           |                | indicates that the                 |
    |                                           |                | server received a                  |
-   |                                           |                | packet that it wasn't              |
+   |                                           |                | packet that it was not             |
    |                                           |                | able to recognize,                 |
    |                                           |                | either with an                     |
    |                                           |                | unsupported type or                |
    |                                           |                | possibly malformed                 |
-   |                                           |                | (without message type              |
+   |                                           |                | (without a message-type            |
    |                                           |                | option).                           |
    +-------------------------------------------+----------------+------------------------------------+
    | pkt4-sent                                 | integer        | Number of DHCPv4                   |
@@ -6334,7 +6334,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | but the most common                |
    |                                           |                | reasons may be: an                 |
    |                                           |                | unacceptable packet                |
-   |                                           |                | type, direct                       |
+   |                                           |                | type was received, direct          |
    |                                           |                | responses are                      |
    |                                           |                | forbidden, or the                  |
    |                                           |                | server-id sent by the              |
@@ -6352,7 +6352,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | pools. This statistic              |
    |                                           |                | changes only during                |
    |                                           |                | configuration                      |
-   |                                           |                | changes. Note it does              |
+   |                                           |                | updates. It does                   |
    |                                           |                | not take into account              |
    |                                           |                | any addresses that                 |
    |                                           |                | may be reserved due                |
@@ -6423,8 +6423,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | server startup. It is              |
    |                                           |                | incremented each time              |
    |                                           |                | an expired lease is                |
-   |                                           |                | reclaimed.                         |
-   |                                           |                | This statistic never               |
+   |                                           |                | reclaimed and never                |
    |                                           |                | decreases. It can be               |
    |                                           |                | used as a long-term                |
    |                                           |                | indicator of how many              |
@@ -6458,8 +6457,8 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | of leases currently                |
    |                                           |                | unavailable. Once a                |
    |                                           |                | lease is recovered,                |
-   |                                           |                | this statistic will                |
-   |                                           |                | be decreased;                      |
+   |                                           |                | this statistic is                  |
+   |                                           |                | decreased;                         |
    |                                           |                | ideally, this                      |
    |                                           |                | statistic should be                |
    |                                           |                | zero. If this                      |
@@ -6482,8 +6481,8 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | of leases currently                |
    |                                           |                | unavailable. Once a                |
    |                                           |                | lease is recovered,                |
-   |                                           |                | this statistic will                |
-   |                                           |                | be decreased;                      |
+   |                                           |                | this statistic is                  |
+   |                                           |                | decreased;                         |
    |                                           |                | ideally, this                      |
    |                                           |                | statistic should be                |
    |                                           |                | zero. If this                      |
@@ -6510,7 +6509,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | decreases. It can be               |
    |                                           |                | used as a long-term                |
    |                                           |                | indicator of how many              |
-   |                                           |                | actual valid Declines              |
+   |                                           |                | actual valid declines              |
    |                                           |                | were processed and                 |
    |                                           |                | recovered from. This               |
    |                                           |                | is a global statistic              |
@@ -6527,7 +6526,7 @@ The DHCPv4 server supports the following statistics:
    |                                           |                | decreases. It can be               |
    |                                           |                | used as a long-term                |
    |                                           |                | indicator of how many              |
-   |                                           |                | actual valid Declines              |
+   |                                           |                | actual valid declines              |
    |                                           |                | were processed and                 |
    |                                           |                | recovered from. The                |
    |                                           |                | *id* is the subnet-id              |
@@ -6562,7 +6561,7 @@ The DHCPv4 server supports the following statistics:
    This section describes DHCPv4-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-Beginning with Kea 1.7.7 the DHCPv4 server provides two global
+Since Kea 1.7.7, the DHCPv4 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
@@ -6595,7 +6594,7 @@ Management API for the DHCPv4 Server
 The management API allows the issuing of specific management commands,
 such as statistics retrieval, reconfiguration, or shutdown. For more
 details, see :ref:`ctrl-channel`. Currently, the only supported
-communication channel type is UNIX stream socket. By default there are
+communication channel type is the UNIX stream socket. By default there are
 no sockets open; to instruct Kea to open a socket, the following entry
 in the configuration file can be used:
 
@@ -6617,7 +6616,7 @@ The length of the path specified by the ``socket-name`` parameter is
 restricted by the maximum length for the UNIX socket name on the administrator's
 operating system, i.e. the size of the ``sun_path`` field in the
 ``sockaddr_un`` structure, decreased by 1. This value varies on
-different operating systems between 91 and 107 characters. Typical
+different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON
@@ -6663,7 +6662,7 @@ as described in :ref:`command-stats`.
 User Contexts in IPv4
 =====================
 
-Kea allows loading hook libraries that can sometimes benefit from
+Kea allows the loading of hook libraries that can sometimes benefit from
 additional parameters. If such a parameter is specific to the whole
 library, it is typically defined as a parameter for the hook library.
 However, sometimes there is a need to specify parameters that are
@@ -6673,15 +6672,15 @@ See :ref:`user-context` for additional background regarding the user
 context idea. See :ref:`user-context-hooks` for a discussion from the
 hooks perspective.
 
-User contexts can be specified at global scope, shared network, subnet,
-pool, client class, option data, or definition level, and via host
+User contexts can be specified at global scope; at the shared network, subnet,
+pool, client class, option data, or definition level; and via host
 reservation. One other useful feature is the ability to store comments or
 descriptions.
 
 Let's consider an imaginary case of devices that have colored LED lights.
 Depending on their location, they should glow red, blue, or green. It
-would be easy to write a hook library that would send specific values as
-maybe a vendor option. However, the server has to have some way to
+would be easy to write a hook library that would send specific values,
+maybe as a vendor option. However, the server has to have some way to
 specify that value for each pool. This need is addressed by user
 contexts. In essence, any user data can be specified in the user context
 as long as it is a valid JSON map. For example, the aforementioned case
@@ -6734,19 +6733,19 @@ The following standards are currently supported:
    DHCPINFORM (8), DHCPACK (5), and DHCPNAK(6).
 
 -  *DHCP Options and BOOTP Vendor Extensions*, `RFC
-   2132 <https://tools.ietf.org/html/rfc2132>`__: Supported options are:
+   2132 <https://tools.ietf.org/html/rfc2132>`__: Supported options are
    PAD (0), END(255), Message Type(53), DHCP Server Identifier (54),
    Domain Name (15), DNS Servers (6), IP Address Lease Time (51), Subnet
-   mask (1), and Routers (3).
+   Mask (1), and Routers (3).
 
 -  *The IPv4 Subnet Selection Option for DHCP*, `RFC
    3011 <https://tools.ietf.org/html/rfc3011>`__: The subnet selection option
-   is supported. If received in a packet, it will be used in the subnet selection
+   is supported. If received in a packet, it is used in the subnet selection
    process.
 
 -  *DHCP Relay Agent Information Option*, `RFC
    3046 <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information,
-   Circuit-id, and Remote-id options are supported.
+   Circuit ID, and Remote ID options are supported.
 
 -  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
    <https://tools.ietf.org/html/rfc3527>`__: The link selection sub-option
@@ -6759,71 +6758,71 @@ The following standards are currently supported:
    options are supported.
 
 -  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC
-   3993 <https://tools.ietf.org/html/rfc3993>`__: The subscriber-id
+   3993 <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID
    option is supported.
 
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
    <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to
    handle the Client FQDN option. Also, it is able to use the
-   kea-dhcp-ddns component to initiate appropriate DNS Update
+   ``kea-dhcp-ddns`` component to initiate appropriate DNS Update
    operations.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
    Configuration Protocol (DHCP) Clients*, `RFC 4703
-   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses DHCP-DDNS
+   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses a DHCP-DDNS
    server to resolve conflicts.
 
 -  *Client Identifier Option in DHCP Server Replies*, `RFC
-   6842 <https://tools.ietf.org/html/rfc6842>`__: Server by default sends
-   back client-id option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
+   6842 <https://tools.ietf.org/html/rfc6842>`__: The server by default sends
+   back the ``client-id`` option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
 
 -  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
-   <https://tools.ietf.org/html/rfc8357>`__: The Kea server is able
-   to handle Relay Agent Information Source Port suboption in a received
-   message, remembers the UDP port  and sends back reply to the same relay
+   <https://tools.ietf.org/html/rfc8357>`__: The Kea server
+   handles the Relay Agent Information Source Port sub-option in a received
+   message, remembers the UDP port, and sends back reply to the same relay
    agent using this UDP port.
 
 -  *IPv6-Only Preferred Option for DHCPv4*, `RFC 8925
    <https://tools.ietf.org/html/rfc8925>`__: The Kea
-   server is able to designate its pools and subnets as v6only-preferred and send
-   back the `v6-only-preferred` option to clients that requested it.
+   server is able to designate its pools and subnets as IPv6-Only Preferred and send
+   back the ``v6-only-preferred`` option to clients that requested it.
 
 Known RFC Violations
 --------------------
 
-In principle Kea seeks to be a reference implementation aiming to implement 100% of the RFC standards.
-However, in some cases there are practical aspects that make Kea not adhere completely to the text of the RFC documents.
+In principle, Kea aspires to be a reference implementation and aims to implement 100% of the RFC standards.
+However, in some cases there are practical aspects that prevent Kea from completely adhering to the text of the RFC documents.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming DHCPREQUEST packet has no
-  `requested IP address` option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However, there
-  are broken clients out there that will always send a DHCPREQUEST without those. As such, Kea accepts such DHCPREQUESTs,
-  will assign an address and will respond with an ACK.
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, page 30, says that if the incoming DHCPREQUEST packet has no
+  `requested IP address` option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However,
+  broken clients exist that will always send a DHCPREQUEST without those indicated. In that event, Kea accepts the DHCPREQUEST,
+  assigns an address, and responds with an ACK.
 
-- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ table 5 says that messages
+- `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, table 5, says that messages
   of type DHCPDECLINE or DHCPRELEASE must have the server identifier set and
   should be dropped if that option is missing. However, ISC DHCP does not enforce this, presumably as a compatibility
-  effort for broken clients. The Kea team decided to follow suit.
+  effort for broken clients, and the Kea team decided to follow suit.
 
 .. _dhcp4-limit:
 
 DHCPv4 Server Limitations
 =========================
 
-These are the current limitations of the DHCPv4 server software. Most of
+These are the current known limitations of the Kea DHCPv4 server software. Most of
 them are reflections of the current stage of development and should be
 treated as “not implemented yet,” rather than as actual limitations.
 However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
--  On Linux and BSD system families the DHCP messages are sent and
-   received over the raw sockets (using LPF and BPF) and all packet
+-  On the Linux and BSD system families, DHCP messages are sent and
+   received over raw sockets (using LPF and BPF) and all packet
    headers (including data link layer, IP, and UDP headers) are created
    and parsed by Kea, rather than by the system kernel. Currently, Kea
-   can only parse the data link layer headers with a format adhering to
-   the IEEE 802.3 standard and assumes this data link layer header
-   format for all interfaces. Thus, Kea will fail to work on interfaces
-   which use different data link layer header formats (e.g. Infiniband).
+   can only parse the data-link layer headers with a format adhering to
+   the IEEE 802.3 standard, and assumes this data link layer header
+   format for all interfaces. Thus, Kea does not work on interfaces
+   which use different data-link layer header formats (e.g. Infiniband).
 
 -  The DHCPv4 server does not verify that an assigned address is unused.
    According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, the
@@ -6836,7 +6835,7 @@ Kea DHCPv4 Server Examples
 ==========================
 
 A collection of simple-to-use examples for the DHCPv4 component of Kea
-is available with the source files, located in the doc/examples/kea4
+is available with the source files, located in the `doc/examples/kea4`
 directory.
 
 .. _dhcp4-cb:
@@ -6845,11 +6844,11 @@ Configuration Backend in DHCPv4
 ===============================
 
 In the :ref:`config-backend` section we have described the Configuration
-Backend feature, its applicability, and its limitations. This section focuses
-on the usage of the CB with the DHCPv4 server. It lists the supported
-parameters, describes limitations, and gives examples of the DHCPv4
-server configuration to take advantage of the CB. Please also refer to
-the sibling section :ref:`dhcp6-cb` for the DHCPv6-specific usage of
+Backend (CB) feature, its applicability, and its limitations. This section focuses
+on the usage of the CB with the Kea DHCPv4 server. It lists the supported
+parameters, describes limitations, and gives examples of DHCPv4
+server configurations to take advantage of the CB. Please also refer to
+the corresponding section :ref:`dhcp6-cb` for DHCPv6-specific usage of
 the CB.
 
 .. _dhcp4-cb-parameters:
@@ -6858,47 +6857,43 @@ Supported Parameters
 --------------------
 
 The ultimate goal for the CB is to serve as a central configuration
-repository for one or multiple Kea servers connected to the database. In
-the future, it will be possible to store most of the server's
-configuration in the database and reduce the configuration file to a bare
-minimum; the only mandatory parameter will be
-``config-control``, which includes the necessary information to connect
-to the database. In the present release, however, only a subset of
+repository for one or multiple Kea servers connected to a database.
+In currently supported Kea versions, only a subset of
 the DHCPv4 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-The following table lists DHCPv4 specific parameters supported by the
-Configuration Backend, with an indication on which level of the hierarchy
-it is currently supported. The "n/a" marks cases when a
+The following table lists DHCPv4-specific parameters supported by the
+Configuration Backend, with an indication of the level of the hierarchy
+at which it is currently supported. "n/a" marks cases when a
 given parameter is not applicable at the particular level of the
 hierarchy or in cases when the server does not support the parameter
 at this level of the hierarchy. "no" is used when a parameter is
 supported at the given level of the hierarchy but is not
 configurable via the Configuration Backend.
 
-All supported parameters can be configured via the ``cb_cmds`` hooks library
+All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`cb-cmds-library` section. The general rule is that
-the scalar global parameters are set using
-``remote-global-parameter4-set``; the shared network-specific parameters
-are set using ``remote-network4-set``; and the subnet- and pool-level
+scalar global parameters are set using
+``remote-global-parameter4-set``; shared network-specific parameters
+are set using ``remote-network4-set``; and subnet- and pool-level
 parameters are set using ``remote-subnet4-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
-table. The non-scalar global parameters have dedicated commands; for example,
+table. Non-scalar global parameters have dedicated commands; for example,
 the global DHCPv4 options (``option-data``) are modified using
-``remote-option4-global-set``. Client classes together with class specific
-option definitions and DHCPv4 options are configured using the
+``remote-option4-global-set``. Client classes, together with class-specific
+option definitions and DHCPv4 options, are configured using the
 ``remote-class4-set`` command.
 
-The :ref:`cb-sharing` explains the concept of shareable
+The :ref:`cb-sharing` section explains the concept of shareable
 and non-shareable configuration elements and the limitations for
 sharing them between multiple servers. In the DHCP configuration (both DHCPv4
-and DHCPv6) the shareable configuration elements are: subnets and shared
+and DHCPv6), the shareable configuration elements are subnets and shared
 networks. Thus, they can be explicitly associated with multiple server tags.
-The global parameters, option definitions and global options are non-shareable
-and they can be associated with only one server tag. This rule does not apply
-to the configuration elements associated with "all" servers. Any configuration
-element associated with "all" servers (using "all" keyword as a server tag) is
+The global parameters, option definitions, and global options are non-shareable
+and can be associated with only one server tag. This rule does not apply
+to the configuration elements associated with `"all"` servers. Any configuration
+element associated with `"all"` servers (using the `"all"` keyword as a server tag) is
 used by all servers connecting to the configuration database.
 
 .. table:: List of DHCPv4 Parameters Supported by the Configuration Backend
@@ -6988,8 +6983,8 @@ used by all servers connecting to the configuration database.
 
 .. _dhcp4-cb-json:
 
-Enabling Configuration Backend
-------------------------------
+Enabling the Configuration Backend
+----------------------------------
 
 Consider the following configuration snippet:
 
@@ -7021,8 +7016,8 @@ and the credentials to be used to connect to this database. (Note that
 the parameters specified here correspond to the database specification
 for the lease database backend and hosts database backend.) Currently
 only one database connection can be specified on the
-``config-databases`` list. The server will connect to this database
-during the startup or reconfiguration, and will fetch the configuration
+``config-databases`` list. The server connects to this database
+during startup or reconfiguration, and fetches the configuration
 available for this server from the database. This configuration is
 merged into the configuration read from the configuration file.
 
@@ -7037,55 +7032,55 @@ merged into the configuration read from the configuration file.
    subnets be specified in the database and that no subnets be specified in
    the configuration file. It is possible to specify the subnets in both
    places, but the subnets in the
-   configuration file with overlapping ids and/or prefixes with the
+   configuration file with overlapping IDs and/or prefixes with the
    subnets from the database will be superseded by those from the
    database.
 
-Once the Kea server is configured, it starts periodically polling for
-the configuration changes in the database. The frequency of polling is
+Once the Kea server is configured, it starts periodically polling
+the database for configuration changes. The polling frequency is
 controlled by the ``config-fetch-wait-time`` parameter, expressed
 in seconds; it is the period between the time when the server
-completed last polling (and possibly the local configuration update) and
+completed its last poll (and possibly the local configuration update) and
 the time when it will begin polling again. In the example above, this period
 is set to 20 seconds. This means that after adding a new configuration
 into the database (e.g. adding a new subnet), it will take up to 20 seconds
 (plus the time needed to fetch and apply the new configuration) before
 the server starts using this subnet. The lower the
 ``config-fetch-wait-time`` value, the shorter the time for the server to
-react to the incremental configuration updates in the database. On the
+react to incremental configuration updates in the database. On the
 other hand, polling the database too frequently may impact the DHCP
 server's performance, because the server needs to make at least one query
-to the database to discover the pending configuration updates. The
-default value of the ``config-fetch-wait-time`` is 30 seconds.
+to the database to discover any pending configuration updates. The
+default value of ``config-fetch-wait-time`` is 30 seconds.
 
 The ``config-backend-pull`` command can be used to force the server to
-immediately poll the configuration changes from the database and avoid
-waiting for the next fetch cycle. The command was added in Kea release
-1.7.1 for DHCPv4 and DHCPv6 servers.
+immediately poll any configuration changes from the database and avoid
+waiting for the next fetch cycle. (This command was added in Kea release
+1.7.1 for both DHCPv4 and DHCPv6 servers.)
 
-Finally, in the configuration example above, two hooks libraries are
+Finally, in the configuration example above, two hook libraries are
 loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of
 the Configuration Backend for MySQL. It must be always present when the
 server uses MySQL as the configuration repository. Failing to load this
 library will result in an error during the server configuration if the
-"mysql" database is selected with the ``config-control`` parameter.
+`"mysql"` database is selected with the ``config-control`` parameter.
 
-The second hooks library, ``libdhcp_cb_cmds.so``, is optional. It should
-be loaded when the Kea server instance is to be used for managing the
+The second hook library, ``libdhcp_cb_cmds.so``, is optional. It should
+be loaded when the Kea server instance is to be used to manage the
 configuration in the database. See the :ref:`cb-cmds-library` section for
-details. Note that this hooks library is only available to ISC
-customers with a support contract.
+details. This hook library is only available to ISC
+customers with a paid support contract.
 
 .. _dhcp4-compatibility:
 
 Kea DHCPv4 Compatibility Configuration Parameters
 =================================================
 
-By default, Kea aims to follow the RFC documents to promote better standards
-compliance. However, there are buggy implementations out there that cannot be
-easily fixed or upgraded. Therefore Kea provides an easy to use compatibility
-mode for broken or non-compliant clients. For that purpose, flags have to be
-enabled in order to enable uncommon practices:
+ISC's intention is for Kea to follow the RFC documents to promote better standards
+compliance. However, many buggy DHCP implementations already exist that cannot be
+easily fixed or upgraded. Therefore, Kea provides an easy-to-use compatibility
+mode for broken or non-compliant clients. For that purpose, flags must be
+enabled to enable uncommon practices:
 
 .. code-block:: json
 
@@ -7104,9 +7099,9 @@ By default, tuple fields defined in custom options are parsed as a set of
 length-value pairs.
 
 With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
-the option's buffer, Kea no longer complains with the log message ``unable to
+the option's buffer, previous versions of Kea returned a log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
-with ``x < y``. Instead, the value is considered to be the rest of the buffer,
+with ``x < y``; this no longer occurs. Instead, the value is considered to be the rest of the buffer,
 or in terms of the log message above, the tuple length ``y`` becomes ``x``.
 
 .. code-block:: json
