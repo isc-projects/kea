@@ -2700,7 +2700,7 @@ the client has an IP address configured (e.g. using manual
 configuration) and only contacts the server to obtain other
 configuration parameters, such as addresses of DNS servers. To
 obtain the stateless configuration parameters, the client sends the
-DHCPINFORM message to the server with the `"ciaddr"` set to the address
+DHCPINFORM message to the server with the ``ciaddr`` set to the address
 that the client is currently using. The server unicasts the DHCPACK
 message to the client that includes the stateless configuration
 (`"yiaddr"` not set).
@@ -2734,13 +2734,13 @@ will be used solely for stateless configuration.
 This server will associate the subnet with the client if one of the
 following conditions is met:
 
--  The DHCPINFORM is relayed and the giaddr matches the configured
+-  The DHCPINFORM is relayed and the ``giaddr`` matches the configured
    subnet.
 
--  The DHCPINFORM is unicast from the client and the ciaddr matches the
+-  The DHCPINFORM is unicast from the client and the ``ciaddr`` matches the
    configured subnet.
 
--  The DHCPINFORM is unicast from the client and the ciaddr is not set,
+-  The DHCPINFORM is unicast from the client and the ``ciaddr`` is not set,
    but the source address of the IP packet matches the configured
    subnet.
 
@@ -5336,21 +5336,20 @@ finds multiple reservations for the same IP address.
 Shared Networks in DHCPv4
 =========================
 
-DHCP servers use subnet information in two ways. First, it is used to
-determine the point of attachment, or where the client is
-connected to the network. Second, the subnet information is used to
-group information pertaining to a specific location in the network. This
-approach works well in general, but there are scenarios where the
-boundaries are blurred. Sometimes it is useful to have more than one
+DHCP servers use subnet information in two ways. It is used to
+both determine the point of attachment, i.e. where the client is
+connected to the network, and to
+group information pertaining to a specific location in the network.
+However, it is sometimes useful to have more than one
 logical IP subnet deployed on the same physical link.
 Understanding that two or more subnets are used on the same link requires
 additional logic in the DHCP server. This capability is called "shared
-networks" in the Kea and ISC DHCP projects. (It is sometimes also called
-"shared subnets"; in Microsoft's nomenclature it is called "multinet.")
+networks" in Kea, and sometimes also
+"shared subnets"; in Microsoft's nomenclature it is called "multinet."
 
-There are many use cases where the feature is useful; this paragraph
-explains just a handful of the most common ones. The first and by far
-the most common use case is an existing network that has grown and is
+There are many use cases where the feature is useful; here we
+explain just a handful of the most common ones. The first and by far
+most common use case is an existing network that has grown and is
 running out of available address space. Rather than migrating all
 devices to a new, larger subnet, it is easier to simply configure
 additional subnets on top of the existing one. Sometimes, due to address
@@ -5370,9 +5369,9 @@ any of the pools defined within the subnets belonging to the shared
 network. Internally, the server selects one of the subnets belonging to
 a shared network and tries to allocate an address from this subnet. If
 the server is unable to allocate an address from the selected subnet
-(e.g., due to address-pool exhaustion), it will use another subnet from
-the same shared network and will try to allocate an address from this subnet,
-etc. Therefore, the server will typically allocate all
+(e.g., due to address-pool exhaustion), it uses another subnet from
+the same shared network and tries to allocate an address from this subnet.
+The server typically allocates all
 addresses available in a given subnet before it starts allocating
 addresses from other subnets belonging to the same shared network.
 However, in certain situations the client can be allocated an address
@@ -5449,7 +5448,7 @@ requires additional processing and thus lowers the server's performance.
 To avoid unnecessary performance degradation, the shared subnets should
 only be defined when required by the deployment.
 
-Shared networks provide an ability to specify many parameters in the
+Shared networks provide the ability to specify many parameters in the
 shared network scope that apply to all subnets within it. If
 necessary, it is possible to specify a parameter in the shared network scope and
 then override its value in the subnet scope. For example:
@@ -5505,28 +5504,29 @@ then override its value in the subnet scope. For example:
            ]
        } ]
 
-In this example, there is a log-servers option defined that is available
+In this example, there is a `"log-servers"` option defined that is available
 to clients in both subnets in this shared network. Also, the valid
 lifetime is set to 10 minutes (600s). However, the first subnet
-overrides some of the values (valid lifetime is 20 minutes, different IP
-address for log-servers), but also adds its own option (router address).
-Assuming a client asking for router and log servers options is assigned
+overrides some of the values (the valid lifetime is 20 minutes, there is a different IP
+address for `"log-servers"`), but also adds its own option (the router address).
+Assuming a client asking for router and `"log-servers"` options is assigned
 a lease from this subnet, it will get a lease for 20 minutes and a
-log-servers and routers value of 10.0.0.254. If the same client is
+`"log-servers"` and routers value of 10.0.0.254. If the same client is
 assigned to the second subnet, it will get a 10-minute lease, a
-log-servers value of 1.2.3.4, and routers set to 192.0.2.1.
+`"log-servers"` value of 1.2.3.4, and routers set to 192.0.2.1.
 
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name at the shared network level
+It is possible to specify an interface name at the shared network level,
 to tell the server that this specific shared network is reachable
 directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
 using subnets that are reachable over different interfaces. In other
 words, all subnets within the shared network must have the same value
-of the "interface" parameter. The following configuration is wrong.
+of the `"interface"` parameter. The following configuration is an
+example of what **NOT** to do:
 
 ::
 
@@ -5551,8 +5551,8 @@ of the "interface" parameter. The following configuration is wrong.
            ]
        } ]
 
-To minimize the chance of the configuration errors, it is often more convenient
-to simply specify the interface name once, at the shared network level, like
+To minimize the chance of configuration errors, it is often more convenient
+to simply specify the interface name once, at the shared network level, as
 shown in the example below.
 
 ::
@@ -5578,14 +5578,15 @@ shown in the example below.
        } ]
 
 
-In case of the relayed traffic, the subnets are typically selected using
+With relayed traffic, subnets are typically selected using
 the relay agents' addresses. If the subnets are used independently (not
-grouped within a shared network) it is allowed to specify a different relay
-address for each of these subnets. When multiple subnets belong to a
+grouped within a shared network), a different relay
+address can be specified for each of these subnets. When multiple subnets belong to a
 shared network they must be selected via the same relay address and,
 similarly to the case of the local traffic described above, it is a
 configuration error to specify different relay addresses for the respective
-subnets in the shared network. The following configuration is wrong.
+subnets in the shared network. The following configuration is another example
+of what **NOT** to do:
 
 ::
 
@@ -5616,7 +5617,7 @@ subnets in the shared network. The following configuration is wrong.
    ]
 
 Again, it is better to specify the relay address at the shared network
-level and this value will be inherited by all subnets belonging to the
+level; this value will be inherited by all subnets belonging to the
 shared network.
 
 ::
@@ -5643,14 +5644,14 @@ shared network.
 
 Even though it is technically possible to configure two (or more) subnets
 within the shared network to use different relay addresses, this will almost
-always lead to a different behavior than what the user would expect. In this
+always lead to a different behavior than what the user expects. In this
 case, the Kea server will initially select one of the subnets by matching
 the relay address in the client's packet with the subnet's configuration.
 However, it MAY end up using the other subnet (even though it does not match
-the relay address) if the client already has a lease in this subnet, has a
-host reservation in this subnet or simply the initially selected subnet has no
+the relay address) if the client already has a lease in this subnet or has a
+host reservation in this subnet, or simply if the initially selected subnet has no
 more addresses available. Therefore, it is strongly recommended to always
-specify subnet selectors (interface or a relay address) at shared network
+specify subnet selectors (interface or relay address) at the shared-network
 level if the subnets belong to a shared network, as it is rarely useful to
 specify them at the subnet level and it may lead to the configuration errors
 described above.
@@ -5665,12 +5666,12 @@ classification can be applied to subnets belonging to shared networks in
 the same way as it is used for subnets specified outside of shared
 networks. It is important to understand how the server selects subnets
 for clients when client classification is in use, to ensure that the
-desired subnet is selected for a given client type.
+appropriate subnet is selected for a given client type.
 
 If a subnet is associated with a class, only the clients belonging to
 this class can use this subnet. If there are no classes specified for a
 subnet, any client connected to a given shared network can use this
-subnet. A common mistake is to assume that the subnet including a client
+subnet. A common mistake is to assume that a subnet including a client
 class is preferred over subnets without client classes. Consider the
 following example:
 
@@ -5702,14 +5703,14 @@ following example:
        ]
    }
 
-If the client belongs to the "b-devices" class (because it includes
+If the client belongs to the `"b-devices"` class (because it includes
 option 93 with a value of 0x0002), that does not guarantee that the
 subnet 10.0.0.0/24 will be used (or preferred) for this client. The
 server can use either of the two subnets, because the subnet 192.0.2.0/26
 is also allowed for this client. The client classification used in this
 case should be perceived as a way to restrict access to certain subnets,
 rather than a way to express subnet preference. For example, if the
-client does not belong to the "b-devices" class it may only use the
+client does not belong to the `"b-devices"` class, it may only use the
 subnet 192.0.2.0/26 and will never use the subnet 10.0.0.0/24.
 
 A typical use case for client classification is in a cable network,
@@ -5754,8 +5755,8 @@ on option 93 values.
    }
 
 In this example each class has its own restriction. Only clients that
-belong to class "a-devices" will be able to use subnet 192.0.2.0/26 and
-only clients belonging to "b-devices" will be able to use subnet
+belong to class `"a-devices"` are able to use subnet 192.0.2.0/26 and
+only clients belonging to `"b-devices"` are able to use subnet
 10.0.0.0/24. Care should be taken not to define too-restrictive
 classification rules, as clients that are unable to use any subnets will
 be refused service. However, this may be a desired outcome if one wishes
@@ -5768,8 +5769,8 @@ subnets are placed in the global subnets scope, rather than in the
 shared network, the server will still use classification rules to pick
 the right subnet for a given class of devices. The major benefit of
 placing subnets within the shared network is that common parameters for
-the logically grouped subnets can be specified once, in the shared
-network scope, e.g. the "interface" or "relay" parameter. All subnets
+the logically grouped subnets can be specified once in the
+shared-network scope, e.g. the `"interface"` or `"relay"` parameter. All subnets
 belonging to this shared network will inherit those parameters.
 
 Host Reservations in Shared Networks
@@ -5816,20 +5817,20 @@ similar to regular subnets:
 
 It is worth noting that Kea conducts additional checks when processing a
 packet if shared networks are defined. First, instead of simply checking
-whether there's a reservation for a given client in its initially
+whether there is a reservation for a given client in its initially
 selected subnet, Kea looks through all subnets in a shared network for a
 reservation. This is one of the reasons why defining a shared network
 may impact performance. If there is a reservation for a client in any
-subnet, that particular subnet will be picked for the client. Although
-it is technically not an error, it is considered a bad practice to define
+subnet, that particular subnet is selected for the client. Although
+it is technically not an error, it is considered bad practice to define
 reservations for the same host in multiple subnets belonging to the same
 shared network.
 
 While not strictly mandatory, it is strongly recommended to use explicit
-"id" values for subnets if database storage will be used for host
+`"id"` values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
-auto generated, i.e. Kea assigns increasing integer values starting from
-1. Thus, the auto generated IDs are not stable across configuration
+auto-generated, i.e. Kea assigns increasing integer values starting from
+1. Thus, the auto-generated IDs are not stable across configuration
 changes.
 
 .. _dhcp4-serverid:
@@ -5841,14 +5842,14 @@ The DHCPv4 protocol uses a "server identifier" to allow clients to
 discriminate between several servers present on the same link; this
 value is an IPv4 address of the server. The server chooses the IPv4
 address of the interface on which the message from the client (or relay)
-has been received. A single server instance will use multiple server
+has been received. A single server instance uses multiple server
 identifiers if it is receiving queries on multiple interfaces.
 
 It is possible to override the default server identifier values by specifying
-the "dhcp-server-identifier" option. This option configuration is only
-supported at the subnet, shared network, client class and global levels. It
-must not be specified at the host reservation level.
-When configuring the "dhcp-server-identifier" option at client class level, the
+the `"dhcp-server-identifier"` option. This option configuration is only
+supported at the subnet, shared network, client class, and global levels. It
+must not be specified at the host-reservation level.
+When configuring the `"dhcp-server-identifier"` option at client-class level, the
 class must not set the ``only-if-required`` flag, because this class would not
 be evaluated before the server determines if the received DHCP message should
 be accepted for processing. Such classes are evaluated after subnet selection.
@@ -5879,25 +5880,25 @@ How the DHCPv4 Server Selects a Subnet for the Client
 
 The DHCPv4 server differentiates between directly connected clients,
 clients trying to renew leases, and clients sending their messages
-through relays. For directly connected clients, the server will check
+through relays. For directly connected clients, the server checks
 the configuration for the interface on which the message has been
-received and, if the server configuration doesn't match any configured
+received and, if the server configuration does not match any configured
 subnet, the message is discarded.
 
 Assuming that the server's interface is configured with the IPv4 address
-192.0.2.3, the server will only process messages received through this
+192.0.2.3, the server only processes messages received through this
 interface from a directly connected client if there is a subnet
 configured to which this IPv4 address belongs, such as 192.0.2.0/24. The
-server will use this subnet to assign an IPv4 address for the client.
+server uses this subnet to assign an IPv4 address for the client.
 
 The rule above does not apply when the client unicasts its message, i.e.
-is trying to renew its lease. Such a message is accepted through any
-interface. The renewing client sets ciaddr to the currently used IPv4
+is trying to renew its lease; such a message is accepted through any
+interface. The renewing client sets ``ciaddr`` to the currently used IPv4
 address, and the server uses this address to select the subnet for the
 client (in particular, to extend the lease using this address).
 
 If the message is relayed it is accepted through any interface. The
-giaddr set by the relay agent is used to select the subnet for the
+``giaddr`` set by the relay agent is used to select the subnet for the
 client.
 
 It is also possible to specify a relay IPv4 address for a given subnet.
@@ -5915,7 +5916,7 @@ configurations, e.g. shared networks. See :ref:`dhcp4-relay-override` for detail
 
    Starting with Kea 1.7.9, the order used to find a subnet which matches
    required conditions to be selected is the ascending subnet identifier
-   order. When the selected subnet is a member of a shared network the
+   order. When the selected subnet is a member of a shared network, the
    whole shared network is selected.
 
 .. _dhcp4-relay-override:
@@ -5926,8 +5927,8 @@ Using a Specific Relay Agent for a Subnet
 A relay must have an interface connected to the link on which the
 clients are being configured. Typically the relay has an IPv4 address
 configured on that interface, which belongs to the subnet from which the
-server will assign addresses. Normally, the server is able to use the
-IPv4 address inserted by the relay (in the giaddr field of the DHCPv4
+server assigns addresses. Normally, the server is able to use the
+IPv4 address inserted by the relay (in the ``giaddr`` field of the DHCPv4
 packet) to select the appropriate subnet.
 
 However, that is not always the case. In certain uncommon — but valid —
@@ -5961,13 +5962,8 @@ selects that subnet for a relay with address 10.0.0.1.
        ],
    }
 
-If "relay" is specified, the "ip-addresses" parameter within it is
-mandatory.
-
-.. note::
-
-   The current version of Kea uses the "ip-addresses" parameter, which
-   supports specifying a list of addresses.
+If `"relay"` is specified, the `"ip-addresses"` parameter within it is
+mandatory. The `"ip-addresses"` parameter supports specifying a list of addresses.
 
 .. _dhcp4-srv-example-client-class-relay:
 
@@ -5980,11 +5976,11 @@ in :ref:`classify`). One specific example is in a cable network,
 where modems typically get addresses from a different subnet than all
 the devices connected behind them.
 
-Let us assume that there is one CMTS (Cable Modem Termination System)
+Let us assume that there is one Cable Modem Termination System (CMTS))
 with one CM MAC (a physical link that modems are connected to). We want
 the modems to get addresses from the 10.1.1.0/24 subnet, while
-everything connected behind the modems should get addresses from another
-subnet (192.0.2.0/24). The CMTS that acts as a relay uses address
+everything connected behind the modems should get addresses from the
+192.0.2.0/24 subnet. The CMTS that acts as a relay uses address
 10.1.1.1. The following configuration can serve that configuration:
 
 ::
@@ -6018,20 +6014,20 @@ Duplicate Addresses (DHCPDECLINE Support)
 The DHCPv4 server is configured with a certain pool of addresses that it
 is expected to hand out to DHCPv4 clients. It is assumed that the server
 is authoritative and has complete jurisdiction over those addresses.
-However, for various reasons, such as misconfiguration or a faulty
+However, for various reasons such as misconfiguration or a faulty
 client implementation that retains its address beyond the valid
 lifetime, there may be devices connected that use those addresses
 without the server's approval or knowledge.
 
 Such an unwelcome event can be detected by legitimate clients (using ARP
 or ICMP Echo Request mechanisms) and reported to the DHCPv4 server using
-a DHCPDECLINE message. The server will do a sanity check (to see whether
-the client declining an address really was supposed to use it), and then
-will conduct a clean-up operation. Any DNS entries related to that
-address will be removed, the fact will be logged, and hooks will be
-triggered. After that is complete, the address will be marked as
+a DHCPDECLINE message. The server does a sanity check (to see whether
+the client declining an address really was supposed to use it) and then
+conducts a clean-up operation. Any DNS entries related to that
+address are removed, the event is logged, and hooks are
+triggered. After that is complete, the address is marked as
 declined (which indicates that it is used by an unknown entity and thus
-not available for assignment) and a probation time will be set on it.
+not available for assignment) and a probation time is set on it.
 Unless otherwise configured, the probation period lasts 24 hours; after
 that period, the server will recover the lease (i.e. put it back into
 the available state) and the address will be available for assignment
@@ -6052,33 +6048,33 @@ default, the following syntax can be used:
        ...
    }
 
-The parameter is expressed in seconds, so the example above will
-instruct the server to recycle declined leases after one hour.
+The parameter is expressed in seconds, so the example above
+instructs the server to recycle declined leases after one hour.
 
 There are several statistics and hook points associated with the decline
-handling procedure. The lease4_decline hook is triggered after the
+handling procedure. The ``lease4_decline`` hook is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
-to decline the lease. The declined-addresses statistic is increased
-after the hook returns (both global and subnet-specific variants). (See
+to decline the lease. The ``declined-addresses`` statistic is increased
+after the hook returns (both the global and subnet-specific variants). (See
 :ref:`dhcp4-stats` and :ref:`hooks-libraries`
 for more details on DHCPv4 statistics and Kea hook points.)
 
 Once the probation time elapses, the declined lease is recovered using
 the standard expired-lease reclamation procedure, with several
-additional steps. In particular, both declined-addresses statistics
+additional steps. In particular, both ``declined-addresses`` statistics
 (global and subnet-specific) are decreased. At the same time,
-reclaimed-declined-addresses statistics (again in two variants, global
+``reclaimed-declined-addresses`` statistics (again in two variants, global
 and subnet-specific) are increased.
 
 A note about statistics: The server does not decrease the
-assigned-addresses statistics when a DHCPDECLINE is received and
+``assigned-addresses`` statistics when a DHCPDECLINE is received and
 processed successfully. While technically a declined address is no
-longer assigned, the primary usage of the assigned-addresses statistic
+longer assigned, the primary usage of the ``assigned-addresses`` statistic
 is to monitor pool utilization. Most people would forget to include
-declined-addresses in the calculation, and simply use
-assigned-addresses/total-addresses. This would cause a bias towards
-under-representing pool utilization. As this has a potential for major
-issues, ISC decided not to decrease assigned-addresses immediately after
+``declined-addresses`` in the calculation, and simply use
+``assigned-addresses``/``total-addresses``. This would cause a bias towards
+under-representing pool utilization. As this has a potential to cause major
+issues, ISC decided not to decrease ``assigned-addresses`` immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
@@ -6800,7 +6796,7 @@ In principle Kea seeks to be a reference implementation aiming to implement 100%
 However, in some cases there are practical aspects that make Kea not adhere completely to the text of the RFC documents.
 
 - `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ on page 30 says that if the incoming DHCPREQUEST packet has no
-  `requested IP address` option and `ciaddr` is not set, the server is supposed to respond with NAK. However, there
+  `requested IP address` option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However, there
   are broken clients out there that will always send a DHCPREQUEST without those. As such, Kea accepts such DHCPREQUESTs,
   will assign an address and will respond with an ACK.
 
