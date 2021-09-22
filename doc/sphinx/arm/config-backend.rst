@@ -138,6 +138,26 @@ The current CB limitations will be gradually removed in subsequent Kea releases.
    not in the database. Use the ``cb_cmds`` hooks library to manage the
    subnets information in the database instead.
 
+.. note::
+
+   Using custom option formats requires creating definitions for these options.
+   Suppose a user wishes to set option data in the configuration backend. In
+   that case, we recommend specifying the definition for that option in the
+   configuration backend as well. It is essential when multiple servers are
+   managed via the configuration backend, and may differ in their
+   configurations. The option data parser can search for an option definition
+   appropriate for the server for which the option data is specified.
+
+   In a single-server deployment, or when all servers share the same
+   configuration file information, it is possible to specify option
+   definitions in the configuration files and option data in the configuration
+   backend. The server receiving a command to set option data must have a
+   valid definition in its configuration file, even when it sets option data
+   for another server.
+
+   It is not supported to specify option definitions in the configuration
+   backend and the corresponding option data in the server configuration files.
+
 CB Components
 -------------
 

@@ -21,6 +21,11 @@ support contract.
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
+.. note::
+
+   Please read about :ref:`cb-limitations` before using the commands
+   described in this section.
+
 Commands Structure
 ~~~~~~~~~~~~~~~~~~
 
@@ -1014,7 +1019,7 @@ These commands create a new DHCP option definition or replace an
 existing option definition in the database. The structure of the option
 definition information is the same as in the Kea configuration file (see
 :ref:`dhcp4-custom-options` and :ref:`dhcp6-custom-options`).
-The following command creates the DHCPv4 option definition in the
+The following command creates the DHCPv4 option definition at the
 top-level "dhcp4" option space and associates it with the "server1":
 
 .. code-block:: json
@@ -1042,7 +1047,8 @@ top-level "dhcp4" option space and associates it with the "server1":
 
 The `server-tags` list must include exactly one
 server tag or the keyword "all". It must not contain the
-`null` value.</para>
+`null` value.
+
 
 .. _command-remote-option4-global-del:
 
