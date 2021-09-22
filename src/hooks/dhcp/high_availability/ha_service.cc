@@ -2239,7 +2239,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                         asyncEnableDHCPService(client, server_name,
                                                [&](const bool success,
                                                    const std::string& error_message,
-                                                   const int rcode) {
+                                                   const int) {
                             // It is possible that we have already recorded an error
                             // message while synchronizing the lease database. Don't
                             // override the existing error message.
@@ -2272,7 +2272,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                 asyncEnableDHCPService(client, server_name,
                                        [&](const bool success,
                                            const std::string& error_message,
-                                           const int rcode) {
+                                           const int) {
                     if (!success && status_message.empty()) {
                         status_message = error_message;
                     }
