@@ -42,7 +42,7 @@ truncated by the logger if it is too large to be printed.
 This warning message is issued when the queue of pending requests for the
 given URL appears to be growing more quickly than the requests can be handled.
 It will be emitted periodically as long as the queue size continues to grow.
-This may occur with a surge of client traffic creating a momemntary backlog
+This may occur with a surge of client traffic creating a momentary backlog
 which then subsides as the surge subsides.  If it happens continually then
 it most likely indicates a deployment configuration that cannot sustain the
 client load.

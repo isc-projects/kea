@@ -822,7 +822,7 @@ private:
         Destination(Url url, TlsContextPtr tls_context, size_t max_connections)
             : url_(url), tls_context_(tls_context),
               max_connections_(max_connections), connections_(), queue_(),
-             last_queue_warn_time_(min_date_time), last_queue_size_(0) {
+              last_queue_warn_time_(min_date_time), last_queue_size_(0) {
         }
 
         /// @brief Destructor
