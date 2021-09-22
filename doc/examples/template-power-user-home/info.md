@@ -1,4 +1,3 @@
-
 Kea Configuration Template: Home network of a power user
 ========================================================
 
@@ -20,13 +19,9 @@ Agent (CA). The server connects with the CA using UNIX sockets. Each DHCPv4+CA a
 as one partner of the HA pair.
 
 ```mermaid
-CA-1 ====== CA-2
+flowchart LR
 
-subgraph host1
-CA-1 ------ DHCPv4-1
-
-subgraph host2
-CA-2 ------ DHCPv4-2
+DHCPv4-1 --UNIX--- CA-1 ==http=== CA-2 --UNIX--- DHCPv4-2
 ```
 
 Deployment Considerations
