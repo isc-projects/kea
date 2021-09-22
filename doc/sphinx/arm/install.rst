@@ -85,32 +85,37 @@ the system:
 
 -  The MySQL client and the client development libraries, when using the
    ``--with-mysql`` configuration flag to build the Kea MySQL database
-   backend. In this case, an instance of the MySQL server running
-   locally or on a machine reachable over a network is required.
-   Running unit tests requires a local MySQL server.
+   backend. In this case, an instance of the MySQL server running locally
+   or on a machine reachable over a network is required. Note that running
+   the unit tests requires a local MySQL server.
 
--  The PostgreSQL client and the client development libraries, when
-   using the ``--with-pgsql`` configuration flag to build the Kea PostgreSQL
-   database backend. In this case, an instance of the PostgreSQL server
-   running locally or on a machine reachable over a network is
-   required. Running unit tests requires a local PostgreSQL server.
+-  The PostgreSQL client and the client development libraries, when using the
+   ``--with-pgsql`` configuration flag to build the Kea PostgreSQL database
+   backend. In this case an instance of the PostgreSQL server running locally
+   or on a machine reachable over a network is required. Note that running
+   the unit tests requires a local PostgreSQL server.
 
--  The cpp-driver from DataStax, when using the ``--with-cql``
+-  The cpp-driver from DataStax is needed when using the ``--with-cql``
    configuration flag to build Kea with the Cassandra database backend.
-   In this case, an instance of the Cassandra server running locally or
-   on a machine reachable over a network is required. Running unit
-   tests requires a local Cassandra server.
+   In this case, an instance of the Cassandra server running locally
+   or on a machine reachable over a network is required. Note that running
+   the unit tests requires a local Cassandra server.
 
--  The FreeRADIUS client library, if connecting to a RADIUS server.
+-  The FreeRADIUS client library is required to connect to a RADIUS server.
    This is specified using the ``--with-freeradius`` configuration switch.
 
--  Sysrepo v1.4.140 and libyang v1.0.240, when connecting to a Sysrepo
-   datastore; earlier versions are no longer supported. When compiling from
+-  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
+   datastore. Earlier versions are no longer supported. When compiling from
    sources, the configure switches that can be used are ``--with-libyang`` and
-   ``--with-sysrepo``, without any parameters. If these dependencies were installed
-   in custom paths, the switches must be pointed to them.
+   ``--with-sysrepo`` without any parameters. If these dependencies were
+   installed in custom paths, point the switches to them.
 
--  googletest (version 1.8 or later), when using the ``--with-gtest``
+-  The MIT Kerberos 5 or Heimdal libraries are needed by Kea DDNS server to sign
+   and verify DNS updates using GSS-TSIG. The configuration switch which enables
+   this functionality is ``--with-gssapi`` without any parameters. If these
+   dependencies were installed in custom paths, point the switch to them.
+
+-  googletest (version 1.8 or later) is required when using the ``--with-gtest``
    configuration option to build the unit tests.
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
@@ -120,8 +125,6 @@ the system:
    with Ubuntu, python3-sphinx, python3-sphinx-rtd-theme, and texlive-binaries
    are needed. If LaTeX packages are missing, Kea skips PDF generation and produces
    only HTML documents.
-
--  The Kerberos 5 libraries, when using the ``--with-gssapi`` configuration flag.
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.
@@ -429,9 +432,9 @@ Install MySQL according to the instructions for the system. The client
 development libraries must be installed.
 
 Build and install Kea as described in :ref:`installation`,
-with the following modification. To enable the MySQL database code, at
-the "configure" step (see :ref:`configure`),
-the ``--with-mysql`` switch should be specified:
+with the following modification. To enable the MySQL database code, at the
+"configure" step (see :ref:`configure`), the ``--with-mysql`` switch should be
+specified:
 
 .. code-block:: console
 
@@ -456,8 +459,9 @@ client development libraries must be installed. Client development
 libraries are often packaged as "libpq".
 
 Build and install Kea as described in :ref:`installation`,
-with the following modification. To enable the PostgreSQL database code,
-at the "configure" step (see :ref:`configure`), the ``--with-pgsql`` switch should be specified:
+with the following modification. To enable the PostgreSQL database code, at the
+"configure" step (see :ref:`configure`), the ``--with-pgsql`` switch should be
+specified:
 
 .. code-block:: console
 

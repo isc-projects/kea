@@ -118,8 +118,13 @@ Some optional features of Kea have additional dependencies.
    is running. This is an optional dependency; Kea can be built
    without RADIUS support.
 
--  Kea provides a NETCONF interface with the
-   kea-netconf agent. This Kea module is built optionally and requires
-   Sysrepo software when used. Building Kea with NETCONF support
-   requires many dependencies to be installed, which are described in
-   more detail in :ref:`netconf-install`.
+-  Kea provides a NETCONF interface with the kea-netconf agent. This Kea module
+   requires Sysrepo software when used. Building Kea with NETCONF support
+   requires many dependencies to be installed, which are described in more
+   detail in :ref:`netconf-install`. This is an optional dependency; Kea can be
+   built without NETCONF support.
+
+-  To sign and verify DNS updates, Kea DDNS server uses GSS-TSIG and requires
+   MIT Kerberos 5 or Heimdal libraries. The dependencies required to be
+   installed are described in more detail in :ref:`gss-tsig-install`. This is an
+   optional dependency; Kea can be built without GSS-TSIG support.

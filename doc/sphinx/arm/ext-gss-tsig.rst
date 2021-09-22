@@ -15,13 +15,18 @@ GSS-TSIG Overview
 -----------------
 
 Kea provides a support for DNS updates, which can be protected using
-Transaction Signatures (or TSIG). This protection
-is often adequate. However, some systems, in particular Active Directory (AD)
-on Microsoft Windows systems, chose to adopt more complex GSS-TSIG
-approach that offers additional capabilities as using negotiated dynamic keys.
+Transaction Signatures (or TSIG). This protection is often adequate.
+However some systems, in particular Active Directory (AD) on Microsoft
+Windows systems, chose to adopt more complex GSS-TSIG approach that offers
+additional capabilities as using negotiated dynamic keys.
 
 Kea provides the support of GSS-TSIG to protect DNS updates sent by
 the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss_tsig`.
+
+.. note::
+
+    This library is still in the experimental phase. Use with care!
+
 The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
 services, defined in `RFC 2743 <https://tools.ietf.org/html/rfc2743>`__.
@@ -129,8 +134,8 @@ detection, similar to this:
 The gss_tsig was developed using the MIT Kerberos 5 implementation but
 Heimdal is supported too. Note that Heimdal is picky about security
 sensitive file permissions and is known to emit an unclear error message.
-It is a good idea to keep these files as plain, with one link and and
-no access for the group or other users.
+It is a good idea to keep these files as plain, with one link and no
+access for the group or other users.
 
 The krb5-config script should provide an ``--all`` option which
 identifies the implementation: in any report about the GSS-TSIG report
@@ -153,16 +158,168 @@ To be done. One critical detail: there are two kinds of key tables
 (keytab files): the system one used by servers and client tables
 used by clients. For Kerberos 5 Kea is a **client**.
 
+Install the Kerberos 5 client library and kadmin tool:
+
+.. code-block:: console
+
+    sudo apt install krb5-kdc krb5-admin-server
+
+The principals for the DNS server (the service protected by the
+GSS-TSIG TKEY) and for the DNS client must be created.
+
+The following examples use the ``EXAMPLE.ORG`` realm to demonstrate required
+configuration steps and settings.
+
+The Kerberos 5 client library must be configured (to accept incoming requests)
+for the realm ``EXAMPLE.ORG`` by updating the ``krb5.conf`` file
+(e.g. on Linux: /etc/krb5.conf):
+
+.. code-block:: ini
+
+    [libdefaults]
+        default_realm = EXAMPLE.ORG
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+
+    [realms]
+        EXAMPLE.ORG = {
+                kdc = kdc.example.org
+                admin_server = kdc.example.org
+        }
+
+In addition to the ``krb5.conf`` file, the ``kdc.conf`` file can be used
+(e.g. on Linux: /etc/krb5kdc/kdc.conf):
+
+.. code-block:: ini
+
+    [kdcdefaults]
+        kdc_ports = 750,88
+
+    [realms]
+        EXAMPLE.ORG = {
+            database_name = /var/lib/krb5kdc/principal
+            admin_keytab = FILE:/etc/krb5kdc/kadm5.keytab
+            acl_file = /etc/krb5kdc/kadm5.acl
+            key_stash_file = /etc/krb5kdc/stash
+            kdc_ports = 750,88
+            max_life = 10h 0m 0s
+            max_renewable_life = 7d 0h 0m 0s
+            master_key_type = des3-hmac-sha1
+            #supported_enctypes = aes256-cts:normal aes128-cts:normal
+            default_principal_flags = +preauth
+        }
+
+The kadmind daemon ACL (Access Control List) must be configured to give
+permissions to the DNS client principal to access the Kerberos 5 database.
+(e.g. on Linux: /etc/krb5kdc/kadm5.acl):
+
+.. code-block:: ini
+
+    DHCP/admin.example.org@EXAMPLE.ORG       *
+
+The admin password for the default realm must be set:
+
+.. code-block:: console
+
+    printf "realm_password\nrealm_password" | krb5_newrealm
+
+The DNS server principal (used by the Bind 9 DNS server to provide
+authentication):
+
+.. code-block:: console
+
+    kadmin.local -q "addprinc -randkey DNS/server.example.org"
+
+The DNS client principal (used by the Kea DDNS server):
+
+.. code-block:: console
+
+    kadmin.local -q "addprinc -pw client_princ_password DHCP/admin.example.org"
+
+The keytab file for the DNS server principal must be exported so that
+they can be used by the Bind 9 DNS server.
+The exported keytab file name is ``dns.keytab``.
+
+.. code-block:: console
+
+    kadmin.local -q "ktadd -k /tmp/dns.keytab DNS/server.example.org"
+
+Finally, the krb5-admin-server must be restarted:
+
+.. code-block:: console
+
+    systemctl restart krb5-admin-server.service
+
 Bind 9 with GSS-TSIG Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To be done.
+The Bind 9 DNS server must be configured to use GSS-TSIG and to use the
+previously exported keytab file ``dns.keytab`` by updating the ``named.conf``
+file:
 
+.. code-block:: console
 
-Microsoft Active Directory Setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    options {
+        ...
+        directory "/var/cache/bind";
+        dnssec-validation auto;
+        tkey-gssapi-keytab "/etc/bind/dns.keytab";
+    };
+    zone "example.org" {
+        type master;
+        file "/var/lib/bind/db.example.org";
+        update-policy {
+            grant "DHCP/admin.example.org@EXAMPLE.ORG" zonesub any;
+        };
+    };
+    zone "84.102.10.in-addr.arpa" {
+        type master;
+        file "/etc/bind/db.10";
+    };
 
-To be done.
+The zone files should have an entry for the server principal FQDN
+``server.example.org``.
+
+The ``/etc/bind/db.10`` file:
+
+.. code-block:: console
+
+    ;
+    ; BIND reverse data file for local loopback interface
+    ;
+    $TTL    604800                      ; 1 week
+    @       IN      SOA      server.example.org. root.example.org. (
+                             2          ; Serial
+                             604800     ; Refresh
+                             86400      ; Retry
+                             2419200    ; Expire
+                             604800     ; Negative Cache TTL
+                             )
+    ;
+    @       IN      NS      ns.
+    40      IN      PTR     ns.example.org.
+
+The ``/var/lib/bind/db.example.org`` file:
+
+.. code-block:: console
+
+    $ORIGIN .
+    $TTL                604800             ; 1 week
+    example.org         IN SOA  server.example.org. root.example.org. (
+                                8          ; serial
+                                604800     ; refresh (1 week)
+                                86400      ; retry (1 day)
+                                2419200    ; expire (4 weeks)
+                                604800     ; minimum (1 week)
+                                )
+                        NS      example.org.
+                        A       ${BIND9_IP_ADDR}
+                        AAAA    ::1
+    $ORIGIN example.org.
+    kdc                 A       ${KDC_IP_ADDR}
+    server              A       ${BIND9_IP_ADDR}
 
 .. _gss-tsig-using:
 
@@ -671,4 +828,3 @@ An example response informing about 2 GSS-TSIG keys for server 'foo' being purge
         "result": 0,
         "text": "2 purged keys for GSS-TSIG server[foo]"
     }
-
