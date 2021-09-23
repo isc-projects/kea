@@ -78,6 +78,12 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 
+nobase_dist_doc_DATA += examples/template-power-user-home/info.md
+nobase_dist_doc_DATA += examples/template-power-user-home/kea-ca-1.conf
+nobase_dist_doc_DATA += examples/template-power-user-home/kea-ca-2.conf
+nobase_dist_doc_DATA += examples/template-power-user-home/kea-dhcp4-1.conf
+nobase_dist_doc_DATA += examples/template-power-user-home/kea-dhcp4-2.conf
+
 # If there's any new parameter added for any grammar in one of the daemons, someone should go through
 # this procedure:
 #
