@@ -1799,11 +1799,13 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
                             "", 0, 4000, "client1.one.example.com.");
 
-    // Make sure the lease hostname is correct.
+    // Make sure the lease hostname and fqdn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                    IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
 
     // Now let's try with a different client. Subnet 1 is full so we should get an
     // address from subnet 2.
@@ -1831,10 +1833,12 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 0, 4000, "client2.two.example.com.");
 
-    // Make sure the lease hostname is correct.
+    // Make sure the lease hostname and fqdn flags are correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client2.two.example.com.", lease->hostname_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
 
     // Now let's check Renewals
     // First we'll renew a client2.
@@ -1872,10 +1876,122 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     // not update, unless the FQDN or flags change.
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
-    // Make sure the lease hostname is correct.
+    // Make sure the lease hostname and fqdn flags are correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+}
+
+// Verifies lease and NCR content (or lack of NCRs) are correct when
+// subnets in a shared-network define different values for send-ddns-updates
+// This checks that we get the right results even when the allocation engine
+// changes the subnet chosen.  The configuration is two 1-address pool subnets in
+// a shared-network. The first client will do a SARR, which consumes the first
+// pool. This should cause the allocation engine to dynamically select
+// the second subnet for the second client.
+TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
+    std::string config_str =
+    "{ \"interfaces-config\": { \n"
+        "  \"interfaces\": [ \"*\" ] \n"
+        "}, \n"
+        "\"preferred-lifetime\": 3000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"shared-networks\": [ \n"
+        "{ \n"
+            "\"name\": \"frog\", \n"
+            "\"interface\": \"eth0\", \n"
+            "\"subnet6\": [ { \n"
+                "\"subnet\": \"2001:db8:1::/64\", \n"
+                "\"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::1\" } ], \n"
+                "\"interface\": \"eth0\", \n"
+                "\"ddns-qualifying-suffix\": \"one.example.com.\", \n"
+                "\"ddns-send-updates\": true \n"
+            " }, \n"
+            " { \n"
+                "\"subnet\": \"2001:db8:2::/64\", \n"
+                "\"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::1\" } ], \n"
+                "\"interface\": \"eth0\", \n"
+                "\"ddns-qualifying-suffix\": \"two.example.com.\", \n"
+                "\"ddns-send-updates\": false \n"
+            " } ] \n"
+        "} ], \n"
+        "\"dhcp-ddns\" : { \n"
+        "     \"enable-updates\" : true \n"
+        " } \n"
+    "}";
+
+    Dhcp6Client client1;
+    client1.setInterface("eth0");
+    client1.requestAddress();
+
+    // Load a configuration with D2 enabled
+    ASSERT_NO_FATAL_FAILURE(configure(config_str, *client1.getServer()));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client1.getServer()->startD2());
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client1.useFQDN(Option6ClientFqdn::FLAG_S, "client1",
+                                    Option6ClientFqdn::PARTIAL));
+
+    // Now do a SARR.
+    ASSERT_NO_THROW(client1.doSARR());
+    Pkt6Ptr resp = client1.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPV6_REPLY, static_cast<int>(resp->getType()));
+
+    // Check that the response FQDN is as expected.
+    Option6ClientFqdnPtr fqdn;
+    fqdn = boost::dynamic_pointer_cast<Option6ClientFqdn>(resp->getOption(D6O_CLIENT_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client1.one.example.com.", fqdn->getDomainName());
+
+    // ddns-send-updates for subnet 1 are enabled, verify the NCR is correct.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
+                            "", 0, 4000, "client1.one.example.com.");
+
+    // Make sure the lease hostname and fdqn flags are correct.
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("client1.one.example.com.", lease->hostname_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+
+    // Now let's try with a different client. Subnet 1 is full so we should get an
+    // address from subnet 2.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth0");
+    client2.requestAddress();
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client2.useFQDN(Option6ClientFqdn::FLAG_S, "client2",
+                                    Option6ClientFqdn::PARTIAL));
+
+    // Do a SARR.
+    ASSERT_NO_THROW(client2.doSARR());
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPV6_REPLY, static_cast<int>(resp->getType()));
+
+    // Check that the response FQDN is as expected.
+    fqdn = boost::dynamic_pointer_cast<Option6ClientFqdn>(resp->getOption(D6O_CLIENT_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client2.two.example.com.", fqdn->getDomainName());
+
+    // ddns-send-updates for subnet 2 are disabled, verify there is no NCR.
+    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+
+    // Make sure the lease hostname and fdqn flags are correct.
+    lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("client2.two.example.com.", lease->hostname_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
 }
 
 // Verifies that renews only generate NCRs if the situation dictates

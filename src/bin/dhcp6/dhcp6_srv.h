@@ -443,15 +443,12 @@ protected:
     /// allocation failure.
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
-    /// @param answer server's response to the client's message. This
-    /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
     /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_NA option (client's request)
     ///
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Pkt6Ptr& query,
-                          const isc::dhcp::Pkt6Ptr& answer,
                           AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
@@ -464,12 +461,10 @@ protected:
     /// allocation failure.
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
-    /// @param answer server's response to the client's message (unused).
     /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
     OptionPtr assignIA_PD(const Pkt6Ptr& query,
-                          const isc::dhcp::Pkt6Ptr& answer,
                           AllocEngine::ClientContext6& ctx,
                           boost::shared_ptr<Option6IA> ia);
 
@@ -481,14 +476,12 @@ protected:
     /// status code.
     ///
     /// @param query client's message (Renew or Rebind)
-    /// @param answer server's response to the client's message. This
-    /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
     /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_NA option which carries address for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
-    OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+    OptionPtr extendIA_NA(const Pkt6Ptr& query,
                           AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 

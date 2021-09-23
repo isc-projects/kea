@@ -1,3 +1,9 @@
+1949.	[bug]		tmark
+	kea-dhcp6 now correctly determines DNS update flags when
+	the allocation engine dynamically changes the selected
+	network subnet.
+	(Gitlab #1622)
+
 1948.	[func]		tmark
 	HTTP library will now emit a warning log when the queue of
 	pending client requests for a given URL exceeds a threshold.

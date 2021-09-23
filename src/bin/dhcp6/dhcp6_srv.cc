@@ -1763,7 +1763,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = assignIA_NA(question, answer, ctx,
+            OptionPtr answer_opt = assignIA_NA(question, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1772,7 +1772,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             break;
         }
         case D6O_IA_PD: {
-            OptionPtr answer_opt = assignIA_PD(question, answer, ctx,
+            OptionPtr answer_opt = assignIA_PD(question, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1834,6 +1834,10 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     // Set the server S, N, and O flags based on client's flags and
     // current configuration.
     d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
+
+    // Get DDNS update direction flags
+    CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn_resp, ctx.fwd_dns_update_,
+                                                            ctx.rev_dns_update_);
 
     // If there's a reservation and it has a hostname specified, use it!
     if (ctx.currentHost() && !ctx.currentHost()->getHostname().empty()) {
@@ -2005,7 +2009,7 @@ Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
                        AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
@@ -2045,20 +2049,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                            " this client"));
         return (ia_rsp);
     }
-
-    // Get DDNS update direction flags
-    bool do_fwd = false;
-    bool do_rev = false;
-    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
-        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
-    if (fqdn) {
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn, do_fwd,
-                                                                do_rev);
-    }
-
-    // Update per-packet context values.
-    ctx.fwd_dns_update_ = do_fwd;
-    ctx.rev_dns_update_ = do_rev;
 
     // Set per-IA context values.
     ctx.createIAContext();
@@ -2146,7 +2136,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
+Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
                        AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
@@ -2288,7 +2278,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
 }
 
 OptionPtr
-Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
                        AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
@@ -2316,20 +2306,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                           "Sorry, no known leases for this duid/iaid."));
         return (ia_rsp);
     }
-
-    // Get DDNS update directions
-    bool do_fwd = false;
-    bool do_rev = false;
-    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
-        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
-    if (fqdn) {
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
-                                                                do_fwd, do_rev);
-    }
-
-    // Set per-packet context values.
-    ctx.fwd_dns_update_ = do_fwd;
-    ctx.rev_dns_update_ = do_rev;
 
     // Set per-IA context values.
     ctx.createIAContext();
@@ -2424,15 +2400,15 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
         // If the new FQDN settings have changed for the lease, we need to
         // delete any existing FQDN records for this lease.
-        if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != do_fwd) ||
-            ((*l)->fqdn_rev_ != do_rev)) {
+        if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != ctx.fwd_dns_update_) ||
+            ((*l)->fqdn_rev_ != ctx.rev_dns_update_)) {
             LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN)
                 .arg(query->getLabel())
                 .arg((*l)->toText())
                 .arg(ctx.hostname_)
-                .arg(do_rev ? "true" : "false")
-                .arg(do_fwd ? "true" : "false");
+                .arg(ctx.rev_dns_update_ ? "true" : "false")
+                .arg(ctx.fwd_dns_update_ ? "true" : "false");
 
             queueNCR(CHG_REMOVE, *l);
         }
@@ -2680,7 +2656,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
          opt != query->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = extendIA_NA(query, reply, ctx,
+            OptionPtr answer_opt = extendIA_NA(query, ctx,
                                                boost::dynamic_pointer_cast<
                                                    Option6IA>(opt->second));
             if (answer_opt) {
