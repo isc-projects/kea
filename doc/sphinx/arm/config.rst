@@ -260,3 +260,6 @@ where the content of "subnets.json" may be:
          "subnet": "10.0.0.0/8"
       }
    ],
+
+
+.. include:: config-templates.rst
