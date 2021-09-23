@@ -20,6 +20,7 @@ pair.
 
 .. code-block::
 
+  ```
    +-host-1-+       +-host-2-+
    |        |       |        |
    |  CA ============= CA    |    ===== - HTTP connection
@@ -28,6 +29,7 @@ pair.
    | DHCPv4 |       | DHCPv4 |
    |        |       |        |
    +--------+       +--------+
+  ```
 
 The CA-1 and CA-2 will each open a TCP port 8000 and will connect to each other.
 
