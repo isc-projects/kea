@@ -1,3 +1,7 @@
+1951.	[doc]		tomek
+	Configuration templates for a home power user have been added.
+	(Gitlab #2050)
+
 1950.	[doc]		slawek
 	Added a description and an example of the usage of the "include"
 	statement in the Kea configuration file to the ARM.
