@@ -18,7 +18,7 @@ The logical set-up consists of two hosts, each running Kea DHCPv4 server and a C
 The server connects with the CA using UNIX sockets. Each DHCPv4+CA acts as one partner of the HA
 pair.
 
-.. code-block::
+.. code-block:: none
 
   ```
    +-host-1-+       +-host-2-+
