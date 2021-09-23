@@ -58,13 +58,39 @@ To deploy this setup, you need to conduct the following steps:
    - tweak your router option
    - tweak your DNS option
 3. If using firewall, make sure the server1 can reach the server2. A nice way to ensure that is to
-   try to retrieve its config:
+   try to retrieve server2's config from the server1:
 
    curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }'  http://192.168.1.3:8000/
 
-2. Install CA and DHCPv4 on host2
+4. Install CA and DHCPv4 on host2, similar to steps 1 and 2. Note the config file for the
+   standby server is very similar, except the definition of "this-server-name" field
+   (and possibly inteface names). In many cases you can simply copy over the file
+   and just tweak it a little bit.
 
+Possible extensions
+-------------------
 
-curl -1sLf   'https://dl.cloudsmith.io/public/isc/kea-1-9/setup.deb.sh'   | sudo -E bash
+The proposed configuration is somewhat basic, but functional. Once your setup is up and running, you
+may want to consider the following changes:
 
-sudo apt install isc-kea-dhcp4-server isc-kea-ctrl-agent
+- if you have your own DNS server, you may configure DNS Updates. This requires running a D2 server,
+  which is a nickname for DHCP-DDNS update server. See Section 13 of the Kea ARM for details.
+
+- if you want to run Stateful DHCP for IPv6, you will need to run `kea-dhcp6` server. Its configuration
+  is very similar to `kea-dhcp4`, but there are some notable differences: the default gateway is not
+  configured via DHCPv6 protocol, but via Router Advertisements sent by your router. Also, there is
+  a concept of Prefix Delegation, which was non-existent in the DHCPv4. See Section 9 of the Kea ARM
+  for details.
+
+- if you want to expand your network, adding MySQL or PostgreSQL database is a popular direction for
+  growing networks. You can choose to store leases, host reservations and even most of the configuration
+  in a database. See Section 4 of the Kea ARM and `lease-database`, `hosts-database`, and `config-control`
+  parameters in Section 8 of the Kea ARM.
+
+- if you want to get more insight into how your DHCP server operates, you may use REST API to query
+  for a lot of run-time statistics or even change your configuration during run-time. You may also
+  consider deploying Stork, which is a young, but fast growing dashboard for Kea. See Section 22
+  of the Kea ARM for pointers.
+
+- you should probably also read Section 23 of the Kea ARM that discusses various trade offs between
+  convenience and security.
