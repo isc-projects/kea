@@ -90,6 +90,7 @@ exclude_patterns = [
     'arm/hooks-class-cmds.rst',
     'arm/hooks-cb-cmds.rst',
     'arm/config-backend.rst',
+    'arm/config-templates.rst',
     'arm/hooks-ha.rst',
     'arm/hooks-host-cache.rst',
     'arm/hooks-lease-cmds.rst',
@@ -238,11 +239,24 @@ def run_generate_docs(_):
     # users. Furthermore, ReadTheDocs does not use the makefile system at all and they rely
     # on sphinx-build only. As a result we need to conduct some Makefile-like operations
     # here. This requires us to copy (or link) the file from the top level to sphinx subdir.
+    #
+    # The first entry on this list is the actual file to copy, the second is a unique name
+    # that will be used when copied over to arm/ directory.
+    FILES_TO_COPY = [
+        [ '../../platforms.rst', 'platforms.rst' ],
+        [ '../examples/template-power-user-home/info.md', 'template-power-user-home.md' ],
+        [ '../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf' ],
+        [ '../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf' ],
+        [ '../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf' ],
+        [ '../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf' ]
+    ]
+
     from shutil import copyfile
-    src = os.path.join(src_dir, '../../platforms.rst')
-    dst = os.path.join(src_dir, 'arm/platforms.rst')
-    print("Copying %s to %s" % (src, dst))
-    copyfile(src, dst)
+    for [a, b] in FILES_TO_COPY:
+        src = os.path.join(src_dir, a)
+        dst = os.path.join(src_dir, 'arm', b)
+        print("Copying %s to %s" % (src, dst))
+        copyfile(src, dst)
 
 # custom setup hook
 def setup(app):
