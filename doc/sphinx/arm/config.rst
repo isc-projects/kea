@@ -212,3 +212,58 @@ Dhcp4/subnet4[0]/pool.
 
 
 .. include:: config-backend.rst
+
+
+Configuration Files Inclusion
+-----------------------------
+
+The parser provides the ability to include files. The syntax was chosen
+to look similar to how Apache includes PHP scripts in HTML code. This particular
+syntax was chosen to emphasize that the include directive is an additional
+feature and not a part of JSON syntax.
+The inclusion is implemented as a stack of files. You can use the include directive
+in nested includes. Up to ten nesting levels are supported. This arbitrarily chosen
+limit is protection against recursive inclusions.
+
+Include directive has a form:
+
+::
+
+   <?include "[RELATIVE-PATH]"?>
+
+The *[RELATIVE-PATH]* pattern should replace with a relative path to an including JSON file.
+
+To include one file from another, use the following syntax:
+
+.. code-block:: javascript
+
+   {
+      "Dhcp6": {
+         "interfaces-config": {
+            "interfaces": [ "*" ]},
+         "preferred-lifetime": 3000,
+         "rebind-timer": 2000,
+         "renew-timer": 1000,
+         <?include "subnets.json"?>
+         "valid-lifetime": 4000
+      }
+   }
+
+where the content of "subnets.json" may be:
+
+::
+
+   "subnet4": [
+      {
+         "id": 123,
+         "subnet": "192.0.2.0/24"
+      },
+      {
+         "id": 234,
+         "subnet": "192.0.3.0/24"
+      },
+      {
+         "id": 345,
+         "subnet": "10.0.0.0/8"
+      }
+   ],
