@@ -1,6 +1,6 @@
 1950.	[doc]		slawek
-	The description and example of the usage of the "include"
-	statement in the Kea configuration file.
+	Added a description and an example of the usage of the "include"
+	statement in the Kea configuration file to the ARM.
 	(Gitalb #2080)
 
 1949.	[bug]		tmark
