@@ -221,17 +221,19 @@ The parser provides the ability to include files. The syntax was chosen
 to look similar to how Apache includes PHP scripts in HTML code. This particular
 syntax was chosen to emphasize that the include directive is an additional
 feature and not a part of JSON syntax.
+
 The inclusion is implemented as a stack of files. You can use the include directive
 in nested includes. Up to ten nesting levels are supported. This arbitrarily chosen
 limit is protection against recursive inclusions.
 
-Include directive has a form:
+The include directive has the form:
 
 ::
 
-   <?include "[RELATIVE-PATH]"?>
+   <?include "[PATH]"?>
 
-The *[RELATIVE-PATH]* pattern should replace with a relative path to an including JSON file.
+The *[PATH]* pattern should be replaced with an absolute path or a path relative to
+the current working directory at the time the Kea process was launched.
 
 To include one file from another, use the following syntax:
 
