@@ -81,17 +81,17 @@ To deploy this setup, you need to conduct the following steps:
    - tweak your DNS option to match your actual network
 
    - the path to the hook libraries. This is very OS specific parameter. The library names are in
-     general the same everywhere, but the path varies.
+     general the same everywhere, but the path varies. See Section 16.2 of the Kea ARM for details.
 
-3. If using firewall, make sure the server1 can reach the server2. A nice way to ensure that is to
-   try to retrieve server2's config from the server1:
+3. If using a firewall, make sure server1 can reach server2. A nice way to ensure that is to
+   try to retrieve server2's config from server1:
 
    ``curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }'  http://192.168.1.3:8000/``
 
    You should get a DHCPv4 running configuration in return in a JSON format.
 
-4. Make sure the opposite direction (server2 can connect to server1). Simply repeat step 3 from the
-   server2 and user server's 1 IP address and port.
+4. Make sure the opposite direction (server2 can connect to server1) works too. Simply repeat
+   step 3 from the server2 and user server's 1 IP address and port.
 
 5. Install CA and DHCPv4 on host2, similar to steps 1 and 2. Note the config file for the
    standby server is very similar, except the definition of ``this-server-name`` field
