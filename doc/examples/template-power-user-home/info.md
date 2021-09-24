@@ -32,7 +32,9 @@ pair.
    +--------+       +--------+
   ```
 
-The CA-1 and CA-2 will each open a TCP port 8000 and will connect to each other.
+The CA at host 1 and CA at host 2 will both listen on port 8000. The DHCP servers will communicate
+with each other via CAs which forward control commands to the DHCP servers over the UNIX domain
+sockets.
 
 Deployment Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
