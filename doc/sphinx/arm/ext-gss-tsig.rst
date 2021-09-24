@@ -9,7 +9,9 @@ GSS-TSIG
 
 .. note::
 
-   This capability is a work in progress.
+   The GSS-TSIG feature is considered experimental. It is possible to perform
+   the key exchanges and sign the DNS updates using GSS-TSIG, but some error
+   handling and fallback scenarios are not covered yet. Use with caution.
 
 GSS-TSIG Overview
 -----------------
@@ -25,7 +27,8 @@ the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss_tsig`.
 
 .. note::
 
-    This library is still in the experimental phase. Use with care!
+    This library is still in the experimental phase and is not recommended
+    nor supported for use in production. Use with care!
 
 The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
@@ -154,18 +157,15 @@ GSS-TSIG capable implementations may work, but were not tested.
 Kerberos 5 Setup
 ~~~~~~~~~~~~~~~~
 
-To be done. One critical detail: there are two kinds of key tables
-(keytab files): the system one used by servers and client tables
-used by clients. For Kerberos 5 Kea is a **client**.
+There are two kinds of key tables (keytab files): the system one used
+by servers and client tables used by clients. For Kerberos 5, Kea is a
+**client**.
 
 Install the Kerberos 5 client library and kadmin tool:
 
 .. code-block:: console
 
     sudo apt install krb5-kdc krb5-admin-server
-
-The principals for the DNS server (the service protected by the
-GSS-TSIG TKEY) and for the DNS client must be created.
 
 The following examples use the ``EXAMPLE.ORG`` realm to demonstrate required
 configuration steps and settings.
@@ -223,28 +223,99 @@ The admin password for the default realm must be set:
 
 .. code-block:: console
 
-    printf "realm_password\nrealm_password" | krb5_newrealm
+    krb5_newrealm
 
-The DNS server principal (used by the Bind 9 DNS server to provide
-authentication):
+The following message will be displayed and you will be required to type
+the password for the default realm:
+
+.. code-block:: console
+
+    This script should be run on the master KDC/admin server to initialize
+    a Kerberos realm.  It will ask you to type in a master key password.
+    This password will be used to generate a key that is stored in
+    /etc/krb5kdc/stash.  You should try to remember this password, but it
+    is much more important that it be a strong password than that it be
+    remembered.  However, if you lose the password and /etc/krb5kdc/stash,
+    you cannot decrypt your Kerberos database.
+    Loading random data
+    Initializing database '/var/lib/krb5kdc/principal' for realm 'EXAMPLE.ORG',
+    master key name 'K/M@EXAMPLE.ORG'
+    You will be prompted for the database Master Password.
+    It is important that you NOT FORGET this password.
+    Enter KDC database master key:
+
+You will be required to retype the password:
+
+.. code-block:: console
+
+    Re-enter KDC database master key to verify:
+
+If succesfully applied, the following message will be displayed:
+
+.. code-block:: console
+
+    Now that your realm is set up you may wish to create an administrative
+    principal using the addprinc subcommand of the kadmin.local program.
+    Then, this principal can be added to /etc/krb5kdc/kadm5.acl so that
+    you can use the kadmin program on other computers.  Kerberos admin
+    principals usually belong to a single user and end in /admin.  For
+    example, if jruser is a Kerberos administrator, then in addition to
+    the normal jruser principal, a jruser/admin principal should be
+    created.
+
+    Don't forget to set up DNS information so your clients can find your
+    KDC and admin servers.  Doing so is documented in the administration
+    guide.
+
+Next step consists in creating the principals for the Bind9 DNS server
+(the service protected by the GSS-TSIG TKEY) and for the DNS client
+(the Kea DDNS server).
+
+The Bind9 DNS server principal (used for authentication) is created the
+following way:
 
 .. code-block:: console
 
     kadmin.local -q "addprinc -randkey DNS/server.example.org"
 
-The DNS client principal (used by the Kea DDNS server):
+If succesfully created, the following message will be displayed:
 
 .. code-block:: console
 
-    kadmin.local -q "addprinc -pw client_princ_password DHCP/admin.example.org"
+    No policy specified for DNS/server.example.org@EXAMPLE.ORG; defaulting to no policy
+    Authenticating as principal root/admin@EXAMPLE.ORG with password.
+    Principal "DNS/server.example.org@EXAMPLE.ORG" created.
 
-The keytab file for the DNS server principal must be exported so that
-they can be used by the Bind 9 DNS server.
-The exported keytab file name is ``dns.keytab``.
+The DNS client principal (used by the Kea DDNS server) is created the
+following way (please choose your own password here):
+
+.. code-block:: console
+
+    kadmin.local -q "addprinc -pw <password> DHCP/admin.example.org"
+
+If succesfully created, the following message will be displayed:
+
+.. code-block:: console
+
+    No policy specified for DHCP/admin.example.org@EXAMPLE.ORG; defaulting to no policy
+    Authenticating as principal root/admin@EXAMPLE.ORG with password.
+    Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
+
+The DNS server principal must be exported so that it can be used by the Bind 9
+DNS server. Only this principal is required and is is exported to the keytab
+file with the name ``dns.keytab``.
 
 .. code-block:: console
 
     kadmin.local -q "ktadd -k /tmp/dns.keytab DNS/server.example.org"
+
+If succesfully exported, the following message will be displayed:
+
+.. code-block:: console
+
+    Authenticating as principal root/admin@EXAMPLE.ORG with password.
+    Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
+    Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
 
 Finally, the krb5-admin-server must be restarted:
 
@@ -256,8 +327,8 @@ Bind 9 with GSS-TSIG Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Bind 9 DNS server must be configured to use GSS-TSIG and to use the
-previously exported keytab file ``dns.keytab`` by updating the ``named.conf``
-file:
+previously exported DNS server principal from the keytab file ``dns.keytab``.
+Updating the ``named.conf`` file is required:
 
 .. code-block:: console
 
@@ -282,7 +353,7 @@ file:
 The zone files should have an entry for the server principal FQDN
 ``server.example.org``.
 
-The ``/etc/bind/db.10`` file:
+The ``/etc/bind/db.10`` file needs to be created or updated:
 
 .. code-block:: console
 
@@ -301,7 +372,7 @@ The ``/etc/bind/db.10`` file:
     @       IN      NS      ns.
     40      IN      PTR     ns.example.org.
 
-The ``/var/lib/bind/db.example.org`` file:
+The ``/var/lib/bind/db.example.org`` file needs to be created or updated:
 
 .. code-block:: console
 

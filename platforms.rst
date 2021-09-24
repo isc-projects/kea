@@ -124,7 +124,7 @@ Some optional features of Kea have additional dependencies.
    detail in :ref:`netconf-install`. This is an optional dependency; Kea can be
    built without NETCONF support.
 
--  To sign and verify DNS updates, Kea DDNS server uses GSS-TSIG and requires
+-  To sign and verify DNS updates, Kea DDNS server may use GSS-TSIG which requires
    MIT Kerberos 5 or Heimdal libraries. The dependencies required to be
    installed are described in more detail in :ref:`gss-tsig-install`. This is an
    optional dependency; Kea can be built without GSS-TSIG support.
