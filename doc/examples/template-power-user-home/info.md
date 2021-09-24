@@ -23,10 +23,11 @@ pair.
   ```
    +-host-1-+       +-host-2-+
    |        |       |        |
-   |  CA ============= CA    |    ===== - HTTP connection
-   |   #    |       |   #    |
-   |   #    |       |   #    |    ##### - UNIX socket
-   | DHCPv4 |       | DHCPv4 |
+   |   CA <===\   /===> CA   |    ===== - HTTP connection
+   |   #    |  \ /  |   #    |
+   |   #    |   X   |   #    |    ##### - UNIX socket
+   |   #    |  / \      #    |
+   | DHCPv4 ==/   \== DHCPv4 |
    |        |       |        |
    +--------+       +--------+
   ```
