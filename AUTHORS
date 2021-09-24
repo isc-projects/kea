@@ -17,7 +17,6 @@ Primary developers:
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading)
- - Michal Nowikowski (testing, hammer, release engineering)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability)
  - Vicky Risk (documentation)
@@ -25,12 +24,14 @@ Primary developers:
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
                  release engineering, shell scripts, testing)
  - Peter Davies (documentation)
+ - Slawek Figiel (documentation)
 
 Former developers who are no longer active:
  - Stephen Morris (Hooks, MySQL)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Brian Reid (logo design)
  - Shawn Routhier (lease file cleanup)
+ - Michal Nowikowski (testing, hammer, release engineering)
 
 Main area of work mentioned in parentheses. The lists are in a roughly
 chronological order.

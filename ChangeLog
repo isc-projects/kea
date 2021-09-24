@@ -1,3 +1,8 @@
+1950.	[doc]		slawek
+	The description and example of the usage of the "include"
+	statement in the Kea configuration file.
+	(Gitalb #2080)
+
 1949.	[bug]		tmark
 	kea-dhcp6 now correctly determines DNS update flags when
 	the allocation engine dynamically changes the selected
