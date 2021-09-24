@@ -1,6 +1,6 @@
 1951.	[doc]		tomek
-	Configuration templates for a home power user have been added.
 	A new appendix for configuration templates added to Kea ARM.
+	the first of which is a home power user.
 	(Gitlab #2050)
 
 1950.	[doc]		slawek
