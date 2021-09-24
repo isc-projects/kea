@@ -78,6 +78,9 @@ To deploy this setup, you need to conduct the following steps:
 
    - tweak your DNS option to match your actual network
 
+   - the path to the hook libraries. This is very OS specific parameter. The library names are in
+     general the same everywhere, but the path varies.
+
 3. If using firewall, make sure the server1 can reach the server2. A nice way to ensure that is to
    try to retrieve server2's config from the server1:
 
