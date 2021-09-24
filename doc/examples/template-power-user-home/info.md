@@ -51,7 +51,7 @@ The assumption is that there are 2 hosts that will be running the Kea setup:
 
 The network is 192.168.1.0/24. It is assumed that 192.168.1.1 is your default router.
 
-The whole network is split into dynamic and static pools:
+The whole subnet is split into dynamic and static pools:
 
 - 192.168.1.100 - 192.168.1.199 - this is the dynamic pool. When new devices appear in your network,
   they will be assigned dynamic addresses from this pool.
@@ -61,8 +61,8 @@ The whole network is split into dynamic and static pools:
 To deploy this setup, you need to conduct the following steps:
 
 1. Install CA and DHCPv4 on host1, copy the config files to the typical locations. It's typically
-   /etc/kea on Linux and /usr/local/etc/kea on FreeBSD. The files are typically called
-   kea-ctrl-agent.conf and kea-dhcp4.conf. Please consult your start-up scripts.
+   ``/etc/kea`` on Linux and ``/usr/local/etc/kea`` on FreeBSD. The files are typically called
+   ``kea-ctrl-agent.conf`` and ``kea-dhcp4.conf``. Please consult your start-up scripts.
 
 2. At the very least alter the following to match your setup:
 
@@ -92,7 +92,7 @@ To deploy this setup, you need to conduct the following steps:
    server2 and user server's 1 IP address and port.
 
 5. Install CA and DHCPv4 on host2, similar to steps 1 and 2. Note the config file for the
-   standby server is very similar, except the definition of "this-server-name" field
+   standby server is very similar, except the definition of ``this-server-name`` field
    (and possibly inteface names). In many cases you can simply copy over the file
    and just tweak it a little bit.
 
