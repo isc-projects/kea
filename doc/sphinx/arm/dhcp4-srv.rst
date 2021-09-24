@@ -312,7 +312,7 @@ eliminates a dependency on third-party database software.
 The configuration of the memfile backend is controlled through
 the Dhcp4/lease-database parameters. The ``type`` parameter is mandatory
 and specifies which storage for leases the server should use, through
-the ``"memfile"`` value. The following list gives additional optional parameters that
+the ``memfile`` value. The following list gives additional optional parameters that
 can be used to configure the memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
@@ -367,7 +367,7 @@ of the lease file every 1800 seconds (30 minutes) and sets the maximum number of
 errors to 100.
 
 Why Is Lease File Cleanup Necessary?
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is important to know how the lease file contents are organized to
 understand why the periodic lease file cleanup is needed. Every time the
@@ -1873,7 +1873,7 @@ currently has no means to validate it.
 
 Kea also supports other options than those listed above; the following options
 are returned by the Kea engine itself and in general should not be configured
-manually. 
+manually.
 
 .. table:: List of Standard DHCPv4 Options Managed by Kea on Its Own and Not Directly Configurable by an Administrator
 
@@ -2647,7 +2647,7 @@ required to carry a uint16 value as well as the sub-options, the
 definition. (Such an option would then have the following data
 structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
-in quotes, e.g. `"123"` — would then be assigned to the uint16 field in
+in quotes, e.g. ``"123"`` — would then be assigned to the uint16 field in
 the ``"container"`` option.
 
 .. _dhcp4-option-data-defaults:
@@ -2785,24 +2785,24 @@ useful when segregating clients belonging to the same subnet into
 different address ranges.
 
 In a similar way, a pool can be constrained to serve only known clients,
-i.e. clients which have a reservation, using the built-in `"KNOWN"` or
-`"UNKNOWN"` classes. Addresses can be assigned to registered clients
+i.e. clients which have a reservation, using the built-in ``KNOWN`` or
+``UNKNOWN`` classes. Addresses can be assigned to registered clients
 without giving a different address per reservation, for instance when
 there are not enough available addresses. The determination whether
 there is a reservation for a given client is made after a subnet is
-selected, so it is not possible to use `"KNOWN"`/`"UNKNOWN"` classes to select a
+selected, so it is not possible to use ``KNOWN``/``UNKNOWN`` classes to select a
 shared network or a subnet.
 
 The process of classification is conducted in five steps. The first step
 is to assess an incoming packet and assign it to zero or more classes.
 The second step is to choose a subnet, possibly based on the class
-information. When the incoming packet is in the special class `"DROP"`,
+information. When the incoming packet is in the special class ``DROP``,
 it is dropped and a debug message logged.
 The next step is to evaluate class expressions depending on
-the built-in `"KNOWN"`/`"UNKNOWN"` classes after host reservation lookup,
+the built-in ``KNOWN``/``UNKNOWN`` classes after host reservation lookup,
 using them for pool selection and assigning classes from host
 reservations. The list of required classes is then built and each class
-of the list has its expression evaluated; when it returns `"true"` the
+of the list has its expression evaluated; when it returns ``true`` the
 packet is added as a member of the class. The last step is to assign
 options, again possibly based on the class information. More complete
 and detailed information is available in :ref:`classify`.
@@ -2812,7 +2812,7 @@ relies on examining the values in the vendor class options or the
 existence of a host reservation. Information from these options is
 extracted, and a class name is constructed from it and added to the
 class list for the packet. The second specifies an expression that is
-evaluated for each packet. If the result is `"true"`, the packet is a
+evaluated for each packet. If the result is ``true``, the packet is a
 member of the class.
 
 .. note::
@@ -2870,10 +2870,10 @@ Using Vendor Class Information in Classification
 
 The server checks whether an incoming packet includes the vendor class
 identifier option (60). If it does, the content of that option is
-prepended with `"VENDOR_CLASS\_"`, and it is interpreted as a class. For
+prepended with ``VENDOR_CLASS\_``, and it is interpreted as a class. For
 example, modern cable modems send this option with value
-`"docsis3.0"`, so the packet belongs to the class
-`"VENDOR_CLASS_docsis3.0"`.
+``docsis3.0``, so the packet belongs to the class
+``VENDOR_CLASS_docsis3.0``.
 
 .. note::
 
@@ -2882,7 +2882,7 @@ example, modern cable modems send this option with value
    ``next-server`` and ``boot-file-name`` values appropriately.
 
 This example shows a configuration using an automatically generated
-`"VENDOR_CLASS\_"` class. The administrator of the network has decided that
+``VENDOR_CLASS\_`` class. The administrator of the network has decided that
 addresses from the range 192.0.2.10 to 192.0.2.20 are going to be managed by
 the Dhcp4 server and only clients belonging to the DOCSIS 3.0 client
 class are allowed to use that pool.
@@ -2905,8 +2905,8 @@ Defining and Using Custom Classes
 
 The following example shows how to configure a class using an expression
 and a subnet using that class. This configuration defines the class
-named `"Client_foo"`. It is comprised of all clients whose client IDs
-(option 61) start with the string `"foo"`. Members of this class will be
+named ``Client_foo``. It is comprised of all clients whose client IDs
+(option 61) start with the string ``foo``. Members of this class will be
 given addresses from 192.0.2.10 to 192.0.2.20 and the addresses of their
 DNS servers set to 192.0.2.1 and 192.0.2.2.
 
