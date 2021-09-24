@@ -15,26 +15,26 @@ Server1's Control Agent configuration file:
 
 .. literalinclude:: template-power-user-home-ca-1.conf
    :language: javascript
-   :emphasize-lines: 8
+   :emphasize-lines: 9, 12
    :linenos:
 
 Server1's DHCPv4 configuration file:
 
 .. literalinclude:: template-power-user-home-dhcp4-1.conf
    :language: javascript
-   :emphasize-lines: 25,120,132,146,150,153-157,165-179,189-198
+   :emphasize-lines: 25,76,81,121,133,147,151,154-158,166-180,190-199
    :linenos:
 
 Server2's Control Agent configuration file:
 
 .. literalinclude:: template-power-user-home-ca-2.conf
    :language: javascript
-   :emphasize-lines: 8
+   :emphasize-lines: 9, 12
    :linenos:
 
 Server2's DHCPv4 configuration file:
 
 .. literalinclude:: template-power-user-home-dhcp4-2.conf
    :language: javascript
-   :emphasize-lines: 25,120,132,146,150,153-157,165-179,189-198
+   :emphasize-lines: 25,76,81,121,133,147,151,154-158,166-180,190-199
    :linenos:
