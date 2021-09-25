@@ -3,6 +3,7 @@ rst_arm_sources += arm/admin.rst
 rst_arm_sources += arm/agent.rst
 rst_arm_sources += arm/classify.rst
 rst_arm_sources += arm/config-backend.rst
+rst_arm_sources += arm/config-templates
 rst_arm_sources += arm/config.rst
 rst_arm_sources += arm/congestion-handling.rst
 rst_arm_sources += arm/ctrl-channel.rst
