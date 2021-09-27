@@ -549,11 +549,6 @@ This informational message is issued when the server in passive-backup
 mode transitions to a new state. The arguments specify initial server state and
 a new server state.
 
-% HA_SYNC_FAILED lease database synchronization with %1 failed: %2
-This error message is issued to indicate that the lease database synchronization
-failed. The first argument provides the partner server's name. The second argument
-provides a reason for the failure.
-
 % HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-sync-complete-notify to %1: %2
 This warning message indicates that there was a problem in communication with an
 HA peer while sending the ha-sync-complete-notify command. The first argument
@@ -569,6 +564,11 @@ the remote server's name. The second argument provides a reason for failure.
 This error message is issued to indicate that the ha-sync-complete-notify command
 handler failed while processing the command. The argument provides the reason for
 failure.
+
+% HA_SYNC_FAILED lease database synchronization with %1 failed: %2
+This error message is issued to indicate that the lease database synchronization
+failed. The first argument provides the partner server's name. The second argument
+provides a reason for the failure.
 
 % HA_SYNC_HANDLER_FAILED ha-sync command failed: %1
 This error message is issued to indicate that the ha-sync command handler
