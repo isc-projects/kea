@@ -87,13 +87,6 @@ to create and initialize its application instance.
 This error message is issued if the controller could not initialize the
 application and will exit.
 
-% DCTL_UNLOAD_LIBRARIES_ERROR error unloading hooks libraries during shutdown: %1
-This error message indicates that during shutdown, unloading hooks
-libraries failed to close them. If the list of libraries is empty it is
-a programmatic error in the server code. If it is not empty it could be
-a programmatic error in one of the hooks libraries which could lead to
-a crash during finalization.
-
 % DCTL_NOT_RUNNING %1 application instance is not running
 A warning message is issued when an attempt is made to shut down the
 application when it is not running.
@@ -148,6 +141,13 @@ and should not be used in a production environment.
 % DCTL_STARTING %1 starting, pid: %2, version: %3 (%4)
 This is an informational message issued when controller for the
 service first starts. Version is also reported.
+
+% DCTL_UNLOAD_LIBRARIES_ERROR error unloading hooks libraries during shutdown: %1
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
 
 % DCTL_UNSUPPORTED_SIGNAL ignoring reception of unsupported signal: %1
 This is a debug message indicating that the application received an
