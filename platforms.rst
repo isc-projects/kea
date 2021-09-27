@@ -26,7 +26,7 @@ and FreeBSD systems. Kea-|release| builds have been tested on:
 * Debian — 9, 10
 * Fedora — 33, 34
 * FreeBSD — 12.1, 13.0
-* Ubuntu — 18.04, 20.04, 20.10, 21.04
+* Ubuntu — 18.04, 20.04, 21.04
 
 There are currently no plans to port Kea to Windows systems.
 
