@@ -58,7 +58,7 @@
     // Need to add gss-tsig hook here
     "hooks-libraries": [
     {
-        "library": "/opt/lib/libdhcp_gss_tsig.so",
+        "library": "/opt/lib/libddns_gss_tsig.so",
         "parameters": {
             // This section governs the GSS-TSIG integration. Each server
             // mentioned in forward-ddns and/or reverse-ddns needs to have

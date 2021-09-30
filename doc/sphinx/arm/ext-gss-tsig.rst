@@ -467,7 +467,7 @@ An excerpt from D2 server is provided below. More examples are available in the
         // Need to add gss-tsig hook here
         "hooks-libraries": [
         {
-            "library": "/opt/lib/libdhcp_gss_tsig.so",
+            "library": "/opt/lib/libddns_gss_tsig.so",
             "parameters": {
                 // This section governs the GSS-TSIG integration. Each server
                 // mentioned in forward-ddns and/or reverse-ddns needs to have
@@ -523,7 +523,7 @@ specified, the default of 53 is assumed. This is similar to basic mode with no
 authentication or authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
 
-Second, the ``libdhcp_gss_tsig.so`` library has to be specified on the
+Second, the ``libddns_gss_tsig.so`` library has to be specified on the
 ``hooks-libraries`` list. This hook takes many parameters. The most
 important one is `servers`, which is a list of GSS-TSIG capable
 servers.  If there are several servers and they share some
