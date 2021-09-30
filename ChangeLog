@@ -1,5 +1,5 @@
 1953.	[build]         fdupont
-	Changed the name of the GSS-TSIG hook libary object to
+	Changed the name of the GSS-TSIG hook library object to
 	libddns_gss_tsig.so.
 	(Gitlab #2115)
 

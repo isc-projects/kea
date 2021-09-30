@@ -539,7 +539,7 @@ The parameters have the following meaning:
   For instance, ``FILE:<filename>`` can be used to point to a specific file.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5_CLIENT_KTNAME`` environment
-  variable.
+  variable. The empty value is silently ignored.
 
 - ``credentials-cache`` specifies the Kerberos credentials cache.
   For instance ``FILE:<filename>`` can be used to point to a file or
@@ -547,7 +547,7 @@ The parameters have the following meaning:
   ``DIR:<directory-path>``.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5CCNAME`` environment
-  variable.
+  variable. The empty value is silently ignored.
 
 - ``server-principal`` is the Kerberos principal name of the DNS
   server that will receive updates.  In plain words, this is the
