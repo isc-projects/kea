@@ -11,8 +11,8 @@ Starting and Stopping the DHCPv6 Server
 
 It is recommended that the Kea DHCPv6 server be started and stopped
 using ``keactrl`` (described in :ref:`keactrl`); however, it is also
-possible to run the server directly. It accepts the following
-command-line switches:
+possible to run the server directly via the ``kea-dhcp6`` command, which accepts
+the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file. This is the only
    mandatory switch.
@@ -25,20 +25,20 @@ command-line switches:
    when debugging.
 
 -  ``-p server-port`` - specifies the local UDP port on which the server
-   will listen. This is only useful during testing, as a DHCPv6 server
-   listening on ports other than the standard ones will not be able to
+   listens. This is only useful during testing, as a DHCPv6 server
+   listening on ports other than the standard ones is not able to
    handle regular DHCPv6 queries.
 
 -  ``-P client-port`` - specifies the remote UDP port to which the
-   server will send all responses. This is only useful during testing,
+   server sends all responses. This is only useful during testing,
    as a DHCPv6 server sending responses to ports other than the standard
-   ones will not be able to handle regular DHCPv6 queries.
+   ones is not able to handle regular DHCPv6 queries.
 
--  ``-t file`` - specifies a configuration file to be tested. Kea-dhcp6
-   will load it, check it, and exit. During the test, log messages are
+-  ``-t file`` - specifies a configuration file to be tested. ``kea-dhcp6``
+   loads it, checks it, and exits. During the test, log messages are
    printed to standard output and error messages to standard error. The
    result of the test is reported through the exit code (0 =
-   configuration looks ok, 1 = error encountered). The check is not
+   configuration looks OK, 1 = error encountered). The check is not
    comprehensive; certain checks are possible only when running the
    server.
 
@@ -52,12 +52,12 @@ command-line switches:
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
-On startup, the server will detect available network interfaces and will
-attempt to open UDP sockets on all interfaces mentioned in the
+On startup, the server detects available network interfaces and
+attempts to open UDP sockets on all interfaces listed in the
 configuration file. Since the DHCPv6 server opens privileged ports, it
-requires root access. This daemon must be run as root.
+requires root access; this daemon must be run as root.
 
-During startup, the server will attempt to create a PID file of the
+During startup, the server attempts to create a PID file of the
 form: [**runstatedir**]/kea/[**conf name**].kea-dhcp6.pid where:
 
 -  ``runstatedir``: The value as passed into the build configure
@@ -72,13 +72,13 @@ form: [**runstatedir**]/kea/[**conf name**].kea-dhcp6.pid where:
    be "myconf".
 
 If the file already exists and contains the PID of a live process, the
-server will issue a DHCP6_ALREADY_RUNNING log message and exit. It is
+server will issue a ``DHCP6_ALREADY_RUNNING`` log message and exit. It is
 possible, though unlikely, that the file is a remnant of a system crash
 and the process to which the PID belongs is unrelated to Kea. In such a
 case it would be necessary to manually delete the PID file.
 
 The server can be stopped using the ``kill`` command. When running in a
-console, the server can also be shut down by pressing ctrl-c. It detects
+console, the server can also be shut down by pressing Ctrl-c. Kea detects
 the key combination and shuts down gracefully.
 
 .. _dhcp6-configuration:
@@ -89,7 +89,7 @@ DHCPv6 Server Configuration
 Introduction
 ------------
 
-This section explains how to configure the DHCPv6 server using a
+This section explains how to configure the Kea DHCPv6 server using a
 configuration file. Before DHCPv6 is started, its configuration file must
 be created. The basic configuration is as follows:
 
@@ -147,23 +147,23 @@ above this object is called ``Dhcp6``.
 
 .. note::
 
-   In the current Kea release it is possible to specify configurations
+   In the current Kea release it is still possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it was removed in 1.7.10 release,
-   including the ``Logging`` object: its previous content, the list
+   not recommended; support for this was removed in Kea 1.7.10,
+   including the ``Logging`` object. Its previous content, the list
    of loggers, must now be inside the ``Dhcp6`` object.
 
-The Dhcp6 configuration starts with the ``"Dhcp6": {`` line and ends
+The ``Dhcp6`` configuration starts with the ``"Dhcp6": {`` line and ends
 with the corresponding closing brace (in the above example, the brace
 after the last comment). Everything defined between those lines is
-considered to be the Dhcp6 configuration.
+considered to be the ``Dhcp6`` configuration.
 
 In general, the order in which those parameters appear does not
-matter, but there are two caveats. The first one is to remember that the
+matter, but there are two caveats. The first one is that the
 configuration file must be well-formed JSON. That means that the
 parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
-configuration file, keep in mind that moving a parameter to or from the
+configuration file, moving a parameter to or from the
 last position in a given scope may also require moving the comma. The
 second caveat is that it is uncommon — although legal JSON — to repeat
 the same parameter multiple times. If that happens, the last occurrence
@@ -175,20 +175,20 @@ in the configuration file.
 The first few DHCPv6 configuration elements
 define some global parameters. ``valid-lifetime`` defines how long the
 addresses (leases) given out by the server are valid. If nothing
-changes, a client that got an address is allowed to use it for 4000
+changes, a client given an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any
 quotes around them.) The address will become deprecated in 3000 seconds,
-i.e. clients are allowed to keep old connections, but can't use this
-address for creating new connections. ``renew-timer`` and
-``rebind-timer`` are values (also in seconds) that define T1 and T2 timers that govern
-when the client will begin the renewal and rebind procedures.
+i.e. clients are allowed to keep old connections, but cannot use this
+address to create new connections. ``renew-timer`` and
+``rebind-timer`` are values (also in seconds) that define T1 and T2 timers, which govern
+when the client begins the renewal and rebind procedures.
 
-The ``interfaces-config`` map specifies the server configuration
-concerning the network interfaces on which the server should listen to
-the DHCP messages. The ``interfaces`` parameter specifies a list of
+The ``interfaces-config`` map specifies the
+network interfaces on which the server should listen to
+DHCP messages. The ``interfaces`` parameter specifies a list of
 network interfaces on which the server should listen. Lists are opened
 and closed with square brackets, with elements separated by commas. To
-listen on two interfaces, the ``interfaces-config`` should look like
+listen on two interfaces, the ``interfaces-config`` element should look like
 this:
 
 ::
@@ -197,7 +197,7 @@ this:
        "interfaces": [ "eth0", "eth1" ]
    },
 
-The next couple of lines define the lease database, the place where the
+The next lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
 server to use ``memfile``, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a
@@ -207,7 +207,7 @@ parameters. Note that ``lease-database`` is an object and opens up a new
 scope, using an opening brace. Its parameters (just one in this example:
 ``type``) follow. If there were more than one, they would be separated
 by commas. This scope is closed with a closing brace. As more parameters
-for the Dhcp6 definition follow, a trailing comma is present.
+for the ``Dhcp6`` definition follow, a trailing comma is present.
 
 Finally, we need to define a list of IPv6 subnets. This is the most
 important DHCPv6 configuration structure, as the server uses that
@@ -216,7 +216,7 @@ which the server is expected to receive DHCP requests. The subnets are
 specified with the ``subnet6`` parameter. It is a list, so it starts and
 ends with square brackets. Each subnet definition in the list has
 several attributes associated with it, so it is a structure and is
-opened and closed with braces. At a minimum, a subnet definition has to
+opened and closed with braces. At a minimum, a subnet definition must
 have at least two parameters: ``subnet`` (which defines the whole
 subnet) and ``pools`` (which is a list of dynamically allocated pools
 that are governed by the DHCP server).
@@ -242,15 +242,15 @@ syntax would be used:
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
-After all the parameters are specified, we have two contexts open: global
-and Dhcp6; thus, we need two closing curly brackets to close them.
+After all the parameters are specified, there are two contexts open: global
+and ``Dhcp6``; thus, two closing curly brackets must be used to close them.
 
 Lease Storage
 -------------
 
 All leases issued by the server are stored in the lease database.
-Currently there are four database backends available: memfile (which is
-the default backend), MySQL, PostgreSQL, and Cassandra.
+There are four database backends available: memfile
+(the default), MySQL, PostgreSQL, and  Cassandra (deprecated)
 
 Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,13 +258,13 @@ Memfile - Basic Storage for Leases
 The server is able to store lease data in different repositories. Larger
 deployments may elect to store leases in a database.
 :ref:`database-configuration6` describes this option. In
-typical smaller deployments, though, the server will store lease
+typical smaller deployments, though, the server stores lease
 information in a CSV file rather than a database. As well as requiring
 less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
 
 The configuration of the file backend (memfile) is controlled through
-the Dhcp6/lease-database parameters. The ``type`` parameter is mandatory
+the ``Dhcp6``/``lease-database`` parameters. The ``type`` parameter is mandatory
 and it specifies which storage for leases the server should use. The
 value of ``"memfile"`` indicates that the file should be used as the
 storage. The following list gives additional optional parameters that
@@ -282,7 +282,7 @@ can be used to configure the memfile backend.
    writing lease updates to the lease file.
 
 -  ``name``: specifies an absolute location of the lease file in which
-   new leases and lease updates will be recorded. The default value for
+   new leases and lease updates are recorded. The default value for
    this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases6.csv"``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
@@ -293,12 +293,13 @@ can be used to configure the memfile backend.
    default value of the ``lfc-interval`` is ``3600``. A value of 0
    disables the LFC.
 
--  ``max-row-errors``: when the server loads a lease file, it is processed
+-  ``max-row-errors``: specifies the number of row errors before the server
+   stops attempting to load a lease file. When the server loads a lease file, it is processed
    row by row, each row containing a single lease. If a row is flawed and
-   cannot be processed correctly the server will log it, discard the row,
-   and go on to the next row. This parameter can be used to set a limit on
-   the number of such discards that may occur after which the server will
-   abandon the effort and exit.  The default value of 0 disables the limit
+   cannot be processed correctly the server logs it, discards the row,
+   and goes on to the next row. This parameter can be used to set a limit on
+   the number of such discards that can occur, after which the server
+   abandons the effort and exits. The default value of 0 disables the limit
    and allows the server to process the entire file, regardless of how many
    rows are discarded.
 
@@ -316,25 +317,24 @@ An example configuration of the memfile backend is presented below:
        }
    }
 
-This configuration selects the ``/tmp/kea-leases6.csv`` as the storage
+This configuration selects ``/tmp/kea-leases6.csv`` as the storage file
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
 of the lease file every 30 minutes and sets the maximum number of row
 errors to 100.
 
-
 It is important to know how the lease file contents are organized to
 understand why the periodic lease file cleanup is needed. Every time the
-server updates a lease or creates a new lease for the client, the new
+server updates a lease or creates a new lease for a client, the new
 lease information must be recorded in the lease file. For performance
 reasons, the server does not update the existing client's lease in the
 file, as this would potentially require rewriting the entire file.
 Instead, it simply appends the new lease information to the end of the
 file; the previous lease entries for the client are not removed. When
-the server loads leases from the lease file, e.g. at the server startup,
+the server loads leases from the lease file, e.g. at server startup,
 it assumes that the latest lease entry for the client is the valid one.
-The previous entries are discarded, meaning that the server can
-re-construct the accurate information about the leases even though there
+Previous entries are discarded, meaning that the server can
+reconstruct accurate information about the leases even though there
 may be many lease entries for each client. However, storing many entries
 for each client results in a bloated lease file and impairs the
 performance of the server's startup and reconfiguration, as it needs to
@@ -349,9 +349,9 @@ however, that the LFC takes time and thus it is possible (although
 unlikely) that, if the ``lfc-interval`` is too short, a new cleanup may
 be started while the previous one is still running. The server would
 recover from this by skipping the new cleanup when it detected that the
-previous cleanup was still in progress. But it implies that the actual
-cleanups will be triggered more rarely than configured. Moreover,
-triggering a new cleanup adds overhead to the server, which will not be
+previous cleanup was still in progress, but it implies that the actual
+cleanups will be triggered more rarely than the configured interval. Moreover,
+triggering a new cleanup adds overhead to the server, which is not
 able to respond to new requests for a short period of time when the new
 cleanup process is spawned. Therefore, it is recommended that the
 ``lfc-interval`` value be selected in a way that allows the LFC
@@ -359,7 +359,7 @@ to complete the cleanup before a new cleanup is triggered.
 
 Lease file cleanup is performed by a separate process (in the
 background) to avoid a performance impact on the server process. To
-avoid conflicts between two processes both using the same lease
+avoid conflicts between two processes using the same lease
 files, the LFC process starts with Kea opening a new lease file; the
 actual LFC process operates on the lease file that is no longer used by
 the server. There are also other files created as a side effect of the
@@ -385,8 +385,8 @@ Lease Database Configuration
    :ref:`pgsql-database-create`.
 
 Lease database configuration is controlled through the
-Dhcp6/lease-database parameters. The database type must be set to
-"memfile", "mysql", "postgresql", or "cql", e.g.:
+``Dhcp6``/``lease-database`` parameters. The database type must be set to
+``memfile``, ``mysql``, or ``postgresql``, or ``cql``, e.g.:
 
 ::
 
@@ -396,6 +396,8 @@ Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
 :ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
 :ref:`cql-database-create`).
+
+For MySQL or PostgreSQL:
 
 ::
 
@@ -422,7 +424,7 @@ For Cassandra, multiple contact points can be provided:
 
    "Dhcp6": { "lease-database": { "contact-points": "remote-host-name[, ...]" , ... }, ... }
 
-Normally, the database will be on the same machine as the DHCPv6 server.
+Normally, the database is on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
 
 ::
@@ -453,7 +455,7 @@ The default value of five seconds should be more than adequate for local
 connections. If a timeout is given, though, it should be an integer
 greater than zero.
 
-The maximum number of times the server will automatically attempt to
+The maximum number of times the server automatically attempts to
 reconnect to the lease database after connectivity has been lost may be
 specified:
 
@@ -465,9 +467,11 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only).
+only). For Cassandra, Kea uses an interface that connects to
+all nodes in a cluster at the same time. Any connectivity issues should
+be handled by internal Cassandra mechanisms.
 
-The number of milliseconds the server will wait between attempts to
+The number of milliseconds the server waits between attempts to
 reconnect to the lease database after connectivity has been lost may
 also be specified:
 
