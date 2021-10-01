@@ -354,6 +354,16 @@ local   all             postgres                                trust
  Use HELP for help.
  cqlsh> @endverbatim\n
 
+@section unitTestsKerberos Kerberos Configuration for Unit Tests
+
+The GSS-TSIG hook library uses the GSS-API with Kerberos. If there are
+no doubt about the Kerberos configuration for using the hook in production,
+for unit tests some problems were reported on some systems.
+
+GSS-TSIG hook unit tests use a setup inherited from bind9 with old crypto
+settings which are not allowed by default Kerberos system configuration.
+A simple workaround is to set the KRB5_CONFIG environment variable.
+
 @section writingShellScriptsAndTests Writing shell scripts and tests
 
 Shell tests are `shellcheck`ed. But there are other writing practices that are
