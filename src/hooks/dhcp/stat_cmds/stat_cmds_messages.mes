@@ -38,6 +38,17 @@ The parameters submitted with stat-lease4-get were valid but excluded all
 known subnets.  The parameters supplied along with an explanation should
 be logged.
 
+% STAT_CMDS_LEASE4_ORPHANED_STATS stat-lease4-get command omitted statistics for one or more non-existent subnets
+During processing the stat-lease4-get found statistics for subnet IDs which
+for non-existent subnets. These values were omitted from the command response
+returned to the user. This may occur when subnets have been removed from
+the configuration in a manner that did not also remove the statistics. While
+the existence of such statistics is not harmful, steps should be considered
+to remove them.  For memfile lease storage, the problem should disappear
+upon configuration reload or server restart. For database lease storage the
+issue is more complicated and as of Kea 2.0.0 we do not yet have a clean
+solution.
+
 % STAT_CMDS_LEASE6_FAILED stat-lease6-get command failed: reason: %1
 The stat-lease6-get command has failed. The reason for failure is logged.
 
@@ -57,3 +68,14 @@ parameters.  A detailed explanation should be logged.
 The parameters submitted with stat-lease6-get were valid but excluded all
 known subnets.  The parameters supplied along with an explanation should
 be logged.
+
+% STAT_CMDS_LEASE6_ORPHANED_STATS stat-lease6-get command omitted statistics for one or more non-existent subnets
+During processing the stat-lease4-get found statistics for subnet IDs which
+for non-existent subnets. These values were omitted from the command response
+returned to the user. This may occur when subnets have been removed from
+the configuration in a manner that did not also remove the statistics. While
+the existence of such statistics is not harmful, steps should be considered
+to remove them.  For memfile lease storage, the problem should disappear
+upon configuration reload or server restart. For database lease storage the
+issue is more complicated and as of Kea 2.0.0 we do not yet have a clean
+solution.

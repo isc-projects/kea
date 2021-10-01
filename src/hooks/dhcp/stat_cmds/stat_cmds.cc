@@ -31,6 +31,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::log;
 using namespace std;
 
 namespace isc {
@@ -449,14 +450,24 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
     bool query_eof = !(query->getNextRow(query_row));
 
     // Now we iterate over the selected range, building rows accordingly.
+    bool orphaned_stats = false;
     for (auto cur_subnet = lower; cur_subnet != upper; ++cur_subnet) {
         SubnetID cur_id = (*cur_subnet)->getID();
 
-        // Add total only rows for subnets that occur before,
-        // in-between, or after the subnets in the query content
-        if ((cur_id < query_row.subnet_id_) ||
-            (cur_id > query_row.subnet_id_) ||
-            (query_eof)) {
+        // Skip any unexpected result set rows.  These occur when
+        // subnets no longer exist but either their leases (memfile)
+        // or their leaseX-stat rows (db lease backends) still do.
+        SubnetID logged_id = 0;
+        while ((cur_id > query_row.subnet_id_) && (!query_eof)) {
+            orphaned_stats = true;
+            query_eof = !(query->getNextRow(query_row));
+        }
+
+        // Add total only rows for subnets that occur before
+        // or after the subnets in the query content. These are
+        // subnets which exist but for which there is not yet any
+        // lease data.
+        if ((cur_id < query_row.subnet_id_) || (query_eof)) {
             // Generate a totals only row
             addValueRow4(value_rows, cur_id, 0, 0);
             continue;
@@ -479,11 +490,15 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
 
             query_eof = !(query->getNextRow(query_row));
         }
-
         // Add the row for the current subnet
         if (add_row) {
             addValueRow4(value_rows, cur_id, assigned, declined);
         }
+    }
+
+    // If there are any orphaned statistics log it.
+    if (!(query_eof) || orphaned_stats) {
+        LOG_DEBUG(stat_cmds_logger, DBGLVL_TRACE_BASIC, STAT_CMDS_LEASE4_ORPHANED_STATS);
     }
 
     return (value_rows->size());
@@ -559,17 +574,25 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
     }
 
     // Get the first query row
+    bool orphaned_stats = false;
     LeaseStatsRow query_row;
     bool query_eof = !(query->getNextRow(query_row));
-
     for (auto cur_subnet = lower; cur_subnet != upper; ++cur_subnet) {
         SubnetID cur_id = (*cur_subnet)->getID();
 
-        // Add total only rows for subnets that occur before,
-        // in-between, or after subnets in the query content
-        if ((cur_id < query_row.subnet_id_) ||
-            (cur_id > query_row.subnet_id_) ||
-            (query_eof)) {
+        // Skip any unexpected result set rows.  These occur when
+        // subnets no longer exist but either their leases (memfile)
+        // or their leaseX-stat rows (db lease backends) still do.
+        while ((cur_id > query_row.subnet_id_) && (!query_eof)) {
+            orphaned_stats = true;
+            query_eof = !(query->getNextRow(query_row));
+        }
+
+        // Add total only rows for subnets that occur before
+        // or after the subnets in the query content. These are
+        // subnets which exist but for which there is not yet any
+        // lease data.
+        if ((cur_id < query_row.subnet_id_) || (query_eof)) {
             // Generate a totals only row
             addValueRow6(value_rows, cur_id, 0, 0, 0);
             continue;
@@ -602,6 +625,11 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         if (add_row) {
             addValueRow6(value_rows, cur_id, assigned, declined, assigned_pds);
         }
+    }
+
+    // If there are any orphaned statistics log it.
+    if (!(query_eof) || orphaned_stats) {
+        LOG_DEBUG(stat_cmds_logger, DBGLVL_TRACE_BASIC, STAT_CMDS_LEASE6_ORPHANED_STATS);
     }
 
     return (value_rows->size());

@@ -1,3 +1,9 @@
+1956.	[bug]		tmark
+	Modified stat_cmds hook library to omit statisics
+	for non-existent subnets from results returned by
+	stat-lease4-get and stat-lease6-get commands.
+	(Gitlab #2033)
+
 1955.	[bug]		tmark
 	kea-dhcp4 no longer sends DHCPNAKs in response to
 	DHCPREQUESTs for addresses for which it has no knowledge.

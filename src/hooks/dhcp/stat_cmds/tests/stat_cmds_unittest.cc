@@ -16,6 +16,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -1469,6 +1470,109 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         {
         SCOPED_TRACE((*test).description_);
         testCommand((*test).command_txt_, CONTROL_RESULT_EMPTY,
+                    (*test).exp_response_, (*test).exp_result_json);
+        }
+    }
+}
+
+// Verifies that statistics for v4 subnets which no longer
+// exist are dropped from the result sets.
+TEST_F(StatCmdsTest, statLease4OrphanedStats) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr4();
+
+    // Now remove subnets 10,30, and 50 thereby orphaning their leases.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    CfgSubnets4Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets4();
+    ASSERT_NO_THROW_LOG(subnets->del(10));
+    ASSERT_NO_THROW_LOG(subnets->del(30));
+    ASSERT_NO_THROW_LOG(subnets->del(50));
+    cfg_mgr.commit();
+
+    // Note timestamp actual values are not important but are included
+    // for clarity.
+    std::vector<TestScenario> tests = {
+        {
+        "ALL-Subnets",
+        "{\n"
+        "    \"command\": \"stat-lease4-get\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}",
+        "stat-lease4-get[all subnets]: 2 rows found",
+        "{\n"
+        "\"result-set\": {\n"
+        "   \"columns\": [\n"
+        "        \"subnet-id\", \"total-addresses\",\n"
+        "        \"cumulative-assigned-addresses\",\n"
+        "        \"assigned-addresses\", \"declined-addresses\"\n"
+        "   ],\n"
+        "   \"rows\": [\n"
+        "       [ 20, 16, 0, 3, 0 ],\n"
+        "       [ 40, 16, 0, 4, 0 ]\n"
+        "   ],\n"
+        "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
+        "}\n"
+        }
+    };
+
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+        SCOPED_TRACE((*test).description_);
+        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
+                    (*test).exp_response_, (*test).exp_result_json);
+        }
+    }
+}
+
+// Verifies that statistics for v6 subnets which no longer
+// exist are dropped from the result sets.
+TEST_F(StatCmdsTest, statLease6OrphanedStats) {
+
+    // Initialize lease manager.
+    initLeaseMgr6();
+
+    // Now remove subnets 10,30, and 50 thereby orphaning their leases.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    CfgSubnets6Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets6();
+    ASSERT_NO_THROW_LOG(subnets->del(10));
+    ASSERT_NO_THROW_LOG(subnets->del(30));
+    ASSERT_NO_THROW_LOG(subnets->del(50));
+    cfg_mgr.commit();
+
+    // Note timestamp actual values are not important but are included
+    // for clarity.
+    std::vector<TestScenario> tests = {
+        {
+        "ALL-Subnets",
+        "{\n"
+        "    \"command\": \"stat-lease6-get\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}",
+        "stat-lease6-get[all subnets]: 2 rows found",
+        "{\n"
+        "\"result-set\": {\n"
+        "   \"columns\": [\n"
+        "        \"subnet-id\", \"total-nas\",\n"
+        "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
+        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
+        "   ],\n"
+        "   \"rows\": [\n"
+        "       [ 20, 16777216, 0, 3, 0, 0, 0, 0 ],\n"
+        "       [ 40, 16777216, 0, 0, 0, 0, 0, 0 ]\n"
+        "   ],\n"
+        "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
+        "}\n"
+        }
+    };
+
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+        SCOPED_TRACE((*test).description_);
+        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
                     (*test).exp_response_, (*test).exp_result_json);
         }
     }
