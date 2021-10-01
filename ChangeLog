@@ -1,3 +1,8 @@
+1953.	[build]         fdupont
+	Changed the name of the GSS-TSIG hook libary object to
+	libddns_gss_tsig.so.
+	(Gitlab #2115)
+
 Kea 2.0.0 (stable) released on September 29, 2021
 
 1952.	[build]		razvan
