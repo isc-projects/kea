@@ -10,7 +10,7 @@ GSS-TSIG
 .. note::
 
    The GSS-TSIG feature is considered experimental. It is possible to perform
-   the key exchanges and sign the DNS updates using GSS-TSIG, but some error
+   the TKEY exchanges and sign the DNS updates using GSS-TSIG, but some error
    handling and fallback scenarios are not covered yet. Use with caution.
 
 GSS-TSIG Overview
@@ -19,7 +19,7 @@ GSS-TSIG Overview
 Kea provides a support for DNS updates, which can be protected using
 Transaction Signatures (or TSIG). This protection is often adequate.
 However some systems, in particular Active Directory (AD) on Microsoft
-Windows systems, chose to adopt more complex GSS-TSIG approach that offers
+Windows servers, chose to adopt more complex GSS-TSIG approach that offers
 additional capabilities as using negotiated dynamic keys.
 
 Kea provides the support of GSS-TSIG to protect DNS updates sent by
@@ -286,21 +286,6 @@ If succesfully created, the following message will be displayed:
     Authenticating as principal root/admin@EXAMPLE.ORG with password.
     Principal "DNS/server.example.org@EXAMPLE.ORG" created.
 
-The DNS client principal (used by the Kea DDNS server) is created the
-following way (please choose your own password here):
-
-.. code-block:: console
-
-    kadmin.local -q "addprinc -pw <password> DHCP/admin.example.org"
-
-If succesfully created, the following message will be displayed:
-
-.. code-block:: console
-
-    No policy specified for DHCP/admin.example.org@EXAMPLE.ORG; defaulting to no policy
-    Authenticating as principal root/admin@EXAMPLE.ORG with password.
-    Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
-
 The DNS server principal must be exported so that it can be used by the Bind 9
 DNS server. Only this principal is required and is is exported to the keytab
 file with the name ``dns.keytab``.
@@ -316,6 +301,29 @@ If succesfully exported, the following message will be displayed:
     Authenticating as principal root/admin@EXAMPLE.ORG with password.
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
+
+The DHCP client principal (used by the Kea DDNS server) is created the
+following way:
+
+.. code-block:: console
+
+    kadmin.local -q "addprinc -randkey DHCP/admin.example.org"
+
+If succesfully created, the following message will be displayed:
+
+.. code-block:: console
+
+    No policy specified for DHCP/admin.example.org@EXAMPLE.ORG; defaulting to no policy
+    Authenticating as principal root/admin@EXAMPLE.ORG with password.
+    Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
+
+The DHCP client principal must be exported so that it can be used by the
+DHCP-DDNS server and GSS-TSIG hook library. It is exported to the client
+keytab file with the name ```dhcp.keytab```.
+
+.. code-block:: console
+
+    kadmin.local -q "ktadd -k /tmp/dhcp.keytab DHCP/admin.example.org"
 
 Finally, the krb5-admin-server must be restarted:
 
@@ -336,6 +344,7 @@ Updating the ``named.conf`` file is required:
         ...
         directory "/var/cache/bind";
         dnssec-validation auto;
+        listen-on-v6 { any; };
         tkey-gssapi-keytab "/etc/bind/dns.keytab";
     };
     zone "example.org" {
@@ -392,6 +401,54 @@ The ``/var/lib/bind/db.example.org`` file needs to be created or updated:
     kdc                 A       ${KDC_IP_ADDR}
     server              A       ${BIND9_IP_ADDR}
 
+As after any configuration change the server must be reloaded or
+restarted:
+
+.. code-block:: console
+
+    systemctl restart named.service
+
+It is possible to get status or restart logs:
+
+.. code-block:: console
+
+    systemctl status named.service
+    journalctl -u named | tail -n 30
+
+Windows Advanced Directory Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This sub-section is based on an Amazon AWS provided Microsoft Windows Server
+2016 with Active Directory pre-installed so describes only the steps used
+for GSS-TSIG deployment (more exactly as other parts of the deployment and
+using sections what the QA ISC department uses for internal tests).
+
+Two Active Directory (AD) user accounts are needed:
+ - the first account is used to download AD information, for instance
+   the client key table of Kea
+ - the second account will be mapped to the Kea DHCP client principal
+
+Kea needs to know:
+ - the server IP address
+ - the domain/realm name: the domain is in lower case, the realm in upper
+   case, both without a final dot
+ - the server name
+
+The second account (named ``kea`` below) is used to create a Service
+Principal Name (SPN):
+
+.. code-block:: console
+
+    setspn -S DHCP/kea.<domain> kea
+
+After a shared secret key is generated and put in a key table file:
+
+.. code-block:: console
+
+    ktpass -princ DHCP/kea.<domain>@<REALM> -mapuser kea +rndpass -mapop set -ptype KRB5_NT_PRINCIPAL -out dhcp.keytab
+
+The ```dhcp.keytab`` takes the same usage as for Unix Kerberos.
+
 .. _gss-tsig-using:
 
 Using GSS-TSIG
@@ -407,7 +464,7 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-97
+   :emphasize-lines: 57-99
 
     {
     "DhcpDdns": {
@@ -477,7 +534,7 @@ An excerpt from D2 server is provided below. More examples are available in the
 
                 "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
                 "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
-                "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+                "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "tkey-lifetime": 3600,
                 "tkey-protocol": "TCP",
@@ -614,6 +671,67 @@ The server map parameters are:
   for a general description of user contexts in Kea).
 
 - ``comment`` is allowed but currently ignored.
+
+GSS-TSIG Configuration for Deployment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using the Kerberos 5 and Bind9 setup of :ref:`gss-tsig-deployment`
+the local resolver must point to the Bind9 named server address and
+local Kerberos be configured by putting in the ``krb5.conf`` file:
+
+.. code-block:: ini
+
+    [libdefaults]
+        default_realm = EXAMPLE.ORG
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+    [realms]
+        EXAMPLE.ORG = {
+                kdc = kdc.example.org
+                admin_server = kdc.example.org
+        }
+
+With Windows AD the DNS service is provided by AD. AD also provides
+the Kerberos service and the ``krb5.conf`` file becomes:
+
+.. code-block:: ini
+
+    [libdefaults]
+        default_realm = <REALM>
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+    [realms]
+        ${REALM} = {
+                kdc = <AD_IP_ADDR>
+                admin_server = <AD_IP_ADDR>
+        }
+
+Even when the GSS-API library can use the secret from the client key
+table it is far better to get and cache credentials.
+
+This can be done manually by:
+
+.. code-block:: console
+
+    kinit -k -t /tmp/dhcp.keytab DHCP/admin.example.org
+
+or when using AD:
+
+.. code-block:: console
+
+    kinit -k -t /tmp/dhcp.keytab DHCP/kea.<domain>
+
+The credential cache can be displayed using ``klist``.
+
+In production it is better to rely on a Kerberos Credential Manager as
+the System Security Services Daemon (``sssd``).
+
+The server principal will be "DNS/server.example.org@EXAMPLE.ORG¨ or
+for AD "DNS/<server>.<domain>@<REALM>".
 
 .. _stats-gss-tsig:
 
