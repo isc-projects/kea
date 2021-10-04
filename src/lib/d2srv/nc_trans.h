@@ -10,7 +10,7 @@
 /// @file nc_trans.h This file defines the class NameChangeTransaction.
 
 #include <asiolink/io_service.h>
-#include <d2/dns_client.h>
+#include <d2srv/dns_client.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_tsig_key.h>
 #include <dhcp_ddns/ncr_msg.h>

@@ -5,8 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <d2/dns_client.h>
+
 #include <d2srv/d2_log.h>
+#include <d2srv/dns_client.h>
 #include <dns/messagerenderer.h>
 #include <stats/stats_mgr.h>
 #include <limits>

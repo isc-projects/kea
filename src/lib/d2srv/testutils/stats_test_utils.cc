@@ -6,7 +6,7 @@
 #include <config.h>
 
 #include <d2srv/d2_stats.h>
-#include <stats_test_utils.h>
+#include <d2srv/testutils/stats_test_utils.h>
 
 using namespace isc::data;
 using namespace isc::stats;

@@ -9,8 +9,8 @@
 #include <asiolink/io_service.h>
 #include <d2/simple_add.h>
 #include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
-#include <nc_test_utils.h>
 
 #include <gtest/gtest.h>
 

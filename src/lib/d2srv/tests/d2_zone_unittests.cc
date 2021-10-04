@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <d2/d2_zone.h>
+#include <d2srv/d2_zone.h>
 #include <gtest/gtest.h>
 #include <sstream>
 

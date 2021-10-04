@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <d2/d2_update_message.h>
+#include <d2srv/d2_update_message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/opcode.h>

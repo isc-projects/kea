@@ -6,14 +6,14 @@
 
 #include <config.h>
 
-#include <d2/dns_client.h>
+#include <d2srv/dns_client.h>
 #include <dns/opcode.h>
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
+#include <d2srv/testutils/nc_test_utils.h>
+#include <d2srv/testutils/stats_test_utils.h>
 #include <dns/messagerenderer.h>
-#include <nc_test_utils.h>
-#include <stats_test_utils.h>
 
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>

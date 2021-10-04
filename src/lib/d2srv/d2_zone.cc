@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <d2/d2_zone.h>
+#include <d2srv/d2_zone.h>
 
 namespace isc {
 namespace d2 {

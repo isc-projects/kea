@@ -8,13 +8,13 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
-#include <d2/nc_trans.h>
+#include <d2srv/nc_trans.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <dns/opcode.h>
 #include <dns/messagerenderer.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
 #include <util/buffer.h>
-#include <nc_test_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>

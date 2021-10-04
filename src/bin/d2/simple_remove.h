@@ -9,7 +9,7 @@
 
 /// @file nc_remove.h This file defines the class SimpleRemoveTransaction.
 
-#include <d2/nc_trans.h>
+#include <d2srv/nc_trans.h>
 
 namespace isc {
 namespace d2 {

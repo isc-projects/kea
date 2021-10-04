@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . testutils tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -15,9 +15,13 @@ libkea_d2srv_la_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 libkea_d2srv_la_SOURCES += d2_config.cc d2_config.h
 libkea_d2srv_la_SOURCES += d2_log.cc d2_log.h
 libkea_d2srv_la_SOURCES += d2_messages.cc d2_messages.h
+libkea_d2srv_la_SOURCES += d2_update_message.cc d2_update_message.h
 libkea_d2srv_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
 libkea_d2srv_la_SOURCES += d2_stats.cc d2_stats.h
 libkea_d2srv_la_SOURCES += d2_tsig_key.cc d2_tsig_key.h
+libkea_d2srv_la_SOURCES += d2_zone.cc d2_zone.h
+libkea_d2srv_la_SOURCES += dns_client.cc dns_client.h
+libkea_d2srv_la_SOURCES += nc_trans.cc nc_trans.h
 EXTRA_DIST += d2_messages.mes
 
 libkea_d2srv_la_CXXFLAGS = $(AM_CXXFLAGS)

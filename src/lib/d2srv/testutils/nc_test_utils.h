@@ -11,7 +11,8 @@
 
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
-#include <d2/nc_trans.h>
+#include <d2srv/d2_update_message.h>
+#include <d2srv/nc_trans.h>
 
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>

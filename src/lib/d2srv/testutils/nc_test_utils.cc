@@ -8,9 +8,9 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/udp_endpoint.h>
 #include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
-#include <nc_test_utils.h>
 #include <util/encode/base64.h>
 
 #include <gtest/gtest.h>

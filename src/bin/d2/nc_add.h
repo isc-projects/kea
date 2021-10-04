@@ -9,7 +9,7 @@
 
 /// @file nc_add.h This file defines the class NameAddTransaction.
 
-#include <d2/nc_trans.h>
+#include <d2srv/nc_trans.h>
 #include <dns/rdata.h>
 
 namespace isc {

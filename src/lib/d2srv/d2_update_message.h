@@ -7,7 +7,7 @@
 #ifndef D2_UPDATE_MESSAGE_H
 #define D2_UPDATE_MESSAGE_H
 
-#include <d2/d2_zone.h>
+#include <d2srv/d2_zone.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rcode.h>
