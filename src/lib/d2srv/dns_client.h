@@ -147,7 +147,8 @@ public:
                   const D2TsigKeyPtr& tsig_key = D2TsigKeyPtr());
 
 private:
-    DNSClientImpl* impl_;  ///< Pointer to DNSClient implementation.
+    /// @brief Pointer to DNSClient implementation.
+    std::unique_ptr<DNSClientImpl> impl_;
 };
 
 } // namespace d2

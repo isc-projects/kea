@@ -56,7 +56,8 @@ const long TEST_TIMEOUT = 5 * 1000;
 // properly handled a task may be hanging for a long time. In order to prevent
 // it, the asiolink::IntervalTimer is used to break a running test if test
 // timeout is hit. This will result in test failure.
-class DNSClientTest : public virtual D2StatTest, DNSClient::Callback {
+class DNSClientTest : public ::testing::Test, DNSClient::Callback,
+                      public D2StatTest {
 public:
     /// @brief The IOService which handles IO operations.
     IOService service_;
@@ -79,10 +80,10 @@ public:
     /// @brief The DNS client performing DNS update.
     DNSClientPtr dns_client_;
 
-    /// @brief The flag which indicates if the response should be corrupted.
+    /// @brief The flag which specifies if the response should be corrupted.
     bool corrupt_response_;
 
-    /// @brief The flag which indicates if a response is expected.
+    /// @brief The flag which specifies if a response is expected.
     bool expect_response_;
 
     /// @brief The timeout timer.
@@ -94,8 +95,8 @@ public:
     /// @brief The number of expected DNS updates.
     int expected_;
 
-    /// @brief The flag which indicates if the server should continue
-    /// with receiving DNS updates.
+    /// @brief The flag which specifies if the server should continue with
+    /// receiving DNS updates.
     bool go_on_;
 
     /// @brief Constructor
@@ -183,8 +184,8 @@ public:
     /// @param remote A pointer to an object which specifies the host (address
     /// and port) from which a request has come.
     /// @param receive_length A length (in bytes) of the received data.
-    /// @param corrupt_response A bool value which indicates that the server's
-    /// response should be invalid (true) or valid (false)
+    /// @param corrupt_response A bool value which specifies if the server's
+    /// response should be invalid (true) or valid (false).
     void udpReceiveHandler(udp::socket* socket, udp::endpoint* remote,
                            size_t receive_length, const bool corrupt_response) {
         // The easiest way to create a response message is to copy the entire

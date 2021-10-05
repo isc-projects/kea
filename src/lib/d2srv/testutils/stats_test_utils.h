@@ -21,8 +21,8 @@ namespace test {
 /// @brief Type of name x value for statistics.
 typedef std::map<std::string, int64_t> StatMap;
 
-/// @brief Test fixture class with utility functions to test statistics.
-class D2StatTest : public ::testing::Test {
+/// @brief Test class with utility functions to test statistics.
+class D2StatTest {
 public:
     /// @brief Constructor.
     D2StatTest();

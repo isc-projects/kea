@@ -38,42 +38,68 @@ using namespace isc::stats;
 // to this separation.
 class DNSClientImpl : public asiodns::IOFetch::Callback {
 public:
-    // A buffer holding response from a DNS.
+    /// @brief A buffer holding response from a DNS.
     util::OutputBufferPtr in_buf_;
-    // A caller-supplied object which will hold the parsed response from DNS.
-    // The response object is (or descends from) isc::dns::Message and is
-    // populated using Message::fromWire().  This method may only be called
-    // once in the lifetime of a Message instance.  Therefore, response_ is a
-    // pointer reference thus allowing this class to replace the object
-    // pointed to with a new Message instance each time a message is
-    // received. This allows a single DNSClientImpl instance to be used for
-    // multiple, sequential IOFetch calls. (@todo Trac# 3286 has been opened
-    // against dns::Message::fromWire.  Should the behavior of fromWire change
-    // the behavior here with could be reexamined).
+
+    /// A caller-supplied object which will hold the parsed response from DNS.
+    /// The response object is (or descends from) isc::dns::Message and is
+    /// populated using Message::fromWire().  This method may only be called
+    /// once in the lifetime of a Message instance.  Therefore, response_ is a
+    /// pointer reference thus allowing this class to replace the object
+    /// pointed to with a new Message instance each time a message is
+    /// received. This allows a single DNSClientImpl instance to be used for
+    /// multiple, sequential IOFetch calls. (@todo Trac# 3286 has been opened
+    /// against dns::Message::fromWire.  Should the behavior of fromWire change
+    /// the behavior here with could be reexamined).
     D2UpdateMessagePtr& response_;
-    // A caller-supplied external callback which is invoked when DNS message
-    // exchange is complete or interrupted.
+
+    /// @brief A caller-supplied external callback which is invoked when DNS
+    /// message exchange is complete or interrupted.
     DNSClient::Callback* callback_;
-    // A Transport Layer protocol used to communicate with a DNS.
+
+    /// @brief A Transport Layer protocol used to communicate with a DNS.
     DNSClient::Protocol proto_;
-    // TSIG context used to sign outbound and verify inbound messages.
+
+    /// @brief TSIG context used to sign outbound and verify inbound messages.
     dns::TSIGContextPtr tsig_context_;
-    // TSIG key name for stats.
+
+    /// @brief TSIG key name for stats.
     std::string tsig_key_name_;
 
-    // Constructor and Destructor
+    /// @brief Constructor.
+    ///
+    /// @param response_placeholder Message object pointer which will be updated
+    /// with dynamically allocated object holding the DNS server's response.
+    /// @param callback Pointer to an object implementing @c DNSClient::Callback
+    /// class. This object will be called when DNS message exchange completes or
+    /// if an error occurs. NULL value disables callback invocation.
+    /// @param proto caller's preference regarding Transport layer protocol to
+    /// be used by DNS Client to communicate with a server.
     DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
                   DNSClient::Callback* callback,
                   const DNSClient::Protocol proto);
+
+    /// @brief Destructor.
     virtual ~DNSClientImpl();
 
-    // This internal callback is called when the DNS update message exchange is
-    // complete. It further invokes the external callback provided by a caller.
-    // Before external callback is invoked, an object of the D2UpdateMessage
-    // type, representing a response from the server is set.
+    /// @brief This internal callback is called when the DNS update message
+    /// exchange is complete. It further invokes the external callback provided
+    /// by a caller. Before external callback is invoked, an object of the
+    /// D2UpdateMessage type, representing a response from the server is set.
     virtual void operator()(asiodns::IOFetch::Result result);
 
-    // Starts asynchronous DNS Update using TSIG.
+    /// @brief Starts asynchronous DNS Update using TSIG.
+    ///
+    /// @param io_service IO service to be used to run the message exchange.
+    /// @param ns_addr DNS server address.
+    /// @param ns_port DNS server port.
+    /// @param update A DNS Update message to be sent to the server.
+    /// @param wait A timeout (in milliseconds) for the response. If a response
+    /// is not received within the timeout, exchange is interrupted. This value
+    /// must not exceed maximal value for 'int' data type.
+    /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
+    /// (if not null) be used to sign the DNS Update message and verify the
+    /// response.
     void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
@@ -81,10 +107,17 @@ public:
                   const unsigned int wait,
                   const D2TsigKeyPtr& tsig_key);
 
-    // This function maps the IO error to the DNSClient error.
-    DNSClient::Status getStatus(const asiodns::IOFetch::Result);
+    /// @brief This function maps the IO error to the DNSClient error.
+    ///
+    /// @param result The IOFetch result to be converted to DNSClient status.
+    /// @return The DNSClient status corresponding to the IOFetch result.
+    DNSClient::Status getStatus(const asiodns::IOFetch::Result result);
 
-    // This function updates statistics.
+    /// @brief This function updates statistics.
+    ///
+    /// @param stat The statistic name to be incremented.
+    /// @param update_key The flag indicating if the key statistics should also
+    /// be updated.
     void incrStats(const std::string& stat, bool update_key = true);
 };
 
@@ -269,7 +302,6 @@ DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
 }
 
 DNSClient::~DNSClient() {
-    delete (impl_);
 }
 
 unsigned int
