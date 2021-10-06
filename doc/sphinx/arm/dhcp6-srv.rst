@@ -503,29 +503,28 @@ The possible values are:
 .. note::
 
    Automatic reconnection to database backends is configured individually per
-   backend. This allows users to tailor the recovery parameters to each backend
-   they use. We do suggest that users enable it either for all backends or none,
+   backend; this allows users to tailor the recovery parameters to each backend
+   they use. We suggest that users enable it either for all backends or none,
    so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is disabled will result
+
+   Losing connectivity to a backend for which reconnection is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
-   It is highly recommended to not change the ``stop-retry-exit`` default
-   setting for the lease manager as it is critical for the connection to be
+
+   It is highly recommended not to change the ``stop-retry-exit`` default
+   setting for the lease manager, as it is critical for the connection to be
    active while processing DHCP traffic. Change this only if the server is used
    exclusively as a configuration tool.
 
-..
+The host parameter is used by the MySQL and PostgreSQL backends.
+Cassandra has a concept of contact points that can be used to
+contact the cluster, instead of a single IP or hostname. It takes a
+list of comma-separated IP addresses, which may be specified as:
 
-.. note::
+::
 
-   Note that the host parameter is used by the MySQL and PostgreSQL backends.
-   Cassandra has a concept of contact points that can be used to
-   contact the cluster, instead of a single IP or hostname. It takes a
-   list of comma-separated IP addresses, which may be specified as:
-   ::
-
-      "Dhcp6": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
+    "Dhcp6": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
 
 Finally, the credentials of the account under which the server will
 access the database should be set:
@@ -538,7 +537,7 @@ access the database should be set:
               ... }
 
 If there is no password to the account, set the password to the empty
-string "". (This is also the default.)
+string ``""``. (This is the default.)
 
 .. _cassandra-database-configuration6:
 
