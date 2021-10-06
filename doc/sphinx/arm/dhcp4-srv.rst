@@ -537,11 +537,11 @@ The possible values are:
 .. note::
 
    Automatic reconnection to database backends is configured individually per
-   backend. This allows users to tailor the recovery parameters to each backend
-   they use. We do suggest that users enable it either for all backends or none,
+   backend; this allows users to tailor the recovery parameters to each backend
+   they use. We suggest that users enable it either for all backends or none,
    so behavior is consistent.
 
-   Losing connectivity to a backend for which reconnect is disabled results
+   Losing connectivity to a backend for which reconnection is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
