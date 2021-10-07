@@ -706,7 +706,7 @@ DHCPv4 Hosts Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hosts database configuration is controlled through the
-Dhcp4/``hosts-database`` parameters. If enabled, the type of database must
+``Dhcp4``/``hosts-database`` parameters. If enabled, the type of database must
 be set to ``mysql`` or ``postgresql``.
 
 ::
@@ -792,10 +792,10 @@ The possible values are:
 
    Automatic reconnection to database backends is configured individually per
    backend. This allows users to tailor the recovery parameters to each backend
-   they use. We do suggest that users enable it either for all backends or none,
+   they use. We suggest that users enable it either for all backends or none,
    so behavior is consistent.
 
-   Losing connectivity to a backend for which reconnect is disabled results
+   Losing connectivity to a backend for which reconnection is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
@@ -813,7 +813,7 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
 
-The multiple storage extension uses a similar syntax; a configuration is
+The multiple-storage extension uses a similar syntax; a configuration is
 placed into a ``hosts-databases`` list instead of into a ``hosts-database``
 entry, as in:
 
@@ -844,7 +844,7 @@ create a view of a Kea hosts database and such a view is often
 read-only.
 
 Kea host-database backends operate with an implicit configuration to
-both read from and write to the database. If the database user does not
+both read from and write to the database. If the user does not
 have write access to the host database, the backend will fail to start
 and the server will refuse to start (or reconfigure). However, if access
 to a read-only host database is required for retrieving reservations
@@ -1056,7 +1056,7 @@ disabled by setting the ``re-detect`` value to ``false``, for instance:
 
 Note that interfaces are not re-detected during ``config-test``.
 
-Usually loopback interfaces (e.g. the `lo` or `lo0` interface) are not
+Usually loopback interfaces (e.g. the ``lo`` or ``lo0`` interface) are not
 configured, but if a loopback interface is explicitly configured and
 IP/UDP sockets are specified, the loopback interface is accepted.
 
@@ -1130,7 +1130,7 @@ subnet. In principle, it is used to associate clients' leases with their
 respective subnets. When a subnet identifier is not specified for a
 subnet being configured, it is automatically assigned by the
 configuration mechanism. The identifiers are assigned starting at 1 and are
-monotonically increased for each subsequent subnet: 1, 2, 3 ....
+monotonically increased for each subsequent subnet: 1, 2, 3, ....
 
 If there are multiple subnets configured with auto-generated identifiers
 and one of them is removed, the subnet identifiers may be renumbered.
@@ -1201,8 +1201,8 @@ The main role of a DHCPv4 server is address assignment. For this, the
 server must be configured with at least one subnet and one pool of
 dynamic addresses to be managed. For example, assume that the server is
 connected to a network segment that uses the 192.0.2.0/24 prefix. The
-administrator of that network decides that addresses from range
-192.0.2.10 to 192.0.2.20 are going to be managed by the Dhcp4 server.
+administrator of that network decides that addresses from the range
+192.0.2.10 to 192.0.2.20 are going to be managed by the ``Dhcp4`` server.
 Such a configuration can be achieved in the following way:
 
 ::
@@ -1232,8 +1232,8 @@ It is possible to define more than one pool in a subnet; continuing the
 previous example, further assume that 192.0.2.64/26 should also be
 managed by the server. It could be written as 192.0.2.64 to 192.0.2.127,
 or it can be expressed more simply as 192.0.2.64/26. Both
-formats are supported by Dhcp4 and can be mixed in the pool list. For
-example, one could define the following pools:
+formats are supported by ``Dhcp4`` and can be mixed in the pool list. For
+example, the following pools could be defined:
 
 ::
 
@@ -1257,7 +1257,8 @@ the hyphen are optional. They can be used to improve readability.
 The number of pools is not limited, but for performance reasons it is
 recommended to use as few as possible.
 
-The server may be configured to serve more than one subnet:
+The server may be configured to serve more than one subnet. To add a
+second subnet, use a command similar to the following:
 
 ::
 
@@ -1288,7 +1289,7 @@ can use a given pool, it is also able to allocate the first
 address) address from that pool. In the aforementioned example of pool
 192.0.3.0/24, both the 192.0.3.0 and 192.0.3.255 addresses may be
 assigned as well. This may be invalid in some network configurations. To
-avoid this, use the "min-max" notation.
+avoid this, use the ``min-max`` notation.
 
 .. _dhcp4-t1-t2-times:
 
@@ -1505,9 +1506,9 @@ Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
-As of Kea 1.6.0, it is also possible to specify data for binary options as
+Since Kea 1.6.0, it is also possible to specify data for binary options as
 a single-quoted text string within double quotes as shown (note that
-``csv-format`` must be set to false):
+``csv-format`` must be set to "false"):
 
 ::
 
@@ -1657,7 +1658,7 @@ currently has no means to validate it.
 
 .. _dhcp4-std-options-list:
 
-.. table:: List of Standard DHCPv4 Options Configurable by an Administrator
+.. table:: List of standard DHCPv4 options configurable by an administrator
 
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | Name                                   | Code | Type                      | Array?      | Returned if |
@@ -1875,7 +1876,7 @@ Kea also supports other options than those listed above; the following options
 are returned by the Kea engine itself and in general should not be configured
 manually.
 
-.. table:: List of Standard DHCPv4 Options Managed by Kea on Its Own and Not Directly Configurable by an Administrator
+.. table:: List of standard DHCPv4 options managed by Kea on its own and not directly configurable by an administrator
 
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | Name                           | Code  | Type                                  | Description                                                       |
@@ -1919,7 +1920,7 @@ what values are accepted for them.
 
 .. _dhcp-types:
 
-.. table:: List of Standard DHCP Option Types
+.. table:: List of standard DHCP option types
 
    +-----------------+-------------------------------------------------------+
    | Name            | Meaning                                               |
@@ -2012,7 +2013,7 @@ on its own. The following table contains a list of RAI sub-options that Kea can 
 and its sub-options are inserted by the relay agent and received by Kea; there is no need for Kea
 to be configured with those options.
 
-.. table:: List of RAI Sub-options That Kea Can Understand.
+.. table:: List of RAI sub-options that Kea can understand
 
    +--------------------+------+----------------------------------------------------------------------+
    | Name               | Code | Comment                                                              |
@@ -2038,8 +2039,8 @@ Custom DHCPv4 Options
 
 Kea supports custom (non-standard) DHCPv4 options. Let's say that we want
 to define a new DHCPv4 option called "foo", which will have code 222
-and will convey a single, unsigned, 32-bit integer value. We can define
-such an option by putting the following entry in the configuration file:
+and will convey a single, unsigned, 32-bit integer value.
+Such an option can be defined by putting the following entry in the configuration file:
 
 ::
 
@@ -2058,7 +2059,7 @@ such an option by putting the following entry in the configuration file:
        ...
    }
 
-The ``false`` value of the ``array`` parameter determines that the
+The "false" value of the ``array`` parameter determines that the
 option does NOT comprise an array of "uint32" values but is, instead, a
 single value. Two other parameters have been left blank:
 ``record-types`` and ``encapsulate``. The former specifies the
@@ -2072,7 +2073,7 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` default value is ``false``. The
+are optional. The ``array`` default value is "false". The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is "dhcp4".
 
@@ -2126,7 +2127,7 @@ multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
 
-The values of the option are set in an ``option-data`` statement as follows:
+The values of the options are set in an ``option-data`` statement as follows:
 
 ::
 
@@ -2143,12 +2144,12 @@ The values of the option are set in an ``option-data`` statement as follows:
        ...
    }
 
-``csv-format`` is set to ``true`` to indicate that the ``data`` field
+``csv-format`` is set to "true" to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``true`` and ``type`` is set to "record", the
+When ``array`` is set to "true" and ``type`` is set to "record", the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
