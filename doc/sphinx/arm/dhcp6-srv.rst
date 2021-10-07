@@ -554,13 +554,13 @@ Hosts Storage
 
 Kea is also able to store information about host reservations in the
 database. The hosts database configuration uses the same syntax as the
-lease database. In fact, a Kea server opens independent connections for
-each purpose, be it lease or hosts information. This arrangement gives
+lease database. In fact, the Kea server opens independent connections for
+each purpose, be it lease or hosts information, which gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
 supported hosts database types are MySQL, PostgreSQL, and Cassandra.
 
-For example, the following configuration can be used to configure a
+The following configuration can be used to configure a
 connection to MySQL:
 
 ::
@@ -576,19 +576,19 @@ connection to MySQL:
        }
    }
 
-Note that depending on the database configuration, many of the
+Depending on the database configuration, many of the
 parameters may be optional.
 
 Please note that usage of hosts storage is optional. A user can define
 all host reservations in the configuration file, and that is the
 recommended way if the number of reservations is small. However, when
 the number of reservations grows, it is more convenient to use host
-storage. Please note that both storage methods (configuration file and
+storage. Please note that both storage methods (the configuration file and
 one of the supported databases) can be used together. If hosts are
 defined in both places, the definitions from the configuration file are
 checked first and external storage is checked later, if necessary.
 
-In fact, host information can be placed in multiple stores. Operations
+Host information can be placed in multiple stores. Operations
 are performed on the stores in the order they are defined in the
 configuration file, although this leads to a restriction in ordering in
 the case of a host reservation addition; read-only stores must be
@@ -607,8 +607,8 @@ DHCPv6 Hosts Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hosts database configuration is controlled through the
-Dhcp6/hosts-database parameters. If enabled, the type of database must
-be set to "mysql" or "postgresql".
+``Dhcp6``/``hosts-database`` parameters. If enabled, the type of database must
+be set to ``mysql`` or ``postgresql``.
 
 ::
 
@@ -632,7 +632,7 @@ the database host name must also be specified:
 
 (Again, it should be noted that this configuration may have a severe impact on server performance.)
 
-Normally, the database will be on the same machine as the DHCPv6 server.
+Normally, the database is on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
 
 ::
@@ -643,7 +643,7 @@ In this case, set the value to the empty string:
 
    "Dhcp6": { "hosts-database": { "port" : 12345, ... }, ... }
 
-The maximum number of times the server will automatically attempt to
+The maximum number of times the server automatically attempts to
 reconnect to the host database after connectivity has been lost may be
 specified:
 
@@ -655,11 +655,9 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only). For Cassandra, Kea uses a Cassandra interface that connects to
-all nodes in a cluster at the same time. Any connectivity issues should
-be handled by internal Cassandra mechanisms.
+only).
 
-The number of milliseconds the server will wait between attempts to
+The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
 be specified:
 
@@ -677,24 +675,25 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 The possible values are:
 
--  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+-  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
 
--  ``serve-retry-exit`` DHCP service continues while trying to automatically
+-  ``serve-retry-exit`` - continues the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``.
 
--  ``serve-retry-continue`` DHCP service continues and does not shut down the
+-  ``serve-retry-continue`` - continues the DHCP service and does not shut down the
    server even if the recovery fails.
 
 .. note::
 
    Automatic reconnection to database backends is configured individually per
    backend. This allows users to tailor the recovery parameters to each backend
-   they use. We do suggest that users enable it either for all backends or none,
+   they use. We suggest that users enable it either for all backends or none,
    so behavior is consistent.
-   Losing connectivity to a backend for which reconnect is disabled will result
+
+   Losing connectivity to a backend for which reconnection is disabled results
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
@@ -710,17 +709,17 @@ access the database should be set:
               ... }
 
 If there is no password to the account, set the password to the empty
-string "". (This is also the default.)
+string ``""``. (This is the default.)
 
-The multiple storage extension uses a similar syntax; a configuration is
-placed into a "hosts-databases" list instead of into a "hosts-database"
+The multiple-storage extension uses a similar syntax; a configuration is
+placed into a ``hosts-databases`` list instead of into a ``hosts-database``
 entry, as in:
 
 ::
 
    "Dhcp6": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
-For additional Cassandra-specific parameters, see
+For Cassandra-specific parameters, see
 :ref:`cassandra-database-configuration4`.
 
 If the same host is configured both in-file and in-database, Kea does not issue a warning,
@@ -733,7 +732,7 @@ in-database.
 Using Read-Only Databases for Host Reservations with DHCPv6
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In some deployments the database user whose name is specified in the
+In some deployments, the user whose name is specified in the
 database backend configuration may not have write privileges to the
 database. This is often required by the policy within a given network to
 secure the data from being unintentionally modified. In many cases
@@ -743,8 +742,8 @@ reservations assigned to them. The inventory database can be used to
 create a view of a Kea hosts database and such a view is often
 read-only.
 
-Kea host database backends operate with an implicit configuration to
-both read from and write to the database. If the database user does not
+Kea host-database backends operate with an implicit configuration to
+both read from and write to the database. If the user does not
 have write access to the host database, the backend will fail to start
 and the server will refuse to start (or reconfigure). However, if access
 to a read-only host database is required for retrieving reservations
@@ -797,7 +796,7 @@ interface names:
    }
 
 
-It is possible to use a wildcard interface name (asterisk) concurrently
+It is possible to use an interface wildcard (*) concurrently
 with explicit interface names:
 
 ::
@@ -810,14 +809,14 @@ with explicit interface names:
    }
 
 
-It is anticipated that this form of usage will only be used when it is
+This form of usage should only be used when it is
 desired to temporarily override a list of interface names and listen on
 all interfaces.
 
 As with the DHCPv4 server, binding to specific addresses and disabling
 re-detection of interfaces are supported. But ``dhcp-socket-type`` is
-not supported, because DHCPv6 uses UDP/IPv6 sockets only. The following example
-shows how to disable the interface detection:
+not supported, because DHCPv6 uses only UDP/IPv6 sockets. The following example
+shows how to disable interface detection:
 
 ::
 
@@ -830,7 +829,7 @@ shows how to disable the interface detection:
    }
 
 
-The loopback interfaces (i.e. the "lo" or "lo0" interface) are not
+The loopback interfaces (i.e. the ``lo`` or ``lo0`` interface) are not
 configured by default, unless explicitly mentioned in the
 configuration. Note that Kea requires a link-local address (which does
 not exist on all systems) or a specified unicast address, as in:
@@ -850,12 +849,12 @@ not exist on all systems) or a specified unicast address, as in:
 IPv6 Subnet Identifier
 ----------------------
 
-The subnet identifier is a unique number associated with a particular
+The subnet identifier (subnet ID) is a unique number associated with a particular
 subnet. In principle, it is used to associate clients' leases with their
 respective subnets. When a subnet identifier is not specified for a
-subnet being configured, it will be automatically assigned by the
-configuration mechanism. The identifiers are assigned from 1 and are
-monotonically increased for each subsequent subnet: 1, 2, 3 ....
+subnet being configured, it is automatically assigned by the
+configuration mechanism. The identifiers are assigned starting at 1 and are
+monotonically increased for each subsequent subnet: 1, 2, 3, ....
 
 If there are multiple subnets configured with auto-generated identifiers
 and one of them is removed, the subnet identifiers may be renumbered.
@@ -870,7 +869,7 @@ manually specify a unique identifier for each subnet.
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
-The following configuration will assign the specified subnet identifier
+The following configuration assigns the specified subnet identifier
 to a newly configured subnet:
 
 ::
@@ -885,7 +884,7 @@ to a newly configured subnet:
        ]
    }
 
-This identifier will not change for this subnet unless the "id"
+This identifier will not change for this subnet unless the ``id``
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
 
@@ -895,7 +894,7 @@ IPv6 Subnet Prefix
 ------------------
 
 The subnet prefix is the second way to identify a subnet. It does not
-need to have the address part to match the prefix length, for instance
+need to have the address part to match the prefix length; for instance,
 this configuration is accepted:
 
 ::
@@ -909,7 +908,7 @@ this configuration is accepted:
        ]
    }
 
-Even there is another subnet with the "2001:db8:1::/64" prefix:
+This works even if there is another subnet with the "2001:db8:1::/64" prefix;
 only the textual form of subnets are compared to avoid duplicates.
 
 .. note::
@@ -933,7 +932,7 @@ followed by the global unicast
 address on which the server should listen. The server will listen to this
 address in addition to normal link-local binding and listening on the
 ff02::1:2 address. The sample configuration below shows how to listen on
-2001:db8::1 (a global address) configured on the eth1 interface.
+2001:db8::1 (a global address) configured on the ``eth1`` interface.
 
 ::
 
@@ -951,21 +950,21 @@ ff02::1:2 address. The sample configuration below shows how to listen on
    }
 
 
-This configuration will cause the server to listen on eth1 on the
+This configuration will cause the server to listen on ``eth1`` on the
 link-local address, the multicast group (ff02::1:2), and 2001:db8::1.
 
-Usually unicast support is associated with a server unicast option which
+Usually, unicast support is associated with a server unicast option which
 allows clients to send unicast messages to the server. The example above
-includes a server unicast option specification which will cause the
+includes a server unicast option specification which causes the
 client to send messages to the specified unicast address.
 
 It is possible to mix interface names, wildcards, and interface
 names/addresses in the list of interfaces. It is not possible, however,
 to specify more than one unicast address on a given interface.
 
-Care should be taken to specify proper unicast addresses. The server
+Care should be taken to specify proper unicast addresses, as the server
 will attempt to bind to the addresses specified without any additional
-checks. This approach was selected on purpose, to allow the software to
+checks. This approach was selected intentionally, to allow the software to
 communicate over uncommon addresses if so desired.
 
 .. _dhcp6-address-config:
@@ -977,8 +976,8 @@ The main role of a DHCPv6 server is address assignment. For this, the
 server must be configured with at least one subnet and one pool of
 dynamic addresses to be managed. For example, assume that the server is
 connected to a network segment that uses the 2001:db8:1::/64 prefix. The
-administrator of that network decides that addresses from range
-2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the Dhcp6
+administrator of that network decides that addresses from the range
+2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the ``Dhcp6``
 server. Such a configuration can be achieved in the following way:
 
 ::
@@ -1009,10 +1008,10 @@ gives the range of addresses in the pool.
 It is possible to define more than one pool in a subnet; continuing the
 previous example, further assume that 2001:db8:1:0:5::/80 should also be
 managed by the server. It could be written as 2001:db8:1:0:5:: to
-2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's is cumbersome. It
+2001:db8:1::5:ffff:ffff:ffff, but typing so many ``f``s is cumbersome. It
 can be expressed more simply as 2001:db8:1:0:5::/80. Both formats are
-supported by Dhcp6 and can be mixed in the pool list. For example, one
-could define the following pools:
+supported by ``Dhcp6`` and can be mixed in the pool list. For example,
+the following pools could be defined:
 
 ::
 
@@ -1067,10 +1066,10 @@ danger in using gigantic address pools.
 
 When configuring a DHCPv6 server using prefix/length notation, please
 pay attention to the boundary values. When specifying that the server
-can use a given pool, it will also be able to allocate the first
+can use a given pool, it is also able to allocate the first
 (typically a network address) address from that pool. For example, for
 pool 2001:db8:2::/64, the 2001:db8:2:: address may be assigned as well.
-To avoid this, use the "min-max" notation.
+To avoid this, use the ``min-max`` notation.
 
 .. _dhcp6-prefix-config:
 
@@ -1082,8 +1081,8 @@ Subnets may also be configured to delegate prefixes, as defined in `RFC
 have one or more prefix delegation pools. Each pool has a prefixed
 address, which is specified as a prefix (``prefix``) and a prefix length
 (``prefix-len``), as well as a delegated prefix length
-(``delegated-len``). The delegated length must not be shorter than (that
-is, it must be numerically greater than or equal to) the prefix length.
+(``delegated-len``). The delegated length must not be shorter than
+(i.e. it must be numerically greater than or equal to) the prefix length.
 If both the delegated and prefix lengths are equal, the server will be
 able to delegate only one prefix. The delegated prefix does not have to
 match the subnet prefix.
@@ -1117,8 +1116,8 @@ Prefix Exclude Option
 For each delegated prefix, the delegating router may choose to exclude a
 single prefix out of the delegated prefix as specified in `RFC
 6603 <https://tools.ietf.org/html/rfc6603>`__. The requesting router must
-not assign the excluded prefix to any of its downstream interfaces, and
-it is intended to be used on a link through which the delegating router
+not assign the excluded prefix to any of its downstream interfaces.
+The excluded prefix is intended to be used on a link through which the delegating router
 exchanges DHCPv6 messages with the requesting router. The configuration
 example below demonstrates how to specify an excluded prefix within a
 prefix pool definition. The excluded prefix
@@ -1187,10 +1186,10 @@ gives the actual value to be sent to clients. The data parameter is specified as
 normal text, with values separated by commas if more than one value is
 allowed.
 
-Options can also be configured as hexadecimal values. If "csv-format" is
-set to false, the option data must be specified as a hexadecimal string.
-The following commands configure the DNS-SERVERS option for all subnets
-with the following addresses: 2001:db8:1::cafe and 2001:db8:1::babe.
+Options can also be configured as hexadecimal values. If ``csv-format`` is
+set to "false", the option data must be specified as a hexadecimal string.
+The following commands configure the ``dns-servers`` option for all subnets
+with the addresses 2001:db8:1::cafe and 2001:db8:1::babe.
 
 ::
 
@@ -1213,14 +1212,14 @@ with the following addresses: 2001:db8:1::cafe and 2001:db8:1::babe.
 
 .. note::
 
-   The value for the setting of the "data" element is split across two
+   The value for the setting of the ``data`` element is split across two
    lines in this example for clarity; when entering the command, the
    whole string should be entered on the same line.
 
 Kea supports the following formats when specifying hexadecimal data:
 
 -  ``Delimited octets`` - one or more octets separated by either colons or
-   spaces (':' or ' '). While each octet may contain one or two digits,
+   spaces (``:`` or `` ``). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
    "ab:cd:ef" and "ab cd ef".
 
@@ -1231,8 +1230,8 @@ Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
-As of Kea 1.6.0, it is also possible to specify data for binary options as
-a single-quoted text string within double quotes as shown (note that
+Since Kea 1.6.0, it is also possible to specify data for binary options as
+a single-quoted text string within double quotes, as shown (note that
 ``csv-format`` must be set to false):
 
 ::
@@ -1251,12 +1250,12 @@ a single-quoted text string within double quotes as shown (note that
        ...
    }
 
-Most of the parameters in the "option-data" structure are optional and
+Most of the parameters in the ``option-data`` structure are optional and
 can be omitted in some circumstances, as discussed in :ref:`dhcp6-option-data-defaults`.
-Only one of name or code
+Only one of ``name`` or ``code``
 is required; it is not necessary to specify both. Space has a default value
 of "dhcp6", so this can be skipped as well if a regular (not
-encapsulated) DHCPv6 option is defined. Finally, csv-format defaults to "true", so it
+encapsulated) DHCPv6 option is defined. Finally, ``csv-format`` defaults to "true", so it
 too can be skipped, unless the option value is specified as
 hexstring. Therefore, the above example can be simplified to:
 
@@ -1277,7 +1276,7 @@ Defined options are added to the response when the client requests them,
 as well as any options required by a protocol. An administrator can also
 specify that an option is always sent, even if a client did not
 specifically request it. To enforce the addition of a particular option,
-set the "always-send" flag to true as in:
+set the ``always-send`` flag to "true", as in:
 
 ::
 
@@ -1294,7 +1293,7 @@ set the "always-send" flag to true as in:
 
 
 The effect is the same as if the client added the option code in the
-Option Request option (or its equivalent for vendor options), as in:
+Option Request Option (or its equivalent for vendor options), as in:
 
 ::
 
@@ -1325,7 +1324,7 @@ Option Request option (or its equivalent for vendor options), as in:
    }
 
 
-The DNS servers option is always added to responses (the always-send is
+The ``dns-servers`` option is always added to responses (the always-send is
 "sticky"), but the value is the subnet one when the client is localized
 in the subnet.
 
@@ -1336,7 +1335,7 @@ specific values for a small number of subnets. On the other hand, if
 different values are used in each subnet, it does not make sense to specify
 global option values; rather, only subnet-specific ones should be set.
 
-The following commands override the global DNS servers option for a
+The following commands override the global ``dns-servers`` option for a
 particular subnet, setting a single DNS server with address
 2001:db8:1::3.
 
@@ -1365,16 +1364,16 @@ particular subnet, setting a single DNS server with address
 In some cases it is useful to associate some options with an address or
 prefix pool from which a client is assigned a lease. Pool-specific
 option values override subnet-specific and global option values. If the
-client is assigned multiple leases from different pools, the server will
-assign options from all pools from which the leases have been obtained.
+client is assigned multiple leases from different pools, the server
+assigns options from all pools from which the leases have been obtained.
 However, if the particular option is specified in multiple pools from
 which the client obtains the leases, only one instance of this option
-will be handed out to the client. The server's administrator must not
+is handed out to the client. The server's administrator must not
 try to prioritize assignment of pool-specific options by trying to order
-pools declarations in the server configuration.
+pool declarations in the server configuration.
 
-The following configuration snippet demonstrates how to specify the DNS
-servers option, which will be assigned to a client only if the client
+The following configuration snippet demonstrates how to specify the
+``dns-servers`` option, which will be assigned to a client only if the client
 obtains an address from the given pool:
 
 ::
@@ -1399,7 +1398,7 @@ obtains an address from the given pool:
        ...
    }
 
-Options can also be specified in class or host reservation scope. The
+Options can also be specified in class or host-reservation scope. The
 current Kea options precedence order is (from most important): host
 reservation, pool, subnet, shared network, class, global.
 
@@ -1409,11 +1408,11 @@ values that should be used as a name/code in the option-data structures.
 "Type" designates the format of the data; the meanings of the various
 types are given in :ref:`dhcp-types`.
 
-When a data field is a string and that string contains the comma (,;
-U+002C) character, the comma must be escaped with two backslashes (\;
+When a data field is a string and that string contains the comma (``,``;
+U+002C) character, the comma must be escaped with two backslashes (``\``;
 U+005C). This double escape is required because both the routine
 splitting CSV data into fields and JSON use the same escape character; a
-single escape (\,) would make the JSON invalid. For example, the string
+single escape (``\,``) would make the JSON invalid. For example, the string
 "EST5EDT4,M3.2.0/02:00,M11.1.0/02:00" must be represented as:
 
 ::
@@ -1440,7 +1439,7 @@ single escape (\,) would make the JSON invalid. For example, the string
    }
 
 Some options are designated as arrays, which means that more than one
-value is allowed in such an option. For example, the option dns-servers
+value is allowed. For example, the option ``dns-servers``
 allows the specification of more than one IPv6 address, enabling clients
 to obtain the addresses of multiple DNS servers.
 
@@ -1448,13 +1447,13 @@ to obtain the addresses of multiple DNS servers.
 configuration syntax to create custom option definitions (formats).
 Creation of custom definitions for standard options is generally not
 permitted, even if the definition being created matches the actual
-option format defined in the RFCs. There is an exception to this rule
+option format defined in the RFCs. However, there is an exception to this rule
 for standard options for which Kea currently does not provide a
-definition. In order to use such options, a server administrator must
-create a definition as described in :ref:`dhcp6-custom-options` in the 'dhcp6' option space. This
+definition. To use such options, a server administrator must
+create a definition as described in :ref:`dhcp6-custom-options` in the ``dhcp6`` option space. This
 definition should match the option format described in the relevant RFC,
-but the configuration mechanism will allow any option format as it
-currently has no means to validate it.
+but the configuration mechanism allows any option format as there is
+currently no way to validate it.
 
 .. _dhcp6-std-options-list:
 
@@ -1599,7 +1598,7 @@ processing, the support for those options is non-functional. However, it
 may be useful in some limited lab testing; hence the definition formats
 are listed here.
 
-Kea supports more options than the listed above. The following list is mostly useful for readers who
+Kea supports more options than those listed above. The following list is mostly useful for readers who
 want to understand whether Kea is able to support certain options. The following options are
 returned by the Kea engine itself and in general should not be configured manually.
 
@@ -1608,61 +1607,61 @@ returned by the Kea engine itself and in general should not be configured manual
    +--------------+------+------------------------------------------------------------------------+
    | Name         | Code | Description                                                            |
    +==============+======+========================================================================+
-   | client-id    | 1    | sent by the client and Kea uses it to distinguish between clients.     |
+   | client-id    | 1    | Sent by the client; Kea uses it to distinguish between clients.        |
    +--------------+------+------------------------------------------------------------------------+
-   | server-id    | 2    | sent by clients to request action from a specific server and by the    |
+   | server-id    | 2    | Sent by clients to request action from a specific server and by the    |
    |              |      | server to identify itself. See :ref:`dhcp6-serverid` for details.      |
    +--------------+------+------------------------------------------------------------------------+
-   | ia-na        | 3    | a container option that conveys IPv6 addresses (``iaddr`` options). Kea|
+   | ia-na        | 3    | A container option that conveys IPv6 addresses (``iaddr`` options). Kea|
    |              |      | receives and sends those options using its allocation engine.          |
    +--------------+------+------------------------------------------------------------------------+
-   | ia-ta        | 4    | conveys temporary addresses. Deprecated feature, not supported.        |
+   | ia-ta        | 4    | Conveys temporary addresses. Deprecated feature, not supported.        |
    +--------------+------+------------------------------------------------------------------------+
-   | iaaddr       | 5    | conveys addresses with lifetimes in ``ia-na`` and ``ia-ta`` options.   |
+   | iaaddr       | 5    | Conveys addresses with lifetimes in ``ia-na`` and ``ia-ta`` options.   |
    +--------------+------+------------------------------------------------------------------------+
-   | oro          | 6    | ORO (or Option Request Option) is used by the clients to request a list|
-   |              |      | of options they are interested in. Kea supports it and will send the   |
+   | oro          | 6    | ORO (or Option Request Option) is used by clients to request a list    |
+   |              |      | of options they are interested in. Kea supports it and sends the       |
    |              |      | requested options back if configured with required options.            |
    +--------------+------+------------------------------------------------------------------------+
-   | elapsed-time | 8    | sent by the clients to identify how long they're trying to obtain a    |
+   | elapsed-time | 8    | Sent by clients to identify how long they have been trying to obtain a |
    |              |      | configuration. Kea uses high values sent by clients as an indicator    |
-   |              |      | that something is wrong and this is one of the aspects used in HA to   |
+   |              |      | that something is wrong; this is one of the aspects used in HA to      |
    |              |      | determine if the partner is healthy or not.                            |
    +--------------+------+------------------------------------------------------------------------+
-   | relay-msg    | 9    | used by relays to encapsulate the original client message. Kea uses it |
+   | relay-msg    | 9    | Used by relays to encapsulate the original client message. Kea uses it |
    |              |      | when sending back relayed responses to the relay agent.                |
    +--------------+------+------------------------------------------------------------------------+
-   | auth         | 10   | used to pass authentication information between clients and server. The|
+   | auth         | 10   | Used to pass authentication information between clients and server. The|
    |              |      | support for this option is very limited.                               |
    +--------------+------+------------------------------------------------------------------------+
-   | status-code  | 13   | an option that the server can attach in case of various failures, such |
+   | status-code  | 13   | An option that the server can attach in case of various failures, such |
    |              |      | as running out of addresses or not being configured to assign prefixes.|
    +--------------+------+------------------------------------------------------------------------+
-   | rapid-commit | 14   | used to signal client's willingness to support ``rapid-commit`` and    |
-   |              |      | server's acceptance for this configuration. See                        |
+   | rapid-commit | 14   | Used to signal the client's willingness to support ``rapid-commit`` and|
+   |              |      | the server's acceptance for this configuration. See                    |
    |              |      | :ref:`dhcp6-rapid-commit` for details.                                 |
    +--------------+------+------------------------------------------------------------------------+
-   | user-class   | 15   | sent by the client to self-identify what kind of device type it is. Kea|
+   | user-class   | 15   | Sent by the client to self-identify the device type. Kea               |
    |              |      | can use this for client classification.                                |
    +--------------+------+------------------------------------------------------------------------+
-   | vendor-class | 16   | similar to ``user-class``, but it is vendor specific.                  |
+   | vendor-class | 16   | Similar to ``user-class``, but vendor-specific.                        |
    +--------------+------+------------------------------------------------------------------------+
-   | vendor-opts  | 17   | a vendor specific container that is used by both the client and the    |
-   |              |      | server to exchange vendor specific options. The logic behind those     |
-   |              |      | options vary between vendors. The vendor options are explained in      |
+   | vendor-opts  | 17   | A vendor-specific container that is used by both the client and the    |
+   |              |      | server to exchange vendor-specific options. The logic behind those     |
+   |              |      | options varies between vendors. Vendor options are explained in        |
    |              |      | :ref:`dhcp6-vendor-opts`.                                              |
    +--------------+------+------------------------------------------------------------------------+
-   | interface-id | 18   | may be inserted by the relay agent to identify the interface that the  |
+   | interface-id | 18   | May be inserted by the relay agent to identify the interface that the  |
    |              |      | original client message was received on. Kea may be told to use this   |
-   |              |      | information to select specific subnets. Also, if specified, Kea will   |
-   |              |      | echo this option back, so the relay will know which interface to use to|
-   |              |      | reach the client.                                                      |
+   |              |      | information to select specific subnets. Also, if specified, Kea        |
+   |              |      | echoes this option back, so the relay will know which interface to use |
+   |              |      | to reach the client.                                                   |
    +--------------+------+------------------------------------------------------------------------+
-   | ia-pd        | 25   | a container for conveying PDs (Prefix Delegation) that are being       |
+   | ia-pd        | 25   | A container for conveying Prefix Delegations (PDs)) that are being     |
    |              |      | delegated to clients. See :ref:`dhcp6-prefix-config` for details.      |
    +--------------+------+------------------------------------------------------------------------+
-   | iaprefix     | 26   | conveys IPv6 prefix in ``ia-pd`` option. See :ref:`dhcp6-prefix-config`|
-   |              |      | for details.                                                           |
+   | iaprefix     | 26   | Conveys the IPv6 prefix in the ``ia-pd`` option. See                   |
+   |              |      | :ref:`dhcp6-prefix-config` for details.                                |
    +--------------+------+------------------------------------------------------------------------+
 
 .. _s46-options:
@@ -1670,8 +1669,8 @@ returned by the Kea engine itself and in general should not be configured manual
 Common Softwire46 Options
 -------------------------
 
-Softwire46 options are involved in IPv4 over IPv6 provisioning by means
-of tunneling or translation as specified in `RFC
+Softwire46 options are involved in IPv4-over-IPv6 provisioning by means
+of tunneling or translation, as specified in `RFC
 7598 <https://tools.ietf.org/html/rfc7598>`__. The following sections
 provide configuration examples of these options.
 
@@ -1706,15 +1705,15 @@ This configuration will cause the server to include the MAP-E Container
 option to the client. Use "s46-cont-mapt" or "s46-cont-lw" for the MAP-T
 Container and S46 Lightweight 4over6 Container options, respectively.
 
-All remaining Softwire options described below are included in one of
+All remaining Softwire46 options described below are included in one of
 the container options. Thus, they must be included in appropriate
-option spaces by selecting a "space" name, which specifies in which
-option they are supposed to be included.
+option spaces by selecting a "space" name, which specifies the
+option where they are supposed to be included.
 
 S46 Rule Option
 ~~~~~~~~~~~~~~~
 
-The S46 Rule option is used for conveying the Basic Mapping Rule (BMR)
+The S46 Rule option is used to convey the Basic Mapping Rule (BMR)
 and Forwarding Mapping Rule (FMR).
 
 ::
@@ -1725,7 +1724,7 @@ and Forwarding Mapping Rule (FMR).
        "data": "128, 0, 24, 192.0.2.0, 2001:db8:1::/64"
    }
 
-Another possible "space" value is "s46-cont-mapt-options".
+Another possible ``space`` value is "s46-cont-mapt-options".
 
 The S46 Rule option conveys a number of parameters:
 
@@ -1736,18 +1735,18 @@ The S46 Rule option conveys a number of parameters:
 -  ``ea-len`` - an 8-bit-long Embedded Address length. Allowed values
    range from 0 to 48.
 
--  ``IPv4 prefix length`` - 8 bits long; expresses the prefix length of
-   the Rule IPv4 prefix specified in the ipv4-prefix field. Allowed
+-  ``IPv4 prefix length`` - an 8-bit-long expression of the prefix length of
+   the Rule IPv4 prefix specified in the ``ipv4-prefix`` field. Allowed
    values range from 0 to 32.
 
 -  ``IPv4 prefix`` - a fixed-length 32-bit field that specifies the IPv4
    prefix for the S46 rule. The bits in the prefix after
-   a specific number of bits (defined in prefix4-len) are reserved, and MUST
+   a specific number of bits (defined in ``prefix4-len``) are reserved, and MUST
    be initialized to zero by the sender and ignored by the receiver.
 
--  ``IPv6 prefix`` - in prefix/length notation that specifies the IPv6
+-  ``IPv6 prefix`` - a field in prefix/length notation that specifies the IPv6
    domain prefix for the S46 rule. The field is padded on the right with
-   zero bits up to the nearest octet boundary, when prefix6-len is not
+   zero bits up to the nearest octet boundary, when ``prefix6-len`` is not
    evenly divisible by 8.
 
 S46 BR Option
@@ -1765,7 +1764,7 @@ permitted in the MAP-T and S46 Lightweight 4over6 Container options.
        "data": "2001:db8:cafe::1",
    }
 
-Another possible "space" value is "s46-cont-lw-options".
+Another possible ``space`` value is "s46-cont-lw-options".
 
 S46 DMR Option
 ~~~~~~~~~~~~~~
@@ -1806,7 +1805,7 @@ S46 Port Parameters
 ~~~~~~~~~~~~~~~~~~~
 
 The S46 Port Parameters option specifies optional port-set information
-that MAY be provided to CEs.
+that may be provided to CEs.
 
 ::
 
@@ -1816,12 +1815,12 @@ that MAY be provided to CEs.
        "data": "2, 3/4",
    }
 
-Another possible "space" value is "s46-v4v6bind", to include this option
+Another possible ``space`` value is "s46-v4v6bind", to include this option
 in the S46 IPv4/IPv6 Address Binding option.
 
 Note that the second value in the example above specifies the PSID and
 PSID-length fields in the format of PSID/PSID length. This is equivalent
-to the values of PSID-len=4 and PSID=12288 conveyed in the S46 Port
+to the values of "PSID-len=4" and "PSID=12288" conveyed in the S46 Port
 Parameters option.
 
 .. _dhcp6-custom-options:
@@ -1830,9 +1829,9 @@ Custom DHCPv6 Options
 ---------------------
 
 Kea supports custom (non-standard) DHCPv6 options.
-Assume that we want to define a new DHCPv6 option called "foo" which
-will have code 100 and which will convey a single, unsigned, 32-bit
-integer value. We can define such an option by putting the following entry
+Let's say that we want to define a new DHCPv6 option called "foo", which
+will have code 100 and will convey a single, unsigned, 32-bit
+integer value. Such an option can be defined by putting the following entry
 in the configuration file:
 
 ::
@@ -1852,7 +1851,7 @@ in the configuration file:
        ...
    }
 
-The ``false`` value of the ``array`` parameter determines that the option
+The "false" value of the ``array`` parameter determines that the option
 does NOT comprise an array of "uint32" values but is, instead, a single
 value. Two other parameters have been left blank: ``record-types`` and
 ``encapsulate``. The former specifies the comma-separated list of option
@@ -1862,12 +1861,12 @@ data fields, if the option comprises a record of data fields. The
 specifies the name of the option space being encapsulated by the
 particular option. If the particular option does not encapsulate any
 option space, the parameter should be left blank. Note that the ``option-def``
-configuration statement only defines the format of the new option and does
+configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all
-others are optional. The ``array`` default value is ``false``. The
-``record-types`` and ``encapsulate`` default values are blank (i.e. "").
+others are optional. The ``array`` default value is "false". The
+``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is "dhcp6".
 
 Once the new option format is defined, its value is set in the same way
@@ -1889,11 +1888,11 @@ global value that applies to all subnets.
        ...
    }
 
-New options can take more complex forms than simple use of primitives
+New options can take more complex forms than the simple use of primitives
 (uint8, string, ipv6-address, etc.); it is possible to define an option
 comprising a number of existing primitives.
 
-For example, assume we want to define a new option that will consist of
+For example, say we want to define a new option that will consist of
 an IPv6 address, followed by an unsigned 16-bit integer, followed by a
 boolean value, followed by a text string. Such an option could be
 defined in the following way:
@@ -1938,12 +1937,12 @@ follows:
        ...
    }
 
-``csv-format`` is set to ``true`` to indicate that the ``data`` field
+``csv-format`` is set to "true" to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``true`` and ``type`` is set to "record", the
+When ``array`` is set to "true" and ``type`` is set to "record", the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
