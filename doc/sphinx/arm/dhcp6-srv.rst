@@ -1219,7 +1219,7 @@ with the addresses 2001:db8:1::cafe and 2001:db8:1::babe.
 Kea supports the following formats when specifying hexadecimal data:
 
 -  ``Delimited octets`` - one or more octets separated by either colons or
-   spaces (``:`` or `` ``). While each octet may contain one or two digits,
+   spaces (":" or " "). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
    "ab:cd:ef" and "ab cd ef".
 
