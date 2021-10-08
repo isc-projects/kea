@@ -2215,7 +2215,7 @@ PXEClient vendor:
        ...
    }
 
-As the Vendor-Specific Information (VSI) option (code 43) has vendor-specific
+As the Vendor-Specific Information (VSI) option (code 43) has a vendor-specific
 format, i.e. can carry either raw binary value or sub-options, this
 mechanism is also available for this option.
 
@@ -2385,7 +2385,7 @@ The first step is to define the format of the option:
    }
 
 (Note that the option space is set to
-``vendor-encapsulated-options-space``.) Once the option format is defined,
+"vendor-encapsulated-options-space".) Once the option format is defined,
 the next step is to define actual values for that option:
 
 ::
@@ -2597,7 +2597,7 @@ define the new sub-options:
    }
 
 Note that we have defined the options to belong to a new option space
-(in this case, ``"isc"``).
+(in this case, "isc").
 
 The next step is to define a regular DHCPv4 option with the desired code
 and specify that it should include options from the new option space:
@@ -2621,7 +2621,7 @@ and specify that it should include options from the new option space:
    }
 
 The name of the option space in which the sub-options are defined is set
-in the ``encapsulate`` field. The ``type`` field is set to ``empty``, to
+in the ``encapsulate`` field. The ``type`` field is set to "empty", to
 indicate that this option does not carry any data other than
 sub-options.
 
@@ -2654,14 +2654,14 @@ Finally, we can set values for the new options:
 
 It is possible to create an option which carries some data in
 addition to the sub-options defined in the encapsulated option space.
-For example, if the ``"container"`` option from the previous example were
+For example, if the ``container`` option from the previous example were
 required to carry a uint16 value as well as the sub-options, the
-``type`` value would have to be set to ``"uint16"`` in the option
+``type`` value would have to be set to "uint16" in the option
 definition. (Such an option would then have the following data
 structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
-in quotes, e.g. ``"123"`` — would then be assigned to the uint16 field in
-the ``"container"`` option.
+in quotes, e.g. "123" — would then be assigned to the uint16 field in
+the ``container`` option.
 
 .. _dhcp4-option-data-defaults:
 
@@ -2680,17 +2680,17 @@ specified:
    must be specified.
 
 -  ``code`` - the server requires either an option name or an option code to
-   identify an option. This parameter may be left unspecified if the
+   identify an option; this parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option has a definition (either as a standard option or
+   particular option have a definition (either as a standard option or
    an administrator-created definition for the option using an
-   ``'option-def'`` structure), as the option definition associates an
+   ``option-def`` structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
    for which there is no definition (unspecified option format).
    Configuration of such options requires the use of the option code.
 
 -  ``space`` - if the option space is unspecified it defaults to
-   ``'dhcp4'``, which is an option space holding standard DHCPv4 options.
+   ``dhcp4``, which is an option space holding standard DHCPv4 options.
 
 -  ``data`` - if the option data is unspecified it defaults to an empty
    value. The empty value is mostly used for the options which have no
@@ -2783,7 +2783,7 @@ devices share the same link and are expected to be served from two
 different subnets. The primary use case for such a scenario is cable
 networks, where there are two classes of devices: the cable modem
 itself, which should be handed a lease from subnet A; and all other
-devices behind the modem, which should get a lease from subnet B. That
+devices behind the modem, which should get leases from subnet B. That
 segregation is essential to prevent overly curious end-users from playing
 with their cable modems. For details on how to set up class restrictions
 on subnets, see :ref:`classification-subnets`.
@@ -2791,7 +2791,7 @@ on subnets, see :ref:`classification-subnets`.
 When subnets belong to a shared network, the classification applies to
 subnet selection but not to pools; that is, a pool in a subnet limited to a
 particular class can still be used by clients which do not belong to the
-class, if the pool they are expected to use is exhausted. So the limit
+class, if the pool they are expected to use is exhausted. The limit
 on access based on class information is also available at the pool
 level within a subnet: see :ref:`classification-pools`. This is
 useful when segregating clients belonging to the same subnet into
@@ -2800,7 +2800,7 @@ different address ranges.
 In a similar way, a pool can be constrained to serve only known clients,
 i.e. clients which have a reservation, using the built-in ``KNOWN`` or
 ``UNKNOWN`` classes. Addresses can be assigned to registered clients
-without giving a different address per reservation, for instance when
+without giving a different address per reservation: for instance, when
 there are not enough available addresses. The determination whether
 there is a reservation for a given client is made after a subnet is
 selected, so it is not possible to use ``KNOWN``/``UNKNOWN`` classes to select a
@@ -2815,7 +2815,7 @@ The next step is to evaluate class expressions depending on
 the built-in ``KNOWN``/``UNKNOWN`` classes after host reservation lookup,
 using them for pool selection and assigning classes from host
 reservations. The list of required classes is then built and each class
-of the list has its expression evaluated; when it returns ``true`` the
+of the list has its expression evaluated; when it returns "true", the
 packet is added as a member of the class. The last step is to assign
 options, again possibly based on the class information. More complete
 and detailed information is available in :ref:`classify`.
@@ -2824,8 +2824,8 @@ There are two main methods of classification. The first is automatic and
 relies on examining the values in the vendor class options or the
 existence of a host reservation. Information from these options is
 extracted, and a class name is constructed from it and added to the
-class list for the packet. The second specifies an expression that is
-evaluated for each packet. If the result is ``true``, the packet is a
+class list for the packet. The second method specifies an expression that is
+evaluated for each packet. If the result is "true", the packet is a
 member of the class.
 
 .. note::
@@ -2890,8 +2890,8 @@ example, modern cable modems send this option with value
 
 .. note::
 
-   Certain special actions for clients in `VENDOR_CLASS_docsis3.0` can be
-   achieved by defining `VENDOR_CLASS_docsis3.0` and setting its
+   Certain special actions for clients in ``VENDOR_CLASS_docsis3.0`` can be
+   achieved by defining ``VENDOR_CLASS_docsis3.0`` and setting its
    ``next-server`` and ``boot-file-name`` values appropriately.
 
 This example shows a configuration using an automatically generated
@@ -2963,8 +2963,8 @@ shared network, subnet, or pool. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate test
 expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is ``false``
-by default. When it is set to ``true``, the test expression of the class
+The first one is the per-class ``only-if-required`` flag, which is "false"
+by default. When it is set to "true", the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
 
@@ -3017,7 +3017,7 @@ DDNS for DHCPv4
 ---------------
 
 As mentioned earlier, ``kea-dhcp4`` can be configured to generate requests
-to the DHCP-DDNS server, ``kea-dhcp-ddns``, (referred to herein as "D2") to
+to the DHCP-DDNS server, ``kea-dhcp-ddns`` (referred to here as "D2"), to
 update DNS entries. These requests are known as Name Change Requests or
 NCRs. Each NCR contains the following information:
 
@@ -3073,8 +3073,8 @@ DDNS-related parameters were split into two groups:
 .. note::
 
     For backward compatibility, configuration parsing still recognizes
-    the original behavioral parameters specified in ``dhcp-ddns``. It
-    does so by translating the parameter into its global equivalent. If a
+    the original behavioral parameters specified in ``dhcp-ddns``,
+    by translating the parameter into its global equivalent. If a
     parameter is specified both globally and in ``dhcp-ddns``, the latter
     value is ignored. In either case, a log is emitted explaining
     what has occurred. Specifying these values within ``dhcp-ddns`` is
@@ -3111,7 +3111,7 @@ The default configuration and values would appear as follows:
         ...
    }
 
-As of Kea 1.7.1, there are two parameters which determine if ``kea-dhcp4``
+Since Kea 1.7.1, there are two parameters which determine if ``kea-dhcp4``
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
 parameter, which now only controls whether ``kea-dhcp4`` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
@@ -3119,52 +3119,52 @@ whether DDNS updates are enabled at a given level (i.e. global, shared-network,
 or subnet). The following table shows how the two parameters function
 together:
 
-.. table:: Enabling and Disabling DDNS Updates
+.. table:: Enabling and disabling DDNS updates
 
-   +-----------------+--------------------+-------------------------------+
-   | dhcp-ddns:      | Global             | Outcome                       |
-   | enable-updates  | ddns-send-updates  |                               |
-   +=================+====================+===============================+
-   | false (default) | false              | no updates at any scope       |
-   +-----------------+--------------------+-------------------------------+
-   | false           | true (default)     | no updates at any scope       |
-   +-----------------+--------------------+-------------------------------+
-   | true            | false              | updates only at scopes with   |
-   |                 |                    | a local value of true for     |
-   |                 |                    | ddns-enable-updates           |
-   +-----------------+--------------------+-------------------------------+
-   | true            | true               | updates at all scopes except  |
-   |                 |                    | those with a local value of   |
-   |                 |                    | false for ddns-enable-updates |
-   +-----------------+--------------------+-------------------------------+
+   +-----------------+--------------------+-------------------------------------+
+   | dhcp-ddns:      | Global             | Outcome                             |
+   | enable-updates  | ddns-send-updates  |                                     |
+   +=================+====================+=====================================+
+   | false (default) | false              | no updates at any scope             |
+   +-----------------+--------------------+-------------------------------------+
+   | false           | true (default)     | no updates at any scope             |
+   +-----------------+--------------------+-------------------------------------+
+   | true            | false              | updates only at scopes with         |
+   |                 |                    | a local value of "true" for         |
+   |                 |                    | ``ddns-enable-updates``             |
+   +-----------------+--------------------+-------------------------------------+
+   | true            | true               | updates at all scopes except        |
+   |                 |                    | those with a local value of "false" |
+   |                 |                    | for ``ddns-enable-updates``         |
+   +-----------------+--------------------+-------------------------------------+
 
 Kea 1.9.1 added two new parameters; the first is ``ddns-update-on-renew``.
-Normally, when leases are renewed the server only updates DNS if the DNS
+Normally, when leases are renewed, the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
-Setting ``ddns-update-on-renew`` to `true` instructs the server to always update
+Setting ``ddns-update-on-renew`` to "true" instructs the server to always update
 the DNS information when a lease is renewed, even if its DNS information has not
 changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
 
-    Setting ``ddns-update-on-renew`` to `true` may impact performance, especially
+    Setting ``ddns-update-on-renew`` to "true" may impact performance, especially
     for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
 The value of this parameter is passed by ``kea-dhcp4`` to D2 with each DNS update
-request. When `true`, (the default value), D2 employs conflict resolution,
+request. When "true" (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
-attempting to fulfill the update request. When false, D2 simply attempts
+attempting to fulfill the update request. When "false", D2 simply attempts
 to update the DNS entries per the request, regardless of whether they
 conflict with existing entries owned by other DHCP4 clients.
 
 .. note::
 
-    Setting ``ddns-use-conflict-resolution`` to `false` disables the overwrite
-    safeguards that the rules of conflict resolution (
+    Setting ``ddns-use-conflict-resolution`` to "false" disables the overwrite
+    safeguards that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
-    prevent. This means that existing entries for a FQDN or an
+    prevent. This means that existing entries for an FQDN or an
     IP address made for Client-A can be deleted or replaced by entries
     for Client-B. Furthermore, there are two scenarios by which entries
     for multiple clients for the same key (e.g. FQDN or IP) can be created.
@@ -3178,10 +3178,10 @@ conflict with existing entries owned by other DHCP4 clients.
 
     2. Client-B uses the same IP address as Client-A but a different FQDN.
     In this case the reverse DNS entries (PTR and DHCID RRs) for Client-A
-    will be deleted as they match the IP address and new entries for
+    will be deleted as they match the IP address, and new entries for
     Client-B will be added. The forward DNS entries (A and DHCID RRs)
     for Client-A, however, will not be deleted, as they belong to a different
-    FQDN while new entries for Client-B will still be added.
+    FQDN, while new entries for Client-B will still be added.
 
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
@@ -3192,8 +3192,8 @@ conflict with existing entries owned by other DHCP4 clients.
 
 .. note::
 
-    The DNS entries Kea creates contain a value for TTL (time to live). As of
-    Kea 1.9.3, kea-dhcp4 calculates that value based on
+    The DNS entries Kea creates contain a value for TTL (time to live). Since
+    Kea 1.9.3, ``kea-dhcp4`` calculates that value based on
     `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
     which suggests that the TTL value be 1/3 of the lease's lifetime, with
     a minimum value of 10 minutes. In earlier versions, the server set the TTL value
@@ -3208,10 +3208,10 @@ For NCRs to reach the D2 server, ``kea-dhcp4`` must be able to communicate
 with it. ``kea-dhcp4`` uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - As of Kea 1.7.1, this parameter only enables
+-  ``enable-updates`` - Since Kea 1.7.1, this parameter only enables
    connectivity to ``kea-dhcp-ddns`` such that DDNS updates can be constructed
-   and sent. It must be `true` for NCRs to be generated and sent to D2.
-   It defaults to `false`.
+   and sent. It must be "true" for NCRs to be generated and sent to D2.
+   It defaults to "false".
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.
@@ -3228,10 +3228,10 @@ control this communication:
    The default value of 0 instructs ``kea-dhcp4`` to select a suitable port.
 
 -  ``max-queue-size`` - This is the maximum number of requests allowed to queue
-   waiting to be sent to D2. This value guards against requests
+   while waiting to be sent to D2. This value guards against requests
    accumulating uncontrollably if they are being generated faster than
    they can be delivered. If the number of requests queued for
-   transmission reaches this value, DDNS updating will be turned off
+   transmission reaches this value, DDNS updating is turned off
    until the queue backlog has been sufficiently reduced. The intent is
    to allow the ``kea-dhcp4`` server to continue lease operations without
    running the risk that its memory usage grows without limit. The
@@ -3276,7 +3276,7 @@ resolution are within the purview of D2 itself
 generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that both the connectivity parameter
 ``enable-updates`` and the behavioral parameter ``ddns-send-updates``,
-are `true`.
+are "true".
 
 In general, ``kea-dhcp4`` generates DDNS update requests when:
 
@@ -3300,7 +3300,7 @@ server uses the FQDN option. By default, ``kea-dhcp4`` respects the
 FQDN N and S flags specified by the client as shown in the following
 table:
 
-.. table:: Default FQDN Flag Behavior
+.. table:: Default FQDN flag behavior
 
    +------------+---------------------+-----------------+-------------+
    | Client     | Client Intent       | Server Response | Server      |
@@ -3329,7 +3329,7 @@ the server should do the reverse updates. By default, ``kea-dhcp4``
 honors the client's wishes and generates a DDNS request to the D2 server
 to update only reverse DNS data. The parameter
 ``ddns-override-client-update`` can be used to instruct the server to
-override client delegation requests. When this parameter is `"true"`,
+override client delegation requests. When this parameter is "true",
 ``kea-dhcp4`` disregards requests for client delegation and generates a
 DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
@@ -3353,7 +3353,7 @@ configuration file:
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
-the client's wishes. When this parameter is true, ``kea-dhcp4``
+the client's wishes. When this parameter is "true", ``kea-dhcp4``
 generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
 requests that no updates be done. The N-S-O flags in the server's
 response to the client will be 0-1-1.
@@ -3379,7 +3379,7 @@ is the name submitted to D2 in the DDNS update request.
 ``kea-dhcp4`` Name Generation for DDNS Update Requests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each Name Change Request must of course include the fully qualified domain
+Each Name Change Request (NCR) must of course include the fully qualified domain
 name whose DNS entries are to be affected. ``kea-dhcp4`` can be configured
 to supply a portion or all of that name, based on what it receives
 from the client in the DHCPREQUEST.
@@ -3417,10 +3417,10 @@ parameter, which provides the following modes of behavior:
 .. note::
 
    In early versions of Kea, this parameter was a boolean and permitted only
-   values of ``true`` and ``false``. Boolean values have been deprecated
+   values of "true" and "false". Boolean values have been deprecated
    and are no longer accepted. Administrators currently using booleans
-   must replace them with the desired mode name. A value of ``true``
-   maps to ``"when-present"``, while ``false`` maps to ``"never"``.
+   must replace them with the desired mode name. A value of "true"
+   maps to ``when-present``, while "false" maps to ``never``.
 
 For example, to instruct ``kea-dhcp4`` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
@@ -3435,7 +3435,7 @@ follows:
     }
 
 The prefix used in the generation of an FQDN is specified by the
-``generated-prefix`` parameter. The default value is `"myhost"`. To alter
+``ddns-generated-prefix`` parameter. The default value is "myhost". To alter
 its value, simply set it to the desired string:
 
 ::
@@ -3462,11 +3462,11 @@ meaningful default.
 
 When generating a name, ``kea-dhcp4`` constructs the name in the format:
 
-``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix]``
+``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix].``
 
 where ``address-text`` is simply the lease IP address converted to a
 hyphenated string. For example, if the lease address is 172.16.1.10, the
-qualifying suffix "example.com", and the default value is used for
+qualifying suffix is "example.com", and the default value is used for
 ``ddns-generated-prefix``, the generated FQDN is:
 
 ``myhost-172-16-1-10.example.com.``
@@ -3494,7 +3494,7 @@ and "-". This may be accomplished with the following two parameters:
 
 .. note::
 
-    Starting with Kea 1.7.5, the default values are as follows:
+    Since Kea 1.7.5, the default values are as follows:
 
     - "hostname-char-set": "[^A-Za-z0-9.-]",
     - "hostname-char-replacement": ""
@@ -3503,7 +3503,7 @@ and "-". This may be accomplished with the following two parameters:
     a letter, digit, hyphen, dot, or null.
 
 The following configuration replaces anything other than a letter,
-digit, hyphen, or dot with the letter 'x':
+digit, hyphen, or dot with the letter "x":
 ::
 
     "Dhcp4": {
@@ -3520,7 +3520,6 @@ qualifying suffix (if one is defined and needed).
 
 .. note::
 
-   The following are some considerations to keep in mind:
    Name sanitizing is meant to catch the more common cases of invalid
    characters through a relatively simple character-replacement scheme.
    It is difficult to devise a scheme that works well in all cases, for
@@ -3533,13 +3532,13 @@ qualifying suffix (if one is defined and needed).
    If clients include domain names in the Host Name option and the administrator
    wants these preserved, they need to make sure that the dot, ".",
    is considered a valid character by the ``hostname-char-set`` expression,
-   such as this: `"[^A-Za-z0-9.-]"`. This does not affect dots in FQDN
+   such as this: "[^A-Za-z0-9.-]". This does not affect dots in FQDN
    Option values. When scrubbing FQDNs, dots are treated as delimiters
    and used to separate the option value into individual domain labels
    that are scrubbed and then re-assembled.
 
    If clients are sending values that differ only by characters
-   considered as invalid by the hostname-char-set, be aware that
+   considered as invalid by the ``hostname-char-set``, be aware that
    scrubbing them will yield identical values. In such cases, DDNS
    conflict rules will permit only one of them to register the name.
 
@@ -3569,14 +3568,14 @@ Although there is a dedicated option for it, some devices may use the
 can be configured using the ``next-server`` directive. It is possible to
 define it in the global scope or for a given subnet only. If both are
 defined, the subnet value takes precedence. The value in the subnet can be
-set to `0.0.0.0`, which means that ``next-server`` should not be sent. It
+set to "0.0.0.0", which means that ``next-server`` should not be sent. It
 can also be set to an empty string, which is equivalent to it
 not being defined at all; that is, it uses the global value.
 
 The ``server-hostname`` (which conveys a server hostname, can be up to
-64 bytes long, and is in the sname field) and
+64 bytes long, and is in the ``sname`` field) and
 ``boot-file-name`` (which conveys the configuration file, can be up to
-128 bytes long, and is sent using the file field) directives are
+128 bytes long, and is sent using the ``file`` field) directives are
 handled the same way as ``next-server``.
 
 ::
@@ -3728,9 +3727,9 @@ for a particular subnet. Consider the following simplified server configuration:
    }
 
 The ``match-client-id`` is a boolean value which controls this behavior.
-The default value of ``true`` indicates that the server will use the
+The default value of "true" indicates that the server will use the
 client identifier for lease lookups and ``chaddr`` if the first lookup
-returns no results. ``false`` means that the server will only use
+returns no results. "false" means that the server will only use
 the ``chaddr`` to search for the client's lease. Whether the DHCID for DNS
 updates is generated from the client identifier or ``chaddr`` is
 controlled through the same parameter.
@@ -3738,18 +3737,18 @@ controlled through the same parameter.
 The ``match-client-id`` parameter may appear both in the global
 configuration scope and/or under any subnet declaration. In the example
 shown above, the effective value of the ``match-client-id`` will be
-``false`` for the subnet 192.0.10.0/24, because the subnet-specific
+"false" for the subnet 192.0.10.0/24, because the subnet-specific
 setting of the parameter overrides the global value of the parameter.
 The effective value of the ``match-client-id`` for the subnet 10.0.0.0/8
-will be set to ``true``, because the subnet declaration lacks this
+will be set to "true", because the subnet declaration lacks this
 parameter and the global setting is by default used for this subnet. In
 fact, the global entry for this parameter could be omitted in this case,
-because ``true`` is the default value.
+because "true" is the default value.
 
 It is important to understand what happens when the client obtains its
 lease for one setting of the ``match-client-id`` and then renews it when
 the setting has been changed. First, consider the case when the client
-obtains the lease and the ``match-client-id`` is set to ``true``. The
+obtains the lease and the ``match-client-id`` is set to "true". The
 server stores the lease information, including the client identifier
 (if supplied) and ``chaddr``, in the lease database. When the setting is
 changed and the client renews the lease, the server will determine that
@@ -3761,7 +3760,7 @@ When the lease is renewed only the ``chaddr`` will be recorded for this lease,
 according to the new server setting.
 
 In the second case, the client has the lease with only a ``chaddr`` value
-recorded. When the ``match-client-id`` setting is changed to ``true``,
+recorded. When the ``match-client-id`` setting is changed to "true",
 the server will first try to use the client identifier to find the
 existing client's lease. This will return no results because the client
 identifier was not recorded for this lease. The server will then use
@@ -3789,10 +3788,10 @@ address from the wrong network, because configuration information about
 a given network segment is not known to be correct. Kea only rejects a
 client's DHCPREQUEST with a DHCPNAK message if it already has a lease
 for the client with a different IP address. Administrators can
-override this behavior through the boolean ``authoritative`` (``false``
+override this behavior through the boolean ``authoritative`` ("false"
 by default) setting.
 
-In authoritative mode, ``authoritative`` set to ``true``, Kea always
+In authoritative mode, ``authoritative`` set to "true", Kea always
 rejects INIT-REBOOT requests from unknown clients with DHCPNAK messages.
 The ``authoritative`` setting can be specified in global,
 shared-network, and subnet configuration scope and is automatically
