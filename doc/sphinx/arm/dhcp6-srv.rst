@@ -2033,7 +2033,7 @@ The first step is to define the format of the option:
        ...
    }
 
-(Note that the option space is set to ``vendor-12345``.) Once the
+(Note that the option space is set to "vendor-12345".) Once the
 option format is defined, the next step is to define actual values for
 that option:
 
@@ -2051,8 +2051,8 @@ that option:
        ...
    }
 
-We should also define a value (enterprise-number) for the
-Vendor-Specific Information option, that conveys our option "foo".
+We should also define a value ("enterprise-number") for the
+Vendor-Specific Information option, to convey the option "foo".
 
 ::
 
@@ -2082,14 +2082,14 @@ Alternatively, the option can be specified using its code.
        ...
    }
 
-A common configuration is to set the always-send flag to true so the
+A common configuration is to set the ``always-send`` flag to "true", so the
 vendor option is sent even when the client did not specify it in the query.
 
 .. note::
 
-   Currently only a single instance of the vendor-class (code 16) and
-   a single instance of the vendor-opts (code 17) options can be
-   specified.  Specifying multiple options with different enterprise
+   Only a single instance of the ``vendor-class`` (code 16) and
+   a single instance of the ``vendor-opts`` (code 17) options can be
+   specified. Specifying multiple options with different enterprise
    numbers is currently not supported by Kea.
 
 .. _dhcp6-option-spaces:
@@ -2097,9 +2097,9 @@ vendor option is sent even when the client did not specify it in the query.
 Nested DHCPv6 Options (Custom Option Spaces)
 --------------------------------------------
 
-It is sometimes useful to define completely new option spaces, such as
+It is sometimes useful to define a completely new option space, such as
 when a user creates a new option to convey sub-options that
-use a separate numbering scheme, for example sub-options with codes 1
+use a separate numbering scheme, such as sub-options with codes 1
 and 2. Those option codes conflict with standard DHCPv6 options, so a
 separate option space must be defined.
 
@@ -2108,8 +2108,8 @@ defining sub-options for a standard option, because one is created by
 default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp6-vendor-opts`).
 
-Assume that we want to have a DHCPv6 option called "container" with code
-102 that conveys two sub-options with codes 1 and 2. First we need to
+If we want a DHCPv6 option called "container" with code
+102, that conveys two sub-options with codes 1 and 2, we first need to
 define the new sub-options:
 
 ::
@@ -2163,8 +2163,9 @@ and specify that it should include options from the new option space:
    }
 
 The name of the option space in which the sub-options are defined is set
-in the ``encapsulate`` field. The ``type`` field is set to ``empty``,
-which limits this option to only carrying data in sub-options.
+in the ``encapsulate`` field. The ``type`` field is set to "empty",
+to indicate that this option does not carry any data other than
+sub-options.
 
 Finally, we can set values for the new options:
 
@@ -2193,16 +2194,16 @@ Finally, we can set values for the new options:
        ...
    }
 
-Note that it is possible to create an option which carries some data in
+It is possible to create an option which carries some data in
 addition to the sub-options defined in the encapsulated option space.
-For example, if the "container" option from the previous example were
+For example, if the ``container`` option from the previous example were
 required to carry a uint16 value as well as the sub-options, the
 ``type`` value would have to be set to "uint16" in the option
 definition. (Such an option would then have the following data
 structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
 in quotes, e.g. "123" — would then be assigned to the uint16 field in
-the "container" option.
+the ``container`` option.
 
 .. _dhcp6-option-data-defaults:
 
@@ -2221,17 +2222,17 @@ specified:
    must be specified.
 
 -  ``code`` - the server requires either an option name or an option code to
-   identify an option. This parameter may be left unspecified if the
+   identify an option; this parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option has a definition (either as a standard option or
+   particular option have a definition (either as a standard option or
    an administrator-created definition for the option using an
-   'option-def' structure), as the option definition associates an
+   ``option-def`` structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
    for which there is no definition (unspecified option format).
    Configuration of such options requires the use of the option code.
 
--  ``space`` - if the option space is unspecified it will default to
-   'dhcp6', which is an option space holding standard DHCPv6 options.
+-  ``space`` - if the option space is unspecified it defaults to
+   ``dhcp6``, which is an option space holding standard DHCPv6 options.
 
 -  ``data`` - if the option data is unspecified it defaults to an empty
    value. The empty value is mostly used for the options which have no
@@ -2240,8 +2241,8 @@ specified:
    specification allows a length of 0. For such options, the data
    parameter may be omitted in the configuration.
 
--  ``csv-format`` - if this value is not specified, the server will
-   assume that the option data is specified as a list of comma-separated
+-  ``csv-format`` - if this value is not specified, the server
+   assumes that the option data is specified as a list of comma-separated
    values to be assigned to individual fields of the DHCP option.
 
 .. _dhcp6-t1-t2-times:
@@ -2256,9 +2257,9 @@ specified explicitly or that are calculated as percentages of the
 preferred lease time. The server's behavior is governed by a combination
 of configuration parameters, two of which have already been mentioned.
 
-Beginning with Kea 1.6.0 lease preferred and valid lifetime are extended from
-single values to triplets with minimum, default and maximum values using:
-
+Since Kea 1.6.0, the lease's preferred and valid lifetimes are extended from
+single values to triplets with minimum, default, and maximum values, with
+the following settings:
 
 - ``min-preferred-lifetime`` - specifies the minimum preferred lifetime (optional).
 
@@ -2272,28 +2273,28 @@ single values to triplets with minimum, default and maximum values using:
 
 - ``max-valid-lifetime`` - specifies the maximum valid lifetime (optional).
 
-As of Kea 1.9.11, these values may be specified within client classes.
+Since Kea 1.9.11, these values may be specified within client classes.
 
-When the client does not specify lifetimes the default is used. When
-it specifies a lifetime using IAADDR or IAPREFIX sub option with
-non-zero values, these values are used when they are between configured
-minimum (lower values are round up) and maximum (larger values are
-rounded down) bounds.
+When the client does not specify lifetimes, the default is used.
+A specified lifetime - using the IAADDR or IAPREFIX sub-option with
+non-zero values - uses these values when they are between the configured
+minimum and maximum bounds. Values outside the bounds are rounded up or down as
+needed.
 
-To send specific, fixed values use the following two parameters:
+To send specific fixed values, use the following two parameters:
 
 -  ``renew-timer`` - specifies the value of T1 in seconds.
 
 -  ``rebind-timer`` - specifies the value of T2 in seconds.
 
-Any value greater than or equal to zero may be specified for T2. When
-specifying T1 it must be less than T2. This flexibility is allowed to
-support a use case where administrators want to suppress client renewals and
+Any value greater than or equal to zero may be specified for T2.
+T1, if specified, must be less than T2. This flexibility allows
+a use case where administrators want to suppress client renewals and
 rebinds by deferring them beyond the lifespan of the lease. This should
 cause the lease to expire, rather than get renewed by clients. If T1 is
-specified as larger than T2, T1 will be set to zero in the outbound IA.
+specified as larger than T2, T1 is silently set to zero in the outbound IA.
 
-In the great majority of cases the values should follow this rule: T1 < T2 <
+In the great majority of cases, the values should follow this rule: T1 < T2 <
 preferred lifetime < valid lifetime. Alternatively, both T1 and T2
 values can be configured to 0, which is a signal to DHCPv6 clients that
 they may renew at their own discretion. However, there are known broken
@@ -2312,29 +2313,27 @@ However, there may be some rare business cases when this is desired
 
 Calculation of the values is controlled by the following three parameters:
 
--  ``calculate-tee-times`` - when true, T1 and T2 will be calculated as
-   percentages of the valid lease time. It defaults to true.
+-  ``calculate-tee-times`` - when "true", T1 and T2 are calculated as
+   percentages of the valid lease time. It defaults to "true".
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be
-   less than t2-percent. The default value is 0.5 per RFC 8415.
+   less than ``t2-percent``. The default value is 0.5, per RFC 8415.
 
 -  ``t2-percent`` - the percentage of the valid lease time to use for
    T2. It is expressed as a real number between 0.0 and 1.0 and must be
-   greater than t1-percent. The default value is 0.8 per RFC 8415.
-
-..
+   greater than ``t1-percent``. The default value is 0.8 per RFC 8415.
 
 .. note::
 
-   In the event that both explicit values are specified and
-   calculate-tee-times is true, the server will use the explicit values.
-   Administrators with a setup where some subnets or share-networks
-   will use explicit values and some will use calculated values must
+   If both explicit values are specified and
+   ``calculate-tee-times`` is "true", the server will use the explicit values.
+   Administrators with a setup where some subnets or shared-networks
+   use explicit values and some use calculated values must
    not define the explicit values at any level higher than where they
    will be used. Inheriting them from too high a scope, such as
    global, will cause them to have values at every level underneath
-   (shared-networks and subnets), effectively disabling calculated
+   (both shared-networks and subnets), effectively disabling calculated
    values.
 
 .. _dhcp6-config-subnets:
@@ -2403,9 +2402,9 @@ shown below:
    }
 
 This setting only affects the subnet for which ``rapid-commit`` is
-set to ``true``. For clients connected to other subnets, the server will
-ignore the Rapid Commit option sent by the client and will follow the
-4-way exchange procedure, i.e. respond with an Advertise for a Solicit
+set to "true". For clients connected to other subnets, the server
+ignores the Rapid Commit option sent by the client and follows the
+4-way exchange procedure, i.e. responds with an Advertise for a Solicit
 containing a Rapid Commit option.
 
 .. _dhcp6-relays:
@@ -2417,33 +2416,33 @@ A DHCPv6 server with multiple subnets defined must select the
 appropriate subnet when it receives a request from a client. For clients
 connected via relays, two mechanisms are used:
 
-The first uses the linkaddr field in the RELAY_FORW message. The name of
+The first uses the ``linkaddr`` field in the ``RELAY_FORW`` message. The name of
 this field is somewhat misleading in that it does not contain a
 link-layer address; instead, it holds an address (typically a global
 address) that is used to identify a link. The DHCPv6 server checks to
 see whether the address belongs to a defined subnet and, if it does,
 that subnet is selected for the client's request.
 
-The second mechanism is based on interface-id options. While forwarding
-a client's message, relays may insert an interface-id option into the
+The second mechanism is based on ``interface-id`` options. While forwarding
+a client's message, relays may insert an ``interface-id`` option into the
 message that identifies the interface on the relay that received the
 message. (Some relays allow configuration of that parameter, but it is
-sometimes hard-coded and may range from the very simple (e.g. "vlan100")
+sometimes hard-coded and may range from the very simple [e.g. "vlan100"]
 to the very cryptic; one example seen on real hardware was
-"ISAM144|299|ipv6|nt:vp:1:110"). The server can use this information to
+"ISAM144|299|ipv6|nt:vp:1:110".) The server can use this information to
 select the appropriate subnet. The information is also returned to the
 relay, which then knows the interface to use to transmit the response to
 the client. For this to work successfully, the relay interface IDs must
 be unique within the network and the server configuration must match
 those values.
 
-When configuring the DHCPv6 server, it should be noted that two
+When configuring the DHCPv6 server, two
 similarly named parameters can be configured for a subnet:
 
--  ``interface`` defines which local network interface can be used to
+-  ``interface`` - defines which local network interface can be used to
    access a given subnet.
 
--  ``interface-id`` specifies the content of the interface-id option
+-  ``interface-id`` - specifies the content of the ``interface-id`` option
    used by relays to identify the interface on the relay to which the
    response packet is sent.
 
@@ -2452,7 +2451,7 @@ locally (direct traffic) and via relays (remote traffic). Specifying
 both is a configuration error and the DHCPv6 server will refuse such a
 configuration.
 
-The following example configuration shows how to specify an interface-id
+The following example configuration shows how to specify an ``interface-id``
 with a value of "vlan123":
 
 ::
@@ -2481,7 +2480,7 @@ Relay-Supplied Options
 called Relay-Supplied DHCP Options. In certain cases relay agents are
 the only entities that may have specific information, and they can
 insert options when relaying messages from the client to the server. The
-server will then do certain checks and copy those options to the
+server then does certain checks and copies those options to the
 response sent to the client.
 
 There are certain conditions that must be met for the option to be
@@ -2493,7 +2492,7 @@ options
 `here <https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied>`__.
 However, there may be cases when system administrators want to echo
 other options. Kea can be instructed to treat other options as
-RSOO-enabled. For example, to mark options 110, 120, and 130 as
+RSOO-enabled; for example, to mark options 110, 120, and 130 as
 RSOO-enabled, the following syntax should be used:
 
 ::
@@ -2503,9 +2502,9 @@ RSOO-enabled, the following syntax should be used:
        ...
    }
 
-As of February 2019, only option 65 is RSOO-enabled by IANA. This option
-will always be treated as such, so there is no need to explicitly mark
-it. Also, when enabling standard options, it is possible to use their
+At this time, only option 65 is RSOO-enabled by IANA. This option
+will always be treated as RSOO-enabled, so there is no need to explicitly mark
+it. When enabling standard options, it is also possible to use their
 names rather than their option code, e.g. use ``dns-servers`` instead of
 ``23``. See ref:`dhcp6-std-options-list` for the names. In
 certain cases this may also work for custom options, but due to the
@@ -2517,12 +2516,12 @@ Client Classification in DHCPv6
 -------------------------------
 
 The DHCPv6 server includes support for client classification. For a
-deeper discussion of the classification process see :ref:`classify`.
+deeper discussion of the classification process, see :ref:`classify`.
 
 In certain cases it is useful to configure the server to differentiate
 between DHCP client types and treat them accordingly. Client
 classification can be used to modify the behavior of almost any part of
-the DHCP message processing. Kea currently offers
+DHCP message processing. Kea currently offers
 three mechanisms that take advantage of client classification in DHCPv6:
 subnet selection, address pool selection, and DHCP options assignment.
 
@@ -2532,39 +2531,39 @@ devices share the same link and are expected to be served from two
 different subnets. The primary use case for such a scenario is cable
 networks, where there are two classes of devices: the cable modem
 itself, which should be handed a lease from subnet A; and all other
-devices behind the modem, which should get a lease from subnet B. That
-segregation is essential to prevent overly curious users from playing
+devices behind the modem, which should get leases from subnet B. That
+segregation is essential to prevent overly curious end-users from playing
 with their cable modems. For details on how to set up class restrictions
 on subnets, see :ref:`classification-subnets`.
 
 When subnets belong to a shared network, the classification applies to
 subnet selection but not to pools; that is, a pool in a subnet limited to a
 particular class can still be used by clients which do not belong to the
-class, if the pool they are expected to use is exhausted. So the limit
+class, if the pool they are expected to use is exhausted. The limit
 on access based on class information is also available at the
-address/prefix pool level; see :ref:`classification-pools`, within a
-subnet. This is useful when segregating clients belonging to the same
+address/prefix pool level within a subnet: see :ref:`classification-pools`.
+This is useful when segregating clients belonging to the same
 subnet into different address ranges.
 
 In a similar way, a pool can be constrained to serve only known clients,
-i.e. clients which have a reservation, using the built-in "KNOWN" or
-"UNKNOWN" classes. Addresses can be assigned to registered clients
-without giving a different address per reservation, for instance when
+i.e. clients which have a reservation, using the built-in ``KNOWN`` or
+``UNKNOWN`` classes. Addresses can be assigned to registered clients
+without giving a different address per reservation: for instance, when
 there are not enough available addresses. The determination whether
 there is a reservation for a given client is made after a subnet is
-selected, so it is not possible to use "KNOWN"/"UNKNOWN" classes to select a
+selected, so it is not possible to use ``KNOWN``/``UNKNOWN`` classes to select a
 shared network or a subnet.
 
 The process of classification is conducted in five steps. The first step
 is to assess an incoming packet and assign it to zero or more classes.
 The second step is to choose a subnet, possibly based on the class
-information. When the incoming packet is in the special class, "DROP,
+information. When the incoming packet is in the special class ``DROP``,
 it is dropped and a debug message logged.
 The next step is to evaluate class expressions depending on the built-in
-"KNOWN"/"UNKNOWN" classes after host reservation lookup, using them for
+``KNOWN``/``UNKNOWN`` classes after host reservation lookup, using them for
 pool/pd-pool selection and assigning classes from host reservations. The
 list of required classes is then built and each class of the list has
-its expression evaluated; when it returns "true" the packet is added as
+its expression evaluated; when it returns "true", the packet is added as
 a member of the class. The last step is to assign options, again possibly
 based on the class information. More complete and detailed information
 is available in :ref:`classify`.
@@ -2573,7 +2572,7 @@ There are two main methods of classification. The first is automatic and
 relies on examining the values in the vendor class options or the
 existence of a host reservation. Information from these options is
 extracted, and a class name is constructed from it and added to the
-class list for the packet. The second specifies an expression that is
+class list for the packet. The second method specifies an expression that is
 evaluated for each packet. If the result is "true", the packet is a
 member of the class.
 
@@ -2587,7 +2586,7 @@ Defining and Using Custom Classes
 
 The following example shows how to configure a class using an expression
 and a subnet using that class. This configuration defines the class
-named "Client_enterprise". It is comprised of all clients whose client
+named ``Client_enterprise``. It is comprised of all clients whose client
 identifiers start with the given hex string (which would indicate a DUID
 based on an enterprise id of 0xAABBCCDD). Members of this class will be given an address
 from 2001:db8:1::0 to 2001:db8:1::FFFF and the addresses of their DNS
@@ -2623,9 +2622,9 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
    }
 
 This example shows a configuration using an automatically generated
-"VENDOR_CLASS\_" class. The administrator of the network has decided that
+``VENDOR_CLASS\_`` class. The administrator of the network has decided that
 addresses in the range 2001:db8:1::1 to 2001:db8:1::ffff are to be
-managed by the DHCP6 server and that only clients belonging to the
+managed by the Dhcp6 server and that only clients belonging to the
 eRouter1.0 client class are allowed to use that pool.
 
 ::
@@ -2655,15 +2654,15 @@ shared network, subnet, or pool. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate
 test expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is false
-by default. When it is set to ``true``, the test expression of the class
+The first one is the per-class ``only-if-required`` flag, which is "false"
+by default. When it is set to "true", the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
 
 The second is ``require-client-classes``, which takes a list of class
 names and is valid in shared-network, subnet, and pool scope. Classes in
 these lists are marked as required and evaluated after selection of this
-specific shared-network/subnet/pool and before output option processing.
+specific shared network/subnet/pool and before output-option processing.
 
 In this example, a class is assigned to the incoming packet when the
 specified subnet is used:
@@ -2697,44 +2696,44 @@ specified subnet is used:
 
 Required evaluation can be used to express complex dependencies like
 subnet membership. It can also be used to reverse the
-precedence; if an option-data is set in a subnet, it takes precedence
-over an option-data in a class. If the option-data is moved to a
+precedence; if ``option-data`` is set in a subnet, it takes precedence
+over ``option-data`` in a class. If ``option-data`` is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
 Required evaluation is also available at shared-network and pool/pd-pool
 levels. The order in which required classes are considered is:
-shared-network, subnet, and (pd-)pool, i.e. in the opposite order in which
-option-data is processed.
+shared-network, subnet, and (pd-)pool, i.e. in the reverse order from the
+way in which ``option-data`` is processed.
 
 .. _dhcp6-ddns-config:
 
 DDNS for DHCPv6
 ---------------
 
-As mentioned earlier, kea-dhcp6 can be configured to generate requests
-to the DHCP-DDNS server (referred to here as "D2") to update DNS
+As mentioned earlier, ``kea-dhcp6`` can be configured to generate requests
+to the DHCP-DDNS server, ``kea-dhcp-ddns`` (referred to here as "D2"), to update DNS
 entries. These requests are known as Name Change Requests or NCRs. Each
 NCR contains the following information:
 
-1. Whether it is a request to add (update) or remove DNS entries
+1. Whether it is a request to add (update) or remove DNS entries.
 
 2. Whether the change requests forward DNS updates (AAAA records),
-   reverse DNS updates (PTR records), or both
+   reverse DNS updates (PTR records), or both.
 
 3. The Fully Qualified Domain Name (FQDN), lease address, and DHCID
-   (information identifying the client associated with the FQDN)
+   (information identifying the client associated with the FQDN).
 
 Prior to Kea 1.7.1, all parameters for controlling DDNS were within the
-global ``dhcp-ddns`` section of the kea-dhcp6.  Beginning with Kea 1.7.1
-DDNS related parameters were split into two groups:
+global ``dhcp-ddns`` section of ``kea-dhcp6``. Beginning with Kea 1.7.1,
+DDNS-related parameters were split into two groups:
 
 1. Connectivity Parameters
 
-    These are parameters which specify where and how kea-dhcp6 connects to
-    and communicates with D2.  These parameters can only be specified
-    within the top-level ``dhcp-ddns`` section in the kea-dhcp6
-    configuration.  The connectivity parameters are listed below:
+    These are parameters which specify where and how ``kea-dhcp6`` connects to
+    and communicates with D2. These parameters can only be specified
+    within the top-level ``dhcp-ddns`` section in the ``kea-dhcp6``
+    configuration. The connectivity parameters are listed below:
 
     -  ``enable-updates``
     -  ``server-ip``
@@ -2748,12 +2747,12 @@ DDNS related parameters were split into two groups:
 2. Behavioral Parameters
 
     These parameters influence behavior such as how client host names and
-    FQDN options are handled.  They have been moved out of the ``dhcp-ddns``
+    FQDN options are handled. They have been moved out of the ``dhcp-ddns``
     section so that they may be specified at the global, shared-network,
-    and/or subnet levels.  Furthermore, they are inherited downward from global to
-    shared-network to subnet.  In other words, if a parameter is not specified at
+    and/or subnet levels. Furthermore, they are inherited downward from global to
+    shared-network to subnet. In other words, if a parameter is not specified at
     a given level, the value for that level comes from the level above it.
-    The behavioral parameter as follows:
+    The behavioral parameters are as follows:
 
     -  ``ddns-send-updates``
     -  ``ddns-override-no-update``
@@ -2768,13 +2767,13 @@ DDNS related parameters were split into two groups:
 
 .. note::
 
-    For backward compatibility, configuration parsing will still recognize
-    the original behavioral parameters specified in ``dhcp-ddns``.  It will
-    do so by translating the parameter into its global equivalent.  If a
+    For backward compatibility, configuration parsing still recognizes
+    the original behavioral parameters specified in ``dhcp-ddns``,
+    by translating the parameter into its global equivalent. If a
     parameter is specified both globally and in ``dhcp-ddns``, the latter
-    value will be ignored.  In either case, a log will be emitted explaining
-    what has occurred.  Specifying these values within ``dhcp-ddns`` is
-    deprecated and support for it will be removed at some future date.
+    value is ignored. In either case, a log is emitted explaining
+    what has occurred. Specifying these values within ``dhcp-ddns`` is
+    deprecated and support for it will be removed.
 
 The default configuration and values would appear as follows:
 
@@ -2807,141 +2806,140 @@ The default configuration and values would appear as follows:
         ...
    }
 
-As of Kea 1.7.1, there are two parameters which determine if kea-dhcp6
+Since Kea 1.7.1, there are two parameters which determine if ``kea-dhcp6``
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
-parameter, which now only controls whether kea-dhcp6 connects to D2;
+parameter, which now only controls whether ``kea-dhcp6`` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
 whether DDNS updates are enabled at a given level (i.e. global, shared-network,
 or subnet). The following table shows how the two parameters function
 together:
 
-.. table:: Enabling and Disabling DDNS Updates
+.. table:: Enabling and disabling DDNS updates
 
-   +-----------------+--------------------+-------------------------------+
-   | dhcp-ddns:      | Global             | Outcome                       |
-   | enable-updates  | ddns-send-updates  |                               |
-   +=================+====================+===============================+
-   | false (default) | false              | no updates at any scope       |
-   +-----------------+--------------------+-------------------------------+
-   | false           | true (default)     | no updates at any scope       |
-   +-----------------+--------------------+-------------------------------+
-   | true            | false              | updates only at scopes with   |
-   |                 |                    | a local value of true for     |
-   |                 |                    | ddns-enable-updates           |
-   +-----------------+--------------------+-------------------------------+
-   | true            | true               | updates at all scopes except  |
-   |                 |                    | those with a local value of   |
-   |                 |                    | false for ddns-enable-updates |
-   +-----------------+--------------------+-------------------------------+
+   +-----------------+--------------------+-------------------------------------+
+   | dhcp-ddns:      | Global             | Outcome                             |
+   | enable-updates  | ddns-send-updates  |                                     |
+   +=================+====================+=====================================+
+   | false (default) | false              | no updates at any scope             |
+   +-----------------+--------------------+-------------------------------------+
+   | false           | true (default)     | no updates at any scope             |
+   +-----------------+--------------------+-------------------------------------+
+   | true            | false              | updates only at scopes with         |
+   |                 |                    | a local value of "true" for         |
+   |                 |                    | ``ddns-enable-updates``             |
+   +-----------------+--------------------+-------------------------------------+
+   | true            | true               | updates at all scopes except        |
+   |                 |                    | those with a local value of "false" |
+   |                 |                    | for ``ddns-enable-updates``         |
+   +-----------------+--------------------+-------------------------------------+
 
-Kea 1.9.1 adds two new parameters. The first new parameter is ``ddns-update-on-renew``.
-Normally, when leases are renewed the server only updates DNS if the DNS
+Kea 1.9.1 added two new parameters; the first is ``ddns-update-on-renew``.
+Normally, when leases are renewed, the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
-Setting ``ddns-update-on-renew`` to true instructs the server to always update
-the DNS information when a lease is renewed even if its DNS information has not
+Setting ``ddns-update-on-renew`` to "true" instructs the server to always update
+the DNS information when a lease is renewed, even if its DNS information has not
 changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
 
-    Setting ``ddns-update-on-renew`` to true may impact performance, especially
-    for servers with numerous clients who renew often.
+    Setting ``ddns-update-on-renew`` to "true" may impact performance, especially
+    for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
-The value of this parameter is passed by kea-dhcp6 to D2 with each DNS update
-request.  When true, (the default value), D2 will employ conflict resolution,
+The value of this parameter is passed by ``kea-dhcp6`` to D2 with each DNS update
+request.  When "true" (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
-attempting to fulfill the update request.  When false, D2 will simply attempt
-to update the DNS entries per the request, regardless of whether or not they
+attempting to fulfill the update request. When "false", D2 simply attempts
+to update the DNS entries per the request, regardless of whether they
 conflict with existing entries owned by other DHCP6 clients.
 
 .. note::
 
-    Setting ``ddns-use-conflict-resolution`` to false disables the overwrite
-    safeguards that the rules of conflict resolution (
+    Setting ``ddns-use-conflict-resolution`` to "false" disables the overwrite
+    safeguards that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
-    prevent.  This means that existing entries for a FQDN or an
+    prevent. This means that existing entries for an FQDN or an
     IP address made for Client-A can be deleted or replaced by entries
-    for Client-B.  Furthermore, there are two scenarios by which entries
+    for Client-B. Furthermore, there are two scenarios by which entries
     for multiple clients for the same key (e.g. FQDN or IP) can be created.
 
     1. Client-B uses the same FQDN as Client-A but a different IP address.
-    In this case the forward DNS entries (AAAA, and DHCID RRs) for
+    In this case, the forward DNS entries (AAAA and DHCID RRs) for
     Client-A will be deleted as they match the FQDN and new entries for
-    Client-B will be added.  The reverse DNS entries (PTR and DHCID RRs)
+    Client-B will be added. The reverse DNS entries (PTR and DHCID RRs)
     for Client-A, however, will not be deleted as they belong to a different
-    IP address while new entries for Client-B will still be added.
+    IP address, while new entries for Client-B will still be added.
 
     2. Client-B uses the same IP address as Client-A but a different FQDN.
     In this case the reverse DNS entries (PTR and DHCID RRs) for Client-A
-    will be deleted as they match the IP address and new entries for
-    Client-B will be added.  The forward DNS entries (AAAA and DHCID RRs)
-    for Client-A, however, will not be deleted as they belong to a different
-    FQDN while new entries for Client-B will still be added.
+    will be deleted as they match the IP address, and new entries for
+    Client-B will be added. The forward DNS entries (AAAA and DHCID RRs)
+    for Client-A, however, will not be deleted, as they belong to a different
+    FQDN, while new entries for Client-B will still be added.
 
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
-    released, expire, or are deleted via the lease-del6 command, prior to
-    reassigning either FQDNs or IP addresses. Doing so causes kea-dhcp6
+    released, expire, or are deleted via the ``lease-del6`` command, prior to
+    reassigning either FQDNs or IP addresses. Doing so causes ``kea-dhcp6``
     to generate DNS removal requests to D2.
 
 .. note::
 
-    The DNS entries Kea creates contain a value for TTL (time to live).  As of
-    Kea 1.9.3, kea-dhcp6 calculates that value based on
-    `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__
-    which suggests that the TTL value be 1/3 of the lease's lifetime with
-    a minimum value of 10 minutes.  Prior to this the server set the TTL value
-    equal to the lease's valid lifetime.  Future releases may add one or
-    more parameters to customize this value.
+    The DNS entries Kea creates contain a value for TTL (time to live). Since
+    Kea 1.9.3, ``kea-dhcp6`` calculates that value based on
+    `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
+    which suggests that the TTL value be 1/3 of the lease's lifetime, with
+    a minimum value of 10 minutes. In earlier versions, the server set the TTL value
+    equal to the lease's valid lifetime.
 
 .. _dhcpv6-d2-io-config:
 
 DHCP-DDNS Server Connectivity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For NCRs to reach the D2 server, kea-dhcp6 must be able to communicate
-with it. kea-dhcp6 uses the following configuration parameters to
+For NCRs to reach the D2 server, ``kea-dhcp6`` must be able to communicate
+with it. ``kea-dhcp6`` uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - As of Kea 1.7.1, this parameter only enables
-   connectivity to kea-dhcp-ddns such that DDNS updates can be constructed
-   and sent.  It must be true for NCRs to be generated and sent to D2.
-   It defaults to false.
+-  ``enable-updates`` - Since Kea 1.7.1, this parameter only enables
+   connectivity to ``kea-dhcp-ddns`` such that DDNS updates can be constructed
+   and sent. It must be "true" for NCRs to be generated and sent to D2.
+   It defaults to "false".
 
--  ``server-ip`` - IP address on which D2 listens for requests. The
+-  ``server-ip`` - This is the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.
    Either an IPv4 or IPv6 address may be specified.
 
--  ``server-port`` - port on which D2 listens for requests. The default
+-  ``server-port`` - This is the port on which D2 listens for requests. The default
    value is 53001.
 
--  ``sender-ip`` - the IP address which kea-dhcp6 uses to send requests to
-   D2. The default value is blank, which instructs kea-dhcp6 to select a
+-  ``sender-ip`` - This is the IP address which ``kea-dhcp6`` uses to send requests to
+   D2. The default value is blank, which instructs ``kea-dhcp6`` to select a
    suitable address.
 
--  ``sender-port`` - the port which kea-dhcp6 uses to send requests to D2.
+-  ``sender-port`` - This is the port which ``kea-dhcp6`` uses to send requests to D2.
    The default value of 0 instructs kea-dhcp6 to select a suitable port.
 
--  ``max-queue-size`` - the maximum number of requests allowed to queue
-   waiting to be sent to D2. This value guards against requests
+-  ``max-queue-size`` - This is the maximum number of requests allowed to queue
+   while waiting to be sent to D2. This value guards against requests
    accumulating uncontrollably if they are being generated faster than
    they can be delivered. If the number of requests queued for
-   transmission reaches this value, DDNS updating will be turned off
+   transmission reaches this value, DDNS updating is turned off
    until the queue backlog has been sufficiently reduced. The intent is
-   to allow the kea-dhcp6 server to continue lease operations without running the
+   to allow the ``kea-dhcp6`` server to continue lease operations without running the
    risk that its memory usage grows without limit. The default value is
    1024.
 
--  ``ncr-protocol`` - the socket protocol to use when sending requests to
+-  ``ncr-protocol`` - This specifies the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
 
--  ``ncr-format`` - the packet format to use when sending requests to D2.
+-  ``ncr-format`` - This specifies the packet format to use when sending requests to D2.
    Currently only JSON format is supported.
 
-By default, kea-dhcp-ddns is assumed to be running on the same machine
-as kea-dhcp6, and all of the default values mentioned above should be
+By default, ``kea-dhcp-ddns`` is assumed to be running on the same machine
+as ``kea-dhcp6``, and all of the default values mentioned above should be
 sufficient. If, however, D2 has been configured to listen on a different
 address or port, these values must be altered accordingly. For example, if
 D2 has been configured to listen on 2001:db8::5 port 900, the following
@@ -2960,28 +2958,28 @@ configuration is required:
 
 .. _dhcpv6-d2-rules-config:
 
-When Does the kea-dhcp6 Server Generate a DDNS Request?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When Does the ``kea-dhcp6`` Server Generate a DDNS Request?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-kea-dhcp6 follows the behavior prescribed for DHCP servers in `RFC
+``kea-dhcp6`` follows the behavior prescribed for DHCP servers in `RFC
 4704 <https://tools.ietf.org/html/rfc4704>`__. It is important to keep in
-mind that kea-dhcp6 makes the initial decision of when and what to
+mind that ``kea-dhcp6`` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
-(see :ref:`dhcp-ddns-server`). This section describes when kea-dhcp6
-will generate NCRs and the configuration parameters that can be used to
+(see :ref:`dhcp-ddns-server`). This section describes when ``kea-dhcp6``
+generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that the ``enable-updates``
-parameter is true.
+parameter is "true".
 
 .. note::
 
-   Currently the interface between kea-dhcp6 and D2 only supports
+   Currently the interface between ``kea-dhcp6`` and D2 only supports
    requests which update DNS entries for a single IP address. If a lease
-   grants more than one address, kea-dhcp6 will create the DDNS update
+   grants more than one address, ``kea-dhcp6`` creates the DDNS update
    request for only the first of these addresses.
 
-In general, kea-dhcp6 will generate DDNS update requests when:
+In general, ``kea-dhcp6`` generates DDNS update requests when:
 
 1. A new lease is granted in response to a DHCPREQUEST;
 
@@ -2990,18 +2988,18 @@ In general, kea-dhcp6 will generate DDNS update requests when:
 
 3. An existing lease is released in response to a DHCPRELEASE.
 
-In the second case, lease renewal, two DDNS requests will be issued: one
+In the second case, lease renewal, two DDNS requests are issued: one
 request to remove entries for the previous FQDN, and a second request to
-add entries for the new FQDN. In the last case, a lease release, a
-single DDNS request to remove its entries will be made.
+add entries for the new FQDN. In the third case, a lease release - a
+single DDNS request - to remove its entries will be made.
 
 As for the first case, the decisions involved when granting a new lease are
-more complex. When a new lease is granted, kea-dhcp6 will generate a
+more complex. When a new lease is granted, ``kea-dhcp6`` generates a
 DDNS update request only if the DHCPREQUEST contains the FQDN option
-(code 39). By default, kea-dhcp6 will respect the FQDN N and S flags
+(code 39). By default, ``kea-dhcp6`` respects the FQDN N and S flags
 specified by the client as shown in the following table:
 
-.. table:: Default FQDN Flag Behavior
+.. table:: Default FQDN flag behavior
 
    +-----------------+-----------------+-----------------+-----------------+
    | Client          | Client Intent   | Server Response | Server          |
@@ -3026,18 +3024,18 @@ specified by the client as shown in the following table:
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
-the server should do the reverse updates. By default, kea-dhcp6 will
-honor the client's wishes and generate a DDNS request to D2 to update
+the server should do the reverse updates. By default, ``kea-dhcp6``
+honors the client's wishes and generates a DDNS request to D2 to update
 only reverse DNS data. The parameter ``ddns-override-client-update`` can be
 used to instruct the server to override client delegation requests. When
-this parameter is "true", kea-dhcp6 will disregard requests for client
-delegation and generate a DDNS request to update both forward and
+this parameter is "true", ``kea-dhcp6`` disregards requests for client
+delegation and generates a DDNS request to update both forward and
 reverse DNS data. In this case, the N-S-O flags in the server's response
 to the client will be 0-1-1 respectively.
 
 (Note that the flag combination N=1, S=1 is prohibited according to `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
-received from the client, the packet will be dropped by kea-dhcp6.)
+received from the client, the packet will be dropped by ``kea-dhcp6``.)
 
 To override client delegation, set the following values in the
 configuration file:
@@ -3051,10 +3049,10 @@ configuration file:
     }
 
 The third row in the table above describes the case in which the client
-requests that no DNS updates be done. The parameter,
-``ddns-override-no-update``, can be used to instruct the server to disregard
-the client's wishes. When this parameter is true, kea-dhcp6 will
-generate DDNS update requests to kea-dhcp-ddns even if the client
+requests that no DNS updates be done. The parameter
+``ddns-override-no-update`` can be used to instruct the server to disregard
+the client's wishes. When this parameter is "true", ``kea-dhcp6``
+generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
 requests that no updates be done. The N-S-O flags in the server's response to
 the client will be 0-1-1.
 
@@ -3070,11 +3068,11 @@ To override client delegation, issue the following commands:
 
 .. _dhcpv6-fqdn-name-generation:
 
-kea-dhcp6 Name Generation for DDNS Update Requests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``kea-dhcp6`` Name Generation for DDNS Update Requests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each Name Change Request must of course include the fully qualified
-domain name whose DNS entries are to be affected. kea-dhcp6 can be
+Each Name Change Request (NCR) must of course include the fully qualified
+domain name whose DNS entries are to be affected. ``kea-dhcp6`` can be
 configured to supply a portion or all of that name, based upon what it
 receives from the client in the DHCPREQUEST.
 
@@ -3107,18 +3105,16 @@ parameter, which provides the following modes of behavior:
 -  ``when-not-present`` - use the name the client sent. If the client
    sent no name, generate one for the client.
 
-..
-
 .. note::
 
-   Note that in early versions of Kea, this parameter was a boolean and
-   permitted only values of ``true`` and ``false``.
+   In early versions of Kea, this parameter was a boolean and
+   permitted only values of "true" and "false".
    Boolean values have been deprecated and are no longer accepted.
    Administrators currently using booleans must replace them with the
-   desired mode name. A value of ``true`` maps to ``"when-present"``, while
-   ``false`` maps to ``"never"``.
+   desired mode name. A value of "true" maps to ``when-present``, while
+   "false" maps to ``never``.
 
-For example, to instruct kea-dhcp6 to always generate the FQDN for a
+For example, to instruct ``kea-dhcp6`` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
 follows:
 
@@ -3155,28 +3151,28 @@ are enabled. To set its value simply set it to the desired string:
         ...
     }
 
-When qualifying a partial name, kea-dhcp6 constructs the name in the
+When qualifying a partial name, ``kea-dhcp6`` constructs the name in the
 format:
 
-[**candidate-name**].[**ddns-qualifying-suffix**].
+``[candidate-name].[ddns-qualifying-suffix].``
 
-where **candidate-name** is the partial name supplied in the DHCPREQUEST.
+where ``candidate-name`` is the partial name supplied in the DHCPREQUEST.
 For example, if the FQDN domain name value is "some-computer" and the
-``ddns-qualifying-suffix`` "example.com", the generated FQDN is:
+``ddns-qualifying-suffix`` is "example.com", the generated FQDN is:
 
-**some-computer.example.com.**
+``some-computer.example.com.``
 
-When generating the entire name, kea-dhcp6 will construct the name in
+When generating the entire name, ``kea-dhcp6`` constructs the name in
 the format:
 
-[**ddns-generated-prefix**]-[**address-text**].[**ddns-qualifying-suffix**].
+``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix].``
 
-where **address-text** is simply the lease IP address converted to a
+where ``address-text`` is simply the lease IP address converted to a
 hyphenated string. For example, if the lease address is 3001:1::70E, the
-qualifying suffix "example.com", and the default value is used for
+qualifying suffix is "example.com", and the default value is used for
 ``ddns-generated-prefix``, the generated FQDN is:
 
-**myhost-3001-1--70E.example.com.**
+``myhost-3001-1--70E.example.com.``
 
 .. _dhcp6-host-name-sanitization:
 
@@ -3185,14 +3181,14 @@ Sanitizing Client FQDN Names
 
 Some DHCP clients may provide values in the name
 component of the FQDN option (option code 39) that contain undesirable
-characters. It is possible to configure kea-dhcp6 to sanitize these
+characters. It is possible to configure ``kea-dhcp6`` to sanitize these
 values. The most typical use case is ensuring that only characters that
-are permitted by RFC 1035 be included: A-Z, a-z, 0-9, and '-'. This may be
+are permitted by RFC 1035 be included: A-Z, a-z, 0-9, and "-". This may be
 accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
-   extended expression syntax.  Embedded nulls (0x00) are always
+   extended expression syntax. Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
@@ -3201,7 +3197,7 @@ accomplished with the following two parameters:
 
 .. note::
 
-    Starting with Kea 1.7.5, the default values are as follows:
+    Since Kea 1.7.5, the default values are as follows:
 
     - "hostname-char-set": "[^A-Za-z0-9.-]",
     - "hostname-char-replacement": ""
@@ -3210,7 +3206,7 @@ accomplished with the following two parameters:
     a letter, digit, hyphen, dot, or null.
 
 The following configuration replaces anything other than a letter,
-digit, hyphen, or dot with the letter 'x':
+digit, hyphen, or dot with the letter "x":
 ::
 
     "Dhcp6": {
@@ -3227,7 +3223,6 @@ qualifying suffix (if one is defined and needed).
 
 .. note::
 
-   The following are some considerations to keep in mind:
    Name sanitizing is meant to catch the more common cases of invalid
    characters through a relatively simple character-replacement scheme.
    It is difficult to devise a scheme that works well in all cases.
@@ -3236,7 +3231,7 @@ qualifying suffix (if one is defined and needed).
    mechanism should consider writing a hook that can carry out
    sufficiently complex logic to address their needs.
 
-   Do not include dots in the hostname-char-set expression. When
+   Do not include dots in the ``hostname-char-set`` expression. When
    scrubbing FQDNs, dots are treated as delimiters and used to separate
    the option value into individual domain labels that are scrubbed and
    then re-assembled.
@@ -3249,17 +3244,17 @@ qualifying suffix (if one is defined and needed).
    Finally, given the latitude clients have in the values they send, it
    is virtually impossible to guarantee that a combination of these two
    parameters will always yield a name that is valid for use in DNS. For
-   example, using an empty value for hostname-char-replacement could
+   example, using an empty value for ``hostname-char-replacement`` could
    yield an empty domain label within a name, if that label consists
    only of invalid characters.
 
 .. note::
 
-   Since the 1.6.0 Kea release, it is possible to specify hostname-char-set
-   and/or hostname-char-replacement at the global scope. This allows
-   sanitizing of host names without requiring a dhcp-ddns entry. When
-   a hostname-char parameter is defined at the global scope and
-   in a dhcp-ddns entry, the second (local) value is used.
+   Since the 1.6.0 Kea release, it is possible to specify ``hostname-char-set``
+   and/or ``hostname-char-replacement`` at the global scope. This allows
+   host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
+   a ``hostname-char`` parameter is defined at both the global scope and
+   in a ``dhcp-ddns`` entry, the second (local) value is used.
 
 .. _dhcp6-dhcp4o6-config:
 
