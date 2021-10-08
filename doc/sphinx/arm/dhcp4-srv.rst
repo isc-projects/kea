@@ -2432,12 +2432,24 @@ Alternatively, the option can be specified using its code.
 
 Another popular option that is often somewhat imprecisely called the "vendor
 option" is option 125. Its proper name is the "vendor-independent
-vendor-specific information option" or "vivso". The idea behind vivso
-options is that each vendor has its own unique set of options with their
-own custom formats. The vendor is identified by a 32-bit unsigned integer
-called `enterprise-id` or `vendor-id`. For example, vivso with vendor-id
-4491 represents DOCSIS options, and they are often seen
-when dealing with cable modems.
+vendor-specific information option" or "vivso". The idea behind vivso options
+is that each vendor has its own unique set of options with their own custom
+formats. The vendor is identified by a 32-bit unsigned integer called
+`enterprise-number` or `vendor-id`.
+
+
+The standard spaces defined in Kea and their options are:
+
+- ``vendor-4491``: Cable Television Laboratories, Inc. for DOCSIS3 options:
+
++-------------+--------------+------------------------------------------------------------------------+
+| option code | option name  | option description                                                     |
++=============+==============+========================================================================+
+| 1           | oro          | ORO (or Option Request Option) is used by clients to request a list of |
+|             |              | options they are interested in.                                        |
++-------------+--------------+------------------------------------------------------------------------+
+| 2           | tftp-servers | a list of IPv4 addresses of TFTP servers to be used by the cable modem |
++-------------+--------------+------------------------------------------------------------------------+
 
 In Kea each vendor is represented by its own vendor space. Since there
 are hundreds of vendors and sometimes they use different option

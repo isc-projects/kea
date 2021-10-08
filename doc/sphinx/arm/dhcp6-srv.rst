@@ -1975,7 +1975,37 @@ DHCPv6 Vendor-Specific Options
 ------------------------------
 
 Vendor options in DHCPv6 are carried in the Vendor-Specific
-Information option (code 17). The following examples show how to
+Information option (code 17). The idea behind option 17
+is that each vendor has its own unique set of options with their own custom
+formats. The vendor is identified by a 32-bit unsigned integer called
+`enterprise-number` or `vendor-id`.
+
+The standard spaces defined in Kea and their options are:
+
+- ``vendor-2495``: Internet Systems Consortium, Inc. for 4o6 options:
+
++-------------+--------------------+------------------------------------------------------------------------+
+| option code | option name        | option description                                                     |
++=============+====================+========================================================================+
+| 60000       | 4o6-interface      | the name of the 4o6 server's client-facing interface                   |
++-------------+--------------------+------------------------------------------------------------------------+
+| 60001       | 4o6-source-address | the address that the 4o6 server uses to send packets to the client     |
++-------------+--------------------+------------------------------------------------------------------------+
+| 60002       | 4o6-source-port    | the port that the 4o6 server opens to send packets to the client       |
++-------------+--------------------+------------------------------------------------------------------------+
+
+- ``vendor-4491``: Cable Television Laboratories, Inc. for DOCSIS3 options:
+
++-------------+--------------------+------------------------------------------------------------------------+
+| option code | option name        | option description                                                     |
++=============+====================+========================================================================+
+| 1           | oro                | ORO (or Option Request Option) is used by clients to request a list of |
+|             |                    | options they are interested in.                                        |
++-------------+--------------------+------------------------------------------------------------------------+
+| 2           | tftp-servers       | a list of IPv4 addresses of TFTP servers to be used by the cable modem |
++-------------+--------------------+------------------------------------------------------------------------+
+
+The following examples show how to
 define an option "foo" with code 1 that consists of an IPv6 address,
 an unsigned 16-bit integer, and a string.  The "foo" option is
 conveyed in a Vendor-Specific Information option, which comprises a
