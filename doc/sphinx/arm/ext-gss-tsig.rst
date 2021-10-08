@@ -615,6 +615,28 @@ The server map parameters are:
 
 - ``comment`` is allowed but currently ignored.
 
+.. _stats-gss-tsig:
+
+GSS-TSIG Statistics
+-------------------
+
+The GSS-TSIG hook library introduces new statistics at global and
+per DNS server levels:
+
+-  ``gss-tsig-key-created`` - number of created GSS-TSIG keys
+-  ``tkey-sent`` - sent TKEY exchange initial requests
+-  ``tkey-success`` - TKEY exchanges which completed with a success
+-  ``tkey-timeout`` - TKEY exchanges which completed on timeout
+-  ``tkey-error`` - TKEY exchanges which completed with an error other than
+   timeout
+
+The relationship between keys and DNS servers are very different between
+the D2 code and static TSIG keys, and GSS-TSIG keys and DNS servers:
+
+ - a static TSIG key can be shared between many DNS servers
+ - a GSS-TSIG key is used only by one DNS server inside a dedicated
+   set of keys.
+
 .. _command-gss-tsig:
 
 GSS-TSIG Commands
