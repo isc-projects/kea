@@ -464,7 +464,8 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-99
+   :emphasize-lines: 57-100
+
 
     {
     "DhcpDdns": {
@@ -538,6 +539,7 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "tkey-lifetime": 3600,
                 "tkey-protocol": "TCP",
+                "fallback": false,
 
                 // The list of GSS-TSIG capable servers
                 "servers": [
@@ -552,7 +554,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
                         "tkey-lifetime": 86400, // 24h
-                        "tkey-protocol": "TCP"
+                        "tkey-protocol": "TCP",
+                        "fallback": true // if no key is available fallback to the
+                                         // standard behavior (vs skip this server)
                     },
                     {
                         // The second server (it has most of the parameters missing
@@ -623,6 +627,13 @@ The parameters have the following meaning:
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
   TKEY protocol, expressed in seconds. Default value is 3600 (one hour).
 
+- ``fallback`` governs the behavior when GSS-TSIG should be used (a
+  matching DNS server is configured) but a GSS-TSIG key is available.
+  If configured to false (the default) this server is skipped, if
+  configured to true the DNS server is ignored and the DNS update
+  is sent with the configured DHCP-DDNS protection e.g. TSIG key or
+  unsecure.
+
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).
 
@@ -666,6 +677,11 @@ The server map parameters are:
   TKEY protocol for the DNS server. The TKEY lifetime parameter per server
   takes precedence. Default and supported values are the same as for
   the global level parameter.
+
+- ``fallback`` governs the behavior when GSS-TSIG should be used (a
+  matching DNS server is configured) but a GSS-TSIG key is available.
+  The fallback parameter per server takes precedence. Default and
+  supported values are the same as for the global level parameter.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).

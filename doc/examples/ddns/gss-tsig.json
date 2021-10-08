@@ -72,6 +72,7 @@
             "credentials-cache": "FILE:/etc/ccache", // toplevel only
             "tkey-lifetime": 3600,
             "tkey-protocol": "TCP",
+            "fallback": false,
 
             // The list of GSS-TSIG capable servers
             "servers": [
@@ -86,7 +87,9 @@
                     "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                     "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
                     "tkey-lifetime": 86400, // 24h
-                    "tkey-protocol": "TCP"
+                    "tkey-protocol": "TCP",
+                    "fallback": true // if no key is available fallback to the
+                                     // standard behavior (vs skip this server)
                 },
                 {
                     // The second server (it has most of the parameters missing
