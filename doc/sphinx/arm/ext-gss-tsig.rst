@@ -1109,7 +1109,7 @@ An example response informing that a rekey was scheduled:
 .. code-block:: json
 
     {
-     	"result": 0,
+        "result": 0,
         "text": "GSS-TSIG server[foo] rekeyed"
     }
 
