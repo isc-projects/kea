@@ -1056,3 +1056,62 @@ An example response informing about 2 GSS-TSIG keys for server 'foo' being purge
         "result": 0,
         "text": "2 purged keys for GSS-TSIG server[foo]"
     }
+
+.. _command-gss-tsig-rekey-all:
+
+The gss-tsig-rekey-all Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The command rekeys i.e. unconditionally creates new GSS-TSIG keys for
+all DNS servers.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-rekey-all"
+    }
+
+An example response informing that a rekey was scheduled:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "rekeyed"
+    }
+
+This command should be use for instance when the DHCP-DDNS server is
+reconnected to the network.
+
+.. _command-gss-tsig-rekey:
+
+The gss-tsig-rekey Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The command rekeys i.e. unconditionally creates new GSS-TSIG keys for
+a specified DNS server.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-purge",
+        "arguments": {
+            "server-id": "foo"
+        }
+    }
+
+An example response informing that a rekey was scheduled:
+
+.. code-block:: json
+
+    {
+     	"result": 0,
+        "text": "GSS-TSIG server[foo] rekeyed"
+    }
+
+A typical usage of this command is when a DNS server was rebooted so
+existing GSS-TSIG keys shared with this server can no longer be used.
