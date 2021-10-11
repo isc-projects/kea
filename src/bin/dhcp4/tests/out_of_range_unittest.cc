@@ -178,7 +178,8 @@ enum CfgIndex {
 /// @brief Enum for specifying expected response to client renewal attempt
 enum RenewOutcome {
     DOES_RENEW,
-    DOES_NOT_RENEW
+    DOES_NOT_RENEW,
+    DOES_NOT_NAK
 };
 
 /// @brief Enum for specifying expected response to client release attempt
@@ -343,9 +344,19 @@ OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
     ASSERT_NO_THROW(client.doRequest());
     resp = client.getContext().response_;
 
-    // Verify we got ACK'd or NAK'd as expected
-    ASSERT_EQ((renew_outcome == DOES_RENEW ? DHCPACK : DHCPNAK),
-              static_cast<int>(resp->getType()));
+    switch(renew_outcome) {
+    case DOES_RENEW:
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+        break;
+    case DOES_NOT_RENEW:
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+        break;
+    case DOES_NOT_NAK:
+        ASSERT_FALSE(resp);
+        break;
+    }
 
     // Verify that the lease still exists in the database as it has not
     // been explicitly released.
@@ -386,7 +397,7 @@ TEST_F(OutOfRangeTest, dynamicOutOfPool) {
     std::string expected_address = "";
 
     oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+                        DOES_NOT_NAK);
 
 }
 
@@ -415,7 +426,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfPool) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -503,7 +514,7 @@ TEST_F(OutOfRangeTest, fixedHostReservationRemoved) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_NAK);
 }
 
 // Test verifies that once-valid fixed address host reservation,

@@ -156,6 +156,7 @@ extern const isc::log::MessageID DHCP4_SUBNET_DYNAMICALLY_CHANGED;
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTED;
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTION_FAILED;
 extern const isc::log::MessageID DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED;
+extern const isc::log::MessageID DHCP4_UNKNOWN_ADDRESS_REQUESTED;
 extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED;
 
 } // namespace dhcp

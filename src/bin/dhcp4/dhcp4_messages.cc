@@ -155,6 +155,7 @@ extern const isc::log::MessageID DHCP4_SUBNET_DYNAMICALLY_CHANGED = "DHCP4_SUBNE
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTED = "DHCP4_SUBNET_SELECTED";
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTION_FAILED = "DHCP4_SUBNET_SELECTION_FAILED";
 extern const isc::log::MessageID DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED = "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED";
+extern const isc::log::MessageID DHCP4_UNKNOWN_ADDRESS_REQUESTED = "DHCP4_UNKNOWN_ADDRESS_REQUESTED";
 extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED = "DHCP6_DHCP4O6_PACKET_RECEIVED";
 
 } // namespace dhcp
@@ -311,6 +312,7 @@ const char* values[] = {
     "DHCP4_SUBNET_SELECTED", "%1: the subnet with ID %2 was selected for client assignments",
     "DHCP4_SUBNET_SELECTION_FAILED", "%1: failed to select subnet for the client",
     "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED", "All packets will be send to source address of an incoming packet - use only for testing",
+    "DHCP4_UNKNOWN_ADDRESS_REQUESTED", "%1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3",
     "DHCP6_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4",
     NULL
 };

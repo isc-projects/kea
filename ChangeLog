@@ -1,10 +1,15 @@
+1955.	[bug]		tmark
+	kea-dhcp4 no longer sends DHCPNAKs in response to
+	DHCPREQUESTs for addresses for which it has no knowledge.
+	(Gitlab #1584)
+
 1954.	[doc]		fdupont
 	Updated the Developer's Guide to explain what to do when
 	GSS-TSIG hook unit tests fail from a system Kerberos
 	incompatible configuration.
 	(Gitlab #2056)
 
-1953.	[build]         fdupont
+1953.	[build]		fdupont
 	Changed the name of the GSS-TSIG hook library object to
 	libddns_gss_tsig.so.
 	(Gitlab #2115)

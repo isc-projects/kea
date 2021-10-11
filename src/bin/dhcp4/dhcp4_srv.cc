@@ -2314,6 +2314,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // it should include this hint. That will help us during the actual lease
     // allocation.
     bool fake_allocation = (query->getType() == DHCPDISCOVER);
+    Subnet4Ptr original_subnet = subnet;
 
     // Get client-id. It is not mandatory in DHCPv4.
     ClientIdPtr client_id = ex.getContext()->clientid_;
@@ -2329,7 +2330,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             .arg(hint.toText());
 
         Lease4Ptr lease;
-        Subnet4Ptr original_subnet = subnet;
+//        Subnet4Ptr original_subnet = subnet;
 
         // We used to issue a separate query (two actually: one for client-id
         // and another one for hw-addr for) each subnet in the shared network.
@@ -2573,6 +2574,34 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure.
+        if ((ctx->unknown_requested_addr_) /*&& !original_subnet->getAuthoritative()*/) {
+            Subnet4Ptr s = original_subnet;
+            // Address might have been rejected via class guard (i.e. not allowed for
+            // this client). We need to determine if we truly do not know about the
+            // address or whether this client just isn't allowed to have that address.
+            // We should only NAK For the latter.
+            while (s) {
+                if (s->inPool(Lease::TYPE_V4, hint)) {
+                    break;
+                }
+
+                s = s->getNextSubnet(original_subnet);
+            }
+
+            // If we didn't find a subnet, it's not an address we know about
+            // so we we drop the NAK.
+            if (!s) {
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
+                          DHCP4_UNKNOWN_ADDRESS_REQUESTED)
+                          .arg(query->getLabel())
+                          .arg(query->getCiaddr().toText())
+                          .arg(opt_requested_address ?
+                          opt_requested_address->readAddress().toText() : "(no address)");
+                ex.deleteResponse();
+                return;
+            }
+        }
+
         LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, fake_allocation ?
                   DHCP4_PACKET_NAK_0003 : DHCP4_PACKET_NAK_0004)
             .arg(query->getLabel())

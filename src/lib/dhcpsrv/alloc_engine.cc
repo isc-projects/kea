@@ -3378,7 +3378,7 @@ AllocEngine::ClientContext4::ClientContext4()
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
       old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
-      query_(), host_identifiers_(),
+      query_(), host_identifiers_(), unknown_requested_addr_(false),
       ddns_params_() {
 }
 
@@ -3395,7 +3395,7 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
       fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
-      hosts_(), host_identifiers_(),
+      hosts_(), host_identifiers_(), unknown_requested_addr_(false),
       ddns_params_(new DdnsParams()) {
 
     // Initialize host identifiers.
@@ -3806,6 +3806,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                 .arg(ctx.query_->getLabel())
                 .arg(ctx.requested_address_);
 
+            ctx.unknown_requested_addr_ = true;
             return (Lease4Ptr());
         }
     }

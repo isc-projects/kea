@@ -2046,17 +2046,14 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     ASSERT_NO_THROW(client.doRequest());
 
-    // Make sure that we received a response
-    ASSERT_TRUE(client.getContext().response_);
+    // Make sure that we did not receive a response. If we're
+    // not authoritative, there should not be a NAK.
+    ASSERT_FALSE(client.getContext().response_);
 
-    // Check that the callback called is indeed the one we installed
-    EXPECT_EQ("leases4_committed", callback_name_);
-
+    // Check that no callback was not called.
+    EXPECT_EQ("", callback_name_);
     EXPECT_FALSE(callback_lease4_);
     EXPECT_FALSE(callback_deleted_lease4_);
-
-    // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that the callout installed on the leases4_committed hook

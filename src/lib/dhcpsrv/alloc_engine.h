@@ -1440,6 +1440,10 @@ public:
         /// received by the server.
         IdentifierList host_identifiers_;
 
+        /// @brief True when the address DHPCREQUEST'ed by client is not within
+        /// a dynamic pool the server knows about.
+        bool unknown_requested_addr_;
+
         /// @brief Returns the set of DDNS behavioral parameters based on
         /// the selected subnet.
         ///
@@ -1448,6 +1452,7 @@ public:
         ///
         /// @return pointer to a DdnsParams instance
         DdnsParamsPtr getDdnsParams();
+
 
         /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.

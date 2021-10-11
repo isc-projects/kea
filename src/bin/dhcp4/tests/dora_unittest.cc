@@ -1099,7 +1099,18 @@ DORATest::authoritative() {
     // Configure DHCP server.
     configure(DORA_CONFIGS[15], *client.getServer());
     client.includeClientId("11:22");
+
+    // Try to renew an address that is outside the pool.
+    client.setState(Dhcp4Client::RENEWING);
+    client.ciaddr_ = IOAddress("10.0.0.9");
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    // Even though we're authoritative server should not respond
+    // since it does not know this address.
+    ASSERT_FALSE(client.getContext().response_);
+
     // Obtain a lease from the server using the 4-way exchange.
+    client.ciaddr_ = IOAddress("0.0.0.0");
+    client.setState(Dhcp4Client::SELECTING);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
     // Make sure that the server responded.
@@ -1202,7 +1213,18 @@ DORATest::notAuthoritative() {
     // Configure DHCP server.
     configure(DORA_CONFIGS[16], *client.getServer());
     client.includeClientId("11:22");
+
+    // Try to renew an address that is outside the pool.
+    client.setState(Dhcp4Client::RENEWING);
+    client.ciaddr_ = IOAddress("10.0.0.9");
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    // We are not authoritative sure that the server does
+    // not respond at all.
+    ASSERT_FALSE(client.getContext().response_);
+
     // Obtain a lease from the server using the 4-way exchange.
+    client.ciaddr_ = IOAddress("0.0.0.0");
+    client.setState(Dhcp4Client::SELECTING);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("10.0.0.50"))));
     // Make sure that the server responded.
@@ -1977,11 +1999,12 @@ DORATest::reservationsWithConflicts() {
 
     // Try to renew the existing lease again.
     ASSERT_NO_THROW(client.doRequest());
-    // The reservation has been removed, so the server should respond with
-    // a DHCPNAK because the address that the client is using doesn't belong
-    // to a dynamic pool.
+
+    // The reservation has been removed. Since address that the client is
+    // using doesn't belong a dynamic pool and the server is not
+    // authoritative it should not send a DHCPNAK.
     resp = client.getContext().response_;
-    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+    ASSERT_FALSE(client.getContext().response_);
 
     // A conforming client would go back to the server discovery.
     client.setState(Dhcp4Client::SELECTING);
