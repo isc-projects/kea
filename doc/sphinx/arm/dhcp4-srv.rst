@@ -328,7 +328,7 @@ can be used to configure the memfile backend.
 
 -  ``name``: specifies an absolute location of the lease file in which
    new leases and lease updates will be recorded. The default value for
-   this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases4.csv"``.
+   this parameter is "[kea-install-dir]/var/lib/kea/kea-leases4.csv".
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes
@@ -2716,7 +2716,7 @@ obtain the stateless configuration parameters, the client sends the
 DHCPINFORM message to the server with the ``ciaddr`` set to the address
 that the client is currently using. The server unicasts the DHCPACK
 message to the client that includes the stateless configuration
-(`"yiaddr"` not set).
+("yiaddr" not set).
 
 The server responds to the DHCPINFORM when the client is associated
 with a subnet defined in the server's configuration. An example subnet
@@ -3812,9 +3812,9 @@ configuration of the DHCPv4 side (the DHCPv6 side is described in
 .. note::
 
    DHCPv4-over-DHCPv6 support is experimental and the details of the
-   inter-process communication may change; both the DHCPv4 and DHCPv6
-   sides should be running the same version of Kea. For instance, the
+   inter-process communication may change; for instance, the
    support of port relay (RFC 8357) introduced an incompatible change.
+   Both the DHCPv4 and DHCPv6 sides should be running the same version of Kea.
 
 The ``dhcp4o6-port`` global parameter specifies the first of the two
 consecutive ports of the UDP sockets used for the communication between
@@ -3836,7 +3836,7 @@ DHCPv4-over-DHCPv6. These entries are:
 -  ``4o6-interface``: takes an interface name which is matched against
    the incoming interface name.
 
-The following configuration was used during some tests:
+ISC tested the following configuration:
 
 ::
 
@@ -3883,12 +3883,12 @@ Sanity Checks in DHCPv4
 -----------------------
 
 An important aspect of a well-running DHCP system is an assurance that
-the data remain consistent. However, in some cases it may be convenient
+the data remains consistent; however, in some cases it may be convenient
 to tolerate certain inconsistent data. For example, a network
-administrator that temporarily removes a subnet from a configuration
+administrator who temporarily removes a subnet from a configuration
 would not want all the leases associated with it to disappear from the
-lease database. Kea has a mechanism to control sanity checks such
-as this.
+lease database. Kea has a mechanism to implement sanity checks for situations
+like this.
 
 Kea supports a configuration scope called ``sanity-checks``. It
 currently allows only a single parameter, called ``lease-checks``, which
@@ -3897,8 +3897,8 @@ lease file. This mechanism permits Kea to attempt to correct inconsistent data.
 
 Every subnet has a ``subnet-id`` value; this is how Kea internally
 identifies subnets. Each lease has a ``subnet-id`` parameter as well, which
-identifies which subnet it belongs to. However, if the configuration has
-changed, it is possible that a lease could exist with a ``subnet-id``, but
+identifies the subnet it belongs to. However, if the configuration has
+changed, it is possible that a lease could exist with a ``subnet-id`` but
 without any subnet that matches it. Also, it is possible that the
 subnet's configuration has changed and the ``subnet-id`` now belongs to a
 subnet that does not match the lease.
@@ -3950,16 +3950,12 @@ Storing Extended Lease Information
 ----------------------------------
 
 To support such features as DHCP Leasequery
-(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__)
-additional information must be stored with each lease. Kea does not
-currently offer a Leasequery hook library, but other hook libraries
-may already be using ``user-context``.
-
-Because the amount
+(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__),
+additional information must be stored with each lease. Because the amount
 of information for each lease has ramifications in terms of
-performance and system resource consumption, storing this additional
+performance and system resource consumption, storage of this additional
 information is configurable through the ``store-extended-info`` parameter.
-It defaults to ``false`` and may be set at the global, shared-network, and
+It defaults to "false" and may be set at the global, shared-network, and
 subnet levels.
 
 ::
@@ -3969,24 +3965,25 @@ subnet levels.
        ...
    }
 
-When set to ``true``, information relevant to the DHCPREQUEST asking for the lease is
-added into the lease's user-context as a map element labeled `"ISC"`.  Currently,
+When set to "true", information relevant to the DHCPREQUEST asking for the lease is
+added into the lease's user-context as a map element labeled "ISC". Currently,
 the map contains a single value, the ``relay-agent-info`` option (DHCP Option 82),
 when the DHCPREQUEST received contains it. Since DHCPREQUESTs sent as renewals will likely not contain this
-information, the values taken from the last DHCPREQUEST that did contain it will
-be retained on the lease.  The lease's user-context will look something like this:
+information, the values taken from the last DHCPREQUEST that did contain it are
+retained on the lease. The lease's user-context looks something like this:
 
 ::
 
   { "ISC": { "relay-agent-info": "0x52050104AABBCCDD" } }
 
 .. note::
-    As mentioned above, it is possible that other hook libraries are already using ``user-context``.
+
+    It is possible that other hook libraries are already using ``user-context``.
     Enabling ``store-extended-info`` should not interfere with any other ``user-context``
-    content, as long as it does not also use an element labeled `"ISC"`. In other
+    content, as long as it does not also use an element labeled "ISC". In other
     words, ``user-context`` is intended to be a flexible container serving multiple
-    purposes. As long as no other purpose also writes an `"ISC"` element to
-    user-context there should not be a conflict.
+    purposes. As long as no other purpose also writes an "ISC" element to
+    ``user-context`` there should not be a conflict.
 
 .. _dhcp4-multi-threading-settings:
 
@@ -3998,7 +3995,7 @@ threads. These settings can be found under the ``multi-threading`` structure and
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-   parallel (default false).
+   parallel. The default is "false".
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
    parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
@@ -4021,15 +4018,15 @@ An example configuration that sets these parameters looks as follows:
        ...
    }
 
-Multi-Threading Settings in Different Backends
-----------------------------------------------
+Multi-Threading Settings With Different Database Backends
+---------------------------------------------------------
 
-Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested internally to determine which settings
-give the best performance. Although this section describes our results, they are just
-recommendations and are very dependent on the particular hardware that was used
+Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested by ISC to determine which settings
+give the best performance. Although this section describes our results, they are merely
+recommendations and are very dependent on the particular hardware used
 for testing. We strongly advise that administrators run their own performance tests.
 
-A full report of performance results for the latest stable Kea can be found
+A full report of performance results for the latest stable Kea version can be found
 `here <https://reports.kea.isc.org/>`_.
 This includes hardware and test scenario descriptions, as well as
 current results.
@@ -4045,7 +4042,7 @@ parameter. Results from our tests show that the best settings for
 -  ``thread-pool-size``: 8 when using ``postgresql``.
 
 Another very important parameter is ``packet-queue-size``; in our tests we
-used it as a multiplier of ``thread-pool-size``. So the actual setting strongly depends
+used it as a multiplier of ``thread-pool-size``. The actual setting strongly depends
 on ``thread-pool-size``.
 
 We saw the best results in our tests with the following settings:
@@ -4112,8 +4109,8 @@ does not require disk operations.
 The two parameters are the ``cache-threshold`` double and the
 ``cache-max-age`` integer; they have no default setting, i.e. the lease caching
 feature must be explicitly enabled. These parameters can be configured
-at the global, shared network, and subnet levels. The subnet level has
-precedence over the shared network level, while the global level is used
+at the global, shared-network, and subnet levels. The subnet level has
+precedence over the shared-network level, while the global level is used
 as a last resort. For example:
 
 ::
@@ -4129,7 +4126,7 @@ as a last resort. For example:
         }
     ],
 
-When an already assigned lease can fulfill a client query:
+When an already-assigned lease can fulfill a client query:
 
   - any important change, e.g. for DDNS parameter, hostname, or
     valid lifetime reduction, makes the lease not reusable.
@@ -4148,7 +4145,7 @@ When an already assigned lease can fulfill a client query:
 
 In our example, a lease with a valid lifetime of 2000 seconds can be
 reused if it was committed less than 500 seconds ago. With a lifetime
-of 3000 seconds, the maximum age of 600 seconds applies.
+of 3000 seconds, a maximum age of 600 seconds applies.
 
 In outbound client responses (e.g. DHCPACK messages), the
 ``dhcp-lease-time`` option is set to the reusable valid lifetime,
@@ -4158,15 +4155,15 @@ also depend on the reusable lifetime.
 
 .. _host-reservation-v4:
 
-Host Reservation in DHCPv4
-==========================
+Host Reservations in DHCPv4
+===========================
 
 There are many cases where it is useful to provide a configuration on a
 per-host basis. The most obvious one is to reserve a specific, static
 address for exclusive use by a given client (host); the returning client
 receives the same address from the server every time, and other
-clients generally do not receive that address. Another situation when
-host reservations are applicable is when a host has
+clients generally do not receive that address. Host
+reservations are also convenient when a host has
 specific requirements, e.g. a printer that needs additional DHCP
 options. Yet another possible use case is to define unique names for
 hosts.
@@ -4174,8 +4171,8 @@ hosts.
 There may be cases when a new reservation has been made for a
 client for an address currently in use by another client. We call this
 situation a "conflict."
-These conflicts get resolved automatically over time as described in
-subsequent sections. Once the conflict is resolved, the correct client will
+These conflicts get resolved automatically over time, as described in
+subsequent sections. Once a conflict is resolved, the correct client will
 receive the reserved configuration when it renews.
 
 Host reservations are defined as parameters for each subnet. Each host
@@ -4183,7 +4180,7 @@ must have its own unique identifier, such as the hardware/MAC
 address. There is an optional ``reservations`` array in the ``subnet4``
 structure; each element in that array is a structure that holds
 information about reservations for a single host. In particular, the
-structure must have a unique host identifier. In
+structure has an identifier that uniquely identifies a host. In
 the DHCPv4 context, the identifier is usually a hardware or MAC address.
 In most cases an IP address will be specified. It is also possible to
 specify a hostname, host-specific options, or fields carried within the
@@ -4228,12 +4225,12 @@ in a subnet:
 
 The first entry reserves the 192.0.2.202 address for the client that
 uses a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the
-address 192.0.2.100 and the hostname of `alice-laptop` for the client
+address 192.0.2.100 and the hostname of "alice-laptop" for the client
 using a DUID 0a:0b:0c:0d:0e:0f. (If DNS updates are planned,
 it is strongly recommended that the hostnames be unique.) The
 third example reserves address 192.0.3.203 for a client whose request
 would be relayed by a relay agent that inserts a ``circuit-id`` option with
-the value `"charter950"`. The fourth entry reserves address 192.0.2.204
+the value "charter950". The fourth entry reserves address 192.0.2.204
 for a client that uses a client identifier with value
 01:11:22:33:44:55:66.
 
@@ -4262,7 +4259,7 @@ reservation for it). That additional check incurs extra overhead.
 Address Reservation Types
 -------------------------
 
-In a typical scenario there is an IPv4 subnet defined, e.g.
+In a typical Kea scenario there is an IPv4 subnet defined, e.g.
 192.0.2.0/24, with a certain part of it dedicated for dynamic allocation
 by the DHCPv4 server. That dynamic part is referred to as a dynamic pool
 or simply a pool. In principle, a host reservation can reserve any
@@ -4274,9 +4271,9 @@ the reservation syntax and both reservation types are handled uniformly.
 
 Kea supports global host reservations. These are reservations that are
 specified at the global level within the configuration and that do not
-belong to any specific subnet. Kea will still match inbound client
+belong to any specific subnet. Kea still matches inbound client
 packets to a subnet as before, but when the subnet's reservation mode is
-set to ``"global"``, Kea looks for host reservations only among the
+set to "global", Kea looks for host reservations only among the
 global reservations defined. Typically, such reservations would be used
 to reserve hostnames for clients which may move from one subnet to
 another.
@@ -4290,8 +4287,8 @@ another.
 .. note::
 
    Since Kea 1.9.1, reservation mode has been replaced by three
-   boolean flags, ``"reservations-global"``, ``"reservations-in-subnet"``,
-   and ``"reservations-out-of-pool"``, which allow the configuration of
+   boolean flags, ``reservations-global``, ``reservations-in-subnet``,
+   and ``reservations-out-of-pool``, which allow the configuration of
    host reservations both globally and in a subnet. In such cases a subnet
    host reservation has preference over a global reservation
    when both exist for the same client.
@@ -4311,7 +4308,7 @@ else is not recommended, but there are valid use cases where such an
 operation is warranted.
 
 The server now has a conflict to resolve. If Host B boots up and
-requests an address, the server is not able to assign the reserved
+requests an address, the server cannot immediately assign the reserved
 address 192.0.2.10. A naive approach would to be immediately remove the
 existing lease for Host A and create a new one for Host B. That would
 not solve the problem, though, because as soon as Host B gets the
@@ -4355,7 +4352,7 @@ where reservations conflict with existing leases; however, this procedure
 takes roughly as long as the value set for ``renew-timer``. The
 best way to avoid such a recovery is not to define new reservations that
 conflict with existing leases. Another recommendation is to use
-out-of-pool reservations. If the reserved address does not belong to a
+out-of-pool reservations; if the reserved address does not belong to a
 pool, there is no way that other clients can get it.
 
 .. note::
@@ -4407,7 +4404,7 @@ configuration:
            }
        }
 
-will result in assigning the `"alice-laptop.example.isc.org."` hostname to
+will result in the "alice-laptop.example.isc.org." hostname being assigned to
 the client using the MAC address "aa:bb:cc:dd:ee:ff". If the
 ``ddns-qualifying-suffix`` is not specified, the default (empty) value will
 be used, and in this case the value specified as a ``hostname`` will be
@@ -4437,6 +4434,11 @@ different clients with different domain names:
                "enable-updates": true,
            }
        }
+
+The above example results in the assignment of the
+"alice-laptop.isc.org." hostname to the client using the MAC
+address "aa:bb:cc:dd:ee:ff", and the hostname  "mark-desktop.example.org."
+to the client using the MAC address "12:34:56:78:99:AA".
 
 .. _reservation4-options:
 
@@ -4504,10 +4506,10 @@ class, and host levels, the host-specific values are used.
 Reserving Next Server, Server Hostname, and Boot File Name
 ----------------------------------------------------------
 
-BOOTP/DHCPv4 messages include `"siaddr"`, `"sname"`, and `"file"` fields. Even
+BOOTP/DHCPv4 messages include "siaddr", "sname", and "file" fields. Even
 though DHCPv4 includes corresponding options, such as option 66 and
 option 67, some clients may not support these options. For this reason,
-server administrators often use the `"siaddr"`, `"sname"`, and `"file"` fields
+server administrators often use the "siaddr", "sname", and "file" fields
 instead.
 
 With Kea, it is possible to make static reservations for these DHCPv4
@@ -4541,7 +4543,7 @@ Reserving Client Classes in DHCPv4
 the server to assign classes to a client, based on the content of the
 options that this client sends to the server. Host reservation
 mechanisms also allow for the static assignment of classes to clients.
-The definitions of these classes are placed in the Kea configuration or
+The definitions of these classes are placed in the Kea configuration file or
 a database. The following configuration snippet shows how to specify that
 a client belongs to the classes ``reserved-class1`` and ``reserved-class2``. Those
 classes are associated with specific options sent to the clients which belong
@@ -4586,11 +4588,11 @@ to them.
 
 In some cases the host reservations can be used in conjunction with client
 classes specified within the Kea configuration. In particular, when a
-host reservation exists for a client within a given subnet, the `"KNOWN"`
+host reservation exists for a client within a given subnet, the "KNOWN"
 built-in class is assigned to the client. Conversely, when there is no
-static assignment for the client, the `"UNKNOWN"` class is assigned to the
+static assignment for the client, the "UNKNOWN" class is assigned to the
 client. Class expressions within the Kea configuration file can
-refer to `"KNOWN"` or `"UNKNOWN"` classes using the `"member"` operator.
+refer to "KNOWN" or "UNKNOWN" classes using the "member" operator.
 For example:
 
 ::
@@ -4605,30 +4607,32 @@ For example:
         ]
     }
 
-Note that the ``only-if-required`` parameter is needed here to force
+The ``only-if-required`` parameter is needed here to force
 evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
+
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to ``false`` have been evaluated.
+   ``only-if-required`` parameter set to "false" have been evaluated.
    This means that these classes must not depend on the
-   statically assigned classes from the host reservations. If there
-   is a need to create such a dependency, the ``only-if-required`` parameter must
-   be set to ``true`` for the dependent classes. Such classes are
+   statically assigned classes from the host reservations. If
+   such a dependency is needed, the ``only-if-required`` parameter must
+   be set to "true" for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
    all classes marked as ``only-if-required`` must be listed in the
    ``require-client-classes`` list for every subnet where they are used.
 
 .. note::
+
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
    In such a case the ``only-if-required`` parameter is not needed.
    Refer to :ref:`pool-selection-with-class-reservations4` and
    :ref:`subnet-selection-with-class-reservations4`
-   for the specific use cases.
+   for specific use cases.
 
 .. _reservations4-mysql-pgsql-cql:
 
@@ -4721,7 +4725,7 @@ The ``reservation-mode`` parameter can be specified at:
   ``.Dhcp4["shared-networks"][].subnet4[]["reservation-mode"]`` (highest
   priority: overrides all others)
 
-To decide which ``"reservation-mode"`` to choose, the
+To decide which ``reservation-mode`` to choose, the
 following decision diagram may be useful:
 
 ::
@@ -5516,16 +5520,16 @@ then override its value in the subnet scope. For example:
            ]
        } ]
 
-In this example, there is a `"log-servers"` option defined that is available
+In this example, there is a ``log-servers`` option defined that is available
 to clients in both subnets in this shared network. Also, the valid
 lifetime is set to 10 minutes (600s). However, the first subnet
 overrides some of the values (the valid lifetime is 20 minutes, there is a different IP
-address for `"log-servers"`), but also adds its own option (the router address).
-Assuming a client asking for router and `"log-servers"` options is assigned
+address for ``log-servers``), but also adds its own option (the router address).
+Assuming a client asking for router and ``log-servers`` options is assigned
 a lease from this subnet, it will get a lease for 20 minutes and a
-`"log-servers"` and routers value of 10.0.0.254. If the same client is
+``log-servers`` and routers value of 10.0.0.254. If the same client is
 assigned to the second subnet, it will get a 10-minute lease, a
-`"log-servers"` value of 1.2.3.4, and routers set to 192.0.2.1.
+``log-servers`` value of 1.2.3.4, and routers set to 192.0.2.1.
 
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
@@ -5537,7 +5541,7 @@ subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
 using subnets that are reachable over different interfaces. In other
 words, all subnets within the shared network must have the same value
-of the `"interface"` parameter. The following configuration is an
+of the ``interface`` parameter. The following configuration is an
 example of what **NOT** to do:
 
 ::
@@ -5715,14 +5719,14 @@ following example:
        ]
    }
 
-If the client belongs to the `"b-devices"` class (because it includes
+If the client belongs to the "b-devices" class (because it includes
 option 93 with a value of 0x0002), that does not guarantee that the
 subnet 10.0.0.0/24 will be used (or preferred) for this client. The
 server can use either of the two subnets, because the subnet 192.0.2.0/26
 is also allowed for this client. The client classification used in this
 case should be perceived as a way to restrict access to certain subnets,
 rather than a way to express subnet preference. For example, if the
-client does not belong to the `"b-devices"` class, it may only use the
+client does not belong to the "b-devices" class, it may only use the
 subnet 192.0.2.0/26 and will never use the subnet 10.0.0.0/24.
 
 A typical use case for client classification is in a cable network,
@@ -5767,8 +5771,8 @@ on option 93 values.
    }
 
 In this example each class has its own restriction. Only clients that
-belong to class `"a-devices"` are able to use subnet 192.0.2.0/26 and
-only clients belonging to `"b-devices"` are able to use subnet
+belong to class "a-devices" are able to use subnet 192.0.2.0/26 and
+only clients belonging to "b-devices" are able to use subnet
 10.0.0.0/24. Care should be taken not to define too-restrictive
 classification rules, as clients that are unable to use any subnets will
 be refused service. However, this may be a desired outcome if one wishes
@@ -5782,7 +5786,7 @@ shared network, the server will still use classification rules to pick
 the right subnet for a given class of devices. The major benefit of
 placing subnets within the shared network is that common parameters for
 the logically grouped subnets can be specified once in the
-shared-network scope, e.g. the `"interface"` or `"relay"` parameter. All subnets
+shared-network scope, e.g. the ``interface`` or ``relay`` parameter. All subnets
 belonging to this shared network will inherit those parameters.
 
 Host Reservations in Shared Networks
@@ -5839,7 +5843,7 @@ reservations for the same host in multiple subnets belonging to the same
 shared network.
 
 While not strictly mandatory, it is strongly recommended to use explicit
-`"id"` values for subnets if database storage will be used for host
+"id" values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
 auto-generated, i.e. Kea assigns increasing integer values starting from
 1. Thus, the auto-generated IDs are not stable across configuration
@@ -5858,10 +5862,10 @@ has been received. A single server instance uses multiple server
 identifiers if it is receiving queries on multiple interfaces.
 
 It is possible to override the default server identifier values by specifying
-the `"dhcp-server-identifier"` option. This option configuration is only
+the ``dhcp-server-identifier`` option. This option configuration is only
 supported at the subnet, shared network, client class, and global levels. It
 must not be specified at the host-reservation level.
-When configuring the `"dhcp-server-identifier"` option at client-class level, the
+When configuring the ``dhcp-server-identifier`` option at client-class level, the
 class must not set the ``only-if-required`` flag, because this class would not
 be evaluated before the server determines if the received DHCP message should
 be accepted for processing. Such classes are evaluated after subnet selection.
@@ -5974,8 +5978,8 @@ selects that subnet for a relay with address 10.0.0.1.
        ],
    }
 
-If `"relay"` is specified, the `"ip-addresses"` parameter within it is
-mandatory. The `"ip-addresses"` parameter supports specifying a list of addresses.
+If ``relay`` is specified, the ``ip-addresses`` parameter within it is
+mandatory. The ``ip-addresses`` parameter supports specifying a list of addresses.
 
 .. _dhcp4-srv-example-client-class-relay:
 
@@ -6904,8 +6908,8 @@ and DHCPv6), the shareable configuration elements are subnets and shared
 networks. Thus, they can be explicitly associated with multiple server tags.
 The global parameters, option definitions, and global options are non-shareable
 and can be associated with only one server tag. This rule does not apply
-to the configuration elements associated with `"all"` servers. Any configuration
-element associated with `"all"` servers (using the `"all"` keyword as a server tag) is
+to the configuration elements associated with ``all`` servers. Any configuration
+element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
 used by all servers connecting to the configuration database.
 
 .. table:: List of DHCPv4 Parameters Supported by the Configuration Backend
@@ -7075,7 +7079,7 @@ loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of
 the Configuration Backend for MySQL. It must be always present when the
 server uses MySQL as the configuration repository. Failing to load this
 library will result in an error during the server configuration if the
-`"mysql"` database is selected with the ``config-control`` parameter.
+"mysql" database is selected with the ``config-control`` parameter.
 
 The second hook library, ``libdhcp_cb_cmds.so``, is optional. It should
 be loaded when the Kea server instance is to be used to manage the
