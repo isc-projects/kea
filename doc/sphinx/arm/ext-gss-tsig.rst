@@ -628,7 +628,7 @@ The parameters have the following meaning:
   TKEY protocol, expressed in seconds. Default value is 3600 (one hour).
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
-  matching DNS server is configured) but a GSS-TSIG key is available.
+  matching DNS server is configured) but no GSS-TSIG key is available.
   If configured to false (the default) this server is skipped, if
   configured to true the DNS server is ignored and the DNS update
   is sent with the configured DHCP-DDNS protection e.g. TSIG key or
@@ -679,7 +679,7 @@ The server map parameters are:
   the global level parameter.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
-  matching DNS server is configured) but a GSS-TSIG key is available.
+  matching DNS server is configured) but no GSS-TSIG key is available.
   The fallback parameter per server takes precedence. Default and
   supported values are the same as for the global level parameter.
 
