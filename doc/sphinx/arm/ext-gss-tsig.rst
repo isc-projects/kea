@@ -131,7 +131,7 @@ detection, similar to this:
 
 7.  After compilation, the gss_tsig hook is available in the
     ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
-    the DHCP-DDNS (D2) daemon.
+    the Kea DHCP-DDNS (D2) daemon.
 
 
 The gss_tsig was developed using the MIT Kerberos 5 implementation but
@@ -269,7 +269,7 @@ If succesfully applied, the following message will be displayed:
 
 Next step consists in creating the principals for the Bind9 DNS server
 (the service protected by the GSS-TSIG TKEY) and for the DNS client
-(the Kea DDNS server).
+(the Kea DHCP-DDNS server).
 
 The Bind9 DNS server principal (used for authentication) is created the
 following way:
@@ -302,7 +302,7 @@ If succesfully exported, the following message will be displayed:
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
 
-The DHCP client principal (used by the Kea DDNS server) is created the
+The DHCP client principal (used by the Kea DHCP-DDNS server) is created the
 following way:
 
 .. code-block:: console
@@ -318,7 +318,7 @@ If succesfully created, the following message will be displayed:
     Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
 
 The DHCP client principal must be exported so that it can be used by the
-DHCP-DDNS server and GSS-TSIG hook library. It is exported to the client
+Kea DHCP-DDNS server and GSS-TSIG hook library. It is exported to the client
 keytab file with the name ```dhcp.keytab```.
 
 .. code-block:: console
@@ -401,7 +401,7 @@ The ``/var/lib/bind/db.example.org`` file needs to be created or updated:
     kdc                 A       ${KDC_IP_ADDR}
     server              A       ${BIND9_IP_ADDR}
 
-As after any configuration change the server must be reloaded or
+After any configuration change the server must be reloaded or
 restarted:
 
 .. code-block:: console
@@ -421,7 +421,7 @@ Windows Advanced Directory Configuration
 This sub-section is based on an Amazon AWS provided Microsoft Windows Server
 2016 with Active Directory pre-installed so describes only the steps used
 for GSS-TSIG deployment (more exactly as other parts of the deployment and
-using sections what the QA ISC department uses for internal tests).
+using sections that the QA ISC department uses for internal tests).
 
 Two Active Directory (AD) user accounts are needed:
  - the first account is used to download AD information, for instance
