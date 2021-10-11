@@ -3270,9 +3270,9 @@ configuration of the DHCPv6 side (the DHCPv4 side is described in
 .. note::
 
    DHCPv4-over-DHCPv6 support is experimental and the details of the
-   inter-process communication may change; both the DHCPv4 and DHCPv6
-   sides should be running the same version of Kea. For instance, the
+   inter-process communication may change; for instance, the
    support of port relay (RFC 8357) introduced an incompatible change.
+   Both the DHCPv4 and DHCPv6 sides should be running the same version of Kea.
 
 There is only one specific parameter for the DHCPv6 side:
 ``dhcp4o6-port``, which specifies the first of the two consecutive ports
@@ -3281,10 +3281,10 @@ DHCPv4 servers. The DHCPv6 server is bound to ::1 on ``port`` and
 connected to ::1 on ``port`` + 1.
 
 Two other configuration entries are generally required: unicast traffic
-support (see :ref:`dhcp6-unicast`) and DHCP 4o6
+support (see :ref:`dhcp6-unicast`) and the DHCP 4o6
 server address option (name "dhcp4o6-server-addr", code 88).
 
-The following configuration was used during some tests:
+ISC tested the following configuration:
 
 ::
 
@@ -3348,12 +3348,12 @@ Sanity Checks in DHCPv6
 -----------------------
 
 An important aspect of a well-running DHCP system is an assurance that
-the data remain consistent. However, in some cases it may be convenient
+the data remains consistent; however, in some cases it may be convenient
 to tolerate certain inconsistent data. For example, a network
-administrator that temporarily removed a subnet from a configuration
+administrator who temporarily removes a subnet from a configuration
 would not want all the leases associated with it to disappear from the lease
-database. Kea has a mechanism to control sanity checks for situations
-such as this.
+database. Kea has a mechanism to implement sanity checks for situations
+like this.
 
 Kea supports a configuration scope called ``sanity-checks``. It
 currently allows only a single parameter, called ``lease-checks``, which
@@ -3361,16 +3361,18 @@ governs the verification carried out when a new lease is loaded from a
 lease file. This mechanism permits Kea to attempt to correct
 inconsistent data.
 
-Every subnet has a subnet-id value; this is how Kea internally
-identifies subnets. Each lease has a subnet-id parameter as well, which
-identifies which subnet it belongs to. However, if the configuration has
-changed, it is possible that a lease could exist with a subnet-id, but
-without any subnet that matches it. Also, it may be possible that the
-subnet's configuration has changed and the subnet-id now belongs to a
-subnet that does not match the lease. Kea's corrective algorithm first
-checks to see if there is a subnet with the subnet-id specified by the
+Every subnet has a ``subnet-id`` value; this is how Kea internally
+identifies subnets. Each lease has a ``subnet-id`` parameter as well, which
+identifies the subnet it belongs to. However, if the configuration has
+changed, it is possible that a lease could exist with a ``subnet-id`` but
+without any subnet that matches it. Also, it is possible that the
+subnet's configuration has changed and the ``subnet-id`` now belongs to a
+subnet that does not match the lease.
+
+Kea's corrective algorithm first
+checks to see if there is a subnet with the ``subnet-id`` specified by the
 lease. If there is, it verifies whether the lease belongs to that
-subnet. If not, depending on the lease-checks setting, the lease is
+subnet. If not, depending on the ``lease-checks`` setting, the lease is
 discarded, a warning is displayed, or a new subnet is selected for the
 lease that matches it topologically.
 
@@ -3386,18 +3388,18 @@ There are five levels which are supported:
    accept the lease data anyway. This is the default value.
 
 -  ``fix`` - if a data inconsistency is discovered, try to
-   correct it. If the correction is not successful, the incorrect data
-   will be inserted anyway.
+   correct it. If the correction is not successful, insert the incorrect data
+   anyway.
 
 -  ``fix-del`` - if a data inconsistency is discovered, try to
    correct it. If the correction is not successful, reject the lease.
    This setting ensures the data's correctness, but some
    incorrect data may be lost. Use with care.
 
--  ``del`` - this is the strictest mode. If any inconsistency is
-   detected, reject the lease. Use with care.
+-  ``del`` - if any inconsistency is
+   detected, reject the lease. This is the strictest mode; use with care.
 
-This feature is currently implemented for the memfile backend. Note the
+This feature is currently implemented for the memfile backend. The
 sanity check applies to the lease database in memory, not to the lease file,
 i.e. inconsistent leases will stay in the lease file.
 
@@ -3416,14 +3418,14 @@ An example configuration that sets this parameter looks as follows:
 
 Storing Extended Lease Information
 ----------------------------------
-In order to support such features as DHCPv6 Reconfigure
-(`RFC 3315 <https://tools.ietf.org/html/rfc3315>`__) and LeaseQuery
-(`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__) it is necessary to
-store additional information with each lease.  Because the amount
+To support such features as DHCPv6 Reconfigure
+(`RFC 3315 <https://tools.ietf.org/html/rfc3315>`__) and Leasequery
+(`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__),
+additional information must be stored with each lease. Because the amount
 of information stored for each lease has ramifications in terms of
-performance and system resource consumption, storing this additional
-information is configurable through the "store-extended-info" parameter.
-It defaults to false and may be set at the global, shared-network, and
+performance and system resource consumption, storage of this additional
+information is configurable through the ``store-extended-info`` parameter.
+It defaults to "false" and may be set at the global, shared-network, and
 subnet levels.
 
 ::
@@ -3433,12 +3435,12 @@ subnet levels.
        ...
    }
 
-When enabled, information relevant to the DHCPv6 query (e.g. REQUEST, RENEW,
-or REBIND) asking for the lease is added into the lease's user-context as a
-map element labeled "ISC".  Currently the information contained in the map
-will be a list of relays, one for each relay message layer that encloses the
-client query. Other values may be added at a future date. The lease's
-user-context for a two-hop query might look something like this (shown
+When set to "true", information relevant to the DHCPv6 query (e.g. REQUEST, RENEW,
+or REBIND) asking for the lease is added into the lease's ``user-context`` as a
+map element labeled "ISC". Currently, the information contained in the map
+is a list of relays, one for each relay message layer that encloses the
+client query. The lease's
+``user-context`` for a two-hop query might look something like this (shown
 pretty-printed for clarity):
 
 ::
@@ -3460,19 +3462,14 @@ pretty-printed for clarity):
         }
     }
 
-
 .. note::
-    This feature is intended to be used in conjunction with an upcoming
-    LeaseQuery hook library and at this time there is other use for this
-    information within Kea.
 
-.. note::
     It is possible that other hook libraries are already using
-    user-context. Enabling store-extended-info should not interfere with
-    any other user-context content, as long as it does not also use an element
-    labeled "ISC". In other words, user-context is intended to be a flexible
+    ``user-context``. Enabling ``store-extended-info`` should not interfere with
+    any other ``user-context`` content, as long as it does not also use an element
+    labeled "ISC". In other words, ``user-context`` is intended to be a flexible
     container serving multiple purposes. As long as no other purpose also
-    writes an "ISC" element to user-context there should not be a conflict.
+    writes an "ISC" element to ``user-context`` there should not be a conflict.
 
 .. _dhcp6-multi-threading-settings:
 
@@ -3480,21 +3477,21 @@ Multi-Threading Settings
 ------------------------
 
 The Kea server can be configured to process packets in parallel using multiple
-threads. These settings can be found under ``multi-threading`` structure and are
+threads. These settings can be found under the ``multi-threading`` structure and are
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-   parallel (default false).
+   parallel. The default is "false".
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
-   parallel.  Supported values are: 0 (auto detect), any positive number sets
-   thread count explicitly (default 0).
+   parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
+   the thread count. The default is 0.
 
 -  ``packet-queue-size`` - specify the size of the queue used by the thread
-   pool to process packets.  Supported values are: 0 (unlimited), any positive
-   number sets queue size explicitly (default 64).
+   pool to process packets. It may be set to 0 (unlimited), or any positive
+   number explicitly sets the queue size. The default is 64.
 
-An example configuration that sets these parameter looks as follows:
+An example configuration that sets these parameters looks as follows:
 
 ::
 
@@ -3507,22 +3504,22 @@ An example configuration that sets these parameter looks as follows:
        ...
    }
 
-Multi-Threading Settings in Different Backends
-----------------------------------------------
+Multi-Threading Settings With Different Database Backends
+---------------------------------------------------------
 
-Both kea-dhcp4 and kea-dhcp6 are tested internally to determine which settings
+Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested by ISC to determine which settings
 give the best performance. Although this section describes our results, they are merely
-recommendations and are very dependent on the particular hardware that was used
+recommendations and are very dependent on the particular hardware used
 for testing. We strongly advise that administrators run their own performance tests.
 
-A full report of performance results for the latest stable Kea can be found
+A full report of performance results for the latest stable Kea version can be found
 `here <https://reports.kea.isc.org/>`_.
 This includes hardware and test scenario descriptions, as well as
 current results.
 
-After enabling multi-threading, the number of threads is set by ``thread-pool-size``
-parameter, and results from our tests show that best configurations for
-kea-dhcp6 are:
+After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
+parameter. Results from our tests show that best configurations for
+``kea-dhcp6`` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
 
@@ -3530,41 +3527,40 @@ kea-dhcp6 are:
 
 -  ``thread-pool-size``: 6 when using ``postgresql``.
 
-Another very important parameter is ``packet-queue-size`` and in our tests we
-used it as multiplier of ``thread-pool-size``. So actual setting strongly depends
+Another very important parameter is ``packet-queue-size``; in our tests we
+used it as a multiplier of ``thread-pool-size``. The actual setting strongly depends
 on ``thread-pool-size``.
 
-Our tests reported best results when:
+We saw the best results in our tests with the following settings:
 
 -  ``packet-queue-size``: 150 * ``thread-pool-size`` when using ``memfile`` for
-   storing leases. In our case it's 150 * 4 = 600. This means that at any given
+   storing leases; in our case it was 150 * 4 = 600. This means that at any given
    time, up to 600 packets could be queued.
 
 -  ``packet-queue-size``: 200 * ``thread-pool-size`` when using ``mysql`` for
-   storing leases. In our case it's 200 * 12 = 2400. This means that up to
+   storing leases; in our case it was 200 * 12 = 2400. This means that up to
    2400 packets could be queued.
 
 -  ``packet-queue-size``: 11 * ``thread-pool-size`` when using ``postgresql`` for
-   storing leases. In our case it's 11 * 6 = 66.
-
+   storing leases; in our case it was 11 * 6 = 66.
 
 Lease Caching
 -------------
 
-Clients that attempt renewal frequently can cause the server to update
-and write to the database frequently resulting in a performance impact
+Clients that attempt multiple renewals in a short period can cause the server to update
+and write to the database frequently, resulting in a performance impact
 on the server. The cache parameters instruct the DHCP server to avoid
-updating leases too frequently thus avoiding this behavior. Instead
+updating leases too frequently, thus avoiding this behavior. Instead,
 the server assigns the same lease (i.e. reuses it) with no
-modifications except for CLTT (Client Last Transmission Time) which
+modifications except for CLTT (Client Last Transmission Time), which
 does not require disk operations.
 
 The two parameters are the ``cache-threshold`` double and the
-``cache-max-age`` integer and have no default, i.e. the lease caching
+``cache-max-age`` integer; they have no default setting, i.e. the lease caching
 feature must be explicitly enabled. These parameters can be configured
-at the global, shared network and subnet levels. The subnet level has
-the precedence on the shared network level, the global level is used
-as last resort. For example:
+at the global, shared-network and subnet levels. The subnet level has
+the precedence over the shared-network level, while the global level is used
+as a last resort. For example:
 
 ::
 
@@ -3579,50 +3575,50 @@ as last resort. For example:
         }
     ],
 
-When an already assigned lease can fulfill a client query:
+When an already-assigned lease can fulfill a client query:
 
-  - any important change e.g. for DDNS parameter, hostname, or
-    preferred or valid lifetime reduction makes the lease not reusable
+  - any important change, e.g. for DDNS parameter, hostname, or
+    preferred or valid lifetime reduction, makes the lease not reusable.
 
-  - lease age i.e. the difference between the creation or last modification
-    time and the current time is computed (elapsed duration)
+  - lease age, i.e. the difference between the creation or last modification
+    time and the current time, is computed (elapsed duration).
 
-  - if ``cache-max-age`` is explicitly configured, it is compared with the age
-    and leases that are too old are not reusable (this means that the value 0
-    for ``cache-max-age`` disables the lease cache feature)
+  - if ``cache-max-age`` is explicitly configured, it is compared with the lease age;
+    leases that are too old are not reusable. This means that the value 0
+    for ``cache-max-age`` disables the lease cache feature.
 
   - if ``cache-threshold`` is explicitly configured and is between 0.0 and 1.0,
     it expresses the percentage of the lease valid lifetime which is
     allowed for the lease age. Values below and including 0.0 and
     values greater than 1.0 disable the lease cache feature.
 
-In the example a lease with a valid lifetime of 2000 seconds can be
+In our example, a lease with a valid lifetime of 2000 seconds can be
 reused if it was committed less than 500 seconds ago. With a lifetime
-of 3000 seconds the maximum age of 600 seconds applies.
+of 3000 seconds, a maximum age of 600 seconds applies.
 
-In outbound client responses (e.g. DHCPV6_REPLY messages) used
-preferred and valid lifetimes are the reusable values i.e. the
+In outbound client responses (e.g. DHCPV6_REPLY messages), the used
+preferred and valid lifetimes are the reusable values, i.e. the
 expiration dates do not change.
 
 .. _host-reservation-v6:
 
-Host Reservation in DHCPv6
-==========================
+Host Reservations in DHCPv6
+===========================
 
 There are many cases where it is useful to provide a configuration on a
 per-host basis. The most obvious one is to reserve a specific, static
 IPv6 address or/and prefix for exclusive use by a given client (host);
-the returning client will receive the same address or/and prefix every time,
-and other clients will never get that address. Another situation when host
-reservations are applicable is when a host has specific requirements,
+the returning client receives the same address and/or prefix every time,
+and other clients will never get that address. Host
+reservations are also convenient when a host has specific requirements,
 e.g. a printer that needs additional DHCP options or a cable modem that
 needs specific parameters. Yet another possible use case is to define
 unique names for hosts.
 
-Note that there may be cases when a new reservation has been made for a
+There may be cases when a new reservation has been made for a
 client for an address or prefix currently in use by another client. We
 call this situation a "conflict." These conflicts get resolved
-automatically over time as described in subsequent sections. Once the
+automatically over time, as described in subsequent sections. Once a
 conflict is resolved, the correct client will receive the reserved
 configuration when it renews.
 
@@ -3630,7 +3626,7 @@ Host reservations are defined as parameters for each subnet. Each host
 must be identified by either DUID or its hardware/MAC address; see
 :ref:`mac-in-dhcpv6` for details. There
 is an optional ``reservations`` array in the ``subnet6`` structure; each
-element in that array is a structure that holds information about a
+element in that array is a structure that holds information about reservations for a
 single host. In particular, the structure has an identifier that
 uniquely identifies a host. In the DHCPv6 context, the identifier is
 usually a DUID, but it can also be a hardware or MAC address. One or more
@@ -3639,9 +3635,8 @@ specify a hostname and DHCPv6 options for a given host.
 
 .. note::
 
-   Kea requires that reserved addresses must be within the subnet.
-   Kea 1.7.10 is the last release that does not enforce this.
-   This does not apply to reserved prefixes.
+   Kea versions 1.7.10 and newer require that the reserved address must
+   be within the subnet. This does not apply to reserved prefixes.
 
 The following example shows how to reserve addresses and prefixes for
 specific hosts:
@@ -3679,7 +3674,7 @@ specific hosts:
    ]
 
 This example includes reservations for three different clients. The
-first reservation is for the address 2001:db8:1::100 for a client using
+first reservation is for the address 2001:db8:1::100, for a client using
 DUID 01:02:03:04:05:0A:0B:0C:0D:0E. The second reservation is for two
 addresses, 2001:db8:1::101 and 2001:db8:1::102, for a client using MAC
 address 00:01:02:03:04:05. Lastly, address 2001:db8:1::103 and prefix
@@ -3687,7 +3682,7 @@ address 00:01:02:03:04:05. Lastly, address 2001:db8:1::103 and prefix
 01:02:03:04:05:06:07:08:09:0A. The last reservation also assigns a
 hostname to this client.
 
-Note that DHCPv6 allows a single client to lease multiple addresses and
+DHCPv6 allows a single client to lease multiple addresses and
 multiple prefixes at the same time. Therefore ``ip-addresses`` and
 ``prefixes`` are plural and are actually arrays. When the client sends
 multiple IA options (IA_NA or IA_PD), each reserved address or prefix is
@@ -3732,7 +3727,7 @@ overhead.
 Address/Prefix Reservation Types
 --------------------------------
 
-In a typical scenario there is an IPv6 subnet defined, with a certain
+In a typical Kea scenario there is an IPv6 subnet defined, with a certain
 part of it dedicated for dynamic address allocation by the DHCPv6
 server. There may be an additional address space defined for prefix
 delegation. Those dynamic parts are referred to as dynamic pools,
@@ -3746,9 +3741,9 @@ and both reservation types are handled uniformly.
 
 Kea supports global host reservations. These are reservations that are
 specified at the global level within the configuration and that do not
-belong to any specific subnet. Kea will still match inbound client
+belong to any specific subnet. Kea still matches inbound client
 packets to a subnet as before, but when the subnet's reservation mode is
-set to ``"global"``, Kea will look for host reservations only among the
+set to "global", Kea looks for host reservations only among the
 global reservations defined. Typically, such reservations would be used
 to reserve hostnames for clients which may move from one subnet to
 another.
@@ -3761,9 +3756,9 @@ another.
 
 .. note::
 
-   Beginning with Kea 1.9.1 reservation mode was replaced by three
-   boolean flags ``"reservations-global"``, ``"reservations-in-subnet"``
-   and ``"reservations-out-of-pool"`` which allows the configuration of
+   Since Kea 1.9.1, reservation mode has been replaced by three
+   boolean flags, ``reservations-global``, ``reservations-in-subnet``
+   and ``reservations-out-of-pool``, which allow the configuration of
    host reservations both globally and in a subnet. In such cases a subnet
    host reservation has preference over a global reservation
    when both exist for the same client.
@@ -3783,7 +3778,7 @@ someone else is not recommended, but there are valid use cases where
 such an operation is warranted.
 
 The server now has a conflict to resolve. If Host B boots up and
-requests an address, the server is not able to assign the reserved
+requests an address, the server cannot immediately assign the reserved
 address 2001:db8::10. A naive approach would to be immediately remove
 the lease for Host A and create a new one for Host B. That would not
 solve the problem, though, because as soon as Host B gets the address,
@@ -3796,14 +3791,14 @@ When Host A renews its address, the server will discover that the
 address being renewed is now reserved for someone else - Host B.
 The server will remove the lease for 2001:db8::10, select a
 new address, and create a new lease for it. It will send two addresses
-in its response: the old address, with lifetime set to 0 to explicitly
+in its response: the old address, with the lifetime set to 0 to explicitly
 indicate that it is no longer valid; and the new address, with a
 non-zero lifetime. When Host B tries to renew its temporarily assigned address,
 the server will detect that the existing lease does not match the
 reservation, so it will release the current address Host B has and will
 create a new lease matching the reservation. As before, the server will
-send two addresses: the temporarily assigned one with zeroed lifetimes,
-and the new one that matches the reservation with proper lifetimes set.
+send two addresses: the temporarily assigned one with a zero lifetime,
+and the new one that matches the reservation with the proper lifetime set.
 
 This recovery will succeed, even if other hosts attempt to get the
 reserved address. If Host C requests the address 2001:db8::10 after the
@@ -3811,10 +3806,10 @@ reservation is made, the server will propose a different address.
 
 This recovery mechanism allows the server to fully recover from a case
 where reservations conflict with existing leases; however, this procedure
-will take roughly as long as the value set for renew-timer. The
-best way to avoid such recovery is not to define new reservations that
+takes roughly as long as the value set for ``renew-timer``. The
+best way to avoid such a recovery is not to define new reservations that
 conflict with existing leases. Another recommendation is to use
-out-of-pool reservations. If the reserved address does not belong to a
+out-of-pool reservations; if the reserved address does not belong to a
 pool, there is no way that other clients can get it.
 
 .. note::
@@ -3832,11 +3827,11 @@ Reserving a Hostname
 --------------------
 
 When the reservation for a client includes the ``hostname``, the server
-will assign this hostname to the client and send it back in the Client
-FQDN, if the client sent the FQDN option to the server. The reserved
-hostname always takes precedence over the hostname supplied by the
-client (via the FQDN option) or the autogenerated (from the IPv6
-address) hostname.
+assigns this hostname to the client and sends it back in the Client
+FQDN option, if the client included the Client FQDN option in its message
+to the server. The reserved hostname always takes precedence over the
+hostname supplied by the client (via the FQDN option) or the autogenerated
+(from the IPv6 address) hostname.
 
 The server qualifies the reserved hostname with the value of the
 ``ddns-qualifying-suffix`` parameter. For example, the following subnet
@@ -3862,7 +3857,7 @@ configuration:
        "enable-updates": true
    }
 
-will result in assigning the "alice-laptop.example.isc.org." hostname to
+will result the "alice-laptop.example.isc.org." hostname being assigned to
 the client using the DUID "01:02:03:04:05:0A:0B:0C:0D:0E". If the
 ``ddns-qualifying-suffix`` is not specified, the default (empty) value will
 be used, and in this case the value specified as a ``hostname`` will be
@@ -3944,9 +3939,9 @@ Vendor-specific options can be reserved in a similar manner:
        } ]
    } ]
 
-Options defined at host level have the highest priority. In other words,
+Options defined at the host level have the highest priority. In other words,
 if there are options defined with the same type on global, subnet,
-class, and host levels, the host-specific values will be used.
+class, and host levels, the host-specific values are used.
 
 .. _reservation6-client-classes:
 
@@ -3955,11 +3950,11 @@ Reserving Client Classes in DHCPv6
 
 :ref:`classification-using-expressions` explains how to configure
 the server to assign classes to a client, based on the content of the
-options that this client sends to the server. Host reservations
+options that this client sends to the server. Host reservation
 mechanisms also allow for the static assignment of classes to clients.
-The definitions of these classes are placed in the Kea configuration or
+The definitions of these classes are placed in the Kea configuration file or
 a database. The following configuration snippet shows how to specify that
-a client belongs to classes ``reserved-class1`` and ``reserved-class2``. Those
+a client belongs to the classes ``reserved-class1`` and ``reserved-class2``. Those
 classes are associated with specific options sent to the clients which belong
 to them.
 
@@ -4021,30 +4016,32 @@ For example:
         ]
     }
 
-Note that the ``only-if-required`` parameter is needed here to force
+The ``only-if-required`` parameter is needed here to force
 evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
 .. note::
-   Be aware that the classes specified in non-global host reservations
+
+   The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to ``false`` have been evaluated.
-   This has an implication that these classes must not depend on the
-   statically assigned classes from the host reservations. If there
-   is a need to create such dependency, the ``only-if-required`` must
-   be set to ``true`` for the dependent classes. Such classes are
+   ``only-if-required`` parameter set to "false" have been evaluated.
+   This means that these classes must not depend on the
+   statically assigned classes from the host reservations. If
+   such a dependency is needed, the ``only-if-required`` must
+   be set to "true" for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
    all classes marked as ``only-if-required`` must be listed in the
    ``require-client-classes`` list for every subnet where they are used.
 
 .. note::
+
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
    In such a case the ``only-if-required`` parameter is not needed.
    Refer to the :ref:`pool-selection-with-class-reservations6` and
    :ref:`subnet-selection-with-class-reservations6`
-   for the specific use cases.
+   for specific use cases.
 
 .. _reservations6-mysql-pgsql-cql:
 
