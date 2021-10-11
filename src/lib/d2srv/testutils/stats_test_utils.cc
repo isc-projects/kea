@@ -26,22 +26,7 @@ D2StatTest::~D2StatTest() {
 }
 
 void
-D2StatTest::checkStat(const string& name, const int64_t expected_value) {
-    ObservationPtr obs = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(obs) << " stat: " << name << " not found ";
-    ASSERT_EQ(expected_value, obs->getInteger().first)
-        << " stat: " << name << " value wrong";
-}
-
-void
-D2StatTest::checkStats(const StatMap& expected_stats) {
-    for (const auto& it : expected_stats) {
-        checkStat(it.first, it.second);
-    }
-}
-
-void
-D2StatTest::checkStats(const string& key_name, const StatMap& expected_stats) {
+checkStats(const string& key_name, const StatMap& expected_stats) {
     StatMap key_stats;
     for (const auto& it : expected_stats) {
         const string& stat_name =
