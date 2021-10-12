@@ -5356,16 +5356,16 @@ DHCP servers use subnet information in two ways. It is used to
 both determine the point of attachment, i.e. where the client is
 connected to the network, and to
 group information pertaining to a specific location in the network.
-However, it is sometimes useful to have more than one
+Sometimes it is useful to have more than one
 logical IP subnet deployed on the same physical link.
 Understanding that two or more subnets are used on the same link requires
 additional logic in the DHCP server. This capability is called "shared
 networks" in Kea, and sometimes also
 "shared subnets"; in Microsoft's nomenclature it is called "multinet."
 
-There are many use cases where the feature is useful; here we
+There are many cases where the shared networks feature is useful; here we
 explain just a handful of the most common ones. The first and by far
-most common use case is an existing network that has grown and is
+most common use case is an existing IPv4 network that has grown and is
 running out of available address space. Rather than migrating all
 devices to a new, larger subnet, it is easier to simply configure
 additional subnets on top of the existing one. Sometimes, due to address
@@ -5402,7 +5402,7 @@ default.
    all the addresses from the first subnet in a shared network before
    allocating addresses from other subnets.
 
-In order to define a shared network an additional configuration scope is
+To define a shared network, an additional configuration scope is
 introduced:
 
 ::
@@ -5461,12 +5461,12 @@ of two or more subnets. However, for testing purposes, an empty subnet
 or a network with just a single subnet is allowed. This is not a
 recommended practice in production networks, as the shared network logic
 requires additional processing and thus lowers the server's performance.
-To avoid unnecessary performance degradation, the shared subnets should
+To avoid unnecessary performance degradation, shared subnets should
 only be defined when required by the deployment.
 
 Shared networks provide the ability to specify many parameters in the
 shared network scope that apply to all subnets within it. If
-necessary, it is possible to specify a parameter in the shared network scope and
+necessary, it is possible to specify a parameter in the shared-network scope and
 then override its value in the subnet scope. For example:
 
 ::
@@ -5541,7 +5541,7 @@ subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
 using subnets that are reachable over different interfaces. In other
 words, all subnets within the shared network must have the same value
-of the ``interface`` parameter. The following configuration is an
+for the ``interface`` parameter. The following configuration is an
 example of what **NOT** to do:
 
 ::
@@ -5568,7 +5568,7 @@ example of what **NOT** to do:
        } ]
 
 To minimize the chance of configuration errors, it is often more convenient
-to simply specify the interface name once, at the shared network level, as
+to simply specify the interface name once, at the shared-network level, as
 shown in the example below.
 
 ::
@@ -5632,7 +5632,7 @@ of what **NOT** to do:
        }
    ]
 
-Again, it is better to specify the relay address at the shared network
+Again, it is better to specify the relay address at the shared-network
 level; this value will be inherited by all subnets belonging to the
 shared network.
 
@@ -5669,7 +5669,7 @@ host reservation in this subnet, or simply if the initially selected subnet has 
 more addresses available. Therefore, it is strongly recommended to always
 specify subnet selectors (interface or relay address) at the shared-network
 level if the subnets belong to a shared network, as it is rarely useful to
-specify them at the subnet level and it may lead to the configuration errors
+specify them at the subnet level and may lead to the configuration errors
 described above.
 
 Client Classification in Shared Networks
@@ -5687,7 +5687,7 @@ appropriate subnet is selected for a given client type.
 If a subnet is associated with a class, only the clients belonging to
 this class can use this subnet. If there are no classes specified for a
 subnet, any client connected to a given shared network can use this
-subnet. A common mistake is to assume that a subnet including a client
+subnet. A common mistake is to assume that a subnet that includes a client
 class is preferred over subnets without client classes. Consider the
 following example:
 
@@ -5725,7 +5725,7 @@ subnet 10.0.0.0/24 will be used (or preferred) for this client. The
 server can use either of the two subnets, because the subnet 192.0.2.0/26
 is also allowed for this client. The client classification used in this
 case should be perceived as a way to restrict access to certain subnets,
-rather than a way to express subnet preference. For example, if the
+rather than as a way to express subnet preference. For example, if the
 client does not belong to the "b-devices" class, it may only use the
 subnet 192.0.2.0/26 and will never use the subnet 10.0.0.0/24.
 
@@ -5779,7 +5779,7 @@ be refused service. However, this may be a desired outcome if one wishes
 to provide service only to clients with known properties (e.g. only VoIP
 phones allowed on a given link).
 
-Note that it is possible to achieve an effect similar to the one
+It is possible to achieve an effect similar to the one
 presented in this section without the use of shared networks. If the
 subnets are placed in the global subnets scope, rather than in the
 shared network, the server will still use classification rules to pick
