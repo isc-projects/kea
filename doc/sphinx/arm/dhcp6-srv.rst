@@ -4749,29 +4749,30 @@ for the same IP address or delegated prefix.
 Shared Networks in DHCPv6
 =========================
 
-DHCP servers use subnet information in two ways. First, it is used to
-determine the point of attachment, or where the client is
-connected to the network. Second, the subnet information is used to
-group information pertaining to a specific location in the network. This
-approach works well in general, but there are scenarios where the
-boundaries are blurred. Sometimes it is useful to have more than one
+DHCP servers use subnet information in two ways. It is used to
+both determine the point of attachment, i.e. where the client is
+connected to the network, and to
+group information pertaining to a specific location in the network.
+Sometimes it is useful to have more than one
 logical IP subnet being deployed on the same physical link.
 Understanding that two or more subnets are used on the same link requires
 additional logic in the DHCP server. This capability is called "shared
-networks" in the Kea and ISC DHCP projects. (It is sometimes also
-called "shared subnets"; in Microsoft's nomenclature it is called
-"multinet.")
+networks" in Kea, and sometimes also
+"shared subnets"; in Microsoft's nomenclature it is called
+"multinet."
 
-There are many use cases where the feature is useful; the most common
-example in IPv4 is when the server is running out of available
-addresses in a subnet. This is less common in IPv6, but shared networks
-are still useful in IPv6. One of the use cases is an exhaustion of IPv6-
-delegated prefixes within a subnet; another is an
+There are many cases where the shared networks feature is useful; here we explain
+just a handful of the most common ones. The first and by far most common
+use case is an existing IPv4 network that has grown and
+is running out of available
+address space. This is less common in IPv6, but shared networks
+are still useful: for example, with the exhaustion of IPv6-
+delegated prefixes within a subnet, or the desire to
 experiment with an addressing scheme. With the advent of IPv6 deployment
 and a vast address space, many organizations split the address space
 into subnets, deploy it, and then after a while discover that they want
-to split it differently. In the transition period, they want both old
-and new addressing to be available; thus the need for more than one
+to split it differently. In the transition period, they want both the old
+and new addressing to be available: thus the need for more than one
 subnet on the same physical link.
 
 Finally, the case of cable networks is directly applicable in IPv6.
@@ -4786,12 +4787,12 @@ or prefix) from any of the pools defined within the subnets belonging to
 the shared network. Internally, the server selects one of the subnets
 belonging to a shared network and tries to allocate a lease from this
 subnet. If the server is unable to allocate a lease from the selected
-subnet (e.g., due to pool exhaustion), it will use another subnet from
-the same shared network and will try to allocate a lease from this subnet,
-etc. Therefore, the server will typically allocate all leases
+subnet (e.g., due to pool exhaustion), it uses another subnet from
+the same shared network and tries to allocate a lease from this subnet.
+The server typically allocates all leases
 available in a given subnet before it starts allocating leases from
 other subnets belonging to the same shared network. However, in certain
-situations the client can be allocated a lease from the other subnets
+situations the client can be allocated a lease from another subnet
 before the pools in the first subnet get exhausted; this sometimes occurs
 when the client provides a hint that belongs to another subnet, or the client has
 reservations in a subnet other than the default.
@@ -4802,7 +4803,7 @@ reservations in a subnet other than the default.
    all the addresses from the first subnet in a shared network before
    allocating addresses from other subnets.
 
-In order to define a shared network an additional configuration scope is
+To define a shared network, an additional configuration scope is
 introduced:
 
 ::
@@ -4857,12 +4858,12 @@ of two or more subnets. However, for testing purposes, an empty subnet
 or a network with just a single subnet is allowed. This
 is not a recommended practice in production networks, as the shared
 network logic requires additional processing and thus lowers the
-server's performance. To avoid unnecessary performance degradation, the
+server's performance. To avoid unnecessary performance degradation,
 shared subnets should only be defined when required by the deployment.
 
 Shared networks provide an ability to specify many parameters in the
 shared network scope that apply to all subnets within it. If
-necessary, it is possible to specify a parameter in the shared network scope and
+necessary, it is possible to specify a parameter in the shared-network scope and
 then override its value in the subnet scope. For example:
 
 ::
@@ -4917,56 +4918,56 @@ then override its value in the subnet scope. For example:
            ],
        } ]
 
-In this example, there is a dns-servers option defined that is available
+In this example, there is a ``dns-servers`` option defined that is available
 to clients in both subnets in this shared network. Also, the valid
 lifetime is set to 10 minutes (600s). However, the first subnet
-overrides some of the values (valid lifetime is 20 minutes, different IP
-address for dns-servers), but also adds its own option (unicast
-address). Assuming a client asking for a server unicast and dns-servers
+overrides some of the values (the valid lifetime is 20 minutes, there is a different IP
+address for ``dns-servers``), but also adds its own option (the unicast
+address). Assuming a client asking for server unicast and ``dns-servers``
 options is assigned a lease from this subnet, it will get a lease for 20
-minutes and dns-servers, and be allowed to use server unicast at address
+minutes and ``dns-servers``, and be allowed to use server unicast at address
 2001:abcd::1. If the same client is assigned to the second subnet, it
-will get a 10-minute lease, a dns-servers value of 2001:db8:cafe::1, and
+will get a 10-minute lease, a ``dns-servers`` value of 2001:db8:cafe::1, and
 no server unicast.
 
 Some parameters must be the same in all subnets in the same shared
 network. This restriction applies to the ``interface`` and
 ``rapid-commit`` settings. The most convenient way is to define them on
-the shared network scope, but they can be specified for each subnet.
-However, care should be taken for each subnet to have the same value.
+the shared-network scope, but they can be specified for each subnet.
+However, each subnet must have the same value.
 
 .. note::
 
     There is an inherent ambiguity when using clients that send multiple IA
-    options in a single request and shared-networks whose subnets have
-    different values for options and configuration parameters.  The server
+    options in a single request, and shared-networks whose subnets have
+    different values for options and configuration parameters. The server
     sequentially processes IA options in the order that they occur in the
-    client's query.  If the leases requested in the IA options end up being
-    fulfilled from different subnets then which parameters and options should
-    apply?  Currently, the code will use the values from the last subnet of
+    client's query; if the leases requested in the IA options end up being
+    fulfilled from different subnets, which parameters and options should
+    apply? Currently, the code uses the values from the last subnet of
     the last IA option fulfilled.
 
-    We view this largely as a site configuration issue.  A shared-network
+    We view this largely as a site configuration issue. A shared network
     generally means the same physical link, so services configured by options
     from subnet A should be as easily reachable from subnet B and vice versa.
     There are a number of ways to avoid this situation:
 
-    - Use the same values for options and parameters for subnets within the shared-network.
-    - Use subnet selectors or client class guards that ensure that for a single client's query, the same subnet will be used for all IA options in that query.
-    - Avoid using shared-networks with clients that send multiple IA options per query
-
+    - Use the same values for options and parameters for subnets within the shared network.
+    - Use subnet selectors or client class guards that ensure that for a single client's query, the same subnet is used for all IA options in that query.
+    - Avoid using shared networks with clients that send multiple IA options per query.
 
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name at the shared network level
+It is possible to specify an interface name at the shared network level,
 to tell the server that this specific shared network is reachable
 directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
 using subnets that are reachable over different interfaces. In other
 words, all subnets within the shared network must have the same value
-of the "interface" parameter. The following configuration is wrong.
+for the ``interface`` parameter. The following configuration is an example
+of what **NOT** to do:
 
 ::
 
@@ -4991,8 +4992,8 @@ of the "interface" parameter. The following configuration is wrong.
            ],
        } ]
 
-To minimize the chance of the configuration errors, it is often more convenient
-to simply specify the interface name once, at the shared network level, like
+To minimize the chance of configuration errors, it is often more convenient
+to simply specify the interface name once, at the shared-network level, as
 shown in the example below.
 
 ::
@@ -5018,14 +5019,15 @@ shown in the example below.
        } ]
 
 
-In case of the relayed traffic, the subnets are typically selected using
+With relayed traffic, subnets are typically selected using
 the relay agents' addresses. If the subnets are used independently (not
-grouped within a shared network) it is allowed to specify different relay
-addresses for each of these subnets. When multiple subnets belong to a
+grouped within a shared network), a different relay
+address can be specified for each of these subnets. When multiple subnets belong to a
 shared network they must be selected via the same relay address and,
 similarly to the case of the local traffic described above, it is a
 configuration error to specify different relay addresses for the respective
-subnets in the shared network. The following configuration is wrong.
+subnets in the shared network. The following configuration is another example
+of what **NOT** to do:
 
 ::
 
@@ -5055,8 +5057,8 @@ subnets in the shared network. The following configuration is wrong.
        }
    ]
 
-Again, it is better to specify the relay address at the shared network
-level and this value will be inherited by all subnets belonging to the
+Again, it is better to specify the relay address at the shared-network
+level; this value will be inherited by all subnets belonging to the
 shared network.
 
 ::
@@ -5087,12 +5089,12 @@ always lead to a different behavior than what the user would expect. In this
 case, the Kea server will initially select one of the subnets by matching
 the relay address in the client's packet with the subnet's configuration.
 However, it MAY end up using the other subnet (even though it does not match
-the relay address) if the client already has a lease in this subnet, has a
-host reservation in this subnet or simply the initially selected subnet has no
+the relay address) if the client already has a lease in this subnet or has a
+host reservation in this subnet, or simply if the initially selected subnet has no
 more addresses available. Therefore, it is strongly recommended to always
-specify subnet selectors (interface or a relay address) at shared network
+specify subnet selectors (interface or relay address) at the shared-network
 level if the subnets belong to a shared network, as it is rarely useful to
-specify them at the subnet level and it may lead to the configuration errors
+specify them at the subnet level and may lead to the configuration errors
 described above.
 
 Client Classification in Shared Networks
@@ -5105,12 +5107,12 @@ classification can be applied to subnets belonging to shared networks in
 the same way as it is used for subnets specified outside of shared
 networks. It is important to understand how the server selects subnets
 for clients when client classification is in use, to ensure that the
-desired subnet is selected for a given client type.
+appropriate subnet is selected for a given client type.
 
 If a subnet is associated with a class, only the clients belonging to
 this class can use this subnet. If there are no classes specified for a
 subnet, any client connected to a given shared network can use this
-subnet. A common mistake is to assume that the subnet including a client
+subnet. A common mistake is to assume that the subnet that includes a client
 class is preferred over subnets without client classes. Consider the
 following example:
 
@@ -5150,9 +5152,9 @@ subnet 2001:db8:3::/64 will be used (or preferred) for this client. The
 server can use either of the two subnets, because the subnet
 2001:db8:1::/64 is also allowed for this client. The client
 classification used in this case should be perceived as a way to
-restrict access to certain subnets, rather than a way to express subnet
+restrict access to certain subnets, rather than as a way to express subnet
 preference. For example, if the client does not belong to the "b-devices"
-class it may only use the subnet 2001:db8:1::/64 and will never use the
+class, it may only use the subnet 2001:db8:1::/64 and will never use the
 subnet 2001:db8:3::/64.
 
 A typical use case for client classification is in a cable network,
@@ -5199,22 +5201,22 @@ on option 1234 values.
    }
 
 In this example each class has its own restriction. Only clients that
-belong to class "a-devices" will be able to use subnet 2001:db8:1::/64
-and only clients belonging to "b-devices" will be able to use subnet
+belong to class "a-devices" are able to use subnet 2001:db8:1::/64
+and only clients belonging to "b-devices" are able to use subnet
 2001:db8:3::/64. Care should be taken not to define too-restrictive
 classification rules, as clients that are unable to use any subnets will
 be refused service. However, this may be a desired outcome if one wishes
 to provide service only to clients with known properties (e.g. only VoIP
 phones allowed on a given link).
 
-Note that it is possible to achieve an effect similar to the one
+It is possible to achieve an effect similar to the one
 presented in this section without the use of shared networks. If the
 subnets are placed in the global subnets scope, rather than in the
 shared network, the server will still use classification rules to pick
 the right subnet for a given class of devices. The major benefit of
 placing subnets within the shared network is that common parameters for
 the logically grouped subnets can be specified once, in the shared
-network scope, e.g. the "interface" or "relay" parameter. All subnets
+network scope, e.g. the ``interface`` or ``relay`` parameter. All subnets
 belonging to this shared network will inherit those parameters.
 
 Host Reservations in Shared Networks
@@ -5263,20 +5265,20 @@ similar to regular subnets:
 
 It is worth noting that Kea conducts additional checks when processing a
 packet if shared networks are defined. First, instead of simply checking
-whether there's a reservation for a given client in its initially
+whether there is a reservation for a given client in its initially
 selected subnet, Kea looks through all subnets in a shared network for a
 reservation. This is one of the reasons why defining a shared network
 may impact performance. If there is a reservation for a client in any
-subnet, that particular subnet will be picked for the client. Although
-it is technically not an error, it is considered a bad practice to define
+subnet, that particular subnet is picked for the client. Although
+it is technically not an error, it is considered bad practice to define
 reservations for the same host in multiple subnets belonging to the same
 shared network.
 
 While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
-auto generated, i.e. it assigns increasing integer values starting from
-1. Thus, the auto generated IDs are not stable across configuration
+auto generated, i.e. Kea assigns increasing integer values starting from
+1. Thus, the auto-generated IDs are not stable across configuration
 changes.
 
 .. _dhcp6-serverid:
@@ -5296,7 +5298,7 @@ restarts of the server and so is a stable identifier.
 Kea follows the recommendation from `RFC
 8415 <https://tools.ietf.org/html/rfc8415>`__ to use DUID-LLT as the
 default server identifier. However, ISC has received reports that some
-deployments require different DUID types, and there is a need to
+deployments require different DUID types, and that there is a need to
 administratively select both the DUID type and/or its contents.
 
 The server identifier can be configured using parameters within the
@@ -5318,23 +5320,23 @@ Currently supported values for the ``type`` parameter are: "LLT", "EN", and
 
 When a new DUID type is selected, the server generates its value and
 replaces any existing DUID in the file. The server then uses the new
-server identifier in all future interactions with the clients.
+server identifier in all future interactions with clients.
 
 .. note::
 
    If the new server identifier is created after some clients have
    obtained their leases, the clients using the old identifier are not
-   able to renew the leases; the server will ignore messages containing
-   the old server identifier. Clients will continue sending Renew until
+   able to renew their leases; the server will ignore messages containing
+   the old server identifier. Clients will continue sending RENEW until
    they transition to the rebinding state. In this state, they will
-   start sending Rebind messages to the multicast address without a
-   server identifier. The server will respond to the Rebind messages
+   start sending REBIND messages to the multicast address without a
+   server identifier. The server will respond to the REBIND messages
    with a new server identifier, and the clients will associate the new
    server identifier with their leases. Although the clients will be
    able to keep their leases and will eventually learn the new server
    identifier, this will be at the cost of an increased number of
    renewals and multicast traffic due to a need to rebind. Therefore, it
-   is recommended that modification of the server identifier type and
+   is recommended that modification of the server-identifier type and
    value be avoided if the server has already assigned leases and these
    leases are still valid.
 
@@ -5371,12 +5373,12 @@ configuration specified above is:
     00:01:00:08:96:23:AB:E6:A6:5D:C7:41:0F:05
    |type |htype|   time    |   identifier    |
 
-A special value of 0 for "htype" and "time" is allowed, which indicates
+A special value of "0" for ``htype`` and ``time`` is allowed, which indicates
 that the server should use ANY value for these components. If the server
 already uses a DUID-LLT, it will use the values from this DUID; if the
-server uses a DUID of a different type or doesn't yet use any DUID, it
-will generate these values. Similarly, if the "identifier" is assigned
-an empty string, the value of the identifier will be generated. Omitting
+server uses a DUID of a different type or does not yet use any DUID, it
+will generate these values. Similarly, if the ``identifier`` is assigned
+an empty string, the value of the ``identifier`` will be generated. Omitting
 any of these parameters is equivalent to setting them to those special
 values.
 
@@ -5433,12 +5435,12 @@ configuration above is:
    |type |  ent-id   |     identifier     |
 
 As in the case of the DUID-LLT, special values can be used for the
-configuration of the DUID-EN. If the ``enterprise-id`` is 0, the server
+configuration of the DUID-EN. If the ``enterprise-id`` is "0", the server
 will use a value from the existing DUID-EN. If the server is not using
 any DUID or the existing DUID has a different type, the ISC enterprise
-id will be used. When an empty string is entered for ``identifier``, the
+ID will be used. When an empty string is entered for ``identifier``, the
 identifier from the existing DUID-EN will be used. If the server is not
-using any DUID-EN, a new 6-byte-long identifier will be generated.
+using any DUID-EN, a new 6-byte-long ``identifier`` will be generated.
 
 DUID-LL is configured in the same way as DUID-LLT except that the
 ``time`` parameter has no effect for DUID-LL, because this DUID type
@@ -5464,7 +5466,7 @@ which will result in the following server identifier:
    |type |htype|   identifier    |
 
 The server stores the generated server identifier in the following
-location: [kea-install-dir]/var/lib/kea/kea-dhcp6-serverid.
+location: ``[kea-install-dir]/var/lib/kea/kea-dhcp6-serverid``.
 
 In some uncommon deployments where no stable storage is available, the
 server should be configured not to try to store the server identifier.
@@ -5483,12 +5485,12 @@ parameter:
        ...
    }
 
-The default value of the "persist" parameter is ``true``, which
+The default value of the ``persist`` parameter is "true", which
 configures the server to store the server identifier on a disk.
 
 In the example above, the server is configured not to store the
 generated server identifier on a disk. But if the server identifier is
-not modified in the configuration, the same value will be used after
+not modified in the configuration, the same value is used after
 server restart, because the entire server identifier is explicitly
 specified in the configuration.
 
