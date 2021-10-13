@@ -5894,7 +5894,7 @@ for a subnet:
 How the DHCPv4 Server Selects a Subnet for the Client
 =====================================================
 
-The DHCPv4 server differentiates between directly connected clients,
+The DHCPv4 server differentiates among directly connected clients,
 clients trying to renew leases, and clients sending their messages
 through relays. For directly connected clients, the server checks
 the configuration for the interface on which the message has been
@@ -5950,8 +5950,8 @@ packet) to select the appropriate subnet.
 However, that is not always the case. In certain uncommon — but valid —
 deployments, the relay address may not match the subnet. This usually
 means that there is more than one subnet allocated for a given link. The
-two most common examples where this is the case are long-lasting network
-renumbering (where both old and new address space is still being used)
+two most common examples of this are long-lasting network
+renumbering (where both old and new address spaces are still being used)
 and a cable network. In a cable network, both cable modems and the
 devices behind them are physically connected to the same link, yet they
 use distinct addressing. In such a case, the DHCPv4 server needs
@@ -5987,17 +5987,17 @@ Segregating IPv4 Clients in a Cable Network
 -------------------------------------------
 
 In certain cases, it is useful to mix relay address information
-(introduced in :ref:`dhcp4-relay-override`), with client classification (explained
+(introduced in :ref:`dhcp4-relay-override`) with client classification (explained
 in :ref:`classify`). One specific example is in a cable network,
 where modems typically get addresses from a different subnet than all
 the devices connected behind them.
 
-Let us assume that there is one Cable Modem Termination System (CMTS))
+Let us assume that there is one Cable Modem Termination System (CMTS)
 with one CM MAC (a physical link that modems are connected to). We want
 the modems to get addresses from the 10.1.1.0/24 subnet, while
 everything connected behind the modems should get addresses from the
 192.0.2.0/24 subnet. The CMTS that acts as a relay uses address
-10.1.1.1. The following configuration can serve that configuration:
+10.1.1.1. The following configuration can serve that situation:
 
 ::
 
@@ -6045,7 +6045,7 @@ triggered. After that is complete, the address is marked as
 declined (which indicates that it is used by an unknown entity and thus
 not available for assignment) and a probation time is set on it.
 Unless otherwise configured, the probation period lasts 24 hours; after
-that period, the server will recover the lease (i.e. put it back into
+that time, the server will recover the lease (i.e. put it back into
 the available state) and the address will be available for assignment
 again. It should be noted that if the underlying issue of a
 misconfigured device is not resolved, the duplicate-address scenario
@@ -6082,15 +6082,15 @@ additional steps. In particular, both ``declined-addresses`` statistics
 ``reclaimed-declined-addresses`` statistics (again in two variants, global
 and subnet-specific) are increased.
 
-A note about statistics: The server does not decrease the
+A note about statistics: The Kea server does not decrease the
 ``assigned-addresses`` statistics when a DHCPDECLINE is received and
 processed successfully. While technically a declined address is no
 longer assigned, the primary usage of the ``assigned-addresses`` statistic
 is to monitor pool utilization. Most people would forget to include
-``declined-addresses`` in the calculation, and simply use
+``declined-addresses`` in the calculation, and would simply use
 ``assigned-addresses``/``total-addresses``. This would cause a bias towards
-under-representing pool utilization. As this has a potential to cause major
-issues, ISC decided not to decrease ``assigned-addresses`` immediately after
+under-representing pool utilization. As this has a potential to cause serious
+confusion, ISC decided not to decrease ``assigned-addresses`` immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
@@ -6103,7 +6103,7 @@ The DHCPv4 server supports the following statistics:
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.1\linewidth}|p{0.7\linewidth}|
 
-.. table:: DHCPv4 Statistics
+.. table:: DHCPv4 statistics
    :class: longtable
    :widths: 20 10 70
 
@@ -6684,12 +6684,12 @@ library, it is typically defined as a parameter for the hook library.
 However, sometimes there is a need to specify parameters that are
 different for each pool.
 
-See :ref:`user-context` for additional background regarding the user
-context idea. See :ref:`user-context-hooks` for a discussion from the
+See :ref:`user-context` for additional background regarding the
+user-context idea. See :ref:`user-context-hooks` for a discussion from the
 hooks perspective.
 
-User contexts can be specified at global scope; at the shared network, subnet,
-pool, client class, option data, or definition level; and via host
+User contexts can be specified at global scope; at the shared-network, subnet,
+pool, client-class, option-data, or definition level; and via host
 reservation. One other useful feature is the ability to store comments or
 descriptions.
 
@@ -6728,7 +6728,7 @@ of LED devices could be configured in the following way:
 
 Kea does not interpret or use the user-context information; it simply stores it and makes it
 available to the hook libraries. It is up to each hook library to
-extract that information and use it. The parser translates a "comment"
+extract that information and use it. The parser translates a ``comment``
 entry into a user context with the entry, which allows a comment to be
 attached inside the configuration itself.
 
@@ -6737,7 +6737,7 @@ attached inside the configuration itself.
 Supported DHCP Standards
 ========================
 
-The following standards are currently supported:
+The following standards are currently supported in Kea:
 
 -  *BOOTP Vendor Information Extensions*, `RFC
    1497 <https://tools.ietf.org/html/rfc1497>`__: This requires the open
@@ -6755,8 +6755,8 @@ The following standards are currently supported:
    Mask (1), and Routers (3).
 
 -  *The IPv4 Subnet Selection Option for DHCP*, `RFC
-   3011 <https://tools.ietf.org/html/rfc3011>`__: The subnet selection option
-   is supported. If received in a packet, it is used in the subnet selection
+   3011 <https://tools.ietf.org/html/rfc3011>`__: The subnet-selection option
+   is supported; if received in a packet, it is used in the subnet-selection
    process.
 
 -  *DHCP Relay Agent Information Option*, `RFC
@@ -6769,7 +6769,7 @@ The following standards are currently supported:
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
    Protocol version 4*, `RFC
-   3925 <https://tools.ietf.org/html/rfc3925>`__: Vendor-Identifying
+   3925 <https://tools.ietf.org/html/rfc3925>`__: The Vendor-Identifying
    Vendor Class and Vendor-Identifying Vendor-Specific Information
    options are supported.
 
@@ -6791,12 +6791,12 @@ The following standards are currently supported:
 
 -  *Client Identifier Option in DHCP Server Replies*, `RFC
    6842 <https://tools.ietf.org/html/rfc6842>`__: The server by default sends
-   back the ``client-id`` option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
+   back the ``client-id`` option. That capability can be disabled. See :ref:`dhcp4-echo-client-id` for details.
 
 -  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
    <https://tools.ietf.org/html/rfc8357>`__: The Kea server
    handles the Relay Agent Information Source Port sub-option in a received
-   message, remembers the UDP port, and sends back reply to the same relay
+   message, remembers the UDP port, and sends back a reply to the same relay
    agent using this UDP port.
 
 -  *IPv6-Only Preferred Option for DHCPv4*, `RFC 8925
@@ -6811,8 +6811,8 @@ In principle, Kea aspires to be a reference implementation and aims to implement
 However, in some cases there are practical aspects that prevent Kea from completely adhering to the text of the RFC documents.
 
 - `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, page 30, says that if the incoming DHCPREQUEST packet has no
-  `requested IP address` option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However,
-  broken clients exist that will always send a DHCPREQUEST without those indicated. In that event, Kea accepts the DHCPREQUEST,
+  "requested IP address" option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However,
+  broken clients exist that will always send a DHCPREQUEST without those options indicated. In that event, Kea accepts the DHCPREQUEST,
   assigns an address, and responds with an ACK.
 
 - `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, table 5, says that messages
@@ -6836,9 +6836,9 @@ are clearly marked as such.
    headers (including data link layer, IP, and UDP headers) are created
    and parsed by Kea, rather than by the system kernel. Currently, Kea
    can only parse the data-link layer headers with a format adhering to
-   the IEEE 802.3 standard, and assumes this data link layer header
+   the IEEE 802.3 standard, and assumes this data-link-layer header
    format for all interfaces. Thus, Kea does not work on interfaces
-   which use different data-link layer header formats (e.g. Infiniband).
+   which use different data-link-layer header formats (e.g. Infiniband).
 
 -  The DHCPv4 server does not verify that an assigned address is unused.
    According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, the
@@ -6851,7 +6851,7 @@ Kea DHCPv4 Server Examples
 ==========================
 
 A collection of simple-to-use examples for the DHCPv4 component of Kea
-is available with the source files, located in the `doc/examples/kea4`
+is available with the source files, located in the ``doc/examples/kea4``
 directory.
 
 .. _dhcp4-cb:
@@ -6884,14 +6884,14 @@ Configuration Backend, with an indication of the level of the hierarchy
 at which it is currently supported. "n/a" marks cases when a
 given parameter is not applicable at the particular level of the
 hierarchy or in cases when the server does not support the parameter
-at this level of the hierarchy. "no" is used when a parameter is
+at that level. "no" is used when a parameter is
 supported at the given level of the hierarchy but is not
 configurable via the Configuration Backend.
 
 All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`cb-cmds-library` section. The general rule is that
 scalar global parameters are set using
-``remote-global-parameter4-set``; shared network-specific parameters
+``remote-global-parameter4-set``; shared-network-specific parameters
 are set using ``remote-network4-set``; and subnet- and pool-level
 parameters are set using ``remote-subnet4-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
@@ -6912,7 +6912,7 @@ to the configuration elements associated with ``all`` servers. Any configuration
 element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
 used by all servers connecting to the configuration database.
 
-.. table:: List of DHCPv4 Parameters Supported by the Configuration Backend
+.. table:: List of DHCPv4 parameters supported by the Configuration Backend
 
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | Parameter                   | Global                     | Client       | Shared      | Subnet      | Pool        |
@@ -7071,7 +7071,7 @@ default value of ``config-fetch-wait-time`` is 30 seconds.
 
 The ``config-backend-pull`` command can be used to force the server to
 immediately poll any configuration changes from the database and avoid
-waiting for the next fetch cycle. (This command was added in Kea release
+waiting for the next fetch cycle. (This command was added in Kea version
 1.7.1 for both DHCPv4 and DHCPv6 servers.)
 
 Finally, in the configuration example above, two hook libraries are
@@ -7095,8 +7095,8 @@ Kea DHCPv4 Compatibility Configuration Parameters
 ISC's intention is for Kea to follow the RFC documents to promote better standards
 compliance. However, many buggy DHCP implementations already exist that cannot be
 easily fixed or upgraded. Therefore, Kea provides an easy-to-use compatibility
-mode for broken or non-compliant clients. For that purpose, flags must be
-enabled to enable uncommon practices:
+mode for broken or non-compliant clients. For that purpose, the compatibility option must be
+enabled to permit uncommon practices:
 
 .. code-block:: json
 
