@@ -45,7 +45,7 @@ public:
 
     /// @brief Fetches the callout manager instance.
     boost::shared_ptr<CalloutManager>getCalloutManager() {
-        return(co_manager_);
+        return (co_manager_);
     }
 
     /// @brief Tests buffer4_receive callout.

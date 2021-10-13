@@ -394,9 +394,9 @@ checkZone(const D2UpdateMessagePtr& request, const std::string& exp_zone_name) {
 
 void
 checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
-              const dns::RRClass& exp_class, const dns::RRType& exp_type,
-              unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr,
-              bool has_rdata) {
+        const dns::RRClass& exp_class, const dns::RRType& exp_type,
+        unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr,
+        bool has_rdata) {
     // Verify the FQDN/DHCID RR fields.
     EXPECT_EQ(exp_name, rrset->getName().toText());
     EXPECT_EQ(exp_class.getCode(), rrset->getClass().getCode());
@@ -417,7 +417,7 @@ checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
         (exp_type == dns::RRType::AAAA())) {
         // should have lease rdata
         EXPECT_EQ(ncr->getIpAddress(), rdata_it->getCurrent().toText());
-    } else if (exp_type == dns::RRType::PTR())  {
+    } else if (exp_type == dns::RRType::PTR()) {
         // should have PTR rdata
         EXPECT_EQ(ncr->getFqdn(), rdata_it->getCurrent().toText());
     } else if (exp_type == dns::RRType::DHCID()) {
@@ -447,19 +447,20 @@ getRRFromSection(const D2UpdateMessagePtr& request,
     return (*rrset_it);
 }
 
-dhcp_ddns::NameChangeRequestPtr makeNcrFromString(const std::string& ncr_str) {
+dhcp_ddns::NameChangeRequestPtr
+makeNcrFromString(const std::string& ncr_str) {
     return (dhcp_ddns::NameChangeRequest::fromJSON(ncr_str));
 }
 
-DdnsDomainPtr makeDomain(const std::string& zone_name,
-                         const std::string& key_name) {
+DdnsDomainPtr
+makeDomain(const std::string& zone_name, const std::string& key_name) {
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
     DdnsDomainPtr domain(new DdnsDomain(zone_name, servers, key_name));
     return (domain);
 }
 
-DdnsDomainPtr makeDomain(const std::string& zone_name,
-                         const TSIGKeyInfoPtr &tsig_key_info) {
+DdnsDomainPtr
+makeDomain(const std::string& zone_name, const TSIGKeyInfoPtr &tsig_key_info) {
     DdnsDomainPtr domain;
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
     std::string key_name;
@@ -470,9 +471,9 @@ DdnsDomainPtr makeDomain(const std::string& zone_name,
     return (domain);
 }
 
-TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
-                           const std::string& secret,
-                           const std::string& algorithm) {
+TSIGKeyInfoPtr
+makeTSIGKeyInfo(const std::string& key_name, const std::string& secret,
+                const std::string& algorithm) {
     TSIGKeyInfoPtr key_info;
     if (!key_name.empty()) {
         if (!secret.empty()) {
@@ -493,20 +494,21 @@ TSIGKeyInfoPtr makeTSIGKeyInfo(const std::string& key_name,
     }
 
     return (key_info);
-
 }
 
-void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
-                     const std::string& ip, const size_t port,
-                     const TSIGKeyInfoPtr &tsig_key_info) {
+void
+addDomainServer(DdnsDomainPtr& domain, const std::string& name,
+                const std::string& ip, const size_t port,
+                const TSIGKeyInfoPtr &tsig_key_info) {
     DnsServerInfoPtr server(new DnsServerInfo(name, asiolink::IOAddress(ip),
                                               port, true, tsig_key_info));
     domain->getServers()->push_back(server);
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for adding a forward DNS entry
-void checkAddFwdAddressRequest(NameChangeTransaction& tran) {
+void
+checkAddFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -555,9 +557,10 @@ void checkAddFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a forward DNS entry
-void checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
+void
+checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -614,9 +617,10 @@ void checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a reverse DNS entry
-void checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
+void
+checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -677,7 +681,8 @@ void checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-void checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
+void
+checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -716,7 +721,8 @@ void checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-void checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
+void
+checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -766,7 +772,8 @@ void checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-void checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
+void
+checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -804,7 +811,8 @@ void checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-std::string toHexText(const uint8_t* data, size_t len) {
+std::string
+toHexText(const uint8_t* data, size_t len) {
     std::ostringstream stream;
     stream << "Data length is: " << len << std::endl;
     for (int i = 0; i < len; ++i) {
@@ -819,10 +827,11 @@ std::string toHexText(const uint8_t* data, size_t len) {
     return (stream.str());
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a forward DNS entry when not using conflict
 // resolution.
-void checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran) {
+void
+checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -883,7 +892,8 @@ void checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
+void
+checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -921,10 +931,11 @@ void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for removing a reverse DNS entry when not using conflict
 // resolution.
-void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
+void
+checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -961,8 +972,9 @@ void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
 }
 
 // Verifies the current state and next event in a transaction
-void checkContext(NameChangeTransactionPtr trans, const int exp_state,
-                  const int exp_evt, const std::string& file, int line) {
+void
+checkContext(NameChangeTransactionPtr trans, const int exp_state,
+             const int exp_evt, const std::string& file, int line) {
     ASSERT_TRUE(trans);
     ASSERT_TRUE(exp_state == trans->getCurrState() && exp_evt == trans->getNextEvent())
             << "expected state: " << trans->getStateLabel(exp_state)

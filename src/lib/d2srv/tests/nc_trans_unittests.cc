@@ -44,6 +44,8 @@ public:
     // NameChangeStub events
     static const int SEND_UPDATE_EVT = NCT_DERIVED_EVENT_MIN + 2;
 
+    /// @brief Flag which specifies if the NameChangeStub's callback should be
+    /// used instead of the NameChangeTransaction's callback.
     bool use_stub_callback_;
 
     /// @brief Constructor
@@ -663,7 +665,7 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
 
     // The server selection process determines the current server,
     // instantiates a new DNSClient, and a DNS response message buffer.
-    //  We need to save the values before each selection, so we can verify
+    // We need to save the values before each selection, so we can verify
     // they are correct after each selection.
     DnsServerInfoPtr prev_server = name_change->getCurrentServer();
     DNSClientPtr prev_client = name_change->getDNSClient();
