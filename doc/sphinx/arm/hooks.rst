@@ -723,6 +723,31 @@ configured, the default logging format is not used. If both of them are
 configured, the resulting log message is constructed by concatenating the
 data extracted from the request and the data extracted from the response.
 
+The custom formatting permits logging on multiple lines using the hexstring 0x0a
+(ASCII code for new line). In the case of the log file, each line is prepended
+with the log timestamp. For the database backend, the data will be stored
+(including the newline character) in the same entry.
+
+Examples:
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "hooks-libraries": [
+                {
+                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "parameters": {
+                        "path": "/var/lib/kea/log",
+                        "base-name": "kea-forensic6",
+                        "request-parser-format": "'first line' + 0x0a + 'second line'",
+                        "response-parser-format": "'also second line' + 0x0a + 'third line'"
+                    }
+                }
+            ]
+        }
+    }
+
 Some data might be available in the request or in the response only and some
 data might differ in the request packet from the one in the response packet.
 
@@ -803,7 +828,6 @@ logging for an IPv6 subnet:
             ]
         }
     }
-
 
 See :ref:`dhcp4-user-contexts` and :ref:`dhcp6-user-contexts` to
 learn more about user contexts in Kea configuration.
@@ -941,6 +965,33 @@ If both of them are configured, the resulting log message is constructed by
 concatenating the logged data extracted from the request and the logged data
 extracted from the response.
 
+The custom formatting permits logging on multiple lines using the hexstring 0x0a
+(ASCII code for new line). In the case of the log file, each line is prepended
+with the log timestamp. For the database backend, the data will be stored
+(including the newline character) in the same entry.
+
+Examples:
+
+.. code-block:: json
+
+    {
+      "Dhcp4": {
+        "hooks-libraries": [
+          {
+            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "parameters": {
+              "name": "database-name",
+              "password": "passwd",
+              "type": "mysql",
+              "user": "user-name",
+              "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
+              "response-parser-format": "'also same log entry' + 0x0a + 'again same log entry'"
+            }
+          }
+        ]
+      }
+    }
+
 Some data might be available in the request or in the response only and some
 data might differ in the incoming packet from the one in the response packet.
 
@@ -1002,13 +1053,11 @@ Examples:
     }</pre>
     </details><br>
 
-
 This will log the following data on request and renew:
 
 ::
 
    Address: 192.2.1.100 has been assigned for 6735 seconds to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
-
 
 This will log the following data on release and decline:
 
@@ -1016,11 +1065,9 @@ This will log the following data on release and decline:
 
    Address: 192.2.1.100 has been released from a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
 
-
 Similar result can be obtained if configuring ``request-parser-format`` only.
 
 Examples:
-
 
 .. code-block:: json
 
@@ -1082,7 +1129,6 @@ Examples:
                     ''))"
     }</pre>
     </details><br>
-
 
 DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
@@ -1219,11 +1265,37 @@ If both of them are configured, the resulting log message is constructed by
 concatenating the logged data extracted from the request and the logged data
 extracted from the response.
 
+The custom formatting permits logging on multiple lines using the hexstring 0x0a
+(ASCII code for new line). In the case of the log file, each line is prepended
+with the log timestamp. For the database backend, the data will be stored
+(including the newline character) in the same entry.
+
+Examples:
+
+.. code-block:: json
+
+    {
+      "Dhcp6": {
+        "hooks-libraries": [
+          {
+            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "parameters": {
+              "name": "database-name",
+              "password": "passwd",
+              "type": "mysql",
+              "user": "user-name",
+              "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
+              "response-parser-format": "'also same log entry' + 0x0a + 'again same log entry'"
+            }
+          }
+        ]
+      }
+    }
+
 Some data might be available in the request or in the response only and some
 data might differ in the incoming packet from the one in the response packet.
 
 Examples:
-
 
 .. code-block:: json
 
@@ -1305,13 +1377,11 @@ Examples:
     }</pre>
     </details><br>
 
-
 This will log the following data on request, renew and rebind for NA:
 
 ::
 
    Address: 2001:db8:1:: has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
-
 
 This will log the following data on request, renew and rebind for PD:
 
@@ -1319,13 +1389,11 @@ This will log the following data on request, renew and rebind for PD:
 
    Prefix: 2001:db8:1::/64 has been assigned for 713 seconds to a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
-
 This will log the following data on release and decline for NA:
 
 ::
 
    Address: 2001:db8:1:: has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
-
 
 This will log the following data on release and decline for PD:
 
@@ -1333,11 +1401,9 @@ This will log the following data on release and decline for PD:
 
    Prefix: 2001:db8:1::/64 has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
-
 Similar result can be obtained if configuring ``request-parser-format`` only.
 
 Examples:
-
 
 .. code-block:: json
 
@@ -1426,9 +1492,10 @@ database backend support. A table named "logs" is used that includes a timestamp
 (timeuuid for Cassandra) generated by the database software, and a
 text log with the same format as files without the timestamp.
 
-Please refer to :ref:`mysql-database` for information on using a MySQL database; to
-:ref:`pgsql-database` for PostgreSQL database information; or to :ref:`cql-database`
-for information on using a Cassandra (CQL) database. The logs table is part of the Kea database schemas.
+Please refer to :ref:`mysql-database` for information on using a MySQL database;
+to :ref:`pgsql-database` for PostgreSQL database information; or to
+:ref:`cql-database` for information on using a Cassandra (CQL) database. The
+logs table is part of the Kea database schemas.
 
 Configuration parameters are extended by standard lease database
 parameters as defined in :ref:`database-configuration4`. The "type"
@@ -2462,7 +2529,6 @@ an error. Example results look as follows:
        "text": "Unable to delete a host because there is no hosts-database
                 configured."
    }
-
 
 
 .. include:: hooks-lease-cmds.rst
