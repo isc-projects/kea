@@ -58,7 +58,7 @@ configuration file. Since the DHCPv6 server opens privileged ports, it
 requires root access; this daemon must be run as root.
 
 During startup, the server attempts to create a PID file of the
-form: [**runstatedir**]/kea/[**conf name**].kea-dhcp6.pid where:
+form: ``[runstatedir]/kea/[conf name].kea-dhcp6.pid`` where:
 
 -  ``runstatedir``: The value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
@@ -5502,7 +5502,7 @@ DHCPv6 Data Directory
 The Kea DHCPv6 server puts the server identifier file and the default
 memory lease file into its data directory. By default this directory is
 ``prefix/var/lib/kea`` but this location can be changed using the
-``data-directory`` global parameter as in:
+``data-directory`` global parameter, as in:
 
 ::
 
@@ -5513,21 +5513,20 @@ memory lease file into its data directory. By default this directory is
 
 .. _stateless-dhcp6:
 
-Stateless DHCPv6 (Information-Request Message)
+Stateless DHCPv6 (INFORMATION-REQUEST Message)
 ==============================================
 
 Typically DHCPv6 is used to assign both addresses and options. These
 assignments (leases) have a state that changes over time, hence their
-description as stateful. DHCPv6 also supports a stateless mode, where clients
-request configuration options only. This mode is considered lightweight
-from the server perspective, as it does not require any state tracking,
-and carries the stateless name.
+description as "stateful." DHCPv6 also supports a "stateless" mode, where clients
+request only configuration options. This mode is considered lightweight
+from the server perspective, as it does not require any state tracking.
 
-The Kea server supports stateless mode. Clients can send
-Information-Request messages and the server sends back answers with the
-requested options, providing the options are available in the server
+The Kea server supports stateless mode. When clients send
+INFORMATION-REQUEST messages, the server sends back answers with the
+requested options, if they are available in the server
 configuration. The server attempts to use per-subnet options first; if
-that fails for any reason, it then tries to provide options
+that fails, it then tries to provide options
 defined in the global scope.
 
 Stateless and stateful mode can be used together. No special
@@ -5535,10 +5534,9 @@ configuration directives are required to handle this; simply use the
 configuration for stateful clients and the stateless clients will get
 only the options they requested.
 
-This usage of global options allows for an interesting case. It is
-possible to run a server that provides only options and no addresses or
+It is possible to run a server that provides only options and no addresses or
 prefixes. If the options have the same value in each subnet, the
-configuration can define required options in the global scope and skip
+configuration can define the required options in the global scope and skip
 subnet definitions altogether. Here's a simple example of such a
 configuration:
 
@@ -5558,8 +5556,8 @@ configuration:
     }
 
 This very simple configuration provides DNS server information to
-all clients in the network, regardless of their location. Note the
-specification of the memfile lease database; this is needed as Kea
+all clients in the network, regardless of their location. The
+memfile lease database must be specified, as Kea
 requires a lease database to be specified even if it is not used.
 
 .. _dhcp6-rfc7550:
@@ -5570,7 +5568,7 @@ Support for RFC 7550 (now part of RFC 8415)
 `RFC 7550 <https://tools.ietf.org/html/rfc7550>`__ introduced some
 changes to the previous DHCPv6 specifications, `RFC
 3315 <https://tools.ietf.org/html/rfc3315>`__ and `RFC
-3633 <https://tools.ietf.org/html/rfc3633>`__, to resolve a few issues
+3633 <https://tools.ietf.org/html/rfc3633>`__, to resolve issues
 with the coexistence of multiple stateful options in the messages sent
 between clients and servers. Those changes were later included in
 the most recent DHCPv6 protocol specification, `RFC
@@ -5581,22 +5579,22 @@ changes, which are briefly described below.
 
 When a client, such as a requesting router, requests an allocation of
 both addresses and prefixes during the 4-way (SARR) exchange with the
-server, and the server is not configured to allocate any prefixes but it
+server, and the server is not configured to allocate any prefixes but
 can allocate some addresses, it will respond with the IA_NA(s)
 containing allocated addresses and the IA_PD(s) containing the
 NoPrefixAvail status code. According to the updated specifications, if
 the client can operate without prefixes it should accept allocated
 addresses and transition to the "bound" state. When the client
-subsequently sends Renew/Rebind messages to the server, according to the
-T1 and T2 times, to extend the lifetimes of the allocated addresses, and
+subsequently sends RENEW/REBIND messages to the server to extend the
+lifetimes of the allocated addresses, according to the T1 and T2 times, and
 if the client is still interested in obtaining prefixes from the server,
-it may also include an IA_PD in the Renew/Rebind to request allocation
+it may also include an IA_PD in the RENEW/REBIND to request allocation
 of the prefixes. If the server still cannot allocate the prefixes, it
 will respond with the IA_PD(s) containing the NoPrefixAvail status code.
-However, if the server can allocate the prefixes it will allocate and
-send them in the IA_PD(s) to the client. A similar situation occurs when
+However, if the server can allocate the prefixes, it allocates and
+sends them in the IA_PD(s) to the client. A similar situation occurs when
 the server is unable to allocate addresses for the client but can
-delegate prefixes. The client may request allocation of the addresses
+delegate prefixes: the client may request allocation of the addresses
 while renewing the delegated prefixes. Allocating leases for other IA
 types while renewing existing leases is by default supported by the Kea
 DHCPv6 server, and the server provides no configuration mechanisms to
@@ -5612,7 +5610,7 @@ DHCPv6 server:
    time (in a single message exchange).
 
 -  Place NoAddrsAvail and NoPrefixAvail status codes in the IA_NA and
-   IA_PD options in the Advertise message, rather than as the top-level
+   IA_PD options in the ADVERTISE message, rather than as the top-level
    options.
 
 .. _dhcp6-relay-override:
@@ -5626,28 +5624,28 @@ relays.
 
 .. note::
 
-   Starting with Kea 1.7.9, the order used to find a subnet which matches
-   required conditions to be selected is the ascending subnet identifier
-   order. When the selected subnet is a member of a shared network the
+   Since Kea 1.7.9, subnets are matched with
+   required conditions in ascending subnet identifier
+   order. When the selected subnet is a member of a shared network, the
    whole shared network is selected.
 
-The relay must have an interface connected to the link on which the
+A relay must have an interface connected to the link on which the
 clients are being configured. Typically the relay has a global IPv6
 address configured on that interface, which belongs to the subnet from
-which the server will assign addresses. Normally, the server is able to
-use the IPv6 address inserted by the relay (in the link-addr field in
-RELAY-FORW message) to select the appropriate subnet.
+which the server assigns addresses. Normally, the server is able to
+use the IPv6 address inserted by the relay (in the ``link-addr`` field in
+the RELAY-FORW message) to select the appropriate subnet.
 
-However, that is not always the case. The relay address may not match
+However, that is not always the case; the relay address may not match
 the subnet in certain deployments. This usually means that there is more
 than one subnet allocated for a given link. The two most common examples
-where this is the case are long-lasting network renumbering (where both the
+of this are long-lasting network renumbering (where both the
 old and new address spaces are still being used) and a cable network. In a
 cable network, both cable modems and the devices behind them are
 physically connected to the same link, yet they use distinct addressing.
-In such a case, the DHCPv6 server needs additional information (like the
-value of the interface-id option or the IPv6 address inserted in the
-link-addr field in the RELAY-FORW message) to properly select an
+In such a case, the DHCPv6 server needs additional information (the
+value of the ``interface-id`` option or the IPv6 address inserted in the
+``link-addr`` field in the RELAY-FORW message) to properly select an
 appropriate subnet.
 
 The following example assumes that there is a subnet 2001:db8:1::/64
@@ -5674,13 +5672,8 @@ selects that subnet for a relay with address 3000::1.
        ]
    }
 
-If "relay" is specified, the "ip-addresses" parameter within it is
-mandatory.
-
-.. note::
-
-   The current version of Kea uses the "ip-addresses" parameter, which
-   supports specifying a list of addresses.
+If ``relay`` is specified, the ``ip-addresses`` parameter within it is
+mandatory. The ``ip-addresses`` parameter supports specifying a list of addresses.
 
 .. _dhcp6-client-class-relay:
 
@@ -5688,17 +5681,17 @@ Segregating IPv6 Clients in a Cable Network
 ===========================================
 
 In certain cases, it is useful to mix relay address information
-(introduced in :ref:`dhcp6-relay-override`), with client classification, explained
-in :ref:`classify`. One specific example is in a cable network,
+(introduced in :ref:`dhcp6-relay-override`) with client classification (explained
+in :ref:`classify`). One specific example is in a cable network,
 where modems typically get addresses from a different subnet than all
 the devices connected behind them.
 
-Let us assume that there is one CMTS (Cable Modem Termination System)
+Let us assume that there is one Cable Modem Termination System (CMTS)
 with one CM MAC (a physical link that modems are connected to). We want
 the modems to get addresses from the 3000::/64 subnet, while everything
-connected behind the modems should get addresses from another subnet
-(2001:db8:1::/64). The CMTS that acts as a relay uses address 3000::1.
-The following configuration can serve that configuration:
+connected behind the modems should get addresses from the 2001:db8:1::/64
+subnet. The CMTS that acts as a relay uses address 3000::1.
+The following configuration can serve that situation:
 
 ::
 
@@ -5733,28 +5726,22 @@ The following configuration can serve that configuration:
 MAC/Hardware Addresses in DHCPv6
 ================================
 
-MAC/hardware addresses are available in DHCPv4 messages from the
+MAC/hardware addresses are available in DHCPv4 messages from
 clients, and administrators frequently use that information to perform
 certain tasks like per-host configuration and address reservation for
 specific MAC addresses. Unfortunately, the DHCPv6 protocol does not
 provide any completely reliable way to retrieve that information. To
 mitigate that issue, a number of mechanisms have been implemented in
-Kea. Each of these mechanisms works in certain cases, but may fail in
+Kea. Each of these mechanisms works in certain cases, but may not in
 others. Whether the mechanism works in a particular deployment is
 somewhat dependent on the network topology and the technologies used.
 
 Kea allows specification of which of the supported methods should be
-used and in what order. This configuration may be considered a fine
-tuning of the DHCP deployment. In a typical deployment the default value
-of ``"any"`` is sufficient and there is no need to select specific
-methods. Changing the value of this parameter is most useful in
-cases when an administrator wants to disable certain methods; for
-example, if the administrator trusts the network infrastructure more
-than the information provided by the clients themselves, they may prefer
-information provided by the relays over that provided by clients.
+used and in what order, via the ``mac-sources`` parameter. This configuration
+may be considered a fine
+tuning of the DHCP deployment.
 
-The configuration is controlled by the ``mac-sources`` parameter as
-follows:
+Here is an example:
 
 ::
 
@@ -5766,14 +5753,21 @@ follows:
        ...
    }
 
-When not specified, a special value of "any" is used, which instructs
+When not specified, a value of "any" is used, which instructs
 the server to attempt to try all the methods in sequence and use the
-value returned by the first one that succeeds. If specified, it must
-have at least one value.
+value returned by the first one that succeeds. In a typical deployment the default value
+of "any" is sufficient and there is no need to select specific
+methods. Changing the value of this parameter is most useful in
+cases when an administrator wants to disable certain methods; for
+example, if the administrator trusts the network infrastructure more
+than the information provided by the clients themselves, they may prefer
+information provided by the relays over that provided by clients.
+
+If specified, ``mac-sources`` must have at least one value.
 
 Supported methods are:
 
--  ``any`` - not an actual method, just a keyword that instructs Kea to
+-  ``any`` - this is not an actual method, just a keyword that instructs Kea to
    try all other methods and use the first one that succeeds. This is
    the default operation if no ``mac-sources`` are defined.
 
@@ -5799,7 +5793,7 @@ Supported methods are:
    link-local address types. In particular, privacy extensions, defined
    in `RFC 4941 <https://tools.ietf.org/html/rfc4941>`__, do not use MAC
    addresses. Also note that successful extraction requires that the
-   address's u-bit must be set to 1 and its g-bit set to 0, indicating
+   address's u-bit must be set to "1" and its g-bit set to "0", indicating
    that it is an interface identifier as per `RFC 2373, section
    2.5.1 <https://tools.ietf.org/html/rfc2373#section-2.5.1>`__.
 
@@ -5809,66 +5803,63 @@ Supported methods are:
    option that is inserted by a relay and contains information about a
    client's MAC address. This method requires a relay agent that
    supports the option and is configured to insert it. This method is
-   useless for directly connected clients. This parameter can also be
-   specified as ``rfc6939``, which is an alias for
+   useless for directly connected clients. The value ``rfc6939`` is an alias for
    ``client-link-addr-option``.
 
 -  ``remote-id`` - `RFC 4649 <https://tools.ietf.org/html/rfc4649>`__
-   defines a remote-id option that is inserted by a relay agent.
+   defines a ``remote-id`` option that is inserted by a relay agent.
    Depending on the relay agent configuration, the inserted option may
-   convey the client's MAC address information. This parameter can also
-   be specified as ``rfc4649``, which is an alias for ``remote-id``.
+   convey the client's MAC address information. The value ``rfc4649``
+   is an alias for ``remote-id``.
 
--  ``subscriber-id`` - Another option that is somewhat similar to the
-   previous one is subscriber-id, defined in `RFC
-   4580 <https://tools.ietf.org/html/rfc4580>`__. It, too, is inserted by
-   a relay agent that is configured to insert it. This parameter can
-   also be specified as ``rfc4580``, which is an alias for
+-  ``subscriber-id`` - Defined in `RFC 4580 <https://tools.ietf.org/html/rfc4580>`__,
+   ``subscriber-id`` is somewhat similar to ``remote-id``; it is also inserted
+   by a relay agent. The value ``rfc4580`` is an alias for
    ``subscriber-id``. This method is currently not implemented.
 
 -  ``docsis-cmts`` - Yet another possible source of MAC address
    information are the DOCSIS options inserted by a CMTS that acts as a
    DHCPv6 relay agent in cable networks. This method attempts to extract
    MAC address information from sub-option 1026 (cm mac) of the
-   vendor-specific option with vendor-id=4491. This vendor option is
-   extracted from the relay-forward message, not the original client's
+   vendor-specific option with ``vendor-id=4491``. This vendor option is
+   extracted from the Relay-forward message, not the original client's
    message.
 
 -  ``docsis-modem`` - The final possible source of MAC address
    information are the DOCSIS options inserted by the cable modem
    itself. This method attempts to extract MAC address information from
-   sub-option 36 (device id) of the vendor-specific option with
-   vendor-id=4491. This vendor option is extracted from the original
+   sub-option 36 (``device-id``) of the vendor-specific option with
+   ``vendor-id=4491``. This vendor option is extracted from the original
    client's message, not from any relay options.
 
-Empty mac-sources are not allowed. Administrators who do not want to specify it
-should either simply omit the mac-sources definition or specify it with the
+An empty ``mac-sources`` parameter is not allowed. Administrators who do not want to specify it
+should either simply omit the ``mac-sources`` definition or specify it with the
 "any" value, which is the default.
 
 .. _dhcp6-decline:
 
-Duplicate Addresses (DECLINE Support)
-=====================================
+Duplicate Addresses (DHCPDECLINE Support)
+=========================================
 
 The DHCPv6 server is configured with a certain pool of addresses that it
 is expected to hand out to DHCPv6 clients. It is assumed that the server
 is authoritative and has complete jurisdiction over those addresses.
-However, for various reasons, such as misconfiguration or a faulty
+However, for various reasons such as misconfiguration or a faulty
 client implementation that retains its address beyond the valid
 lifetime, there may be devices connected that use those addresses
 without the server's approval or knowledge.
 
 Such an unwelcome event can be detected by legitimate clients (using
 Duplicate Address Detection) and reported to the DHCPv6 server using a
-DHCPDECLINE message. The server will do a sanity check (to see whether
-the client declining an address really was supposed to use it), and then
-will conduct a clean-up operation and confirm it by sending back a REPLY
-message. Any DNS entries related to that address will be removed, the
-fact will be logged, and hooks will be triggered. After that is
-complete, the address will be marked as declined (which indicates that
+DHCPDECLINE message. The server does a sanity check (to see whether
+the client declining an address really was supposed to use it), then
+conducts a clean-up operation, and confirms the DHCPDECLINE by sending back a REPLY
+message. Any DNS entries related to that address are removed, the
+event is logged, and hooks are triggered. After that is
+complete, the address is marked as declined (which indicates that
 it is used by an unknown entity and thus not available for assignment)
-and a probation time will be set on it. Unless otherwise configured, the
-probation period lasts 24 hours; after that period, the server will
+and a probation time is set on it. Unless otherwise configured, the
+probation period lasts 24 hours; after that time, the server will
 recover the lease (i.e. put it back into the available state) and the
 address will be available for assignment again. It should be noted that
 if the underlying issue of a misconfigured device is not resolved, the
@@ -5887,33 +5878,33 @@ default, the following syntax can be used:
        ...
    }
 
-The parameter is expressed in seconds, so the example above will
-instruct the server to recycle declined leases after one hour.
+The parameter is expressed in seconds, so the example above
+instructs the server to recycle declined leases after one hour.
 
 There are several statistics and hook points associated with the decline
-handling procedure. The lease6_decline hook is triggered after the
+handling procedure. The ``lease6_decline`` hook is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
-to decline the lease. The declined-addresses statistic is increased
-after the hook returns (both global and subnet-specific variants). (See
+to decline the lease. The ``declined-addresses`` statistic is increased
+after the hook returns (both the global and subnet-specific variants). (See
 :ref:`dhcp6-stats` and :ref:`hooks-libraries`
 for more details on DHCPv6 statistics and Kea hook points.)
 
 Once the probation time elapses, the declined lease is recovered using
 the standard expired-lease reclamation procedure, with several
-additional steps. In particular, both declined-addresses statistics
+additional steps. In particular, both ``declined-addresses`` statistics
 (global and subnet-specific) are decreased. At the same time,
-reclaimed-declined-addresses statistics (again in two variants, global
+``reclaimed-declined-addresses`` statistics (again in two variants, global
 and subnet-specific) are increased.
 
-A note about statistics: The server does not decrease the
-assigned-nas statistics when a DHCPDECLINE message is received and
+A note about statistics: The Kea server does not decrease the
+``assigned-nas`` statistics when a DHCPDECLINE message is received and
 processed successfully. While technically a declined address is no
-longer assigned, the primary usage of the assigned-nas statistic
+longer assigned, the primary usage of the ``assigned-nas`` statistic
 is to monitor pool utilization. Most people would forget to include
-declined-addresses in the calculation, and simply use
-assigned-nas/total-nas. This would cause a bias towards
-under-representing pool utilization. As this has a potential for major
-issues, ISC decided not to decrease assigned-nas immediately after
+``declined-addresses`` in the calculation, and would simply use
+``assigned-nas``/``total-nas``. This would cause a bias towards
+under-representing pool utilization. As this has a potential to cause serious
+confusion, ISC decided not to decrease ``assigned-nas`` immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
@@ -5926,7 +5917,7 @@ The DHCPv6 server supports the following statistics:
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.1\linewidth}|p{0.7\linewidth}|
 
-.. table:: DHCPv6 Statistics
+.. table:: DHCPv6 statistics
    :class: longtable
    :widths: 20 10 70
 
@@ -5991,7 +5982,7 @@ The DHCPv6 server supports the following statistics:
    +-----------------------------------------+-----------------------+------------------------+
    | pkt6-advertise-received                 | integer               | Number of ADVERTISE    |
    |                                         |                       | packets received.      |
-   |                                         |                       | Advertise packets are  |
+   |                                         |                       | ADVERTISE packets are  |
    |                                         |                       | sent by the server     |
    |                                         |                       | and the server is      |
    |                                         |                       | never expected to      |
@@ -6179,8 +6170,8 @@ The DHCPv6 server supports the following statistics:
    |                                         |                       | this statistic         |
    |                                         |                       | indicates that the     |
    |                                         |                       | server received a      |
-   |                                         |                       | packet that it wasn't  |
-   |                                         |                       | able to recognize;     |
+   |                                         |                       | packet that it was     |
+   |                                         |                       | unable to recognize;   |
    |                                         |                       | either it had an       |
    |                                         |                       | unsupported type or    |
    |                                         |                       | was possibly           |
@@ -6425,8 +6416,7 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].reclaimed-leases             | integer               | Number of expired      |
    |                                         |                       | leases associated      |
    |                                         |                       | with a given subnet    |
-   |                                         |                       | (*"id"* is the         |
-   |                                         |                       | subnet-id) that have   |
+   |                                         |                       | that have              |
    |                                         |                       | been reclaimed since   |
    |                                         |                       | server startup. It is  |
    |                                         |                       | incremented each time  |
@@ -6532,7 +6522,7 @@ The DHCPv6 server supports the following statistics:
    This section describes DHCPv6-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-Beginning with Kea 1.7.7, the DHCPv6 server provides two global
+Since Kea 1.7.7, the DHCPv6 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
@@ -6543,7 +6533,7 @@ parameters to control statistics default sample limits:
   age in seconds of samples which are kept.
 
 For instance, to reduce the statistic-keeping overhead, set
-the default maximum sample count to 1 so that only one sample is kept:
+the default maximum sample count to 1 so only one sample is kept:
 
 ::
 
@@ -6565,7 +6555,7 @@ Management API for the DHCPv6 Server
 The management API allows the issuing of specific management commands,
 such as statistics retrieval, reconfiguration, or shutdown. For more
 details, see :ref:`ctrl-channel`. Currently, the only supported
-communication channel type is UNIX stream socket. By default there are
+communication channel type is the UNIX stream socket. By default there are
 no sockets open; to instruct Kea to open a socket, the following entry
 in the configuration file can be used:
 
@@ -6587,7 +6577,7 @@ The length of the path specified by the ``socket-name`` parameter is
 restricted by the maximum length for the UNIX socket name on the administrator's
 operating system, i.e. the size of the ``sun_path`` field in the
 ``sockaddr_un`` structure, decreased by 1. This value varies on
-different operating systems between 91 and 107 characters. Typical
+different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON
@@ -6633,28 +6623,28 @@ as described in :ref:`command-stats`.
 User Contexts in IPv6
 =====================
 
-Kea allows loading hook libraries that can sometimes benefit from
+Kea allows the loading of hook libraries that can sometimes benefit from
 additional parameters. If such a parameter is specific to the whole
 library, it is typically defined as a parameter for the hook library.
 However, sometimes there is a need to specify parameters that are
 different for each pool.
 
-See :ref:`user-context` for additional background regarding the user
-context idea. See :ref:`user-context-hooks` for a discussion from the
+See :ref:`user-context` for additional background regarding the
+user-context idea. See :ref:`user-context-hooks` for a discussion from the
 hooks perspective.
 
-User contexts can be specified at global scope, shared network, subnet,
-pool, client class, option data, or definition level, and via host
+User contexts can be specified at global scope; at the shared-network, subnet,
+pool, client-class, option-data, or definition level; and via host
 reservation. One other useful feature is the ability to store comments or
 descriptions.
 
-Let's consider a lightweight 4over6 deployment as an example. It is an
+Let's consider an example deployment of lightweight 4over6, an
 IPv6 transition technology that allows mapping IPv6 prefixes into full
 or partial IPv4 addresses. In the DHCP context, these are specific
 parameters that are supposed to be delivered to clients in the form of
 additional options. Values of these options are correlated to delegated
 prefixes, so it is reasonable to keep these parameters together with the
-PD pool. On the other hand, lightweight 4over6 is not a commonly used
+prefix delegation (PD) pool. On the other hand, lightweight 4over6 is not a commonly used
 feature, so it is not a part of the base Kea code. The solution to this
 problem is to specify a user context. For each PD pool that is expected to be
 used for lightweight 4over6, a user context with extra parameters is
@@ -6696,10 +6686,10 @@ option is actually needed. An example configuration looks as follows:
        } ]
    }
 
-Kea does not interpret or use the user context information; it simply
+Kea does not interpret or use the user-context information; it simply
 stores it and makes it available to the hook libraries. It is up to each
 hook library to extract that information and use it. The parser
-translates a "comment" entry into a user context with the entry, which
+translates a ``comment`` entry into a user context with the entry, which
 allows a comment to be attached inside the configuration itself.
 
 .. _dhcp6-std:
@@ -6707,13 +6697,13 @@ allows a comment to be attached inside the configuration itself.
 Supported DHCPv6 Standards
 ==========================
 
-The following standards are currently supported:
+The following standards are currently supported in Kea:
 
 -  *Dynamic Host Configuration Protocol for IPv6*, `RFC
    3315 <https://tools.ietf.org/html/rfc3315>`__: Supported messages are
    SOLICIT, ADVERTISE, REQUEST, RELEASE, RENEW, REBIND,
-   INFORMATION-REQUEST, CONFIRM, DECLINE and REPLY. The only not
-   supported message is RECONFIGURE.
+   INFORMATION-REQUEST, CONFIRM, DECLINE and REPLY. The only
+   unsupported message is RECONFIGURE.
 
 -  *Dynamic Host Configuration Protocol (DHCPv6) Options for
    Session Initiation Protocol (SIP) Servers*, `RFC 3319
@@ -6729,46 +6719,46 @@ The following standards are currently supported:
    options are supported.
 
 -  *Stateless Dynamic Host Configuration Protocol (DHCP) Service for IPv6*, `RFC
-   3736 <https://tools.ietf.org/html/rfc3736>`__: The server operation in
-   stateless mode is supported. Kea is currently server only, so the client side
+   3736 <https://tools.ietf.org/html/rfc3736>`__: Server operation in
+   stateless mode is supported. Kea is currently server-only, so the client side
    is not implemented.
 
 -  *Information Refresh Time Option for Dynamic Host Configuration Protocol for
    IPv6 (DHCPv6)*, `RFC 4242 <https://tools.ietf.org/html/rfc4242>`__: The
-   sole defined option (information-refresh-time) is supported.
+   sole defined option (``information-refresh-time``) is supported.
 
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay
    Agent Remote-ID Option*, `RFC
-   4649 <https://tools.ietf.org/html/rfc4649>`__: REMOTE-ID option is
+   4649 <https://tools.ietf.org/html/rfc4649>`__: The REMOTE-ID option is
    supported.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
    Configuration Protocol (DHCP) Clients*, `RFC 4703
-   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses DHCP-DDNS
+   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses the DHCP-DDNS
    server to resolve conflicts.
 
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
    Fully Qualified Domain Name (FQDN) Option*, `RFC
-   4704 <https://tools.ietf.org/html/rfc4704>`__: Supported option is
+   4704 <https://tools.ietf.org/html/rfc4704>`__: The supported option is
    CLIENT_FQDN.
 
 -  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Option for
    Dual-Stack Lite*, `RFC 6334 <https://tools.ietf.org/html/rfc6334>`__:
-   the AFTR-Name DHCPv6 Option is supported.
+   The AFTR-Name DHCPv6 Option is supported.
 
 -  *Relay-Supplied DHCP Options*, `RFC
-   6422 <https://tools.ietf.org/html/rfc6422>`__: Full functionality is
-   supported: OPTION_RSOO, ability of the server to echo back the
-   options, checks whether an option is RSOO-enabled, ability to mark
+   6422 <https://tools.ietf.org/html/rfc6422>`__: The full functionality is
+   supported: OPTION_RSOO; the ability of the server to echo back the
+   options; verification of whether an option is RSOO-enabled; the ability to mark
    additional options as RSOO-enabled.
 
 -  *Prefix Exclude Option for DHCPv6-based Prefix Delegation*, `RFC
-   6603 <https://tools.ietf.org/html/rfc6603>`__: Prefix Exclude option
+   6603 <https://tools.ietf.org/html/rfc6603>`__: The Prefix Exclude option
    is supported.
 
 -  *Client Link-Layer Address Option in DHCPv6*, `RFC
-   6939 <https://tools.ietf.org/html/rfc6939>`__: Supported option is
-   client link-layer address option.
+   6939 <https://tools.ietf.org/html/rfc6939>`__: The supported option is
+   the client link-layer address option.
 
 -  *Issues and Recommendations with Multiple Stateful DHCPv6 Options*,
    `RFC 7550 <https://tools.ietf.org/html/rfc7550>`__: All
@@ -6781,15 +6771,15 @@ The following standards are currently supported:
 
 -  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
    <https://tools.ietf.org/html/rfc8357>`__: The Kea server is able
-   to handle Relay Source Port option in a received Relay-Forward
-   message, remembers the UDP port and sends back Relay-Reply with a
+   to handle Relay Source Port option in a received Relay-forward
+   message, remembers the UDP port and sends back Relay-reply with a
    copy of the option to the relay agent using this UDP port.
 
 -  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 8415
-   <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol specification
-   which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
-   and RFC 7550. All features, with the exception of Reconfigure mechanism and
-   the now deprecated temporary addresses (IA_TA) mechanism, are supported.
+   <https://tools.ietf.org/html/rfc8415>`__: This new DHCPv6 protocol specification
+   obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
+   and RFC 7550. All features, with the exception of the RECONFIGURE mechanism and
+   the now-deprecated temporary addresses (IA_TA) mechanism, are supported.
 
 .. _dhcp6-limit:
 
@@ -6806,7 +6796,8 @@ treated as “not implemented yet”, rather than actual limitations.
    addresses or prefixes to be allocated for a single IA.
 
 -  Temporary addresses are not supported. There is no intention to ever
-   implement this feature, as it is deprecated in RFC8415.
+   implement this feature, as it is deprecated in `RFC 8415
+   <https://tools.ietf.org/html/rfc8415>`__.
 
 -  Client reconfiguration (RECONFIGURE) is not yet supported.
 
@@ -6816,7 +6807,7 @@ Kea DHCPv6 Server Examples
 ==========================
 
 A collection of simple-to-use examples for the DHCPv6 component of Kea
-is available with the source files, located in the doc/examples/kea6
+is available with the source files, located in the ``doc/examples/kea6``
 directory.
 
 .. _dhcp6-cb:
@@ -6825,11 +6816,11 @@ Configuration Backend in DHCPv6
 ===============================
 
 In the :ref:`config-backend` section we have described the Configuration
-Backend feature, its applicability, and its limitations. This section focuses
+Backend (CB) feature, its applicability, and its limitations. This section focuses
 on the usage of the CB with the DHCPv6 server. It lists the supported
-parameters, describes limitations, and gives examples of the DHCPv6
-server configuration to take advantage of the CB. Please also refer to
-the sibling section :ref:`dhcp4-cb` for the DHCPv4-specific usage of
+parameters, describes limitations, and gives examples of DHCPv6
+server configurations to take advantage of the CB. Please also refer to
+the corresponding section :ref:`dhcp4-cb` for DHCPv4-specific usage of
 the CB.
 
 .. _dhcp6-cb-parameters:
@@ -6838,39 +6829,46 @@ Supported Parameters
 --------------------
 
 The ultimate goal for the CB is to serve as a central configuration
-repository for one or multiple Kea servers connected to the database. In
-the future, it will be possible to store most of the server's
-configuration in the database and reduce the configuration file to a bare
-minimum; the only mandatory parameter will be the
-``config-control``, which includes the necessary information to connect
-to the database. In the present release, however, only a subset of
-the DHCPv4 server parameters can be stored in the database. All other
+repository for one or multiple Kea servers connected to a database.
+In currently supported Kea versions, only a subset of
+the DHCPv6 server parameters can be stored in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-The following table lists DHCPv6 specific parameters supported by the
-Configuration Backend, with an indication on which level of the hierarchy
-it is currently supported. The "n/a" marks cases when a
+The following table lists DHCPv6-specific parameters supported by the
+Configuration Backend, with an indication of the level of the hierarchy
+at which it is currently supported. "n/a" marks cases when a
 given parameter is not applicable at the particular level of the
 hierarchy or in cases when the server does not support the parameter
-at this level of the hierarchy. "no" is used when a parameter is
+at that level. "no" is used when a parameter is
 supported at the given level of the hierarchy but is not
 configurable via the Configuration Backend.
 
-All supported parameters can be configured via ``cb_cmds`` hooks library
+All supported parameters can be configured via ``cb_cmds`` hook library
 described in the :ref:`cb-cmds-library` section. The general rule is that
-the scalar global parameters are set using the
-``remote-global-parameter6-set``; the shared network-specific parameters
-are set using ``remote-network6-set``; and the subnet- and pool-level
+scalar global parameters are set using
+``remote-global-parameter6-set``; shared-network-specific parameters
+are set using ``remote-network6-set``; and subnet- and pool-level
 parameters are set using ``remote-subnet6-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
-table. The non-scalar global parameters have dedicated commands; for example,
+table. Non-scalar global parameters have dedicated commands; for example,
 the global DHCPv6 options (``option-data``) are modified using
-``remote-option6-global-set``. Client classes together with class specific
-option definitions and DHCPv6 options are configured using the
+``remote-option6-global-set``. Client classes, together with class-specific
+option definitions and DHCPv6 options, are configured using the
 ``remote-class6-set`` command.
 
-.. table:: List of DHCPv6 Parameters Supported by the Configuration Backend
+The :ref:`cb-sharing` section explains the concept of shareable
+and non-shareable configuration elements and the limitations for
+sharing them between multiple servers. In the DHCP configuration (both DHCPv4
+and DHCPv6), the shareable configuration elements are subnets and shared
+networks. Thus, they can be explicitly associated with multiple server tags.
+The global parameters, option definitions, and global options are non-shareable
+and can be associated with only one server tag. This rule does not apply
+to the configuration elements associated with ``all`` servers. Any configuration
+element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
+used by all servers connecting to the configuration database.
+
+.. table:: List of DHCPv6 parameters supported by the Configuration Backend
 
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | Parameter                   | Global                     | Client    | Shared    | Subnet    | Pool      | Prefix     |
@@ -6962,8 +6960,8 @@ option definitions and DHCPv6 options are configured using the
 
 .. _dhcp6-cb-json:
 
-Enabling Configuration Backend
-------------------------------
+Enabling the Configuration Backend
+----------------------------------
 
 The following configuration snippet demonstrates how to enable the MySQL
 Configuration Backend for the DHCPv6 server:
@@ -7006,11 +7004,11 @@ The configuration structure is almost identical to that of the DHCPv4 server
 Kea DHCPv6 Compatibility Configuration Parameters
 =================================================
 
-By default, Kea aims to follow the RFC documents to promote better standards
-compliance. However, there are buggy implementations out there that cannot be
-easily fixed or upgraded. Therefore Kea provides an easy to use compatibility
-mode for broken or non-compliant clients. In that purpose, flags have to be
-enabled in order to enable uncommon practices:
+ISC's intention is for Kea to follow the RFC documents to promote better standards
+compliance. However, many buggy DHCP implementations already exist that cannot be
+easily fixed or upgraded. Therefore, Kea provides an easy-to-use compatibility
+mode for broken or non-compliant clients. For that purpose, the compatibility option must be
+enabled to permit uncommon practices:
 
 .. code-block:: json
 
@@ -7025,13 +7023,13 @@ enabled in order to enable uncommon practices:
 Lenient Option Parsing
 ----------------------
 
-By default, DHCPv6 option 16's vendor-class-data field is parsed as a set of
+By default, DHCPv6 option 16's ``vendor-class-data`` field is parsed as a set of
 length-value pairs. Same for tuple fields defined in custom options.
 
 With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
-the option's buffer, Kea no longer complains with the log message ``unable to
+the option's buffer, previous versions of Kea returned a log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
-with ``x < y``. Instead, the value is considered to be the rest of the buffer,
+with ``x < y``; this no longer occurs. Instead, the value is considered to be the rest of the buffer,
 or in terms of the log message above, the tuple length ``y`` becomes ``x``.
 
 Enabling this flag is expected to improve compatibility with devices such as RAD
