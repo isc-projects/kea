@@ -10,7 +10,7 @@ Overview
 ========
 
 ``kea-lfc`` is a service process that removes redundant information from
-the files used to provide persistent storage for the Memfile database
+the files used to provide persistent storage for the memfile database
 backend. This service is written to run as a standalone process.
 
 While ``kea-lfc`` can be started externally, there is usually no need to
@@ -55,17 +55,17 @@ for input, write its output, and perform its bookkeeping:
 -  ``input`` — before the DHCP server invokes ``kea-lfc``, it moves
    the current lease file here and then calls ``kea-lfc`` with this file.
 
--  ``output`` — This is the temporary file where ``kea-lfc`` writes the
-   leases. Once the file has finished writing, it will be moved to the
-   finish file (see below).
+-  ``output`` — this is the temporary file where ``kea-lfc`` writes the
+   leases. Once the file has finished writing, it is moved to the
+   ``finish`` file (see below).
 
--  ``finish`` — This is another temporary file ``kea-lfc`` uses for
-   bookkeeping. When ``kea-lfc`` completes writing the output file, it
-   moves the output to this file name. After ``kea-lfc`` finishes deleting the
-   other files (previous and input), it moves this file to the previous
-   lease file. By moving the files in this fashion, the ``kea-lfc`` and
+-  ``finish`` — this is another temporary file ``kea-lfc`` uses for
+   bookkeeping. When ``kea-lfc`` completes writing the ``output`` file, it
+   moves the contents to the file of this name. After ``kea-lfc`` finishes deleting the
+   other files (``previous`` and ``input``), it moves this file to the ``previous``
+   lease file. By moving the files in this fashion, ``kea-lfc`` and
    the DHCP server processes can determine the correct file to use even
-   if one of the processes were interrupted before completing its task.
+   if one of the processes is interrupted before completing its task.
 
 There are several additional arguments, mostly for debugging purposes.
 ``-d`` sets the logging level to debug. ``-v`` and ``-V`` print out
