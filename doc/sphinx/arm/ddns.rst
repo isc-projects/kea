@@ -700,11 +700,11 @@ configuration. The priority rule is:
 -  if a not-empty key name is specified in a DNS server entry, this TSIG
    key protects DNS updates sent to this server.
 
--  if empty, and if no key name is specified in a DNS server entry but a
-   not-empty key name is specified in the parent domain entry, the domain
+-  if the DNS server entry is empty, but a
+   not-empty key name is specified in the parent's domain entry, the parent domain's
    TSIG key protects DNS updates sent to this server.
 
--  if empty, and if no key name is specified in a DNS server entry and its parent
+-  if the DNS server entry is empty, and no key name is specified in its parent
    domain entry, no TSIG protects DNS updates sent to this server.
 
 For instance, in this configuration:
