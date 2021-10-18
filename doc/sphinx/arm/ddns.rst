@@ -9,10 +9,10 @@ The DHCP-DDNS Server
 Overview
 ========
 
-The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts
+The DHCP-DDNS Server (``kea-dhcp-ddns``, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
-and DHCPv6 servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP
+and DHCPv6 servers (``kea-dhcp4`` and ``kea-dhcp6`` respectively). The DHCP
 servers construct DDNS update requests, known as Name Change Requests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
@@ -24,36 +24,36 @@ DNS data.
 DNS Server Selection
 --------------------
 
-In order to match a request to the appropriate DNS servers, D2 must have
+To match a request to the appropriate DNS servers, D2 must have
 a catalog of servers from which to select. In fact, D2 has two such
 catalogs, one for forward DNS and one for reverse DNS; these catalogs
-are referred to as DDNS Domain Lists. Each list consists of one or more
-named DDNS Domains. Further, each DDNS Domain has a list of one or more
+are referred to as "DDNS domain lists." Each list consists of one or more
+named DDNS domains. Further, each DDNS domain has a list of one or more
 DNS servers that publish the DNS data for that domain.
 
-When conducting forward domain matching, D2 compares the fully qualified
-domain name (FQDN) in the request against the name of each Forward DDNS
-Domain in its catalog. The domain whose name matches the longest portion
+When conducting forward-domain matching, D2 compares the fully qualified
+domain name (FQDN) in the request against the name of each forward DDNS
+domain in its catalog. The domain whose name matches the longest portion
 of the FQDN is considered the best match. For example, if the FQDN is
 "myhost.sample.example.com.", and there are two forward domains in the
 catalog, "sample.example.com." and "example.com.", the former is
 regarded as the best match. In some cases, it may not be possible to
 find a suitable match. Given the same two forward domains there would be
-no match for the FQDN, "bogus.net", so the request would be rejected.
-Finally, if there are no Forward DDNS Domains defined, D2 simply
-disregards the forward update portion of requests.
+no match for the FQDN "bogus.net", so the request would be rejected.
+Finally, if there are no forward DDNS domains defined, D2 simply
+disregards the forward-update portion of requests.
 
-When conducting reverse domain matching, D2 constructs a reverse FQDN
+When conducting reverse-domain matching, D2 constructs a reverse FQDN
 from the lease address in the request and compares that against the name
-of each Reverse DDNS Domain. Again, the domain whose name matches the
+of each reverse DDNS domain. Again, the domain whose name matches the
 longest portion of the FQDN is considered the best match. For instance,
 if the lease address is "172.16.1.40" and there are two reverse domains
 in the catalog, "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
-former is the best match. As with forward matching, it may not find a
+former is the best match. As with forward matching, D2 may not find a
 suitable match. Given the same two domains, there would be no match for
 the lease address, "192.168.1.50", and the request would be rejected.
-Finally, if there are no Reverse DDNS Domains defined, D2 simply
-disregards the reverse update portion of requests.
+As with forward-domain matching, if there are no reverse DDNS domains defined, D2 simply
+disregards the reverse-update portion of requests.
 
 .. _dhcp-ddns-conflict-resolution:
 
@@ -71,10 +71,10 @@ wishes to update or remove existing forward entries for an FQDN may only
 do so if their client matches that of the DHCID RR.
 
 In other words, the DHCID RR maps an FQDN to the client to whom it
-belongs, and thereafter changes to that mapping should only be done by
+belongs, and thereafter changes to that mapping can only be done by
 or at the behest of that client.
 
-Currently, conflict detection is always performed.
+Currently, D2 conflict detection is always performed.
 
 .. _dhcp-ddns-dual-stack:
 
@@ -84,8 +84,8 @@ Dual-Stack Environments
 `RFC 4703, section
 5.2, <https://tools.ietf.org/html/rfc4703#section-5.2>`__ describes
 issues that may arise with dual-stack clients. These are clients that
-wish to have both IPv4 and IPv6 mappings for the same FQDN. For
-this to work properly, the clients are required to embed their IPv6 DUID
+wish to have both IPv4 and IPv6 mappings for the same FQDN.
+To work properly, clients must embed their IPv6 DUID
 within their IPv4 client identifier option, as described in `RFC
 4703 <https://tools.ietf.org/html/rfc4361>`__. In this way, DNS updates
 for both IPv4 and IPv6 can be managed under the same DHCID RR. Kea does not
@@ -107,7 +107,7 @@ directly. It accepts the following command-line switches:
 -  ``-c file`` - specifies the configuration file. This is the only
    mandatory switch.
 
--  ``-d`` - specifies whether the server logging should be switched to
+-  ``-d`` - specifies whether server logging should be switched to
    debug/verbose mode. In verbose mode, the logging severity and
    debuglevel specified in the configuration file are ignored and
    "debug" severity and the maximum debuglevel (99) are assumed. The
@@ -121,14 +121,14 @@ directly. It accepts the following command-line switches:
    it is embedded in the executable binary.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   Kea-dhcp-ddns will attempt to load it and will conduct sanity checks.
-   Note that certain checks are possible only while running the actual
+   ``kea-dhcp-ddns`` attempts to load it and conducts sanity checks.
+   Certain checks are possible only while running the actual
    server. The actual status is reported with an exit code (0 =
-   configuration looks ok, 1 = error encountered). Kea prints out log
+   configuration looks okay, 1 = error encountered). Kea prints out log
    messages to standard output and errors to standard error when testing
    the configuration.
 
-The ``config.report`` may also be accessed more directly, via the
+The ``config.report`` file may also be accessed directly, via the
 following command. The binary ``path`` may be found in the install
 directory or in the ``.libs`` subdirectory in the source tree. For
 example: ``kea/src/bin/d2/.libs/kea-dhcp-ddns``.
@@ -137,16 +137,16 @@ example: ``kea/src/bin/d2/.libs/kea-dhcp-ddns``.
 
    strings path/kea-dhcp-ddns | sed -n 's/;;;; //p'
 
-Upon startup, the module will load its configuration and begin listening
+Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 
-During startup, the server will attempt to create a PID file of the form:
-[**runstatedir**]/[**conf name**].kea-dhcp-ddns.pid where:
+During startup, the server attempts to create a PID file of the form:
+``[runstatedir]/[conf name].kea-dhcp-ddns.pid`` where:
 
 -  ``runstatedir`` - is the value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
    overridden at runtime by setting the environment variable
-   KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
+   ``KEA_PIDFILE_DIR``. This is intended primarily for testing purposes.
 
 -  ``conf name`` - is the configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
@@ -154,7 +154,7 @@ During startup, the server will attempt to create a PID file of the form:
    be "myconf".
 
 If the file already exists and contains the PID of a live process, the
-server will issue a DHCP_DDNS_ALREADY_RUNNING log message and exit. It
+server issues a ``DHCP_DDNS_ALREADY_RUNNING`` log message and exits. It
 is possible, though unlikely, that the file is a remnant of a system
 crash and the process to which the PID belongs is unrelated to Kea. In
 such a case it is necessary to manually delete the PID file.
@@ -196,9 +196,9 @@ which is described below:
 -  *TSIG Key Info* - defines the TSIG keys used for secure traffic with
    DNS servers.
 
--  *Forward DDNS* - defines the catalog of Forward DDNS Domains.
+-  *Forward DDNS* - defines the catalog of forward DDNS domains.
 
--  *Reverse DDNS* - defines the catalog of Forward DDNS Domains.
+-  *Reverse DDNS* - defines the catalog of reverse DDNS domains.
 
 .. _d2-server-parameter-config:
 
@@ -241,15 +241,15 @@ illustrates how to change D2's global parameters so it will listen at
 .. warning::
 
    It is possible for a malicious attacker to send bogus
-   NameChangeRequests to the DHCP-DDNS server. Addresses other than the
+   Name Change Requests to the DHCP-DDNS server. Addresses other than the
    IPv4 or IPv6 loopback addresses (127.0.0.1 or ::1) should only be
    used for testing purposes; note that local users may still
    communicate with the DHCP-DDNS server.
 
 .. note::
 
-   If the ip-address and port are changed, the corresponding values in
-   the DHCP servers' "dhcp-ddns" configuration section must be changed.
+   If the ``ip-address`` and ``port`` are changed, the corresponding values in
+   the DHCP servers' ``dhcp-ddns`` configuration section must be changed.
 
 .. _d2-ctrl-channel:
 
@@ -259,7 +259,7 @@ Management API for the D2 Server
 The management API allows the issuing of specific management commands,
 such as configuration retrieval or shutdown. For more details, see
 :ref:`ctrl-channel`. Currently, the only supported communication
-channel type is UNIX stream socket. By default there are no sockets
+channel type is the UNIX stream socket. By default there are no sockets
 open; to instruct Kea to open a socket, the following entry in the
 configuration file can be used:
 
@@ -277,7 +277,7 @@ The length of the path specified by the ``socket-name`` parameter is
 restricted by the maximum length for the UNIX socket name on the
 operating system, i.e. the size of the ``sun_path`` field in the
 ``sockaddr_un`` structure, decreased by 1. This value varies on
-different operating systems between 91 and 107 characters. Typical
+different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON structures.
@@ -298,7 +298,7 @@ The D2 server supports the following operational commands:
 -  status-get
 -  version-get
 
-Starting with Kea version 2.0.0 the D2 server supports too the following
+Since Kea version 2.0.0, the D2 server also supports the following
 operational commands for statistics:
 
 -  statistic-get
@@ -306,17 +306,17 @@ operational commands for statistics:
 -  statistic-reset
 -  statistic-reset-all
 
-The ``shutdown`` command supports the extra ``type`` argument which controls the
+The ``shutdown`` command supports the extra ``type`` argument, which controls the
 way the D2 server cleans up on exit.
 The supported shutdown types are:
 
--  ``normal`` - Stops the queue manager and finishes all current transactions
+-  ``normal`` - stops the queue manager and finishes all current transactions
    before exiting. This is the default.
 
--  ``drain_first`` - Stops the queue manager but continues processing requests
+-  ``drain_first`` - stops the queue manager but continues processing requests
    from the queue until it is empty.
 
--  ``now`` - Exits immediately.
+-  ``now`` - exits immediately.
 
 An example command may look like this:
 
@@ -335,21 +335,22 @@ An example command may look like this:
 TSIG Key List
 -------------
 
-A DDNS protocol exchange can be conducted with or without TSIG (defined
+A DDNS protocol exchange can be conducted with or without a transaction
+signature, or TSIG (defined
 in `RFC 2845 <https://tools.ietf.org/html/rfc2845>`__). This
 configuration section allows the administrator to define the set of TSIG
 keys that may be used in such exchanges.
 
 To use TSIG when updating entries in a DNS domain, a key must be defined
-in the TSIG Key list and referenced by name in that domain's
+in the TSIG key list and referenced by name in that domain's
 configuration entry. When D2 matches a change request to a domain, it
 checks whether the domain has a TSIG key associated with it. If so, D2
 uses that key to sign DNS update messages sent to and verify
 responses received from the domain's DNS server(s). For each TSIG key
-required by the DNS servers that D2 will be working with, there must be
-a corresponding TSIG key in the TSIG Key list.
+required by the DNS servers that D2 is working with, there must be
+a corresponding TSIG key in the TSIG key list.
 
-As one might gather from the name, the tsig-key section of the D2
+As one might gather from the name, the ``tsig-key`` section of the D2
 configuration lists the TSIG keys. Each entry describes a TSIG key used
 by one or more DNS servers to authenticate requests and sign responses.
 Every entry in the list has three parameters:
@@ -378,7 +379,7 @@ Every entry in the list has three parameters:
    bits. The default value 0 means truncation is forbidden; non-zero
    values must be an integral number of octets, and be greater than both
    80 and half of the full length. (Note that in BIND 9 this parameter
-   is appended after a dash to the algorithm name.)
+   is appended to the algorithm name, after a dash.)
 
 -  ``secret`` - is used to specify the shared secret key code for this
    key. This value is case-sensitive and must exactly match the value
@@ -398,7 +399,7 @@ named.conf file looks like this:
       };
       :
 
-By default, the TSIG Key list is empty:
+By default, the TSIG key list is empty:
 
 ::
 
@@ -407,7 +408,7 @@ By default, the TSIG Key list is empty:
       ...
    }
 
-We must extend the list with a new key:
+A new key must be added to the list:
 
 ::
 
@@ -422,7 +423,7 @@ We must extend the list with a new key:
        ...
    }
 
-These steps would be repeated for each TSIG key needed. Note that the
+These steps must be repeated for each TSIG key needed, although the
 same TSIG key can be used with more than one domain.
 
 .. _d2-forward-ddns-config:
@@ -430,9 +431,9 @@ same TSIG key can be used with more than one domain.
 Forward DDNS
 ------------
 
-The Forward DDNS section is used to configure D2's forward update
+The forward DDNS section is used to configure D2's forward-update
 behavior. Currently it contains a single parameter, the catalog of
-Forward DDNS Domains, which is a list of structures.
+forward DDNS domains, which is a list of structures.
 
 ::
 
@@ -443,44 +444,44 @@ Forward DDNS Domains, which is a list of structures.
        ...
    }
 
-By default, this list is empty, which will cause the server to ignore
-the forward update portions of requests.
+By default, this list is empty, which causes the server to ignore
+the forward-update portions of requests.
 
 .. _add-forward-ddns-domain:
 
 Adding Forward DDNS Domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A Forward DDNS Domain maps a forward DNS zone to a set of DNS servers
+A forward DDNS domain maps a forward DNS zone to a set of DNS servers
 which maintain the forward DNS data (i.e. name-to-address mapping) for
-that zone. Each zone served needs one Forward DDNS Domain. It may very
-well be that some or all of the zones are maintained by the same
-servers, but one DDNS Domain is still needed for each zone. Remember that
+that zone. Each zone served needs one forward DDNS domain.
+Some or all of the zones may be maintained by the same
+servers, but one DDNS domain is still needed for each zone. Remember that
 matching a request to the appropriate server(s) is done by zone and a
-DDNS Domain only defines a single zone.
+DDNS domain only defines a single zone.
 
-This section describes how to add Forward DDNS Domains; repeat these
-steps for each Forward DDNS Domain desired. Each Forward DDNS Domain has
+This section describes how to add forward DDNS domains; repeat these
+steps for each forward DDNS domain desired. Each forward DDNS domain has
 the following parameters:
 
--  ``name`` - the fully qualified domain name (or zone) that this DDNS
-   Domain can update. This value is compared against the request FQDN
+-  ``name`` - this is the fully qualified domain name (or zone) that this DDNS
+   domain can update. This value is compared against the request FQDN
    during forward matching. It must be unique within the catalog.
 
 -  ``key-name`` - if TSIG is used with this domain's servers, this value
-   should be the name of the key from the TSIG Key list. If the
+   should be the name of the key from the TSIG key list. If the
    value is blank (the default), TSIG will not be used in DDNS
    conversations with this domain's servers.
 
--  ``dns-servers`` - a list of one or more DNS servers which can conduct
+-  ``dns-servers`` - this is a list of one or more DNS servers which can conduct
    the server side of the DDNS protocol for this domain. The servers are
    used in a first-to-last preference; in other words, when D2 begins to
    process a request for this domain, it will pick the first server in
    this list and attempt to communicate with it. If that attempt fails,
-   D2 will move to the next one in the list and so on until either it
+   D2 will move to the next one in the list and so on, until either it
    is successful or the list is exhausted.
 
-To create a new Forward DDNS Domain, add a new domain element and set
+To create a new forward DDNS domain, add a new domain element and set
 its parameters:
 
 ::
@@ -507,11 +508,11 @@ useful, at least one DNS server must be added to it.
 Adding Forward DNS Servers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section describes how to add DNS servers to a Forward DDNS Domain.
+This section describes how to add DNS servers to a forward DDNS domain.
 Repeat these instructions as needed for all the servers in each domain.
 
-Forward DNS Server entries represent actual DNS servers which support
-the server side of the DDNS protocol. Each Forward DNS Server has the
+Forward DNS server entries represent actual DNS servers which support
+the server side of the DDNS protocol. Each forward DNS server has the
 following parameters:
 
 -  ``hostname`` - the resolvable host name of the DNS server; this
@@ -523,9 +524,9 @@ following parameters:
 -  ``port`` - the port on which the server listens for DDNS requests. It
    defaults to the standard DNS service port of 53.
 
-To create a new Forward DNS Server, a new server element must be added to
+To create a new forward DNS server, a new server element must be added to
 the domain and its parameters filled in. If, for example, the service is
-running at "172.88.99.10", set the Forward DNS Server as follows:
+running at "172.88.99.10", set the forward DNS server as follows:
 
 ::
 
@@ -550,7 +551,7 @@ running at "172.88.99.10", set the Forward DNS Server as follows:
 
 .. note::
 
-   Since "hostname" is not yet supported, the parameter "ip-address"
+   Since ``hostname`` is not yet supported, the parameter ``ip-address``
    must be set to the address of the DNS server.
 
 .. _d2-reverse-ddns-config:
@@ -558,10 +559,10 @@ running at "172.88.99.10", set the Forward DNS Server as follows:
 Reverse DDNS
 ------------
 
-The Reverse DDNS section is used to configure D2's reverse update
+The reverse DDNS section is used to configure D2's reverse update
 behavior, and the concepts are the same as for the forward DDNS section.
-Currently it contains a single parameter, the catalog of Reverse DDNS
-Domains, which is a list of structures.
+Currently it contains a single parameter, the catalog of reverse DDNS
+domains, which is a list of structures.
 
 ::
 
@@ -572,49 +573,49 @@ Domains, which is a list of structures.
        ...
    }
 
-By default, this list is empty, which will cause the server to ignore
-the reverse update portions of requests.
+By default, this list is empty, which causes the server to ignore
+the reverse-update portions of requests.
 
 .. _add-reverse-ddns-domain:
 
 Adding Reverse DDNS Domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A Reverse DDNS Domain maps a reverse DNS zone to a set of DNS servers
+A reverse DDNS domain maps a reverse DNS zone to a set of DNS servers
 which maintain the reverse DNS data (address-to-name mapping) for that
-zone. Each zone served needs one Reverse DDNS Domain. It may very well
-be that some or all of the zones are maintained by the same servers, but
-one DDNS Domain entry is still needed for each zone. Remember that
+zone. Each zone served needs one reverse DDNS domain.
+Some or all of the zones may be maintained by the same servers, but
+one DDNS domain entry is needed for each zone. Remember that
 matching a request to the appropriate server(s) is done by zone and a
-DDNS Domain only defines a single zone.
+DDNS domain only defines a single zone.
 
-This section describes how to add Reverse DDNS Domains; repeat these
-steps for each Reverse DDNS Domain desired. Each Reverse DDNS Domain has
+This section describes how to add reverse DDNS domains; repeat these
+steps for each reverse DDNS domain desired. Each reverse DDNS domain has
 the following parameters:
 
--  ``name`` - the fully qualified reverse zone that this DDNS domain can
-   update. This is the value used during reverse matching, which will
-   compare it with a reversed version of the request's lease address.
+-  ``name`` - this is the fully qualified reverse zone that this DDNS domain can
+   update. This is the value used during reverse matching, which
+   compares it with a reversed version of the request's lease address.
    The zone name should follow the appropriate standards; for example,
    to support the IPv4 subnet 172.16.1, the name should be
    "1.16.172.in-addr.arpa.". Similarly, to support an IPv6 subnet of
    2001:db8:1, the name should be "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
-   Whatever the name, it must be unique within the catalog.
+   The name must be unique within the catalog.
 
 -  ``key-name`` - if TSIG is used with this domain's servers,
-   this value should be the name of the key from the TSIG Key List. If
+   this value should be the name of the key from the TSIG key list. If
    the value is blank (the default), TSIG will not be used in DDNS
    conversations with this domain's servers.
 
--  ``dns-servers`` - a list of one or more DNS servers which can conduct
+-  ``dns-servers`` - this is a list of one or more DNS servers which can conduct
    the server side of the DDNS protocol for this domain. Currently, the
    servers are used in a first-to-last preference; in other words, when
    D2 begins to process a request for this domain, it will pick the
    first server in this list and attempt to communicate with it. If that
-   attempt fails, D2 will move to the next one in the list and so on
+   attempt fails, D2 will move to the next one in the list and so on,
    until either it is successful or the list is exhausted.
 
-To create a new Reverse DDNS Domain, a new domain element must be added
+To create a new reverse DDNS domain, a new domain element must be added
 and its parameters set. For example, to support subnet 2001:db8:1::, the
 following configuration could be used:
 
@@ -642,11 +643,11 @@ useful, at least one DNS server must be added to it.
 Adding Reverse DNS Servers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section describes how to add DNS servers to a Reverse DDNS Domain.
+This section describes how to add DNS servers to a reverse DDNS domain.
 Repeat these instructions as needed for all the servers in each domain.
 
-Reverse DNS Server entries represent actual DNS servers which support
-the server side of the DDNS protocol. Each Reverse DNS Server has the
+Reverse DNS server entries represent actual DNS servers which support
+the server side of the DDNS protocol. Each reverse DNS server has the
 following parameters:
 
 -  ``hostname`` - the resolvable host name of the DNS server; this value
@@ -658,8 +659,8 @@ following parameters:
 -  ``port`` - the port on which the server listens for DDNS requests. It
    defaults to the standard DNS service port of 53.
 
-To create a new reverse DNS Server, a new server
-element must be added to the domain and its parameters filled in. If, for example, the
+To create a new reverse DNS server, a new server
+element must be added to the domain and its parameters specified. If, for example, the
 service is running at "172.88.99.10", then set it as follows:
 
 ::
@@ -685,28 +686,28 @@ service is running at "172.88.99.10", then set it as follows:
 
 .. note::
 
-   Since "hostname" is not yet supported, the parameter "ip-address"
+   Since ``hostname`` is not yet supported, the parameter ``ip-address``
    must be set to the address of the DNS server.
 
 .. _per-server-keys:
 
-Per DNS server TSIG keys
+Per-DNS-Server TSIG Keys
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since Kea version 2.0.0 a TSIG key can be specified in a DNS server
+Since Kea version 2.0.0, a TSIG key can be specified in a DNS server
 configuration. The priority rule is:
 
--  if a not empty key name is specified in a DNS server entry this TSIG
-   key will protect DNS updates sent to this server.
+-  if a not-empty key name is specified in a DNS server entry, this TSIG
+   key protects DNS updates sent to this server.
 
--  if empty or no key name is specified in a DNS server entry but a not
-   empty key name is specified in the parent domain entry, the domain
-   TSIG key will protect DNS updates sent to this server.
+-  if empty, and if no key name is specified in a DNS server entry but a
+   not-empty key name is specified in the parent domain entry, the domain
+   TSIG key protects DNS updates sent to this server.
 
--  if empty or no key name is specified in a DNS server entry and its parent
-   domain entry, no TSIG will protect DNS updates sent to this server.
+-  if empty, and if no key name is specified in a DNS server entry and its parent
+   domain entry, no TSIG protects DNS updates sent to this server.
 
-For instance in this configuration:
+For instance, in this configuration:
 
 ::
 
@@ -763,8 +764,8 @@ For instance in this configuration:
    }
 
 
-The 172.88.99.10 server will use the foo TSIG key, 172.88.99.11 and
-172.88.99.13 servers the bar one and 172.88.99.12 will not use TSIG.
+The 172.88.99.10 server will use the "foo" TSIG key, the 172.88.99.11 and
+172.88.99.13 servers will use the "bar" key. and 172.88.99.12 will not use TSIG.
 
 .. _d2-user-contexts:
 
@@ -774,8 +775,8 @@ User Contexts in DDNS
 See :ref:`user-context` for additional background regarding the user
 context idea.
 
-User contexts can be specified on global scope, DDNS domain, DNS server,
-TSIG key, and loggers. One other useful usage is the ability to store
+User contexts can be specified on a global scope, a DDNS domain, a DNS server,
+a TSIG key, and loggers. One other useful usage is the ability to store
 comments or descriptions; the parser translates a "comment" entry into a
 user context with the entry, which allows a comment to be attached
 inside the configuration itself.
@@ -789,7 +790,7 @@ This section provides a sample DHCP-DDNS server configuration, based on
 a small example network. Let's suppose our example network has three
 domains, each with their own subnet.
 
-.. table:: Our Example Network
+.. table:: Our example network
 
    +------------------+-----------------+-----------------+-----------------+
    | Domain           | Subnet          | Forward DNS     | Reverse DNS     |
@@ -803,9 +804,9 @@ domains, each with their own subnet.
    | example.com      | 192.0.0.0/16    | 172.16.2.5      | 172.16.2.5      |
    +------------------+-----------------+-----------------+-----------------+
 
-We need to construct three Forward DDNS Domains:
+We need to construct three forward DDNS domains:
 
-.. table:: Forward DDNS Domains Needed
+.. table:: Forward DDNS domains needed
 
    +----+-------------------+------------------------+
    | #  | DDNS Domain Name  | DNS Servers            |
@@ -818,12 +819,12 @@ We need to construct three Forward DDNS Domains:
    +----+-------------------+------------------------+
 
 As discussed earlier, FQDN-to-domain matching is based on the longest
-match. The FQDN, "myhost.four.example.com.", will match the first domain
-("four.example.com") while "admin.example.com." will match the third
-domain ("example.com"). The FQDN, "other.example.net.", will fail to
+match. The FQDN "myhost.four.example.com." matches the first domain
+("four.example.com"), while "admin.example.com." matches the third
+domain ("example.com"). The FQDN "other.example.net." fails to
 match any domain and is rejected.
 
-The following example configuration specifies the Forward DDNS Domains.
+The following example configuration specifies the forward DDNS domains.
 
 ::
 
@@ -859,9 +860,9 @@ The following example configuration specifies the Forward DDNS Domains.
        }
    }
 
-Similarly, we need to construct the three Reverse DDNS Domains:
+Similarly, we need to construct the three reverse DDNS domains:
 
-.. table:: Reverse DDNS Domains Needed
+.. table:: Reverse DDNS domains needed
 
    +----+-----------------------------------+------------------------+
    | #  | DDNS Domain Name                  | DNS Servers            |
@@ -873,11 +874,11 @@ Similarly, we need to construct the three Reverse DDNS Domains:
    | 3. | 0.182.in-addr.arpa.               | 172.16.2.5             |
    +----+-----------------------------------+------------------------+
 
-An address of "192.0.2.150" will match the first domain,
-"2001:db8:1::10" will match the second domain, and "192.0.50.77" the
+An address of "192.0.2.150" matches the first domain,
+"2001:db8:1::10" matches the second domain, and "192.0.50.77" matches the
 third domain.
 
-These Reverse DDNS Domains are specified as follows:
+These reverse DDNS domains are specified as follows:
 
 ::
 
@@ -914,68 +915,69 @@ These Reverse DDNS Domains are specified as follows:
 DHCP-DDNS Server Statistics
 ===========================
 
-Kea version 2.0.0 introduced statistics support for the DHCP-DDNS.
+Kea version 2.0.0 introduced statistics support for DHCP-DDNS.
 
-Statistics are divided in three groups: Name Change Request, DNS update
-and per TSIG key DNS updates. If the statistics of the first two groups
+Statistics are divided into three groups: Name Change Requests, DNS updates,
+and per-TSIG-key DNS updates. While the statistics of the first two groups
 are cumulative, i.e. not affected by configuration change or reload,
-per key statistics are reset to 0 when the underlying object is
+per-key statistics are reset to 0 when the underlying object is
 (re)created.
 
-Currently the statistics management is limited:
+Currently Kea's statistics management has the following limitations:
 
--  only integer samples (i.e. a counter and a timestamp) are used
--  the maximum sample count is 1
--  there is no API to remove one or all statistics
--  there is no API to set the maximum sample count or age
+-  only integer samples (i.e. a counter and a timestamp) are used;
+-  the maximum sample count is 1;
+-  there is no API to remove one or all statistics;
+-  there is no API to set the maximum sample count or age.
 
 .. note::
 
-    Hook libraries like the GSS-TSIG add new statistics.
+    Hook libraries, such as the the ISC subscriber-only GSS-TSIG library,
+    make new statistics available in Kea.
 
-A reference about Kea statistics can be found at :ref:`stats`.
+More information about Kea statistics can be found at :ref:`stats`.
 
 NCR Statistics
 --------------
 
 The Name Change Request statistics are:
 
--  ``ncr-received`` - received valid NCRs
--  ``ncr-invalid`` - received invalid NCRs
--  ``ncr-error`` - errors in NCR receptions other than I/O cancel on shutdown
+-  ``ncr-received`` - the number of received valid NCRs
+-  ``ncr-invalid`` - the number of received invalid NCRs
+-  ``ncr-error`` - the number of errors in NCR receptions other than an I/O cancel on shutdown
 
 DNS Update Statistics
 ---------------------
 
 The global DNS update statistics are:
 
--  ``update-sent`` - sent DNS updates
--  ``update-signed`` - sent DNS updates protected by TSIG
--  ``update-unsigned`` - sent DNS updates not protected by TSIG
--  ``update-success`` - DNS updates which completed with a success
--  ``update-timeout`` - DNS updates which completed on timeout
--  ``update-error`` - DNS updates which completed with an error other than
+-  ``update-sent`` - the number of DNS updates sent
+-  ``update-signed`` - the number of DNS updates sent and protected by TSIG
+-  ``update-unsigned`` - the number of DNS updates sent and not protected by TSIG
+-  ``update-success`` - the number of DNS updates which successfully completed
+-  ``update-timeout`` - the number of DNS updates which completed on timeout
+-  ``update-error`` - the number of DNS updates which completed with an error other than
    timeout
 
-Per TSIG key DNS Update Statistics
+Per-TSIG-Key DNS Update Statistics
 ----------------------------------
 
 The per TSIG key DNS update statistics are:
 
--  ``update-sent`` - sent DNS updates
--  ``update-success`` - DNS updates which completed with a success
--  ``update-timeout`` - DNS updates which completed on timeout
--  ``update-error`` - DNS updates which completed with an error other than
+-  ``update-sent`` - the number of DNS updates sent
+-  ``update-success`` - the number of DNS updates which successfully completed
+-  ``update-timeout`` - the number of DNS updates which completed on timeout
+-  ``update-error`` - the number of DNS updates which completed with an error other than
    timeout
 
-The name of a per key statistics is ``key[<key-DNS-name>].<stat-name>``,
-for instance the name of the ``update-sent`` statistics for the
+The name format for per-key statistics is ``key[<key-DNS-name>].<stat-name>``:
+for instance, the name of the ``update-sent`` statistics for the
 ``key.example.com.`` TSIG key is ``key[key.example.com.].update-sent``.
 
 DHCP-DDNS Server Limitations
 ============================
 
-The following are the current limitations of the DHCP-DDNS Server.
+The following are the current limitations of the DHCP-DDNS server.
 
 -  Requests received from the DHCP servers are placed in a queue until
    they are processed. Currently, all queued requests are lost if the
@@ -987,19 +989,19 @@ Supported Standards
 The following RFCs are supported by the DHCP-DDNS server:
 
 - *Secret Key Transaction Authentication for DNS (TSIG)*, `RFC 2845
-  <https://tools.ietf.org/html/rfc2845>`__: All DNS Update packets sent and
-  received by DHCP-DDNS server can be protected by TSIG signatures.
+  <https://tools.ietf.org/html/rfc2845>`__: All DNS update packets sent and
+  received by the DHCP-DDNS server can be protected by TSIG signatures.
 
 - *Dynamic Updates in the Domain Name System (DNS UPDATE)*, `RFC 2136
-  <https://tools.ietf.org/html/rfc2136>`__: The whole DNS Update mechanism is
+  <https://tools.ietf.org/html/rfc2136>`__: The complete DNS update mechanism is
   supported.
 
 - *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
   Configuration Protocol (DHCP) Clients*, `RFC 4703
-  <https://tools.ietf.org/html/rfc4703>`__: The DHCP-DDNS takes care of the
-  conflict resolution. This capability is used by DHCPv4 and DHCPv6 servers.
+  <https://tools.ietf.org/html/rfc4703>`__: DHCP-DDNS takes care of
+  conflict resolution, for both DHCPv4 and DHCPv6 servers.
 
 - *A DNS Resource Record (RR) for Encoding Dynamic Host Configuration Protocol
   (DHCP) Information (DHCID RR)*, `RFC 4701
-  <https://tools.ietf.org/html/rfc4701>`__: The DHCP-DDNS server uses the DHCID
+  <https://tools.ietf.org/html/rfc4701>`__: The DHCP-DDNS server uses DHCID
   records.
