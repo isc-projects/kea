@@ -225,6 +225,26 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
                 [AC_MSG_RESULT([no])
                  continue])
 
+        AC_MSG_CHECKING(noreturn support)
+        feature="noreturn"
+        CPPFLAGS_SAVED=${CPPFLAGS}
+        CPPFLAGS="-Werror $CPPFLAGS"
+        AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                        [#include <cstdlib>
+                         [[[noreturn]]] void f() {exit(0);}],
+                        [int i = 0;
+                         switch (i) {
+                         case 0:
+                         f();
+                         default:
+                         break;
+                         }])],
+                [AC_MSG_RESULT([yes])],
+                [AC_MSG_RESULT([no])
+                 continue])
+         CPPFLAGS=$CPPFLAGS_SAVED
+
          AC_MSG_CHECKING(chrono support)
          feature="chrono"
          AC_COMPILE_IFELSE(
