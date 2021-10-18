@@ -28,13 +28,13 @@ ways:
 
 -  Implicitly, using a vendor class option or another built-in condition.
 
--  Using an expression which evaluates to true.
+-  Using an expression which evaluates to "true".
 
 -  Using static host reservations, a shared network, a subnet, etc.
 
 -  Using a hook.
 
-It is envisaged that client classification will be used to change the
+Client classification can be used to change the
 behavior of almost any part of the DHCP message processing. There are
 currently five mechanisms that take advantage of client classification:
 subnet selection, pool selection, definition of DHCPv4 private (codes
@@ -44,22 +44,22 @@ TFTP server address and the boot file field.
 
 The classification process is conducted in several steps:
 
-1.  The ALL class is associated with the incoming packet.
+1.  The "ALL" class is associated with the incoming packet.
 
 2.  Vendor class options are processed.
 
 3.  Classes with matching expressions and not marked for later evaluation ("on
-    request" or depending on the KNOWN/UNKNOWN built-in classes)
+    request" or depending on the "KNOWN"/"UNKNOWN" built-in classes)
     are processed in the order they are defined in the
     configuration; the boolean expression is evaluated and, if it
-    returns true ("match"), the incoming packet is associated with the
+    returns "true" (a match), the incoming packet is associated with the
     class.
 
 4.  If a private or code 43 DHCPv4 option is received, it is decoded
-    following its client class or global (or, for option 43, last
-    resort) definition.
+    following its client-class or global (or, for option 43,
+    last-resort) definition.
 
-5.  When the incoming packet belongs to the special class, `DROP`, it is
+5.  When the incoming packet belongs to the special class "DROP", it is
     dropped and an informational message is logged with the packet
     information.
 
@@ -67,30 +67,30 @@ The classification process is conducted in several steps:
     some subnets are reserved. More precisely: when choosing a subnet,
     the server iterates over all of the subnets that are feasible given
     the information found in the packet (client address, relay address,
-    etc.). It uses the first subnet it finds that either doesn't have a
+    etc.). It uses the first subnet it finds that either has no
     class associated with it, or has a class which matches one of the
     packet's classes.
 
 7.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
-    network, the packet is associated with the KNOWN class and all
+    network, the packet is associated with the "KNOWN" class and all
     classes of the host reservation. If a reservation is not found, the
-    packet is assigned to the UNKNOWN class.
+    packet is assigned to the "UNKNOWN" class.
 
 8.  Classes with matching expressions - directly, or indirectly using the
-    KNOWN/UNKNOWN built-in classes and not marked for later evaluation ("on
+    "KNOWN"/"UNKNOWN" built-in classes and not marked for later evaluation ("on
     request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
-    returns true ("match"), the incoming packet is associated with the
+    returns "true" (a match), the incoming packet is associated with the
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
-    possible to use KNOWN/UNKNOWN classes to select a shared network or
+    possible to use "KNOWN"/"UNKNOWN" classes to select a shared network or
     a subnet.
 
-9.  When the incoming packet belongs to the special class, `DROP`, it is
+9.  When the incoming packet belongs to the special class "DROP", it is
     dropped and an informational message is logged with the packet
-    information. Since Kea version 1.9.8 it is allowed to make DROP
-    class dependent on KNOWN/UNKNOWN classes.
+    information. Since Kea version 1.9.8, it is permissible to make the "DROP"
+    class dependent on the "KNOWN"/"UNKNOWN" classes.
 
 10. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
@@ -102,10 +102,8 @@ The classification process is conducted in several steps:
 
 12. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
-    For DHCPv4 private and code 43 options, this includes class local
-    option definitions.
-
-..
+    For DHCPv4 private and code 43 options, this includes class
+    local-option definitions.
 
 .. note::
 
@@ -117,7 +115,7 @@ When determining which options to include in the response, the server
 examines the union of options from all of the assigned classes. If two
 or more classes include the same option, the value from the first class
 examined is used; classes are examined in the order they were
-associated, so ALL is always the first class and matching required
+associated, so "ALL" is always the first class and matching required
 classes are last.
 
 As an example, imagine that an incoming packet matches two classes.
@@ -127,7 +125,7 @@ for an NTP server and a POP3 server (option 70 in DHCPv4). The server
 examines the three options - NTP, SMTP, and POP3 - and returns any that
 the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
-value is obtained determined as explained in the previous paragraph.
+value is obtained is determined as explained in the previous paragraph.
 
 .. note::
 
@@ -140,34 +138,34 @@ value is obtained determined as explained in the previous paragraph.
 Built-in Client Classes
 =======================
 
-Some classes are built-in, so they do not need to be defined. The main
-example uses Vendor Class information: the server checks whether an
+Some classes are built-in, so they do not need to be defined.
+Vendor class information is the primary example: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
-it does, the content of that option is prepended with "VENDOR_CLASS\_"
+it does, the content of that option is prepended with ``VENDOR_CLASS_``
 and the result is interpreted as a class. For example, modern cable
 modems send this option with value "docsis3.0", so the packet belongs to
-class "VENDOR_CLASS_docsis3.0".
+class ``VENDOR_CLASS_docsis3.0``.
 
-The "HA\_" prefix is used by the High Availability hooks library to
+The ``HA_`` prefix is used by the High Availability hook library to
 designate certain servers to process DHCP packets as a result of load
-balancing. The class name is constructed by prepending the "HA\_" prefix
+balancing. The class name is constructed by prepending the ``HA_`` prefix
 to the name of the server which should process the DHCP packet. This
 server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
 be found in :ref:`high-availability-library`.
 
-The BOOTP class is used by the BOOTP hook library to classify and
+The "BOOTP" class is used by the BOOTP hook library to classify and
 respond to inbound BOOTP queries.
 
-Other examples are the ALL class, which all incoming packets belong to,
-and the KNOWN class, assigned when host reservations exist for a
-particular client. By convention, built-in classes' names begin with all
+Other examples are the "ALL" class, which all incoming packets belong to,
+and the "KNOWN" class, assigned when host reservations exist for a
+particular client. By convention, the names of built-in classes begin with all
 capital letters.
 
-Currently recognized built-in class names are ALL, KNOWN and UNKNOWN, and the
-prefixes VENDOR_CLASS\_, HA\_, AFTER\_, and EXTERNAL\_. Although the AFTER\_
-prefix is a provision for an as-yet-unwritten hook, the EXTERNAL\_
+Currently recognized built-in class names are "ALL", "KNOWN" and "UNKNOWN", and the
+prefixes ``VENDOR_CLASS_``, ``HA_``, ``AFTER_``, and ``EXTERNAL_``. Although the ``AFTER_``
+prefix is a provision for an as-yet-unwritten hook, the ``EXTERNAL_``
 prefix can be freely used; built-in classes are implicitly defined so
 they never raise warnings if they do not appear in the configuration.
 
@@ -200,9 +198,9 @@ Dependencies between classes are also checked. For instance, forward
 dependencies are rejected when the configuration is parsed; an
 expression can only depend on already-defined classes (including built-in
 classes) which are evaluated in a previous or the same evaluation phase.
-This does not apply to the KNOWN or UNKNOWN classes.
+This does not apply to the "KNOWN" or "UNKNOWN" classes.
 
-.. table:: List of Classification Values
+.. table:: List of classification values
 
    +-----------------------+-------------------------------+-----------------------+
    | Name                  | Example expression            | Example value         |
@@ -345,71 +343,71 @@ Notes:
    0x00000001 instead of 0x1 or 0x01. Also, make sure the value is
    specified in network order, e.g. 1 is represented as 0x00000001.
 
--  "option[code].hex" extracts the value of the option with the code
-   "code" from the incoming packet. If the packet doesn't contain the
+-  ``option[code].hex`` extracts the value of the option with the code
+   "code" from the incoming packet. If the packet does not contain the
    option, it returns an empty string. The string is presented as a byte
    string of the option payload, without the type code or length fields.
 
--  "option[code].exists" checks whether an option with the code "code"
+-  ``option[code].exists`` checks whether an option with the code "code"
    is present in the incoming packet. It can be used with empty options.
 
--  "member('foobar')" checks whether the packet belongs to the client
+-  ``member('foobar')`` checks whether the packet belongs to the client
    class "foobar". To avoid dependency loops, the configuration file
    parser verifies whether client classes were already defined or are
-   built-in, i.e., beginning by "VENDOR_CLASS\_", "AFTER\_" (for the
-   to-come "after" hook) and "EXTERNAL\_" or equal to "ALL", "KNOWN",
+   built-in, i.e., beginning with ``VENDOR_CLASS_``, ``AFTER_`` (for the
+   to-come "after" hook) and ``EXTERNAL_`` or equal to "ALL", "KNOWN",
    "UNKNOWN", etc.
 
    "known" and "unknown" are shorthand for "member('KNOWN')" and "not
    member('KNOWN')". Note that the evaluation of any expression using
-   directly or indirectly the "KNOWN" class is deferred after the host
+   the "KNOWN" class (directly or indirectly) is deferred after the host
    reservation lookup (i.e. when the "KNOWN" or "UNKNOWN" partition is
    determined).
 
--  "relay4[code].hex" attempts to extract the value of the sub-option
+-  ``relay4[code].hex`` attempts to extract the value of the sub-option
    "code" from the option inserted as the DHCPv4 Relay Agent Information
-   (82) option. If the packet doesn't contain a RAI option, or the RAI
-   option doesn't contain the requested sub-option, the expression
+   (82) option. If the packet does not contain a RAI option, or the RAI
+   option does not contain the requested sub-option, the expression
    returns an empty string. The string is presented as a byte string of
    the option payload without the type code or length fields. This
    expression is allowed in DHCPv4 only.
 
--  "relay4" shares the same representation types as "option"; for
-   instance, "relay4[code].exists" is supported.
+-  ``relay4`` shares the same representation types as ``option``; for
+   instance, ``relay4[code].exists`` is supported.
 
--  "relay6[nest]" allows access to the encapsulations used by any DHCPv6
+-  ``relay6[nest]`` allows access to the encapsulations used by any DHCPv6
    relays that forwarded the packet. The "nest" level specifies the
    relay from which to extract the information, with a value of 0
    indicating the relay closest to the DHCPv6 server. Negative values
-   allow specifying relays counted from the DHCPv6 client, -1 indicating
+   allow relays to be specified counting from the DHCPv6 client, with -1 indicating
    the relay closest to the client. In general, a negative "nest" level is
-   the same as the number of relays + "nest" level. If the requested
-   encapsulation doesn't exist, an empty string "" is returned. This
+   the same as the number of relays plus "nest" level. If the requested
+   encapsulation does not exist, an empty string "" is returned. This
    expression is allowed in DHCPv6 only.
 
--  "relay6[nest].option[code]" shares the same representation types as
-   "option"; for instance, "relay6[nest].option[code].exists" is
+-  ``relay6[nest].option[code]`` shares the same representation types as
+   ``option``; for instance, ``relay6[nest].option[code].exists`` is
    supported.
 
 -  Expressions starting with "pkt4" can be used only in DHCPv4. They
    allow access to DHCPv4 message fields.
 
 -  "pkt6" refers to information from the client request. To access any
-   information from an intermediate relay use "relay6". "pkt6.msgtype"
-   and "pkt6.transid" output a 4-byte binary string for the message type
-   or transaction id. For example the message type SOLICIT will be
-   "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
+   information from an intermediate relay, use "relay6". ``pkt6.msgtype``
+   and ``pkt6.transid`` output a 4-byte binary string for the message type
+   or transaction ID. For example, the message type ``SOLICIT`` is
+   "0x00000001" or simply 1, as in ``pkt6.msgtype == 1``.
 
--  Vendor option means the Vendor-Identifying Vendor-Specific Information
+-  "Vendor option" means the Vendor-Identifying Vendor-Specific Information
    option in DHCPv4 (code 125; see `Section 4 of RFC
-   3925 <https://tools.ietf.org/html/rfc3925#section-4>`__) and
+   3925 <https://tools.ietf.org/html/rfc3925#section-4>`__) and the
    Vendor-Specific Information Option in DHCPv6 (code 17, defined in
    `Section 21.17 of RFC
-   8415 <https://tools.ietf.org/html/rfc8415#section-21.17>`__). Vendor
-   class option means Vendor-Identifying Vendor Class Option in DHCPv4
+   8415 <https://tools.ietf.org/html/rfc8415#section-21.17>`__). "Vendor
+   class option" means the Vendor-Identifying Vendor Class Option in DHCPv4
    (code 124; see `Section 3 of RFC
    3925 <https://tools.ietf.org/html/rfc3925#section-3>`__) in DHCPv4 and
-   Class Option in DHCPv6 (code 16; see `Section 21.16 of RFC
+   the Class Option in DHCPv6 (code 16; see `Section 21.16 of RFC
    8415 <https://tools.ietf.org/html/rfc8415#section-21.16>`__). Vendor
    options may have sub-options that are referenced by their codes.
    Vendor class options do not have sub-options, but rather data chunks,
@@ -417,8 +415,8 @@ Notes:
    chunk, index 1 is for the second data chunk (if present), etc.
 
 -  In the vendor and vendor-class constructs an asterisk (*) or 0 can be
-   used to specify a wildcard enterprise-id value, i.e. it will match
-   any enterprise-id value.
+   used to specify a wildcard ``enterprise-id`` value, i.e. it will match
+   any ``enterprise-id`` value.
 
 -  Vendor Class Identifier (option 60 in DHCPv4) can be accessed using the
    option[60] expression.
@@ -427,13 +425,13 @@ Notes:
    8415 <https://tools.ietf.org/html/rfc8415>`__ allow for multiple
    instances of vendor options to appear in a single message. The client
    classification code currently examines the first instance if more
-   than one appear. For the vendor.enterprise and vendor-class.enterprise
+   than one appear. For the ``vendor.enterprise`` and ``vendor-class.enterprise``
    expressions, the value from the first instance is returned. Please
    submit a feature request on the
    `Kea GitLab site <https://gitlab.isc.org/isc-projects/kea>`__ to request
    support for multiple instances.
 
-.. table:: List of Classification Expressions
+.. table:: List of classification expressions
 
    +-----------------------+-------------------------+-----------------------+
    | Name                  | Example                 | Description           |
@@ -470,7 +468,7 @@ Notes:
    |                       |                         | e.g. 0a:1b:2c:3e      |
    +-----------------------+-------------------------+-----------------------+
 
-.. table:: List of Conversion to Text Expressions
+.. table:: List of conversion-to-text expressions
 
    +-----------------------+---------------------------+------------------------+
    | Name                  | Example                   | Description            |
@@ -481,27 +479,27 @@ Notes:
    |                       |                           | IPv6 address in human  |
    |                       |                           | readable format        |
    +-----------------------+---------------------------+------------------------+
-   | Int8ToText            | int8totext (-1)           | Represents the 8 bit   |
+   | Int8ToText            | int8totext (-1)           | Represents the 8-bit   |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | Int16ToText           | int16totext (-1)          | Represents the 16 bit  |
+   | Int16ToText           | int16totext (-1)          | Represents the 16-bit  |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | Int32ToText           | int32totext (-1)          | Represents the 32 bit  |
+   | Int32ToText           | int32totext (-1)          | Represents the 32-bit  |
    |                       |                           | signed integer in text |
    |                       |                           | format                 |
    +-----------------------+---------------------------+------------------------+
-   | UInt8ToText           | uint8totext (255)         | Represents the 8 bit   |
+   | UInt8ToText           | uint8totext (255)         | Represents the 8-bit   |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+
-   | UInt16ToText          | uint16totext (65535)      | Represents the 16 bit  |
+   | UInt16ToText          | uint16totext (65535)      | Represents the 16-bit  |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+
-   | UInt32ToText          | uint32totext (4294967295) | Represents the 32 bit  |
+   | UInt32ToText          | uint32totext (4294967295) | Represents the 32-bit  |
    |                       |                           | unsigned integer in    |
    |                       |                           | text format            |
    +-----------------------+---------------------------+------------------------+
@@ -511,19 +509,20 @@ Notes:
 The conversion operators can be used to transform data from binary to the text
 representation. The only requirement is that the input data type length matches
 an expected value.
-The AddressToText token expects 4 bytes for IPv4 addresses or 16 bytes for IPv6
-addresses. The Int8ToText and UInt8ToText expect 1 byte, the Int16ToText and
-UInt16ToText expect 2 bytes and Int32ToText and UInt32ToText expect 4 bytes.
+
+The ``AddressToText`` token expects 4 bytes for IPv4 addresses or 16 bytes for IPv6
+addresses. The ``Int8ToText`` and ``UInt8ToText`` tokens expect 1 byte, the ``Int16ToText`` and
+``UInt16ToText`` tokens expect 2 bytes, and ``Int32ToText`` and ``UInt32ToText`` expect 4 bytes.
 For all conversion tokens, if the data length is 0, the result string is empty.
 
-Logical operators
+Logical Operators
 -----------------
 
 The Not, And, and Or logical operators are the common operators. Not has
 the highest precedence and Or the lowest. And and Or are (left)
 associative. Parentheses around a logical expression can be used to
-enforce a specific grouping; for instance, in "A and (B or C)" (without
-parentheses "A and B or C" means "(A and B) or C").
+enforce a specific grouping; for instance, in "A and (B or C)". Without
+parentheses, "A and B or C" means "(A and B) or C".
 
 Substring
 ---------
@@ -559,7 +558,7 @@ of its two arguments. For instance:
 
            concat('foo', 'bar') == 'foobar'
 
-For user convenience Kea version 1.9.8 added an associative operator
+For user convenience, Kea version 1.9.8 added an associative operator
 version of the concat function. For instance:
 ::
 
@@ -602,8 +601,6 @@ digits separated by the separator, e.g ':', '-', '' (empty separator).
              hexstring(pkt4.mac, ':')
 
 
-..
-
 .. note::
 
    The expression for each class is executed on each packet received. If
@@ -624,7 +621,7 @@ definition, and only-if-required flag are optional.
 
 The test expression is a string containing the logical expression used
 to determine membership in the class. The entire expression is in double
-quotes.
+quotes (").
 
 The option data is a list which defines any options that should be
 assigned to members of this class.
@@ -635,23 +632,23 @@ The option definition is for DHCPv4 option 43
 
 Usually the test expression is evaluated before subnet selection, but in
 some cases it is useful to evaluate it later when the subnet,
-shared network, or pools are known but output option processing has not yet
-been done. The only-if-required flag, false by default, allows the
+shared network, or pools are known but output-option processing has not yet
+been done. The only-if-required flag, which is "false" by default, allows the
 evaluation of the test expression only when it is required, i.e. in a
-require-client-classes list of the selected subnet, shared network, or
+``require-client-classes`` list of the selected subnet, shared network, or
 pool.
 
-The require-client-classes list which is valid for shared-network,
-subnet, and pool scope specifies the classes which are evaluated in the
-second pass before output option processing. The list is built in the
+The ``require-client-classes`` list, which is valid for shared-network,
+subnet, and pool scope, specifies the classes which are evaluated in the
+second pass before output-option processing. The list is built in the
 reversed precedence order of option data, i.e. an option data item in a
 subnet takes precedence over one in a shared network, but required class in
 a subnet is added after one in a shared network. The mechanism is
 related to the only-if-required flag but it is not mandatory that the
-flag be set to true.
+flag be set to "true".
 
-In the following example, the class named "Client_foo" is defined. It is
-comprised of all clients whose client ids (option 61) start with the
+In the following example, the class named ``Client_foo`` is defined. It is
+comprised of all clients whose client IDs (option 61) start with the
 string "foo". Members of this class will be given 192.0.2.1 and
 192.0.2.2 as their domain name servers.
 
@@ -677,11 +674,11 @@ string "foo". Members of this class will be given 192.0.2.1 and
        ...
    }
 
-This example shows a client class being defined for use by the DHCPv6
-server. In it the class named "Client_enterprise" is defined. It is
+The next example shows a client class being defined for use by the DHCPv6
+server. In it the class named ``Client_enterprise`` is defined. It is
 comprised of all clients whose client identifiers start with the given
-hex string (which would indicate a DUID based on an enterprise id of
-0xAABBCCDD). Members of this class will be given an 2001:db8:0::1 and
+hex string (which would indicate a DUID based on an enterprise ID of
+0xAABBCCDD). Members of this class will be given 2001:db8:0::1 and
 2001:db8:2::1 as their domain name servers.
 
 ::
@@ -708,7 +705,7 @@ hex string (which would indicate a DUID based on an enterprise id of
 
 .. _classification-using-host-reservations:
 
-Using Static Host Reservations In Classification
+Using Static Host Reservations in Classification
 ================================================
 
 Classes can be statically assigned to the clients using techniques
@@ -721,14 +718,14 @@ Configuring Subnets With Class Information
 ==========================================
 
 In certain cases it is beneficial to restrict access to certain subnets
-only to clients that belong to a given class, using the "client-class"
+only to clients that belong to a given class, using the ``client-class``
 keyword when defining the subnet.
 
 Let's assume that the server is connected to a network segment that uses
 the 192.0.2.0/24 prefix. The administrator of that network has decided
-that addresses from the range 192.0.2.10 to 192.0.2.20 are going to be
+that addresses from the range 192.0.2.10 to 192.0.2.20 will be
 managed by the DHCP4 server. Only clients belonging to client class
-Client_foo are allowed to use this subnet. Such a configuration can be
+``Client_foo`` are allowed to use this subnet. Such a configuration can be
 achieved in the following way:
 
 ::
@@ -762,8 +759,8 @@ achieved in the following way:
    }
 
 The following example shows how to restrict access to a DHCPv6 subnet. This
-configuration will restrict use of the addresses 2001:db8:1::1 to
-2001:db8:1::FFFF to members of the "Client_enterprise" class.
+configuration restricts use of the addresses in the range 2001:db8:1::1 to
+2001:db8:1::FFFF to members of the ``Client_enterprise`` class.
 
 ::
 
@@ -801,13 +798,13 @@ Configuring Pools With Class Information
 
 Similar to subnets, in certain cases access to certain address or prefix
 pools must be restricted to only clients that belong to a given class,
-using the "client-class" when defining the pool.
+using the ``client-class`` when defining the pool.
 
 Let's assume that the server is connected to a network segment that uses
 the 192.0.2.0/24 prefix. The administrator of that network has decided
 that addresses from the range 192.0.2.10 to 192.0.2.20 are going to be
 managed by the DHCP4 server. Only clients belonging to client class
-Client_foo are allowed to use this pool. Such a configuration can be
+``Client_foo`` are allowed to use this pool. Such a configuration can be
 achieved in the following way:
 
 ::
@@ -845,8 +842,8 @@ achieved in the following way:
    }
 
 The following example shows how to restrict access to an address pool. This
-configuration will restrict use of the addresses 2001:db8:1::1 to
-2001:db8:1::FFFF to members of the "Client_enterprise" class.
+configuration restricts use of the addresses in the range 2001:db8:1::1 to
+2001:db8:1::FFFF to members of the ``Client_enterprise`` class.
 
 ::
 
@@ -891,8 +888,8 @@ to members of the class, and they can be used to choose a subnet from
 which an address will be assigned to a class member.
 
 When supplying options, options defined as part of the class definition
-are considered "class globals." They will override any global options
-that may be defined and in turn will be overridden by any options
+are considered "class globals." They override any global options
+that may be defined, and in turn will be overridden by any options
 defined for an individual subnet.
 
 Classes and Hooks
@@ -915,7 +912,7 @@ description of the logging facility.
 
 To enable the debug statements in the classification system,
 the severity must be set to "DEBUG" and the debug level to at least 55.
-The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
+The specific loggers are ``kea-dhcp4.eval`` and ``kea-dhcp6.eval``.
 
 To understand the logging statements, it is essential to understand a bit
 about how expressions are evaluated; for a more complete description,
@@ -927,8 +924,8 @@ stack which represents the values being manipulated.
 
 The list of tokens is created when the configuration file is processed,
 with most expressions and values being converted to a token. The list is
-organized in reverse Polish notation. During execution, the list will be
-traversed in order; as each token is executed it will be able to pop
+organized in reverse Polish notation. During execution, the list is
+traversed in order; as each token is executed, it is able to pop
 values from the top of the stack and eventually push its result on the
 top of the stack. Imagine the following expression:
 
@@ -944,21 +941,21 @@ This will result in the following tokens:
           option, number (0), number (3), substring, text ('foo'), equals
 
 
-In this example the first three tokens will simply push values onto the
+In this example, the first three tokens will simply push values onto the
 stack. The substring token will then remove those three values and
 compute a result that it places on the stack. The text option also
-places a value on the stack and finally the equals token removes the two
+places a value on the stack, and finally the equals token removes the two
 tokens on the stack and places its result on the stack.
 
-When debug logging is enabled, each time a token is evaluated it will
-emit a log message indicating the values of any objects that were popped
-off of the value stack and any objects that were pushed onto the value
+When debug logging is enabled, each time a token is evaluated it
+emits a log message indicating the values of any objects that were popped
+off of the value stack, and any objects that were pushed onto the value
 stack.
 
-The values will be displayed as either text, if the command is known to
+The values are displayed as either text, if the command is known to
 use text values, or hexadecimal, if the command either uses binary values
 or can manipulate either text or binary values. For expressions that pop
-multiple values off the stack, the values will be displayed in the order
+multiple values off the stack, the values are displayed in the order
 they were popped. For most expressions this will not matter, but for the
 concat expression the values are displayed in reverse order from their
 written order in the expression.
@@ -988,10 +985,10 @@ The logging might then resemble this:
 
 .. note::
 
-   The debug logging may be quite verbose if there are a number of
+   The debug logging may be quite verbose if there are multiple
    expressions to evaluate; that is intended as an aid in helping
    create and debug expressions. Administrators should plan to disable debug
-   logging when the expressions are working correctly. Users may also
+   logging when expressions are working correctly. Users may also
    wish to include only one set of expressions at a time in the
    configuration file while debugging them, to limit the log
    statements. For example, when adding a new set of expressions, an administrator
