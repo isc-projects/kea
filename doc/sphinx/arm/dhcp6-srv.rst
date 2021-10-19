@@ -68,8 +68,8 @@ form: ``[runstatedir]/kea/[conf name].kea-dhcp6.pid`` where:
 
 -  ``conf name``: The configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
-   a pathname of "/usr/local/etc/kea/myconf.txt", the portion used would
-   be "myconf".
+   a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
+   be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
 server will issue a ``DHCP6_ALREADY_RUNNING`` log message and exit. It is
@@ -199,7 +199,7 @@ this:
 
 The next lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
-server to use ``memfile``, which is the simplest (and fastest) database
+server to use memfile, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a
 CSV (comma-separated values) file. This is a very simple configuration; usually the lease
 database configuration is more extensive and contains additional
@@ -242,7 +242,7 @@ syntax would be used:
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
-After all the parameters are specified, there are two contexts open: global
+After all the parameters are specified, there are two contexts open: ``global``
 and ``Dhcp6``; thus, two closing curly brackets must be used to close them.
 
 Lease Storage
@@ -250,7 +250,7 @@ Lease Storage
 
 All leases issued by the server are stored in the lease database.
 There are four database backends available: memfile
-(the default), MySQL, PostgreSQL, and  Cassandra (deprecated)
+(the default), MySQL, PostgreSQL, and Cassandra (deprecated)
 
 Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,7 +290,7 @@ can be used to configure the memfile backend.
    redundant (historical) information from the lease file and
    effectively reduces the lease file size. The cleanup process is
    described in more detail later in this section. The
-   default value of the ``lfc-interval`` is ``3600``. A value of 0
+   default value of the ``lfc-interval`` is "3600". A value of "0"
    disables the LFC.
 
 -  ``max-row-errors``: specifies the number of row errors before the server
@@ -416,8 +416,6 @@ the database host name must also be specified:
 
    "Dhcp6": { "lease-database": { "host": "remote-host-name", ... }, ... }
 
-(It should be noted that this configuration may have a severe impact on server performance.)
-
 For Cassandra, multiple contact points can be provided:
 
 ::
@@ -464,7 +462,7 @@ specified:
    "Dhcp6": { "lease-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts, the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
 only). For Cassandra, Kea uses an interface that connects to
@@ -489,15 +487,15 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 The possible values are:
 
--  ``stop-retry-exit`` disables the DHCP service while trying to automatically
+-  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
 
--  ``serve-retry-exit`` DHCP service continues while trying to automatically
+-  ``serve-retry-exit`` - continues the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
    ``max-reconnect-tries``.
 
--  ``serve-retry-continue`` DHCP service continues and does not shut down the
+-  ``serve-retry-continue`` - continues the DHCP service and does not shut down the
    server even if the recovery fails.
 
 .. note::
@@ -630,8 +628,6 @@ the database host name must also be specified:
 
    "Dhcp6": { "hosts-database": { "host": remote-host-name, ... }, ... }
 
-(Again, it should be noted that this configuration may have a severe impact on server performance.)
-
 Normally, the database is on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
 
@@ -652,10 +648,12 @@ specified:
    "Dhcp6": { "hosts-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts, the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only).
+only). For Cassandra, Kea uses an interface that connects to
+all nodes in a cluster at the same time. Any connectivity issues should
+be handled by internal Cassandra mechanisms.
 
 The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
@@ -761,7 +759,7 @@ the parameter is not specified.
 
 .. note::
 
-   The ``readonly`` parameter is currently only supported for MySQL and
+   The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
 
 .. _dhcp6-interface-configuration:
@@ -808,8 +806,7 @@ with explicit interface names:
        ...
    }
 
-
-This form of usage should only be used when it is
+This format should only be used when it is
 desired to temporarily override a list of interface names and listen on
 all interfaces.
 
@@ -927,7 +924,7 @@ configured to listen on (see :ref:`dhcp6-interface-configuration`). In some case
 useful to configure a server to handle incoming traffic sent to global
 unicast addresses as well; the most common reason for this is to have
 relays send their traffic to the server directly. To configure the
-server to listen on a specific unicast address, add a slash after the interface name,
+server to listen on a specific unicast address, add a slash (/) after the interface name,
 followed by the global unicast
 address on which the server should listen. The server will listen to this
 address in addition to normal link-local binding and listening on the
@@ -977,7 +974,7 @@ server must be configured with at least one subnet and one pool of
 dynamic addresses to be managed. For example, assume that the server is
 connected to a network segment that uses the 2001:db8:1::/64 prefix. The
 administrator of that network decides that addresses from the range
-2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the ``Dhcp6``
+2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the DHCP6
 server. Such a configuration can be achieved in the following way:
 
 ::
@@ -1121,7 +1118,7 @@ The excluded prefix is intended to be used on a link through which the delegatin
 exchanges DHCPv6 messages with the requesting router. The configuration
 example below demonstrates how to specify an excluded prefix within a
 prefix pool definition. The excluded prefix
-"2001:db8:1:8000:cafe:80::/72" will be sent to a requesting router which
+``2001:db8:1:8000:cafe:80::/72`` will be sent to a requesting router which
 includes the Prefix Exclude option in the Option Request option (ORO),
 and which is delegated a prefix from this pool.
 
@@ -1178,7 +1175,7 @@ option name. (For a complete list of currently supported names, see
 :ref:`dhcp6-std-options-list`.) The next line specifies the
 option code, which must match one of the values from that list. The line
 beginning with ``space`` specifies the option space, which must always
-be set to "dhcp6" as these are standard DHCPv6 options. For other name
+be set to ``dhcp6`` as these are standard DHCPv6 options. For other name
 spaces, including custom option spaces, see :ref:`dhcp6-option-spaces`. The following line
 specifies the format in which the data will be entered; use of CSV
 (comma-separated values) is recommended. Finally, the ``data`` line
@@ -1187,7 +1184,7 @@ normal text, with values separated by commas if more than one value is
 allowed.
 
 Options can also be configured as hexadecimal values. If ``csv-format`` is
-set to "false", the option data must be specified as a hexadecimal string.
+set to ``false``, the option data must be specified as a hexadecimal string.
 The following commands configure the ``dns-servers`` option for all subnets
 with the addresses 2001:db8:1::cafe and 2001:db8:1::babe.
 
@@ -1254,8 +1251,8 @@ Most of the parameters in the ``option-data`` structure are optional and
 can be omitted in some circumstances, as discussed in :ref:`dhcp6-option-data-defaults`.
 Only one of ``name`` or ``code``
 is required; it is not necessary to specify both. Space has a default value
-of "dhcp6", so this can be skipped as well if a regular (not
-encapsulated) DHCPv6 option is defined. Finally, ``csv-format`` defaults to "true", so it
+of ``dhcp6``, so this can be skipped as well if a regular (not
+encapsulated) DHCPv6 option is defined. Finally, ``csv-format`` defaults to ``true``, so it
 too can be skipped, unless the option value is specified as
 hexstring. Therefore, the above example can be simplified to:
 
@@ -1276,7 +1273,7 @@ Defined options are added to the response when the client requests them,
 as well as any options required by a protocol. An administrator can also
 specify that an option is always sent, even if a client did not
 specifically request it. To enforce the addition of a particular option,
-set the ``always-send`` flag to "true", as in:
+set the ``always-send`` flag to ``true``, as in:
 
 ::
 
@@ -1402,14 +1399,8 @@ Options can also be specified in class or host-reservation scope. The
 current Kea options precedence order is (from most important): host
 reservation, pool, subnet, shared network, class, global.
 
-The currently supported standard DHCPv6 options are listed in
-:ref:`dhcp6-std-options-list`. "Name" and "Code" are the
-values that should be used as a name/code in the option-data structures.
-"Type" designates the format of the data; the meanings of the various
-types are given in :ref:`dhcp-types`.
-
 When a data field is a string and that string contains the comma (``,``;
-U+002C) character, the comma must be escaped with two backslashes (``\``;
+U+002C) character, the comma must be escaped with two backslashes (``\\,``;
 U+005C). This double escape is required because both the routine
 splitting CSV data into fields and JSON use the same escape character; a
 single escape (``\,``) would make the JSON invalid. For example, the string
@@ -1455,9 +1446,15 @@ definition should match the option format described in the relevant RFC,
 but the configuration mechanism allows any option format as there is
 currently no way to validate it.
 
+The currently supported standard DHCPv6 options are listed in
+the table below. "Name" and "Code" are the
+values that should be used as a name/code in the option-data structures.
+"Type" designates the format of the data; the meanings of the various
+types are given in :ref:`dhcp-types`.
+
 .. _dhcp6-std-options-list:
 
-.. table:: List of Standard DHCPv6 Options configurable by an administrator
+.. table:: List of standard DHCPv6 options configurable by an administrator
 
    +--------------------------+-----------------+-----------------+-----------------+
    | Name                     | Code            | Type            | Array?          |
@@ -4502,7 +4499,7 @@ following can be used:
 
 When using database backends, the global host reservations are
 distinguished from regular reservations by using a ``subnet-id`` value of
-zero.
+0.
 
 .. _pool-selection-with-class-reservations6:
 
@@ -6526,7 +6523,7 @@ Since Kea 1.7.7, the DHCPv6 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which are kept. The special value of zero
+  number of samples which are kept. The special value of 0
   indicates that a default maximum age should be used.
 
 - ``statistic-default-sample-age`` - determines the default maximum
