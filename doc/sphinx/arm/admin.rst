@@ -6,8 +6,8 @@ Kea Database Administration
 
 .. _kea-database-version:
 
-Databases and Database Version Numbers
-======================================
+Databases and Schema Versions
+=============================
 
 Kea may be configured to use a database as storage for leases or as a
 source of servers' configurations and host reservations (i.e. static
@@ -15,27 +15,25 @@ assignments of addresses, prefixes, options, etc.). As Kea is
 updated, new database schemas are introduced to facilitate new
 features and correct discovered issues with the existing schemas.
 
-Each version of Kea expects a particular structure in the backend and
-checks for this by examining the version of the database it is using.
-Separate version numbers are maintained for the backends, independent of the
-version of Kea itself. It is possible that the backend version will stay
-the same through several Kea revisions; similarly, it is possible that
-the version of the backend may go up several revisions during a single Kea
-version upgrade. Versions for each backend are also independent, so an increment in
-the MySQL backend version does not imply an increment in that of
-PostgreSQL.
+Each version of Kea expects a particular schema structure and checks for this by
+examining the version of the database it is using. Separate version numbers are
+maintained for the schemas, independent of the version of Kea itself. It is
+possible that the schema version will stay the same through several Kea
+revisions; similarly, it is possible that the version of the schema may go up
+several revisions during a single Kea version upgrade. Versions for each backend
+type are also independent, so an increment in the MySQL backend version does not
+imply an increment in that of PostgreSQL.
 
-Backend versions are specified in a major.minor format. The minor number
-is increased when there are backward-compatible changes introduced: for
-example, when a new index is added. It is desirable but not mandatory
-to apply such a change; running an older backend version is possible.
-(Although, in the example given, running without the new index may
-introduce a performance penalty.) On the other hand, the
-major number is increased when an incompatible change is introduced: for
-example, an extra column is added to a table. If Kea attempts to run on a
-backend that is too old (as indicated by a mismatched backend major
-version number), it will fail; administrative action is
-required to upgrade the backend.
+Schema versions are specified in a major.minor format. For the most recent
+versions, the minor version is always zero and only the major version is
+incremented.
+
+Historically, the minor version used to be incremented when backward-compatible
+changes were introduced to the schema: for example - when a new index is added.
+This was opposed to incrementing the major version which implied an incompatible
+schema change: for example - changing the type of an existing column. If Kea
+attempts to run on a schema that is too old, as indicated by a mismatched schema
+version, it will fail; administrative action is required to upgrade the schema.
 
 .. _kea-admin:
 
@@ -292,7 +290,7 @@ To create the database:
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_create.mysql
 
-   (where "path-to-kea" is the location where Kea is installed.)
+   (where ``path-to-kea`` is the location where Kea is installed.)
 
     The database may also be dropped manually as follows:
 
@@ -301,7 +299,7 @@ To create the database:
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_drop.mysql
 
-   (where "path-to-kea" is the location where Kea is installed.)
+   (where ``path-to-kea`` is the location where Kea is installed.)
 
 .. warning::
     Dropping the database results in the unrecoverable loss of any data it contains.
@@ -519,7 +517,7 @@ which the servers will access it. A number of steps are required:
       COMMIT
       $
 
-   ("path-to-kea" is the location where Kea is installed.)
+   (``path-to-kea`` is the location where Kea is installed.)
 
    If instead an error is encountered, such as:
 
@@ -645,7 +643,7 @@ To create the database:
 
       cqlsh -k keyspace-name -f path-to-kea/share/kea/scripts/cql/dhcpdb_create.cql
 
-   (path-to-kea is the location where Kea is installed.)
+   (``path-to-kea`` is the location where Kea is installed.)
 
 It is also possible to exit Cassandra and create the tables using
 the ``kea-admin`` tool. If the tables were not created in Step 4, do so now by

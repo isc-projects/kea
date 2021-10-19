@@ -108,7 +108,7 @@ different from the HA peer URLs, which are strictly
 for internal HA traffic between the peers. User commands should
 still be sent via CA.
 
-The ``trust-anchor``, ``cert-file``, ```key-file``, and ``cert-required``
+The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
 are not specified, HTTP is used. The TLS/HTTPS support in Kea is
 described in :ref:`tls`.
