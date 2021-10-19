@@ -25,7 +25,8 @@ During dynamic reconfiguration, all backends are disconnected and then
 reconnected using the new configuration. If connectivity to any of the
 backends cannot be established, the server logs a fatal error but remains
 up. It is able to process commands but does not serve clients. This
-allows the configuration to be corrected via the command line, if required.
+allows the configuration to be corrected via the ``config-set`` or
+``remote-*`` commands, if required.
 
 During normal operations, if connectivity to any of the backends is lost and
 automatic recovery for that backend is enabled, the server disconnects from the
