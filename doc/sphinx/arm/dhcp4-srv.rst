@@ -72,13 +72,13 @@ form ``[runstatedir]/kea/[conf name].kea-dhcp4.pid``, where:
    be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
-server issues a DHCP4_ALREADY_RUNNING log message and exits. It is
+server issues a ``DHCP4_ALREADY_RUNNING`` log message and exits. It is
 possible, though unlikely, that the file is a remnant of a system crash
 and the process to which the PID belongs is unrelated to Kea. In such a
 case, it would be necessary to manually delete the PID file.
 
 The server can be stopped using the ``kill`` command. When running in a
-console, the server can also be shut down by pressing ctrl-c. Kea detects
+console, the server can also be shut down by pressing Ctrl-c. Kea detects
 the key combination and shuts down gracefully.
 
 .. _dhcp4-configuration:
@@ -154,10 +154,10 @@ above, this object is called ``Dhcp4``.
    including the ``Logging`` object; its previous content, the list
    of loggers, must now be inside the ``Dhcp4`` object.
 
-The Dhcp4 configuration starts with the ``"Dhcp4": {`` line and ends
+The ``Dhcp4`` configuration starts with the ``"Dhcp4": {`` line and ends
 with the corresponding closing brace (in the above example, the brace
 after the last comment). Everything defined between those lines is
-considered to be the Dhcp4 configuration.
+considered to be the ``Dhcp4`` configuration.
 
 In general, the order in which those parameters appear does not
 matter, but there are two caveats. The first one is that the
@@ -187,7 +187,7 @@ client begins the renewal and rebind processes.
    Beginning with Kea 1.6.0, the lease valid-lifetime is extended from a
    single value to a triplet with minimum, default, and maximum values using
    ``min-valid-lifetime``, ``valid-lifetime``, and ``max-valid-lifetime``.
-   As of Kea 1.9.5, these values may be specified in client classes. The procedure
+   Since Kea 1.9.5, these values may be specified in client classes. The procedure
    the server uses to select which lifetime value to use is as follows:
 
    If the client query is a BOOTP query, the server always uses the
@@ -240,7 +240,7 @@ like this:
 
 The next couple of lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
-server to use ``memfile``, which is the simplest and fastest database
+server to use memfile, which is the simplest and fastest database
 backend. It uses an in-memory database and stores leases on disk in a
 CSV (comma-separated values) file. This is a very simple configuration example; usually the lease
 database configuration is more extensive and contains additional
@@ -248,7 +248,7 @@ parameters. Note that ``lease-database`` is an object and opens up a new
 scope, using an opening brace. Its parameters (just one in this example:
 ``type``) follow. If there were more than one, they would be separated
 by commas. This scope is closed with a closing brace. As more parameters
-for the Dhcp4 definition follow, a trailing comma is present.
+for the ``Dhcp4`` definition follow, a trailing comma is present.
 
 Finally, we need to define a list of IPv4 subnets. This is the most
 important DHCPv4 configuration structure, as the server uses that
@@ -288,7 +288,7 @@ Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
 After all the parameters have been specified, there are two contexts open:
-global and Dhcp4; thus, two closing curly brackets are needed to close
+``global`` and ``Dhcp4``; thus, two closing curly brackets are needed to close
 them.
 
 Lease Storage
@@ -310,9 +310,9 @@ less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
 
 The configuration of the memfile backend is controlled through
-the Dhcp4/lease-database parameters. The ``type`` parameter is mandatory
+the ``Dhcp4``/``lease-database`` parameters. The ``type`` parameter is mandatory
 and specifies which storage for leases the server should use, through
-the ``memfile`` value. The following list gives additional optional parameters that
+the ``"memfile"`` value. The following list gives additional optional parameters that
 can be used to configure the memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
@@ -328,14 +328,14 @@ can be used to configure the memfile backend.
 
 -  ``name``: specifies an absolute location of the lease file in which
    new leases and lease updates will be recorded. The default value for
-   this parameter is "[kea-install-dir]/var/lib/kea/kea-leases4.csv".
+   this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases4.csv"``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes
    redundant (historical) information from the lease file and
    effectively reduces the lease file size. The cleanup process is
    described in more detail later in this section. The default
-   value of the ``lfc-interval`` is ``3600``. A value of 0 disables the
+   value of the ``lfc-interval`` is "3600". A value of "0" disables the
    LFC.
 
 -  ``max-row-errors``: specifies the number of row errors before the server
@@ -344,9 +344,11 @@ can be used to configure the memfile backend.
    cannot be processed correctly the server logs it, discards the row,
    and goes on to the next row. This parameter can be used to set a limit on
    the number of such discards that can occur, after which the server
-   abandons the effort and exits. The default value of 0 disables the limit
+   abandons the effort and exits. The default value of "0" disables the limit
    and allows the server to process the entire file, regardless of how many
    rows are discarded.
+
+An example configuration of the memfile backend is presented below:
 
 ::
 
@@ -431,8 +433,8 @@ Lease Database Configuration
    :ref:`pgsql-database-create`.
 
 Lease database configuration is controlled through the
-Dhcp4/``lease-database`` parameters. The database type must be set to
-``memfile``, ``mysql``, ``postgresql``, or `cql``, e.g.:
+``Dhcp4``/``lease-database`` parameters. The database type must be set to
+``memfile``, ``mysql``, ``postgresql``, or ``cql``, e.g.:
 
 ::
 
@@ -461,8 +463,6 @@ the database host name must also be specified:
 ::
 
    "Dhcp4": { "lease-database": { "host": "remote-host-name", ... }, ... }
-
-(It should be noted that this configuration may have a severe impact on server performance.)
 
 Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
@@ -498,7 +498,7 @@ specified:
    "Dhcp4": { "lease-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts, the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
 only). For Cassandra, Kea uses an interface that connects to
@@ -614,16 +614,16 @@ Cassandra also supports a number of optional parameters:
    The default is ``true``.
 
 -  ``consistency`` - configures the consistency level. The default is
-   "quorum". Supported values: any, one, two, three, quorum, all,
-   local-quorum, each-quorum, serial, local-serial, local-one. See
+   ``quorum``. Supported values are: ``any``, ``one``, ``two``, ``three``, ``quorum``, ``all``,
+   ``local-quorum``, ``each-quorum``, ``serial``, ``local-serial``, and ``local-one``. See
    `Cassandra
    consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`__
    for more details.
 
 -  ``serial-consistency`` - configures the serial consistency level, which
-   manages lightweight transaction isolation. The default is "serial".
-   Supported values: any, one, two, three, quorum, all, local-quorum,
-   each-quorum, serial, local-serial, local-one. See `Cassandra serial
+   manages lightweight transaction isolation. The default is ``serial``.
+   Supported values are: ``any``, ``one``, ``two``, ``three``, ``quorum``, ``all``, ``local-quorum``,
+   ``each-quorum``, ``serial``, ``local-serial``, and ``local-one``. See `Cassandra serial
    consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`__
    for more details.
 
@@ -660,7 +660,8 @@ lease database. In fact, the Kea server opens independent connections for
 each purpose, be it lease or hosts information, which gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
-supported hosts database types are MySQL, PostgreSQL, and Cassandra.
+supported hosts database types are MySQL, PostgreSQL, and Cassandra,
+although support for Cassandra has been deprecated.
 
 The following configuration can be used to configure a
 connection to MySQL:
@@ -729,8 +730,6 @@ the database host name must also be specified:
 
    "Dhcp4": { "hosts-database": { "host": remote-host-name, ... }, ... }
 
-(Again, it should be noted that this configuration may have a severe impact on server performance.)
-
 Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
 
@@ -754,10 +753,12 @@ specified:
    "Dhcp4": { "hosts-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts, the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only).
+only). For Cassandra, Kea uses an interface that connects to
+all nodes in a cluster at the same time. Any connectivity issues should
+be handled by internal Cassandra mechanisms.
 
 The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
@@ -883,7 +884,6 @@ server to listen on all available interfaces:
        ...
    },
 
-
 The asterisk plays the role of a wildcard and means "listen on all
 interfaces." However, it is usually a good idea to explicitly specify
 interface names:
@@ -910,8 +910,7 @@ with explicit interface names:
        ...
    }
 
-
-This form of usage should only be used when it is
+This format should only be used when it is
 desired to temporarily override a list of interface names and listen on
 all interfaces.
 
@@ -1202,7 +1201,7 @@ server must be configured with at least one subnet and one pool of
 dynamic addresses to be managed. For example, assume that the server is
 connected to a network segment that uses the 192.0.2.0/24 prefix. The
 administrator of that network decides that addresses from the range
-192.0.2.10 to 192.0.2.20 are going to be managed by the ``Dhcp4`` server.
+192.0.2.10 to 192.0.2.20 are going to be managed by the DHCP4 server.
 Such a configuration can be achieved in the following way:
 
 ::
@@ -1385,9 +1384,9 @@ subnets.
 
 
 Note that either ``name`` or ``code`` is required; there is no need to
-specify both. ``space`` has a default value of "dhcp4", so this can be skipped
+specify both. ``space`` has a default value of ``dhcp4``, so this can be skipped
 as well if a regular (not encapsulated) DHCPv4 option is defined.
-Finally, ``csv-format`` defaults to "true", so it too can be skipped, unless
+Finally, ``csv-format`` defaults to ``true``, so it too can be skipped, unless
 the option value is specified as a hexadecimal string. Therefore,
 the above example can be simplified to:
 
@@ -1406,7 +1405,7 @@ the above example can be simplified to:
 
 Defined options are added to the response when the client requests them,
 with a few exceptions which are always added. To enforce the addition of
-a particular option, set the ``always-send`` flag to "true" as in:
+a particular option, set the ``always-send`` flag to ``true`` as in:
 
 ::
 
@@ -1462,7 +1461,7 @@ The ``name`` parameter specifies the option name. For a list of
 currently supported names, see :ref:`dhcp4-std-options-list`
 below. The ``code`` parameter specifies the option code, which must
 match one of the values from that list. The next line specifies the
-option space, which must always be set to "dhcp4" as these are standard
+option space, which must always be set to ``dhcp4`` as these are standard
 DHCPv4 options. For other option spaces, including custom option spaces,
 see :ref:`dhcp4-option-spaces`. The next line specifies the format in
 which the data will be entered; use of CSV (comma-separated values) is
@@ -1495,12 +1494,12 @@ subnets with the following addresses: 192.0.3.1 and 192.0.3.2. Note that
 Kea supports the following formats when specifying hexadecimal data:
 
 -  ``Delimited octets`` - one or more octets separated by either colons or
-   spaces (':' or ' '). While each octet may contain one or two digits,
+   spaces (":" or " "). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
-   `ab:cd:ef` and `ab cd ef`.
+   "ab:cd:ef" and "ab cd ef".
 
 -  ``String of digits`` - a continuous string of hexadecimal digits with
-   or without a `0x` prefix. Valid examples are `0xabcdef` and `abcdef`.
+   or without a "0x" prefix. Valid examples are "0xabcdef" and "abcdef".
 
 Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
@@ -1508,7 +1507,7 @@ limited.
 
 Since Kea 1.6.0, it is also possible to specify data for binary options as
 a single-quoted text string within double quotes as shown (note that
-``csv-format`` must be set to "false"):
+``csv-format`` must be set to ``false``):
 
 ::
 
@@ -1598,21 +1597,15 @@ obtains an address from the given pool:
        ...
    }
 
-Options can also be specified in class or host reservation scope. The
+Options can also be specified in class or host-reservation scope. The
 current Kea options precedence order is (from most important to least): host
 reservation, pool, subnet, shared network, class, global.
 
-The currently supported standard DHCPv4 options are listed in
-:ref:`dhcp4-std-options-list`. "Name" and "Code" are the
-values that should be used as a name/code in the option-data structures.
-"Type" designates the format of the data; the meanings of the various
-types are given in :ref:`dhcp-types`.
-
-When a data field is a string and that string contains the comma (,;
-U+002C) character, the comma must be escaped with two backslashes (\;
+When a data field is a string and that string contains the comma (``,``;
+U+002C) character, the comma must be escaped with two backslashes (``\\,``;
 U+005C). This double escape is required because both the routine
 splitting of CSV data into fields and JSON use the same escape character; a
-single escape (\,) would make the JSON invalid. For example, the string
+single escape (``\,``) would make the JSON invalid. For example, the string
 "foo,bar" must be represented as:
 
 ::
@@ -1651,10 +1644,16 @@ option format defined in the RFCs. There is an exception to this rule
 for standard options for which Kea currently does not provide a
 definition. To use such options, a server administrator must
 create a definition as described in
-:ref:`dhcp4-custom-options` in the "dhcp4" option space. This
+:ref:`dhcp4-custom-options` in the ``dhcp4`` option space. This
 definition should match the option format described in the relevant RFC,
 but the configuration mechanism will allow any option format as it
 currently has no means to validate it.
+
+The currently supported standard DHCPv4 options are listed in
+the table below. "Name" and "Code" are the
+values that should be used as a name/code in the option-data structures.
+"Type" designates the format of the data; the meanings of the various
+types are given in :ref:`dhcp-types`.
 
 .. _dhcp4-std-options-list:
 
@@ -3813,7 +3812,7 @@ configuration of the DHCPv4 side (the DHCPv6 side is described in
 
    DHCPv4-over-DHCPv6 support is experimental and the details of the
    inter-process communication may change; for instance, the
-   support of port relay (RFC 8357) introduced an incompatible change.
+   support of port relay (RFC 8357) in Kea 1.4.0 introduced an incompatible change.
    Both the DHCPv4 and DHCPv6 sides should be running the same version of Kea.
 
 The ``dhcp4o6-port`` global parameter specifies the first of the two
@@ -4651,7 +4650,7 @@ operations.
 
 .. note::
 
-   In Kea, the maximum length of an option specified per-host is
+   In Kea, the maximum length of an option specified per-host-reservation is
    arbitrarily set to 4096 bytes.
 
 .. _reservations4-tuning:
@@ -4676,7 +4675,8 @@ performing them may improve performance. The Kea server provides the
 ``reservation-mode`` configuration parameter to select the types of
 reservations allowed for a particular subnet. Each reservation type has
 different constraints for the checks to be performed by the server when
-allocating or renewing a lease for the client. Allowed values are:
+allocating or renewing a lease for the client. Although ``reservation-mode``
+was deprecated in Kea 1.9.1, it is still available; the allowed values are:
 
 -  ``all`` - enables both in-pool and out-of-pool host reservation
    types. This setting is the default value, and is the safest and most
@@ -5097,7 +5097,7 @@ following can be used:
 
 When using database backends, the global host reservations are
 distinguished from regular reservations by using a ``subnet-id`` value of
-zero.
+0.
 
 .. _pool-selection-with-class-reservations4:
 
@@ -6581,7 +6581,7 @@ Since Kea 1.7.7, the DHCPv4 server provides two global
 parameters to control statistics default sample limits:
 
 - ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which are kept. The special value of zero
+  number of samples which are kept. The special value of 0
   indicates that a default maximum age should be used.
 
 - ``statistic-default-sample-age`` - determines the default maximum
@@ -6879,15 +6879,6 @@ the DHCPv4 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-The following table lists DHCPv4-specific parameters supported by the
-Configuration Backend, with an indication of the level of the hierarchy
-at which it is currently supported. "n/a" marks cases when a
-given parameter is not applicable at the particular level of the
-hierarchy or in cases when the server does not support the parameter
-at that level. "no" is used when a parameter is
-supported at the given level of the hierarchy but is not
-configurable via the Configuration Backend.
-
 All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`cb-cmds-library` section. The general rule is that
 scalar global parameters are set using
@@ -6912,6 +6903,10 @@ to the configuration elements associated with ``all`` servers. Any configuration
 element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
 used by all servers connecting to the configuration database.
 
+The following table lists DHCPv4-specific parameters supported by the
+Configuration Backend, with an indication of the level of the hierarchy
+at which it is currently supported.
+
 .. table:: List of DHCPv4 parameters supported by the Configuration Backend
 
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
@@ -6926,9 +6921,9 @@ used by all servers connecting to the configuration database.
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | boot-file-name              | yes                        | yes          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
-   | cache-max-age               | yes                        | n/a          | todo        | todo        | n/a         |
+   | cache-max-age               | yes                        | n/a          | no          | no          | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
-   | cache-threshold             | yes                        | n/a          | todo        | todo        | n/a         |
+   | cache-threshold             | yes                        | n/a          | no          | no          | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | calculate-tee-times         | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
@@ -6997,6 +6992,16 @@ used by all servers connecting to the configuration database.
    | t2-percent                  | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
 
+-  ``yes`` - indicates that the parameter is supported at the given
+   level of the hierarchy and can be configured via the Configuration Backend.
+
+-  ``no`` - indicates that a parameter is supported at the given level
+   of the hierarchy but cannot be configured via the Configuration Backend.
+
+-  ``n/a`` -  indicates that a given parameter is not applicable
+   at the particular level of the hierarchy or that the
+   server does not support the parameter at that level.
+   
 .. _dhcp4-cb-json:
 
 Enabling the Configuration Backend
@@ -7027,7 +7032,7 @@ Consider the following configuration snippet:
    }
 
 The ``config-control`` command contains two parameters. ``config-databases``
-is a list which contains one element comprising database type, location,
+is a list that contains one element, which includes the database type, its location,
 and the credentials to be used to connect to this database. (Note that
 the parameters specified here correspond to the database specification
 for the lease database backend and hosts database backend.) Currently
@@ -7114,7 +7119,7 @@ Lenient Option Parsing
 By default, tuple fields defined in custom options are parsed as a set of
 length-value pairs.
 
-With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
+With ``"lenient-option-parsing": true``, if a length ever exceeds the rest of
 the option's buffer, previous versions of Kea returned a log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
 with ``x < y``; this no longer occurs. Instead, the value is considered to be the rest of the buffer,
