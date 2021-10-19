@@ -14,7 +14,7 @@ interface for managing Kea servers. The daemon can receive control
 commands over HTTP and either forward these commands to the respective
 Kea servers or handle these commands on its own. The determination
 whether the command should be handled by the CA or forwarded is made by
-checking the value of the `service` parameter, which may be included in
+checking the value of the ``service`` parameter, which may be included in
 the command from the controlling client. The details of the supported
 commands, as well as their structures, are provided in
 :ref:`ctrl-channel`.
@@ -295,7 +295,7 @@ server enables authentication of the clients using certificates.
 
 .. note::
 
-   Note that the configuration snippet provided above is for testing
+   The configuration snippet provided above is for testing
    purposes only. It should be modified according to the security
    policies and best practices of the administrator's organization.
 
@@ -328,7 +328,7 @@ a boolean parameter:
    authentication.
 
 The file format is PEM. Either all the string parameters are specified and
-HTTP over TLS aka HTTPS is used, or none is specified and plain HTTP is used.
+HTTP over TLS (HTTPS) is used, or none is specified and plain HTTP is used.
 Configuring only one or two string parameters results in an error.
 
 .. note::
@@ -336,7 +336,7 @@ Configuring only one or two string parameters results in an error.
    When client certificates are not required, only the server side is
    authenticated, i.e. the communication is encrypted with an unknown
    client. This protects only against passive attacks; active
-   attacks, such as "Man in the Middle," are still possible.
+   attacks, such as "man-in-the-middle," are still possible.
 
 .. note::
 
@@ -359,7 +359,7 @@ file it should use. For example:
 
    $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 
-It can be started by keactrl as well (see :ref:`keactrl`).
+It can be started by ``keactrl`` as well (see :ref:`keactrl`).
 
 .. _agent-clients:
 
