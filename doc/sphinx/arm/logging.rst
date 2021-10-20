@@ -557,12 +557,12 @@ output), ``stderr`` (messages are printed on stderr), ``syslog``
 (messages are logged to syslog using a specified name). Any other value is
 interpreted as a filename to which messages should be written.
 
-The flush (true or false) Option
+The flush (boolean) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Flush buffers after each log message. Doing this will reduce performance
 but will ensure that if the program terminates abnormally, all messages
-up to the point of termination are output. The default is "true".
+up to the point of termination are output. The default is ``true``.
 
 The maxsize (integer) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

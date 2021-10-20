@@ -11,26 +11,26 @@ Starting and Stopping the DHCPv4 Server
 
 It is recommended that the Kea DHCPv4 server be started and stopped
 using ``keactrl`` (described in :ref:`keactrl`); however, it is also
-possible to run the server directly. It accepts the following
-command-line switches:
+possible to run the server directly via the ``kea-dhcp4`` command, which accepts
+the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file. This is the only
    mandatory switch.
 
 -  ``-d`` - specifies whether the server logging should be switched to
-   debug/verbose mode. In verbose mode, the logging severity and
-   debuglevel specified in the configuration file are ignored;
-   "debug" severity and the maximum debuglevel (99) are assumed. The
-   flag is convenient for temporarily switching the server into maximum
-   verbosity, e.g. when debugging.
+   debug/verbose mode. In verbose mode, the logging severity and debuglevel
+   specified in the configuration file are ignored; "debug" severity
+   and the maximum debuglevel (99) are assumed. The flag is convenient
+   for temporarily switching the server into maximum verbosity, e.g.
+   when debugging.
 
 -  ``-p server-port`` - specifies the local UDP port on which the server
-   will listen. This is only useful during testing, as a DHCPv4 server
+   listens. This is only useful during testing, as a DHCPv4 server
    listening on ports other than the standard ones is not able to
    handle regular DHCPv4 queries.
 
 -  ``-P client-port`` - specifies the remote UDP port to which the
-   server will send all responses. This is only useful during testing,
+   server sends all responses. This is only useful during testing,
    as a DHCPv4 server sending responses to ports other than the standard
    ones is not able to handle regular DHCPv4 queries.
 
@@ -53,20 +53,20 @@ command-line switches:
    it is embedded in the executable binary.
 
 On startup, the server detects available network interfaces and
-attempts to open UDP sockets on all interfaces mentioned in the
-configuration file. Since the DHCPv4 server opens privileged ports,
-this daemon must be run as root.
+attempts to open UDP sockets on all interfaces listed in the
+configuration file. Since the DHCPv4 server opens privileged ports, it
+requires root access; this daemon must be run as root.
 
 During startup, the server attempts to create a PID file of the
-form ``[runstatedir]/kea/[conf name].kea-dhcp4.pid``, where:
+form: ``[runstatedir]/kea/[conf name].kea-dhcp4.pid``, where:
 
--  ``runstatedir`` is the value as passed into the build configure
+-  ``runstatedir``: The value as passed into the build configure
    script; it defaults to ``/usr/local/var/run``. Note that this value may be
    overridden at runtime by setting the environment variable
    ``KEA_PIDFILE_DIR``, although this is intended primarily for testing
    purposes.
 
--  ``conf name`` is the configuration file name used to start the server,
+-  ``conf name``: The configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
    a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
    be ``myconf``.
@@ -148,10 +148,10 @@ above, this object is called ``Dhcp4``.
 
 .. note::
 
-   In the current Kea release it is possible to specify configurations
+   In the current Kea release it is still possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended. Support for this type of configuration was removed in the 1.7.10 release,
-   including the ``Logging`` object; its previous content, the list
+   not recommended; support for this was removed in Kea 1.7.10,
+   including the ``Logging`` object. Its previous content, the list
    of loggers, must now be inside the ``Dhcp4`` object.
 
 The ``Dhcp4`` configuration starts with the ``"Dhcp4": {`` line and ends
@@ -164,7 +164,7 @@ matter, but there are two caveats. The first one is that the
 configuration file must be well-formed JSON, meaning that the
 parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
-configuration file, keep in mind that moving a parameter to or from the
+configuration file, moving a parameter to or from the
 last position in a given scope may also require moving the comma. The
 second caveat is that it is uncommon — although legal JSON — to repeat
 the same parameter multiple times. If that happens, the last occurrence
@@ -1010,7 +1010,7 @@ that link. To use a single address on such an interface, the
    that raw sockets will be used! The use of raw sockets to handle
    traffic from the directly connected clients is currently
    supported on Linux and BSD systems only. If raw sockets are not
-   supported on the particular OS in use, the server will issue a warning and
+   supported on the particular OS in use, the server issues a warning and
    fall back to using IP/UDP sockets.
 
 In a typical environment, the DHCP server is expected to send back a
@@ -1470,10 +1470,10 @@ clients. The data parameter is specified as normal text, with values separated b
 commas if more than one value is allowed.
 
 Options can also be configured as hexadecimal values. If ``csv-format``
-is set to "false", option data must be specified as a hexadecimal string.
+is set to ``false``, option data must be specified as a hexadecimal string.
 The following commands configure the ``domain-name-servers`` option for all
 subnets with the following addresses: 192.0.3.1 and 192.0.3.2. Note that
-``csv-format`` is set to "false".
+``csv-format`` is set to ``false``.
 
 ::
 
@@ -2058,7 +2058,7 @@ Such an option can be defined by putting the following entry in the configuratio
        ...
    }
 
-The "false" value of the ``array`` parameter determines that the
+The ``false`` value of the ``array`` parameter determines that the
 option does NOT comprise an array of "uint32" values but is, instead, a
 single value. Two other parameters have been left blank:
 ``record-types`` and ``encapsulate``. The former specifies the
@@ -2072,7 +2072,7 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` default value is "false". The
+are optional. The ``array`` default value is ``false``. The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is "dhcp4".
 
@@ -2143,12 +2143,12 @@ The values of the options are set in an ``option-data`` statement as follows:
        ...
    }
 
-``csv-format`` is set to "true" to indicate that the ``data`` field
+``csv-format`` is set to ``true`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to "true" and ``type`` is set to "record", the
+When ``array`` is set to ``true`` and ``type`` is set to "record", the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2814,7 +2814,7 @@ The next step is to evaluate class expressions depending on
 the built-in ``KNOWN``/``UNKNOWN`` classes after host reservation lookup,
 using them for pool selection and assigning classes from host
 reservations. The list of required classes is then built and each class
-of the list has its expression evaluated; when it returns "true", the
+of the list has its expression evaluated; when it returns ``true``, the
 packet is added as a member of the class. The last step is to assign
 options, again possibly based on the class information. More complete
 and detailed information is available in :ref:`classify`.
@@ -2824,7 +2824,7 @@ relies on examining the values in the vendor class options or the
 existence of a host reservation. Information from these options is
 extracted, and a class name is constructed from it and added to the
 class list for the packet. The second method specifies an expression that is
-evaluated for each packet. If the result is "true", the packet is a
+evaluated for each packet. If the result is ``true``, the packet is a
 member of the class.
 
 .. note::
@@ -2962,8 +2962,8 @@ shared network, subnet, or pool. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate test
 expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is "false"
-by default. When it is set to "true", the test expression of the class
+The first one is the per-class ``only-if-required`` flag, which is ``false``
+by default. When it is set to ``true``, the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
 
@@ -3129,38 +3129,38 @@ together:
    | false           | true (default)     | no updates at any scope             |
    +-----------------+--------------------+-------------------------------------+
    | true            | false              | updates only at scopes with         |
-   |                 |                    | a local value of "true" for         |
+   |                 |                    | a local value of ``true`` for       |
    |                 |                    | ``ddns-enable-updates``             |
    +-----------------+--------------------+-------------------------------------+
-   | true            | true               | updates at all scopes except        |
-   |                 |                    | those with a local value of "false" |
+   | true            | true               | updates at all scopes except those  |
+   |                 |                    | with a local value of ``false``     |
    |                 |                    | for ``ddns-enable-updates``         |
    +-----------------+--------------------+-------------------------------------+
 
 Kea 1.9.1 added two new parameters; the first is ``ddns-update-on-renew``.
 Normally, when leases are renewed, the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
-Setting ``ddns-update-on-renew`` to "true" instructs the server to always update
+Setting ``ddns-update-on-renew`` to ``true`` instructs the server to always update
 the DNS information when a lease is renewed, even if its DNS information has not
 changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
 
-    Setting ``ddns-update-on-renew`` to "true" may impact performance, especially
+    Setting ``ddns-update-on-renew`` to ``true`` may impact performance, especially
     for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
 The value of this parameter is passed by ``kea-dhcp4`` to D2 with each DNS update
-request. When "true" (the default value), D2 employs conflict resolution,
+request. When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
-attempting to fulfill the update request. When "false", D2 simply attempts
+attempting to fulfill the update request. When ``false``, D2 simply attempts
 to update the DNS entries per the request, regardless of whether they
 conflict with existing entries owned by other DHCP4 clients.
 
 .. note::
 
-    Setting ``ddns-use-conflict-resolution`` to "false" disables the overwrite
+    Setting ``ddns-use-conflict-resolution`` to ``false`` disables the overwrite
     safeguards that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
     prevent. This means that existing entries for an FQDN or an
@@ -3209,8 +3209,8 @@ control this communication:
 
 -  ``enable-updates`` - Since Kea 1.7.1, this parameter only enables
    connectivity to ``kea-dhcp-ddns`` such that DDNS updates can be constructed
-   and sent. It must be "true" for NCRs to be generated and sent to D2.
-   It defaults to "false".
+   and sent. It must be ``true`` for NCRs to be generated and sent to D2.
+   It defaults to ``false``.
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.
@@ -3275,7 +3275,7 @@ resolution are within the purview of D2 itself
 generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that both the connectivity parameter
 ``enable-updates`` and the behavioral parameter ``ddns-send-updates``,
-are "true".
+are ``true``.
 
 In general, ``kea-dhcp4`` generates DDNS update requests when:
 
@@ -3328,7 +3328,7 @@ the server should do the reverse updates. By default, ``kea-dhcp4``
 honors the client's wishes and generates a DDNS request to the D2 server
 to update only reverse DNS data. The parameter
 ``ddns-override-client-update`` can be used to instruct the server to
-override client delegation requests. When this parameter is "true",
+override client delegation requests. When this parameter is ``true``,
 ``kea-dhcp4`` disregards requests for client delegation and generates a
 DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
@@ -3352,7 +3352,7 @@ configuration file:
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
-the client's wishes. When this parameter is "true", ``kea-dhcp4``
+the client's wishes. When this parameter is ``true``, ``kea-dhcp4``
 generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
 requests that no updates be done. The N-S-O flags in the server's
 response to the client will be 0-1-1.
@@ -3416,10 +3416,10 @@ parameter, which provides the following modes of behavior:
 .. note::
 
    In early versions of Kea, this parameter was a boolean and permitted only
-   values of "true" and "false". Boolean values have been deprecated
+   values of ``true`` and ``false``. Boolean values have been deprecated
    and are no longer accepted. Administrators currently using booleans
-   must replace them with the desired mode name. A value of "true"
-   maps to ``when-present``, while "false" maps to ``never``.
+   must replace them with the desired mode name. A value of ``true``
+   maps to ``when-present``, while ``false`` maps to ``never``.
 
 For example, to instruct ``kea-dhcp4`` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
@@ -3726,9 +3726,9 @@ for a particular subnet. Consider the following simplified server configuration:
    }
 
 The ``match-client-id`` is a boolean value which controls this behavior.
-The default value of "true" indicates that the server will use the
+The default value of ``true`` indicates that the server will use the
 client identifier for lease lookups and ``chaddr`` if the first lookup
-returns no results. "false" means that the server will only use
+returns no results. ``false`` means that the server will only use
 the ``chaddr`` to search for the client's lease. Whether the DHCID for DNS
 updates is generated from the client identifier or ``chaddr`` is
 controlled through the same parameter.
@@ -3736,18 +3736,18 @@ controlled through the same parameter.
 The ``match-client-id`` parameter may appear both in the global
 configuration scope and/or under any subnet declaration. In the example
 shown above, the effective value of the ``match-client-id`` will be
-"false" for the subnet 192.0.10.0/24, because the subnet-specific
+``false`` for the subnet 192.0.10.0/24, because the subnet-specific
 setting of the parameter overrides the global value of the parameter.
 The effective value of the ``match-client-id`` for the subnet 10.0.0.0/8
-will be set to "true", because the subnet declaration lacks this
+will be set to ``true``, because the subnet declaration lacks this
 parameter and the global setting is by default used for this subnet. In
 fact, the global entry for this parameter could be omitted in this case,
-because "true" is the default value.
+because ``true`` is the default value.
 
 It is important to understand what happens when the client obtains its
 lease for one setting of the ``match-client-id`` and then renews it when
 the setting has been changed. First, consider the case when the client
-obtains the lease and the ``match-client-id`` is set to "true". The
+obtains the lease and the ``match-client-id`` is set to ``true``. The
 server stores the lease information, including the client identifier
 (if supplied) and ``chaddr``, in the lease database. When the setting is
 changed and the client renews the lease, the server will determine that
@@ -3759,7 +3759,7 @@ When the lease is renewed only the ``chaddr`` will be recorded for this lease,
 according to the new server setting.
 
 In the second case, the client has the lease with only a ``chaddr`` value
-recorded. When the ``match-client-id`` setting is changed to "true",
+recorded. When the ``match-client-id`` setting is changed to ``true``,
 the server will first try to use the client identifier to find the
 existing client's lease. This will return no results because the client
 identifier was not recorded for this lease. The server will then use
@@ -3787,10 +3787,10 @@ address from the wrong network, because configuration information about
 a given network segment is not known to be correct. Kea only rejects a
 client's DHCPREQUEST with a DHCPNAK message if it already has a lease
 for the client with a different IP address. Administrators can
-override this behavior through the boolean ``authoritative`` ("false"
+override this behavior through the boolean ``authoritative`` (``false``
 by default) setting.
 
-In authoritative mode, ``authoritative`` set to "true", Kea always
+In authoritative mode, ``authoritative`` set to ``true``, Kea always
 rejects INIT-REBOOT requests from unknown clients with DHCPNAK messages.
 The ``authoritative`` setting can be specified in global,
 shared-network, and subnet configuration scope and is automatically
@@ -3954,7 +3954,7 @@ additional information must be stored with each lease. Because the amount
 of information for each lease has ramifications in terms of
 performance and system resource consumption, storage of this additional
 information is configurable through the ``store-extended-info`` parameter.
-It defaults to "false" and may be set at the global, shared-network, and
+It defaults to ``false`` and may be set at the global, shared-network, and
 subnet levels.
 
 ::
@@ -3964,7 +3964,7 @@ subnet levels.
        ...
    }
 
-When set to "true", information relevant to the DHCPREQUEST asking for the lease is
+When set to ``true``, information relevant to the DHCPREQUEST asking for the lease is
 added into the lease's user-context as a map element labeled "ISC". Currently,
 the map contains a single value, the ``relay-agent-info`` option (DHCP Option 82),
 when the DHCPREQUEST received contains it. Since DHCPREQUESTs sent as renewals will likely not contain this
@@ -3994,7 +3994,7 @@ threads. These settings can be found under the ``multi-threading`` structure and
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-   parallel. The default is "false".
+   parallel. The default is ``false``.
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
    parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
@@ -4614,11 +4614,11 @@ reserved class has been also assigned.
 
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to "false" have been evaluated.
+   ``only-if-required`` parameter set to ``false`` have been evaluated.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
    such a dependency is needed, the ``only-if-required`` parameter must
-   be set to "true" for the dependent classes. Such classes are
+   be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
    all classes marked as ``only-if-required`` must be listed in the
@@ -4838,8 +4838,8 @@ The meaning of the reservation flags are:
   this includes all subnet members of the shared network.
 
 - ``reservations-out-of-pool``: this makes sense only when the
-  ``reservations-in-subnet`` flag is "true". When ``reservations-out-of-pool``
-  is "true", the server assumes that all host reservations are for addresses
+  ``reservations-in-subnet`` flag is ``true``. When ``reservations-out-of-pool``
+  is ``true``, the server assumes that all host reservations are for addresses
   that do not belong to the dynamic pool. Therefore, it can skip the reservation
   checks when dealing with in-pool addresses, thus improving performance.
   The server will not assign reserved addresses that are inside the dynamic
@@ -4920,7 +4920,7 @@ be used:
 
 Enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
 is not recommended because ``out-of-pool`` applies to host reservations in a
-subnet, which are fetched only when the ``in-subnet`` flag is "true".
+subnet, which are fetched only when the ``in-subnet`` flag is ``true``.
 
 The parameter can be specified at the global, subnet, and shared-network
 levels.
@@ -5237,7 +5237,7 @@ a reservation for the ``reserved_class`` are assigned an address from
 the subnet 192.0.2.0/24. The subnets must belong to the same shared network.
 In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
-set to "true".
+set to ``true``.
 
 In the example above, the ``client-class`` could also be specified at the
 subnet level rather than the pool level, and would yield the same effect.
@@ -5274,21 +5274,21 @@ release as an optional mode of operation, enabled with the
 ``ip-reservations-unique`` global parameter.
 
 ``ip-reservations-unique`` is a boolean parameter that defaults to
-"true", which forbids the specification of more than one reservation
+``true``, which forbids the specification of more than one reservation
 for the same IP address within a given subnet. Setting this parameter to
-"false" allows such reservations to be created both in the Kea configuration
+``false`` allows such reservations to be created both in the Kea configuration
 file and in the host database backend, via the ``host-cmds`` hook library.
 
 This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
 Host Cache (see :ref:`hooks-host-cache`), or the RADIUS backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
-to "false" when any of these three backends is in use yields a
+to ``false`` when any of these three backends is in use yields a
 configuration error.
 
 .. note::
 
-   When ``ip-reservations-unique`` is set to "true" (the default value),
+   When ``ip-reservations-unique`` is set to ``true`` (the default value),
    the server ensures that IP reservations are unique for a subnet within
    a single host backend and/or Kea configuration file. It does not
    guarantee that the reservations are unique across multiple backends.
@@ -5342,7 +5342,7 @@ finds multiple reservations for the same IP address.
    Currently the Kea server does not verify whether multiple reservations for
    the same IP address exist in MySQL and/or
    PostgreSQL host databases when ``ip-reservations-unique`` is updated from
-   "true" to "false". This may cause issues with lease allocations.
+   ``true`` to ``false``. This may cause issues with lease allocations.
    The administrator must ensure that there is at most one reservation
    for each IP address within each subnet, prior to the configuration
    update.
@@ -7001,7 +7001,7 @@ at which it is currently supported.
 -  ``n/a`` -  indicates that a given parameter is not applicable
    at the particular level of the hierarchy or that the
    server does not support the parameter at that level.
-   
+
 .. _dhcp4-cb-json:
 
 Enabling the Configuration Backend

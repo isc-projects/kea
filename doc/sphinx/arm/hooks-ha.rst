@@ -911,7 +911,7 @@ assigned addresses from different pools. The ``HA_server1`` and
 :ref:`classification-using-vendor`) and do not need to be declared.
 They are assigned dynamically by the HA hook library as a result of the
 load-balancing algorithm. ``phones_*`` and ``laptop_*`` evaluate to
-"true" when the query belongs to a given combination of other classes,
+``true`` when the query belongs to a given combination of other classes,
 e.g. ``HA_server1`` and ``phones``. The pool is selected accordingly as
 a result of such an evaluation.
 

@@ -1662,7 +1662,7 @@ for non-printable characters and do not require the use of the
        ]
    }
 
-When ``replace-client-id`` is set to "false" (which is the default setting),
+When ``replace-client-id`` is set to ``false`` (which is the default setting),
 the flex-id hook library uses the evaluated flexible identifier solely for
 identifying host reservations, i.e. searching for reservations within a
 database. This is the functional equivalent of other identifiers, similar
@@ -1713,11 +1713,11 @@ flexible identifier.
 
 Note that for this mechanism to take effect, the DHCPv4 server must be
 configured to respect the client identifier option value during lease
-allocation, i.e. ``match-client-id`` must be set to "true". See
+allocation, i.e. ``match-client-id`` must be set to ``true``. See
 :ref:`dhcp4-match-client-id` for details. No additional settings are
 required for DHCPv6.
 
-If the ``replace-client-id`` option is set to "true", the value of the
+If the ``replace-client-id`` option is set to ``true``, the value of the
 ``echo-client-id`` parameter (which governs whether to send back a
 client-id option) is ignored.
 
@@ -1725,7 +1725,7 @@ The :ref:`lease-cmds` section describes commands used to retrieve,
 update, and delete leases using various identifiers, such as "hw-address" and
 "client-id". The lease_cmds library does not natively support querying
 for leases by flexible identifier. However, when ``replace-client-id`` is
-set to "true", it makes it possible to query for leases using a value
+set to ``true``, it makes it possible to query for leases using a value
 derived from the flexible identifier. In the DHCPv4 case, the query will
 look similar to this:
 

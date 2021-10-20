@@ -75,7 +75,7 @@ If the file already exists and contains the PID of a live process, the
 server will issue a ``DHCP6_ALREADY_RUNNING`` log message and exit. It is
 possible, though unlikely, that the file is a remnant of a system crash
 and the process to which the PID belongs is unrelated to Kea. In such a
-case it would be necessary to manually delete the PID file.
+case, it would be necessary to manually delete the PID file.
 
 The server can be stopped using the ``kill`` command. When running in a
 console, the server can also be shut down by pressing Ctrl-c. Kea detects
@@ -143,7 +143,7 @@ server; they do not impact its operation in any way.
 The configuration starts in the first line with the initial opening
 curly bracket (or brace). Each configuration must contain an object
 specifying the configuration of the Kea module using it. In the example
-above this object is called ``Dhcp6``.
+above, this object is called ``Dhcp6``.
 
 .. note::
 
@@ -160,7 +160,7 @@ considered to be the ``Dhcp6`` configuration.
 
 In general, the order in which those parameters appear does not
 matter, but there are two caveats. The first one is that the
-configuration file must be well-formed JSON. That means that the
+configuration file must be well-formed JSON, meaning that the
 parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
 configuration file, moving a parameter to or from the
@@ -1934,12 +1934,12 @@ follows:
        ...
    }
 
-``csv-format`` is set to "true" to indicate that the ``data`` field
+``csv-format`` is set to ``true`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to "true" and ``type`` is set to "record", the
+When ``array`` is set to ``true`` and ``type`` is set to "record", the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2079,7 +2079,7 @@ Alternatively, the option can be specified using its code.
        ...
    }
 
-A common configuration is to set the ``always-send`` flag to "true", so the
+A common configuration is to set the ``always-send`` flag to ``true``, so the
 vendor option is sent even when the client did not specify it in the query.
 
 .. note::
@@ -2310,8 +2310,8 @@ However, there may be some rare business cases when this is desired
 
 Calculation of the values is controlled by the following three parameters:
 
--  ``calculate-tee-times`` - when "true", T1 and T2 are calculated as
-   percentages of the valid lease time. It defaults to "true".
+-  ``calculate-tee-times`` - when ``true``, T1 and T2 are calculated as
+   percentages of the valid lease time. It defaults to ``true``.
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be
@@ -2324,7 +2324,7 @@ Calculation of the values is controlled by the following three parameters:
 .. note::
 
    If both explicit values are specified and
-   ``calculate-tee-times`` is "true", the server will use the explicit values.
+   ``calculate-tee-times`` is ``true``, the server will use the explicit values.
    Administrators with a setup where some subnets or shared-networks
    use explicit values and some use calculated values must
    not define the explicit values at any level higher than where they
@@ -2399,7 +2399,7 @@ shown below:
    }
 
 This setting only affects the subnet for which ``rapid-commit`` is
-set to "true". For clients connected to other subnets, the server
+set to ``true``. For clients connected to other subnets, the server
 ignores the Rapid Commit option sent by the client and follows the
 4-way exchange procedure, i.e. responds with an Advertise for a Solicit
 containing a Rapid Commit option.
@@ -2560,7 +2560,7 @@ The next step is to evaluate class expressions depending on the built-in
 ``KNOWN``/``UNKNOWN`` classes after host reservation lookup, using them for
 pool/pd-pool selection and assigning classes from host reservations. The
 list of required classes is then built and each class of the list has
-its expression evaluated; when it returns "true", the packet is added as
+its expression evaluated; when it returns ``true``, the packet is added as
 a member of the class. The last step is to assign options, again possibly
 based on the class information. More complete and detailed information
 is available in :ref:`classify`.
@@ -2570,7 +2570,7 @@ relies on examining the values in the vendor class options or the
 existence of a host reservation. Information from these options is
 extracted, and a class name is constructed from it and added to the
 class list for the packet. The second method specifies an expression that is
-evaluated for each packet. If the result is "true", the packet is a
+evaluated for each packet. If the result is ``true``, the packet is a
 member of the class.
 
 .. note::
@@ -2652,7 +2652,7 @@ to limit the scope of the class by instructing the server to evaluate
 test expressions when required.
 
 The first one is the per-class ``only-if-required`` flag, which is "false"
-by default. When it is set to "true", the test expression of the class
+by default. When it is set to ``true``, the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
 
@@ -2822,30 +2822,30 @@ together:
    | false           | true (default)     | no updates at any scope             |
    +-----------------+--------------------+-------------------------------------+
    | true            | false              | updates only at scopes with         |
-   |                 |                    | a local value of "true" for         |
+   |                 |                    | a local value of ``true`` for       |
    |                 |                    | ``ddns-enable-updates``             |
    +-----------------+--------------------+-------------------------------------+
-   | true            | true               | updates at all scopes except        |
-   |                 |                    | those with a local value of "false" |
+   | true            | true               | updates at all scopes except those  |
+   |                 |                    | with a local value of ``false``     |
    |                 |                    | for ``ddns-enable-updates``         |
    +-----------------+--------------------+-------------------------------------+
 
 Kea 1.9.1 added two new parameters; the first is ``ddns-update-on-renew``.
 Normally, when leases are renewed, the server only updates DNS if the DNS
 information for the lease (e.g. FQDN, DNS update direction flags) has changed.
-Setting ``ddns-update-on-renew`` to "true" instructs the server to always update
+Setting ``ddns-update-on-renew`` to ``true`` instructs the server to always update
 the DNS information when a lease is renewed, even if its DNS information has not
 changed. This allows Kea to "self-heal" if it was previously unable
 to add DNS entries or they were somehow lost by the DNS server.
 
 .. note::
 
-    Setting ``ddns-update-on-renew`` to "true" may impact performance, especially
+    Setting ``ddns-update-on-renew`` to ``true`` may impact performance, especially
     for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
 The value of this parameter is passed by ``kea-dhcp6`` to D2 with each DNS update
-request.  When "true" (the default value), D2 employs conflict resolution,
+request.  When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
 attempting to fulfill the update request. When "false", D2 simply attempts
 to update the DNS entries per the request, regardless of whether they
@@ -2902,7 +2902,7 @@ control this communication:
 
 -  ``enable-updates`` - Since Kea 1.7.1, this parameter only enables
    connectivity to ``kea-dhcp-ddns`` such that DDNS updates can be constructed
-   and sent. It must be "true" for NCRs to be generated and sent to D2.
+   and sent. It must be ``true`` for NCRs to be generated and sent to D2.
    It defaults to "false".
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
@@ -2967,7 +2967,7 @@ resolution are within the purview of D2 itself
 (see :ref:`dhcp-ddns-server`). This section describes when ``kea-dhcp6``
 generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that the ``enable-updates``
-parameter is "true".
+parameter is ``true``.
 
 .. note::
 
@@ -3025,7 +3025,7 @@ the server should do the reverse updates. By default, ``kea-dhcp6``
 honors the client's wishes and generates a DDNS request to D2 to update
 only reverse DNS data. The parameter ``ddns-override-client-update`` can be
 used to instruct the server to override client delegation requests. When
-this parameter is "true", ``kea-dhcp6`` disregards requests for client
+this parameter is ``true``, ``kea-dhcp6`` disregards requests for client
 delegation and generates a DDNS request to update both forward and
 reverse DNS data. In this case, the N-S-O flags in the server's response
 to the client will be 0-1-1 respectively.
@@ -3048,7 +3048,7 @@ configuration file:
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
-the client's wishes. When this parameter is "true", ``kea-dhcp6``
+the client's wishes. When this parameter is ``true``, ``kea-dhcp6``
 generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
 requests that no updates be done. The N-S-O flags in the server's response to
 the client will be 0-1-1.
@@ -3105,10 +3105,10 @@ parameter, which provides the following modes of behavior:
 .. note::
 
    In early versions of Kea, this parameter was a boolean and
-   permitted only values of "true" and "false".
+   permitted only values of ``true`` and "false".
    Boolean values have been deprecated and are no longer accepted.
    Administrators currently using booleans must replace them with the
-   desired mode name. A value of "true" maps to ``when-present``, while
+   desired mode name. A value of ``true`` maps to ``when-present``, while
    "false" maps to ``never``.
 
 For example, to instruct ``kea-dhcp6`` to always generate the FQDN for a
@@ -3432,7 +3432,7 @@ subnet levels.
        ...
    }
 
-When set to "true", information relevant to the DHCPv6 query (e.g. REQUEST, RENEW,
+When set to ``true``, information relevant to the DHCPv6 query (e.g. REQUEST, RENEW,
 or REBIND) asking for the lease is added into the lease's ``user-context`` as a
 map element labeled "ISC". Currently, the information contained in the map
 is a list of relays, one for each relay message layer that encloses the
@@ -4025,7 +4025,7 @@ reserved class has been also assigned.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
    such a dependency is needed, the ``only-if-required`` must
-   be set to "true" for the dependent classes. Such classes are
+   be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
    all classes marked as ``only-if-required`` must be listed in the
@@ -4246,8 +4246,8 @@ The meaning of the reservation flags are:
   this includes all subnet members of the shared network.
 
 - ``reservations-out-of-pool``: this makes sense only when the
-  ``reservations-in-subnet`` flag is "true". When ``reservations-out-of-pool``
-  is "true", the server assumes that all host reservations are for addresses
+  ``reservations-in-subnet`` flag is ``true``. When ``reservations-out-of-pool``
+  is ``true``, the server assumes that all host reservations are for addresses
   that do not belong to the dynamic pool. Therefore, it can skip the reservation
   checks when dealing with in-pool addresses, thus improving performance.
   The server will not assign reserved addresses that are inside the dynamic
@@ -4328,7 +4328,7 @@ be used:
 
 Enabling ``out-of-pool`` and disabling ``in-subnet`` at the same time
 is not recommended because ``out-of-pool`` applies to host reservations in a
-subnet, which are fetched only when the ``in-subnet`` flag is "true".
+subnet, which are fetched only when the ``in-subnet`` flag is ``true``.
 
 The parameter can be specified at the global, subnet, and shared-network
 levels.
@@ -4639,7 +4639,7 @@ a reservation for the ``reserved_class`` are assigned an address from
 the subnet 2001:db8:1::/64. The subnets must belong to the same shared network.
 In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
-set to "true".
+set to ``true``.
 
 In the example above, the ``client-class`` could also be specified at the
 subnet level rather than the pool level, and would yield the same effect.
@@ -4666,7 +4666,7 @@ is supported since Kea release 1.9.1 as an optional mode of operation
 enabled with the ``ip-reservations-unique`` global parameter.
 
 ``ip-reservations-unique`` is a boolean parameter that defaults to
-"true", which forbids the specification of more than one reservation
+``true``, which forbids the specification of more than one reservation
 for the same lease in a given subnet. Setting this parameter to "false"
 allows such reservations to be created both in the Kea configuration
 file and in the host database backend, via the ``host-cmds`` hook library.
@@ -4680,7 +4680,7 @@ configuration error.
 
 .. note::
 
-   When ``ip-reservations-unique`` is set to "true" (the default value),
+   When ``ip-reservations-unique`` is set to ``true`` (the default value),
    the server ensures that IP reservations are unique for a subnet within
    a single host backend and/or Kea configuration file. It does not
    guarantee that the reservations are unique across multiple backends.
@@ -4736,7 +4736,7 @@ for the same IP address or delegated prefix.
    Currently the Kea server does not verify whether multiple reservations for
    the same IP address and/or delegated prefix exist in
    MySQL and/or PostgreSQL) host databases when ``ip-reservations-unique``
-   is updated from "true" to "false". This may cause issues with
+   is updated from ``true`` to "false". This may cause issues with
    lease allocations. The administrator must ensure that there is at
    most one reservation for each IP address and/or delegated prefix
    within each subnet, prior to the configuration update.
@@ -5482,7 +5482,7 @@ parameter:
        ...
    }
 
-The default value of the ``persist`` parameter is "true", which
+The default value of the ``persist`` parameter is ``true``, which
 configures the server to store the server identifier on a disk.
 
 In the example above, the server is configured not to store the
@@ -6832,15 +6832,6 @@ the DHCPv6 server parameters can be stored in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-The following table lists DHCPv6-specific parameters supported by the
-Configuration Backend, with an indication of the level of the hierarchy
-at which it is currently supported. "n/a" marks cases when a
-given parameter is not applicable at the particular level of the
-hierarchy or in cases when the server does not support the parameter
-at that level. "no" is used when a parameter is
-supported at the given level of the hierarchy but is not
-configurable via the Configuration Backend.
-
 All supported parameters can be configured via ``cb_cmds`` hook library
 described in the :ref:`cb-cmds-library` section. The general rule is that
 scalar global parameters are set using
@@ -6865,6 +6856,10 @@ to the configuration elements associated with ``all`` servers. Any configuration
 element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
 used by all servers connecting to the configuration database.
 
+The following table lists DHCPv6-specific parameters supported by the
+Configuration Backend, with an indication of the level of the hierarchy
+at which it is currently supported.
+
 .. table:: List of DHCPv6 parameters supported by the Configuration Backend
 
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
@@ -6872,9 +6867,9 @@ used by all servers connecting to the configuration database.
    |                             |                            | Class     | Network   |           |           | Delegation |
    |                             |                            |           |           |           |           | Pool       |
    +=============================+============================+===========+===========+===========+===========+============+
-   | cache-max-age               | yes                        | n/a       | todo      | todo      | n/a       | n/a        |
+   | cache-max-age               | yes                        | n/a       | no        | no        | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
-   | cache-threshold             | yes                        | n/a       | todo      | todo      | n/a       | n/a        |
+   | cache-threshold             | yes                        | n/a       | no        | no        | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | calculate-tee-times         | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
@@ -6955,6 +6950,16 @@ used by all servers connecting to the configuration database.
    | valid-lifetime              | yes                        | yes       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
 
+-  ``yes`` - indicates that the parameter is supported at the given
+   level of the hierarchy and can be configured via the Configuration Backend.
+
+-  ``no`` - indicates that a parameter is supported at the given level
+   of the hierarchy but cannot be configured via the Configuration Backend.
+
+-  ``n/a`` -  indicates that a given parameter is not applicable
+   at the particular level of the hierarchy or that the
+   server does not support the parameter at that level.
+
 .. _dhcp6-cb-json:
 
 Enabling the Configuration Backend
@@ -7023,7 +7028,7 @@ Lenient Option Parsing
 By default, DHCPv6 option 16's ``vendor-class-data`` field is parsed as a set of
 length-value pairs. Same for tuple fields defined in custom options.
 
-With ``lenient-option-parsing: "true"``, if a length ever exceeds the rest of
+With ``"lenient-option-parsing": true``, if a length ever exceeds the rest of
 the option's buffer, previous versions of Kea returned a log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
 with ``x < y``; this no longer occurs. Instead, the value is considered to be the rest of the buffer,
