@@ -1,10 +1,8 @@
 AC_DEFUN([AX_ISC_CPP11], [
 
 CXX_SAVED=$CXX
-CPPFLAGS_SAVED=$CPPFLAGS
 feature=
 for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
-        CPPFLAGS=$CPPFLAGS_SAVED
         if test "$retry" = "fail"; then
                 AC_MSG_ERROR([$feature (a C++11 feature) is not supported])
         fi
@@ -227,29 +225,9 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
                 [AC_MSG_RESULT([no])
                  continue])
 
-        AC_MSG_CHECKING(noreturn support)
-        feature="noreturn"
-        CPPFLAGS="-Werror=implicit-fallthrough -Wimplicit-fallthrough $CPPFLAGS"
+        AC_MSG_CHECKING(chrono support)
+        feature="chrono"
         AC_COMPILE_IFELSE(
-                [AC_LANG_PROGRAM(
-                        [#include <cstdlib>
-                         [[[noreturn]]] void f() {exit(0);}],
-                        [int i = 0;
-                         switch (i) {
-                         case 0:
-                         f();
-                         default:
-                         i++;
-                         break;
-                         }])],
-                [AC_MSG_RESULT([yes])],
-                [AC_MSG_RESULT([no])
-                 continue])
-         CPPFLAGS=$CPPFLAGS_SAVED
-
-         AC_MSG_CHECKING(chrono support)
-         feature="chrono"
-         AC_COMPILE_IFELSE(
                 [AC_LANG_PROGRAM(
                         [#include <chrono>
                          using namespace std::chrono;],
@@ -257,8 +235,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
                 [AC_MSG_RESULT([yes])],
                 [AC_MSG_RESULT([no])
                  continue])
-         break
-
+        break
 done
 
 ])dnl AX_ISC_CPP11
