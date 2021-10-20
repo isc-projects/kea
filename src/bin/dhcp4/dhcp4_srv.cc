@@ -2330,7 +2330,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             .arg(hint.toText());
 
         Lease4Ptr lease;
-//        Subnet4Ptr original_subnet = subnet;
 
         // We used to issue a separate query (two actually: one for client-id
         // and another one for hw-addr for) each subnet in the shared network.
@@ -2574,12 +2573,13 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure.
-        if ((ctx->unknown_requested_addr_) /*&& !original_subnet->getAuthoritative()*/) {
+        if (ctx->unknown_requested_addr_) {
             Subnet4Ptr s = original_subnet;
-            // Address might have been rejected via class guard (i.e. not allowed for
-            // this client). We need to determine if we truly do not know about the
-            // address or whether this client just isn't allowed to have that address.
-            // We should only NAK For the latter.
+            // Address might have been rejected via class guard (i.e. not
+            // allowed for this client). We need to determine if we truly
+            // do not know about the address or whether this client just
+            // isn't allowed to have that address. We should only NAK
+            // For the latter.
             while (s) {
                 if (s->inPool(Lease::TYPE_V4, hint)) {
                     break;
@@ -2589,7 +2589,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             }
 
             // If we didn't find a subnet, it's not an address we know about
-            // so we we drop the NAK.
+            // so we drop the NAK.
             if (!s) {
                 LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                           DHCP4_UNKNOWN_ADDRESS_REQUESTED)
