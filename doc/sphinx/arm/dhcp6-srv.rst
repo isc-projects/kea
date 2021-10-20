@@ -890,8 +890,8 @@ of the subnet identifier.
 IPv6 Subnet Prefix
 ------------------
 
-The subnet prefix is the second way to identify a subnet. It does not
-need to have the address part to match the prefix length; for instance,
+The subnet prefix is the second way to identify a subnet. Kea can
+accept non-canonical subnet addresses; for instance,
 this configuration is accepted:
 
 ::
@@ -1699,12 +1699,12 @@ server configuration as shown below:
    }
 
 This configuration will cause the server to include the MAP-E Container
-option to the client. Use "s46-cont-mapt" or "s46-cont-lw" for the MAP-T
+option to the client. Use ``s46-cont-mapt`` or ``s46-cont-lw`` for the MAP-T
 Container and S46 Lightweight 4over6 Container options, respectively.
 
 All remaining Softwire46 options described below are included in one of
 the container options. Thus, they must be included in appropriate
-option spaces by selecting a "space" name, which specifies the
+option spaces by selecting a ``space`` name, which specifies the
 option where they are supposed to be included.
 
 S46 Rule Option
@@ -1721,7 +1721,7 @@ and Forwarding Mapping Rule (FMR).
        "data": "128, 0, 24, 192.0.2.0, 2001:db8:1::/64"
    }
 
-Another possible ``space`` value is "s46-cont-mapt-options".
+Another possible ``space`` value is ``s46-cont-mapt-options``.
 
 The S46 Rule option conveys a number of parameters:
 
@@ -1761,7 +1761,7 @@ permitted in the MAP-T and S46 Lightweight 4over6 Container options.
        "data": "2001:db8:cafe::1",
    }
 
-Another possible ``space`` value is "s46-cont-lw-options".
+Another possible ``space`` value is ``s46-cont-lw-options``.
 
 S46 DMR Option
 ~~~~~~~~~~~~~~
@@ -1812,12 +1812,12 @@ that may be provided to CEs.
        "data": "2, 3/4",
    }
 
-Another possible ``space`` value is "s46-v4v6bind", to include this option
+Another possible ``space`` value is ``s46-v4v6bind``, to include this option
 in the S46 IPv4/IPv6 Address Binding option.
 
 Note that the second value in the example above specifies the PSID and
 PSID-length fields in the format of PSID/PSID length. This is equivalent
-to the values of "PSID-len=4" and "PSID=12288" conveyed in the S46 Port
+to the values of ``PSID-len=4`` and ``PSID=12288`` conveyed in the S46 Port
 Parameters option.
 
 .. _dhcp6-custom-options:
@@ -1826,7 +1826,7 @@ Custom DHCPv6 Options
 ---------------------
 
 Kea supports custom (non-standard) DHCPv6 options.
-Let's say that we want to define a new DHCPv6 option called "foo", which
+Let's say that we want to define a new DHCPv6 option called ``foo``, which
 will have code 100 and will convey a single, unsigned, 32-bit
 integer value. Such an option can be defined by putting the following entry
 in the configuration file:
@@ -1848,13 +1848,13 @@ in the configuration file:
        ...
    }
 
-The "false" value of the ``array`` parameter determines that the option
-does NOT comprise an array of "uint32" values but is, instead, a single
+The ``"false"`` value of the ``array`` parameter determines that the option
+does NOT comprise an array of ``uint32`` values but is, instead, a single
 value. Two other parameters have been left blank: ``record-types`` and
 ``encapsulate``. The former specifies the comma-separated list of option
 data fields, if the option comprises a record of data fields. The
 ``record-types`` value should be non-empty if ``type`` is set to
-"record"; otherwise it must be left blank. The latter parameter
+``record``; otherwise it must be left blank. The latter parameter
 specifies the name of the option space being encapsulated by the
 particular option. If the particular option does not encapsulate any
 option space, the parameter should be left blank. Note that the ``option-def``
@@ -1862,9 +1862,9 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all
-others are optional. The ``array`` default value is "false". The
+others are optional. The ``array`` default value is ``"false"``. The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
-The default ``space`` is "dhcp6".
+The default ``space`` is ``dhcp6``.
 
 Once the new option format is defined, its value is set in the same way
 as for a standard option. For example, the following commands set a
@@ -1911,7 +1911,7 @@ defined in the following way:
        ...
    }
 
-The ``type`` is set to "record" to indicate that the option contains
+The ``type`` is set to ``record`` to indicate that the option contains
 multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
@@ -1939,7 +1939,7 @@ comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``true`` and ``type`` is set to "record", the
+When ``array`` is set to ``"true"`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2005,10 +2005,10 @@ The standard spaces defined in Kea and their options are:
 +-------------+--------------------+------------------------------------------------------------------------+
 
 The following examples show how to
-define an option "foo" with code 1 that consists of an IPv6 address,
-an unsigned 16-bit integer, and a string.  The "foo" option is
+define an option ``"foo"`` with code 1 that consists of an IPv6 address,
+an unsigned 16-bit integer, and a string.  The ``"foo"`` option is
 conveyed in a Vendor-Specific Information option, which comprises a
-single uint32 value that is set to "12345". The sub-option "foo"
+single uint32 value that is set to ``12345``. The sub-option ``"foo"``
 follows the data field holding this value.
 
 The first step is to define the format of the option:
@@ -2030,7 +2030,7 @@ The first step is to define the format of the option:
        ...
    }
 
-(Note that the option space is set to "vendor-12345".) Once the
+(Note that the option space is set to ``"vendor-12345"``.) Once the
 option format is defined, the next step is to define actual values for
 that option:
 
@@ -2048,8 +2048,8 @@ that option:
        ...
    }
 
-We should also define a value ("enterprise-number") for the
-Vendor-Specific Information option, to convey the option "foo".
+We should also define a value (``"enterprise-number"``) for the
+Vendor-Specific Information option, to convey the option ``foo``.
 
 ::
 
@@ -2105,7 +2105,7 @@ defining sub-options for a standard option, because one is created by
 default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp6-vendor-opts`).
 
-If we want a DHCPv6 option called "container" with code
+If we want a DHCPv6 option called ``container`` with code
 102, that conveys two sub-options with codes 1 and 2, we first need to
 define the new sub-options:
 
@@ -2136,7 +2136,7 @@ define the new sub-options:
    }
 
 Note that we have defined the options to belong to a new option space
-(in this case, "isc").
+(in this case, ``"isc"``).
 
 The next step is to define a regular DHCPv6 option with the desired code
 and specify that it should include options from the new option space:
@@ -2160,7 +2160,7 @@ and specify that it should include options from the new option space:
    }
 
 The name of the option space in which the sub-options are defined is set
-in the ``encapsulate`` field. The ``type`` field is set to "empty",
+in the ``encapsulate`` field. The ``type`` field is set to ``"empty"``,
 to indicate that this option does not carry any data other than
 sub-options.
 
@@ -2195,11 +2195,11 @@ It is possible to create an option which carries some data in
 addition to the sub-options defined in the encapsulated option space.
 For example, if the ``container`` option from the previous example were
 required to carry a uint16 value as well as the sub-options, the
-``type`` value would have to be set to "uint16" in the option
+``type`` value would have to be set to ``"uint16"`` in the option
 definition. (Such an option would then have the following data
 structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
-in quotes, e.g. "123" — would then be assigned to the uint16 field in
+in quotes, e.g. ``"123"`` — would then be assigned to the ``uint16`` field in
 the ``container`` option.
 
 .. _dhcp6-option-data-defaults:
@@ -2251,8 +2251,8 @@ According to RFC 8415, section 21.4, the recommended T1 and T2 values
 are 50% and 80% of the preferred
 lease time, respectively. Kea can be configured to send values that are
 specified explicitly or that are calculated as percentages of the
-preferred lease time. The server's behavior is governed by a combination
-of configuration parameters, two of which have already been mentioned.
+preferred lease time. The server's behavior is determined by a combination
+of configuration parameters, of which T1 and T2 are only two.
 
 Since Kea 1.6.0, the lease's preferred and valid lifetimes are extended from
 single values to triplets with minimum, default, and maximum values, with
@@ -2619,9 +2619,9 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
    }
 
 This example shows a configuration using an automatically generated
-``VENDOR_CLASS\_`` class. The administrator of the network has decided that
+``VENDOR_CLASS_`` class. The administrator of the network has decided that
 addresses in the range 2001:db8:1::1 to 2001:db8:1::ffff are to be
-managed by the Dhcp6 server and that only clients belonging to the
+managed by the DHCP6 server and that only clients belonging to the
 eRouter1.0 client class are allowed to use that pool.
 
 ::
