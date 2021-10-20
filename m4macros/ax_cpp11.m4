@@ -229,7 +229,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 
         AC_MSG_CHECKING(noreturn support)
         feature="noreturn"
-        CPPFLAGS="-Werror -Wimplicit-fallthrough $CPPFLAGS"
+        CPPFLAGS="-Werror=implicit-fallthrough -Wimplicit-fallthrough $CPPFLAGS"
         AC_COMPILE_IFELSE(
                 [AC_LANG_PROGRAM(
                         [#include <cstdlib>
