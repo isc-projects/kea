@@ -1168,8 +1168,8 @@ of the subnet identifier.
 IPv4 Subnet Prefix
 ------------------
 
-The subnet prefix is the second way to identify a subnet. It does not
-need to have the address part to match the prefix length; for instance,
+The subnet prefix is the second way to identify a subnet. Kea can
+accept non-canonical subnet addresses; for instance,
 this configuration is accepted:
 
 ::
@@ -1902,9 +1902,9 @@ manually.
    | fqdn                           | 81    | record (uint8, uint8, uint8, fqdn)    | part of the DDNS and D2 configuration.                            |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | dhcp-agent-options             | 82    | empty                                 | sent by the relay agent. This is an empty container option; see   |
-   |                                |       |                                       | RAI option detail in later part of this section.                  |
+   |                                |       |                                       | RAI option detail later in this section.                          |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | authenticate                   | 90    | binary                                | sent by client, kea does not validate it yet.                     |
+   | authenticate                   | 90    | binary                                | sent by client, Kea does not yet validate it.                     |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | client-last-transaction-time   | 91    | uint32                                | sent by client, server does not set it.                           |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
@@ -1975,33 +1975,33 @@ what values are accepted for them.
    | string          | Any text. Please note that Kea                        |
    |                 | silently discards any                                 |
    |                 | terminating/trailing nulls from                       |
-   |                 | the end of 'string' options when                      |
+   |                 | the end of "string" options when                      |
    |                 | unpacking received packets. This                      |
    |                 | is in keeping with `RFC 2132,                         |
    |                 | Section                                               |
    |                 | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
    +-----------------+-------------------------------------------------------+
-   | tuple           | A length encoded as an 8- (16-                        |
-   |                 | for DHCPv6) bit unsigned integer                      |
+   | tuple           | A length encoded as an 8-bit (16-bit                  |
+   |                 | for DHCPv6) unsigned integer                          |
    |                 | followed by a string of this                          |
    |                 | length.                                               |
    +-----------------+-------------------------------------------------------+
-   | uint8           | 8-bit unsigned integer with                           |
+   | uint8           | An 8-bit unsigned integer with                        |
    |                 | allowed values 0 to 255.                              |
    +-----------------+-------------------------------------------------------+
-   | uint16          | 16-bit unsigned integer with                          |
+   | uint16          | A 16-bit unsigned integer with                        |
    |                 | allowed values 0 to 65535.                            |
    +-----------------+-------------------------------------------------------+
-   | uint32          | 32-bit unsigned integer with                          |
+   | uint32          | A 32-bit unsigned integer with                        |
    |                 | allowed values 0 to 4294967295.                       |
    +-----------------+-------------------------------------------------------+
-   | int8            | 8-bit signed integer with allowed                     |
+   | int8            | An 8-bit signed integer with allowed                  |
    |                 | values -128 to 127.                                   |
    +-----------------+-------------------------------------------------------+
-   | int16           | 16-bit signed integer with                            |
+   | int16           | A 16-bit signed integer with                          |
    |                 | allowed values -32768 to 32767.                       |
    +-----------------+-------------------------------------------------------+
-   | int32           | 32-bit signed integer with                            |
+   | int32           | A 32-bit signed integer with                          |
    |                 | allowed values -2147483648 to                         |
    |                 | 2147483647.                                           |
    +-----------------+-------------------------------------------------------+
@@ -2029,7 +2029,7 @@ to be configured with those options.
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
-and/or by flex-id to construct a unique device identifier.
+and/or by ``flex-id`` to construct a unique device identifier.
 
 .. _dhcp4-custom-options:
 
@@ -2037,7 +2037,7 @@ Custom DHCPv4 Options
 ---------------------
 
 Kea supports custom (non-standard) DHCPv4 options. Let's say that we want
-to define a new DHCPv4 option called "foo", which will have code 222
+to define a new DHCPv4 option called ``foo``, which will have code 222
 and will convey a single, unsigned, 32-bit integer value.
 Such an option can be defined by putting the following entry in the configuration file:
 
@@ -2058,8 +2058,8 @@ Such an option can be defined by putting the following entry in the configuratio
        ...
    }
 
-The ``false`` value of the ``array`` parameter determines that the
-option does NOT comprise an array of "uint32" values but is, instead, a
+The ``"false"`` value of the ``array`` parameter determines that the
+option does NOT comprise an array of ``uint32`` values but is, instead, a
 single value. Two other parameters have been left blank:
 ``record-types`` and ``encapsulate``. The former specifies the
 comma-separated list of option data fields, if the option comprises a
@@ -2072,9 +2072,9 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` default value is ``false``. The
+are optional. The ``array`` default value is ``"false"``. The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
-The default ``space`` is "dhcp4".
+The default ``space`` is ``dhcp4``.
 
 Once the new option format is defined, its value is set in the same way
 as for a standard option. For example, the following commands set a
@@ -2121,12 +2121,12 @@ defined in the following way:
        ...
    }
 
-The ``type`` is set to "record" to indicate that the option contains
+The ``type`` is set to ``"record"`` to indicate that the option contains
 multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
 
-The values of the options are set in an ``option-data`` statement as follows:
+The option's values are set in an ``option-data`` statement as follows:
 
 ::
 
@@ -2143,12 +2143,12 @@ The values of the options are set in an ``option-data`` statement as follows:
        ...
    }
 
-``csv-format`` is set to ``true`` to indicate that the ``data`` field
+``csv-format`` is set to ``"true"`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``true`` and ``type`` is set to "record", the
+When ``array`` is set to ``"true"`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2332,7 +2332,7 @@ The definition used to decode a VSI option is:
    - If not defined at global scope nor in a client class to which the
      packet belongs, the built-in last resort definition is used. This
      definition only says the sub-option space is
-     "vendor-encapsulated-options-space".
+     ``"vendor-encapsulated-options-space"``.
 
    The output definition selection is a bit simpler:
 
@@ -2356,13 +2356,13 @@ DHCPv4 Vendor-Specific Options
 ------------------------------
 
 Currently there are two option spaces defined for the DHCPv4 daemon:
-"dhcp4" (for the top-level DHCPv4 options) and
-"vendor-encapsulated-options-space", which is empty by default but in
+``dhcp4`` (for the top-level DHCPv4 options) and
+``"vendor-encapsulated-options-space"``, which is empty by default but in
 which options can be defined. Those options are carried in the
 Vendor-Specific Information option (code 43). The following examples
-show how to define an option "foo" with code 1 that
+show how to define an option ``foo`` with code 1 that
 comprises an IPv4 address, an unsigned 16-bit integer, and a string. The
-"foo" option is conveyed in a Vendor-Specific Information option.
+``foo`` option is conveyed in a Vendor-Specific Information option.
 
 The first step is to define the format of the option:
 
@@ -2384,7 +2384,7 @@ The first step is to define the format of the option:
    }
 
 (Note that the option space is set to
-"vendor-encapsulated-options-space".) Once the option format is defined,
+``"vendor-encapsulated-options-space"``.) Once the option format is defined,
 the next step is to define actual values for that option:
 
 ::
@@ -2403,7 +2403,7 @@ the next step is to define actual values for that option:
    }
 
 In this example, we also include the Vendor-Specific Information option, which
-conveys our sub-option "foo". This is required; otherwise, the option
+conveys our sub-option ``foo``. This is required; otherwise, the option
 will not be included in messages sent to the client.
 
 ::
@@ -2518,17 +2518,21 @@ following:
        } ]
    }
 
-By default Kea sends back
+By default, Kea sends back
 only those options that are requested by a client, unless there are
 protocol rules that tell the DHCP server to always send an option. This
 approach works nicely in most cases and avoids problems with clients
-refusing responses with options they don't understand. Unfortunately,
-this is more complex when we consider vendor options. Some vendors (such
+refusing responses with options they don't understand. However,
+the situation with vendor options is more complex, as they
+are not requested the same way as other options, are
+not well-documented in official RFCs, or vary by vendor.
+
+Some vendors (such
 as DOCSIS, identified by vendor option 4491) have a mechanism to
 request specific vendor options and Kea is able to honor those.
-Unfortunately, for many other vendors, such as Genexis (25167) as discussed
-above, Kea does not have such a mechanism, so it cannot send any
-sub-options on its own. To solve this issue, we came up with the concept of
+Unfortunately, for many other vendors, such as Genexis (25167, discussed
+above), Kea does not have such a mechanism, so it cannot send any
+sub-options on its own. To solve this issue, we devised the concept of
 persistent options. Kea can be told to always send options, even if the
 client did not request them. This can be achieved by adding
 ``"always-send": true`` to the option definition. Note that in this
@@ -2544,8 +2548,8 @@ and ``doc/examples/kea6/vivso.json`` in the Kea sources.
 
 .. note::
 
-   Currently only one vendor is supported for vivco-suboptions (code 124)
-   and vivso-suboptions (code 125) options. Specifying
+   Currently only one vendor is supported for the ``vivco-suboptions`` (code 124)
+   and ``vivso-suboptions`` (code 125) options. Specifying
    multiple enterprise numbers within a single option instance or multiple
    options with different enterprise numbers is not supported.
 
@@ -2556,7 +2560,7 @@ Nested DHCPv4 Options (Custom Option Spaces)
 
 It is sometimes useful to define a completely new option space, such as
 when a user creates a new option in the standard option space
-("dhcp4") and wants this option to convey sub-options. Since they are in
+(``dhcp4``) and wants this option to convey sub-options. Since they are in
 a separate space, sub-option codes have a separate numbering scheme
 and may overlap with the codes of standard options.
 
@@ -2565,7 +2569,7 @@ defining sub-options for a standard option, because one is created by
 default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp4-vendor-opts`).
 
-If we want a DHCPv4 option called "container" with code
+If we want a DHCPv4 option called ``container`` with code
 222, that conveys two sub-options with codes 1 and 2, we first need to
 define the new sub-options:
 
@@ -2596,7 +2600,7 @@ define the new sub-options:
    }
 
 Note that we have defined the options to belong to a new option space
-(in this case, "isc").
+(in this case, ``"isc"``).
 
 The next step is to define a regular DHCPv4 option with the desired code
 and specify that it should include options from the new option space:
@@ -2620,7 +2624,7 @@ and specify that it should include options from the new option space:
    }
 
 The name of the option space in which the sub-options are defined is set
-in the ``encapsulate`` field. The ``type`` field is set to "empty", to
+in the ``encapsulate`` field. The ``type`` field is set to ``"empty"``, to
 indicate that this option does not carry any data other than
 sub-options.
 
@@ -2655,11 +2659,11 @@ It is possible to create an option which carries some data in
 addition to the sub-options defined in the encapsulated option space.
 For example, if the ``container`` option from the previous example were
 required to carry a uint16 value as well as the sub-options, the
-``type`` value would have to be set to "uint16" in the option
+``type`` value would have to be set to ``"uint16"`` in the option
 definition. (Such an option would then have the following data
 structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
-in quotes, e.g. "123" — would then be assigned to the uint16 field in
+in quotes, e.g. ``"123"`` — would then be assigned to the ``uint16`` field in
 the ``container`` option.
 
 .. _dhcp4-option-data-defaults:
@@ -2882,7 +2886,7 @@ Using Vendor Class Information in Classification
 
 The server checks whether an incoming packet includes the vendor class
 identifier option (60). If it does, the content of that option is
-prepended with ``VENDOR_CLASS\_``, and it is interpreted as a class. For
+prepended with ``VENDOR_CLASS_``, and it is interpreted as a class. For
 example, modern cable modems send this option with value
 ``docsis3.0``, so the packet belongs to the class
 ``VENDOR_CLASS_docsis3.0``.
@@ -2894,7 +2898,7 @@ example, modern cable modems send this option with value
    ``next-server`` and ``boot-file-name`` values appropriately.
 
 This example shows a configuration using an automatically generated
-``VENDOR_CLASS\_`` class. The administrator of the network has decided that
+``VENDOR_CLASS_`` class. The administrator of the network has decided that
 addresses from the range 192.0.2.10 to 192.0.2.20 are going to be managed by
 the Dhcp4 server and only clients belonging to the DOCSIS 3.0 client
 class are allowed to use that pool.
@@ -3531,7 +3535,7 @@ qualifying suffix (if one is defined and needed).
    If clients include domain names in the Host Name option and the administrator
    wants these preserved, they need to make sure that the dot, ".",
    is considered a valid character by the ``hostname-char-set`` expression,
-   such as this: "[^A-Za-z0-9.-]". This does not affect dots in FQDN
+   such as this: ``"[^A-Za-z0-9.-]"``. This does not affect dots in FQDN
    Option values. When scrubbing FQDNs, dots are treated as delimiters
    and used to separate the option value into individual domain labels
    that are scrubbed and then re-assembled.
