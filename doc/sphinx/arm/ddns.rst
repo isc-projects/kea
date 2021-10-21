@@ -76,7 +76,7 @@ or at the behest of that client.
 
 Conflict resolution can be indirectly enabled or disabled via
 the configuration parameter ``ddns-use-conflict-resolution``, supported
-by both ``kea-dhcp4`` and ``kea-dhcp6``. The servers use this parameter to
+by both ``kea-dhcp4`` and ``kea-dhcp6``. These servers use this parameter to
 set a flag within each NameChangeRequest they send that tells D2
 whether conflict resolution should be employed for that request.
 By default, conflict resolution is enabled. For more details, please refer 
