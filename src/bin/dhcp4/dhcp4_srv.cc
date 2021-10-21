@@ -2578,7 +2578,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // Address might have been rejected via class guard (i.e. not
             // allowed for this client). We need to determine if we truly
             // do not know about the address or whether this client just
-            // isn't allowed to have that address. We should only NAK
+            // isn't allowed to have that address. We should only DHCPNAK
             // For the latter.
             while (s) {
                 if (s->inPool(Lease::TYPE_V4, hint)) {
@@ -2589,7 +2589,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             }
 
             // If we didn't find a subnet, it's not an address we know about
-            // so we drop the NAK.
+            // so we drop the DHCPNAK.
             if (!s) {
                 LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                           DHCP4_UNKNOWN_ADDRESS_REQUESTED)
@@ -2886,9 +2886,9 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     } else if (!query->getCiaddr().isV4Zero()) {
         response->setRemoteAddr(query->getCiaddr());
 
-    // We can't unicast the response to the client when sending NAK,
+    // We can't unicast the response to the client when sending DHCPNAK,
     // because we haven't allocated address for him. Therefore,
-    // NAK is broadcast.
+    // DHCPNAK is broadcast.
     } else if (response->getType() == DHCPNAK) {
         response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 

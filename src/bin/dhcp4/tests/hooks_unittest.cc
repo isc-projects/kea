@@ -2040,14 +2040,13 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     resetCalloutBuffers();
 
-    // Now request an address that can't be allocated. The client should receive
-    // the DHCPNAK.
+    // Now request an address that can't be allocated.
     client.ciaddr_ = IOAddress("10.0.0.1");
 
     ASSERT_NO_THROW(client.doRequest());
 
-    // Make sure that we did not receive a response. If we're
-    // not authoritative, there should not be a NAK.
+    // Make sure that we did not receive a response. Since we're
+    // not authoritative, there should not be a DHCPNAK.
     ASSERT_FALSE(client.getContext().response_);
 
     // Check that no callback was not called.

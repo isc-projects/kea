@@ -3600,7 +3600,7 @@ AllocEngine::findGlobalReservation(ClientContext4& ctx) {
 
 Lease4Ptr
 AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
-    // Find an existing lease for this client. This function will return true
+    // Find an existing lease for this client. This function will return null
     // if there is a conflict with existing lease and the allocation should
     // not be continued.
     Lease4Ptr client_lease;
@@ -3711,7 +3711,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
 
 Lease4Ptr
 AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
-    // Find an existing lease for this client. This function will return true
+    // Find an existing lease for this client. This function will return null
     // if there is a conflict with existing lease and the allocation should
     // not be continued.
     Lease4Ptr client_lease;

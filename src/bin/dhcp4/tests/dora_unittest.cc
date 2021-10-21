@@ -2001,10 +2001,10 @@ DORATest::reservationsWithConflicts() {
     ASSERT_NO_THROW(client.doRequest());
 
     // The reservation has been removed. Since address that the client is
-    // using doesn't belong a dynamic pool and the server is not
+    // using doesn't belong to a dynamic pool and the server is not
     // authoritative it should not send a DHCPNAK.
     resp = client.getContext().response_;
-    ASSERT_FALSE(client.getContext().response_);
+    ASSERT_FALSE(resp);
 
     // A conforming client would go back to the server discovery.
     client.setState(Dhcp4Client::SELECTING);
