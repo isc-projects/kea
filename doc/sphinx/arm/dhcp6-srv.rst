@@ -2714,9 +2714,9 @@ way in which ``option-data`` is processed.
 DDNS for DHCPv6
 ---------------
 
-As mentioned earlier, ``kea-dhcp6`` can be configured to generate requests
-to the DHCP-DDNS server, ``kea-dhcp-ddns`` (referred to here as "D2"), to update DNS
-entries. These requests are known as Name Change Requests or NCRs. Each
+As mentioned earlier, kea-dhcp6 can be configured to generate requests
+to the DHCP-DDNS server (referred to here as "D2") to update DNS
+entries. These requests are known as NameChangeRequests or NCRs. Each
 NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries.
@@ -3074,8 +3074,8 @@ To override client delegation, issue the following commands:
 ``kea-dhcp6`` Name Generation for DDNS Update Requests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each Name Change Request (NCR) must of course include the fully qualified
-domain name whose DNS entries are to be affected. ``kea-dhcp6`` can be
+Each NameChangeRequest must of course include the fully qualified
+domain name whose DNS entries are to be affected. kea-dhcp6 can be
 configured to supply a portion or all of that name, based upon what it
 receives from the client in the DHCPREQUEST.
 
