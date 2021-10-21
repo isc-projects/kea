@@ -3034,8 +3034,8 @@ DDNS for DHCPv4
 ---------------
 
 As mentioned earlier, ``kea-dhcp4`` can be configured to generate requests
-to the DHCP-DDNS server, ``kea-dhcp-ddns`` (referred to here as "D2"), to
-update DNS entries. These requests are known as Name Change Requests or
+to the DHCP-DDNS server, ``kea-dhcp-ddns``, (referred to herein as "D2") to
+update DNS entries. These requests are known as NameChangeRequests or
 NCRs. Each NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries.
@@ -3396,7 +3396,7 @@ is the name submitted to D2 in the DDNS update request.
 ``kea-dhcp4`` Name Generation for DDNS Update Requests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each Name Change Request (NCR) must of course include the fully qualified domain
+Each NameChangeRequest must of course include the fully qualified domain
 name whose DNS entries are to be affected. ``kea-dhcp4`` can be configured
 to supply a portion or all of that name, based on what it receives
 from the client in the DHCPREQUEST.
