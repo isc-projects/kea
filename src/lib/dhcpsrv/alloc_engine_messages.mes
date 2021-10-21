@@ -10,9 +10,9 @@ $NAMESPACE isc::dhcp
 This debug message is logged when the allocation engine successfully
 reclaims a lease. The lease is now available for assignment.
 
-% ALLOC_ENGINE_REMOVAL_NCR_FAILED sending removal name change request failed for lease %1: %2
-This error message is logged when sending a removal name change request
-to DHCP DDNS failed. This name change request is usually generated when
+% ALLOC_ENGINE_REMOVAL_NCR_FAILED sending removal NameChangeRequest failed for lease %1: %2
+This error message is logged when sending a removal NameChangeRequest
+to DHCP DDNS failed. This NameChangeRequest is usually generated when
 the lease reclamation routine acts upon expired leases. If a lease being
 reclaimed has a corresponding DNS entry it needs to be removed.
 This message indicates that removal of the DNS entry has failed.
