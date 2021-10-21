@@ -86,10 +86,10 @@ servers through an optional, top-level, configuration element,
 where:
 
 -  ``enable-queue`` - enables or disables packet queueing.
-   When "true", the server processes packets from the packet queue, which
-   is filled by a separate thread. When "false", the server processes
+   When ``true``, the server processes packets from the packet queue, which
+   is filled by a separate thread. When ``false``, the server processes
    packets directly from the socket buffers in the main thread. It is
-   disabled ("false") by default.
+   disabled (``false``) by default.
 
 -  ``queue-type`` - the name of the queue implementation to use. This value
    exists so that custom implementations can be registered (via a hook
