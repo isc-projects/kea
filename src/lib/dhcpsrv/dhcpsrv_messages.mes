@@ -1224,7 +1224,7 @@ lease from the PostgreSQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
-% DHCPSRV_QUEUE_NCR %1: name change request to %2 DNS entry queued: %3
+% DHCPSRV_QUEUE_NCR %1: Name change request to %2 DNS entry queued: %3
 A debug message which is logged when the NameChangeRequest to add or remove
 a DNS entries for a particular lease has been queued. The first argument
 includes the client identification information. The second argument
@@ -1232,7 +1232,7 @@ indicates whether the DNS entry is to be added or removed. The third
 argument carries the details of the NameChangeRequest.
 
 % DHCPSRV_QUEUE_NCR_FAILED %1: queuing %2 name change request failed for lease %3: %4
-This error message is logged when sending a name change request
+This error message is logged when sending a NameChangeRequest
 to DHCP DDNS failed. The first argument includes the client identification
 information. The second argument indicates whether the DNS entry is to be
 added or removed. The third argument specifies the leased address. The
