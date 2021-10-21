@@ -124,7 +124,7 @@ be created. The basic configuration is as follows:
                "subnet": "192.0.2.0/24",
                "pools": [
                    {
-                        "pool": "192.0.2.1 - 192.0.2.200"
+                       "pool": "192.0.2.1 - 192.0.2.200"
                    }
                ]
            }
@@ -224,13 +224,13 @@ client begins the renewal and rebind processes.
    See section :ref:`dhcp4-t1-t2-times`
    for more details on generating T1 and T2.
 
-The ``interfaces-config`` map specifies the server configuration
-concerning the network interfaces on which the server should listen to
-the DHCP messages. The ``interfaces`` parameter specifies a list of
+The ``interfaces-config`` map specifies the
+network interfaces on which the server should listen to
+DHCP messages. The ``interfaces`` parameter specifies a list of
 network interfaces on which the server should listen. Lists are opened
 and closed with square brackets, with elements separated by commas. To
-listen on two interfaces, the ``interfaces-config`` command should look
-like this:
+listen on two interfaces, the ``interfaces-config`` element should look like
+this:
 
 ::
 
@@ -238,14 +238,14 @@ like this:
        "interfaces": [ "eth0", "eth1" ]
    },
 
-The next couple of lines define the lease database, the place where the
+The next lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
 server to use memfile, which is the simplest and fastest database
 backend. It uses an in-memory database and stores leases on disk in a
-CSV (comma-separated values) file. This is a very simple configuration example; usually the lease
-database configuration is more extensive and contains additional
-parameters. Note that ``lease-database`` is an object and opens up a new
-scope, using an opening brace. Its parameters (just one in this example:
+CSV (comma-separated values) file. This is a very simple configuration example;
+usually the lease database configuration is more extensive and contains
+additional parameters. Note that ``lease-database`` is an object and opens up a
+new scope, using an opening brace. Its parameters (just one in this example:
 ``type``) follow. If there were more than one, they would be separated
 by commas. This scope is closed with a closing brace. As more parameters
 for the ``Dhcp4`` definition follow, a trailing comma is present.
@@ -257,7 +257,7 @@ which the server is expected to receive DHCP requests. The subnets are
 specified with the ``subnet4`` parameter. It is a list, so it starts and
 ends with square brackets. Each subnet definition in the list has
 several attributes associated with it, so it is a structure and is
-opened and closed with braces. At a minimum, a subnet definition has to
+opened and closed with braces. At a minimum, a subnet definition must
 have at least two parameters: ``subnet``, which defines the whole
 subnet; and ``pools``, which is a list of dynamically allocated pools
 that are governed by the DHCP server.
@@ -288,14 +288,14 @@ Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
 After all the parameters have been specified, there are two contexts open:
-``global`` and ``Dhcp4``; thus, two closing curly brackets are needed to close
+``global`` and ``Dhcp4``; thus, two closing curly brackets must be used to close
 them.
 
 Lease Storage
 -------------
 
 All leases issued by the server are stored in the lease database.
-Currently there are four database backends available: memfile
+There are four database backends available: memfile
 (the default), MySQL, PostgreSQL, and Cassandra (deprecated).
 
 Memfile - Basic Storage for Leases
@@ -312,8 +312,8 @@ eliminates a dependency on third-party database software.
 The configuration of the memfile backend is controlled through
 the ``Dhcp4``/``lease-database`` parameters. The ``type`` parameter is mandatory
 and specifies which storage for leases the server should use, through
-the ``"memfile"`` value. The following list gives additional optional parameters that
-can be used to configure the memfile backend.
+the ``"memfile"`` value. The following list gives additional optional parameters
+that can be used to configure the memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
    leases are written to the file. It is strongly recommended that the
@@ -327,7 +327,7 @@ can be used to configure the memfile backend.
    writing lease updates to the lease file.
 
 -  ``name``: specifies an absolute location of the lease file in which
-   new leases and lease updates will be recorded. The default value for
+   new leases and lease updates are recorded. The default value for
    this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases4.csv"``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
@@ -335,8 +335,7 @@ can be used to configure the memfile backend.
    redundant (historical) information from the lease file and
    effectively reduces the lease file size. The cleanup process is
    described in more detail later in this section. The default
-   value of the ``lfc-interval`` is "3600". A value of "0" disables the
-   LFC.
+   value of the ``lfc-interval`` is ``3600``. A value of ``0`` disables the LFC.
 
 -  ``max-row-errors``: specifies the number of row errors before the server
    stops attempting to load a lease file. When the server loads a lease file, it is processed
@@ -344,7 +343,7 @@ can be used to configure the memfile backend.
    cannot be processed correctly the server logs it, discards the row,
    and goes on to the next row. This parameter can be used to set a limit on
    the number of such discards that can occur, after which the server
-   abandons the effort and exits. The default value of "0" disables the limit
+   abandons the effort and exits. The default value of ``0`` disables the limit
    and allows the server to process the entire file, regardless of how many
    rows are discarded.
 
@@ -365,8 +364,8 @@ An example configuration of the memfile backend is presented below:
 This configuration selects ``/tmp/kea-leases4.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
-of the lease file every 1800 seconds (30 minutes) and sets the maximum number of row
-errors to 100.
+of the lease file every 1800 seconds (30 minutes) and sets the maximum number of
+row errors to 100.
 
 Why Is Lease File Cleanup Necessary?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -464,12 +463,24 @@ the database host name must also be specified:
 
    "Dhcp4": { "lease-database": { "host": "remote-host-name", ... }, ... }
 
+For Cassandra, multiple contact points can be provided:
+
+::
+
+    "Dhcp4": { "lease-database": { "contact-points": "remote-host-name[, ...]" , ... }, ... }
+
 Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
 
 ::
 
    "Dhcp4": { "lease-database": { "host" : "", ... }, ... }
+
+For Cassandra:
+
+::
+
+    "Dhcp4": { "lease-database": { "contact-points": "", ... }, ... }
 
 Should the database use a port other than the default, it may be
 specified as well:
@@ -678,6 +689,9 @@ connection to MySQL:
            "port": 3306
        }
    }
+
+Depending on the database configuration, many of the
+parameters may be optional.
 
 Please note that usage of hosts storage is optional. A user can define
 all host reservations in the configuration file, and that is the
@@ -1183,8 +1197,8 @@ this configuration is accepted:
        ]
    }
 
-This works even if there is another subnet with the "192.0.2.0/24" prefix; only the
-textual form of subnets are compared to avoid duplicates.
+This works even if there is another subnet with the "192.0.2.0/24" prefix;
+only the textual form of subnets are compared to avoid duplicates.
 
 .. note::
 
@@ -1201,7 +1215,7 @@ server must be configured with at least one subnet and one pool of
 dynamic addresses to be managed. For example, assume that the server is
 connected to a network segment that uses the 192.0.2.0/24 prefix. The
 administrator of that network decides that addresses from the range
-192.0.2.10 to 192.0.2.20 are going to be managed by the DHCP4 server.
+192.0.2.10 to 192.0.2.20 are going to be managed by the DHCPv4 server.
 Such a configuration can be achieved in the following way:
 
 ::
@@ -2168,8 +2182,8 @@ last field is an array, i.e. it can contain more than one value, as in:
        ...
    }
 
-The new option content is one IPv4 address followed by one or more 16-
-bit unsigned integers.
+The new option content is one IPv4 address followed by one or more 16-bit
+unsigned integers.
 
 .. note::
 
@@ -3160,7 +3174,7 @@ request. When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
 attempting to fulfill the update request. When ``false``, D2 simply attempts
 to update the DNS entries per the request, regardless of whether they
-conflict with existing entries owned by other DHCP4 clients.
+conflict with existing entries owned by other DHCPv4 clients.
 
 .. note::
 
