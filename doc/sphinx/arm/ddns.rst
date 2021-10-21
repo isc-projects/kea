@@ -74,7 +74,17 @@ In other words, the DHCID RR maps an FQDN to the client to whom it
 belongs, and thereafter changes to that mapping can only be done by
 or at the behest of that client.
 
-Currently, D2 conflict detection is always performed.
+Conflict resolution can be indirectly enabled or disabled via
+the configuration parameter ``ddns-use-conflict-resolution``, supported
+by both ``kea-dhcp4`` and ``kea-dhcp6``. The servers use this parameter to
+set a flag within each NameChangeRequest they send that tells D2
+whether conflict resolution should be employed for that request.
+By default, conflict resolution is enabled. For more details, please refer 
+to discussions of ``ddns-use-conflict-resolution`` in :ref:`dhcp4-ddns-config` and :ref:`dhcp6-ddns-config`.
+
+When conflict resolution is disabled, D2 still adds DHCID RRs but does
+not use them to enforce client ownership of DNS entries. Disabling it should
+only be used after careful consideration.
 
 .. _dhcp-ddns-dual-stack:
 
