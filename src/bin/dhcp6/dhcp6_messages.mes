@@ -173,7 +173,7 @@ This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
 
 % DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST created name change request: %1
-This debug message is logged when the new Name Change Request has been created
+This debug message is logged when the new NameChangeRequest has been created
 to perform the DNS Update, which adds new RRs.
 
 % DHCP6_DDNS_FQDN_GENERATED %1: generated FQDN for the client: %2
