@@ -13,7 +13,7 @@ The DHCP-DDNS Server (``kea-dhcp-ddns``, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
 and DHCPv6 servers (``kea-dhcp4`` and ``kea-dhcp6`` respectively). The DHCP
-servers construct DDNS update requests, known as Name Change Requests
+servers construct DDNS update requests, known as NameChangeRequests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
 carries out the necessary conversation with those servers to update the
@@ -241,7 +241,7 @@ illustrates how to change D2's global parameters so it will listen at
 .. warning::
 
    It is possible for a malicious attacker to send bogus
-   Name Change Requests to the DHCP-DDNS server. Addresses other than the
+   NameChangeRequests to the DHCP-DDNS server. Addresses other than the
    IPv4 or IPv6 loopback addresses (127.0.0.1 or ::1) should only be
    used for testing purposes; note that local users may still
    communicate with the DHCP-DDNS server.
@@ -917,7 +917,7 @@ DHCP-DDNS Server Statistics
 
 Kea version 2.0.0 introduced statistics support for DHCP-DDNS.
 
-Statistics are divided into three groups: Name Change Requests, DNS updates,
+Statistics are divided into three groups: NameChangeRequests, DNS updates,
 and per-TSIG-key DNS updates. While the statistics of the first two groups
 are cumulative, i.e. not affected by configuration change or reload,
 per-key statistics are reset to 0 when the underlying object is
@@ -940,7 +940,7 @@ More information about Kea statistics can be found at :ref:`stats`.
 NCR Statistics
 --------------
 
-The Name Change Request statistics are:
+The NameChangeRequest statistics are:
 
 -  ``ncr-received`` - the number of received valid NCRs
 -  ``ncr-invalid`` - the number of received invalid NCRs
