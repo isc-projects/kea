@@ -1,7 +1,7 @@
 .. _hooks-libraries:
 
 ***************
-Hooks Libraries
+Hook Libraries
 ***************
 
 .. _hooks-libraries-introduction:
@@ -11,7 +11,7 @@ Introduction
 
 Kea is both flexible and customizable, via the use of "hooks." This feature
 lets Kea load one or more
-dynamically linked libraries (known as "hooks libraries") and, at
+dynamically linked libraries (known as "hook libraries") and, at
 various points in its processing ("hook points"), call functions in
 them. Those functions perform whatever custom processing is required.
 
@@ -20,14 +20,14 @@ by moving features to external libraries that some, but not all, users
 find useful. Those with no need for specific functions can simply choose not
 to load the libraries.
 
-Hooks libraries are loaded by individual Kea processes, not by Kea as a
+Hook libraries are loaded by individual Kea processes, not by Kea as a
 whole. This means, among other things, that it is possible to associate one set
 of libraries with the DHCP4 server and a different set with the DHCP6
 server.
 
-Another point to note is that it is possible for a process to load
+It is also possible for a process to load
 multiple libraries. When processing reaches a hook point, Kea calls the
-hooks library functions attached to it. If multiple libraries have
+hook library functions attached to it. If multiple libraries have
 attached a function to a given hook point, Kea calls all of them, in the
 order in which the libraries are specified in the configuration file.
 The order may be important; consult the documentation of the libraries
@@ -42,8 +42,8 @@ is loaded forever in a process, for instance it is not possible to
 replace a library binary by another version using configuration change
 or reload: the process must be stopped and relaunched.
 
-The next section describes how to configure hooks libraries. Users who are
-interested in writing their own hooks library can find information
+The next section describes how to configure hook libraries. Users who are
+interested in writing their own hook library can find information
 in the `Hooks Developer's Guide section of the Kea Developer's
 Guide <https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>`__.
 
@@ -52,8 +52,8 @@ Note that some libraries are available under different licenses.
 Please also note that some libraries may require additional dependencies and/or
 compilation switches to be enabled, e.g. the RADIUS library introduced in
 Kea 1.4 requires the FreeRadius-client library to be present. If
---with-freeradius option is not specified, the RADIUS library will not
-be built.
+the ``--with-freeradius`` option is not specified, the RADIUS library is not
+built.
 
 Installing Hook Packages
 ========================
@@ -72,27 +72,27 @@ ISC provides several additional premium hooks in the form of packages, which
 follow a similar installation procedure but with several additional steps.
 For our users' convenience, the premium hooks installation procedure is described in this section.
 
-1. Download the package; detailed instructions are provided separately on how
-to get it. The package will be a file with a name similar to
-kea-premium-|release|.tar.gz. (The name may vary depending on the package
+1. Download the package; detailed instructions are provided in the KB article
+above. The package will be a file with a name similar to
+``kea-premium-|release|.tar.gz``. (The name may vary depending on the package
 purchased.)
 
-2. Administrators who still have the sources for the corresponding version of the
-open-source Kea package still on their system from the initial Kea installation
+2. Administrators who have the sources for the corresponding version of the
+open-source Kea package on their system from the initial Kea installation
 should skip this step. Otherwise, extract the Kea source from the original
 tarball that was downloaded. For example, with a download of Kea |release|.,
-there should be a tarball called kea-|release|.tar.gz on the system.
+there should be a tarball called ``kea-|release|.tar.gz`` on the system.
 Unpack this tarball:
 
 .. parsed-literal::
 
    $ tar -zxvf kea-|release|.tar.gz
 
-This will unpack the tarball into the kea-|release| subdirectory of
+This will unpack the tarball into the ``kea-|release|`` subdirectory of
 the current working directory.
 
-3. Unpack the Kea premium tarball into the directory into which Kea was
-unpacked. Once Kea |release| has been unpacked into a kea-|release|
+3. Unpack the Kea premium hooks tarball into the same directory where the
+original Kea source is located. Once Kea |release| has been unpacked into a ``kea-|release|``
 subdirectory and the Kea premium tarball is in the current directory, the following
 steps will unpack the premium tarball into the correct location:
 
@@ -101,12 +101,12 @@ steps will unpack the premium tarball into the correct location:
      $ cd kea-|release|
      $ tar -xvf ../kea-premium-|release|.tar.gz
 
-Note that unpacking the Kea premium package will put the files into a
-directory named "premium". Regardless of the name of the package, the
-directory will always be called "premium", although its contents will vary
-depending on the premium package.
+Note that unpacking the Kea premium package puts the files into a
+directory named ``premium``. Regardless of the name of the package, the
+directory will always be called ``premium``, although its contents will vary
+depending on the hooks package.
 
-4. Run ``autoreconf`` tools. This step is necessary to update Kea's build
+4. Run the ``autoreconf`` tools. This step is necessary to update Kea's build
 script to include the additional directory. If this tool is not already
 available on the system, install the ``automake`` and ``autoconf``
 tools. To generate the configure script, please use:
@@ -115,8 +115,8 @@ tools. To generate the configure script, please use:
 
      $ autoreconf -i
 
-5. Rerun configure, using the same configure options that were used when
-originally building Kea. It is possible to verify that configure has detected the
+5. Rerun ``configure``, using the same configuration options that were used when
+originally building Kea. It is possible to verify that ``configure`` has detected the
 premium package by inspecting the summary printed when it exits. The
 first section of the output should look something like this:
 
@@ -143,7 +143,7 @@ this chapter for details.
      $ make
 
 If the machine has multiple CPU cores, an interesting option to consider
-here is using the argument -j X, where X is the number of available cores.
+here is using the argument ``-j X``, where ``X`` is the number of available cores.
 
 7. Install Kea sources along with the hooks:
 
@@ -151,13 +151,12 @@ here is using the argument -j X, where X is the number of available cores.
 
    $ sudo make install
 
-Note that as part of the installation procedure, the install script will
-eventually venture into the premium/ directory and will install additional
-hook libraries and associated files.
+Note that as part of the installation procedure, the install script
+places additional hook libraries and associated files into the ``premium/`` directory.
 
-The installation location of the hooks libraries depends on whether the
---prefix parameter was specified in the configure script. If not,
-the default location will be /usr/local/lib/kea/hooks. The proper installation
+The installation location of the hook libraries depends on whether the
+``--prefix`` parameter was specified in the ``configure`` script. If not,
+the default location is ``/usr/local/lib/kea/hooks``. The proper installation
 of the libraries can be verified with this command:
 
 ::
@@ -171,18 +170,18 @@ of the libraries can be verified with this command:
    /usr/local/lib/kea/hooks/libdhcp_legal_log.so
    /usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
 
-The exact list returned will depend on the packages installed. If the
-directory was specified via --prefix, the hooks libraries will be located in
-{prefix directory}/lib/kea/hooks.
+The exact list returned depends on the packages installed. If the
+directory was specified via ``--prefix``, the hook libraries will be located in
+``{prefix directory}/lib/kea/hooks``.
 
-Configuring Hooks Libraries
+Configuring Hook Libraries
 ===========================
 
-The hooks libraries for a given process are configured using the
+The hook libraries for a given process are configured using the
 ``hooks-libraries`` keyword in the configuration for that process. (Note
 that the word "hooks" is plural.) The value of the keyword is an array
-of map structures, with each structure corresponding to a hooks library. For
-example, to set up two hooks libraries for the DHCPv4 server, the
+of map structures, with each structure corresponding to a hook library. For
+example, to set up two hook libraries for the DHCPv4 server, the
 configuration would be:
 
 ::
@@ -219,8 +218,6 @@ configuration would be:
    parameter entry for comments, as is the case with many configuration
    scopes.
 
-..
-
 .. note::
 
    In all versions of Kea since 1.1.0, libraries
@@ -229,11 +226,11 @@ configuration would be:
    parameters point to) may have changed.
 
 Libraries may have additional parameters that are not mandatory, in the
-sense that there may be libraries that do not require them. However, for a
-specific library there is often a specific requirement to specify a certain
+sense that there may be libraries that do not require them. However, for any
+given library there is often a requirement to specify a certain
 set of parameters. Please consult the documentation for each individual library for
-details. In the example above, the first library has no parameters. The
-second library has five parameters: specifying mail (string parameter),
+details. In the example above, the first library (``/opt/charging.so``) has no parameters. The
+second library (``/opt/local/notification.so``) has five parameters: specifying mail (string parameter),
 floor (integer parameter), debug (boolean parameter), lists
 (list of strings), and maps (containing strings). Nested parameters can
 be used if the library supports it. This topic is explained in detail in
@@ -257,31 +254,30 @@ Notes:
       item is removed and the configuration reloaded, the removal will
       be ignored and the libraries remain loaded. As a workaround,
       instead of removing the ``hooks-libraries`` item, change it to an
-      empty list. This will be fixed in a future version of Kea.
+      empty list.
 
-At the present time, only the kea-dhcp4 and kea-dhcp6 processes support
-hooks libraries.
+At the moment, only the ``kea-dhcp4`` and ``kea-dhcp6`` processes support
+hook libraries.
 
-Available Hooks Libraries
+Available Hook Libraries
 =========================
 
-As described above, the hooks functionality provides a way to customize
+As described above, the hook functionality provides a way to customize
 a Kea server without modifying the core code. ISC has chosen to take
 advantage of this feature to provide functions that may only be useful
-to a subset of Kea users. To this end, ISC has created some hooks
+to a subset of Kea users. To this end, ISC has created some hook
 libraries, discussed in the following sections.
 
 .. note::
 
    Some of these libraries are available with the base code, while
-   others will be shared with organizations supporting development of
-   Kea. Users who would like to get access to those premium
-   libraries should consider purchasing a support contract from ISC. This
-   includes professional support, advance security notifications, input
+   others are shared with organizations who contribute to Kea's development
+   through paid ISC support contracts. Paid support
+   includes professional engineering assistance, advance security notifications, input
    into ISC's roadmap planning, and many other benefits, while helping
-   make Kea sustainable in the long term.
+   keep Kea sustainable in the long term.
 
-The following table provides a list of libraries currently available
+The following table provides a list of hook libraries currently available
 from ISC. It is important to pay attention to which libraries may be
 loaded by which Kea processes. It is a common mistake to configure the
 ``kea-ctrl-agent`` process to load libraries that should, in fact, be
@@ -292,37 +288,37 @@ loaded by the correct process per the table below.
 .. warning::
 
    While the Kea Control Agent includes the "hooks" functionality, (i.e.
-   hooks libraries can be loaded by this process), none of ISC's current
-   hooks libraries should be loaded by the Control Agent.
+   hook libraries can be loaded by this process), none of ISC's current
+   hook libraries should be loaded by the Control Agent.
 
 .. tabularcolumns:: |p{0.1\linewidth}|p{0.1\linewidth}|p{0.8\linewidth}|
 
-.. table:: List of Available Hooks Libraries
+.. table:: List of available hook libraries
    :class: longtable
    :widths: 10 10 80
 
    +-----------------+---------------+------------------------------------------------------------+
    | Name            | Availability  | Description                                                |
    +=================+===============+============================================================+
-   | User Check      | Kea sources   |Reads known users list from a file. Unknown users will be   |
-   |                 | (since 0.8)   |assigned a lease from the last subnet defined in the        |
-   |                 |               |configuration file, e.g. to redirect them to a captive      |
+   | User Check      | Kea open      |Reads known users list from a file. Unknown users will be   |
+   |                 | source        |assigned a lease from the last subnet defined in the        |
+   |                 | (since 0.8)   |configuration file, e.g. to redirect them to a captive      |
    |                 |               |portal. This demonstrates how an external source of         |
    |                 |               |information can be used to influence the Kea allocation     |
    |                 |               |engine. This hook is part of the Kea source code and is     |
-   |                 |               |available in the src/hooks/dhcp/user_chk directory.         |
+   |                 |               |available in the ``src/hooks/dhcp/user_chk`` directory.     |
    +-----------------+---------------+------------------------------------------------------------+
    | Forensic        | Support       |This library provides hooks that record a detailed log of   |
    | Logging         | customers     |lease assignments and renewals into a set of log files. In  |
-   |                 | (since 1.1)   |many legal jurisdictions companies, especially ISPs, must   |
+   |                 | (since 1.1)   |many legal jurisdictions, companies - especially ISPs - must|
    |                 |               |record information about the addresses they have leased to  |
    |                 |               |DHCP clients. This library is designed to help with that    |
    |                 |               |requirement. If the information that it records is          |
-   |                 |               |sufficient it may be used directly. If your jurisdiction    |
-   |                 |               |requires that you save a different set of information, you  |
-   |                 |               |may use it as a template or example and create your own     |
-   |                 |               |custom logging hooks. In Kea 1.9.8 additional parameters    |
-   |                 |               |have been added to give users more flexibility regarding    |
+   |                 |               |sufficient, it may be used directly. If a jurisdiction      |
+   |                 |               |requires a different set of information to be saved, it can |
+   |                 |               |be used as a template or example to create                  |
+   |                 |               |custom logging hooks. In Kea 1.9.8, additional parameters   |
+   |                 |               |were added to give users more flexibility regarding         |
    |                 |               |what information should be logged.                          |
    +-----------------+---------------+------------------------------------------------------------+
    | Flexible        | Support       |Kea software provides a way to handle host reservations that|
@@ -331,92 +327,89 @@ loaded by the correct process per the table below.
    |                 |               |address, DUID, circuit-id or client-id in DHCPv4 and using  |
    |                 |               |hardware address or DUID in DHCPv6. However, there are      |
    |                 |               |sometimes scenarios where the reservation is more complex,  |
-   |                 |               |e.g. uses other options that mentioned above, uses part of  |
-   |                 |               |specific options or perhaps even a combination of several   |
+   |                 |               |e.g. uses other options than mentioned above, uses parts of |
+   |                 |               |specific options, or perhaps uses a combination of several  |
    |                 |               |options and fields to uniquely identify a client. Those     |
-   |                 |               |scenarios are addressed by the Flexible Identifiers hook    |
+   |                 |               |scenarios are addressed by the Flexible Identifier hook     |
    |                 |               |application. It allows defining an expression, similar to   |
    |                 |               |the one used in client classification,                      |
-   |                 |               |e.g. substring(relay6[0].option[37],0,6). Each incoming     |
+   |                 |               |e.g. ``substring(relay6[0].option[37],0,6)``. Each incoming |
    |                 |               |packet is evaluated against that expression and its value is|
    |                 |               |then searched in the reservations database.                 |
    +-----------------+---------------+------------------------------------------------------------+
-   | Flexible        | Kea sources   |This library provides hooks that compute option values      |
-   | Option          | (since 1.7.1) |instead of static configured values. An expression is       |
-   |                 |               |evaluated on the query packet. Defined add, supersede and   |
+   | Flexible        | Kea open      |This library provides hooks that compute option values      |
+   | Option          | source        |instead of static configured values. An expression is       |
+   |                 | (since 1.7.1) |evaluated on the query packet. Defined add, supersede, and  |
    |                 |               |remove actions are applied on the response packet before    |
    |                 |               |it is sent using the evaluation result.                     |
    +-----------------+---------------+------------------------------------------------------------+
    | Host Commands   | Support       |Kea provides a way to store host reservations in a          |
    |                 | customers     |database. In many larger deployments it is useful to be able|
    |                 | (since 1.2)   |to manage that information while the server is running. This|
-   |                 |               |library provides management commands for adding, querying   |
+   |                 |               |library provides management commands for adding, querying,  |
    |                 |               |and deleting host reservations in a safe way without        |
-   |                 |               |restarting the server.  In particular, it validates the     |
+   |                 |               |restarting the server. In particular, it validates the      |
    |                 |               |parameters, so an attempt to insert incorrect data, e.g. add|
-   |                 |               |a host with conflicting identifier in the same subnet will  |
-   |                 |               |be rejected. Those commands are exposed via command channel |
-   |                 |               |(JSON over unix sockets) and Control Agent (JSON over       |
-   |                 |               |RESTful interface). Additional commands and capabilities    |
-   |                 |               |related to host reservations will be added in the future.   |
+   |                 |               |a host with conflicting identifier in the same subnet, is   |
+   |                 |               |rejected. Those commands are exposed via the command channel|
+   |                 |               |(JSON over UNIX sockets) and the Control Agent (JSON over   |
+   |                 |               |RESTful interface).                                         |
    +-----------------+---------------+------------------------------------------------------------+
    | Subnet Commands | Support       |In deployments in which subnet configuration needs to be    |
    |                 | customers     |frequently updated, it is a hard requirement that such      |
    |                 | (since 1.3)   |updates be performed without the need for a full DHCP server|
-   |                 |               |reconfiguration or restart. This hooks library allows for   |
-   |                 |               |incremental changes to the subnet configuration such as:    |
-   |                 |               |adding a subnet, removing a subnet. It also allows for      |
+   |                 |               |reconfiguration or restart. This hook library allows for    |
+   |                 |               |incremental changes to the subnet configuration such as     |
+   |                 |               |adding or removing a subnet. It also allows for             |
    |                 |               |listing all available subnets and fetching detailed         |
    |                 |               |information about a selected subnet. The commands exposed by|
    |                 |               |this library do not affect other subnets or configuration   |
    |                 |               |parameters currently used by the server.                    |
    +-----------------+---------------+------------------------------------------------------------+
-   | Lease Commands  | Kea sources   |The lease commands hook library offers a number of new      |
-   |                 | (since 1.3)   |commands used to manage leases. Kea provides a way to store |
-   |                 |               |lease information in various backends: memfile, MySQL,      |
-   |                 |               |PostgreSQL and Cassandra. This library provides a unified   |
-   |                 |               |interface that can manipulate leases in an unified, safe    |
-   |                 |               |way. In particular, it allows: manipulate leases in memfile |
-   |                 |               |while Kea is running, sanity check changes, check lease     |
-   |                 |               |existence and remove all leases belonging to specific       |
-   |                 |               |subnet. It can also catch more obscure errors, like adding a|
-   |                 |               |lease with subnet-id that does not exist in the             |
-   |                 |               |configuration or configuring a lease to use an address that |
-   |                 |               |is outside of the subnet to which it is supposed to belong. |
-   |                 |               |It provides a way to manage user contexts associated with   |
-   |                 |               |leases.                                                     |
+   | Lease Commands  | Kea open      |This hook library offers a number of                        |
+   |                 | source        |commands used to manage leases. Kea can store               |
+   |                 | (since 1.3)   |lease information in various backends: memfile, MySQL,      |
+   |                 |               |PostgreSQL, and Cassandra. This library provides a unified  |
+   |                 |               |interface to manipulate leases in an unified, safe          |
+   |                 |               |way. In particular, it allows manipulation of memfile leases|
+   |                 |               |while Kea is running, sanity check changes, lease           |
+   |                 |               |existence checks, and removal of all leases belonging to a  |
+   |                 |               |specific subnet. It can also catch obscure errors, like     |
+   |                 |               |the addition of a lease with subnet-id that does not exist  |
+   |                 |               |in the configuration, or configuration of a lease to use an |
+   |                 |               |address that is outside of the subnet to which it is        |
+   |                 |               |supposed to belong. This library allows easy management of  |
+   |                 |               |user contexts associated with leases.                       |
    +-----------------+---------------+------------------------------------------------------------+
-   | High            | Kea sources   |Minimizing a risk of DHCP service unavailability is achieved|
-   | Availability    | (since 1.4)   |by setting up a pair of the DHCP servers in a network.  Two |
-   |                 |               |modes of operation are supported. The first one is called   |
-   |                 |               |load balancing and is sometimes referred to as              |
-   |                 |               |active-active. Each server can handle selected groups of    |
-   |                 |               |clients in this network or all clients, if it detects that  |
+   | High            | Kea open      |The risk of DHCP service unavailability can be minimized    |
+   | Availability    | source        |by setting up a pair of DHCP servers in a network. Two      |
+   |                 | (since 1.4)   |modes of operation are supported. The first one is called   |
+   |                 |               |load-balancing, and is sometimes referred to as             |
+   |                 |               |"active-active." Each server can handle selected groups of  |
+   |                 |               |clients in this network, or all clients if it detects that  |
    |                 |               |its partner has become unavailable. It is also possible to  |
    |                 |               |designate one server to serve all DHCP clients, and leave   |
-   |                 |               |another server as "standby". This mode is called hot standby|
-   |                 |               |and is sometimes referred to as active-passive. This        |
-   |                 |               |server will activate its DHCP function when it detects that |
-   |                 |               |its partner is not available.  Such cooperation between the |
+   |                 |               |another server as standby. This mode is called "hot standby"|
+   |                 |               |and is sometimes referred to as "active-passive." This      |
+   |                 |               |server activates its DHCP function only when it detects that|
+   |                 |               |its partner is not available. Such cooperation between the  |
    |                 |               |DHCP servers requires that these servers constantly         |
    |                 |               |communicate with each other to send updates about allocated |
-   |                 |               |leases and to periodically test whether their partners are  |
+   |                 |               |leases, and to periodically test whether their partners are |
    |                 |               |still operational. The hook library also provides an ability|
    |                 |               |to send lease updates to external backup servers, making it |
-   |                 |               |much easier to have a replacement that is almost up to      |
-   |                 |               |date. The "libdhcp_ha" library provides such functionality  |
-   |                 |               |for Kea DHCP servers.                                       |
-   +-----------------+---------------+------------------------------------------------------------+
-   | Statistics      | Kea sources   |The Statistics Commands library provides additional         |
-   | Commands        | (since 1.4)   |commands for retrieving accurate DHCP lease statistics for  |
-   |                 |               |Kea DHCP servers that share the same lease database. This   |
+   |                 |               |much easier to have a replacement that is up-to-date.       |
+    +-----------------+---------------+------------------------------------------------------------+
+   | Statistics      | Kea open      |The Statistics Commands library provides additional         |
+   | Commands        | source        |commands for retrieving accurate DHCP lease statistics for  |
+   |                 | (since 1.4)   |Kea DHCP servers that share the same lease database. This   |
    |                 |               |setup is common in deployments where DHCP service redundancy|
    |                 |               |is required and a shared lease database is used to avoid    |
    |                 |               |lease data replication between the DHCP servers. A feature  |
    |                 |               |was introduced in Kea 1.4.0 that allows tracking lease      |
    |                 |               |allocations within the lease database, thus making the      |
    |                 |               |statistics accessible to all connected DHCP servers. The    |
-   |                 |               |Statistics Commands hooks library utilizes this feature and |
+   |                 |               |Statistics Commands hook library utilizes this feature and  |
    |                 |               |returns lease statistics for all subnets respectively.      |
    +-----------------+---------------+------------------------------------------------------------+
    | RADIUS          | Support       |The RADIUS Hook library allows Kea to interact with the     |
@@ -437,11 +430,11 @@ loaded by the correct process per the table below.
    |                 |               |includes negative caching, i.e. the ability to remember that|
    |                 |               |there is no client information in the database.             |
    +-----------------+---------------+------------------------------------------------------------+
-   | Class Commands  | Support       |This Class Cmds hooks library allows for adding, updating,  |
+   | Class Commands  | Support       |This Class Cmds hook library allows for adding, updating,   |
    |                 | customers     |deleting and fetching configured DHCP client classes without|
    |                 | (since 1.5)   |the need to restart the DHCP server.                        |
    +-----------------+---------------+------------------------------------------------------------+
-   | MySQL           | Kea sources   |The MySQL CB hooks library is an implementation of the Kea  |
+   | MySQL           | Kea sources   |The MySQL CB hook library is an implementation of the Kea   |
    | Configuration   | (since 1.6)   |Configuration Backend for MySQL. It uses a MySQL database as|
    | Backend         |               |a repository for the Kea configuration information. The Kea |
    |                 |               |servers use this library to fetch their configurations.     |
@@ -452,29 +445,29 @@ loaded by the correct process per the table below.
    |                 |               |database. This library may only be used in conjunction with |
    |                 |               |one of the supported configuration backend implementations. |
    +-----------------+---------------+------------------------------------------------------------+
-   | BOOTP           | Kea sources   |The BOOTP hooks library adds BOOTP support, as defined in   |
+   | BOOTP           | Kea sources   |The BOOTP hook library adds BOOTP support, as defined in    |
    |                 | (since 1.7.3) |RFC 1497. It recognizes received BOOTP requests:            |
    |                 |               |they are translated into DHCPREQUEST packets, put into the  |
    |                 |               |BOOTP client class and get infinite lifetime leases.        |
    +-----------------+---------------+------------------------------------------------------------+
-   | Leasequery      | Support       |The Leasequery hooks library adds support for DHCPv4        |
+   | Leasequery      | Support       |The Leasequery hook library adds support for DHCPv4         |
    |                 | customers     |Leasequery as described in RFC 4388; and for DHCPv6         |
    |                 | (DHCPv4 since |Leasequery as described in RFC 5007.                        |
    |                 | 1.7.8, DHCPv6 |                                                            |
    |                 | since 1.7.9)  |                                                            |
    +-----------------+---------------+------------------------------------------------------------+
-   | Run Script      | Kea sources   |The Run Script hooks library adds support to run external   |
+   | Run Script      | Kea sources   |The Run Script hook library adds support to run external    |
    |                 | (since 1.9.5) |scripts for specific packet processing hook points. There   |
    |                 |               |are several exported environment variables available for    |
    |                 |               |the script.                                                 |
    +-----------------+---------------+------------------------------------------------------------+
 
-ISC hopes to see more hooks libraries become available as time
+ISC hopes to see more hook libraries become available as time
 progresses, developed both internally and externally. Since this list
 may evolve dynamically, it is maintained on a wiki page, available
 at this link:
 https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
-Developers or others who are aware of any hooks libraries not listed there
+Developers or others who are aware of any hook libraries not listed there
 are asked to please send a note to the kea-users or kea-dev mailing lists for
 updating.
 
@@ -484,7 +477,7 @@ sections.
 user_chk: Checking User Access
 ==============================
 
-The user_chk library is the first hooks library published by ISC. It
+The user_chk library is the first hook library published by ISC. It
 serves several purposes:
 
 -  To assign "new" or "unregistered" users to a restricted subnet, while
@@ -548,7 +541,7 @@ A sample user registry file is shown below:
    { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
    { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 
-As with any other hooks libraries provided by ISC, internals of the
+As with any other hook libraries provided by ISC, internals of the
 user_chk code are well-documented. Users may refer to the `user_chk
 library section of the Kea Developer's Guide
 <https://reports.kea.isc.org/dev_guide/d8/db2/libdhcp_user_chk.html>`__
@@ -561,7 +554,7 @@ from scratch.
 legal_log: Forensic Logging Hooks
 =================================
 
-This section describes the forensic log hooks library. This library provides
+This section describes the forensic log hook library. This library provides
 hooks that record a detailed log of assignments, renewals, releases and other
 lease events into a set of log files.
 
@@ -586,7 +579,7 @@ channel commands.
 
 Alternatively, this library may be used as a template or an example for the
 user's own custom logging hook. The logging is done as a set of hooks to allow
-it to be customized to any particular need. Modifying a hooks library is easier
+it to be customized to any particular need. Modifying a hook library is easier
 and safer than updating the core code. In addition by using the hooks features,
 those users who do not need to log this information can leave it out and avoid
 any performance penalties.
@@ -895,7 +888,7 @@ or for a release:
    identified by circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
-the hooks library also logs entries for the following lease management control
+the hook library also logs entries for the following lease management control
 channel commands: lease4-add, lease4-update, and lease4-del. These cannot have
 custom formatting. Each entry is a single string with no embedded end-of-line
 markers, and it will typically have the following form:
@@ -1195,7 +1188,7 @@ or for a release:
    hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
-the hooks library also logs entries for the following lease management control channel
+the hook library also logs entries for the following lease management control channel
 commands: lease6-add, lease6-update, and lease6-del. Each entry is a
 single string with no embedded end-of-line markers, and it will
 typically have the following form:
@@ -3478,7 +3471,7 @@ both the command and the response.
 User Contexts in Hooks
 ======================
 
-Hooks libraries can have their own configuration parameters, which is
+Hook libraries can have their own configuration parameters, which is
 convenient if the parameter applies to the whole library. However,
 sometimes it is very useful to extend certain configuration entities
 with additional configuration data. This is where the concept
@@ -3487,7 +3480,7 @@ data and attach it to Kea structures, as long as the data are specified
 as a JSON map. In particular, it is possible to define fields that are
 integers, strings, boolean, lists, or maps. It is possible to define
 nested structures of arbitrary complexity. Kea does not use that data on
-its own; it simply stores it and makes it available for the hooks libraries.
+its own; it simply stores it and makes it available for the hook libraries.
 
 Another use case for user contexts may be storing comments and other
 information that will be retained by Kea. Regular comments are discarded
