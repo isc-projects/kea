@@ -1482,7 +1482,7 @@ TEST_F(StatCmdsTest, statLease4OrphanedStats) {
     // Initialize lease manager.
     initLeaseMgr4();
 
-    // Now remove subnets 10,30, and 50 thereby orphaning their leases.
+    // Now remove subnets 10, 30, and 50 thereby orphaning their leases.
     CfgMgr& cfg_mgr = CfgMgr::instance();
     CfgSubnets4Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets4();
     ASSERT_NO_THROW_LOG(subnets->del(10));
@@ -1533,7 +1533,7 @@ TEST_F(StatCmdsTest, statLease6OrphanedStats) {
     // Initialize lease manager.
     initLeaseMgr6();
 
-    // Now remove subnets 10,30, and 50 thereby orphaning their leases.
+    // Now remove subnets 10, 30, and 50 thereby orphaning their leases.
     CfgMgr& cfg_mgr = CfgMgr::instance();
     CfgSubnets6Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets6();
     ASSERT_NO_THROW_LOG(subnets->del(10));
