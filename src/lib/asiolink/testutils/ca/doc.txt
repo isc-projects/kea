@@ -45,6 +45,8 @@ Files:
  - server-conf.cnf OpenSSL configuration file to add a DNS subject
   alternative name (localhost)
 
+NOTE: On some systems, the openssl pkcs8 commands require -topk8 parameter.
+
 Procedure to build CA, server and client files:
 
 1 - create a CA self signed certificate (password is keatest)
