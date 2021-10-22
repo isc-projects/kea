@@ -348,6 +348,19 @@ public:
     virtual void
     createUpdateServer4(const db::ServerPtr& server);
 
+    /// @brief Creates or updates DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param client_class Client class to be added or updated.
+    /// @param follow_class_name name of the class after which the
+    /// new or updated class should be positioned. An empty value
+    /// causes the class to be appended at the end of the class
+    /// hierarchy.
+    virtual void
+    createUpdateClientClass4(const db::ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class,
+                             const std::string& follow_class_name);
+
     /// @brief Deletes subnet by prefix.
     ///
     /// @param server_selector Server selector.
@@ -495,6 +508,47 @@ public:
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
 
+    /// @brief Retrieves a client class by name.
+    ///
+    /// @param selector Server selector.
+    /// @param name Client class name.
+    /// @return Pointer to the retrieved client class.
+    virtual ClientClassDefPtr
+    getClientClass4(const db::ServerSelector& selector, const std::string& name) const;
+
+    /// @brief Retrieves all client classes.
+    ///
+    /// @param selector Server selector.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getAllClientClasses4(const db::ServerSelector& selector) const;
+
+    /// @brief Retrieves client classes modified after specified time.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Modification time.
+    /// @return Collection of client classes.
+    virtual ClientClassDictionary
+    getModifiedClientClasses4(const db::ServerSelector& selector,
+                              const boost::posix_time::ptime& modification_time) const;
+
+    /// @brief Deletes DHCPv4 client class.
+    ///
+    /// @param server_selector Server selector.
+    /// @param name Name of the class to be deleted.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteClientClass4(const db::ServerSelector& server_selector,
+                       const std::string& name);
+
+    /// @brief Deletes all client classes.
+    ///
+    /// @param server_selector Server selector.
+    /// @return Number of deleted client classes.
+    virtual uint64_t
+    deleteAllClientClasses4(const db::ServerSelector& server_selector);
+
+
     /// @brief Deletes a server from the backend.
     ///
     /// @param server_tag Tag of the server to be deleted.
@@ -549,6 +603,8 @@ public:
     /// @return true if there is at least one unusable connection, false
     /// otherwise
     virtual bool isUnusable();
+
+
 
 protected:
 

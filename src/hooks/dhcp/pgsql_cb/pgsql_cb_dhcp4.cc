@@ -1834,8 +1834,9 @@ bool
 PgSqlConfigBackendDHCPv4::registerBackendType() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_REGISTER_BACKEND_TYPE4);
     return (
-        dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
+        dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("pgsql",
             [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
+            // Many virtual function still missing
             return (dhcp::PgSqlConfigBackendDHCPv4Ptr(new dhcp::PgSqlConfigBackendDHCPv4(params)));
         })
     );
@@ -1844,8 +1845,44 @@ PgSqlConfigBackendDHCPv4::registerBackendType() {
 void
 PgSqlConfigBackendDHCPv4::unregisterBackendType() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_UNREGISTER_BACKEND_TYPE4);
-    dhcp::ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("mysql");
+    dhcp::ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("pgsql");
 }
+
+void
+PgSqlConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
+                          const ClientClassDefPtr& client_class,
+                          const std::string& follow_class_name) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDefPtr
+PgSqlConfigBackendDHCPv4::getClientClass4(const db::ServerSelector& selector,
+                                          const std::string& name) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDictionary
+PgSqlConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& selector) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDictionary
+PgSqlConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& selector,
+                          const boost::posix_time::ptime& modification_time) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+uint64_t
+PgSqlConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_selector,
+                    const std::string& name) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+uint64_t
+PgSqlConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& server_selector) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
