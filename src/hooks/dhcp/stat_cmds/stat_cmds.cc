@@ -532,7 +532,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
     auto upper = idx.end();
     switch (params.select_mode_) {
     case LeaseStatsQuery::SINGLE_SUBNET:
-        lower = idx.lower_bound(params.first_subnet_id_);
+        lower = idx.find(params.first_subnet_id_);
         // If it's an unknown subnet, punt.
         if (lower == idx.end()) {
             isc_throw(NotFound, "subnet-id: "
