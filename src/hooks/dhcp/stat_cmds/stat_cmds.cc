@@ -388,11 +388,17 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
     // First we need to determine the range of configured subnets
     // which meet the selection criteria.  If the range contains
     // no subnets we punt.
+    // Iterate over the selected range of configured subnets generating
+    // a result-set row for each one.  If a subnet has data in the query
+    // content use it, otherwise, it gets a row with totals only.  This
+    // way we send back a row for every selected subnet.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+
+    // Set the bounds on the selected subnet range
     const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
-    // Init to ALL so we can use auto ;)
+    // Init to ALL so we can use auto
     auto lower = idx.begin();
     auto upper = idx.end();
     switch (params.select_mode_) {
@@ -421,7 +427,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
             << params.last_subnet_id_ << " includes no known subnets");
     }
 
-    // Now, that we have a valid range, run the Lease query.
+    // Now we can run the stats query.
     LeaseStatsQueryPtr query;
     switch (params.select_mode_) {
     case LeaseStatsQuery::ALL_SUBNETS:
@@ -438,7 +444,8 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         break;
     }
 
-    // Create the empty result-set.
+    // Create the result-set map.
+    // labels could be class statics?
     std::vector<std::string>column_labels = { "subnet-id", "total-addresses",
                                               "cumulative-assigned-addresses",
                                               "assigned-addresses",
@@ -457,7 +464,6 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         // Skip any unexpected result set rows.  These occur when
         // subnets no longer exist but either their leases (memfile)
         // or their leaseX-stat rows (db lease backends) still do.
-        SubnetID logged_id = 0;
         while ((cur_id > query_row.subnet_id_) && (!query_eof)) {
             orphaned_stats = true;
             query_eof = !(query->getNextRow(query_row));
@@ -488,6 +494,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
                 declined = query_row.state_count_;
             }
 
+            // Get next query row
             query_eof = !(query->getNextRow(query_row));
         }
         // Add the row for the current subnet
@@ -507,6 +514,9 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
 uint64_t
 LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
                                   const Parameters& params) {
+    // First we need to determine the range of configured subnets
+    // which meet the selection criteria.  If the range contains
+    // no subnets we punt.
     // Iterate over the selected range of configured subnets generating
     // a result-set row for each one.  If a subnet has data in the query
     // content use it, otherwise, it gets a row with totals only.  This
@@ -517,7 +527,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
     // Set the bounds on the selected subnet range
     const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
-    // Init to all so we can use auto ;)
+    // Init to ALL so we can use auto
     auto lower = idx.begin();
     auto upper = idx.end();
     switch (params.select_mode_) {
@@ -539,22 +549,12 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         break;
     }
 
-    // If it's empty range, punt.
+    // If it's an empty range, punt.
     if (lower == upper) {
         isc_throw(NotFound, "selected ID range: "
             << params.first_subnet_id_ << " through "
             << params.last_subnet_id_ << " includes no known subnets");
     }
-
-    // Create the result-set map.
-    // labels could be class statics?
-    std::vector<std::string>column_labels = { "subnet-id", "total-nas",
-                                              "cumulative-assigned-nas",
-                                              "assigned-nas",
-                                              "declined-nas", "total-pds",
-                                              "cumulative-assigned-pds",
-                                              "assigned-pds" };
-    ElementPtr value_rows = createResultSet(result_wrapper, column_labels);
 
     // Now we can run the stats query.
     LeaseStatsQueryPtr query;
@@ -573,10 +573,22 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         break;
     }
 
+    // Create the result-set map.
+    // labels could be class statics?
+    std::vector<std::string>column_labels = { "subnet-id", "total-nas",
+                                              "cumulative-assigned-nas",
+                                              "assigned-nas",
+                                              "declined-nas", "total-pds",
+                                              "cumulative-assigned-pds",
+                                              "assigned-pds" };
+    ElementPtr value_rows = createResultSet(result_wrapper, column_labels);
+
     // Get the first query row
-    bool orphaned_stats = false;
     LeaseStatsRow query_row;
     bool query_eof = !(query->getNextRow(query_row));
+
+    // Now we iterate over the selected range, building rows accordingly.
+    bool orphaned_stats = false;
     for (auto cur_subnet = lower; cur_subnet != upper; ++cur_subnet) {
         SubnetID cur_id = (*cur_subnet)->getID();
 
@@ -598,14 +610,14 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
             continue;
         }
 
-        // Current subnet matches query row, so iterate over
-        // its query rows and accumulate them into a result-set row.
+        // Current subnet matches query row, so iterate over its
+        // query rows (one per state) and accumulate them
+        // into a result-set row.
         int64_t assigned = 0;
         int64_t declined = 0;
         int64_t assigned_pds = 0;
         bool add_row = false;
         while (!query_eof && (query_row.subnet_id_ == cur_id)) {
-
             if (query_row.lease_state_ == Lease::STATE_DEFAULT) {
                 add_row = true;
                 if (query_row.lease_type_ == Lease::TYPE_NA) {
@@ -621,7 +633,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
             // Get next query row
             query_eof = !(query->getNextRow(query_row));
         }
-
+        // Add the row for the current subnet
         if (add_row) {
             addValueRow6(value_rows, cur_id, assigned, declined, assigned_pds);
         }
