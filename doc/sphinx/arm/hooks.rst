@@ -34,13 +34,14 @@ The order may be important; consult the documentation of the libraries
 for specifics.
 
 When a Kea process unloads a library, it expects the ``dlclose`` function
-removes all library symbols and removes the library code from address space
-on the last reference. This behavior is not required by the POSIX standard
-and at least the musl library used by default by Alpine Linux implements
-the ``dlclose`` function as a no operation. On such systems a library
-is loaded forever in a process, for instance it is not possible to
-replace a library binary by another version using configuration change
-or reload: the process must be stopped and relaunched.
+to remove all library symbols, as well as the library code, from address space.
+Although most OSes implement the ``dlclose`` function, this behavior is not
+required by the POSIX standard and not all systems support it; for example, the musl 
+library, used by default by Alpine Linux, implements the ``dlclose`` function
+as a no operation. On such systems a library actually remains loaded for the
+lifetime of the process, which means that it must be restarted
+to update libraries with newer versions; it is not sufficient to simply
+reconfigure or reload the Kea process.
 
 The next section describes how to configure hook libraries. Users who are
 interested in writing their own hook library can find information
@@ -302,15 +303,15 @@ loaded by the correct process per the table below.
    +=================+===============+============================================================+
    | User Check      | Kea open      |Reads known users list from a file. Unknown users will be   |
    |                 | source        |assigned a lease from the last subnet defined in the        |
-   |                 | (since 0.8)   |configuration file, e.g. to redirect them to a captive      |
+   |                 |               |configuration file, e.g. to redirect them to a captive      |
    |                 |               |portal. This demonstrates how an external source of         |
    |                 |               |information can be used to influence the Kea allocation     |
    |                 |               |engine. This hook is part of the Kea source code and is     |
    |                 |               |available in the ``src/hooks/dhcp/user_chk`` directory.     |
    +-----------------+---------------+------------------------------------------------------------+
-   | Forensic        | Support       |This library provides hooks that record a detailed log of   |
+   | Forensic        | ISC support   |This library provides hooks that record a detailed log of   |
    | Logging         | customers     |lease assignments and renewals into a set of log files. In  |
-   |                 | (since 1.1)   |many legal jurisdictions, companies - especially ISPs - must|
+   |                 |               |many legal jurisdictions, companies - especially ISPs - must|
    |                 |               |record information about the addresses they have leased to  |
    |                 |               |DHCP clients. This library is designed to help with that    |
    |                 |               |requirement. If the information that it records is          |
@@ -321,9 +322,9 @@ loaded by the correct process per the table below.
    |                 |               |were added to give users more flexibility regarding         |
    |                 |               |what information should be logged.                          |
    +-----------------+---------------+------------------------------------------------------------+
-   | Flexible        | Support       |Kea software provides a way to handle host reservations that|
+   | Flexible        | ISC support   |Kea software provides a way to handle host reservations that|
    | Identifier      | customers     |include addresses, prefixes, options, client classes and    |
-   |                 | (since 1.2)   |other features. The reservation can be based on hardware    |
+   |                 |               |other features. The reservation can be based on hardware    |
    |                 |               |address, DUID, circuit-id or client-id in DHCPv4 and using  |
    |                 |               |hardware address or DUID in DHCPv6. However, there are      |
    |                 |               |sometimes scenarios where the reservation is more complex,  |
@@ -339,13 +340,13 @@ loaded by the correct process per the table below.
    +-----------------+---------------+------------------------------------------------------------+
    | Flexible        | Kea open      |This library provides hooks that compute option values      |
    | Option          | source        |instead of static configured values. An expression is       |
-   |                 | (since 1.7.1) |evaluated on the query packet. Defined add, supersede, and  |
+   |                 |               |evaluated on the query packet. Defined add, supersede, and  |
    |                 |               |remove actions are applied on the response packet before    |
    |                 |               |it is sent using the evaluation result.                     |
    +-----------------+---------------+------------------------------------------------------------+
-   | Host Commands   | Support       |Kea provides a way to store host reservations in a          |
+   | Host Commands   | ISC support   |Kea provides a way to store host reservations in a          |
    |                 | customers     |database. In many larger deployments it is useful to be able|
-   |                 | (since 1.2)   |to manage that information while the server is running. This|
+   |                 |               |to manage that information while the server is running. This|
    |                 |               |library provides management commands for adding, querying,  |
    |                 |               |and deleting host reservations in a safe way without        |
    |                 |               |restarting the server. In particular, it validates the      |
@@ -355,9 +356,9 @@ loaded by the correct process per the table below.
    |                 |               |(JSON over UNIX sockets) and the Control Agent (JSON over   |
    |                 |               |RESTful interface).                                         |
    +-----------------+---------------+------------------------------------------------------------+
-   | Subnet Commands | Support       |In deployments in which subnet configuration needs to be    |
+   | Subnet Commands | ISC support   |In deployments in which subnet configuration needs to be    |
    |                 | customers     |frequently updated, it is a hard requirement that such      |
-   |                 | (since 1.3)   |updates be performed without the need for a full DHCP server|
+   |                 |               |updates be performed without the need for a full DHCP server|
    |                 |               |reconfiguration or restart. This hook library allows for    |
    |                 |               |incremental changes to the subnet configuration such as     |
    |                 |               |adding or removing a subnet. It also allows for             |
@@ -368,7 +369,7 @@ loaded by the correct process per the table below.
    +-----------------+---------------+------------------------------------------------------------+
    | Lease Commands  | Kea open      |This hook library offers a number of                        |
    |                 | source        |commands used to manage leases. Kea can store               |
-   |                 | (since 1.3)   |lease information in various backends: memfile, MySQL,      |
+   |                 |               |lease information in various backends: memfile, MySQL,      |
    |                 |               |PostgreSQL, and Cassandra. This library provides a unified  |
    |                 |               |interface to manipulate leases in an unified, safe          |
    |                 |               |way. In particular, it allows manipulation of memfile leases|
@@ -383,7 +384,7 @@ loaded by the correct process per the table below.
    +-----------------+---------------+------------------------------------------------------------+
    | High            | Kea open      |The risk of DHCP service unavailability can be minimized    |
    | Availability    | source        |by setting up a pair of DHCP servers in a network. Two      |
-   |                 | (since 1.4)   |modes of operation are supported. The first one is called   |
+   |                 |               |modes of operation are supported. The first one is called   |
    |                 |               |load-balancing, and is sometimes referred to as             |
    |                 |               |"active-active." Each server can handle selected groups of  |
    |                 |               |clients in this network, or all clients if it detects that  |
@@ -400,64 +401,59 @@ loaded by the correct process per the table below.
    |                 |               |to send lease updates to external backup servers, making it |
    |                 |               |much easier to have a replacement that is up-to-date.       |
     +-----------------+---------------+------------------------------------------------------------+
-   | Statistics      | Kea open      |The Statistics Commands library provides additional         |
-   | Commands        | source        |commands for retrieving accurate DHCP lease statistics for  |
-   |                 | (since 1.4)   |Kea DHCP servers that share the same lease database. This   |
+   | Statistics      | Kea open      |This library provides additional                            |
+   | Commands        | source        |commands for retrieving accurate DHCP lease statistics, for |
+   |                 |               |Kea DHCP servers that share the same lease database. This   |
    |                 |               |setup is common in deployments where DHCP service redundancy|
    |                 |               |is required and a shared lease database is used to avoid    |
-   |                 |               |lease data replication between the DHCP servers. A feature  |
-   |                 |               |was introduced in Kea 1.4.0 that allows tracking lease      |
-   |                 |               |allocations within the lease database, thus making the      |
-   |                 |               |statistics accessible to all connected DHCP servers. The    |
-   |                 |               |Statistics Commands hook library utilizes this feature and  |
-   |                 |               |returns lease statistics for all subnets respectively.      |
+   |                 |               |lease-data replication between the DHCP servers.            |
+   |                 |               |This hook library returns lease statistics                  |
+   |                 |               |for each subnet.                                            |
    +-----------------+---------------+------------------------------------------------------------+
-   | RADIUS          | Support       |The RADIUS Hook library allows Kea to interact with the     |
+   | RADIUS          | ISC support   |The RADIUS hook library allows Kea to interact with         |
    |                 | customers     |RADIUS servers using access and accounting mechanisms. The  |
-   |                 | (since 1.4)   |access mechanism may be used for access control, assigning  |
+   |                 |               |access mechanism may be used for access control, assigning  |
    |                 |               |specific IPv4 or IPv6 addresses reserved by RADIUS,         |
    |                 |               |dynamically assigning addresses from designated pools chosen|
-   |                 |               |by RADIUS or rejecting the client's messages altogether. The|
-   |                 |               |accounting mechanism allows a RADIUS server to keep track of|
-   |                 |               |device activity over time.                                  |
+   |                 |               |by RADIUS, or rejecting the client's messages altogether.   |
+   |                 |               |The accounting mechanism allows a RADIUS server to keep     |
+   |                 |               |track of device activity over time.                         |
    +-----------------+---------------+------------------------------------------------------------+
-   | Host Cache      | Support       |Some of the database backends, such as RADIUS, are          |
-   |                 | customers     |considered slow and may take a long time to respond. Since  |
-   |                 | (since 1.4)   |Kea in general is synchronous, the backend performance      |
-   |                 |               |directly affects the DHCP performance. To minimize the      |
-   |                 |               |impact and improve performance, the Host Cache library      |
+   | Host Cache      | ISC support   |Some database backends, such as RADIUS,                     |
+   |                 | customers     |may take a long time to respond. Since                      |
+   |                 |               |Kea in general is synchronous, backend performance          |
+   |                 |               |directly affects DHCP performance. To minimize              |
+   |                 |               |performance impact, this library                            |
    |                 |               |provides a way to cache responses from other hosts. This    |
    |                 |               |includes negative caching, i.e. the ability to remember that|
    |                 |               |there is no client information in the database.             |
    +-----------------+---------------+------------------------------------------------------------+
-   | Class Commands  | Support       |This Class Cmds hook library allows for adding, updating,   |
-   |                 | customers     |deleting and fetching configured DHCP client classes without|
-   |                 | (since 1.5)   |the need to restart the DHCP server.                        |
+   | Class Commands  | ISC support   |This hook library allows configured DHCP client classes to  |
+   |                 | customers     |be added, updated, deleted, and fetched without             |
+   |                 |               |needing to restart the DHCP server.                         |
    +-----------------+---------------+------------------------------------------------------------+
-   | MySQL           | Kea sources   |The MySQL CB hook library is an implementation of the Kea   |
-   | Configuration   | (since 1.6)   |Configuration Backend for MySQL. It uses a MySQL database as|
-   | Backend         |               |a repository for the Kea configuration information. The Kea |
+   | MySQL           | Kea open      |This hook library is an implementation of the Kea           |
+   | Configuration   | source        |Configuration Backend for MySQL. It uses a MySQL database as|
+   | Backend         |               |a repository for the Kea configuration information. Kea     |
    |                 |               |servers use this library to fetch their configurations.     |
    +-----------------+---------------+------------------------------------------------------------+
-   | Configuration   | Support       |The Configuration Backend Commands (CB Commands) hooks      |
-   | Backend         | customers     |library implements a collection of commands to manage the   |
-   | Commands        | (since 1.6)   |configuration information of the Kea servers in the         |
+   | Configuration   | ISC support   |This hook                                                   |
+   | Backend         | customers     |library implements a collection of commands to manage       |
+   | Commands        |               |Kea configuration information in a                          |
    |                 |               |database. This library may only be used in conjunction with |
-   |                 |               |one of the supported configuration backend implementations. |
+   |                 |               |one of the supported Configuration Backend implementations. |
    +-----------------+---------------+------------------------------------------------------------+
-   | BOOTP           | Kea sources   |The BOOTP hook library adds BOOTP support, as defined in    |
-   |                 | (since 1.7.3) |RFC 1497. It recognizes received BOOTP requests:            |
+   | BOOTP           | Kea open      |This hook library adds BOOTP support, as defined in         |
+   |                 | source        |RFC 1497. It recognizes received BOOTP requests:            |
    |                 |               |they are translated into DHCPREQUEST packets, put into the  |
-   |                 |               |BOOTP client class and get infinite lifetime leases.        |
+   |                 |               |BOOTP client class, and receive infinite lifetime leases.   |
    +-----------------+---------------+------------------------------------------------------------+
-   | Leasequery      | Support       |The Leasequery hook library adds support for DHCPv4         |
+   | Leasequery      | ISC support   |This library adds support for DHCPv4                        |
    |                 | customers     |Leasequery as described in RFC 4388; and for DHCPv6         |
-   |                 | (DHCPv4 since |Leasequery as described in RFC 5007.                        |
-   |                 | 1.7.8, DHCPv6 |                                                            |
-   |                 | since 1.7.9)  |                                                            |
-   +-----------------+---------------+------------------------------------------------------------+
-   | Run Script      | Kea sources   |The Run Script hook library adds support to run external    |
-   |                 | (since 1.9.5) |scripts for specific packet processing hook points. There   |
+   |                 |               |Leasequery as described in RFC 5007.                        |
+    +-----------------+---------------+------------------------------------------------------------+
+   | Run Script      | Kea open      |This hook library adds support to run external              |
+   |                 | source        |scripts for specific packet-processing hook points. There   |
    |                 |               |are several exported environment variables available for    |
    |                 |               |the script.                                                 |
    +-----------------+---------------+------------------------------------------------------------+
@@ -469,16 +465,16 @@ at this link:
 https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
 Developers or others who are aware of any hook libraries not listed there
 are asked to please send a note to the kea-users or kea-dev mailing lists for
-updating.
+updating. (Information on all of ISC's public mailing lists can be found
+at https://www.isc.org/mailinglists/.)
 
 The libraries developed by ISC are described in detail in the following
 sections.
 
-user_chk: Checking User Access
-==============================
+``user_chk``: Checking User Access
+==================================
 
-The user_chk library is the first hook library published by ISC. It
-serves several purposes:
+The ``user_chk`` library serves several purposes:
 
 -  To assign "new" or "unregistered" users to a restricted subnet, while
    "known" or "registered" users are assigned to unrestricted subnets.
@@ -496,7 +492,7 @@ Once loaded, the library allows the separation of incoming requests into known
 and unknown clients. For known clients, packets are processed
 as usual, although it is possible to override the sending of certain options
 on a per-host basis. Clients that are not on the known
-hosts list will be treated as unknown and will be assigned to the last
+hosts list are treated as unknown and are assigned to the last
 subnet defined in the configuration file.
 
 As an example of a use case, this behavior may be implemented to put unknown users
@@ -509,16 +505,16 @@ address after their device is restarted.
 
    This library was developed several years before the host reservation
    mechanism became available. Host reservation is much
-   more powerful and flexible, but the user_chk capability
+   more powerful and flexible, but the ability of ``user_chk``
    to consult an external source of information about clients and alter
    Kea's behavior remains useful and of educational value.
 
-The library reads the /tmp/user_chk_registry.txt file while being loaded
+The library reads the ``/tmp/user_chk_registry.txt`` file while being loaded
 and each time an incoming packet is processed. Each line of the file is expected to
 contain a self-contained JSON snippet which must have the
 following two entries:
 
--  ``type`` - whose value is "HW_ADDR" for IPv4 users or "DUID" for IPv6
+-  ``type`` - whose value is ``"HW_ADDR"`` for IPv4 users or ``"DUID"`` for IPv6
    users.
 
 -  ``id`` - whose value is either the hardware address or the DUID from
@@ -542,7 +538,7 @@ A sample user registry file is shown below:
    { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 
 As with any other hook libraries provided by ISC, internals of the
-user_chk code are well-documented. Users may refer to the `user_chk
+``user_chk`` code are well-documented. Users may refer to the `user_chk
 library section of the Kea Developer's Guide
 <https://reports.kea.isc.org/dev_guide/d8/db2/libdhcp_user_chk.html>`__
 for information on how the code works internally. That, together with the
@@ -551,11 +547,11 @@ for information on how the code works internally. That, together with the
 some pointers on how to extend this library and perhaps even write one
 from scratch.
 
-legal_log: Forensic Logging Hooks
-=================================
+``legal_log``: Forensic Logging Hooks
+=====================================
 
 This section describes the forensic log hook library. This library provides
-hooks that record a detailed log of assignments, renewals, releases and other
+hooks that record a detailed log of assignments, renewals, releases, and other
 lease events into a set of log files.
 
 Currently this library is only available to ISC customers with a paid support
@@ -566,50 +562,52 @@ contract.
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
-In many legal jurisdictions, companies, especially ISPs, must record
+In many legal jurisdictions, companies - especially ISPs - must record
 information about the addresses they have leased to DHCP clients. This
 library is designed to help with that requirement. If the information
 that it records is sufficient, it may be used directly.
 
-If a jurisdiction requires that a different set of information be saved, users
+If a jurisdiction requires that different information be saved, users
 may use the custom formatting capability to extract information from the inbound
-request packet, or from the outbound response packet. Use with caution as this
-might affect server performance.  The custom format can not be used for control
-channel commands.
+request packet, or from the outbound response packet. Administrators are advised
+to use this feature with caution, as it may affect server performance.
+The custom format cannot be used for control channel commands.
 
 Alternatively, this library may be used as a template or an example for the
 user's own custom logging hook. The logging is done as a set of hooks to allow
-it to be customized to any particular need. Modifying a hook library is easier
-and safer than updating the core code. In addition by using the hooks features,
-those users who do not need to log this information can leave it out and avoid
+it to be customized to any particular need; modifying a hook library is easier
+and safer than updating the core code. In addition, by using the hooks features,
+users who do not need to log this information can leave it out and avoid
 any performance penalties.
 
 Log File Naming
 ~~~~~~~~~~~~~~~
 
-The names for the log files have the following form:
+The names of the log files follow a set pattern.
 
-Legal file names, if using ``day``, ``month`` or ``year`` as time unit:
+If using ``day``, ``month``, or ``year`` as the time unit, the file name follows
+the format:
 
 ::
 
    path/base-name.CCYYMMDD.txt
 
-where ``CC`` represents century, ``YY`` represents current year,
-``MM`` represents current month and ``DD`` represents current day.
+where ``CC`` represents the century, ``YY`` represents the year,
+``MM`` represents the month, and ``DD`` represents the day.
 
-Legal file names, if using ``second`` as time unit:
+If using ``second`` as the time unit the file name follows the format:
 
 ::
 
    path/base-name.TXXXXXXXXXXXXXXXXXXXX.txt
 
-where ``XXXXXXXXXXXXXXXXXXXX`` represents time in seconds since epoch.
+where ``XXXXXXXXXXXXXXXXXXXX`` represents the time in seconds since the beginning
+of the UNIX epoch.
 
-When using ``second`` as the time unit, the file will be rotated when
-the ``count`` number of seconds pass. In contrast, when using ``day``, ``month``
-or ``year`` as time unit, the file will be rotated whenever the ``count`` th day,
-month or year starts respectively.
+When using ``second`` as the time unit, the file is rotated when
+the ``count`` number of seconds pass. In contrast, when using ``day``, ``month``,
+or ``year`` as the time unit, the file is rotated whenever the ``count`` of day,
+month, or year starts, as applicable.
 
 The ``"path"`` and ``"base-name"`` are supplied in the configuration as
 described below; see :ref:`forensic-log-configuration`.
@@ -625,14 +623,14 @@ Configuring the Forensic Log Hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use this functionality, the hook library must be included in the
-configuration of the desired DHCP server modules. The legal_log library
-is able to save logs to a text file or to a database (created using
-``kea-admin`` see :ref:`mysql-database-create`, :ref:`pgsql-database-create`).
+configuration of the desired DHCP server modules. The ``legal_log`` library
+can save logs to a text file or to a database (created using
+``kea-admin``; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
-``[kea-install-dir]/var/lib/kea`` where ``kea-install-dir`` is determined
-by the "--prefix" option of the configure script. It defaults to
-``/usr/local``. Assuming the default value, configuring kea-dhcp4 to load
-the legal_log library could be done with the following kea-dhcp4 configuration:
+``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
+by the ``--prefix`` option of the configure script; it defaults to
+``/usr/local``. Assuming the default value, ``kea-dhcp4`` can be configured to load
+the ``legal_log`` library like this:
 
 .. code-block:: json
 
@@ -650,7 +648,7 @@ the legal_log library could be done with the following kea-dhcp4 configuration:
         }
     }
 
-For kea-dhcp6, the configuration is:
+For ``kea-dhcp6``, the configuration is:
 
 .. code-block:: json
 
@@ -678,47 +676,47 @@ The hook library parameters for the text file configuration are:
    defaults to ``kea-legal``.
 
 -  ``time-unit`` - configures the time unit used to rotate the log file. Valid
-   values are ``second``, ``day``, ``month`` or ``year``. It defaults to
+   values are ``second``, ``day``, ``month``, or ``year``. It defaults to
    ``day``.
 
 -  ``count`` - configures the number of time units that need to pass until the
-   log file is rotated. It can be any positive number, or 0 which disables log
-   rotate. It defaults to 1.
+   log file is rotated. It can be any positive number, or 0, which disables log
+   rotation. It defaults to 1.
 
-If log rotate is disabled, a new file will be created when the library is
-loaded and the new file name is different that any previous file name.
+If log rotation is disabled, a new file is created when the library is
+loaded; the new file name is different from any previous file name.
 
 Additional actions can be performed just before closing the old file and after
 opening the new file. These actions must point to an external executable or
-script and are configured by setting:
+script and are configured with the following settings:
 
--  ``prerotate`` - external executable or script called with the name of the
-   file that will be closed. Kea will not wait for the process to finish.
+-  ``prerotate`` - an external executable or script called with the name of the
+   file that will be closed. Kea does not wait for the process to finish.
 
--  ``postrotate`` - external executable or script called with the name of the
-   file that had been opened. Kea will not wait for the process to finish.
+-  ``postrotate`` - an external executable or script called with the name of the
+   file that was opened. Kea does not wait for the process to finish.
 
 Custom formatting can be enabled for logging information that can be extracted
 either from the client's request packet or from the server's response packet.
 Use with caution as this might affect server performance.
-The custom format can not be used for control channel commands.
+The custom format cannot be used for control channel commands.
 Two parameters can be used towards this goal, either together or separately:
 
--  ``request-parser-format`` - evaluated parsed expression used to extract and
-   log data from the incoming packet
+-  ``request-parser-format`` - an evaluated parsed expression used to extract and
+   log data from the incoming packet.
 
--  ``response-parser-format`` - evaluated parsed expression used to extract and
-   log data from the server response packet
+-  ``response-parser-format`` - an evaluated parsed expression used to extract and
+   log data from the server response packet.
 
 See :ref:`classification-using-expressions` for a list of expressions.
-If any of ``request-parser-format`` or ``response-parser-format`` is
+If either ``request-parser-format`` or ``response-parser-format`` is
 configured, the default logging format is not used. If both of them are
 configured, the resulting log message is constructed by concatenating the
 data extracted from the request and the data extracted from the response.
 
 The custom formatting permits logging on multiple lines using the hexstring 0x0a
-(ASCII code for new line). In the case of the log file, each line is prepended
-with the log timestamp. For the database backend, the data will be stored
+(ASCII code for new line). In the log file, each line is prepended
+with the log timestamp. For the database backend, the data is stored
 (including the newline character) in the same entry.
 
 Examples:
@@ -741,10 +739,10 @@ Examples:
         }
     }
 
-Some data might be available in the request or in the response only and some
-data might differ in the request packet from the one in the response packet.
+Some data might be available in the request or only in the response; the
+data in the request packet might differ from that in the response packet.
 
-The lease client context can only be printed using the default format, as this
+The lease-client context can only be printed using the default format, as this
 information is not directly stored in the request packet or in the response
 packet.
 
@@ -768,11 +766,11 @@ Additional parameters for the database connection can be specified, e.g:
       }
     }
 
-For more specific information about database related parameters please refer to
-:ref:`database-configuration6` and :ref:`database-configuration4`.
+For more specific information about database-related parameters, please refer to
+:ref:`database-configuration4` and :ref:`database-configuration6`.
 
 If it is desired to restrict forensic logging to certain subnets, the
-"legal-logging" boolean parameter can be specified within a user context
+``"legal-logging"`` boolean parameter can be specified within a user context
 of these subnets. For example:
 
 .. code-block:: json
@@ -796,7 +794,7 @@ of these subnets. For example:
     }
 
 This configuration disables legal logging for the subnet "192.0.2.0/24". If the
-"legal-logging" parameter is not specified, it defaults to 'true', which
+``"legal-logging"`` parameter is not specified, it defaults to ``true``, which
 enables legal logging for the subnet.
 
 The following example demonstrates how to selectively disable legal
