@@ -2449,7 +2449,7 @@ option" is option 125. Its proper name is the "vendor-independent
 vendor-specific information option" or "vivso". The idea behind vivso options
 is that each vendor has its own unique set of options with their own custom
 formats. The vendor is identified by a 32-bit unsigned integer called
-`enterprise-number` or `vendor-id`.
+``enterprise-number`` or ``vendor-id``.
 
 
 The standard spaces defined in Kea and their options are:
