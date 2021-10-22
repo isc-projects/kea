@@ -345,7 +345,7 @@ public:
         lmptr_ = 0;
     }
 
-    /// @brief Initializes lease manager for v6 operation
+    /// @brief Initializes lease manager for v4 operation
     ///
     /// Creates a lease manager (memfile, trimmed down to keep everything in memory
     /// only) and adds five subnets to the configuration.
@@ -788,7 +788,7 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease4GetValid) {
 
-    // Initialize lease manager (false = v4, false = don't add leases)
+    // Initialize lease manager.
     initLeaseMgr4();
 
     // Note timestamp actual values are not important but are included
@@ -987,7 +987,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
 
-    // Initialize lease manager (false = v4, false = don't add leases)
+    // Initialize lease manager.
     initLeaseMgr4();
 
     // Note timestamp actual values are not important but are included
@@ -1479,7 +1479,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease4OrphanedStats) {
 
-    // Initialize lease manager (false = v4, false = don't add leases)
+    // Initialize lease manager.
     initLeaseMgr4();
 
     // Now remove subnets 10,30, and 50 thereby orphaning their leases.
