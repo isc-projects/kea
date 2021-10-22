@@ -1,3 +1,8 @@
+1957.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.0 development
+	version.
+	(Gitlab #2141)
+
 1956.	[bug]		tmark
 	Modified stat_cmds hook library to omit statisics
 	for non-existent subnets from results returned by
