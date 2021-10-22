@@ -9,6 +9,7 @@
 
 #include <log/logger_support.h>
 #include <log/macros.h>
+
 #include <pgsql_cb_messages.h>
 
 namespace isc {
@@ -18,6 +19,5 @@ extern isc::log::Logger pgsql_cb_logger;
 
 }  // namespace dhcp
 }  // namespace isc
-
 
 #endif

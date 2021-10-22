@@ -5,9 +5,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <pgsql_cb_impl.h>
-#include <gtest/gtest.h>
+
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
+
+#include <gtest/gtest.h>
+#include <pgsql_cb_impl.h>
 #include <vector>
 
 using namespace isc::db;
@@ -16,18 +18,17 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-typedef PsqlBindArrayPtr (tripletFunc) (const Triplet<uint32_t>& triplet);
+typedef PsqlBindArrayPtr(tripletFunc)(const Triplet<uint32_t>& triplet);
 
-class PgsqlConfigBackendTest: public PgSqlGenericBackendTest {
+class PgsqlConfigBackendTest : public PgSqlGenericBackendTest {
 public:
-    PgsqlConfigBackendTest(): PgSqlGenericBackendTest() {
+    PgsqlConfigBackendTest() : PgSqlGenericBackendTest() {
         DatabaseConnection::ParameterMap params;
         params["name"] = "keatest";
         params["password"] = "keatest";
         params["user"] = "keatest";
 
         cbptr_.reset(new PgSqlConfigBackendImpl(params, 0));
-
     }
 
     /// @brief checks if specified triplet generating function stores the values properly.
@@ -73,7 +74,7 @@ TEST_F(PgsqlConfigBackendTest, triplet) {
 // the createBinding function takes the default value of a triplet.
 TEST_F(PgsqlConfigBackendTest, createBinding) {
 
-    tripletFunc &f = PgSqlConfigBackendImpl::createBinding;
+    tripletFunc& f = PgSqlConfigBackendImpl::createBinding;
     std::vector<uint32_t> exp;
 
     // Case 1: empty triplet creates empty binding
@@ -92,7 +93,7 @@ TEST_F(PgsqlConfigBackendTest, createBinding) {
 // the createBinding function takes the default value of a triplet.
 TEST_F(PgsqlConfigBackendTest, createMinBinding) {
 
-    tripletFunc &f = PgSqlConfigBackendImpl::createMinBinding;
+    tripletFunc& f = PgSqlConfigBackendImpl::createMinBinding;
     std::vector<uint32_t> exp;
 
     // Case 1: empty triplet creates empty binding
@@ -112,7 +113,7 @@ TEST_F(PgsqlConfigBackendTest, createMinBinding) {
 // the createBinding function takes the default value of a triplet.
 TEST_F(PgsqlConfigBackendTest, createMaxBinding) {
 
-    tripletFunc &f = PgSqlConfigBackendImpl::createMaxBinding;
+    tripletFunc& f = PgSqlConfigBackendImpl::createMaxBinding;
     std::vector<uint32_t> exp;
 
     // Case 1: empty triplet creates empty binding
@@ -128,5 +129,4 @@ TEST_F(PgsqlConfigBackendTest, createMaxBinding) {
     checkBinding(f, Triplet<uint32_t>(111, 222, 333), exp);
 }
 
-
-}
+}  // namespace

@@ -22,6 +22,7 @@
 #include <exceptions/exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
+
 #include <set>
 #include <sstream>
 #include <string>
@@ -39,7 +40,6 @@ namespace dhcp {
 /// class must be local times.
 class PgSqlConfigBackendImpl {
 protected:
-
     /// @brief RAII object used to protect against creating multiple
     /// audit revisions during cascade configuration updates.
     ///
@@ -65,7 +65,6 @@ protected:
     /// transaction with the database.
     class ScopedAuditRevision {
     public:
-
         /// @brief Constructor.
         ///
         /// Creates new audit revision and sets the flag in the
@@ -96,13 +95,11 @@ protected:
         ~ScopedAuditRevision();
 
     private:
-
         /// @brief Pointer to the Postgres CB implementation.
         PgSqlConfigBackendImpl* impl_;
     };
 
 public:
-
     /// @brief Constructor.
     ///
     /// @param parameters A data structure relating keywords and values
@@ -135,13 +132,14 @@ public:
     /// @return Server tag.
     /// @throw InvalidOperation if the server selector is unassigned or if there
     /// is more than one server tag associated with the selector.
-    std::string getServerTag(const db::ServerSelector& server_selector,
-                             const std::string& operation) const {
+    std::string
+    getServerTag(const db::ServerSelector& server_selector, const std::string& operation) const {
         auto tags = server_selector.getTags();
         if (tags.size() != 1) {
             isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
-                      " while " << operation << ". Got: "
-                      << getServerTagsAsText(server_selector));
+                                        " while "
+                                            << operation
+                                            << ". Got: " << getServerTagsAsText(server_selector));
         }
 
         return (tags.begin()->get());
@@ -290,10 +288,9 @@ public:
     /// if the query contains no WHERE clause.
     /// @param [out] option_defs Reference to the container where fetched
     /// option definitions will be inserted.
-    void
-    getOptionDefs(const int index,
-                  const db::PsqlBindArray& in_bindings,
-                  OptionDefContainer& option_defs);
+    void getOptionDefs(const int index,
+                       const db::PsqlBindArray& in_bindings,
+                       OptionDefContainer& option_defs);
 
     /// @brief Creates or updates an option definition.
     ///
@@ -328,10 +325,11 @@ public:
     ///
     /// @return Pointer to the returned option or NULL if such option
     /// doesn't exist.
-    OptionDescriptorPtr
-    getOption(const int index, const Option::Universe& universe,
-              const db::ServerSelector& server_selector, const uint16_t code,
-              const std::string& space);
+    OptionDescriptorPtr getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector,
+                                  const uint16_t code,
+                                  const std::string& space);
 
     /// @brief Sends query to retrieve all global options.
     ///
@@ -339,9 +337,9 @@ public:
     /// @param universe Option universe, i.e. V4 or V6.
     /// @param server_selector Server selector.
     /// @return Container holding returned options.
-    OptionContainer
-    getAllOptions(const int index, const Option::Universe& universe,
-                  const db::ServerSelector& server_selector);
+    OptionContainer getAllOptions(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector);
 
     /// @brief Sends query to retrieve global options with modification
     /// time later than specified timestamp.
@@ -350,10 +348,10 @@ public:
     /// @param universe Option universe, i.e. V4 or V6.
     /// @param server_selector Server selector.
     /// @return Container holding returned options.
-    OptionContainer
-    getModifiedOptions(const int index, const Option::Universe& universe,
-                       const db::ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time);
+    OptionContainer getModifiedOptions(const int index,
+                                       const Option::Universe& universe,
+                                       const db::ServerSelector& server_selector,
+                                       const boost::posix_time::ptime& modification_time);
 
     /// @brief Sends query to retrieve single option by code and option space
     /// for a given subnet id.
@@ -439,7 +437,8 @@ public:
     /// @todo implement
     db::PsqlBindArrayPtr createInputRelayBinding(const NetworkPtr& network);
 
-    /// @todo implement template<typename T> db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object)
+    /// @todo implement template<typename T> db::MySqlBindingPtr
+    /// createInputRequiredClassesBinding(const T& object)
 
     /// @todo implement db::MySqlBindingPtr createInputContextBinding(const T& config_element) {
 
@@ -468,9 +467,8 @@ public:
     /// @param bindings Reference to the MySQL input bindings.
     /// @param [out] servers Reference to the container where fetched servers
     /// will be inserted.
-    void getServers(const int index,
-                    const db::PsqlBindArray& bindings,
-                    db::ServerCollection& servers);
+    void
+    getServers(const int index, const db::PsqlBindArray& bindings, db::ServerCollection& servers);
 
     /// @brief Creates or updates a server.
     ///
@@ -492,7 +490,8 @@ public:
                             const int& update_index,
                             const db::ServerPtr& server);
 
-    /// @todo implement template<typename T, typename... R> void multipleUpdateDeleteQueries(T first_index, R... other_indexes)
+    /// @todo implement template<typename T, typename... R> void multipleUpdateDeleteQueries(T
+    /// first_index, R... other_indexes)
 
     /// @brief Removes configuration elements from the index which don't match
     /// the specified server selector.
@@ -510,9 +509,9 @@ public:
     /// @param server_selector Server selector.
     /// @param index Reference to the index holding the returned configuration
     /// elements to be processed.
-    template<typename CollectionIndex>
-    void tossNonMatchingElements(const db::ServerSelector& server_selector,
-                                 CollectionIndex& index) {
+    template <typename CollectionIndex>
+    void
+    tossNonMatchingElements(const db::ServerSelector& server_selector, CollectionIndex& index) {
         // Don't filter the matching server tags if the server selector is
         // set to ANY.
         if (server_selector.amAny()) {
@@ -520,7 +519,7 @@ public:
         }
 
         // Go over the collection of elements.
-        for (auto elem = index.begin(); elem != index.end(); ) {
+        for (auto elem = index.begin(); elem != index.end();) {
 
             // If we're asking for shared networks matching all servers,
             // we have to make sure that the fetched element has "all"
@@ -547,8 +546,7 @@ public:
                 auto tags = server_selector.getTags();
                 bool tag_found = false;
                 for (auto tag : tags) {
-                    if ((*elem)->hasServerTag(tag) ||
-                        (*elem)->hasAllServerTag()) {
+                    if ((*elem)->hasServerTag(tag) || (*elem)->hasAllServerTag()) {
                         tag_found = true;
                         break;
                     }
@@ -613,12 +611,10 @@ public:
     db::PgSqlConnection conn_;
 
 protected:
-
     /// @brief Timer name used to register database reconnect timer.
     std::string timer_name_;
 
 private:
-
     /// @brief Boolean flag indicating if audit revision has been created
     /// using @c ScopedAuditRevision object.
     bool audit_revision_created_;
@@ -630,7 +626,7 @@ private:
     static isc::asiolink::IOServicePtr io_service_;
 };
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // end of namespace isc
 
 #endif

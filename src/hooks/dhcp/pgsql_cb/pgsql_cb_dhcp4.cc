@@ -6,9 +6,6 @@
 
 #include <config.h>
 
-#include <pgsql_cb_dhcp4.h>
-#include <pgsql_cb_impl.h>
-#include <pgsql_macros.h>
 #include <cc/data.h>
 #include <config_backend/constants.h>
 #include <database/database_connection.h>
@@ -20,18 +17,23 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
-#include <dhcpsrv/lease.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <util/buffer.h>
-#include <util/boost_time_utils.h>
 #include <pgsql/pgsql_connection.h>
+#include <util/boost_time_utils.h>
+#include <util/buffer.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
+
 #include <array>
+#include <pgsql_cb_dhcp4.h>
+#include <pgsql_cb_impl.h>
+#include <pgsql_macros.h>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -49,7 +51,6 @@ namespace dhcp {
 /// @brief Implementation of the Postgres Configuration Backend.
 class PgSqlConfigBackendDHCPv4Impl : public PgSqlConfigBackendImpl {
 public:
-
     /// @brief Statement tags.
     ///
     /// The contents of the enum are indexes into the list of SQL statements.
@@ -150,8 +151,7 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
-    explicit PgSqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap&
-                                          parameters);
+    explicit PgSqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
     ~PgSqlConfigBackendDHCPv4Impl();
@@ -163,8 +163,8 @@ public:
     ///
     /// @return Pointer to the retrieved value or null if such parameter
     /// doesn't exist.
-    StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
-                                        const std::string& name) {
+    StampedValuePtr
+    getGlobalParameter4(const ServerSelector& server_selector, const std::string& name) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -185,8 +185,7 @@ public:
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
-                          const SubnetID& subnet_id) {
+    Subnet4Ptr getSubnet4(const ServerSelector& server_selector, const SubnetID& subnet_id) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -199,8 +198,7 @@ public:
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
-                          const std::string& subnet_prefix) {
+    Subnet4Ptr getSubnet4(const ServerSelector& server_selector, const std::string& subnet_prefix) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -209,8 +207,7 @@ public:
     /// @param server_selector Server selector.
     /// @param [out] subnets Reference to the subnet collection structure where
     /// subnets should be inserted.
-    void getAllSubnets4(const ServerSelector& server_selector,
-                        Subnet4Collection& subnets) {
+    void getAllSubnets4(const ServerSelector& server_selector, Subnet4Collection& subnets) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -250,16 +247,15 @@ public:
                       const IOAddress& pool_start_address,
                       const IOAddress& pool_end_address,
                       uint64_t& pool_id) {
-          isc_throw(NotImplemented, "Not implemented yet.");
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Sends query to insert or update subnet.
     ///
     /// @param server_selector Server selector.
     /// @param subnet Pointer to the subnet to be inserted or updated.
-    void createUpdateSubnet4(const ServerSelector& server_selector,
-                             const Subnet4Ptr& subnet) {
-          isc_throw(NotImplemented, "Not implemented yet.");
+    void createUpdateSubnet4(const ServerSelector& server_selector, const Subnet4Ptr& subnet) {
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Inserts new IPv4 pool to the database.
@@ -267,9 +263,10 @@ public:
     /// @param server_selector Server selector.
     /// @param pool Pointer to the pool to be inserted.
     /// @param subnet Pointer to the subnet that this pool belongs to.
-    void createPool4(const ServerSelector& server_selector, const Pool4Ptr& pool,
+    void createPool4(const ServerSelector& server_selector,
+                     const Pool4Ptr& pool,
                      const Subnet4Ptr& subnet) {
-          isc_throw(NotImplemented, "Not implemented yet.");
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Sends a query to delete data from a table.
@@ -290,14 +287,14 @@ public:
     /// @c deleteFromTable methods.
     ///
     /// @return Number of deleted entries.
-    template<typename... Args>
+    template <typename... Args>
     uint64_t deleteTransactional(const int index,
                                  const db::ServerSelector& server_selector,
                                  const std::string& operation,
                                  const std::string& log_message,
                                  const bool cascade_delete,
                                  Args&&... keys) {
-         isc_throw(NotImplemented, "Not implemented yet.");
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Sends query to delete subnet by id.
@@ -305,13 +302,11 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
     /// @return Number of deleted subnets.
-    uint64_t deleteSubnet4(const ServerSelector& server_selector,
-                           const SubnetID& subnet_id) {
+    uint64_t deleteSubnet4(const ServerSelector& server_selector, const SubnetID& subnet_id) {
         int index = (server_selector.amAny() ?
-                     PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_ANY :
-                     PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_WITH_TAG);
-        return (deleteTransactional(index, server_selector,
-                                    "deleting a subnet", "subnet deleted",
+                         PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_ANY :
+                         PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_WITH_TAG);
+        return (deleteTransactional(index, server_selector, "deleting a subnet", "subnet deleted",
                                     true, static_cast<uint32_t>(subnet_id)));
     }
 
@@ -320,13 +315,12 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be deleted.
     /// @return Number of deleted subnets.
-    uint64_t deleteSubnet4(const ServerSelector& server_selector,
-                           const std::string& subnet_prefix) {
+    uint64_t
+    deleteSubnet4(const ServerSelector& server_selector, const std::string& subnet_prefix) {
         int index = (server_selector.amAny() ?
-                     PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_ANY :
-                     PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_WITH_TAG);
-        return (deleteTransactional(index, server_selector,
-                                    "deleting a subnet", "subnet deleted",
+                         PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_ANY :
+                         PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_WITH_TAG);
+        return (deleteTransactional(index, server_selector, "deleting a subnet", "subnet deleted",
                                     true, subnet_prefix));
     }
 
@@ -337,7 +331,7 @@ public:
     /// @param subnet Pointer to the subnet for which pools should be
     /// deleted.
     uint64_t deletePools4(const Subnet4Ptr& subnet) {
-          isc_throw(NotImplemented, "Not implemented yet.");
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Sends query to retrieve single shared network by name.
@@ -347,9 +341,9 @@ public:
     ///
     /// @return Pointer to the returned shared network or NULL if such shared
     /// network doesn't exist.
-    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
-                                        const std::string& name) {
-          isc_throw(NotImplemented, "Not implemented yet.");
+    SharedNetwork4Ptr
+    getSharedNetwork4(const ServerSelector& server_selector, const std::string& name) {
+        isc_throw(NotImplemented, "Not implemented yet.");
     }
 
     /// @brief Sends query to retrieve all shared networks.
@@ -387,10 +381,10 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param option Pointer to the option descriptor encapsulating the option.
-    void createUpdateOption4(const ServerSelector& server_selector,
-                             const OptionDescriptorPtr& option) {
-       isc_throw(NotImplemented, "Not implemented yet.");
- }
+    void
+    createUpdateOption4(const ServerSelector& server_selector, const OptionDescriptorPtr& option) {
+        isc_throw(NotImplemented, "Not implemented yet.");
+    }
 
     /// @brief Sends query to insert or update DHCP option in a subnet.
     ///
@@ -417,17 +411,14 @@ public:
                              const IOAddress& pool_end_address,
                              const OptionDescriptorPtr& option) {
         uint64_t pool_id = 0;
-        Pool4Ptr pool = getPool4(server_selector, pool_start_address, pool_end_address,
-                                 pool_id);
+        Pool4Ptr pool = getPool4(server_selector, pool_start_address, pool_end_address, pool_id);
         if (!pool) {
-            isc_throw(BadValue, "no pool found for range of "
-                      << pool_start_address << " : "
-                      << pool_end_address);
+            isc_throw(BadValue, "no pool found for range of " << pool_start_address << " : "
+                                                              << pool_end_address);
         }
 
         createUpdateOption4(server_selector, pool_id, option, false);
     }
-
 
     /// @brief Sends query to insert or update DHCP option in a pool.
     ///
@@ -550,8 +541,7 @@ public:
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
     /// @return Number of deleted options.
-    uint64_t deleteOptions4(const ServerSelector& server_selector,
-                            const Subnet4Ptr& subnet) {
+    uint64_t deleteOptions4(const ServerSelector& server_selector, const Subnet4Ptr& subnet) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -561,8 +551,8 @@ public:
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
     /// @return Number of deleted options.
-    uint64_t deleteOptions4(const ServerSelector& server_selector,
-                            const SharedNetwork4Ptr& shared_network) {
+    uint64_t
+    deleteOptions4(const ServerSelector& server_selector, const SharedNetwork4Ptr& shared_network) {
         isc_throw(NotImplemented, "Not implemented yet.");
     }
 
@@ -633,15 +623,15 @@ public:
             for (auto db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
                 auto parameters = db.getParameters();
-                if (ConfigBackendDHCPv4Mgr::instance().delBackend(parameters["type"], access, true)) {
+                if (ConfigBackendDHCPv4Mgr::instance().delBackend(parameters["type"], access,
+                                                                  true)) {
                     ConfigBackendDHCPv4Mgr::instance().addBackend(db.getAccessString());
                 }
             }
 
             reopened = true;
         } catch (const std::exception& ex) {
-            LOG_ERROR(pgsql_cb_logger, PGSQL_CB_RECONNECT_ATTEMPT_FAILED4)
-                    .arg(ex.what());
+            LOG_ERROR(pgsql_cb_logger, PGSQL_CB_RECONNECT_ATTEMPT_FAILED4).arg(ex.what());
         }
 
         if (reopened) {
@@ -658,7 +648,7 @@ public:
             if (!db_reconnect_ctl->checkRetries()) {
                 // We're out of retries, log it and initiate shutdown.
                 LOG_ERROR(pgsql_cb_logger, PGSQL_CB_RECONNECT_FAILED4)
-                        .arg(db_reconnect_ctl->maxRetries());
+                    .arg(db_reconnect_ctl->maxRetries());
 
                 // Cancel the timer.
                 if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
@@ -672,30 +662,29 @@ public:
             }
 
             LOG_INFO(pgsql_cb_logger, PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4)
-                    .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
-                    .arg(db_reconnect_ctl->maxRetries())
-                    .arg(db_reconnect_ctl->retryInterval());
+                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+                .arg(db_reconnect_ctl->maxRetries())
+                .arg(db_reconnect_ctl->retryInterval());
 
             // Start the timer.
             if (!TimerMgr::instance()->isTimerRegistered(timer_name)) {
-                TimerMgr::instance()->registerTimer(timer_name,
+                TimerMgr::instance()->registerTimer(
+                    timer_name,
                     std::bind(&PgSqlConfigBackendDHCPv4Impl::dbReconnect, db_reconnect_ctl),
-                              db_reconnect_ctl->retryInterval(),
-                              asiolink::IntervalTimer::ONE_SHOT);
+                    db_reconnect_ctl->retryInterval(), asiolink::IntervalTimer::ONE_SHOT);
             }
             TimerMgr::instance()->setup(timer_name);
         }
 
         return (true);
     }
-
 };
 
 namespace {
 
 /// @brief Array of tagged statements.
 typedef std::array<PgSqlTaggedStatement, PgSqlConfigBackendDHCPv4Impl::NUM_STATEMENTS>
-PgSqlTaggedStatementArray;
+    PgSqlTaggedStatementArray;
 
 /// @brief Prepared Postgres statements used by the backend to insert and
 /// retrieve data from the database.
@@ -1273,15 +1262,15 @@ PgSqlTaggedStatementArray tagged_statements = { {
 };
 #endif
 
-}; // end anonymous namespace
+};  // end anonymous namespace
 
-PgSqlConfigBackendDHCPv4Impl::PgSqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
+PgSqlConfigBackendDHCPv4Impl::PgSqlConfigBackendDHCPv4Impl(
+    const DatabaseConnection::ParameterMap& parameters)
     : PgSqlConfigBackendImpl(parameters, &PgSqlConfigBackendDHCPv4Impl::dbReconnect) {
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.
-    conn_.prepareStatements(tagged_statements.begin(),
-                            tagged_statements.end());
+    conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end());
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlConfigBackend4[";
@@ -1295,7 +1284,8 @@ PgSqlConfigBackendDHCPv4Impl::PgSqlConfigBackendDHCPv4Impl(const DatabaseConnect
 PgSqlConfigBackendDHCPv4Impl::~PgSqlConfigBackendDHCPv4Impl() {
 }
 
-PgSqlConfigBackendDHCPv4::PgSqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
+PgSqlConfigBackendDHCPv4::PgSqlConfigBackendDHCPv4(
+    const DatabaseConnection::ParameterMap& parameters)
     : impl_(new PgSqlConfigBackendDHCPv4Impl(parameters)), base_impl_(impl_) {
 }
 
@@ -1315,8 +1305,7 @@ PgSqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
 Subnet4Ptr
 PgSqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
                                      const SubnetID& subnet_id) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SUBNET4_BY_SUBNET_ID)
-        .arg(subnet_id);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SUBNET4_BY_SUBNET_ID).arg(subnet_id);
     return (impl_->getSubnet4(server_selector, subnet_id));
 }
 
@@ -1331,8 +1320,9 @@ PgSqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& server_selector) 
 }
 
 Subnet4Collection
-PgSqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selector,
-                                              const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedSubnets4(
+    const ServerSelector& server_selector,
+    const boost::posix_time::ptime& modification_time) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_SUBNETS4)
         .arg(util::ptimeToText(modification_time));
     Subnet4Collection subnets;
@@ -1357,8 +1347,7 @@ PgSqlConfigBackendDHCPv4::getSharedNetworkSubnets4(const ServerSelector& /* serv
 SharedNetwork4Ptr
 PgSqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& server_selector,
                                             const std::string& name) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SHARED_NETWORK4)
-        .arg(name);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SHARED_NETWORK4).arg(name);
     return (impl_->getSharedNetwork4(server_selector, name));
 }
 
@@ -1373,8 +1362,9 @@ PgSqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& server_sel
 }
 
 SharedNetwork4Collection
-PgSqlConfigBackendDHCPv4::getModifiedSharedNetworks4(const ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedSharedNetworks4(
+    const ServerSelector& server_selector,
+    const boost::posix_time::ptime& modification_time) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_SHARED_NETWORKS4)
         .arg(util::ptimeToText(modification_time));
     SharedNetwork4Collection shared_networks;
@@ -1388,8 +1378,7 @@ OptionDefinitionPtr
 PgSqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_OPTION_DEF4)
-        .arg(code).arg(space);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_OPTION_DEF4).arg(code).arg(space);
     return (impl_->getOptionDef(PgSqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                                 server_selector, code, space));
 }
@@ -1398,16 +1387,17 @@ OptionDefContainer
 PgSqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_OPTION_DEFS4);
     OptionDefContainer option_defs;
-    impl_->getAllOptionDefs(PgSqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-                            server_selector, option_defs);
+    impl_->getAllOptionDefs(PgSqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4, server_selector,
+                            option_defs);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_OPTION_DEFS4_RESULT)
         .arg(option_defs.size());
     return (option_defs);
 }
 
 OptionDefContainer
-PgSqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedOptionDefs4(
+    const ServerSelector& server_selector,
+    const boost::posix_time::ptime& modification_time) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_OPTION_DEFS4)
         .arg(util::ptimeToText(modification_time));
     OptionDefContainer option_defs;
@@ -1422,29 +1412,30 @@ OptionDescriptorPtr
 PgSqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
                                      const uint16_t code,
                                      const std::string& space) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_OPTION4)
-        .arg(code).arg(space);
-    return (impl_->getOption(PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-                             Option::V4, server_selector, code, space));
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_OPTION4).arg(code).arg(space);
+    return (impl_->getOption(PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE, Option::V4,
+                             server_selector, code, space));
 }
 
 OptionContainer
 PgSqlConfigBackendDHCPv4::getAllOptions4(const ServerSelector& server_selector) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_OPTIONS4);
     OptionContainer options = impl_->getAllOptions(PgSqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-            Option::V4, server_selector);
+                                                   Option::V4, server_selector);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_OPTIONS4_RESULT)
         .arg(options.size());
     return (options);
 }
 
 OptionContainer
-PgSqlConfigBackendDHCPv4::getModifiedOptions4(const ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedOptions4(
+    const ServerSelector& server_selector,
+    const boost::posix_time::ptime& modification_time) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_OPTIONS4)
         .arg(util::ptimeToText(modification_time));
-    OptionContainer options = impl_->getModifiedOptions(PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-            Option::V4, server_selector, modification_time);
+    OptionContainer options =
+        impl_->getModifiedOptions(PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4, Option::V4,
+                                  server_selector, modification_time);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_OPTIONS4_RESULT)
         .arg(options.size());
     return (options);
@@ -1453,8 +1444,7 @@ PgSqlConfigBackendDHCPv4::getModifiedOptions4(const ServerSelector& server_selec
 StampedValuePtr
 PgSqlConfigBackendDHCPv4::getGlobalParameter4(const ServerSelector& server_selector,
                                               const std::string& name) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_GLOBAL_PARAMETER4)
-        .arg(name);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_GLOBAL_PARAMETER4).arg(name);
     return (impl_->getGlobalParameter4(server_selector, name));
 }
 
@@ -1464,22 +1454,23 @@ PgSqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_s
 }
 
 StampedValueCollection
-PgSqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedGlobalParameters4(
+    const db::ServerSelector& server_selector,
+    const boost::posix_time::ptime& modification_time) const {
     isc_throw(NotImplemented, "Not implemented yet.");
 }
 
 AuditEntryCollection
 PgSqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server_selector,
-        const boost::posix_time::ptime& modification_time,
-        const uint64_t& modification_id) const {
+                                                const boost::posix_time::ptime& modification_time,
+                                                const uint64_t& modification_id) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_RECENT_AUDIT_ENTRIES4)
-      .arg(util::ptimeToText(modification_time))
-      .arg(modification_id);
+        .arg(util::ptimeToText(modification_time))
+        .arg(modification_id);
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(PgSqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
-                                 server_selector, modification_time,
-                                 modification_id, audit_entries);
+                                 server_selector, modification_time, modification_id,
+                                 audit_entries);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT)
         .arg(audit_entries.size());
     return (audit_entries);
@@ -1490,8 +1481,7 @@ PgSqlConfigBackendDHCPv4::getAllServers4() const {
     ServerCollection servers;
 
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_SERVERS4);
-    impl_->getAllServers(PgSqlConfigBackendDHCPv4Impl::GET_ALL_SERVERS4,
-                         servers);
+    impl_->getAllServers(PgSqlConfigBackendDHCPv4Impl::GET_ALL_SERVERS4, servers);
 
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_SERVERS4_RESULT)
         .arg(servers.size());
@@ -1500,16 +1490,14 @@ PgSqlConfigBackendDHCPv4::getAllServers4() const {
 
 ServerPtr
 PgSqlConfigBackendDHCPv4::getServer4(const data::ServerTag& server_tag) const {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SERVER4)
-        .arg(server_tag.get());
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_SERVER4).arg(server_tag.get());
     return (impl_->getServer(PgSqlConfigBackendDHCPv4Impl::GET_SERVER4, server_tag));
 }
 
 void
 PgSqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& server_selector,
                                               const Subnet4Ptr& subnet) {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_CREATE_UPDATE_SUBNET4)
-        .arg(subnet);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_CREATE_UPDATE_SUBNET4).arg(subnet);
     impl_->createUpdateSubnet4(server_selector, subnet);
 }
 
@@ -1525,7 +1513,8 @@ void
 PgSqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& server_selector,
                                                  const OptionDefinitionPtr& option_def) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_CREATE_UPDATE_OPTION_DEF4)
-        .arg(option_def->getName()).arg(option_def->getCode());
+        .arg(option_def->getName())
+        .arg(option_def->getCode());
     impl_->createUpdateOptionDef4(server_selector, option_def);
 }
 
@@ -1560,9 +1549,9 @@ PgSqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selec
                                               const asiolink::IOAddress& pool_end_address,
                                               const OptionDescriptorPtr& option) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_CREATE_UPDATE_BY_POOL_OPTION4)
-        .arg(pool_start_address.toText()).arg(pool_end_address.toText());
-    impl_->createUpdateOption4(server_selector, pool_start_address, pool_end_address,
-                               option);
+        .arg(pool_start_address.toText())
+        .arg(pool_end_address.toText());
+    impl_->createUpdateOption4(server_selector, pool_start_address, pool_end_address, option);
 }
 
 void
@@ -1579,8 +1568,7 @@ PgSqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& server) {
         .arg(server->getServerTagAsText());
     impl_->createUpdateServer(PgSqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
-                              PgSqlConfigBackendDHCPv4Impl::UPDATE_SERVER4,
-                              server);
+                              PgSqlConfigBackendDHCPv4Impl::UPDATE_SERVER4, server);
 }
 
 uint64_t
@@ -1610,12 +1598,11 @@ PgSqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selecto
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SUBNETS4);
 
     int index = (server_selector.amUnassigned() ?
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_UNASSIGNED :
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_UNASSIGNED :
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
     uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all subnets",
                                                  "deleted all subnets", true);
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SUBNETS4_RESULT)
-        .arg(result);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SUBNETS4_RESULT).arg(result);
     return (result);
 }
 
@@ -1624,15 +1611,14 @@ PgSqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& 
                                                       const std::string& shared_network_name) {
     if (!server_selector.amAny()) {
         isc_throw(InvalidOperation, "deleting all subnets from a shared "
-                  "network requires using ANY server selector");
+                                    "network requires using ANY server selector");
     }
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4)
         .arg(shared_network_name);
-    uint64_t result = impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
-                                                 server_selector,
-                                                 "deleting all subnets for a shared network",
-                                                 "deleted all subnets for a shared network",
-                                                 true, shared_network_name);
+    uint64_t result = impl_->deleteTransactional(
+        PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME, server_selector,
+        "deleting all subnets for a shared network", "deleted all subnets for a shared network",
+        true, shared_network_name);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4_RESULT)
         .arg(result);
     return (result);
@@ -1645,17 +1631,17 @@ PgSqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_sele
     /// dedicated query for this at the moment. The user should use ANY to delete
     /// the shared network by name.
     if (server_selector.amUnassigned()) {
-        isc_throw(NotImplemented, "deleting an unassigned shared network requires "
+        isc_throw(NotImplemented,
+                  "deleting an unassigned shared network requires "
                   "an explicit server tag or using ANY server. The UNASSIGNED server "
                   "selector is currently not supported");
     }
 
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK4)
-        .arg(name);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK4).arg(name);
 
     int index = (server_selector.amAny() ?
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_ANY :
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_WITH_TAG);
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_ANY :
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_WITH_TAG);
     uint64_t result = impl_->deleteTransactional(index, server_selector,
                                                  "deleting a shared network",
                                                  "shared network deleted", true, name);
@@ -1668,15 +1654,16 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
     if (server_selector.amAny()) {
         isc_throw(InvalidOperation, "deleting all shared networks for ANY server is not"
-                  " supported");
+                                    " supported");
     }
 
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SHARED_NETWORKS4);
 
     int index = (server_selector.amUnassigned() ?
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED :
-                 PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
-    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all shared networks",
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED :
+                     PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
+    uint64_t result = impl_->deleteTransactional(index, server_selector,
+                                                 "deleting all shared networks",
                                                  "deleted all shared networks", true);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT)
         .arg(result);
@@ -1687,20 +1674,19 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector,
                                            const uint16_t code,
                                            const std::string& space) {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION_DEF4)
-        .arg(code).arg(space);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION_DEF4).arg(code).arg(space);
     uint64_t result = impl_->deleteOptionDef4(server_selector, code, space);
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION_DEF4_RESULT)
-        .arg(result);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION_DEF4_RESULT).arg(result);
     return (result);
 }
 
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_selector) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_OPTION_DEFS4);
-    uint64_t result = impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-                                                 server_selector, "deleting all option definitions",
-                                                 "deleted all option definitions", true);
+    uint64_t result =
+        impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
+                                   server_selector, "deleting all option definitions",
+                                   "deleted all option definitions", true);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT)
         .arg(result);
     return (result);
@@ -1710,11 +1696,9 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4)
-        .arg(code).arg(space);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4).arg(code).arg(space);
     uint64_t result = impl_->deleteOption4(server_selector, code, space);
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4_RESULT)
-        .arg(result);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4_RESULT).arg(result);
     return (result);
 }
 
@@ -1727,9 +1711,10 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4)
-        .arg(shared_network_name).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), shared_network_name,
-                                           code, space);
+        .arg(shared_network_name)
+        .arg(code)
+        .arg(space);
+    uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), shared_network_name, code, space);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4_RESULT)
         .arg(result);
     return (result);
@@ -1744,7 +1729,9 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4)
-        .arg(subnet_id).arg(code).arg(space);
+        .arg(subnet_id)
+        .arg(code)
+        .arg(space);
     uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), subnet_id, code, space);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4_RESULT)
         .arg(result);
@@ -1761,7 +1748,10 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION4)
-        .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
+        .arg(pool_start_address.toText())
+        .arg(pool_end_address.toText())
+        .arg(code)
+        .arg(space);
     uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), pool_start_address,
                                            pool_end_address, code, space);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION4_RESULT)
@@ -1772,11 +1762,11 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_GLOBAL_PARAMETER4)
-        .arg(name);
-    uint64_t result = impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-                                                 server_selector, "deleting global parameter",
-                                                 "global parameter deleted", false, name);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_GLOBAL_PARAMETER4).arg(name);
+    uint64_t result =
+        impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
+                                   server_selector, "deleting global parameter",
+                                   "global parameter deleted", false, name);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT)
         .arg(result);
     return (result);
@@ -1785,9 +1775,10 @@ PgSqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_se
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& server_selector) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4);
-    uint64_t result = impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
-                                                 server_selector, "deleting all global parameters",
-                                                 "all global parameters deleted", true);
+    uint64_t result =
+        impl_->deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
+                                   server_selector, "deleting all global parameters",
+                                   "all global parameters deleted", true);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT)
         .arg(result);
     return (result);
@@ -1795,11 +1786,9 @@ PgSqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SERVER4)
-        .arg(server_tag.get());
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SERVER4).arg(server_tag.get());
     uint64_t result = impl_->deleteServer4(server_tag);
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SERVER4_RESULT)
-        .arg(result);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SERVER4_RESULT).arg(result);
     return (result);
 }
 
@@ -1807,8 +1796,7 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteAllServers4() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SERVERS4);
     uint64_t result = impl_->deleteAllServers4();
-    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SERVERS4_RESULT)
-        .arg(result);
+    LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SERVERS4_RESULT).arg(result);
     return (result);
 }
 
@@ -1833,13 +1821,12 @@ PgSqlConfigBackendDHCPv4::getPort() const {
 bool
 PgSqlConfigBackendDHCPv4::registerBackendType() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_REGISTER_BACKEND_TYPE4);
-    return (
-        dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("pgsql",
-            [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
+    return (dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory(
+        "pgsql",
+        [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
             // Many virtual function still missing
             return (dhcp::PgSqlConfigBackendDHCPv4Ptr(new dhcp::PgSqlConfigBackendDHCPv4(params)));
-        })
-    );
+        }));
 }
 
 void
@@ -1850,8 +1837,8 @@ PgSqlConfigBackendDHCPv4::unregisterBackendType() {
 
 void
 PgSqlConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& server_selector,
-                          const ClientClassDefPtr& client_class,
-                          const std::string& follow_class_name) {
+                                                   const ClientClassDefPtr& client_class,
+                                                   const std::string& follow_class_name) {
     isc_throw(NotImplemented, "Not implemented yet.");
 }
 
@@ -1867,14 +1854,14 @@ PgSqlConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& selecto
 }
 
 ClientClassDictionary
-PgSqlConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& selector,
-                          const boost::posix_time::ptime& modification_time) const {
+PgSqlConfigBackendDHCPv4::getModifiedClientClasses4(
+    const db::ServerSelector& selector, const boost::posix_time::ptime& modification_time) const {
     isc_throw(NotImplemented, "Not implemented yet.");
 }
 
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_selector,
-                    const std::string& name) {
+                                             const std::string& name) {
     isc_throw(NotImplemented, "Not implemented yet.");
 }
 
@@ -1883,6 +1870,5 @@ PgSqlConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& serv
     isc_throw(NotImplemented, "Not implemented yet.");
 }
 
-
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // end of namespace isc

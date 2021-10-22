@@ -9,7 +9,9 @@
 // issues related to namespaces.
 
 #include <config.h>
+
 #include <hooks/hooks.h>
+
 #include <pgsql_cb_dhcp4.h>
 #include <pgsql_cb_dhcp6.h>
 #include <pgsql_cb_log.h>
@@ -26,7 +28,8 @@ extern "C" {
 /// @param handle library handle
 /// @return 0 when initialization is successful, 1 otherwise
 
-int load(LibraryHandle& /* handle */) {
+int
+load(LibraryHandle& /* handle */) {
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_INIT_OK);
     // Register Postgres CB factories with CB Managers
     isc::dhcp::PgSqlConfigBackendDHCPv4::registerBackendType();
@@ -41,7 +44,8 @@ int load(LibraryHandle& /* handle */) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp4_srv_configured(CalloutHandle& handle) {
+int
+dhcp4_srv_configured(CalloutHandle& handle) {
     isc::asiolink::IOServicePtr io_service;
     handle.getArgument("io_context", io_service);
     isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
@@ -54,7 +58,8 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp6_srv_configured(CalloutHandle& handle) {
+int
+dhcp6_srv_configured(CalloutHandle& handle) {
     isc::asiolink::IOServicePtr io_service;
     handle.getArgument("io_context", io_service);
     isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
@@ -64,7 +69,8 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
 /// @brief This function is called when the library is unloaded.
 ///
 /// @return 0 if deregistration was successful, 1 otherwise
-int unload() {
+int
+unload() {
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_DEINIT_OK);
     // Unregister the factories and remove Postgres backends
     isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType();
@@ -78,8 +84,9 @@ int unload() {
 /// is always called from the main thread.
 ///
 /// @return 1 which means compatible with multi-threading.
-int multi_threading_compatible() {
+int
+multi_threading_compatible() {
     return (1);
 }
 
-} // end extern "C"
+}  // end extern "C"

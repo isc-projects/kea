@@ -5,13 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cc/stamped_value.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
-#include <pgsql_cb_dhcp4.h>
-#include <pgsql/testutils/pgsql_schema.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
+#include <pgsql/testutils/pgsql_schema.h>
+
 #include <boost/shared_ptr.hpp>
+
 #include <gtest/gtest.h>
+#include <pgsql_cb_dhcp4.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -64,8 +67,8 @@ TEST_F(PgSqlConfigBackendDHCPv4MgrTest, factoryRegistration) {
 
     // Should be able to create a global parameter.
     StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
-    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(pgsql, ServerSelector::ALL(),
-                                                                server_tag));
+    ASSERT_NO_THROW(
+        mgr.getPool()->createUpdateGlobalParameter4(pgsql, ServerSelector::ALL(), server_tag));
     // Verify parameter can be fetched.
     server_tag.reset();
     ASSERT_NO_THROW(server_tag = mgr.getPool()->getGlobalParameter4(pgsql, ServerSelector::ALL(),
@@ -85,4 +88,4 @@ TEST_F(PgSqlConfigBackendDHCPv4MgrTest, factoryRegistration) {
                  NoSuchDatabase);
 }
 
-}
+}  // namespace

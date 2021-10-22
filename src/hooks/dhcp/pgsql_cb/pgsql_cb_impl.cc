@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include "pgsql_cb_impl.h"
+
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
-#include <pgsql/pgsql_exchange.h>
 #include <dhcp/option_space.h>
+#include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
+
+#include "pgsql_cb_impl.h"
 #include <cstdint>
 #include <utility>
 
@@ -25,39 +27,37 @@ namespace dhcp {
 
 isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
 
-PgSqlConfigBackendImpl::
-ScopedAuditRevision::ScopedAuditRevision(PgSqlConfigBackendImpl* impl,
-                                         const int index,
-                                         const ServerSelector& server_selector,
-                                         const std::string& log_message,
-                                         bool cascade_transaction)
+PgSqlConfigBackendImpl::ScopedAuditRevision::ScopedAuditRevision(
+    PgSqlConfigBackendImpl* impl,
+    const int index,
+    const ServerSelector& server_selector,
+    const std::string& log_message,
+    bool cascade_transaction)
     : impl_(impl) {
     impl_->createAuditRevision(index, server_selector,
-                               boost::posix_time::microsec_clock::local_time(),
-                               log_message,
+                               boost::posix_time::microsec_clock::local_time(), log_message,
                                cascade_transaction);
 }
 
-PgSqlConfigBackendImpl::
-ScopedAuditRevision::~ScopedAuditRevision() {
+PgSqlConfigBackendImpl::ScopedAuditRevision::~ScopedAuditRevision() {
     impl_->clearAuditRevision();
 }
 
-PgSqlConfigBackendImpl::
-PgSqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
-                       const DbCallback db_reconnect_callback)
+PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
+                                               const DbCallback db_reconnect_callback)
     : conn_(parameters,
             IOServiceAccessorPtr(new IOServiceAccessor(PgSqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""), audit_revision_created_(false),
-            parameters_(parameters) {
+            db_reconnect_callback),
+      timer_name_(""), audit_revision_created_(false), parameters_(parameters) {
 
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = PgSqlConnection::getVersion(parameters);
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Postgres schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "." << db_version.second);
+                                   << code_version.first << "." << code_version.second
+                                   << " found version:  " << db_version.first << "."
+                                   << db_version.second);
     }
 
     // Open the database.
@@ -159,7 +159,7 @@ PgSqlConfigBackendImpl::deleteFromTable(const int index,
     // When deleting multiple objects we must not use ANY server.
     if (server_selector.amAny()) {
         isc_throw(InvalidOperation, "deleting multiple objects for ANY server is not"
-                  " supported");
+                                    " supported");
     }
 
     PsqlBindArray in_bindings;
@@ -173,7 +173,6 @@ PgSqlConfigBackendImpl::deleteFromTable(const int index,
                                         db::PsqlBindArray& bindings) {
     isc_throw(NotImplemented, "todo");
 }
-
 
 void
 PgSqlConfigBackendImpl::getGlobalParameters(const int index,
@@ -268,7 +267,7 @@ PgSqlConfigBackendImpl::getOptionDef(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching option definition");
@@ -287,8 +286,8 @@ PgSqlConfigBackendImpl::getOptionDef(const int index,
 
 void
 PgSqlConfigBackendImpl::getAllOptionDefs(const int index,
-                     const ServerSelector& server_selector,
-                     OptionDefContainer& option_defs) {
+                                         const ServerSelector& server_selector,
+                                         OptionDefContainer& option_defs) {
     auto tags = server_selector.getTags();
 #if 0
     for (auto tag : tags) {
@@ -465,7 +464,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "creating or updating option definition");
@@ -532,7 +531,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching global option");
@@ -603,7 +602,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching subnet level option");
@@ -622,8 +621,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(PsqlBindArray::createString(space));
 #endif
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -636,7 +634,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     std::string msg = "fetching ";
@@ -663,8 +661,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(PsqlBindArray::createString(space));
 #endif
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -677,7 +674,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching shared network level option");
@@ -695,8 +692,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(PsqlBindArray::createString(space));
 #endif
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
 
 void
@@ -875,7 +871,6 @@ PgSqlConfigBackendImpl::attachElementToServers(const int index,
 }
 #endif
 
-
 PsqlBindArrayPtr
 PgSqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
@@ -901,8 +896,7 @@ PgSqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
         OutputBuffer buf(opt->len());
         opt->pack(buf);
         const char* buf_ptr = static_cast<const char*>(buf.getData());
-        std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
-                                  buf_ptr + buf.getLength());
+        std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(), buf_ptr + buf.getLength());
 
         // return (PsqlBindArray::createBlob(blob.begin(), blob.end()));
     }
@@ -971,18 +965,16 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
                                            const ServerPtr& server) {
     // The server tag 'all' is reserved.
     if (server->getServerTag().amAll()) {
-        isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+        isc_throw(InvalidOperation,
+                  "'all' is a name reserved for the server tag which"
                   " associates the configuration elements with all servers connecting"
                   " to the database and a server with this name may not be created");
     }
 
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
-    ScopedAuditRevision audit_revision(this,
-                                       create_audit_revision,
-                                       ServerSelector::ALL(),
-                                       "server set",
-                                       true);
+    ScopedAuditRevision audit_revision(this, create_audit_revision, ServerSelector::ALL(),
+                                       "server set", true);
 
     PgSqlTransaction transaction(conn_);
 
@@ -1031,5 +1023,5 @@ PgSqlConfigBackendImpl::getPort() const {
     return (0);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // end of namespace isc

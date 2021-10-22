@@ -5,13 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <hooks/hooks.h>
 
 extern "C" {
 
 /// @brief returns Kea hooks version.
-int version() {
+int
+version() {
     return (KEA_HOOKS_VERSION);
 }
-
 }
