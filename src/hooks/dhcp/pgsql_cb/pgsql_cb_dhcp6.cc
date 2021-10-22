@@ -2047,5 +2047,41 @@ PgSqlConfigBackendDHCPv6::unregisterBackendType() {
     dhcp::ConfigBackendDHCPv6Mgr::instance().unregisterBackendFactory("pgsql");
 }
 
+void
+PgSqlConfigBackendDHCPv6::createUpdateClientClass6(const db::ServerSelector& server_selector,
+                          const ClientClassDefPtr& client_class,
+                          const std::string& follow_class_name) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDefPtr
+PgSqlConfigBackendDHCPv6::getClientClass6(const db::ServerSelector& selector,
+                                          const std::string& name) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDictionary
+PgSqlConfigBackendDHCPv6::getAllClientClasses6(const db::ServerSelector& selector) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+ClientClassDictionary
+PgSqlConfigBackendDHCPv6::getModifiedClientClasses6(const db::ServerSelector& selector,
+                          const boost::posix_time::ptime& modification_time) const {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+uint64_t
+PgSqlConfigBackendDHCPv6::deleteClientClass6(const db::ServerSelector& server_selector,
+                    const std::string& name) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+uint64_t
+PgSqlConfigBackendDHCPv6::deleteAllClientClasses6(const db::ServerSelector& server_selector) {
+    isc_throw(NotImplemented, "Not implemented yet.");
+}
+
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
