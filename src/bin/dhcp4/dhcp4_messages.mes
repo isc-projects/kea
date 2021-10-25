@@ -920,10 +920,6 @@ environment variable is set. It's causing Kea to send packets to
 source address of incoming packet. Usable just in testing environment
 to simulate multiple subnet traffic from single source.
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
-This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication.
-
 % DHCP4_UNKNOWN_ADDRESS_REQUESTED %1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3
 This message indicates that the client requested an address that does
 not belong to any dynamic pools managed by this server.  The first argument
@@ -931,3 +927,7 @@ contains the client and the transaction identification information.
 The second argument contains the IPv4 address in the ciaddr field. The
 third argument contains the IPv4 address in the requested-ip-address
 option (if present).
+
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication.

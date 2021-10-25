@@ -95,7 +95,7 @@ To deploy this setup, you need to conduct the following steps:
 
 5. Install CA and DHCPv4 on host2, similar to steps 1 and 2. Note the config file for the
    standby server is very similar, except the definition of ``this-server-name`` field
-   (and possibly inteface names). In many cases you can simply copy over the file
+   (and possibly interface names). In many cases you can simply copy over the file
    and just tweak it a little bit.
 
 Possible extensions

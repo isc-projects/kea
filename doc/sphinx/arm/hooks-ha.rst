@@ -1080,8 +1080,8 @@ be minimal.
 
    Currently, active servers place lease updates to be sent to peers onto internal
    queues (one queue per peer/URL).  In passive-backup mode, active servers do not
-   wait for lease udpates to be acknowledged thus during times of heavy client
-   traffic it is possible for the number of lease updates queued for transimission
+   wait for lease updates to be acknowledged thus during times of heavy client
+   traffic it is possible for the number of lease updates queued for transmission
    to accumulate faster than they can be delivered.  As client traffic lessens the
    queues begin to empty.  As of Kea 2.0.0, active servers monitor the size of
    these queues and will emit periodic warnings (see HTTP_CILENT_QUEUE_SIZE_GROWING
@@ -1091,7 +1091,7 @@ be minimal.
    and seeing them sporadically during times of heavy traffic load does not
    necessarily indicate a problem.  If, however, they occur continually during
    times of routine traffic load they likely indicate potential mismatches in
-   server capibilities and/or configuration and this should be investigated as
+   server capabilities and/or configuration and this should be investigated as
    the size of the queues may eventually impair an active server's ability to
    respond to clients in a timely manner.
 

@@ -404,7 +404,7 @@ public:
         EXPECT_EQ(expected_client_class, member->getClientClass());
     }
 
-    /// @rief This tests attempts to parse the expression then checks
+    /// @brief This tests attempts to parse the expression then checks
     /// if the number of tokens is correct and the TokenMember is as
     /// expected.
     ///

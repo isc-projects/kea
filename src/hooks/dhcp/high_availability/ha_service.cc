@@ -2265,7 +2265,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                 });
 
             } else {
-                // Synchronization was unsuccessul. Send the dhcp-enable command to
+                // Synchronization was unsuccessful. Send the dhcp-enable command to
                 //  re-enable the DHCP service. Note, that we don't send the
                 // ha-sync-complete-notify command in this case. It is only sent in
                 // the case when synchronization ends successfully.

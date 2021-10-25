@@ -250,7 +250,7 @@ You will be required to retype the password:
 
     Re-enter KDC database master key to verify:
 
-If succesfully applied, the following message will be displayed:
+If successfully applied, the following message will be displayed:
 
 .. code-block:: console
 
@@ -278,7 +278,7 @@ following way:
 
     kadmin.local -q "addprinc -randkey DNS/server.example.org"
 
-If succesfully created, the following message will be displayed:
+If successfully created, the following message will be displayed:
 
 .. code-block:: console
 
@@ -294,7 +294,7 @@ file with the name ``dns.keytab``.
 
     kadmin.local -q "ktadd -k /tmp/dns.keytab DNS/server.example.org"
 
-If succesfully exported, the following message will be displayed:
+If successfully exported, the following message will be displayed:
 
 .. code-block:: console
 
@@ -309,7 +309,7 @@ following way:
 
     kadmin.local -q "addprinc -randkey DHCP/admin.example.org"
 
-If succesfully created, the following message will be displayed:
+If successfully created, the following message will be displayed:
 
 .. code-block:: console
 
@@ -415,8 +415,8 @@ It is possible to get status or restart logs:
     systemctl status named.service
     journalctl -u named | tail -n 30
 
-Windows Advanced Directory Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Windows Active Directory Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This sub-section is based on an Amazon AWS provided Microsoft Windows Server
 2016 with Active Directory pre-installed so describes only the steps used
@@ -495,7 +495,8 @@ An excerpt from D2 server is provided below. More examples are available in the
                         },
                         { // This server also has an entry there, so will
                           // use GSS-TSIG, too.
-                            "ip-address": "192.0.2.2"
+                            "ip-address": "192.0.2.2",
+                            "port": 5300
                         }
                     ]
                 }

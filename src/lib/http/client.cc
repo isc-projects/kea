@@ -985,7 +985,7 @@ private:
 
         /// @brief Adds a request to the end of the request queue.
         ///
-        /// If the size of the queue exceeds a threhsold and appears
+        /// If the size of the queue exceeds a threshold and appears
         /// to be growing it will emit a warning log.
         ///
         /// @param desc RequestDescriptor to queue.

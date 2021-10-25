@@ -510,7 +510,7 @@ const char* values[] = {
     "DHCPSRV_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
     "DHCPSRV_PGSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
-    "DHCPSRV_QUEUE_NCR", "%1: name change request to %2 DNS entry queued: %3",
+    "DHCPSRV_QUEUE_NCR", "%1: Name change request to %2 DNS entry queued: %3",
     "DHCPSRV_QUEUE_NCR_FAILED", "%1: queuing %2 name change request failed for lease %3: %4",
     "DHCPSRV_QUEUE_NCR_SKIP", "%1: skip queuing name change request for lease: %2",
     "DHCPSRV_TIMERMGR_CALLBACK_FAILED", "running handler for timer %1 caused exception: %2",
