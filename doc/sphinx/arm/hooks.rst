@@ -261,7 +261,7 @@ At the moment, only the ``kea-dhcp4`` and ``kea-dhcp6`` processes support
 hook libraries.
 
 Available Hook Libraries
-=========================
+========================
 
 As described above, the hook functionality provides a way to customize
 a Kea server without modifying the core code. ISC has chosen to take
@@ -827,13 +827,14 @@ DHCPv4 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
 For DHCPv4, the library creates entries based on DHCPREQUEST, DHCPDECLINE,
-DHCPRELEASE messages et.al. and their responses. The resulting packets and
+and DHCPRELEASE messages, et al., and their responses. The resulting packets and
 leases are taken into account, intercepted through the following hook points:
-* pkt4_receive
-* leases4_committed
-* pkt4_send
-* lease4_release
-* lease4_decline
+
+* ``pkt4_receive``
+* ``leases4_committed``
+* ``pkt4_send``
+* ``lease4_release``
+* ``lease4_decline``
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -844,31 +845,31 @@ prepended timestamp, and has the following sections:
 
 Where:
 
--  timestamp - the current date and time the log entry was written in
+-  ``timestamp`` - the date and time the log entry was written, in
    "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone name).
 
--  address - the leased IPv4 address given out and whether it was
-   assigned, renewed or released.
+-  ``address`` - the leased IPv4 address given out, and whether it was
+   assigned, renewed, or released.
 
--  duration - the lease lifetime expressed in days (if present), hours,
+-  ``duration`` - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
-   with the text "infinite duration". This information is not given
+   with the text "infinite duration." This information is not given
    when the lease is released.
 
--  device-id - the client's hardware address shown as numerical type and
-   hex digit string.
+-  ``device-id`` - the client's hardware address shown as a numerical type and
+   hex-digit string.
 
--  client-info - the DHCP client id option (61) if present, shown as a
+-  ``client-info`` - the DHCP client id option (61) if present, shown as a
    hex string. When its content is printable it is displayed.
 
--  relay-info - for relayed packets the giaddr and the RAI circuit-id,
-   remote-id, and subscriber-id options (option 82 sub options: 1, 2 and 6)
-   if present. The circuit id and remote id are presented as hex
+-  ``relay-info`` - for relayed packets, the ``giaddr`` and the RAI ``circuit-id``,
+   ``remote-id``, and ``subscriber-id`` options (option 82 sub options: 1, 2 and 6),
+   if present. The ``circuit-id`` and ``remote-id`` are presented as hex
    strings. When their content is printable it is displayed.
 
--  user-context - the optional user context associated with the lease.
+-  ``user-context`` - the optional user context associated with the lease.
 
-For instance (line breaks added for readability; they will not be
+For instance (line breaks are added here for readability; they are not
 present in the log file):
 
 ::
@@ -887,7 +888,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
 the hook library also logs entries for the following lease management control
-channel commands: lease4-add, lease4-update, and lease4-del. These cannot have
+channel commands: ``lease4-add``, ``lease4-update``, and ``lease4-del``. These cannot have
 custom formatting. Each entry is a single string with no embedded end-of-line
 markers, and it will typically have the following form:
 
@@ -936,7 +937,7 @@ or
 
    *timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 
-Currently only a type of @b hw-address (hardware address) is supported.
+Currently only a type of ``@b hw-address`` (hardware address) is supported.
 
 Examples:
 
@@ -946,19 +947,19 @@ Examples:
 
    2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 
-The ``request-parser-format`` and ``response-parser-format`` can be used to
-extract and log data from the incoming packet and server response packet
+The ``request-parser-format`` and ``response-parser-format`` options can be used to
+extract and log data from the incoming packet and server response packet,
 respectively. The configured value is an evaluated parsed expression returning a
 string. A list of tokens is described in the server classification process.
 Use with caution as this might affect server performance.
-If any of them is configured, the default logging format is not used.
+If either of them is configured, the default logging format is not used.
 If both of them are configured, the resulting log message is constructed by
 concatenating the logged data extracted from the request and the logged data
 extracted from the response.
 
 The custom formatting permits logging on multiple lines using the hexstring 0x0a
 (ASCII code for new line). In the case of the log file, each line is prepended
-with the log timestamp. For the database backend, the data will be stored
+with the log timestamp. For the database backend, the data is stored
 (including the newline character) in the same entry.
 
 Examples:
@@ -983,7 +984,7 @@ Examples:
       }
     }
 
-Some data might be available in the request or in the response only and some
+Some data might be available in the request or in the response only, and some
 data might differ in the incoming packet from the one in the response packet.
 
 Examples:
@@ -1056,7 +1057,7 @@ This will log the following data on release and decline:
 
    Address: 192.2.1.100 has been released from a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, circuit-id: 68:6f:77:64:79, remote-id: 87:f6:79:77:ef, subscriber-id: 1a:2b:3c:4d:5e:6f
 
-Similar result can be obtained if configuring ``request-parser-format`` only.
+A similar result can be obtained by configuring only ``request-parser-format``.
 
 Examples:
 
@@ -1125,13 +1126,14 @@ DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
 
 For DHCPv6, the library creates entries based on REQUEST, RENEW, RELEASE,
-DECLINE messages et.al. and their responses. The resulting packets and leases
+and DECLINE messages, et al. and their responses. The resulting packets and leases
 are taken into account, intercepted through the following hook points:
-* pkt6_receive
-* leases6_committed
-* pkt6_send
-* lease6_release
-* lease6_decline
+
+* ``pkt6_receive``
+* ``leases6_committed``
+* ``pkt6_send``
+* ``lease6_release``
+* ``lease6_decline``
 
 An entry is a single string with no embedded end-of-line markers and a
 prepended timestamp, and has the following sections:
@@ -1142,31 +1144,31 @@ prepended timestamp, and has the following sections:
 
 Where:
 
--  timestamp - the current date and time the log entry was written in
+-  ``timestamp`` - the date and time the log entry was written, in
    "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone name).
 
--  address - the leased IPv6 address or prefix given out and whether it
-   was assigned, renewed or released.
+-  ``address`` - the leased IPv6 address or prefix given out, and whether it
+   was assigned, renewed, or released.
 
--  duration - the lease lifetime expressed in days (if present), hours,
+-  ``duration`` - the lease lifetime expressed in days (if present), hours,
    minutes, and seconds. A lease lifetime of 0xFFFFFFFF will be denoted
-   with the text "infinite duration". This information is not given
+   with the text "infinite duration." This information is not given
    when the lease is released.
 
--  device-id - the client's DUID and hardware address (if present).
+-  ``device-id`` - the client's DUID and hardware address (if present).
 
--  relay-info - for relayed packets the content of relay agent messages,
-   remote-id (code 37), subscriber-id (code 38), and interface-id (code 18)
-   options, if present. Note that interface-id option, if present,
-   identifies the whole interface the relay agent received the message
-   on. This typically translates to a single link in the network, but
+-  ``relay-info`` - for relayed packets the content of relay agent messages, and the
+   ``remote-id`` (code 37), ``subscriber-id`` (code 38), and ``interface-id`` (code 18)
+   options, if present. Note that the ``interface-id`` option, if present,
+   identifies the whole interface on which the relay agent received the message.
+   This typically translates to a single link in the network, but
    it depends on the specific network topology. Nevertheless, this is
-   useful information to better scope down the location of the device,
+   useful information to better pinpoint the location of the device,
    so it is recorded, if present.
 
--  user-context - the optional user context associated with the lease.
+-  ``user-context`` - the optional user context associated with the lease.
 
-For instance (line breaks added for readability; they will not be
+For instance (line breaks are added here for readability; they are not
 present in the log file):
 
 ::
@@ -1187,7 +1189,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
 the hook library also logs entries for the following lease management control channel
-commands: lease6-add, lease6-update, and lease6-del. Each entry is a
+commands: ``lease6-add``, ``lease6-update``, and ``lease6-del``. Each entry is a
 single string with no embedded end-of-line markers, and it will
 typically have the following form:
 
@@ -1236,7 +1238,7 @@ or
 
    *timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 
-Currently only a type of DUID is supported.
+Currently only a type of ``DUID`` is supported.
 
 Examples:
 
@@ -1246,19 +1248,19 @@ Examples:
 
    2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
 
-The ``request-parser-format`` and ``response-parser-format`` can be used to
-extract and log data from the incoming packet and server response packet
+The ``request-parser-format`` and ``response-parser-format`` options can be used to
+extract and log data from the incoming packet and server response packet,
 respectively. The configured value is an evaluated parsed expression returning a
 string. A list of tokens is described in the server classification process.
 Use with caution as this might affect server performance.
-If any of them is configured, the default logging format is not used.
+If either of them is configured, the default logging format is not used.
 If both of them are configured, the resulting log message is constructed by
 concatenating the logged data extracted from the request and the logged data
 extracted from the response.
 
 The custom formatting permits logging on multiple lines using the hexstring 0x0a
 (ASCII code for new line). In the case of the log file, each line is prepended
-with the log timestamp. For the database backend, the data will be stored
+with the log timestamp. For the database backend, the data is stored
 (including the newline character) in the same entry.
 
 Examples:
@@ -1283,7 +1285,7 @@ Examples:
       }
     }
 
-Some data might be available in the request or in the response only and some
+Some data might be available in the request or in the response only, and some
 data might differ in the incoming packet from the one in the response packet.
 
 Examples:
@@ -1368,7 +1370,7 @@ Examples:
     }</pre>
     </details><br>
 
-This will log the following data on request, renew and rebind for NA:
+This will log the following data on request, renew, and rebind for NA:
 
 ::
 
@@ -1392,7 +1394,7 @@ This will log the following data on release and decline for PD:
 
    Prefix: 2001:db8:1::/64 has been released from a device with DUID: 17:34:e2:ff:09:92:54 connected via relay at address: fe80::abcd for client on link address: 3001::1, remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f, subscriber-id: 1a:2b:3c:4d:5e:6f, connected at location interface-id: 72:65:6c:61:79:31:3a:65:74:68:30
 
-Similar result can be obtained if configuring ``request-parser-format`` only.
+A similar result can be obtained by configuring only ``request-parser-format``.
 
 Examples:
 
@@ -1479,25 +1481,23 @@ Database Backend
 ~~~~~~~~~~~~~~~~
 
 Log entries can be inserted into a database when Kea is configured with
-database backend support. A table named "logs" is used that includes a timestamp
+database backend support. Kea uses a table named ``logs``, that includes a timestamp
 (timeuuid for Cassandra) generated by the database software, and a
 text log with the same format as files without the timestamp.
 
 Please refer to :ref:`mysql-database` for information on using a MySQL database;
 to :ref:`pgsql-database` for PostgreSQL database information; or to
 :ref:`cql-database` for information on using a Cassandra (CQL) database. The
-logs table is part of the Kea database schemas.
+``logs`` table is part of the Kea database schemas.
 
 Configuration parameters are extended by standard lease database
-parameters as defined in :ref:`database-configuration4`. The "type"
-parameter should be "mysql", "postgresql", "cql", or "logfile". When
-it is absent or set to "logfile", files are used.
+parameters as defined in :ref:`database-configuration4`. The ``type``
+parameter should be ``mysql``, ``postgresql``, ``cql``, or ``logfile``; when
+it is absent or set to ``logfile``, files are used.
 
-This database feature is experimental and will be likely improved, for
-instance to add an address/prefix index (currently the only index is
-the timestamp). No specific tools are provided to operate the database,
-but standard tools may be used, for example, to dump the logs table
-from a CQL database:
+This database feature is experimental. No specific tools are provided
+to operate the database, but standard tools may be used, for example,
+to dump the logs table from a CQL database:
 
 ::
 
@@ -1510,23 +1510,24 @@ from a CQL database:
    (12 rows)
 
 Like all the other database-centric features, forensic logging supports database
-connection recovery which can be enabled by setting the ``on-fail`` parameter.
-If not specified, the ``on-fail`` parameter defaults to ``serve-retry-continue``
-as opposed to the case of lease manager, host manager and config backend where
-it defaults to ``stop-retry-exit``. In this case, the server will continue
-serving clients and it will not shut down even if the recovery mechanism fails.
-If the ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
+connection recovery, which can be enabled by setting the ``on-fail`` parameter.
+If not specified, the ``on-fail`` parameter in forensic logging defaults to
+``serve-retry-continue``;
+this is a change from its behavior in the Lease Commands, Host Commands, and
+Configuration Backend hook libraries, where
+``on-fail`` defaults to ``stop-retry-exit``. In this case, the server continues
+serving clients and does not shut down even if the recovery mechanism fails.
+If ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
 the connection to the database backend is not restored according to the
-``max-reconnect-tries`` and ``reconnect-wait-time`` parameters, but it will
-continue serving clients while this mechanism is activated.
+``max-reconnect-tries`` and ``reconnect-wait-time`` parameters, but it
+continues serving clients while this mechanism is activated.
 
 .. _flex-id:
 
-flex_id: Flexible Identifiers for Host Reservations
-===================================================
+``flex_id``: Flexible Identifiers for Host Reservations
+=======================================================
 
-This section describes a hook application dedicated to generating flexible
-identifiers for host reservations. The Kea software provides a way to handle
+The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
 classes, and other features. The reservation can be based on hardware
 address, DUID, circuit-id, or client-id in DHCPv4 and on hardware
@@ -1548,8 +1549,8 @@ The library allows the definition of an expression, using notation initially
 used only for client classification. (See
 :ref:`classification-using-expressions` for a detailed description of
 the syntax available.) One notable difference is that for client
-classification, the expression currently has to evaluate to either true
-or false, while the flexible identifier expression is expected to
+classification, the expression currently has to evaluate to either ``true``
+or ``false``, while the flexible identifier expression is expected to
 evaluate to a string that will be used as an identifier. It is a valid case
 for the expression to evaluate to an empty string (e.g. in cases where a
 client does not send specific options). This expression is then
@@ -1558,8 +1559,8 @@ identifier that is used to identify the client. In particular, there may
 be host reservations that are tied to specific values of the flexible
 identifier.
 
-The library can be loaded in a similar way as other hook libraries. It
-takes a mandatory parameter ``identifier-expression`` and optional boolean
+The library can be loaded similarly to other hook libraries. It
+takes a mandatory parameter ``identifier-expression`` and an optional boolean
 parameter ``replace-client-id``:
 
 ::
@@ -1587,9 +1588,9 @@ use an option inserted by a relay agent to differentiate between
 clients. In this particular deployment, the operator has verified that the
 interface-id is unique for each customer-facing interface, so it
 is suitable for usage as a reservation. However, only the first six bytes of
-the interface-id are interesting, because remaining bytes are either
+the interface-id are interesting, because the remaining bytes are either
 randomly changed or not unique between devices. Therefore, the customer
-decided to use the first six bytes of the interface-id option inserted by the
+decides to use the first six bytes of the interface-id option inserted by the
 relay agent. After adding ``flex-id``, the ``host-reservation-identifiers`` goal
 can be achieved by using the following configuration:
 
@@ -1621,11 +1622,11 @@ can be achieved by using the following configuration:
   all reservations based on ``flex-id`` unusable until they are manually updated.
   It is strongly recommended that administrators start with the expression and a
   handful of reservations, and then adjust the expression as needed. Once
-  the expression is confirmed to do what is desired of it, host reservations
+  the desired result is obtained with the expression, host reservations
   can be deployed on a broader scale.
 
 ``flex-id`` values in host reservations can be specified in two ways. First,
-they can be expressed as a hex string, e.g. bar string can be represented
+they can be expressed as a hex string, e.g. the string "bar" can be represented
 as 626174. Alternatively, it can be expressed as a quoted value (using
 double and single quotes), e.g. "'bar'". The former is more convenient
 for printable characters, while hex string values are more convenient
@@ -1654,7 +1655,7 @@ for non-printable characters and do not require the use of the
    }
 
 When ``replace-client-id`` is set to ``false`` (which is the default setting),
-the flex-id hook library uses the evaluated flexible identifier solely for
+the ``flex-id`` hook library uses the evaluated flexible identifier solely for
 identifying host reservations, i.e. searching for reservations within a
 database. This is the functional equivalent of other identifiers, similar
 to hardware address or circuit-id. However, this mode of operation
@@ -1666,18 +1667,18 @@ so the server will try to allocate the same lease. The mismatch between
 client identifiers sent by the new device and the old device causes the server
 to refuse this new allocation until the old lease expires. A
 manifestation of this problem is dependent on the specific expression used
-as the flexible identifier and is likely to appear if only options
+as the flexible identifier, and is likely to appear if only options
 and other parameters are used that identify where the device is connected
 (e.g. circuit-id), rather than the device identification itself (e.g.
 MAC address).
 
-The flex-id library offers a way to overcome the problem with lease
+The ``flex-id`` library offers a way to overcome the problem with lease
 conflicts by dynamically replacing the client identifier (or DUID in DHCPv6)
 with a value derived from the flexible identifier. The server
 processes the client's query as if the flexible identifier were sent in the
 client identifier (or DUID) option. This guarantees that a returning
 client (for which the same flexible identifier is evaluated) will be
-assigned the same lease despite the client identifier and/or MAC address
+assigned the same lease, despite the client identifier and/or MAC address
 change.
 
 The following is a stub configuration that enables this behavior:
@@ -1713,12 +1714,12 @@ If the ``replace-client-id`` option is set to ``true``, the value of the
 client-id option) is ignored.
 
 The :ref:`lease-cmds` section describes commands used to retrieve,
-update, and delete leases using various identifiers, such as "hw-address" and
-"client-id". The lease_cmds library does not natively support querying
+update, and delete leases using various identifiers, such as ``hw-address`` and
+``client-id``. The ``lease_cmds`` library does not natively support querying
 for leases by flexible identifier. However, when ``replace-client-id`` is
 set to ``true``, it makes it possible to query for leases using a value
-derived from the flexible identifier. In the DHCPv4 case, the query will
-look similar to this:
+derived from the flexible identifier. In DHCPv4, the query
+looks similar to this:
 
 ::
 
@@ -1734,7 +1735,7 @@ look similar to this:
 where the hexadecimal value of "54:64:45:66" is a flexible identifier
 computed for the client.
 
-In the DHCPv6 case, the corresponding query will look similar to this:
+In DHCPv6, the corresponding query looks something like this:
 
 ::
 
@@ -1749,25 +1750,25 @@ In the DHCPv6 case, the corresponding query will look similar to this:
 
 .. _flex-option:
 
-flex_option Flexible Option for Option value settings
-=====================================================
+``flex_option`` Flexible Option for Option Value Settings
+=========================================================
 
-This library allows you to define an action to take, for a given option,
-based upon on the result of an expression.  These actions are carried
+This library allows administrators to define an action to take, for a given option,
+based upon on the result of an expression. These actions are carried
 out during the final stages of constructing a query response packet,
 just before it is sent to the client. The three actions currently
 supported are ``add``, ``supersede``, and ``remove``.
 
 The syntax used for the action expressions is the same syntax used
-for client classification and the Flex Identifier hook library
-(See either :ref:`classification-using-expressions` or :ref:`flex-id`
-for detailed description of the syntax).
+for client classification and the Flexible Identifier hook library;
+see either :ref:`classification-using-expressions` or :ref:`flex-id`
+for a detailed description of the syntax.
 
 The ``add`` and ``supersede`` actions use an expression returning a
-string, doing nothing when it evaluates to the empty string. The
-``remove`` application uses an expression returning true or false,
-doing nothing on false. When it is necessary to set an option to the
-empty value this mechanism does not work but a client class can be
+string, and do nothing if the string is empty. The
+``remove`` application uses an expression returning ``true`` or ``false``,
+and does nothing on ``false``. When it is necessary to set an option to the
+empty value this mechanism does not work, but a client class can be
 used instead.
 
 The ``add`` action adds an option only when the option does not already
@@ -1778,15 +1779,14 @@ the response packet if it already exists and the expression evaluates to
 true.
 
 The option to which an action applies may be specified by either its
-numeric code or its name.. At least the code or the name must be
-specified. The option space is the DHCPv4 or DHCPv6 spaces depending
-on the server where the hook library is loaded. Other spaces as vendor
-spaces could be supported in a further version.
+numeric code or its name; either the code or the name must be
+specified. The option space is DHCPv4 or DHCPv6, depending
+on the server where the hook library is loaded.
 
-The library is available since Kea 1.7.1 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhcp4`` or `kea-dhcp6``
-process.. It takes a mandatory ``options`` parameter holding a list of
-per option parameter maps with code, name, add, supersede and remove
+Similar to other hook libraries, the ``flex_option`` library can be loaded
+by either the ``kea-dhcp4`` or `kea-dhcp6``
+process. It takes a mandatory ``options`` parameter with a list of
+per-option parameter maps, with ``code``, ``name``, ``add``, ``supersede``, and ``remove``
 actions. Action entries take a string value representing an
 expression.
 
@@ -1809,28 +1809,27 @@ expression.
         ]
     }
 
-If (and only if) the query includes a host-name option (code 12),
-a boot-file-name option (code 67) is added to the response with the host
-name followed by .boot for content.
+If (and only if) the query includes a ``host-name`` option (code 12),
+a ``boot-file-name`` option (code 67) is added to the response with the host
+name followed by ``.boot`` for content.
 
 The flexible option library supports both DHCPv4 and DHCPv6.
 
-Since Kea 1.9.0, the add and supersede actions take an optional csv-format
-boolean parameter. If not specified or configured to false, the option data is
+Since Kea 1.9.0, the ``add`` and ``supersede`` actions take an optional CSV-format
+boolean parameter. If not specified or set to ``false``, the option data is
 set using the raw value of the evaluated expression. When it is configured
-to true, this value is parsed using the option definition from the option data
+to ``true``, this value is parsed using the option definition from the option data
 specified in the configuration file. This eases option setting for options
 using complex record formats or fully qualified domain names.
 
-For instance if the expression evaluation returns "example.com" and
-the option is defined with the fqdn type the domain name will be
+For instance, if the expression evaluation returns "example.com" and
+the option is defined with the ``fqdn`` type, the domain name will be
 encoded into DNS binary format.
-
 
 .. _host-cmds:
 
-host_cmds: Host Commands
-========================
+``host_cmds``: Host Commands
+============================
 
 This section describes a hook application that offers a number of new
 commands used to query and manipulate host reservations. Kea provides a
@@ -2527,8 +2526,8 @@ an error. Example results look as follows:
 
 .. _subnet-cmds:
 
-subnet_cmds: Subnet Commands
-============================
+``subnet_cmds``: Subnet Commands
+================================
 
 This section describes a hook application that offers some new
 commands used to query and manipulate subnet and shared network
