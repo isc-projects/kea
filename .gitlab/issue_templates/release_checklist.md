@@ -22,17 +22,26 @@ Some of those checks and updates can be made before the actual freeze.
    - [ ] create an issue for that for developers in Gitlab
    - script: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the version to be released and `q.w.e` is the version previous to that)
 1. Prepare Release Notes
-   1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-1.9.2
+   1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-2.1.0
    1. [ ] Finish release notes and conduct its review
 1. [ ] Run [release-pkgs-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-upload-internal/) and [release-pkgs-check-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check-internal/) to test repositories for correctness.
+   1. If a new Cloudsmith repository is used, make sure access tokens have been been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
+1. [ ] Check if ReadTheDocs can build Kea documentation.
+   1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
 The following steps may involve changing files in the repository.
 
 1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) <br>
    Example command: `GITLAB_KEA_TOKEN='...' GITLAB_KEA_PREMIUM_TOKEN='...' ./update-code-for-release.py 1.9.7 'Apr 28, 2021' ~/isc/repos/kea/` <br>
    The script:
-   - creates a Kea issue and MR for release changes,
-   - runs several updating scripts
+   - creates Gitlab issue and MR for release changes
+   - adds release entries to ChangeLogs
+   - regenerates BNF grammar
+   - regenerates documentation
+   - regenerates messages
+   - reorders messages in alphabetical order
+   - regenerates parsers
+   - updates copyright dates
    - pushes the changes to MR
 1. Check manually User's Guide sections:
    1. Chapter 1. Introduction
@@ -58,11 +67,15 @@ This is the last moment to freeze code! :snowflake:
 1. [ ] Go to [tarball-internal](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/) Jenkins job and pick the last tarball built - it will be a release candidate.
 1. [ ] Check tarball before requesting sanity checks from the development team.
    1. Download tarballs from picked Jenkins build
+   1. Check hook libraries.
+      1. Are there any new hook libraries installed in this release?
+         1. Are they in the proper tarball? Premium or subscription?
+         1. Do they have their own package?
    1. Check sizes - is the new package reasonable?
    1. Check installation tree, compare it with the previous release
-   1. Check installed lib versions
+   1. Check installed libraries.
       1. which were updated? (save results)
-      1. any of the lib from current release has lower number then corresponding lib from previous release? (!)
+      1. Do any of the libraries from the current release have lower version than in the previous release?
    1. Uninstall Kea, check what left (there should be just configuration files)
    1. Check if all of the installed binaries has man page
       1. if not, is it in the tarball?
@@ -106,15 +119,19 @@ This is the last moment to freeze code! :snowflake:
       - open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) requesting signing final tarballs on repo.isc.org
       - create Git tags `Kea-a.b.c` in Kea main and premium repositories
       - send a signing request issue link on the DHCP Mattermost channel
-1. [ ] Send a request for publishing the release on the Support Mattermost channel linking the Signing issue and the release checklist issue.
-1. [ ] Mark Jenkins jobs with release artifacts to be kept forever: <br>
-   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button: <br>
-   1. [tarball-internal job](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/)
-   1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
 1. [ ] Update ReadTheDocs
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
    1. For stable releases, change the default version to point to this stable release.
+1. [ ] Mark Jenkins jobs with release artifacts to be kept forever: <br>
+   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button: <br>
+   1. [tarball-internal job](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/)
+   1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
+1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
+    * `a.b.z-git` where `z == c + 1` or
+    * `a.y.0-git` where `y == b + 1` or
+    * `x.1.0-git` where `x == a + 1`
+1. [ ] Send a request for publishing the release on the Support Mattermost channel linking the Signing issue and the release checklist issue.
 
 
 ### On the Day of Public Release
@@ -125,9 +142,10 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Support)*** Write release email to *kea-announce*.
  - [ ] ***(Support)*** Write email to *kea-users* (if a major release).
  - [ ] ***(Support)*** Send eligible customers updated links to the Subscription software FTP site.
- - [ ] ***(Support)*** If it is a new major version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
+ - [ ] ***(Support)*** If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
  - [ ] ***(Support)*** Update tickets in case of waiting for support customers.
  - [ ] ***(QA)*** Inform Marketing of the release.
+ - [ ] ***(Marketing)*** If a new Cloudsmith repository is used, update the Zapier scripts.
  - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
  - [ ] ***(Marketing)*** Announce on social media.
  - [ ] ***(Marketing)*** Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea_(software)).
@@ -136,10 +154,3 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Marketing)*** Update Kea Premium and Kea Subscription data sheets if any new hooks.
  - [ ] ***(Marketing)*** Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features).
  - [ ] ***(Marketing)*** Update [Kea documentation page in KB](https://kb.isc.org/docs/en/kea-administrator-reference-manual).
-
-## Post-Release, But Before Code Unfreeze
-
-- [ ] Bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
-    * `a.b.z-git` where `z == c + 1` or
-    * `a.y.0-git` where `y == b + 1` or
-    * `x.1.0-git` where `x == a + 1`
