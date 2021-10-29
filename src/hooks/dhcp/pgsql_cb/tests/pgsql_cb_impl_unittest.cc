@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
 #include <gtest/gtest.h>
 #include <pgsql_cb_impl.h>
@@ -28,7 +29,78 @@ public:
         params["password"] = "keatest";
         params["user"] = "keatest";
 
+        createDummySchema();
+
         cbptr_.reset(new PgSqlConfigBackendImpl(params, 0));
+    }
+
+    ~PgsqlConfigBackendTest() {
+        destroyDummySchema();
+    }
+
+    /// @brief Creates the absolute minimum schema.
+    ///
+    /// This is a basic schema that has the absolute minimum necessary to run some
+    /// tests. This is the schema that should be used, unless you really need the full
+    /// schema. See @ref createFullSchema() for full schema that is much slower to create.
+    /// Don't forget to destroy it with @ref destroyDummySchema().
+    void createDummySchema() {
+
+        DatabaseConnection::ParameterMap params;
+        params["name"] = "keatest";
+        params["user"] = "keatest";
+        params["password"] = "keatest";
+
+        // Create and open the database connection
+        conn_.reset(new PgSqlConnection(params));
+        conn_->openDatabase();
+
+        // Dummy schema queries
+        const char* sql[] = {
+            "CREATE TABLE schema_version (version INT PRIMARY KEY NOT NULL, minor INT);",
+            "INSERT INTO schema_version VALUES (7,0);"
+        };
+
+        for (auto s : sql) {
+            PgSqlResult r(PQexec(*conn_, s));
+            ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
+                    << " create a table for dummy schema failed: " << PQerrorMessage(*conn_);
+        }
+    }
+
+    /// @brief Destroys the basic schema.
+    /// Asserts if the destruction fails
+    void destroyDummySchema() {
+        if (conn_) {
+
+            const char* sql[] = {
+                "DROP TABLE schema_version;"
+            };
+
+
+            for (auto s : sql) {
+                PgSqlResult r(PQexec(*conn_, s));
+                ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
+                        << " dropping a table for dummy schema failed: " << PQerrorMessage(*conn_);
+            }
+        }
+    }
+
+    /// @brief creates full schema (slow!)
+    ///
+    /// If possible, use simpler, faster alternative: @ref createDummySchema();
+    /// Don't forget to tear it down with @ref destroyFullSchema();
+    void createFullSchema() {
+        // Create the actual full Kea schema.
+        isc::db::test::createPgSQLSchema(true, true);
+    }
+
+    /// @brief destroys the full schema (slow!)
+    ///
+    /// Don't forget to call this method once you're done, if you used @ref createFullSchema().
+    void destroyFullSchema() {
+        // Clean up after ourselves.
+        isc::db::test::destroyPgSQLSchema(true, true);
     }
 
     /// @brief checks if specified triplet generating function stores the values properly.
@@ -63,9 +135,12 @@ public:
     }
 
     boost::shared_ptr<PgSqlConfigBackendImpl> cbptr_;
+
+    /// @brief Database connection
+    PgSqlConnectionPtr conn_;
 };
 
-// Let's start with absolute basics. Is this the right type?
+// Let's start with absolute basics. Is this the right config backend type?
 TEST_F(PgsqlConfigBackendTest, triplet) {
     EXPECT_EQ("pgsql", cbptr_->getType());
 }
