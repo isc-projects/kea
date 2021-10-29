@@ -11,9 +11,10 @@
 #include <config.h>
 
 #include <hooks/hooks.h>
+#include <pgsql_cb_impl.h>
 
 // #include <pgsql_cb_dhcp4.h> // disabled for now, to be added in #95
-#include <pgsql_cb_dhcp6.h>
+// #include <pgsql_cb_dhcp6.h> // disabled for now, to be added in #96
 #include <pgsql_cb_log.h>
 
 using namespace isc::cb;
@@ -34,7 +35,7 @@ load(LibraryHandle& /* handle */) {
 
     // Register Postgres CB factories with CB Managers
     //isc::dhcp::PgSqlConfigBackendDHCPv4::registerBackendType(); // disabled for now, to be added in #95
-    isc::dhcp::PgSqlConfigBackendDHCPv6::registerBackendType();
+    //isc::dhcp::PgSqlConfigBackendDHCPv6::registerBackendType(); // disabled for now, to be added in #96
 
     return (0);
 }
@@ -75,7 +76,7 @@ unload() {
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_DEINIT_OK);
     // Unregister the factories and remove Postgres backends
     //isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType(); // disabled for now, to be added in #95
-    isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
+    //isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType(); // disabled for now, to be added in #96
     return (0);
 }
 
