@@ -1831,59 +1831,54 @@ encoded into DNS binary format.
 ``host_cmds``: Host Commands
 ============================
 
-This section describes a hook application that offers a number of new
-commands used to query and manipulate host reservations. Kea provides a
-way to store host reservations in a database. In many larger deployments
+Kea can store host reservations in a database; in many larger deployments,
 it is useful to be able to manage that information while the server is
 running. This library provides management commands for adding, querying,
 and deleting host reservations in a safe way without restarting the
 server. In particular, it validates the parameters, so an attempt to
 insert incorrect data - such as adding a host with a conflicting identifier in the
-same subnet - will be rejected. Those commands are exposed via the command
+same subnet - is rejected. Those commands are exposed via the command
 channel (JSON over UNIX sockets) and the Control Agent (JSON over a RESTful
-interface). Additional commands and capabilities related to host
-reservations will be added in the future.
+interface).
 
 Currently this library is only available to ISC customers with a paid support
 contract.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
-Currently, six commands are supported: reservation-add (which adds a new
-host reservation), reservation-get (which returns an existing reservation
-if specified criteria are matched), reservation-get-all (which returns
-all reservations in a specified subnet), reservation-get-page (a variant
-of reservation-get-all which returns all reservations in a specified
-subnet by pages and since Kea version 1.9.0 all reservations),
-reservation-get-by-hostname (which returns all reservations
-with a specified hostname and optionally in a subnet) since Kea version
-1.7.1, reservation-get-by-id (which returns all reservations with a
-specified identifier) since Kea version 1.9.0,
-and reservation-del (which attempts to delete a
-reservation matching specified criteria). To use commands that change
-the reservation information (currently these are reservation-add and
-reservation-del, but this rule applies to other commands that may be
-implemented in the future), the hosts database must be specified and it must not operate
-in read-only mode (see
-the hosts-databases descriptions in :ref:`hosts-databases-configuration4`
-and :ref:`hosts-databases-configuration6`). If the hosts-databases are not specified or are
-running in read-only mode, the host_cmds library will load, but any
-attempts to use reservation-add or reservation-del will fail.
+Currently, six commands are supported: ``reservation-add``, which adds a new
+host reservation; ``reservation-get``, which returns an existing reservation
+if specified criteria are matched; ``reservation-get-all``, which returns
+all reservations in a specified subnet; ``reservation-get-page``, a variant
+of ``reservation-get-all`` that returns all reservations in a specified
+subnet by pages (and, since Kea version 1.9.0, all reservations);
+``reservation-get-by-hostname``, which returns all reservations
+with a specified hostname and optionally in a subnet; since Kea version
+1.7.1, ``reservation-get-by-id``, which returns all reservations with a
+specified identifier since Kea version 1.9.0;
+and ``reservation-del``, which attempts to delete a
+reservation matching specified criteria. To use the commands that change
+reservation information (i.e. ``reservation-add`` and
+``reservation-del``), the hosts database must be specified and it must not operate
+in read-only mode (for details, see
+the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
+and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
+running in read-only mode, the ``host_cmds`` library will load, but any
+attempts to use ``reservation-add`` or ``reservation-del`` will fail.
 
-Additional host reservation commands are planned in future releases of Kea. For a
-description of envisaged commands, see the `Control API
+For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
 document.
 
-All commands use JSON syntax. They can be issued either using the
+All host commands use JSON syntax. They can be issued either using the
 control channel (see :ref:`ctrl-channel`) or via the Control Agent (see
 :ref:`kea-ctrl-agent`).
 
 The library can be loaded similarly to other hook libraries. It
-does not take any parameters, and it supports both DHCPv4 and DHCPv6
+does not take any parameters, and it supports both the DHCPv4 and DHCPv6
 servers.
 
 ::
@@ -1897,18 +1892,17 @@ servers.
        ]
    }
 
-The subnet-id Parameter
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet-id`` Parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Prior to diving into the individual commands, it is worth discussing the
-parameter, ``subnet-id``. Currently this parameter is mandatory for all of the
-commands supplied by this library with the exception of
-reservation-get-by-hostname where it is optional, and since Kea 1.9.0
-reservation-get-page where it is optional and reservation-get-by-id
-where it is forbidden.
-In previous versions of Kea, reservations had
-to belong to a specific subnet; as of Kea 1.5.0, reservations may
-be specified globally. In other words, they are not specific to any
+Before examining the individual commands, it is worth discussing the
+parameter ``subnet-id``. Currently this parameter is mandatory for all of the
+commands supplied by this library, with the exception of
+``reservation-get-by-hostname``, where it is optional. Since Kea 1.9.0,
+``subnet-id`` is also optional in ``reservation-get-page``, and
+it is forbidden in ``reservation-get-by-id``.
+
+Reservations can be specified globally, and are not necessarily specific to any
 subnet. When reservations are supplied via the configuration file, the
 ID of the containing subnet (or lack thereof) is implicit in the
 configuration structure. However, when managing reservations using
@@ -1917,16 +1911,16 @@ the reservation belongs. This is done via the ``subnet-id`` parameter.
 For global reservations, use a value of zero (0). For reservations
 scoped to a specific subnet, use that subnet's ID.
 
-On the other hand when the subnet id is not specified in the command
-parameters it is added to each host in responses. If the subnet id
-has the unused special value this means the host entry belongs only
+On the other hand, when the ``subnet-id`` is not specified in the command
+parameters, it is added to each host in responses. If the ``subnet-id``
+has the unused special value, this means the host entry belongs only
 to the other IP version (i.e. IPv6 in DHCPv4 server or IPv4 in DHCPv6
 server) and this entry is ignored.
 
 .. _command-reservation-add:
 
-The reservation-add Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-add`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-add`` allows for the insertion of a new host. It takes a
 set of arguments that vary depending on the nature of the host
@@ -1934,7 +1928,7 @@ reservation. Any parameters allowed in the configuration file that
 pertain to host reservation are permitted here. For details regarding
 IPv4 reservations, see :ref:`host-reservation-v4`; for IPv6 reservations, see
 :ref:`host-reservation-v6`. The ``subnet-id`` is mandatory. Use a
-value of zero (0) to add a global reservation, or the id of the subnet
+value of zero (0) to add a global reservation, or the ID of the subnet
 to which the reservation should be added. An example command can be as
 simple as:
 
@@ -2004,49 +1998,46 @@ Here is an example of a complex IPv6 reservation:
        }
    }
 
-The command returns a status that indicates either a success (result 0)
-or a failure (result 1). A failed command always includes a text parameter
-that explains the cause of the failure. Example results:
+The command returns a status that indicates either success (result 0)
+or failure (result 1). A failed command always includes a text parameter
+that explains the cause of the failure. Here's an example of a successful
+addition:
 
 ::
 
    { "result": 0, "text": "Host added." }
 
-Example failure:
+And here's an example of a failure:
 
 ::
 
    { "result": 1, "text": "Mandatory 'subnet-id' parameter missing." }
 
-As ``reservation-add`` is expected to store the host, the hosts-databases
-parameter must be specified in the configuration and databases must not
-run in read-only mode. In future versions of Kea, it will be possible to
-modify the reservations read from a configuration file. Interested parties are
-encouraged to contact ISC for more information on developing this functionality.
+As ``reservation-add`` is expected to store the host, the ``hosts-databases``
+parameter must be specified in the configuration, and databases must not
+run in read-only mode.
 
 .. _command-reservation-get:
 
-The reservation-get Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-get`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get`` can be used to query the host database and retrieve
-existing reservations. There are two types of parameters this command
-supports: (subnet-id, address) or (subnet-id, identifier-type,
-identifier). The first type of query is used when the address (either
+existing reservations. This command supports two types of parameters:
+(``subnet-id``, ``address``) or (``subnet-id``, ``identifier-type``,
+``identifier``). The first type of query is used when the address (either
 IPv4 or IPv6) is known, but the details of the reservation are not. One
-common use case of this type of query is to find out whether a given
+common use for this type of query is to find out whether a given
 address is reserved. The second query uses identifiers. For
 maximum flexibility, Kea stores the host identifying information as a
 pair of values: the type and the actual identifier. Currently supported
-identifiers are "hw-address", "duid", "circuit-id", "client-id", and
-"flex-id", but additional types may be added in the future. If any new
-identifier types are defined in the future, the reservation-get command will
-support them automatically. The ``subnet-id`` is mandatory. Use a value
-of zero (0) to fetch a global reservation, or the id of the subnet to
+identifiers are ``"hw-address"``, ``"duid"``, ``"circuit-id"``, ``"client-id"``, and
+``"flex-id"``. The ``subnet-id`` is mandatory. Use a value
+of zero (0) to fetch a global reservation, or the ID of the subnet to
 which the reservation belongs.
 
-An example command for getting a host reservation by a (subnet-id,
-address) pair looks as follows:
+An example command for getting a host reservation by a (``subnet-id``,
+``address``) pair looks as follows:
 
 ::
 
@@ -2058,7 +2049,7 @@ address) pair looks as follows:
        }
    }
 
-An example query by (subnet-id, identifier-type, identifier) looks as
+An example query by (``subnet-id``, ``identifier-type``, ``identifier``) looks as
 follows:
 
 ::
@@ -2072,9 +2063,9 @@ follows:
        }
    }
 
-``reservation-get`` typically returns the result 0 when the query was
+``reservation-get`` typically returns the result 0 when a query was
 conducted properly. In particular, 0 is returned when the host was not
-found. If the query was successful, a number of host parameters will be
+found. If the query was successful, the host parameters are
 returned. An example of a query that did not find the host looks as
 follows:
 
@@ -2082,7 +2073,7 @@ follows:
 
    { "result": 0, "text": "Host not found." }
 
-An example result returned when the host was found looks like this:
+Here's an example of a result returned when the host was found successfully:
 
 ::
 
@@ -2114,13 +2105,13 @@ An example result returned when the query was malformed might look like this:
 
 .. _command-reservation-get-all:
 
-The reservation-get-all Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-get-all`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get-all`` can be used to query the host database and
 retrieve all reservations in a specified subnet. This command uses
-parameters providing the mandatory subnet-id. Global host reservations
-can be retrieved by using a subnet-id value of zero (0).
+parameters providing the mandatory ``subnet-id``. Global host reservations
+can be retrieved by using a ``subnet-id`` value of zero (0).
 
 For instance, retrieving host reservations for the subnet 1:
 
@@ -2168,48 +2159,48 @@ returns some IPv4 hosts:
    }
 
 The response returned by ``reservation-get-all`` can be very long. The
-DHCP server does not handle DHCP traffic when preparing a response to
-reservation-get-all, so if there are many reservations in a subnet, this
-may be disruptive. Use with caution. For larger deployments, please
+DHCP server does not handle DHCP traffic while preparing a response to
+``reservation-get-all``, so if there are many reservations in a subnet, this
+may be disruptive; use with caution. For larger deployments, please
 consider using ``reservation-get-page`` instead (see
 :ref:`command-reservation-get-page`).
 
-For a reference, see :ref:`command-reservation-get-all`.
+For more information, see :ref:`command-reservation-get-all`.
 
 .. _command-reservation-get-page:
 
-The reservation-get-page command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-get-page`` command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get-page`` can be used to query the host database and
-retrieve all reservations in a specified subnet by pages. This command
-uses parameters providing the mandatory subnet-id. Use a value of zero
+retrieve all reservations in a specified subnet, by pages. This command
+uses parameters providing the mandatory ``subnet-id``. Use a value of zero
 (0) to fetch global reservations. The second mandatory parameter is the
-page size limit. Optional source-index and from host id, both defaulting
-to 0, are used to chain page queries.
-Since Kea version 1.9.0 the subnet id parameter is optional.
+page size limit. The optional ``source-index`` and ``from-host-id`` parameters, both
+of which default to 0, are used to chain page queries.
+Since Kea version 1.9.0, the ``subnet-id`` parameter is optional.
 
-The usage of from and source-index parameters requires additional
+The usage of the ``from`` and ``source-index`` parameters requires additional
 explanation. For the first call, those parameters should not be specified
-(or specified as zeros). For any follow-up calls, they should be set to
-the values returned in previous calls in a next map holding from and
-source-index values. Subsequent calls should be issued until all
+(or should be specified as zeros). For any follow-up calls, they should be set to
+the values returned in previous calls, in a next map holding ``from`` and
+``source-index`` values. Subsequent calls should be issued until all
 reservations are returned. The end is reached once the returned list is
 empty, the count is 0, no next map is present, and result status 3 (empty) is
 returned.
 
 .. note::
 
-   The from and source-index parameters are reflecting the internal state of
+   The ``from`` and ``source-index`` parameters reflect the internal state of
    the search. There is no need to understand what they represent; it is
-   simply a value that is supposed to be copied from one response to the
-   next query. However, for those who are curious, the from field represents a
+   simply a value that should be copied from one response to the
+   next query. However, for those who are curious, the ``from`` field represents a
    64-bit representation of the host identifier used by a host backend. The
-   source-index is an internal representation of multiple host
+   ``source-index`` is an internal representation of multiple host
    backends: 0 is used to represent hosts defined in a configuration
    file, and 1 represents the first database backend. In some uncommon cases
    there may be more than one database backend configured, so
-   potentially there may be a 2. In any case, Kea will iterate over all
+   potentially there may be a 2. In any case, Kea iterates over all
    backends configured.
 
 For instance, retrieving host reservations for the subnet 1 and
@@ -2225,8 +2216,8 @@ requesting the first page can be done by:
         }
    }
 
-Since this is the first call, source-index and from should not be
-specified. They will default to their zero default values.
+Since this is the first call, ``source-index`` and ``from`` should not be
+specified. They are set to their zero default values.
 
 Some hosts are returned with information to get the next page:
 
@@ -2267,7 +2258,7 @@ Some hosts are returned with information to get the next page:
        "text": "72 IPv4 host(s) found."
    }
 
-Note that the "from" and "source-index" fields were specified in the response in
+Note that the ``from`` and ``source-index`` fields were specified in the response in
 the next map. Those two must be copied to the next command, so Kea
 continues from the place where the last command finished. To get the
 next page the following command can be sent:
@@ -2284,8 +2275,8 @@ next page the following command can be sent:
         }
    }
 
-The response will contain a list of hosts with updated source-index
-and from fields. Continue calling the command until the last
+The response will contain a list of hosts with updated ``source-index``
+and ``from`` fields. Continue calling the command until the last
 page is received. Its response will look like this:
 
 ::
@@ -2306,19 +2297,19 @@ small deployments with few reservations, it is easier to use
 
 .. note::
 
-   Currently ``reservation-get-page`` is not supported by the Cassandra
+   ``reservation-get-page`` is not supported by the Cassandra
    host backend.
 
 .. _command-reservation-get-by-hostname:
 
-The reservation-get-by-hostname Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-get-by-hostname`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get-by-hostname`` can be used to query the host database and
-retrieve all reservations with a specified hostname and optionally in
+retrieve all reservations with a specified hostname or in
 a specified subnet. This command uses parameters providing the mandatory
-hostname and the optional subnet-id. Global host reservations
-can be retrieved by using a subnet-id value of zero (0).
+``hostname`` and the optional ``subnet-id``. Global host reservations
+can be retrieved by using a ``subnet-id`` value of zero (0).
 Hostname matching is case-insensitive. This command is available since
 Kea version 1.7.1.
 
@@ -2368,28 +2359,28 @@ returns some IPv4 hosts:
        "text": "5 IPv4 host(s) found."
    }
 
-The response returned by ``reservation-get-by-hostname`` can be long
-in particular when responses are not limited to a subnet.
+The response returned by ``reservation-get-by-hostname`` can be long,
+particularly when responses are not limited to a subnet.
 
-For a reference, see :ref:`command-reservation-get-by-hostname`.
+For more information, see :ref:`command-reservation-get-by-hostname`.
 
 .. note::
 
-   When the host backend is MySQL this commands relies on the fact
-   the hostname column in the hosts table uses a case-insensitive
-   collation as explained in the :ref:`mysql-database` section of
+   When using MySQL as the host backend, this command relies on the fact
+   that the hostname column in the hosts table uses a case-insensitive
+   collation, as explained in the :ref:`mysql-database` section of
    :ref:`admin`.
 
 .. _command-reservation-get-by-id:
 
-The reservation-get-by-id Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-get-by-id`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get-by-id`` can be used to query the host database and
-retrieve all reservations with a specified identifier (identifier-type
-and identifier parameters) independently of subnets. The syntax for
+retrieve all reservations with a specified identifier (``identifier-type``
+and ``identifier`` parameters), independently of subnets. The syntax for
 parameters is the same as for ref:`command-reservation-get`.
-The subnet-id parameter is forbidden to avoid confusion.
+The ``subnet-id`` parameter cannot be used, to avoid confusion.
 This command is available since Kea version 1.9.0.
 
 For instance, retrieving host reservations for the 01:02:03:04:05:06 MAC
@@ -2441,34 +2432,32 @@ returns some IPv4 hosts:
        "text": "5 IPv4 host(s) found."
    }
 
-The response returned by ``reservation-get-by-id`` can be long
-in particular when responses are not limited to a subnet.
+The response returned by ``reservation-get-by-id`` can be long,
+particularly when responses are not limited to a subnet.
 
-For a reference, see :ref:`command-reservation-get-by-id`.
+For more information, see :ref:`command-reservation-get-by-id`.
 
 .. _command-reservation-del:
 
-The reservation-del Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``reservation-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-del`` can be used to delete a reservation from the host
-database. There are two types of parameters this command supports:
-(subnet-id, address) or (subnet-id, identifier-type, identifier). The
+database. This command supports two types of parameters:
+(``subnet-id``, ``address``) or (``subnet-id``, ``identifier-type``, ``identifier``). The
 first type of query is used when the address (either IPv4 or IPv6) is
-known, but the details of the reservation are not. One common use case of
+known, but the details of the reservation are not. One common use for
 this type of query is to remove a reservation (e.g. a specific
 address should no longer be reserved). The second query uses identifiers.
 For maximum flexibility, Kea stores the host identifying information as
 a pair of values: the type and the actual identifier. Currently supported
-identifiers are "hw-address", "duid", "circuit-id", "client-id", and
-"flex-id", but additional types may be added in the future. If any new
-identifier types are defined in the future, the reservation-get command will
-support them automatically. The ``subnet-id`` is mandatory. Use a value
-of zero (0) to delete a global reservation, or the id of the subnet from
+identifiers are ``"hw-address"``, ``"duid"``, ``"circuit-id"``, ``"client-id"``, and
+``"flex-id"``. The ``subnet-id`` is mandatory. Use a value
+of zero (0) to delete a global reservation, or the ID of the subnet from
 which the reservation should be deleted.
 
-An example command for deleting a host reservation by (subnet-id,
-address) pair looks as follows:
+An example command for deleting a host reservation by (``subnet-id``,
+``address``) pair looks as follows:
 
 ::
 
@@ -2480,7 +2469,7 @@ address) pair looks as follows:
        }
    }
 
-An example deletion by (subnet-id, identifier-type, identifier) looks as
+An example deletion by (``subnet-id``, ``identifier-type``, ``identifier``) looks as
 follows:
 
 ::
@@ -2494,9 +2483,9 @@ follows:
        }
    }
 
-``reservation-del`` returns a result 0 when the host deletion was
-successful or 1 if it was not. Descriptive text is provided in the event of
-an error. Example results look as follows:
+``reservation-del`` returns a result of 0 when the host deletion was
+successful, or 1 if it failed. Descriptive text is provided in the event of
+an error. Here are some examples of possible results:
 
 ::
 
@@ -2523,19 +2512,17 @@ an error. Example results look as follows:
 
 .. include:: hooks-lease-cmds.rst
 
-
 .. _subnet-cmds:
 
 ``subnet_cmds``: Subnet Commands
 ================================
 
-This section describes a hook application that offers some new
-commands used to query and manipulate subnet and shared network
-configurations in Kea. This application is very useful in deployments
+This application offers commands used to query and manipulate subnet and shared network
+configurations in Kea. These can be very useful in deployments
 with a large number of subnets being managed by the DHCP servers,
 when those subnets are frequently updated. The commands offer a lightweight
-approach for manipulating subnets without a need to fully reconfigure
-the server and without affecting existing servers' configurations. An
+approach for manipulating subnets without needing to fully reconfigure
+the server, and without affecting existing servers' configurations. An
 ability to manage shared networks (listing, retrieving details, adding
 new ones, removing existing ones, and adding subnets to and removing them from
 shared networks) is also provided.
@@ -2583,15 +2570,15 @@ The following commands are currently supported:
 
 .. _command-subnet4-list:
 
-The subnet4-list Command
-~~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet4-list`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
 subnet is returned with a subnet identifier and
 subnet prefix. To retrieve
 detailed information about the subnet, use the ``subnet4-get`` command.
 
-This command has the simple structure:
+This command has a simple structure:
 
 ::
 
@@ -2624,15 +2611,15 @@ error description.
 
 .. _command-subnet6-list:
 
-The subnet6-list Command
-~~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet6-list`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
 subnet is returned with a subnet identifier and
 subnet prefix. To retrieve
 detailed information about the subnet, use the ``subnet6-get`` command.
 
-This command has the simple structure:
+This command has a simple structure:
 
 ::
 
@@ -2665,13 +2652,13 @@ error description.
 
 .. _command-subnet4-get:
 
-The subnet4-get Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet4-get`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
 specified subnet. This command usually follows ``subnet4-list``,
 which is used to discover available subnets with their respective subnet
-identifiers and prefixes. Any of those parameters can be then used in
+identifiers and prefixes. Any of those parameters can then be used in
 ``subnet4-get`` to fetch subnet information:
 
 ::
@@ -2694,7 +2681,7 @@ or
        }
    }
 
-If the subnet exists the response will be similar to this:
+If the subnet exists, the response will be similar to this:
 
 ::
 
@@ -2717,8 +2704,8 @@ If the subnet exists the response will be similar to this:
 
 .. _command-subnet6-get:
 
-The subnet6-get Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet6-get`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
 specified subnet. This command usually follows ``subnet6-list``,
@@ -2746,7 +2733,7 @@ or
        }
    }
 
-If the subnet exists the response will be similar to this:
+If the subnet exists, the response will be similar to this:
 
 ::
 
@@ -2769,8 +2756,8 @@ If the subnet exists the response will be similar to this:
 
 .. _command-subnet4-add:
 
-The subnet4-add Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet4-add`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
 configuration. This operation has no impact on other subnets. The subnet
@@ -2780,7 +2767,7 @@ the subnet is not added.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
-that static host reservations must not be specified within
+that static host reservations cannot be specified within
 ``subnet4-add``. The commands described in :ref:`host-cmds` should be used to
 add, remove, and modify static reservations.
 
@@ -2816,8 +2803,8 @@ The response to this command has the following structure:
 
 .. _command-subnet6-add:
 
-The subnet6-add Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet6-add`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
 configuration. This operation has no impact on other subnets. The subnet
@@ -2827,7 +2814,7 @@ the subnet is not added.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
-that static host reservations must not be specified within
+that static host reservations cannot be specified within
 ``subnet6-add``. The commands described in :ref:`host-cmds` should be used
 to add, remove, and modify static reservations.
 
@@ -2862,25 +2849,25 @@ The response to this command has the following structure:
    }
 
 It is recommended, but not mandatory, to specify the subnet ID. If not
-specified, Kea will try to assign the next subnet-id value. This
-automatic ID value generator is simple; it returns a previously
+specified, Kea will try to assign the next ``subnet-id`` value. This
+automatic ID value generator is simple; it returns the previous
 automatically assigned value, increased by 1. This works well, unless
-a subnet is manually created with a value bigger than one previously used. For
-example, if subnet4-add is called five times, each without an ID, Kea will
+a subnet is manually created with a larger value than one previously used. For
+example, if ``subnet4-add`` is called five times, each without an ID, Kea will
 assign IDs 1, 2, 3, 4, and 5 and it will work just fine. However, if
-subnet4-add is called five times, with the first subnet having the
-subnet-id of value 3 and the remaining ones having no subnet-id, the operation will
-fail. The first command (with the explicit value) will use subnet-id 3; the
-second command will create a subnet with id of 1; the third will use a
-value of 2; and finally the fourth will have the subnet-id value
+``subnet4-add`` is called five times, with the first subnet having the
+``subnet-id`` of value 3 and the remaining ones having no ``subnet-id``, the operation will
+fail. The first command (with the explicit value) will use ``subnet-id`` 3; the
+second command will create a subnet with and ID of 1; the third will use a
+value of 2; and finally the fourth will have its ``subnet-id`` value
 auto-generated as 3. However, since there is already a subnet with that
 ID, the process will fail.
 
-The general recommendation is either never use explicit values, so
-the auto-generated values will always work; or always use explicit
-values, so the auto-generation is never used. The two
+The general recommendation is either never to use explicit values, so
+that auto-generated values will always work; or always use explicit
+values, so that auto-generation is never used. The two
 approaches can be mixed only if the administrator understands how internal
-automatic subnet-id generation works in Kea.
+automatic ``subnet-id`` generation works in Kea.
 
 .. note::
 
@@ -2888,8 +2875,8 @@ automatic subnet-id generation works in Kea.
 
 .. _command-subnet4-update:
 
-The subnet4-update Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet4-update`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet in the existing server
 configuration. This operation has no impact on other subnets. The subnet
@@ -2899,7 +2886,7 @@ not be updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
-that static host reservations must not be specified within
+that static host reservations cannot be specified within
 ``subnet4-update``. The commands described in :ref:`host-cmds` should be used
 to update, remove, and modify static reservations.
 
@@ -2935,8 +2922,8 @@ The response to this command has the following structure:
 
 .. _command-subnet6-update:
 
-The subnet6-update Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet6-update`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet in the existing server
 configuration. This operation has no impact on other subnets. The subnet
@@ -2946,7 +2933,7 @@ not be updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
-that static host reservations must not be specified within
+that static host reservations cannot be specified within
 ``subnet6-update``. The commands described in :ref:`host-cmds` should be used
 to update, remove, and modify static reservations.
 
@@ -2982,13 +2969,12 @@ The response to this command has the following structure:
 
 .. _command-subnet4-del:
 
-The subnet4-del Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet4-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
 This command has no effect on other configured subnets, but removing a
-subnet has certain implications which the server's administrator should
-be aware of.
+subnet does have certain implications.
 
 In most cases the server has assigned some leases to the clients
 belonging to the subnet. The server may also be configured with static
@@ -3019,7 +3005,7 @@ The command has the following structure:
        }
    }
 
-The example successful response may look like this:
+A successful response may look like this:
 
 ::
 
@@ -3038,13 +3024,12 @@ The example successful response may look like this:
 
 .. _command-subnet6-del:
 
-The subnet6-del Command
-~~~~~~~~~~~~~~~~~~~~~~~
+The ``subnet6-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
 This command has no effect on other configured subnets, but removing a
-subnet has certain implications which the server's administrator should
-be aware of.
+subnet does have certain implications.
 
 In most cases the server has assigned some leases to the clients
 belonging to the subnet. The server may also be configured with static
@@ -3075,7 +3060,7 @@ The command has the following structure:
        }
    }
 
-The example successful response may look like this:
+A successful response may look like this:
 
 ::
 
@@ -3094,8 +3079,8 @@ The example successful response may look like this:
 
 .. _command-network6-list:
 
-The network4-list, network6-list Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-list``, ``network6-list`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to retrieve the full list of currently configured
 shared networks. The list contains only very basic information about
@@ -3132,8 +3117,8 @@ the response.
 
 .. _command-network6-get:
 
-The network4-get, network6-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-get``, ``network6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to retrieve detailed information about shared
 networks, including subnets that are currently part of a given network.
@@ -3197,7 +3182,7 @@ An example response could look as follows:
        }
    }
 
-Note that the actual response contains many additional fields that are
+The actual response contains many additional fields that are
 omitted here for clarity. The response format is exactly the same as
 used in ``config-get``, just limited to returning the shared network's
 information.
@@ -3206,8 +3191,8 @@ information.
 
 .. _command-network6-add:
 
-The network4-add, network6-add Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-add``, ``network6-add`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to add a new shared network, which must
 have a unique name. This command requires one parameter,
@@ -3215,7 +3200,7 @@ have a unique name. This command requires one parameter,
 entry that defines the network. The only mandatory element for a network
 is its name. Although it does not make operational sense, it is possible
 to add an empty shared network that does not have any subnets in it.
-That is allowed for testing purposes, but having empty networks (or with
+That is allowed for testing purposes, but having empty networks (or networks with
 only one subnet) is discouraged in production environments. For details
 regarding syntax, see :ref:`shared-network4` and
 :ref:`shared-network6`.
@@ -3280,15 +3265,15 @@ successful and will return the following response:
 
 The ``network6-add`` command uses the same syntax for both the query and the
 response. However, there are some parameters that are IPv4-only (e.g.
-match-client-id) and some that are IPv6-only (e.g. interface-id). The same
+``match-client-id``) and some that are IPv6-only (e.g. ``interface-id``). The same
 applies to subnets within the network.
 
 .. _command-network4-del:
 
 .. _command-network6-del:
 
-The network4-del, network6-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-del``, ``network6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to delete existing shared networks. Both
 commands take exactly one parameter, ``name``, that specifies the name of
@@ -3349,15 +3334,15 @@ Alternatively, to completely remove the subnets, it is possible to use the
 
 .. _command-network6-subnet-add:
 
-The network4-subnet-add, network6-subnet-add Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-subnet-add``, ``network6-subnet-add`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to add existing subnets to existing shared
 networks. There are several ways to add a new shared network. The system
 administrator can add the whole shared network at once, either by
 editing a configuration file or by calling the ``network4-add`` or
 ``network6-add`` command with the desired subnets in it. This approach
-works better for completely new shared subnets. However, there may be
+works well for completely new shared subnets. However, there may be
 cases when an existing subnet is running out of addresses and needs to
 be extended with additional address space; in other words, another subnet
 needs to be added on top of it. For this scenario, a system administrator
@@ -3366,11 +3351,11 @@ subnet to this newly created shared network using
 ``network4-subnet-add`` or ``network6-subnet-add``.
 
 The ``network4-subnet-add`` and ``network6-subnet-add`` commands take
-two parameters: ``id``, which is an integer and specifies the subnet-id of
+two parameters: ``id``, which is an integer and specifies the ID of
 an existing subnet to be added to a shared network; and ``name``, which
 specifies the name of the shared network to which the subnet will be added. The
 subnet must not belong to any existing network; to
-reassign a subnet from one shared network to another, please use the
+reassign a subnet from one shared network to another, use the
 ``network4-subnet-del`` or ``network6-subnet-del`` commands first.
 
 An example invocation of the ``network4-subnet-add`` command looks as
@@ -3387,7 +3372,7 @@ follows:
    }
 
 Assuming there is a network named "floor13", and there is a subnet with
-subnet-id 5 that is not a part of existing network, the command will
+``subnet-id`` 5 that is not a part of the existing network, the command will
 return a response similar to the following:
 
 ::
@@ -3412,15 +3397,15 @@ both the command and the response.
 
 .. _command-network6-subnet-del:
 
-The network4-subnet-del, network6-subnet-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``network4-subnet-del``, ``network6-subnet-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to remove a subnet that is part of an existing
 shared network and demote it to a plain, stand-alone subnet.
 To remove a subnet completely, use the ``subnet4-del`` or ``subnet6-del``
 commands instead. The ``network4-subnet-del`` and
 ``network6-subnet-del`` commands take two parameters: ``id``, which is
-an integer and specifies the subnet-id of an existing subnet to be removed from
+an integer and specifies the ID of an existing subnet to be removed from
 a shared network; and ``name``, which specifies the name of the shared
 network from which the subnet will be removed.
 
@@ -3437,7 +3422,7 @@ follows:
        }
     }
 
-Assuming there was a subnet with subnet-id equal to 5, that was part of a
+Assuming there was a subnet with ``subnet-id`` 5, that was part of a
 shared network named "floor13", the response would look similar to the
 following:
 
@@ -3462,7 +3447,6 @@ both the command and the response.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-run-script.rst
 
-
 .. _user-context-hooks:
 
 User Contexts in Hooks
@@ -3470,10 +3454,10 @@ User Contexts in Hooks
 
 Hook libraries can have their own configuration parameters, which is
 convenient if the parameter applies to the whole library. However,
-sometimes it is very useful to extend certain configuration entities
+sometimes it is useful to extend certain configuration entities
 with additional configuration data. This is where the concept
 of user contexts comes in. A system administrator can define an arbitrary set of
-data and attach it to Kea structures, as long as the data are specified
+data and attach it to Kea structures, as long as the data is specified
 as a JSON map. In particular, it is possible to define fields that are
 integers, strings, boolean, lists, or maps. It is possible to define
 nested structures of arbitrary complexity. Kea does not use that data on
@@ -3482,7 +3466,7 @@ its own; it simply stores it and makes it available for the hook libraries.
 Another use case for user contexts may be storing comments and other
 information that will be retained by Kea. Regular comments are discarded
 when the configuration is loaded, but user contexts are retained. This is
-useful if administrators want their comments to survive config-set or config-get
+useful if administrators want their comments to survive ``config-set`` or ``config-get``
 operations, for example.
 
 If user context is supported in a given context, the parser translates
@@ -3490,10 +3474,9 @@ If user context is supported in a given context, the parser translates
 print of a configuration did the opposite operation and put "comment"
 entries at the beginning of maps, but this was withdrawn in 1.7.9.
 
-As of Kea 1.3, the structures that allow user contexts are pools of all
-types (addresses and prefixes) and subnets. Kea 1.4 extended user
-context support to the global scope, interfaces configuration, shared networks,
+Kea supports user contexts at the following levels: global scope,
+interfaces configuration, shared networks,
 subnets, client classes, option data and definitions, host
-reservations, control socket, dhcp ddns, loggers and server ID. These
-are supported in both DHCPv4 and DHCPv6, with the exception of server ID
+reservations, control socket, DHCP-DDNS, loggers, and server ID. These
+are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
 which is DHCPv6 only.
