@@ -23,11 +23,13 @@ TESTS =
 if HAVE_GTEST
 TESTS += pgsql_cb_unittests
 
-pgsql_cb_unittests_SOURCES  = pgsql_cb_dhcp4_unittest.cc
-pgsql_cb_unittests_SOURCES += pgsql_cb_dhcp4_mgr_unittest.cc
+pgsql_cb_unittests_SOURCES  = pgsql_cb_impl_unittest.cc
+
+# disabled for now, to be added in #95
+#pgsql_cb_unittests_SOURCES  = pgsql_cb_dhcp4_unittest.cc
+#pgsql_cb_unittests_SOURCES += pgsql_cb_dhcp4_mgr_unittest.cc
 pgsql_cb_unittests_SOURCES += pgsql_cb_dhcp6_unittest.cc
 pgsql_cb_unittests_SOURCES += pgsql_cb_dhcp6_mgr_unittest.cc
-pgsql_cb_unittests_SOURCES += pgsql_cb_impl_unittest.cc
 pgsql_cb_unittests_SOURCES += run_unittests.cc
 
 pgsql_cb_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

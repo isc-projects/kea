@@ -14,7 +14,9 @@ CLEANFILES = *.gcno *.gcda
 noinst_LTLIBRARIES = libpgsqlcb.la
 
 libpgsqlcb_la_SOURCES  = pgsql_cb_callouts.cc
-libpgsqlcb_la_SOURCES += pgsql_cb_dhcp4.cc pgsql_cb_dhcp4.h
+
+# Commented out for now - see kea#95
+#libpgsqlcb_la_SOURCES += pgsql_cb_dhcp4.cc pgsql_cb_dhcp4.h
 libpgsqlcb_la_SOURCES += pgsql_cb_dhcp6.cc pgsql_cb_dhcp6.h
 libpgsqlcb_la_SOURCES += pgsql_cb_impl.cc pgsql_cb_impl.h
 libpgsqlcb_la_SOURCES += pgsql_cb_messages.cc pgsql_cb_messages.h
