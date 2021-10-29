@@ -91,8 +91,6 @@ TEST(PsqlBindArray, addDataTest) {
     EXPECT_EQ(expected, b.toText());
 }
 
-/// @brief Defines a pointer to a PgSqlConnection
-typedef boost::shared_ptr<PgSqlConnection> PgSqlConnectionPtr;
 /// @brief Defines a pointer to a PgSqlResult
 typedef boost::shared_ptr<PgSqlResult> PgSqlResultPtr;
 

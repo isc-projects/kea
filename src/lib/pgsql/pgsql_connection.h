@@ -471,6 +471,9 @@ public:
     isc::asiolink::IOServicePtr io_service_;
 };
 
+/// @brief Defines a pointer to a PgSqlConnection
+typedef boost::shared_ptr<PgSqlConnection> PgSqlConnectionPtr;
+
 } // end of isc::db namespace
 } // end of isc namespace
 
