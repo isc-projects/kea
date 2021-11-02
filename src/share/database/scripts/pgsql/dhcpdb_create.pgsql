@@ -140,7 +140,7 @@ ALTER TABLE lease6
 --
 --  FUNCTION that returns a result set containing the column names for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpHeader();
-CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease4DumpHeader() RETURNS text AS  $$
     select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
@@ -148,7 +148,7 @@ $$ LANGUAGE SQL;
 --
 --  FUNCTION that returns a result set containing the data for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpData();
-CREATE FUNCTION lease4DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease4DumpData() RETURNS
     table (address inet,
            hwaddr text,
            client_id text,
@@ -178,7 +178,7 @@ $$ LANGUAGE SQL;
 --
 --  FUNCTION that returns a result set containing the column names for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpHeader();
-CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
@@ -186,7 +186,7 @@ $$ LANGUAGE SQL;
 --
 --  FUNCTION that returns a result set containing the data for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpData();
-CREATE FUNCTION lease6DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease6DumpData() RETURNS
     TABLE (
            address text,
            duid text,
@@ -382,7 +382,7 @@ INSERT INTO lease_hwaddr_source VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
 --
 --  FUNCTION that returns a result set containing the data for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpData();
-CREATE FUNCTION lease4DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease4DumpData() RETURNS
     table (address inet,
            hwaddr text,
            client_id text,
@@ -419,7 +419,7 @@ ALTER TABLE lease6
 --
 --  FUNCTION that returns a result set containing the column names for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpHeader();
-CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source' as text) as result;
 $$ LANGUAGE SQL;
 --
@@ -427,7 +427,7 @@ $$ LANGUAGE SQL;
 --
 --  FUNCTION that returns a result set containing the data for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpData();
-CREATE FUNCTION lease6DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease6DumpData() RETURNS
     TABLE (
            address text,
            duid text,
@@ -580,7 +580,7 @@ CREATE TABLE lease4_stat (
 
 --
 -- Create v4 insert trigger procedure
-CREATE FUNCTION proc_stat_lease4_insert () RETURNS trigger AS $stat_lease4_insert$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_insert () RETURNS trigger AS $stat_lease4_insert$
 BEGIN
     IF NEW.state < 2 THEN
         UPDATE lease4_stat
@@ -604,7 +604,7 @@ AFTER INSERT ON lease4
 
 --
 -- Create v4 update trigger procedure
-CREATE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
 BEGIN
     IF OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -638,7 +638,7 @@ AFTER UPDATE ON lease4
 
 --
 -- Create the v4 delete trigger procedure
-CREATE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -667,7 +667,7 @@ CREATE TABLE lease6_stat (
 
 --
 -- Create v6 insert trigger procedure
-CREATE FUNCTION proc_stat_lease6_insert () RETURNS trigger AS $stat_lease6_insert$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_insert () RETURNS trigger AS $stat_lease6_insert$
 BEGIN
     IF NEW.state < 2 THEN
         UPDATE lease6_stat
@@ -694,7 +694,7 @@ AFTER INSERT ON lease6
 
 --
 -- Create v6 update trigger procedure
-CREATE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
 BEGIN
     IF OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -729,7 +729,7 @@ AFTER UPDATE ON lease6
 
 --
 -- Create the v6 delete trigger procedure
-CREATE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS $stat_lease6_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS $stat_lease6_delete$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -762,14 +762,14 @@ ALTER TABLE lease6 ADD COLUMN user_context TEXT;
 
 --
 DROP FUNCTION IF EXISTS lease4DumpHeader();
-CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease4DumpHeader() RETURNS text AS  $$
     select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' as text) as result;
 $$ LANGUAGE SQL;
 --
 
 --
 DROP FUNCTION IF EXISTS lease4DumpData();
-CREATE FUNCTION lease4DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease4DumpData() RETURNS
     table (address inet,
            hwaddr text,
            client_id text,
@@ -801,14 +801,14 @@ $$ LANGUAGE SQL;
 
 --
 DROP FUNCTION IF EXISTS lease6DumpHeader();
-CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source,user_context' as text) as result;
 $$ LANGUAGE SQL;
 --
 
 --
 DROP FUNCTION IF EXISTS lease6DumpData();
-CREATE FUNCTION lease6DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease6DumpData() RETURNS
     TABLE (
            address text,
            duid text,
@@ -1747,10 +1747,10 @@ CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- -----------------------------------------------------
-CREATE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP,
-                                                     server_tag VARCHAR(256),
-                                                     audit_log_message TEXT,
-                                                     cascade_transaction SMALLINT)
+CREATE OR REPLACE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE,
+                                         server_tag VARCHAR(256),
+                                         audit_log_message TEXT,
+                                         cascade_transaction SMALLINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -1794,7 +1794,7 @@ END;$$;
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- ----------------------------------------------------
-CREATE FUNCTION createAuditEntryDHCP4(object_type_val VARCHAR(256),
+CREATE OR REPLACE FUNCTION createAuditEntryDHCP4(object_type_val VARCHAR(256),
                                        object_id_val BIGINT,
                                        modification_type_val VARCHAR(32))
 RETURNS VOID
@@ -1895,7 +1895,7 @@ CREATE INDEX key_dhcp4_client_class_order_index on dhcp4_client_class_order (ord
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION setClientClass4Order(id BIGINT,
+CREATE OR REPLACE FUNCTION setClientClass4Order(id BIGINT,
                                      follow_class_name VARCHAR(128),
                                      old_follow_class_name VARCHAR(128))
 RETURNS VOID
@@ -1987,12 +1987,17 @@ BEGIN
     -- whenever the dhcp4_client_class record is updated. Such update may include
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
-    -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
---    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
---        VALUES (id, follow_class_index + 1, 0)
---        ON CONFLICT(class_id) DO UPDATE
---        SET order_index = excluded.order_index,
---            depend_on_known_indirectly = excluded.depend_on_known_indirectly;
+    -- ON CONFLICT required 9.5 or later
+    UPDATE dhcp4_client_class_order 
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
+    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
+        VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;$$;
 
@@ -2093,7 +2098,7 @@ CREATE INDEX dhcp4_client_class_dependency_id_idx on dhcp4_client_class_dependen
 -- - class_id id client class,
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
+CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
                                                   dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -2201,7 +2206,7 @@ CREATE TRIGGER dhcp4_client_class_check_dependency_BINS
 -- - client_class_id id of the client class which dependency is set,
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
+CREATE OR REPLACE FUNCTION updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
                                                         dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -2254,7 +2259,7 @@ CREATE TRIGGER dhcp4_client_class_dependency_AINS
 -- update. It signals an error if it has changed and there is at least
 -- one class depending on this class.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv4ClientClassKnownDependencyChange()
+CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassKnownDependencyChange()
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2352,7 +2357,7 @@ CREATE INDEX fk_dhcp4_client_class_server_id ON dhcp4_client_class_server (serve
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- -----------------------------------------------------
-CREATE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP,
+CREATE OR REPLACE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE,
                                          server_tag VARCHAR(256),
                                          audit_log_message TEXT,
                                          cascade_transaction SMALLINT)
@@ -2399,7 +2404,7 @@ END;$$;
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- ----------------------------------------------------
-CREATE FUNCTION createAuditEntryDHCP6(object_type_val VARCHAR(256),
+CREATE OR REPLACE FUNCTION createAuditEntryDHCP6(object_type_val VARCHAR(256),
                                        object_id_val BIGINT,
                                        modification_type_val VARCHAR(32))
 RETURNS VOID
@@ -2496,7 +2501,7 @@ CREATE INDEX key_dhcp6_client_class_order_index on dhcp6_client_class_order (ord
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION setClientClass6Order(id BIGINT,
+CREATE OR REPLACE FUNCTION setClientClass6Order(id BIGINT,
                                      follow_class_name VARCHAR(128),
                                      old_follow_class_name VARCHAR(128))
 RETURNS VOID
@@ -2589,11 +2594,16 @@ BEGIN
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
     -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
+    UPDATE dhcp6_client_class_order 
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
     INSERT INTO  dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
-        VALUES (id, follow_class_index + 1, 0)
-        ON CONFLICT(class_id) DO UPDATE
-        SET order_index = excluded.order_index,
-            depend_on_known_indirectly = excluded.depend_on_known_indirectly;
+        VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;$$;
 
@@ -2693,7 +2703,7 @@ CREATE INDEX dhcp6_client_class_dependency_id_idx on dhcp6_client_class_dependen
 -- - class_id id client class,
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
+CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
                                                   dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -2801,7 +2811,7 @@ CREATE TRIGGER dhcp6_client_class_check_dependency_BINS
 -- - client_class_id id of the client class which dependency is set,
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
+CREATE OR REPLACE FUNCTION updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
                                                         dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -2854,7 +2864,7 @@ CREATE TRIGGER dhcp6_client_class_dependency_AINS
 -- update. It signals an error if it has changed and there is at least
 -- one class depending on this class.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv6ClientClassKnownDependencyChange()
+CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassKnownDependencyChange()
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -3116,7 +3126,7 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 -- - modification_ts: modification timestamp of the
 --   option.
 -- -----------------------------------------------------
-CREATE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
                                        scope_id SMALLINT,
                                        option_id INT,
                                        subnet_id BIGINT,
@@ -3377,7 +3387,7 @@ CREATE TRIGGER dhcp6_option_def_ADEL
 -- - modification_ts: modification timestamp of the
 --   option.
 -- -----------------------------------------------------
-CREATE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
                                        scope_id SMALLINT,
                                        option_id INT,
                                        subnet_id BIGINT,

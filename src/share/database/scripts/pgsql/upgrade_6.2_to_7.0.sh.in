@@ -753,10 +753,10 @@ CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- -----------------------------------------------------
-CREATE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP,
-                                                     server_tag VARCHAR(256),
-                                                     audit_log_message TEXT,
-                                                     cascade_transaction SMALLINT)
+CREATE OR REPLACE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE,
+                                         server_tag VARCHAR(256),
+                                         audit_log_message TEXT,
+                                         cascade_transaction SMALLINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS \$\$
@@ -800,7 +800,7 @@ END;\$\$;
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- ----------------------------------------------------
-CREATE FUNCTION createAuditEntryDHCP4(object_type_val VARCHAR(256),
+CREATE OR REPLACE FUNCTION createAuditEntryDHCP4(object_type_val VARCHAR(256),
                                        object_id_val BIGINT,
                                        modification_type_val VARCHAR(32))
 RETURNS VOID
@@ -901,7 +901,7 @@ CREATE INDEX key_dhcp4_client_class_order_index on dhcp4_client_class_order (ord
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION setClientClass4Order(id BIGINT,
+CREATE OR REPLACE FUNCTION setClientClass4Order(id BIGINT,
                                      follow_class_name VARCHAR(128),
                                      old_follow_class_name VARCHAR(128))
 RETURNS VOID
@@ -993,12 +993,17 @@ BEGIN
     -- whenever the dhcp4_client_class record is updated. Such update may include
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
-    -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
---    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
---        VALUES (id, follow_class_index + 1, 0)
---        ON CONFLICT(class_id) DO UPDATE
---        SET order_index = excluded.order_index,
---            depend_on_known_indirectly = excluded.depend_on_known_indirectly;
+    -- ON CONFLICT required 9.5 or later
+    UPDATE dhcp4_client_class_order 
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
+    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
+        VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;\$\$;
 
@@ -1099,7 +1104,7 @@ CREATE INDEX dhcp4_client_class_dependency_id_idx on dhcp4_client_class_dependen
 -- - class_id id client class,
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
+CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
                                                   dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -1207,7 +1212,7 @@ CREATE TRIGGER dhcp4_client_class_check_dependency_BINS
 -- - client_class_id id of the client class which dependency is set,
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
+CREATE OR REPLACE FUNCTION updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
                                                         dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -1260,7 +1265,7 @@ CREATE TRIGGER dhcp4_client_class_dependency_AINS
 -- update. It signals an error if it has changed and there is at least
 -- one class depending on this class.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv4ClientClassKnownDependencyChange()
+CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassKnownDependencyChange()
 RETURNS VOID
 LANGUAGE plpgsql
 AS \$\$
@@ -1358,7 +1363,7 @@ CREATE INDEX fk_dhcp4_client_class_server_id ON dhcp4_client_class_server (serve
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- -----------------------------------------------------
-CREATE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP,
+CREATE OR REPLACE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE,
                                          server_tag VARCHAR(256),
                                          audit_log_message TEXT,
                                          cascade_transaction SMALLINT)
@@ -1405,7 +1410,7 @@ END;\$\$;
 --   unit tests.  This avoids issues with revision_id
 --   being null.
 -- ----------------------------------------------------
-CREATE FUNCTION createAuditEntryDHCP6(object_type_val VARCHAR(256),
+CREATE OR REPLACE FUNCTION createAuditEntryDHCP6(object_type_val VARCHAR(256),
                                        object_id_val BIGINT,
                                        modification_type_val VARCHAR(32))
 RETURNS VOID
@@ -1502,7 +1507,7 @@ CREATE INDEX key_dhcp6_client_class_order_index on dhcp6_client_class_order (ord
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION setClientClass6Order(id BIGINT,
+CREATE OR REPLACE FUNCTION setClientClass6Order(id BIGINT,
                                      follow_class_name VARCHAR(128),
                                      old_follow_class_name VARCHAR(128))
 RETURNS VOID
@@ -1595,11 +1600,16 @@ BEGIN
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
     -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
+    UPDATE dhcp6_client_class_order 
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
     INSERT INTO  dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
-        VALUES (id, follow_class_index + 1, 0)
-        ON CONFLICT(class_id) DO UPDATE
-        SET order_index = excluded.order_index,
-            depend_on_known_indirectly = excluded.depend_on_known_indirectly;
+        VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;\$\$;
 
@@ -1699,7 +1709,7 @@ CREATE INDEX dhcp6_client_class_dependency_id_idx on dhcp6_client_class_dependen
 -- - class_id id client class,
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
+CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
                                                   dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -1807,7 +1817,7 @@ CREATE TRIGGER dhcp6_client_class_check_dependency_BINS
 -- - client_class_id id of the client class which dependency is set,
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
+CREATE OR REPLACE FUNCTION updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
                                                         dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -1860,7 +1870,7 @@ CREATE TRIGGER dhcp6_client_class_dependency_AINS
 -- update. It signals an error if it has changed and there is at least
 -- one class depending on this class.
 -- -----------------------------------------------------------------------
-CREATE FUNCTION checkDHCPv6ClientClassKnownDependencyChange()
+CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassKnownDependencyChange()
 RETURNS VOID
 LANGUAGE plpgsql
 AS \$\$
@@ -2122,7 +2132,7 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 -- - modification_ts: modification timestamp of the
 --   option.
 -- -----------------------------------------------------
-CREATE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
                                        scope_id SMALLINT,
                                        option_id INT,
                                        subnet_id BIGINT,
@@ -2383,7 +2393,7 @@ CREATE TRIGGER dhcp6_option_def_ADEL
 -- - modification_ts: modification timestamp of the
 --   option.
 -- -----------------------------------------------------
-CREATE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
                                        scope_id SMALLINT,
                                        option_id INT,
                                        subnet_id BIGINT,
