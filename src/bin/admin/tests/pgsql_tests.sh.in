@@ -289,24 +289,27 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
 }
 
 pgsql_upgrade_6_2_to_7_0() {
+    # Verify upgraded schema reports version 7.0.
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # The dhcp6_server table has been introduced in this schema update. It should contain a special value "all" (with id 1)
-    # Hence we're adding tag "server1" with id 2.
-    insert_sql="insert into dhcp6_server (id,tag,description) values(2, 'server1', 'This is only a test server');"
-    run_command \
-        pgsql_execute "$insert_sql"
-    assert_eq 0 "${EXIT_CODE}" "insert into dhcp6_server failed, expected exit code %d, actual %d"
-
-    # And now check if it's possible to read something from the table.
-    select_sql="SELECT id, tag, description, modification_ts from dhcp6_server;"
+    # dhcp4_server should have a single entry for 'all'
+    select_sql="SELECT id, tag, description, modification_ts from dhcp4_server where id = 1 and tag = 'all';"
     run_command \
         pgsql_execute "$select_sql"
 
-    assert_eq 0 "${EXIT_CODE}" "the dhcp6_server table is broken or missing. (expected status code %d, returned %d)"
+    assert_eq 0 "${EXIT_CODE}" "the dhcp4_server table is broken or missing. (expected status code %d, returned %d)"
 
     # Verify upgraded schema reports version 7.0.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+
+    # dhcp6_server should have a single entry for 'all'
+    select_sql="SELECT id, tag, description, modification_ts from dhcp6_server where id = 1 and tag = 'all';"
+    run_command \
+        pgsql_execute "$select_sql"
+
+    assert_eq 0 "${EXIT_CODE}" "the dhcp6_server table is broken or missing. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {
