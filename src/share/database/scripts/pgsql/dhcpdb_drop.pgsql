@@ -162,4 +162,8 @@ DROP TABLE IF EXISTS modification CASCADE;
 DROP TABLE IF EXISTS parameter_data_type CASCADE;
 DROP TABLE IF EXISTS ddns_replace_client_name_types CASCADE;
 DROP FUNCTION IF EXISTS modification_ts_update();
+DROP FUNCTION IF EXISTS get_session_small_int(name text);
+DROP FUNCTION IF EXISTS get_session_big_int(name text);
+DROP FUNCTION IF EXISTS get_session_value(name text);
+
 
