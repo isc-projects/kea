@@ -194,6 +194,7 @@ not_empty_map: STRING COLON value {
                   ctx.unique($3, ctx.loc2pos(@3));
                   ctx.stack_.back()->set($3, $5);
                   }
+             | not_empty_map COMMA
              ;
 
 list_generic: LSQUARE_BRACKET {
@@ -214,6 +215,7 @@ not_empty_list: value {
                   // List ending with , and a value.
                   ctx.stack_.back()->add($3);
                   }
+              | not_empty_list COMMA
               ;
 
 // --- generic JSON parser ends here -------------------------------------------
@@ -244,7 +246,6 @@ agent_syntax_map: LCURLY_BRACKET {
 
 // This represents the single top level entry, e.g. Control-agent.
 global_object: CONTROL_AGENT {
-
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
     // on the stack as well, so child elements will be able to add
@@ -259,10 +260,13 @@ global_object: CONTROL_AGENT {
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
-};
+}
+             | global_object COMMA
+             ;
 
 global_params: global_param
              | global_params COMMA global_param
+             | global_params COMMA
              ;
 
 // These are the parameters that are allowed in the top-level for
@@ -400,6 +404,7 @@ hooks_libraries_list: %empty
 
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
+    | not_empty_hooks_libraries_list COMMA
     ;
 
 hooks_library: LCURLY_BRACKET {
@@ -412,6 +417,7 @@ hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
+            | hooks_params COMMA
             | unknown_map_entry
             ;
 
@@ -455,6 +461,7 @@ control_sockets: CONTROL_SOCKETS COLON LCURLY_BRACKET {
 // is required.
 control_sockets_params: control_socket
                       | control_sockets_params COMMA control_socket
+                      | control_sockets_params COMMA
                       ;
 
 // We currently support three types of sockets: DHCPv4, DHCPv6 and D2
@@ -504,6 +511,7 @@ d2_server_socket: D2_SERVER {
 // Socket parameters consist of one or more parameters.
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
+                     | control_socket_params COMMA
                      ;
 
 // We currently support two socket parameters: type and name.
@@ -556,6 +564,7 @@ authentication: AUTHENTICATION {
 
 auth_params: auth_param
            | auth_params COMMA auth_param
+           | auth_params COMMA
            ;
 
 auth_param: auth_type
@@ -603,6 +612,7 @@ clients_list: %empty
 
 not_empty_clients_list: basic_auth
                       | not_empty_clients_list COMMA basic_auth
+                      | not_empty_clients_list COMMA
                       ;
 
 basic_auth: LCURLY_BRACKET {
@@ -615,6 +625,7 @@ basic_auth: LCURLY_BRACKET {
 
 clients_params: clients_param
               | clients_params COMMA clients_param
+              | clients_params COMMA
               ;
 
 clients_param: user
@@ -661,6 +672,7 @@ loggers: LOGGERS {
 // entry or multiple entries separate by commas.
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
+               | loggers_entries COMMA
                ;
 
 // This defines a single entry defined in loggers.
@@ -674,6 +686,7 @@ logger_entry: LCURLY_BRACKET {
 
 logger_params: logger_param
              | logger_params COMMA logger_param
+             | logger_params COMMA
              ;
 
 logger_param: name
@@ -722,6 +735,7 @@ output_options_list: OUTPUT_OPTIONS {
 
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
+                           | output_options_list_content COMMA
                            ;
 
 output_entry: LCURLY_BRACKET {
@@ -734,6 +748,7 @@ output_entry: LCURLY_BRACKET {
 
 output_params_list: output_params
              | output_params_list COMMA output_params
+             | output_params_list COMMA
              ;
 
 output_params: output

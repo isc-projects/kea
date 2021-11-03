@@ -188,6 +188,7 @@ not_empty_map: STRING COLON value {
                   ctx.unique($3, ctx.loc2pos(@3));
                   ctx.stack_.back()->set($3, $5);
                   }
+             | not_empty_map COMMA
              ;
 
 list_generic: LSQUARE_BRACKET {
@@ -208,6 +209,7 @@ not_empty_list: value {
                   // List ending with , and a value.
                   ctx.stack_.back()->add($3);
                   }
+              | not_empty_list COMMA
               ;
 
 // --- generic JSON parser ends here -------------------------------------------
@@ -238,7 +240,6 @@ netconf_syntax_map: LCURLY_BRACKET {
 
 // This represents the single top level entry, e.g. Netconf.
 global_object: NETCONF {
-
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
     // on the stack as well, so child elements will be able to add
@@ -255,7 +256,9 @@ global_object: NETCONF {
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
-};
+}
+             | global_object COMMA
+             ;
 
 global_params: %empty
              | not_empty_global_params
@@ -263,6 +266,7 @@ global_params: %empty
 
 not_empty_global_params: global_param
                        | not_empty_global_params COMMA global_param
+                       | not_empty_global_params COMMA
                        ;
 
 // These are the parameters that are allowed in the top-level for
@@ -366,6 +370,7 @@ hooks_libraries_list: %empty
 
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
+    | not_empty_hooks_libraries_list COMMA
     ;
 
 hooks_library: LCURLY_BRACKET {
@@ -378,6 +383,7 @@ hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
+            | hooks_params COMMA
             | unknown_map_entry
             ;
 
@@ -422,6 +428,7 @@ servers_entries: %empty
 
 not_empty_servers_entries: server_entry
                          | not_empty_servers_entries COMMA server_entry
+                         | not_empty_servers_entries COMMA
                          ;
 
 
@@ -485,6 +492,7 @@ ca_server: CA_SERVER {
 // Server parameters consist of one or more parameters.
 managed_server_params: managed_server_param
                      | managed_server_params COMMA managed_server_param
+                     | managed_server_params COMMA
                      ;
 
 // We currently support two server parameters: model and control-socket.
@@ -523,6 +531,7 @@ control_socket: CONTROL_SOCKET {
 // control-socket parameters
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
+                     | control_socket_params COMMA
                      ;
 
 control_socket_param: socket_type
@@ -585,6 +594,7 @@ loggers: LOGGERS {
 // entry or multiple entries separate by commas.
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
+               | loggers_entries COMMA
                ;
 
 // This defines a single entry defined in loggers.
@@ -598,6 +608,7 @@ logger_entry: LCURLY_BRACKET {
 
 logger_params: logger_param
              | logger_params COMMA logger_param
+             | logger_params COMMA
              ;
 
 logger_param: name
@@ -646,6 +657,7 @@ output_options_list: OUTPUT_OPTIONS {
 
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
+                           | output_options_list_content COMMA
                            ;
 
 output_entry: LCURLY_BRACKET {
@@ -658,6 +670,7 @@ output_entry: LCURLY_BRACKET {
 
 output_params_list: output_params
              | output_params_list COMMA output_params
+             | output_params_list COMMA
              ;
 
 output_params: output
