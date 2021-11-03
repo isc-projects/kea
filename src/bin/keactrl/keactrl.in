@@ -541,7 +541,7 @@ ${args}" 1
         d2_status=$inactive
         check_running "$(basename -- "${dhcp_ddns_srv}")"
         if [ "${_running}" -eq 1 ]; then
-            d2_status="active"
+            d2_status=$active
         fi
         printf "DHCP DDNS: %b\n" "${d2_status}"
 
