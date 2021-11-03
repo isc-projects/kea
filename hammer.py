@@ -475,6 +475,16 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
     execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
 
+def get_image_template(key, variant):
+    if key not in IMAGE_TEMPLATES:
+        print(f'ERROR: Image {key} not available.', file=sys.stderr)
+        sys.exit(1)
+    if variant not in IMAGE_TEMPLATES[key]:
+        print(f'ERROR: Variant {variant} not available for image {key}.', file=sys.stderr)
+        sys.exit(1)
+    return IMAGE_TEMPLATES[key][variant]
+
+
 def _get_full_repo_url(repository_url, system, revision, pkg_version):
     if not repository_url:
         return None
@@ -519,7 +529,7 @@ class VagrantEnv(object):
         self.python = None
 
         self.key = key = "%s-%s-%s" % (system, revision, provider)
-        self.image_tpl = image_tpl = IMAGE_TEMPLATES[key][image_template_variant]
+        self.image_tpl = image_tpl = get_image_template(key, image_template_variant)
         self.repo_dir = os.getcwd()
 
         sys_dir = "%s-%s" % (system, revision)
@@ -726,7 +736,7 @@ class VagrantEnv(object):
         return box_path
 
     def upload_to_cloud(self, box_path):
-        image_tpl = IMAGE_TEMPLATES[self.key]['kea']
+        image_tpl = get_image_template(self.key, 'kea')
         if '/' not in image_tpl:
             return
 
