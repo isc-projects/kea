@@ -165,5 +165,6 @@ DROP FUNCTION IF EXISTS modification_ts_update();
 DROP FUNCTION IF EXISTS get_session_small_int(name text);
 DROP FUNCTION IF EXISTS get_session_big_int(name text);
 DROP FUNCTION IF EXISTS get_session_value(name text);
-
-
+DROP FUNCTION IF EXISTS set_session_value(name text, value TEXT);
+DROP FUNCTION IF EXISTS set_session_value(name text, value BIGINT);
+DROP FUNCTION IF EXISTS set_session_value(name text, value SMALLINT);

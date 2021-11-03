@@ -580,7 +580,7 @@ CREATE TABLE lease4_stat (
 
 --
 -- Create v4 insert trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_insert () RETURNS trigger AS $stat_lease4_insert$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_insert() RETURNS trigger AS $stat_lease4_insert$
 BEGIN
     IF NEW.state < 2 THEN
         UPDATE lease4_stat
@@ -604,7 +604,7 @@ AFTER INSERT ON lease4
 
 --
 -- Create v4 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_update() RETURNS trigger AS $stat_lease4_update$
 BEGIN
     IF OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -638,7 +638,7 @@ AFTER UPDATE ON lease4
 
 --
 -- Create the v4 delete trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_delete() RETURNS trigger AS $stat_lease4_delete$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -667,7 +667,7 @@ CREATE TABLE lease6_stat (
 
 --
 -- Create v6 insert trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease6_insert () RETURNS trigger AS $stat_lease6_insert$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_insert() RETURNS trigger AS $stat_lease6_insert$
 BEGIN
     IF NEW.state < 2 THEN
         UPDATE lease6_stat
@@ -694,7 +694,7 @@ AFTER INSERT ON lease6
 
 --
 -- Create v6 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_update() RETURNS trigger AS $stat_lease6_update$
 BEGIN
     IF OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -910,7 +910,7 @@ UPDATE schema_version
 -- Upgrade to schema 6.1 begins here:
 
 -- Fix v4 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_update() RETURNS trigger AS $stat_lease4_update$
 BEGIN
     IF OLD.subnet_id != NEW.subnet_id OR OLD.state != NEW.state THEN
         IF OLD.state < 2 THEN
@@ -938,7 +938,7 @@ $stat_lease4_update$ LANGUAGE plpgsql;
 
 --
 -- Fix the v4 delete trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+CREATE OR REPLACE FUNCTION proc_stat_lease4_delete() RETURNS trigger AS $stat_lease4_delete$
 BEGIN
     IF OLD.state < 2 THEN
         -- Decrement the state count if record exists
@@ -953,7 +953,7 @@ $stat_lease4_delete$ LANGUAGE plpgsql;
 
 --
 -- Fix v6 update trigger procedure
-CREATE OR REPLACE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+CREATE OR REPLACE FUNCTION proc_stat_lease6_update() RETURNS trigger AS $stat_lease6_update$
 BEGIN
     IF OLD.subnet_id != NEW.subnet_id OR
        OLD.lease_type != NEW.lease_type OR
@@ -1715,13 +1715,67 @@ CREATE TRIGGER dhcp4_audit_modification_ts_update
 CREATE INDEX dhcp4_audit_idx1 ON dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
 
+
+-- Stores a TEXT value to a session variable
+-- name name of session variable to set
+-- value TEXT value to store
+CREATE OR REPLACE FUNCTION set_session_value(name text, value TEXT)
+RETURNS VOID
+AS $$
+DECLARE
+BEGIN
+    PERFORM set_config(name, value, false);
+    RETURN;
+
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'set_session_value(%) : value:[%] failed, sqlstate: %', name, value, sqlstate;
+END;$$
+LANGUAGE plpgsql;
+
+-- Stores a BIGINT value to a session variable
+-- Note the value converted to TEXT and then stored as Postgresql does
+-- not support any other data type in session variables.
+-- name name of session variable to set
+-- value BIGINT value to store
+CREATE OR REPLACE FUNCTION set_session_value(name text, value BIGINT)
+RETURNS VOID
+AS $$
+BEGIN
+    PERFORM set_config(name, cast(value as text), false);
+    RETURN;
+
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'set_session_value(%) : value:[%] failed, sqlstate: %', name, value, sqlstate;
+END;$$
+LANGUAGE plpgsql;
+
+-- Stores a SMALLINT value to a session variable
+-- Note the value converted to TEXT and then stored as Postgresql does
+-- not support any other data type in session variables.
+-- name name of session variable to set
+-- value SMALLINT value to store
+CREATE OR REPLACE FUNCTION set_session_value(name text, value SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    PERFORM set_config(name, cast(value as text), false);
+    RETURN;
+
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'set_session_value(%) : value:[%] failed, sqlstate: %', name, value, sqlstate;
+END;$$
+LANGUAGE plpgsql;
+
 -- Fetches a text value from the session configuration.
 -- param name name of the session variable to fetch
 -- If the name is not found it returns NULL.
 -- Postgresql allows you to store custom session values
 -- but throws an exception if they have not first been
 -- set.  This allows us to be a bit more graceful.
-CREATE OR REPLACE FUNCTION get_session_value(name text)
+CREATE OR REPLACE FUNCTION get_session_value(name TEXT)
 RETURNS TEXT
 AS $$
 DECLARE
@@ -1731,9 +1785,11 @@ BEGIN
     RETURN(text_value);
 
     EXCEPTION
-    WHEN OTHERS THEN
-        RAISE NOTICE 'get_session_value(%) failed, sqlstate: %', name, sqlstate;
+    WHEN undefined_object THEN
+        -- Variable has not been initialized so return NULL
         RETURN NULL;
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'get_session_value(%, TEXT) failed, sqlstate: %', name, sqlstate;
 END;$$
 LANGUAGE plpgsql;
 
@@ -1772,8 +1828,7 @@ AS $$
 DECLARE
     int_value SMALLINT := 0;
     text_value TEXT := '';
-BEGIN
-    text_value = get_session_value(name);
+BEGIN text_value = get_session_value(name);
     IF text_value is NULL or text_value = '' THEN
         RETURN(0);
     END IF;
@@ -1821,9 +1876,9 @@ LANGUAGE plpgsql;
 --   being null.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE,
-                                         server_tag VARCHAR(256),
-                                         audit_log_message TEXT,
-                                         cascade_transaction SMALLINT)
+                                                    server_tag VARCHAR(256),
+                                                    audit_log_message TEXT,
+                                                    cascade_transaction SMALLINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -1840,8 +1895,8 @@ BEGIN
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
         -- Update pertienent session variables.
-        PERFORM set_config('kea.audit_revision_id', cast(audit_revision_id as text), false);
-        PERFORM set_config('kea.cascade_transaction', cast(cascade_transaction as text), false);
+        PERFORM set_session_value('kea.audit_revision_id', audit_revision_id);
+        PERFORM set_session_value('kea.cascade_transaction', cascade_transaction);
     END IF;
     RETURN;
 END;$$;
@@ -1867,8 +1922,8 @@ END;$$;
 --   being null.
 -- ----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditEntryDHCP4(object_type_val VARCHAR(256),
-                                       object_id_val BIGINT,
-                                       modification_type_val VARCHAR(32))
+                                                 object_id_val BIGINT,
+                                                 modification_type_val VARCHAR(32))
 RETURNS VOID
 LANGUAGE plpgsql
 as $$
@@ -1968,8 +2023,8 @@ CREATE INDEX key_dhcp4_client_class_order_index on dhcp4_client_class_order (ord
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION setClientClass4Order(id BIGINT,
-                                     follow_class_name VARCHAR(128),
-                                     old_follow_class_name VARCHAR(128))
+                                                follow_class_name VARCHAR(128),
+                                                old_follow_class_name VARCHAR(128))
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -1988,7 +2043,7 @@ BEGIN
     -- Note this does not work prior to Postgres 9.2 unless the variables are
     -- defined in postgresql.conf. I think for now we put up with CB not supported
     -- prior to 9.2 or we tell people how to edit the conf file.
-    PERFORM set_config('kea.depend_on_known_indirectly', cast(depend_on_known_indirectly as text), false);
+    PERFORM set_session_value('kea.depend_on_known_indirectly', depend_on_known_indirectly);
 
     -- Bail if the class is updated without re-positioning.
     IF(
@@ -2077,7 +2132,7 @@ END;$$;
 -- Trigger procedure to position an inserted class within the class hierarchy
 -- and create audit.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp4_client_class_AINS () RETURNS trigger AS $dhcp4_client_class_AINS$
+CREATE OR REPLACE FUNCTION func_dhcp4_client_class_AINS() RETURNS trigger AS $dhcp4_client_class_AINS$
 BEGIN
     PERFORM setClientClass4Order(NEW.id, NEW.follow_class_name, NULL);
     PERFORM createAuditEntryDHCP4('dhcp4_client_class', NEW.id, 'create');
@@ -2104,10 +2159,10 @@ CREATE TRIGGER dhcp4_client_class_AINS
 -- values will be compared with the new dependencies after an update.
 -- If they change, an error will be signaled.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp4_client_class_AUPD () RETURNS trigger AS $dhcp4_client_class_AUPD$
+CREATE OR REPLACE FUNCTION func_dhcp4_client_class_AUPD() RETURNS trigger AS $dhcp4_client_class_AUPD$
 BEGIN
-    PERFORM set_config('kea.depend_on_known_directly', cast(OLD.depend_on_known_directly as text), false);
-    PERFORM set_config('kea.client_class_id', cast(NEW.id as text), false);
+    PERFORM set_session_value('kea.depend_on_known_directly', OLD.depend_on_known_directly);
+    PERFORM set_session_value('kea.client_class_id', NEW.id);
     PERFORM setClientClass4Order(NEW.id, NEW.follow_class_name, OLD.follow_class_name);
     PERFORM createAuditEntryDHCP4('dhcp4_client_class', NEW.id, 'update');
     RETURN NULL;
@@ -2123,7 +2178,7 @@ CREATE TRIGGER dhcp4_client_class_AUPD
 -- -----------------------------------------------------------------------
 -- Trigger procedure to create the audit entry for client class delete.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp4_client_class_ADEL () RETURNS trigger AS $dhcp4_client_class_ADEL$
+CREATE OR REPLACE FUNCTION func_dhcp4_client_class_ADEL() RETURNS trigger AS $dhcp4_client_class_ADEL$
 BEGIN
     PERFORM createAuditEntryDHCP4('dhcp4_client_class', OLD.id, 'delete');
     RETURN NULL;
@@ -2171,7 +2226,7 @@ CREATE INDEX dhcp4_client_class_dependency_id_idx on dhcp4_client_class_dependen
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
-                                                  dependency_id BIGINT)
+                                                            dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2279,7 +2334,7 @@ CREATE TRIGGER dhcp4_client_class_check_dependency_BINS
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
-                                                        dependency_id BIGINT)
+                                                                  dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2430,9 +2485,9 @@ CREATE INDEX fk_dhcp4_client_class_server_id ON dhcp4_client_class_server (serve
 --   being null.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE,
-                                         server_tag VARCHAR(256),
-                                         audit_log_message TEXT,
-                                         cascade_transaction SMALLINT)
+                                                    server_tag VARCHAR(256),
+                                                    audit_log_message TEXT,
+                                                    cascade_transaction SMALLINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2449,8 +2504,8 @@ BEGIN
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
         -- Update pertienent session variables.
-        PERFORM set_config('kea.audit_revision_id', cast(audit_revision_id as text), false);
-        PERFORM set_config('kea.cascade_transaction', cast(cascade_transaction as text), false);
+        PERFORM set_session_value('kea.audit_revision_id', audit_revision_id);
+        PERFORM set_session_value('kea.cascade_transaction', cascade_transaction);
     END IF;
     RETURN;
 END;$$;
@@ -2476,8 +2531,8 @@ END;$$;
 --   being null.
 -- ----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditEntryDHCP6(object_type_val VARCHAR(256),
-                                       object_id_val BIGINT,
-                                       modification_type_val VARCHAR(32))
+                                                 object_id_val BIGINT,
+                                                 modification_type_val VARCHAR(32))
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2572,8 +2627,8 @@ CREATE INDEX key_dhcp6_client_class_order_index on dhcp6_client_class_order (ord
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION setClientClass6Order(id BIGINT,
-                                     follow_class_name VARCHAR(128),
-                                     old_follow_class_name VARCHAR(128))
+                                                follow_class_name VARCHAR(128),
+                                                old_follow_class_name VARCHAR(128))
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2592,7 +2647,7 @@ BEGIN
     -- Note this does not work prior to Postgres 9.2 unless the variables are
     -- defined in postgresql.conf. I think for now we put up with CB not supported
     -- prior to 9.2 or we tell people how to edit the conf file.
-    PERFORM set_config('kea.depend_on_known_indirectly', cast(depend_on_known_indirectly as text), false);
+    PERFORM set_session_value('kea.depend_on_known_indirectly', depend_on_known_indirectly);
 
     -- Bail if the class is updated without re-positioning.
     IF(
@@ -2681,7 +2736,7 @@ END;$$;
 -- Trigger procedure to position an inserted class within the class hierarchy
 -- and create audit.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp6_client_class_AINS () RETURNS trigger AS $dhcp6_client_class_AINS$
+CREATE OR REPLACE FUNCTION func_dhcp6_client_class_AINS() RETURNS trigger AS $dhcp6_client_class_AINS$
 BEGIN
     PERFORM setClientClass6Order(NEW.id, NEW.follow_class_name, NULL);
     PERFORM createAuditEntryDHCP6('dhcp6_client_class', NEW.id, 'create');
@@ -2707,10 +2762,10 @@ CREATE TRIGGER dhcp6_client_class_AINS
 -- values will be compared with the new dependencies after an update.
 -- If they change, an error will be signaled.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp6_client_class_AUPD () RETURNS trigger AS $dhcp6_client_class_AUPD$
+CREATE OR REPLACE FUNCTION func_dhcp6_client_class_AUPD() RETURNS trigger AS $dhcp6_client_class_AUPD$
 BEGIN
-    PERFORM set_config('kea.depend_on_known_directly', cast(OLD.depend_on_known_directly as text), false);
-    PERFORM set_config('kea.client_class_id', cast(NEW.id as text), false);
+    PERFORM set_session_value('kea.depend_on_known_directly', OLD.depend_on_known_directly);
+    PERFORM set_session_value('kea.client_class_id', NEW.id);
     PERFORM setClientClass6Order(NEW.id, NEW.follow_class_name, OLD.follow_class_name);
     PERFORM createAuditEntryDHCP6('dhcp6_client_class', NEW.id, 'update');
     RETURN NULL;
@@ -2726,7 +2781,7 @@ CREATE TRIGGER dhcp6_client_class_AUPD
 -- -----------------------------------------------------------------------
 -- Trigger procedure to create the audit entry for client class delete.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION func_dhcp6_client_class_ADEL () RETURNS trigger AS $dhcp6_client_class_ADEL$
+CREATE OR REPLACE FUNCTION func_dhcp6_client_class_ADEL() RETURNS trigger AS $dhcp6_client_class_ADEL$
 BEGIN
     PERFORM createAuditEntryDHCP6('dhcp6_client_class', OLD.id, 'delete');
     RETURN NULL;
@@ -2774,7 +2829,7 @@ CREATE INDEX dhcp6_client_class_dependency_id_idx on dhcp6_client_class_dependen
 -- - dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
-                                                  dependency_id BIGINT)
+                                                            dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -2882,7 +2937,7 @@ CREATE TRIGGER dhcp6_client_class_check_dependency_BINS
 -- - dependency_id id of the client class on which the given class depends.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
-                                                        dependency_id BIGINT)
+                                                                  dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -3197,13 +3252,13 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 --   option.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
-                                       scope_id SMALLINT,
-                                       option_id INT,
-                                       subnet_id BIGINT,
-                                       host_id INT,
-                                       network_name VARCHAR,
-                                       pool_id BIGINT,
-                                       modification_ts TIMESTAMP WITH TIME ZONE)
+                                                  scope_id SMALLINT,
+                                                  option_id INT,
+                                                  subnet_id BIGINT,
+                                                  host_id INT,
+                                                  network_name VARCHAR,
+                                                  pool_id BIGINT,
+                                                  modification_ts TIMESTAMP WITH TIME ZONE)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -3267,8 +3322,8 @@ END;$$;
 CREATE OR REPLACE FUNCTION func_dhcp4_options_AINS() RETURNS TRIGGER AS $dhcp4_options_AINS$
 BEGIN
     PERFORM createOptionAuditDHCP4('create', NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
-                                  NEW.host_id, NEW.shared_network_name, NEW.pool_id,
-                                  NEW.modification_ts);
+                                   NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                   NEW.modification_ts);
     RETURN NULL;
 END;
 $dhcp4_options_AINS$
@@ -3283,8 +3338,8 @@ CREATE TRIGGER dhcp4_options_AINS
 CREATE OR REPLACE FUNCTION func_dhcp4_options_AUPD() RETURNS TRIGGER AS $dhcp4_options_AUPD$
 BEGIN
     PERFORM createOptionAuditDHCP4('update', NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
-                                NEW.host_id, NEW.shared_network_name, NEW.pool_id,
-                                NEW.modification_ts);
+                                   NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                   NEW.modification_ts);
     RETURN NULL;
 END;
 $dhcp4_options_AUPD$
@@ -3298,8 +3353,8 @@ CREATE TRIGGER dhcp4_options_AUPD
 CREATE OR REPLACE FUNCTION func_dhcp4_options_ADEL() RETURNS TRIGGER AS $dhcp4_options_ADEL$
 BEGIN
     PERFORM createOptionAuditDHCP4('delete', OLD.scope_id, OLD.option_id, OLD.dhcp4_subnet_id,
-                                OLD.host_id, OLD.shared_network_name, OLD.pool_id,
-                                NOW());
+                                   OLD.host_id, OLD.shared_network_name, OLD.pool_id,
+                                   NOW());
     RETURN NULL;
 END;
 $dhcp4_options_ADEL$
@@ -3460,14 +3515,14 @@ CREATE TRIGGER dhcp6_option_def_ADEL
 --   option.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
-                                       scope_id SMALLINT,
-                                       option_id INT,
-                                       subnet_id BIGINT,
-                                       host_id INT,
-                                       network_name VARCHAR(128),
-                                       pool_id BIGINT,
-                                       pd_pool_id BIGINT,
-                                       modification_ts TIMESTAMP WITH TIME ZONE)
+                                                  scope_id SMALLINT,
+                                                  option_id INT,
+                                                  subnet_id BIGINT,
+                                                  host_id INT,
+                                                  network_name VARCHAR(128),
+                                                  pool_id BIGINT,
+                                                  pd_pool_id BIGINT,
+                                                  modification_ts TIMESTAMP WITH TIME ZONE)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -3532,8 +3587,8 @@ END;$$;
 CREATE OR REPLACE FUNCTION func_dhcp6_options_AINS() RETURNS TRIGGER AS $dhcp6_options_AINS$
 BEGIN
     PERFORM createOptionAuditDHCP6('create', NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
-                                NEW.host_id, NEW.shared_network_name, NEW.pool_id,
-                                NEW.pd_pool_id, NEW.modification_ts);
+                                   NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                   NEW.pd_pool_id, NEW.modification_ts);
     RETURN NULL;
 END;
 $dhcp6_options_AINS$
@@ -3547,8 +3602,8 @@ CREATE TRIGGER dhcp6_options_AINS
 CREATE OR REPLACE FUNCTION func_dhcp6_options_AUPD() RETURNS TRIGGER AS $dhcp6_options_AUPD$
 BEGIN
     PERFORM createOptionAuditDHCP6('update', NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
-                                NEW.host_id, NEW.shared_network_name, NEW.pool_id,
-                                NEW.pd_pool_id, NEW.modification_ts);
+                                   NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                   NEW.pd_pool_id, NEW.modification_ts);
     RETURN NULL;
 END;
 $dhcp6_options_AUPD$
@@ -3563,8 +3618,8 @@ CREATE TRIGGER dhcp6_options_AUPD
 CREATE OR REPLACE FUNCTION func_dhcp6_options_ADEL() RETURNS TRIGGER AS $dhcp6_options_ADEL$
 BEGIN
     PERFORM createOptionAuditDHCP6('delete', OLD.scope_id, OLD.option_id, OLD.dhcp6_subnet_id,
-                                OLD.host_id, OLD.shared_network_name, OLD.pool_id,
-                                OLD.pd_pool_id, NOW());
+                                   OLD.host_id, OLD.shared_network_name, OLD.pool_id,
+                                   OLD.pd_pool_id, NOW());
     RETURN NULL;
 END;
 $dhcp6_options_ADEL$
