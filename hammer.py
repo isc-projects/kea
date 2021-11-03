@@ -200,6 +200,7 @@ Vagrant.configure("2") do |config|
 end
 """
 
+RECOMMENDED_VAGRANT_VERSION='2.2.16'
 
 log = logging.getLogger()
 
@@ -2379,11 +2380,11 @@ def ssh(provider, system, revision):
     ve.ssh()
 
 
-def _install_vagrant(ver='2.2.16', upgrade=False):
+def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
     system, _ = get_system_revision()
     if system in ['fedora', 'centos', 'rhel']:
         if upgrade:
-            execute('sudo rpm -e vagrant')
+            execute('sudo yum remove -y vagrant')
         rpm = 'vagrant_%s_x86_64.rpm' % ver
         cmd = 'wget --no-verbose -O /tmp/%s ' % rpm
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, rpm)
@@ -2392,7 +2393,7 @@ def _install_vagrant(ver='2.2.16', upgrade=False):
         os.unlink('/tmp/%s' % rpm)
     elif system in ['debian', 'ubuntu']:
         if upgrade:
-            execute('sudo dpkg --purge vagrant')
+            execute('sudo apt-get purge -y vagrant')
         deb = 'vagrant_%s_x86_64.deb' % ver
         cmd = 'wget --no-verbose -O /tmp/%s ' % deb
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, deb)
@@ -2412,10 +2413,15 @@ def ensure_hammer_deps():
     else:
         m = re.search('Installed Version: ([\d\.]+)', out, re.I)
         ver = m.group(1)
-        major, minor, patch = [int(v) for v in ver.split('.')]
-        # if ver < 2.2.16
-        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 16))):
+        vagrant = [int(v) for v in ver.split('.')]
+        recommended_vagrant = [int(v) for v in RECOMMENDED_VAGRANT_VERSION.split('.')]
+        if vagrant < recommended_vagrant:
             m = re.search('Latest Version: ([\d\.]+)', out, re.I)
+            if m is None:
+                # Vagrant was unable to check for the latest version of Vagrant.
+                # Attempt to upgrade to the recommended version to fix it.
+                _install_vagrant(upgrade=True)
+                return
             ver = m.group(1)
             _install_vagrant(ver, upgrade=True)
 
