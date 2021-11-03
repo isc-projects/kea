@@ -11,9 +11,13 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
+
 #include <gtest/gtest.h>
+
 #include <fstream>
 #include <set>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace isc::data;
 using namespace isc::test;
@@ -48,8 +52,9 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param compare whether to compare the output with legacy JSON parser
 void testParser(const std::string& txt, Parser4Context::ParserType parser_type,
                 bool compare = true) {
-    ConstElementPtr test_json;
+    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
 
+    ConstElementPtr test_json;
     ASSERT_NO_THROW({
             try {
                 Parser4Context ctx;
@@ -331,8 +336,9 @@ TEST(ParserTest, outboundIface) {
 /// @param msg expected content of the exception
 void testError(const std::string& txt,
                Parser4Context::ParserType parser_type,
-               const std::string& msg)
-{
+               const std::string& msg) {
+    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
+
     try {
         Parser4Context ctx;
         ConstElementPtr parsed = ctx.parseString(txt, parser_type);
@@ -575,10 +581,6 @@ TEST(ParserTest, errors) {
               Parser4Context::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected \",\", "
               "expecting }");
-    testError("{ \"foo\":true, }\n",
-              Parser4Context::PARSER_JSON,
-              "<string>:1.15: syntax error, unexpected }, "
-              "expecting constant string");
 
     // bad type
     testError("{ \"Dhcp4\":{\n"
@@ -646,7 +648,7 @@ TEST(ParserTest, errors) {
               "  \"Dhcp4\":{\n"
               "  \"comment\": \"second\" }}\n",
               Parser4Context::PARSER_DHCP4,
-              "<string>:2.23: syntax error, unexpected \",\", expecting }");
+              "<string>:3.3-9: syntax error, unexpected Dhcp4, expecting \",\" or }");
 
     // duplicate of not string entries
     testError("{ \"Dhcp4\":{\n"
@@ -874,6 +876,65 @@ TEST(ParserTest, duplicateMapEntries) {
     cout << "checked " << cnt << " duplicated map entries\n";
 }
 
+// Test that trailing commas are allowed.
+TEST(ParserTest, trailingCommas) {
+    string txt(R"({
+  "Dhcp4": {
+    "control-socket": {
+      "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
+      "socket-type": "unix",
+    },
+    "hooks-libraries": [
+      {
+        "library": "/usr/local/lib/kea/hooks/libdhcp_dummy.so",
+      },
+    ],
+    "interfaces-config": {
+      "interfaces": [
+        "eth0",
+      ],
+    },
+    "lease-database": {
+      "name": "/tmp/kea-dhcp4.csv",
+      "persist": true,
+      "type": "memfile",
+    },
+    "loggers": [
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcp4",
+        "output_options": [
+          {
+            "output": "stdout",
+          },
+        ],
+        "severity": "DEBUG",
+      },
+    ],
+    "multi-threading": {
+      "enable-multi-threading": false,
+      "packet-queue-size": 0,
+      "thread-pool-size": 0
+    },
+    "subnet4": [
+      {
+        "pools": [
+          {
+            "pool": "192.168.0.0/24",
+          },
+        ],
+        "subnet": "192.168.0.0/24",
+      },
+    ],
+  },
+})");
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
+
+    // Test with many consecutive commas.
+    boost::replace_all(txt, ",", ",,,,");
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
-}
-}
+
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

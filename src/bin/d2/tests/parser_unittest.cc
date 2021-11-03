@@ -10,9 +10,13 @@
 #include <d2/tests/parser_unittest.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
+
 #include <gtest/gtest.h>
+
 #include <fstream>
 #include <set>
+
+#include <boost/algorithm/string.hpp>
 
 #include "test_data_files_config.h"
 
@@ -49,8 +53,9 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param compare whether to compare the output with legacy JSON parser
 void testParser(const std::string& txt, D2ParserContext::ParserType parser_type,
     bool compare = true) {
-    ConstElementPtr test_json;
+    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
 
+    ConstElementPtr test_json;
     ASSERT_NO_THROW({
             try {
                 D2ParserContext ctx;
@@ -291,8 +296,9 @@ TEST(ParserTest, file) {
 /// @param msg expected content of the exception
 void testError(const std::string& txt,
                D2ParserContext::ParserType parser_type,
-               const std::string& msg)
-{
+               const std::string& msg) {
+    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
+
     try {
         D2ParserContext ctx;
         ConstElementPtr parsed = ctx.parseString(txt, parser_type);
@@ -531,10 +537,6 @@ TEST(ParserTest, errors) {
               D2ParserContext::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected \",\", "
               "expecting }");
-    testError("{ \"foo\":true, }\n",
-              D2ParserContext::PARSER_JSON,
-              "<string>:1.15: syntax error, unexpected }, "
-              "expecting constant string");
 
     // bad type
     testError("{ \"DhcpDdns\":{\n"
@@ -595,7 +597,7 @@ TEST(ParserTest, errors) {
               "  \"DhcpDdns\":{\n"
               "  \"comment\": \"second\" }}\n",
               D2ParserContext::PARSER_DHCPDDNS,
-              "<string>:2.23: syntax error, unexpected \",\", expecting }");
+              "<string>:3.3-12: syntax error, unexpected DhcpDdns, expecting \",\" or }");
 
     // duplicate of not string entries
     testError("{ \"DhcpDdns\":{\n"
@@ -805,6 +807,41 @@ TEST(ParserTest, duplicateMapEntries) {
     cout << "checked " << cnt << " duplicated map entries\n";
 }
 
+// Test that trailing commas are allowed.
+TEST(ParserTest, trailingCommas) {
+    string txt(R"({
+  "DhcpDdns": {
+    "forward-ddns": {},
+    "ip-address": "127.0.0.1",
+    "loggers": [
+      {
+        "name": "kea-dhcp-ddns",
+        "output_options": [
+          {
+            "output": "stdout"
+          },
+        ],
+        "severity": "DEBUG",
+      },
+    ],
+    "port": 53001,
+    "reverse-ddns": {},
+    "tsig-keys": [
+      {
+        "algorithm": "HMAC-MD5",
+        "name": "d2.md5.key",
+        "secret": "sensitivejdPJI5QxlpnfQ==",
+      },
+    ]
+  },
+})");
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+
+    // Test with many consecutive commas.
+    boost::replace_all(txt, ",", ",,,,");
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
-}
-}
+
+}  // namespace test
+}  // namespace d2
+}  // namespace isc
