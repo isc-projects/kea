@@ -232,8 +232,8 @@ public:
             // value).  This is roughly ten times the number for the longest
             // test (currently, multiTransactionTimeout).
             if (passes > max_passes) {
-                ADD_FAILURE() << "processALL failed, too many passes: "
-                    << passes <<  ", total handlers executed: " << handlers;
+                FAIL() << "processALL failed, too many passes: "
+                       << passes <<  ", total handlers executed: " << handlers;
             }
         }
     }

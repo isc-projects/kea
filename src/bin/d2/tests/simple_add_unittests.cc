@@ -598,23 +598,8 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
-
         // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time out we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::TIMEOUT);
@@ -662,23 +647,8 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
-
         // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time out we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a corrupt server response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
@@ -886,23 +856,8 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_Timeout) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
-
         // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time out we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::TIMEOUT);
@@ -949,23 +904,8 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
-
         // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time out we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server corrupt response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);

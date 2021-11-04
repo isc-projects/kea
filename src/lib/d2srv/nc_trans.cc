@@ -301,8 +301,12 @@ NameChangeTransaction::setDnsUpdateRequest(D2UpdateMessagePtr& request) {
 
 void
 NameChangeTransaction::clearDnsUpdateRequest() {
-    update_attempts_ = 0;
     dns_update_request_.reset();
+}
+
+void
+NameChangeTransaction::clearUpdateAttempts() {
+    update_attempts_ = 0;
 }
 
 void

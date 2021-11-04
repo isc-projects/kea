@@ -170,30 +170,28 @@ SimpleRemoveTransaction::selectingFwdServerHandler() {
 void
 SimpleRemoveTransaction::removingFwdRRsHandler() {
     if (doOnEntry()) {
-        // Clear the request on initial transition. This allows us to reuse
-        // the request on retries if necessary.
-        clearDnsUpdateRequest();
+        // Clear the update attempts count on initial transition.
+        clearUpdateAttempts();
     }
+    // No reuse of the request on retries.
+    clearDnsUpdateRequest();
 
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
     case SERVER_SELECTED_EVT:
-        if (!getDnsUpdateRequest()) {
-            // Request hasn't been constructed yet, so build it.
-            try {
-                buildRemoveFwdRRsRequest();
-            } catch (const std::exception& ex) {
-                // While unlikely, the build might fail if we have invalid
-                // data.  Should that be the case, we need to fail the
-                // transaction.
-                LOG_ERROR(d2_to_dns_logger,
-                          DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE)
-                          .arg(getRequestId())
-                          .arg(getNcr()->toText())
-                          .arg(ex.what());
-                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
-                break;
-            }
+        try {
+            buildRemoveFwdRRsRequest();
+        } catch (const std::exception& ex) {
+            // While unlikely, the build might fail if we have invalid
+            // data.  Should that be the case, we need to fail the
+            // transaction.
+            LOG_ERROR(d2_to_dns_logger,
+                      DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE)
+                .arg(getRequestId())
+                .arg(getNcr()->toText())
+                .arg(ex.what());
+            transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+            break;
         }
 
         // Call sendUpdate() to initiate the async send. Note it also sets
@@ -286,7 +284,6 @@ SimpleRemoveTransaction::removingFwdRRsHandler() {
     }
 }
 
-
 void
 SimpleRemoveTransaction::selectingRevServerHandler() {
     switch(getNextEvent()) {
@@ -320,28 +317,26 @@ SimpleRemoveTransaction::selectingRevServerHandler() {
 void
 SimpleRemoveTransaction::removingRevPtrsHandler() {
     if (doOnEntry()) {
-        // Clear the request on initial transition. This allows us to reuse
-        // the request on retries if necessary.
-        clearDnsUpdateRequest();
+        // Clear the update attempts count on initial transition.
+        clearUpdateAttempts();
     }
+    // No reuse of the request on retries.
+    clearDnsUpdateRequest();
 
     switch(getNextEvent()) {
     case SERVER_SELECTED_EVT:
-        if (!getDnsUpdateRequest()) {
-            // Request hasn't been constructed yet, so build it.
-            try {
-                buildRemoveRevPtrsRequest();
-            } catch (const std::exception& ex) {
-                // While unlikely, the build might fail if we have invalid
-                // data.  Should that be the case, we need to fail the
-                // transaction.
-                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE)
-                          .arg(getRequestId())
-                          .arg(getNcr()->toText())
-                          .arg(ex.what());
-                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
-                break;
-            }
+        try {
+            buildRemoveRevPtrsRequest();
+        } catch (const std::exception& ex) {
+            // While unlikely, the build might fail if we have invalid
+            // data.  Should that be the case, we need to fail the
+            // transaction.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE)
+                .arg(getRequestId())
+                .arg(getNcr()->toText())
+                .arg(ex.what());
+            transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+            break;
         }
 
         // Call sendUpdate() to initiate the async send. Note it also sets

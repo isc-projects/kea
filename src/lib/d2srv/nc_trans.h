@@ -288,9 +288,11 @@ protected:
     /// @param request is the new request packet to assign.
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
-    /// @brief Destroys the current update request packet and resets
-    /// update attempts count.
+    /// @brief Destroys the current update request packet.
     void clearDnsUpdateRequest();
+
+    /// @brief Resets the update attempts count.
+    void clearUpdateAttempts();
 
     /// @brief Sets the update status to the given status value.
     ///

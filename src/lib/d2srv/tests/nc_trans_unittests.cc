@@ -237,6 +237,7 @@ public:
     using NameChangeTransaction::setNcrStatus;
     using NameChangeTransaction::setDnsUpdateRequest;
     using NameChangeTransaction::clearDnsUpdateRequest;
+    using NameChangeTransaction::clearUpdateAttempts;
     using NameChangeTransaction::setDnsUpdateStatus;
     using NameChangeTransaction::getDnsUpdateResponse;
     using NameChangeTransaction::setDnsUpdateResponse;
@@ -873,6 +874,12 @@ TEST_F(NameChangeTransactionTest, updateAttempts) {
 
     // Verify that the value is as expected.
     EXPECT_EQ(5, name_change->getUpdateAttempts());
+
+    // Clear it.
+    name_change->clearUpdateAttempts();
+
+    // Verify that it was cleared as expected.
+    EXPECT_EQ(0, name_change->getUpdateAttempts());
 }
 
 /// @brief Tests retryTransition method
