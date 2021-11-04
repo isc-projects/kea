@@ -464,7 +464,7 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-100
+   :emphasize-lines: 57-104
 
 
     {
@@ -538,7 +538,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
                 "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
-                "tkey-lifetime": 3600,
+                "tkey-lifetime": 3600, // 1h
+                "rekey-interval": 2700, // 45m
+                "retry-interval": 120, // 2m
                 "tkey-protocol": "TCP",
                 "fallback": false,
 
@@ -555,6 +557,8 @@ An excerpt from D2 server is provided below. More examples are available in the
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
                         "tkey-lifetime": 86400, // 24h
+                        "rekey-interval": 64800, // 18h
+                        "retry-interval": 3600, // 1h
                         "tkey-protocol": "TCP",
                         "fallback": true // if no key is available fallback to the
                                          // standard behavior (vs skip this server)
@@ -626,7 +630,20 @@ The parameters have the following meaning:
   values are TCP (the default) and UDP.
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
-  TKEY protocol, expressed in seconds. Default value is 3600 (one hour).
+  TKEY protocol. The value must be greater than the ``rekey-interval``
+  value. It is expressed in seconds and it default to 3600 seconds
+  (one hour) if not specified.
+
+- ``rekey-interval`` governs the time interval the keys for each configured
+  server are checked if they expires before the next check cycle, so that
+  new keys are created. The value must be smaller than the ``tkey-lifetime``
+  value. It is expressed in seconds and it defaults to 2700 seconds
+  (45 minutes) if not specified.
+
+- ``retry-interval`` governs the time interval to retry to create a key if
+  any error occured on any key. The value must be smaller than the
+  ``rekey-interval`` value. It is expressed in seconds and it defaults to
+  120 seconds (2 minutes) if not specified.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
@@ -676,8 +693,19 @@ The server map parameters are:
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
   TKEY protocol for the DNS server. The TKEY lifetime parameter per server
-  takes precedence. Default and supported values are the same as for
-  the global level parameter.
+  takes precedence. Default and supported values are the same as for the
+  global level parameter.
+
+- ``rekey-interval`` governs the time interval the keys for each configured
+  server are checked if they expires before the next check cycle, so that
+  new keys are created. The rekey interval parameter per server takes
+  precedence. Default and supported values are the same as for the global
+  level parameter.
+
+- ``retry-interval`` governs the time interval to retry to create a key if
+  any error occured on any key of this particular server. The retry interval
+  parameter per server takes precedence. Default and supported values are
+  the same as for the global level parameter.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
