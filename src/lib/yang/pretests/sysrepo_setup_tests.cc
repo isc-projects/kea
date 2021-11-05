@@ -32,11 +32,8 @@ string missingModuleText(const string& name, const string& revision) {
     stringstream tmp;
     tmp << "ERROR: YANG module " << name << " is not installed." << endl
         << "The environment is not suitable for running unit tests." << endl
-        << "Please locate " << name << "@" << revision << ".yang, "
-        << "change to its directory and issue the following command:" << endl
-        << endl
-        << "sysrepoctl -i " << name << "@" << revision << ".yang" << endl
-        << endl
+        << "Please install the module " << name << ":" << endl
+        << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << revision << ".yang" << endl
         << endl;
     return (tmp.str());
 }
@@ -50,16 +47,13 @@ string missingModuleText(const string& name, const string& revision) {
 string badRevisionModuleText(const string& name, const string& expected,
                              const string& got) {
     stringstream tmp;
-    tmp << "ERROR: YANG module " << name << " is not installed with the right "
-        << "revision: expected " << expected << " but got " << got << endl
-        << "Please remove the module " << name << " and re-install it: "
-        << "Please locate " << name << "@" << expected << ".yang, " << endl
-        << "change to its directory and issue the following commands:"
-        << endl << endl
-        << "# sysrepoctl -u -m " << name << endl
-        << "# sysrepoctl -i -s " << REPOSITORY << "/yang "
-        << "-s . -g " << name << "@" << expected << ".yang" << endl
-        << endl << endl;
+    tmp << endl
+        << "ERROR: YANG module " << name << " is not installed with the right "
+        << "revision: got " << got << ", but expected " << expected << "." << endl
+        << "Please remove the module " << name << " and reinstall it: " << endl
+        << "$ sysrepoctl -u " << name << endl
+        << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << expected << ".yang" << endl
+        << endl;
     return (tmp.str());
 }
 
@@ -116,12 +110,12 @@ int main() {
 
     for (auto const& kv : YANG_REVISIONS) {
         std::string const& name(kv.first);
-        std::string const& revision(kv.second);
+        std::string const& expected_revision(kv.second);
         if (!installed_modules.count(name)) {
-            cerr << missingModuleText(name, revision);
+            cerr << missingModuleText(name, expected_revision);
             return (6);
         }
-        string const& expected_revision(installed_modules.at(name));
+        string const& revision(installed_modules.at(name));
         if (expected_revision != revision) {
             cerr << badRevisionModuleText(name, expected_revision, revision);
             return (7);
