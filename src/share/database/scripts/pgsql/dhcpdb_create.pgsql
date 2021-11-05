@@ -1103,9 +1103,7 @@ CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-INSERT INTO dhcp6_server VALUES (1,'all','special type: all servers');
-
-
+INSERT INTO dhcp6_server (tag, description) VALUES ('all','special type: all servers');
 
 -- Create a table for storing IPv6 shared networks
 CREATE TABLE dhcp6_shared_network (
@@ -1170,7 +1168,7 @@ CREATE INDEX dhcp6_shared_network_server_idx2 ON dhcp6_shared_network_server (se
 
 -- Create a list of IPv6 subnets
 CREATE TABLE dhcp6_subnet (
-  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_id BIGINT PRIMARY KEY NOT NULL,
   subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
   client_class VARCHAR(128) DEFAULT NULL,
   interface VARCHAR(128) DEFAULT NULL,
@@ -1427,7 +1425,7 @@ CREATE TRIGGER dhcp4_server_modification_ts_update
   AFTER UPDATE ON dhcp4_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-INSERT INTO dhcp4_server VALUES (1,'all','special type: all servers');
+INSERT INTO dhcp4_server (tag, description) VALUES ('all','special type: all servers');
 
 -- Create table for storing global DHCPv4 parameters.
 CREATE TABLE dhcp4_global_parameter (
@@ -1527,7 +1525,7 @@ CREATE INDEX dhcp4_shared_network_server_idx2 ON dhcp4_shared_network_server (se
 
 -- Create a list of IPv4 subnets
 CREATE TABLE dhcp4_subnet (
-  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_id BIGINT PRIMARY KEY NOT NULL,
   subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
   interface_4o6 VARCHAR(128) DEFAULT NULL,
   interface_id_4o6 VARCHAR(128) DEFAULT NULL,
@@ -1890,7 +1888,7 @@ BEGIN
     -- Fetch session value for disable_audit.
     disable_audit := get_session_small_int('kea.disable_audit');
     IF disable_audit = 0 THEN
-        SELECT id INTO STRICT srv_id FROM dhcp4_server WHERE tag = server_tag;
+        SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
         INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
@@ -2036,7 +2034,7 @@ DECLARE
     follow_class_index BIGINT;
 BEGIN
     -- Fetch the class's current value of depend_on_known_indirectly.
-    SELECT depend_on_known_indirectly INTO STRICT depend_on_known_indirectly
+    SELECT depend_on_known_indirectly INTO depend_on_known_indirectly
         FROM dhcp4_client_class_order WHERE id = class_id;
 
     -- Save it to the current session for use elsewhere during this transaction.
@@ -2062,7 +2060,7 @@ BEGIN
 
     IF follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
-        SELECT o.order_index INTO STRICT follow_class_index
+        SELECT o.order_index INTO follow_class_index
             FROM dhcp4_client_class AS c
             INNER JOIN dhcp4_client_class_order AS o
                 ON c.id = o.class_id
@@ -2091,7 +2089,7 @@ BEGIN
     ELSE
         -- A caller did not specify the follow_class_name value. Let's append the
         -- new class at the end of the hierarchy.
-        SELECT MAX(order_index) INTO STRICT follow_class_index FROM dhcp4_client_class_order;
+        SELECT MAX(order_index) INTO follow_class_index FROM dhcp4_client_class_order;
         IF follow_class_index IS NULL THEN
             -- Apparently, there are no classes. Let's start from 0.
             follow_class_index = 0;
@@ -2254,7 +2252,7 @@ BEGIN
     END IF;
 
     -- Check position of our class in the hierarchy.
-    SELECT o.order_index INTO STRICT class_index FROM dhcp4_client_class AS c
+    SELECT o.order_index INTO class_index FROM dhcp4_client_class AS c
         INNER JOIN dhcp4_client_class_order AS o ON c.id = o.class_id
         WHERE c.id = class_id;
 
@@ -2264,7 +2262,7 @@ BEGIN
     END IF;
 
     -- Check position of the dependency.
-    SELECT o.order_index INTO STRICT dependency_index FROM dhcp4_client_class AS c
+    SELECT o.order_index INTO dependency_index FROM dhcp4_client_class AS c
         INNER JOIN dhcp4_client_class_order AS o ON c.id = o.class_id
         WHERE c.id = dependency_id;
 
@@ -2342,13 +2340,13 @@ DECLARE
     dependency SMALLINT;
 BEGIN
     -- Check if the dependency class references KNOWN/UNKNOWN.
-    SELECT depend_on_known_directly INTO STRICT dependency FROM dhcp4_client_class
+    SELECT depend_on_known_directly INTO dependency FROM dhcp4_client_class
         WHERE id = dependency_id;
 
     -- If it doesn't, check if the dependency references KNOWN/UNKNOWN
     -- indirectly (via other classes).
     IF dependency = 0 THEN
-        SELECT depend_on_known_indirectly INTO STRICT dependency FROM dhcp4_client_class_order
+        SELECT depend_on_known_indirectly INTO dependency FROM dhcp4_client_class_order
             WHERE class_id = dependency_id;
     END IF;
 
@@ -2416,12 +2414,12 @@ BEGIN
             END IF;
 
             -- Check if the client class depends on KNOWN/UNKNOWN after the update.
-            SELECT depend_on_known_directly INTO STRICT depends FROM dhcp4_client_class
+            SELECT depend_on_known_directly INTO depends FROM dhcp4_client_class
                 WHERE id = client_class_id;
 
             -- If it doesn't depend directly, check indirect dependencies.
             IF depends = 0 THEN
-                SELECT depend_on_known_indirectly INTO STRICT depends FROM dhcp4_client_class_order
+                SELECT depend_on_known_indirectly INTO depends FROM dhcp4_client_class_order
                     WHERE class_id = client_class_id;
             END IF;
 
@@ -2499,7 +2497,7 @@ BEGIN
     -- Fetch session value for disable_audit.
     disable_audit := get_session_small_int('kea.disable_audit');
     IF disable_audit = 0 THEN
-        SELECT id INTO STRICT srv_id FROM dhcp6_server WHERE tag = server_tag;
+        SELECT id INTO srv_id FROM dhcp6_server WHERE tag = server_tag;
         INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
@@ -2640,7 +2638,7 @@ DECLARE
     follow_class_index BIGINT;
 BEGIN
     -- Fetch the class's current value of depend_on_known_indirectly.
-    SELECT depend_on_known_indirectly INTO STRICT depend_on_known_indirectly
+    SELECT depend_on_known_indirectly INTO depend_on_known_indirectly
         FROM dhcp6_client_class_order WHERE id = class_id;
 
     -- Save it to the current session for use elsewhere during this transaction.
@@ -2666,7 +2664,7 @@ BEGIN
 
     IF follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
-        SELECT o.order_index INTO STRICT follow_class_index
+        SELECT o.order_index INTO follow_class_index
             FROM dhcp6_client_class AS c
             INNER JOIN dhcp6_client_class_order AS o
                 ON c.id = o.class_id
@@ -2695,7 +2693,7 @@ BEGIN
     ELSE
         -- A caller did not specify the follow_class_name value. Let's append the
         -- new class at the end of the hierarchy.
-        SELECT MAX(order_index) INTO STRICT follow_class_index FROM dhcp6_client_class_order;
+        SELECT MAX(order_index) INTO follow_class_index FROM dhcp6_client_class_order;
         IF follow_class_index IS NULL THEN
             -- Apparently, there are no classes. Let's start from 0.
             follow_class_index = 0;
@@ -2857,7 +2855,7 @@ BEGIN
     END IF;
 
     -- Check position of our class in the hierarchy.
-    SELECT o.order_index INTO STRICT class_index FROM dhcp6_client_class AS c
+    SELECT o.order_index INTO class_index FROM dhcp6_client_class AS c
         INNER JOIN dhcp6_client_class_order AS o ON c.id = o.class_id
         WHERE c.id = class_id;
 
@@ -2867,7 +2865,7 @@ BEGIN
     END IF;
 
     -- Check position of the dependency.
-    SELECT o.order_index INTO STRICT dependency_index FROM dhcp6_client_class AS c
+    SELECT o.order_index INTO dependency_index FROM dhcp6_client_class AS c
         INNER JOIN dhcp6_client_class_order AS o ON c.id = o.class_id
         WHERE c.id = dependency_id;
 
@@ -2945,13 +2943,13 @@ DECLARE
     dependency SMALLINT;
 BEGIN
     -- Check if the dependency class references KNOWN/UNKNOWN.
-    SELECT depend_on_known_directly INTO STRICT dependency FROM dhcp6_client_class
+    SELECT depend_on_known_directly INTO dependency FROM dhcp6_client_class
         WHERE id = dependency_id;
 
     -- If it doesn't, check if the dependency references KNOWN/UNKNOWN
     -- indirectly (via other classes).
     IF dependency = 0 THEN
-        SELECT depend_on_known_indirectly INTO STRICT dependency FROM dhcp6_client_class_order
+        SELECT depend_on_known_indirectly INTO dependency FROM dhcp6_client_class_order
             WHERE class_id = dependency_id;
     END IF;
 
@@ -3019,12 +3017,12 @@ BEGIN
             END IF;
 
             -- Check if the client class depends on KNOWN/UNKNOWN after the update.
-            SELECT depend_on_known_directly INTO STRICT depends FROM dhcp6_client_class
+            SELECT depend_on_known_directly INTO depends FROM dhcp6_client_class
                 WHERE id = client_class_id;
 
             -- If it doesn't depend directly, check indirect dependencies.
             IF depends = 0 THEN
-                SELECT depend_on_known_indirectly INTO STRICT depends FROM dhcp6_client_class_order
+                SELECT depend_on_known_indirectly INTO depends FROM dhcp6_client_class_order
                     WHERE class_id = client_class_id;
             END IF;
 
@@ -3060,7 +3058,7 @@ CREATE INDEX fk_dhcp6_client_class_server_id ON dhcp6_client_class_server (serve
 CREATE OR REPLACE FUNCTION func_dhcp4_pool_BDEL() RETURNS TRIGGER AS $dhcp4_pool_BDEL$
 BEGIN
     DELETE FROM dhcp4_options WHERE scope_id = 5 AND pool_id = OLD.id;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp4_pool_BDEL$
 LANGUAGE plpgsql;
@@ -3074,7 +3072,7 @@ CREATE TRIGGER dhcp4_pool_BDEL
 CREATE OR REPLACE FUNCTION func_dhcp6_pool_BDEL() RETURNS TRIGGER AS $dhcp6_pool_BDEL$
 BEGIN
     DELETE FROM dhcp6_options WHERE scope_id = 5 AND pool_id = OLD.id;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp6_pool_BDEL$
 LANGUAGE plpgsql;
@@ -3304,13 +3302,13 @@ BEGIN
             -- to allow the servers to refresh the shared network
             -- information. This will also result in creating an
             -- audit entry for this shared network.
-           SELECT id INTO STRICT snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
+           SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
            UPDATE dhcp4_shared_network AS n SET n.modification_ts = modification_ts
                 WHERE n.id = snid;
         ELSEIF scope_id = 5 THEN
             -- If pool specific option is added or modified, update
             -- the modification timestamp of the owning subnet.
-            SELECT dhcp4_pool.subnet_id INTO STRICT sid FROM dhcp4_pool WHERE id = pool_id;
+            SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
             UPDATE dhcp4_subnet AS s SET s.modification_ts = modification_ts
                 WHERE s.subnet_id = sid;
         END IF;
@@ -3564,18 +3562,18 @@ BEGIN
             -- create audit entry for the shared network which
             -- indicates that it should be treated as the shared
             -- network update.
-           SELECT id INTO STRICT snid FROM dhcp6_shared_network
+           SELECT id INTO snid FROM dhcp6_shared_network
                 WHERE name = network_name LIMIT 1;
            PERFORM createAuditEntryDHCP6('dhcp6_shared_network', snid, 'update');
         ELSEIF scope_id = 5 THEN
             -- If pool specific option is added or modified, create
             -- audit entry for the subnet which this pool belongs to.
-            SELECT dhcp6_pool.subnet_id INTO STRICT sid FROM dhcp6_pool WHERE id = pool_id;
+            SELECT dhcp6_pool.subnet_id INTO sid FROM dhcp6_pool WHERE id = pool_id;
             PERFORM createAuditEntryDHCP6('dhcp6_subnet', sid, 'update');
         ELSEIF scope_id = 6 THEN
             -- If pd pool specific option is added or modified, create
             -- audit entry for the subnet which this pd pool belongs to.
-            SELECT dhcp6_pd_pool.subnet_id INTO STRICT sid FROM dhcp6_pd_pool
+            SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool
                 WHERE id = pd_pool_id;
             PERFORM createAuditEntryDHCP6('dhcp6_subnet', sid, 'update');
         END IF;
@@ -3676,6 +3674,7 @@ CREATE TRIGGER dhcp4_server_ADEL
 CREATE OR REPLACE FUNCTION func_dhcp6_server_AINS() RETURNS TRIGGER AS $dhcp6_server_AINS$
 BEGIN
     PERFORM createAuditEntryDHCP6('dhcp6_server', NEW.id, 'create');
+    RETURN NULL;
 END;
 $dhcp6_server_AINS$
 LANGUAGE plpgsql;
@@ -3716,9 +3715,9 @@ CREATE TRIGGER dhcp6_server_ADEL
 -- Trigger function for dhcp4_shared_network_BDEL called BEFORE DELETE on dhcp4_shared_network
 CREATE OR REPLACE FUNCTION func_dhcp4_shared_network_BDEL() RETURNS TRIGGER AS $dhcp4_shared_network_BDEL$
 BEGIN
-    PERFORM createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, 'create');
+    PERFORM createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, 'delete');
     DELETE FROM dhcp4_options WHERE shared_network_name = OLD.name;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp4_shared_network_BDEL$
 LANGUAGE plpgsql;
@@ -3733,7 +3732,7 @@ BEGIN
     PERFORM createAuditEntryDHCP4('dhcp4_subnet', OLD.subnet_id, 'delete');
     DELETE FROM dhcp4_pool WHERE subnet_id = OLD.subnet_id;
     DELETE FROM dhcp4_options WHERE dhcp4_subnet_id = OLD.subnet_id;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp4_subnet_BDEL$
 LANGUAGE plpgsql;
@@ -3747,7 +3746,7 @@ CREATE OR REPLACE FUNCTION func_dhcp6_shared_network_BDEL() RETURNS TRIGGER AS $
 BEGIN
     PERFORM createAuditEntryDHCP6('dhcp6_shared_network', OLD.id, 'delete');
     DELETE FROM dhcp6_options WHERE shared_network_name = OLD.name;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp6_shared_network_BDEL$
 LANGUAGE plpgsql;
@@ -3763,7 +3762,7 @@ BEGIN
     DELETE FROM dhcp6_pool WHERE subnet_id = OLD.subnet_id;
     DELETE FROM dhcp6_pd_pool WHERE subnet_id = OLD.subnet_id;
     DELETE FROM dhcp6_options WHERE dhcp6_subnet_id = OLD.subnet_id;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp6_subnet_BDEL$
 LANGUAGE plpgsql;
@@ -3776,7 +3775,7 @@ CREATE TRIGGER dhcp6_subnet_BDEL
 CREATE OR REPLACE FUNCTION func_dhcp6_pd_pool_BDEL() RETURNS TRIGGER AS $dhcp6_pd_pool_BDEL$
 BEGIN
     DELETE FROM dhcp6_options WHERE scope_id = 6 AND pd_pool_id = OLD.id;
-    RETURN NULL;
+    RETURN OLD;
 END;
 $dhcp6_pd_pool_BDEL$
 LANGUAGE plpgsql;
