@@ -12,7 +12,7 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2021-08-25;
+    revision-date 2021-11-24;
   }
 
   organization "Internet Systems Consortium";
@@ -21,7 +21,12 @@ module kea-dhcp4-server {
                used to configure and manage a Kea DHCPv4 server.";
 
   revision 2021-11-24 {
-    description "Added lifetimes to client classes.";
+    description "Fixed store-extended-info. Added containers and leaves:
+                 cache-*, on-fail, compatibility, lenient-option-parsing,
+                 ddns-*, ip-reservations-unique,
+                 multi-threading and its children, reservations-*,
+                 statistic-default-sample-age, statistic-default-sample-count,
+                 *valid-lifetime, *preferred-lifetime.";
   }
 
   revision 2021-08-25 {
@@ -215,8 +220,23 @@ module kea-dhcp4-server {
         description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
       }
       uses authoritative;
-      uses dhcp:subnet-user-context;
+      uses dhcp:cache-max-age;
+      uses dhcp:cache-threshold;
+      uses dhcp:ddns-generated-prefix;
+      uses dhcp:ddns-override-client-update;
+      uses dhcp:ddns-override-no-update;
+      uses dhcp:ddns-qualifying-suffix;
+      uses dhcp:ddns-replace-client-name;
+      uses dhcp:ddns-send-updates;
+      uses dhcp:ddns-update-on-renew;
+      uses dhcp:ddns-use-conflict-resolution;
+      uses dhcp:hostname-char-replacement;
+      uses dhcp:hostname-char-set;
+      uses dhcp:reservations-global;
+      uses dhcp:reservations-in-subnet;
+      uses dhcp:reservations-out-of-pool;
       uses dhcp:store-extended-info;
+      uses dhcp:subnet-user-context;
     }
   }
 
@@ -234,9 +254,9 @@ module kea-dhcp4-server {
       uses next-server;
       uses server-hostname;
       uses boot-file-name;
+      uses dhcp:valid-lifetime;
       uses dhcp:min-valid-lifetime;
       uses dhcp:max-valid-lifetime;
-      uses dhcp:valid-lifetime;
       uses dhcp:class-user-context;
     }
   }
@@ -334,6 +354,22 @@ module kea-dhcp4-server {
       uses dhcp:calculate-tee-times;
       uses dhcp:t1-percent;
       uses dhcp:t2-percent;
+      uses dhcp:cache-max-age;
+      uses dhcp:cache-threshold;
+      uses dhcp:ddns-generated-prefix;
+      uses dhcp:ddns-override-client-update;
+      uses dhcp:ddns-override-no-update;
+      uses dhcp:ddns-qualifying-suffix;
+      uses dhcp:ddns-replace-client-name;
+      uses dhcp:ddns-send-updates;
+      uses dhcp:ddns-update-on-renew;
+      uses dhcp:ddns-use-conflict-resolution;
+      uses dhcp:store-extended-info;
+      uses dhcp:hostname-char-replacement;
+      uses dhcp:hostname-char-set;
+      uses dhcp:reservations-global;
+      uses dhcp:reservations-in-subnet;
+      uses dhcp:reservations-out-of-pool;
       uses dhcp:network-user-context;
     }
 
@@ -418,6 +454,25 @@ module kea-dhcp4-server {
     uses dhcp:server-tag;
     uses dhcp:dhcp-queue-control;
     uses kea:loggers;
+    uses dhcp:cache-max-age;
+    uses dhcp:cache-threshold;
+    uses dhcp:compatibility;
+    uses dhcp:ddns-generated-prefix;
+    uses dhcp:ddns-override-client-update;
+    uses dhcp:ddns-override-no-update;
+    uses dhcp:ddns-qualifying-suffix;
+    uses dhcp:ddns-replace-client-name;
+    uses dhcp:ddns-send-updates;
+    uses dhcp:ddns-update-on-renew;
+    uses dhcp:ddns-use-conflict-resolution;
+    uses dhcp:ip-reservations-unique;
+    uses dhcp:multi-threading;
+    uses dhcp:parked-packet-limit;
+    uses dhcp:reservations-global;
+    uses dhcp:reservations-in-subnet;
+    uses dhcp:reservations-out-of-pool;
+    uses dhcp:statistic-default-sample-age;
+    uses dhcp:statistic-default-sample-count;
     uses dhcp:store-extended-info;
   }
 

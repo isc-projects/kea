@@ -66,6 +66,9 @@ TranslatorClass::getClassKea(const string& xpath) {
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
+    checkAndGetLeaf(result, xpath, "valid-lifetime");
+    checkAndGetLeaf(result, xpath, "min-valid-lifetime");
+    checkAndGetLeaf(result, xpath, "max-valid-lifetime");
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = getOptionDefList(xpath);
         if (defs && (defs->size() > 0)) {
@@ -83,6 +86,10 @@ TranslatorClass::getClassKea(const string& xpath) {
         if (boot) {
             result->set("boot-file-name", boot);
         }
+    } else if (model_ == KEA_DHCP6_SERVER) {
+        checkAndGetLeaf(result, xpath, "preferred-lifetime");
+        checkAndGetLeaf(result, xpath, "min-preferred-lifetime");
+        checkAndGetLeaf(result, xpath, "max-preferred-lifetime");
     }
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
@@ -127,6 +134,9 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
         setOptionDataList(xpath, options);
         created = true;
     }
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", SR_UINT32_T);
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = elem->get("option-def");
         if (defs) {
@@ -148,6 +158,10 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
             setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
             created = true;
         }
+    } else if (model_ == KEA_DHCP6_SERVER) {
+        checkAndSetLeaf(elem, xpath, "preferred-lifetime", SR_UINT32_T);
+        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", SR_UINT32_T);
+        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", SR_UINT32_T);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {

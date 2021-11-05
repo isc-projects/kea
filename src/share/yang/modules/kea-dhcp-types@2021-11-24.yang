@@ -16,6 +16,15 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2021-11-24 {
+    description "Fixed store-extended-info. Added containers and leaves:
+                 cache-*, on-fail, compatibility, lenient-option-parsing,
+                 ddns-*, ip-reservations-unique,
+                 multi-threading and its children, reservations-*,
+                 statistic-default-sample-age, statistic-default-sample-count,
+                 *valid-lifetime, *preferred-lifetime.";
+  }
+
   revision 2021-08-25 {
     description "Added store-extended-info";
   }
@@ -113,6 +122,23 @@ module kea-dhcp-types {
     leaf calculate-tee-times {
       type boolean;
       description "Calculate T1/T2 entry.";
+    }
+  }
+
+  grouping cache-max-age {
+    leaf cache-max-age {
+      description "Maximum lease age until cached";
+      type uint32;
+    }
+  }
+
+  grouping cache-threshold {
+    leaf cache-threshold {
+      description "Cache threshold";
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
     }
   }
 
@@ -231,7 +257,11 @@ module kea-dhcp-types {
     leaf max-row-errors {
       type uint32;
       description "Maximum row errors (0 means unlimited).";
-   }
+    }
+    leaf on-fail {
+      description "Action to take when connection recovery fails.";
+      type string;
+    }
     uses kea:user-context {
       refine user-context {
         description "Database user context. Arbitrary JSON data can be
@@ -842,6 +872,145 @@ module kea-dhcp-types {
     leaf store-extended-info {
       description "whether Kea should store additional client query data e.g. RAI in packets";
       type boolean;
+    }
+  }
+
+  grouping compatibility {
+    container compatibility {
+      description "Parameters for triggering behaviors compatible with broken or
+                   non-compliant clients, relays or other agents";
+      leaf lenient-option-parsing {
+        description "Enable more lenient option parsing";
+        type boolean;
+      }
+    }
+  }
+
+  grouping ddns-generated-prefix {
+    leaf ddns-generated-prefix {
+      description "Specifies a prefix to be prepended to the generated Client
+                   FQDN.";
+      type string;
+    }
+  }
+
+  grouping ddns-override-client-update {
+    leaf ddns-override-client-update {
+      description "whether to ignore DHCP client requests to update DNS";
+      type boolean;
+    }
+  }
+
+  grouping ddns-override-no-update {
+    leaf ddns-override-no-update {
+      description "whether to override DHCP client requests to not update DNS";
+      type boolean;
+    }
+  }
+
+  grouping ddns-qualifying-suffix {
+    leaf ddns-qualifying-suffix {
+      description "suffix appended to the partial name sent to the DNS";
+      type string;
+    }
+  }
+
+  grouping ddns-replace-client-name {
+    leaf ddns-replace-client-name {
+      description "whether the server should honor the hostname or Client FQDN
+                   sent by the client; multiple options are available";
+      type string;
+    }
+  }
+
+  grouping ddns-send-updates {
+    leaf ddns-send-updates {
+      description "whether DDNS updates should be enabled";
+      type boolean;
+    }
+  }
+
+  grouping ddns-update-on-renew {
+    leaf ddns-update-on-renew{
+      description "whether to update DNS when leases are renewed";
+      type boolean;
+    }
+  }
+
+  grouping ddns-use-conflict-resolution {
+    leaf ddns-use-conflict-resolution {
+      description "whether RFC 4703 DNS update conflict resolution should be
+                   employed";
+      type boolean;
+    }
+  }
+
+  grouping ip-reservations-unique {
+    leaf ip-reservations-unique {
+      description "whether Kea should enforce a single reservation per address";
+      type boolean;
+    }
+  }
+
+  grouping multi-threading {
+    container multi-threading {
+      description "multi-threading parameters";
+      leaf enable-multi-threading {
+        description "whether Kea should run on multiple threads or just one";
+        type boolean;
+      }
+      leaf packet-queue-size {
+        description "the capacity of the packet backlog that threads dequeue
+                     from";
+        type uint32;
+      }
+      leaf thread-pool-size {
+        description "the number of threads Kea should run on";
+        type uint32;
+      }
+    }
+  }
+
+  grouping parked-packet-limit {
+    leaf parked-packet-limit {
+      description "maximum allowed capacity of parked packets";
+      type uint32;
+    }
+  }
+
+  grouping reservations-global {
+    leaf reservations-global {
+      description "whether Kea should lookup global reservations";
+      type boolean;
+    }
+  }
+
+  grouping reservations-in-subnet {
+    leaf reservations-in-subnet {
+      description "whether Kea should lookup in-subnet reservations";
+      type boolean;
+    }
+  }
+
+  grouping reservations-out-of-pool {
+    leaf reservations-out-of-pool {
+      description "whether Kea can assume that all reservations are
+                   out-of-pool";
+      type boolean;
+    }
+  }
+
+  grouping statistic-default-sample-age {
+    leaf statistic-default-sample-age {
+      description "the maximum number of seconds that samples are kept for.";
+      type uint32;
+    }
+  }
+
+  grouping statistic-default-sample-count {
+    leaf statistic-default-sample-count {
+      description "the maximum number of samples which are kept";
+      type uint32;
     }
   }
 }

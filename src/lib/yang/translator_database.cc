@@ -125,6 +125,7 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     if (max_row_errors) {
         result->set("max-row-errors", max_row_errors);
     }
+    checkAndGetLeaf(result, xpath, "on-fail");
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
@@ -243,6 +244,7 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     if (max_row_errors) {
         setItem(xpath + "/max-row-errors", max_row_errors, SR_UINT32_T);
     }
+    checkAndSetLeaf(elem, xpath, "on-fail", SR_STRING_T);
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),

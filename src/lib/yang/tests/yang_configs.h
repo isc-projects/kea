@@ -401,6 +401,10 @@ const YRTree subnetOptionsTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
       "", SR_CONTAINER_T, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/relay",
       "", SR_CONTAINER_T, false },
+    { "/kea-dhcp4-server:config/compatibility",
+      "", SR_CONTAINER_T, false },
+    { "/kea-dhcp4-server:config/multi-threading",
+      "", SR_CONTAINER_T, false },
 });
 
 /// @brief A subnet with a pool and option data lists with
@@ -461,6 +465,10 @@ const YRTree subnetOptionsTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
     { "/kea-dhcp6-server:config/interfaces-config",
       "", SR_CONTAINER_T, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/relay",
+      "", SR_CONTAINER_T, false },
+    { "/kea-dhcp6-server:config/compatibility",
+      "", SR_CONTAINER_T, false },
+    { "/kea-dhcp6-server:config/multi-threading",
       "", SR_CONTAINER_T, false },
 });
 
@@ -540,6 +548,10 @@ const YRTree emptyTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
       "", SR_CONTAINER_T, false },
     { "/kea-dhcp4-server:config/interfaces-config",
       "", SR_CONTAINER_T, false },
+    { "/kea-dhcp4-server:config/compatibility",
+      "", SR_CONTAINER_T, false },
+    { "/kea-dhcp4-server:config/multi-threading",
+      "", SR_CONTAINER_T, false },
 });
 
 const YRTree emptyTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
@@ -554,10 +566,14 @@ const YRTree emptyTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
       "", SR_CONTAINER_T, false },
     { "/kea-dhcp6-server:config/interfaces-config",
       "", SR_CONTAINER_T, false },
+    { "/kea-dhcp6-server:config/compatibility",
+      "", SR_CONTAINER_T, false },
+    { "/kea-dhcp6-server:config/multi-threading",
+      "", SR_CONTAINER_T, false },
 });
 
 /// @brief Set of example configurations.
-const std::vector<std::pair<std::string, YRTree> > test_configs =
+const std::vector<std::pair<std::string, YRTree> > TEST_CONFIGS =
 {
     { testModel,                   testTree },
     { subnetTwoPoolsModelIetf6,    subnetTwoPoolsTreeIetf6 },

@@ -262,7 +262,7 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
 // This is test environment sanity check. It verifies that all configuration
 // defined in yang_configs.h are sane.
 TEST(YangReprTest, verifyConfigs) {
-    for (auto x : test_configs) {
+    for (auto x : TEST_CONFIGS) {
         sanityCheckConfig(x.first, x.second);
     }
 }

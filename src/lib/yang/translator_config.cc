@@ -274,6 +274,35 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (loggers && !loggers->empty()) {
         result->set("loggers", loggers);
     }
+    checkAndGetLeaf(result, xpath, "cache-max-age");
+    checkAndGetLeaf(result, xpath, "cache-threshold");
+    ElementPtr compatibility = Element::createMap();
+    checkAndGetLeaf(compatibility, xpath + "/compatibility", "lenient-option-parsing");
+    if (!compatibility->empty()) {
+        result->set("compatibility", compatibility);
+    }
+    checkAndGetLeaf(result, xpath, "ddns-generated-prefix");
+    checkAndGetLeaf(result, xpath, "ddns-override-client-update");
+    checkAndGetLeaf(result, xpath, "ddns-override-no-update");
+    checkAndGetLeaf(result, xpath, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, xpath, "ddns-replace-client-name");
+    checkAndGetLeaf(result, xpath, "ddns-send-updates");
+    checkAndGetLeaf(result, xpath, "ddns-update-on-renew");
+    checkAndGetLeaf(result, xpath, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, xpath, "ip-reservations-unique");
+    ElementPtr multi_threading = Element::createMap();
+    checkAndGetLeaf(multi_threading, xpath + "/multi-threading", "enable-multi-threading");
+    checkAndGetLeaf(multi_threading, xpath + "/multi-threading", "packet-queue-size");
+    checkAndGetLeaf(multi_threading, xpath + "/multi-threading", "thread-pool-size");
+    if (!multi_threading->empty()) {
+        result->set("multi-threading", multi_threading);
+    }
+    checkAndGetLeaf(result, xpath, "parked-packet-limit");
+    checkAndGetLeaf(result, xpath, "reservations-global");
+    checkAndGetLeaf(result, xpath, "reservations-in-subnet");
+    checkAndGetLeaf(result, xpath, "reservations-out-of-pool");
+    checkAndGetLeaf(result, xpath, "statistic-default-sample-age");
+    checkAndGetLeaf(result, xpath, "statistic-default-sample-count");
     checkAndGetLeaf(result, xpath, "store-extended-info");
     return (result);
 }
@@ -718,6 +747,33 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     if (loggers) {
         setLoggers(xpath, loggers);
     }
+    checkAndSetLeaf(elem, xpath, "cache-max-age", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "cache-threshold", SR_DECIMAL64_T);
+    ConstElementPtr compatibility(elem->get("compatibility"));
+    if (compatibility) {
+        checkAndSetLeaf(compatibility, xpath + "/compatibility", "lenient-option-parsing", SR_BOOL_T);
+    }
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ip-reservations-unique", SR_BOOL_T);
+    ConstElementPtr multi_threading(elem->get("multi-threading"));
+    if (multi_threading) {
+        checkAndSetLeaf(multi_threading, xpath + "/multi-threading", "enable-multi-threading", SR_BOOL_T);
+        checkAndSetLeaf(multi_threading, xpath + "/multi-threading", "packet-queue-size", SR_UINT32_T);
+        checkAndSetLeaf(multi_threading, xpath + "/multi-threading", "thread-pool-size", SR_UINT32_T);
+    }
+    checkAndSetLeaf(elem, xpath, "parked-packet-limit", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "reservations-global", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "statistic-default-sample-age", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "statistic-default-sample-count", SR_UINT32_T);
     checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 

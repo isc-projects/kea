@@ -175,6 +175,22 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
+    checkAndGetLeaf(result, xpath, "cache-max-age");
+    checkAndGetLeaf(result, xpath, "cache-threshold");
+    checkAndGetLeaf(result, xpath, "ddns-generated-prefix");
+    checkAndGetLeaf(result, xpath, "ddns-override-client-update");
+    checkAndGetLeaf(result, xpath, "ddns-override-no-update");
+    checkAndGetLeaf(result, xpath, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, xpath, "ddns-replace-client-name");
+    checkAndGetLeaf(result, xpath, "ddns-send-updates");
+    checkAndGetLeaf(result, xpath, "ddns-update-on-renew");
+    checkAndGetLeaf(result, xpath, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, xpath, "hostname-char-replacement");
+    checkAndGetLeaf(result, xpath, "hostname-char-set");
+    checkAndGetLeaf(result, xpath, "reservations-global");
+    checkAndGetLeaf(result, xpath, "reservations-in-subnet");
+    checkAndGetLeaf(result, xpath, "reservations-out-of-pool");
+    checkAndGetLeaf(result, xpath, "store-extended-info");
     return (result);
 }
 
@@ -324,6 +340,22 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
         ConstElementPtr repr = Element::create(context->str());
         setItem(xpath + "/user-context", repr, SR_STRING_T);
     }
+    checkAndSetLeaf(elem, xpath, "cache-max-age", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "cache-threshold", SR_DECIMAL64_T);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "reservations-global", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
