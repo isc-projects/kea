@@ -638,10 +638,68 @@ described by a string containing one or more format components as part of a
 text string.  In addition to the components the string may contain any other
 arbitrary text you find useful.
 
-The Log4Cplus documentation provides a concise discussion of the supported
-components and formatting behavior and can be seen here:
+The behavior of Kea's format strings is determined by Log4Cplus. The following
+format options are possible:
 
-    https://log4cplus.sourceforge.io/docs/html/classlog4cplus_1_1PatternLayout.html
+.. table:: List of Supported Format String Components by Kea's Logger
+   :class: longtable
+   :widths: 8 40
+
+   +-----------+-----------------------------------------------+
+   | Component | Value                                         |
+   +===========+===============================================+
+   | ``%a``    | Abbreviated weekday name                      |
+   +-----------+-----------------------------------------------+
+   | ``%A``    | Full weekday name                             |
+   +-----------+-----------------------------------------------+
+   | ``%b``    | Abbreviated month name                        |
+   +-----------+-----------------------------------------------+
+   | ``%B``    | Full month name                               |
+   +-----------+-----------------------------------------------+
+   | ``%c``    | Standard date and time string                 |
+   +-----------+-----------------------------------------------+
+   | ``%d``    | Day of month as a decimal(1-31)               |
+   +-----------+-----------------------------------------------+
+   | ``%H``    | Hour(0-23)                                    |
+   +-----------+-----------------------------------------------+
+   | ``%I``    | Hour(1-12)                                    |
+   +-----------+-----------------------------------------------+
+   | ``%j``    | Day of year as a decimal(1-366)               |
+   +-----------+-----------------------------------------------+
+   | ``%m``    | Month as decimal(1-12)                        |
+   +-----------+-----------------------------------------------+
+   | ``%M``    | Minute as decimal(0-59)                       |
+   +-----------+-----------------------------------------------+
+   | ``%p``    | Locale's equivalent of AM or PM               |
+   +-----------+-----------------------------------------------+
+   | ``%q``    | milliseconds as decimal(0-999)                |
+   +-----------+-----------------------------------------------+
+   | ``%Q``    | fractional milliseconds as decimal(0-999.999) |
+   +-----------+-----------------------------------------------+
+   | ``%S``    | Second as decimal(0-59)                       |
+   +-----------+-----------------------------------------------+
+   | ``%U``    | Week of year, Sunday being first day(0-53)    |
+   +-----------+-----------------------------------------------+
+   | ``%w``    | Weekday as a decimal(0-6, Sunday being 0)     |
+   +-----------+-----------------------------------------------+
+   | ``%W``    | Week of year, Monday being first day(0-53)    |
+   +-----------+-----------------------------------------------+
+   | ``%x``    | Standard date string                          |
+   +-----------+-----------------------------------------------+
+   | ``%X``    | Standard time string                          |
+   +-----------+-----------------------------------------------+
+   | ``%y``    | Year in decimal without century(0-99)         |
+   +-----------+-----------------------------------------------+
+   | ``%Y``    | Year including century as decimal             |
+   +-----------+-----------------------------------------------+
+   | ``%Z``    | Time zone name                                |
+   +-----------+-----------------------------------------------+
+   | ``%%``    | The percent sign                              |
+   +-----------+-----------------------------------------------+
+
+Lookup the documentation for the ``strftime()`` function found in the
+``<ctime>`` header or the ``strftime(3)`` Unix manual page for more
+information.
 
 It is probably easiest to understand this by examining the default pattern
 for stdout and files (currently they are the same).  That pattern is shown
