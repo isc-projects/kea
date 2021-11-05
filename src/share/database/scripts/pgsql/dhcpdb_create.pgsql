@@ -293,7 +293,7 @@ CREATE TABLE dhcp4_options (
   space VARCHAR(128) DEFAULT NULL,
   persistent BOOLEAN NOT NULL DEFAULT 'f',
   dhcp_client_class VARCHAR(128) DEFAULT NULL,
-  dhcp4_subnet_id INT DEFAULT NULL,
+  dhcp4_subnet_id BIGINT DEFAULT NULL,
   host_id INT DEFAULT NULL,
   scope_id SMALLINT NOT NULL,
   CONSTRAINT fk_options_host1 FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE,
@@ -315,7 +315,7 @@ CREATE TABLE dhcp6_options (
   space VARCHAR(128) DEFAULT NULL,
   persistent BOOLEAN NOT NULL DEFAULT 'f',
   dhcp_client_class VARCHAR(128) DEFAULT NULL,
-  dhcp6_subnet_id INT DEFAULT NULL,
+  dhcp6_subnet_id BIGINT DEFAULT NULL,
   host_id INT DEFAULT NULL,
   scope_id SMALLINT NOT NULL,
   CONSTRAINT fk_options_host10 FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE,
@@ -2021,33 +2021,33 @@ CREATE INDEX key_dhcp4_client_class_order_index on dhcp4_client_class_order (ord
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION setClientClass4Order(id BIGINT,
-                                                follow_class_name VARCHAR(128),
+                                                new_follow_class_name VARCHAR(128),
                                                 old_follow_class_name VARCHAR(128))
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
     -- Used to fetch class's current value for depend_on_known_indirectly
-    depend_on_known_indirectly BIGINT := 0;
+    l_depend_on_known_indirectly BIGINT := 0;
 
     -- Optionally set if the follow_class_name column value is specified.
     follow_class_index BIGINT;
 BEGIN
     -- Fetch the class's current value of depend_on_known_indirectly.
-    SELECT depend_on_known_indirectly INTO depend_on_known_indirectly
+    SELECT depend_on_known_indirectly INTO l_depend_on_known_indirectly
         FROM dhcp4_client_class_order WHERE id = class_id;
 
     -- Save it to the current session for use elsewhere during this transaction.
     -- Note this does not work prior to Postgres 9.2 unless the variables are
     -- defined in postgresql.conf. I think for now we put up with CB not supported
     -- prior to 9.2 or we tell people how to edit the conf file.
-    PERFORM set_session_value('kea.depend_on_known_indirectly', depend_on_known_indirectly);
+    PERFORM set_session_value('kea.depend_on_known_indirectly', l_depend_on_known_indirectly);
 
     -- Bail if the class is updated without re-positioning.
     IF(
-       depend_on_known_indirectly IS NOT NULL AND
-       ((follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
-        (follow_class_name = old_follow_class_name))
+       l_depend_on_known_indirectly IS NOT NULL AND
+       ((new_follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+        (new_follow_class_name = old_follow_class_name))
     ) THEN
         -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
         -- whenever the dhcp4_client_class record is updated. Such update may include
@@ -2058,18 +2058,18 @@ BEGIN
             WHERE class_id = id;
     END IF;
 
-    IF follow_class_name IS NOT NULL THEN
+    IF new_follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
         SELECT o.order_index INTO follow_class_index
             FROM dhcp4_client_class AS c
             INNER JOIN dhcp4_client_class_order AS o
                 ON c.id = o.class_id
-            WHERE c.name = follow_class_name;
+            WHERE c.name = new_follow_class_name;
 
         IF follow_class_index IS NULL THEN
-            -- The class with a name specified with follow_class_name does
+            -- The class with a name specified with new_follow_class_name does
             -- not exist.
-            RAISE EXCEPTION 'Class %s does not exist.', follow_class_name
+            RAISE EXCEPTION 'Class %s does not exist.', new_follow_class_name
                 USING ERRCODE = 'sql_routine_exception';
         END IF;
 
@@ -2087,7 +2087,7 @@ BEGIN
         END IF;
 
     ELSE
-        -- A caller did not specify the follow_class_name value. Let's append the
+        -- A caller did not specify the new_follow_class_name value. Let's append the
         -- new class at the end of the hierarchy.
         SELECT MAX(order_index) INTO follow_class_index FROM dhcp4_client_class_order;
         IF follow_class_index IS NULL THEN
@@ -2115,7 +2115,7 @@ BEGIN
     -- ON CONFLICT required 9.5 or later
     UPDATE dhcp4_client_class_order 
         SET order_index = follow_class_index + 1,
-            depend_on_known_indirectly = depend_on_known_indirectly
+            depend_on_known_indirectly = l_depend_on_known_indirectly
         WHERE class_id = id;
     IF FOUND THEN
         RETURN;
@@ -2186,7 +2186,7 @@ LANGUAGE plpgsql;
 
 -- Create dhcp4_client_class delete trigger
 CREATE TRIGGER dhcp4_client_class_ADEL
-    AFTER INSERT ON dhcp4_client_class
+    AFTER DELETE ON dhcp4_client_class
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_client_class_ADEL();
 
 -- -----------------------------------------------------------------------
@@ -2615,43 +2615,43 @@ CREATE INDEX key_dhcp6_client_class_order_index on dhcp6_client_class_order (ord
 -- -----------------------------------------------------------------------
 -- Stored procedure positioning an inserted or updated client class
 -- within the class hierarchy, depending on the value of the
--- follow_class_name parameter.
+-- new_follow_class_name parameter.
 --
 -- Parameters:
 -- - id id of the positioned class,
--- - follow_class_name name of the class after which this class should be
+-- - new_follow_class_name name of the class after which this class should be
 --   positioned within the class hierarchy.
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
 -- -----------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION setClientClass6Order(id BIGINT,
-                                                follow_class_name VARCHAR(128),
+                                                new_follow_class_name VARCHAR(128),
                                                 old_follow_class_name VARCHAR(128))
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
     -- Used to fetch class's current value for depend_on_known_indirectly
-    depend_on_known_indirectly BIGINT := 0;
+    l_depend_on_known_indirectly BIGINT := 0;
 
     -- Optionally set if the follow_class_name column value is specified.
     follow_class_index BIGINT;
 BEGIN
     -- Fetch the class's current value of depend_on_known_indirectly.
-    SELECT depend_on_known_indirectly INTO depend_on_known_indirectly
+    SELECT depend_on_known_indirectly INTO l_depend_on_known_indirectly
         FROM dhcp6_client_class_order WHERE id = class_id;
 
     -- Save it to the current session for use elsewhere during this transaction.
     -- Note this does not work prior to Postgres 9.2 unless the variables are
     -- defined in postgresql.conf. I think for now we put up with CB not supported
     -- prior to 9.2 or we tell people how to edit the conf file.
-    PERFORM set_session_value('kea.depend_on_known_indirectly', depend_on_known_indirectly);
+    PERFORM set_session_value('kea.depend_on_known_indirectly', l_depend_on_known_indirectly);
 
     -- Bail if the class is updated without re-positioning.
     IF(
-       depend_on_known_indirectly IS NOT NULL AND
-       ((follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
-        (follow_class_name = old_follow_class_name))
+       l_depend_on_known_indirectly IS NOT NULL AND
+       ((new_follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+        (new_follow_class_name = old_follow_class_name))
     ) THEN
         -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
         -- whenever the dhcp6_client_class record is updated. Such update may include
@@ -2662,18 +2662,18 @@ BEGIN
             WHERE class_id = id;
     END IF;
 
-    IF follow_class_name IS NOT NULL THEN
+    IF new_follow_class_name IS NOT NULL THEN
         -- Get the position of the class after which the new class should be added.
         SELECT o.order_index INTO follow_class_index
             FROM dhcp6_client_class AS c
             INNER JOIN dhcp6_client_class_order AS o
                 ON c.id = o.class_id
-            WHERE c.name = follow_class_name;
+            WHERE c.name = new_follow_class_name;
 
         IF follow_class_index IS NULL THEN
-            -- The class with a name specified with follow_class_name does
+            -- The class with a name specified with new_follow_class_name does
             -- not exist.
-            RAISE EXCEPTION 'Class %s does not exist.', follow_class_name
+            RAISE EXCEPTION 'Class %s does not exist.', new_follow_class_name
                 USING ERRCODE = 'sql_routine_exception';
         END IF;
 
@@ -2691,7 +2691,7 @@ BEGIN
         END IF;
 
     ELSE
-        -- A caller did not specify the follow_class_name value. Let's append the
+        -- A caller did not specify the new_follow_class_name value. Let's append the
         -- new class at the end of the hierarchy.
         SELECT MAX(order_index) INTO follow_class_index FROM dhcp6_client_class_order;
         IF follow_class_index IS NULL THEN
@@ -2719,7 +2719,7 @@ BEGIN
     -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
     UPDATE dhcp6_client_class_order 
         SET order_index = follow_class_index + 1,
-            depend_on_known_indirectly = depend_on_known_indirectly
+            depend_on_known_indirectly = l_depend_on_known_indirectly
         WHERE class_id = id;
     IF FOUND THEN
         RETURN;
@@ -2738,6 +2738,7 @@ CREATE OR REPLACE FUNCTION func_dhcp6_client_class_AINS() RETURNS trigger AS $dh
 BEGIN
     PERFORM setClientClass6Order(NEW.id, NEW.follow_class_name, NULL);
     PERFORM createAuditEntryDHCP6('dhcp6_client_class', NEW.id, 'create');
+    RETURN NULL;
 END;
 $dhcp6_client_class_AINS$
 LANGUAGE plpgsql;
@@ -2789,7 +2790,7 @@ LANGUAGE plpgsql;
 
 -- Create dhcp6_client_class delete trigger
 CREATE TRIGGER dhcp6_client_class_ADEL
-    AFTER INSERT ON dhcp6_client_class
+    AFTER DELETE ON dhcp6_client_class
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_client_class_ADEL();
 
 -- -----------------------------------------------------------------------
@@ -3238,7 +3239,7 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 -- - scope_id: identifier of the option scope, e.g.
 --   global, subnet specific etc.
 -- - option_id: identifier of the option.
--- - subnet_id: identifier of the subnet if the option
+-- - p_subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
 -- - host_id: identifier of the host if the option
 -- - belongs to the host.
@@ -3246,17 +3247,21 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 --   belongs to the shared network.
 -- - pool_id: identifier of the pool if the option
 --   belongs to the pool.
--- - modification_ts: modification timestamp of the
---   option.
+-- - p_modification_ts: modification timestamp of the
+--   option. 
+--   Some arguments are prefixed with "p_" to avoid ambiguity
+--   with column names in SQL statments. PostgreSQL does not
+--   allow table aliases to be used with column names in update
+--   set expressions.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
                                                   scope_id SMALLINT,
                                                   option_id INT,
-                                                  subnet_id BIGINT,
+                                                  p_subnet_id BIGINT,
                                                   host_id INT,
                                                   network_name VARCHAR,
                                                   pool_id BIGINT,
-                                                  modification_ts TIMESTAMP WITH TIME ZONE)
+                                                  p_modification_ts TIMESTAMP WITH TIME ZONE)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -3294,8 +3299,8 @@ BEGIN
             -- the modification timestamp of this subnet to allow the
             -- servers to refresh the subnet information. This will
             -- also result in creating an audit entry for this subnet.
-            UPDATE dhcp4_subnet AS s SET s.modification_ts = modification_ts
-                WHERE s.subnet_id = subnet_id;
+            UPDATE dhcp4_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = p_subnet_id;
         ELSEIF scope_id = 4 THEN
             -- If shared network specific option is added or modified,
             -- update the modification timestamp of this shared network
@@ -3303,14 +3308,14 @@ BEGIN
             -- information. This will also result in creating an
             -- audit entry for this shared network.
            SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
-           UPDATE dhcp4_shared_network AS n SET n.modification_ts = modification_ts
-                WHERE n.id = snid;
+           UPDATE dhcp4_shared_network SET modification_ts = p_modification_ts
+                WHERE id = snid;
         ELSEIF scope_id = 5 THEN
             -- If pool specific option is added or modified, update
             -- the modification timestamp of the owning subnet.
             SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
-            UPDATE dhcp4_subnet AS s SET s.modification_ts = modification_ts
-                WHERE s.subnet_id = sid;
+            UPDATE dhcp4_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = sid;
         END IF;
     END IF;
     RETURN;
