@@ -330,7 +330,7 @@ select get_session_big_int('kea.test_val'); \
         pgsql_execute "$session_sql"
 
     assert_eq 0 "${EXIT_CODE}" "session variable handling broken. (expected status code %d, returned %d)"
-    clean_out=`echo ${OUTPUT} | tr '\n' ' '`
+    clean_out=$(echo ${OUTPUT} | tr '\n' ' ')
     assert_str_eq "0 0 987 987 987 984 1984 " "${clean_out}" "session variable output incorrect"
 }
 
