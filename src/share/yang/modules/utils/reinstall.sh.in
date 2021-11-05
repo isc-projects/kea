@@ -88,10 +88,10 @@ fi
 # sysrepoctl does not set its rpath. Set LD_LIBRARY_PATH instead.
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${sysrepo}/lib:${sysrepo}/lib64"
 
-# Check if model is installed.
-is_model_installed() {
-  model=${1}
-  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | tail -n +7 | head -n -1 | grep -Ec "^${model}")" -eq 0; then
+# Check if module is installed.
+is_module_installed() {
+  module=${1}
+  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | tail -n +7 | head -n -1 | grep -Ec "^${module}")" -eq 0; then
     # not installed
     return 1
   fi
@@ -99,44 +99,44 @@ is_model_installed() {
   return 0
 }
 
-# Install a model from the Kea sources. Should upgrade automatically to a newer
+# Install a module from the Kea sources. Should upgrade automatically to a newer
 # revision.
-install_kea_model() {
-  model=${1}
-  find "${modules}" -maxdepth 1 -type f -name "${model}*.yang" -exec \
+install_kea_module() {
+  module=${1}
+  find "${modules}" -maxdepth 1 -type f -name "${module}*.yang" -exec \
     ${sysrepo}/bin/sysrepoctl -i {} -s "${modules}" -v 4 \;
 }
 
-# Uninstall a model if installed.
-uninstall_model() {
-  model=${1}
-  if ! is_model_installed "${model}"; then
+# Uninstall a module if installed.
+uninstall_module() {
+  module=${1}
+  if ! is_module_installed "${module}"; then
     return;
   fi
-  "${sysrepo}/bin/sysrepoctl" -u "${model}" -v 4
+  "${sysrepo}/bin/sysrepoctl" -u "${module}" -v 4
 }
 
-# Install all YANG models in dependency order.
-install_yang_models() {
-  install_kea_model 'keatest-module'
-  install_kea_model 'ietf-interfaces'
-  install_kea_model 'ietf-dhcpv6-common'
-  install_kea_model 'ietf-dhcpv6-client'
-  install_kea_model 'ietf-dhcpv6-relay'
-  install_kea_model 'ietf-dhcpv6-server'
-  install_kea_model 'ietf-yang-types'
-  install_kea_model 'ietf-dhcpv6-options'
-  install_kea_model 'ietf-dhcpv6-types'
-  install_kea_model 'ietf-inet-types'
-  install_kea_model 'kea-types'
-  install_kea_model 'kea-dhcp-types'
-  install_kea_model 'kea-dhcp-ddns'
-  install_kea_model 'kea-ctrl-agent'
-  install_kea_model 'kea-dhcp4-server'
-  install_kea_model 'kea-dhcp6-server'
+# Install all YANG modules in dependency order.
+install_yang_modules() {
+  install_kea_module 'keatest-module'
+  install_kea_module 'ietf-interfaces'
+  install_kea_module 'ietf-dhcpv6-common'
+  install_kea_module 'ietf-dhcpv6-client'
+  install_kea_module 'ietf-dhcpv6-relay'
+  install_kea_module 'ietf-dhcpv6-server'
+  install_kea_module 'ietf-yang-types'
+  install_kea_module 'ietf-dhcpv6-options'
+  install_kea_module 'ietf-dhcpv6-types'
+  install_kea_module 'ietf-inet-types'
+  install_kea_module 'kea-types'
+  install_kea_module 'kea-dhcp-types'
+  install_kea_module 'kea-dhcp-ddns'
+  install_kea_module 'kea-ctrl-agent'
+  install_kea_module 'kea-dhcp4-server'
+  install_kea_module 'kea-dhcp6-server'
 }
 
-# Uninstall all YANG models in reverse dependency order.
+# Uninstall all YANG modules in reverse dependency order.
 # Currently not working. It complains:
 #   Internal module "ietf-inet-types" cannot be uninstalled.
 # Something about another module depending on ietf-inet-types.
@@ -144,24 +144,24 @@ install_yang_models() {
 # Might be for the better to not uninstall them since installing YANG modules is
 # idempotent and actually has logic to only install if the revision is newer
 # which is arguably beneficial.
-uninstall_yang_models() {
-  uninstall_model 'kea-dhcp6-server'
-  uninstall_model 'kea-dhcp4-server'
-  uninstall_model 'kea-ctrl-agent'
-  uninstall_model 'kea-dhcp-ddns'
-  uninstall_model 'kea-dhcp-types'
-  uninstall_model 'kea-types'
-  uninstall_model 'ietf-inet-types'
-  uninstall_model 'ietf-dhcpv6-types'
-  uninstall_model 'ietf-dhcpv6-options'
-  uninstall_model 'ietf-yang-types'
-  uninstall_model 'ietf-dhcpv6-server'
-  uninstall_model 'ietf-dhcpv6-relay'
-  uninstall_model 'ietf-dhcpv6-client'
-  uninstall_model 'ietf-dhcpv6-common'
-  uninstall_model 'ietf-interfaces'
-  uninstall_model 'keatest-module'
+uninstall_yang_modules() {
+  uninstall_module 'kea-dhcp6-server'
+  uninstall_module 'kea-dhcp4-server'
+  uninstall_module 'kea-ctrl-agent'
+  uninstall_module 'kea-dhcp-ddns'
+  uninstall_module 'kea-dhcp-types'
+  uninstall_module 'kea-types'
+  uninstall_module 'ietf-inet-types'
+  uninstall_module 'ietf-dhcpv6-types'
+  uninstall_module 'ietf-dhcpv6-options'
+  uninstall_module 'ietf-yang-types'
+  uninstall_module 'ietf-dhcpv6-server'
+  uninstall_module 'ietf-dhcpv6-relay'
+  uninstall_module 'ietf-dhcpv6-client'
+  uninstall_module 'ietf-dhcpv6-common'
+  uninstall_module 'ietf-interfaces'
+  uninstall_module 'keatest-module'
 }
 
-# uninstall_yang_models
-install_yang_models
+# uninstall_yang_modules
+install_yang_modules
