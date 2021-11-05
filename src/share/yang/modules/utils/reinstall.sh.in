@@ -103,8 +103,18 @@ is_module_installed() {
 # revision.
 install_kea_module() {
   module=${1}
+
+  if is_module_installed "${module}"; then
+    # Upgrade.
+    flag="-U"
+  else
+    # Install.
+    flag="-i"
+  fi
+
+  # Find a module starting with given name and act on it.
   find "${modules}" -maxdepth 1 -type f -name "${module}*.yang" -exec \
-    ${sysrepo}/bin/sysrepoctl -i {} -s "${modules}" -v 4 \;
+    "${sysrepo}/bin/sysrepoctl" "${flag}" {} -s "${modules}" -v 4 \;
 }
 
 # Uninstall a module if installed.
