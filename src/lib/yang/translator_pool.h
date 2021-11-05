@@ -49,13 +49,14 @@ namespace yang {
 /// YANG syntax for kea-dhcp[46] is with start-address and end-address
 /// as the keys:
 /// @code
-/// +--rw prefix?                  inet:ipv[46]-prefix
-/// +--rw start-address            inet:ipv[46]-address
-/// +--rw end-address              inet:ipv[46]-address
-/// +--rw option-data*
-/// +--rw client-class?            string
-/// +--rw require-client-classes*  string
-/// +--rw user-context?            string
+/// +--rw pool* [start-address end-address]
+///    +--rw prefix?                   inet:ipv[46]-prefix
+///    +--rw start-address             inet:ipv[46]-address
+///    +--rw end-address               inet:ipv[46]-address
+///    +--rw option-data* [code space]
+///    +--rw client-class?             string
+///    +--rw require-client-classes*   string
+///    +--rw user-context?             user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats for the IETF model:

@@ -35,15 +35,19 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46] is with the name as the list key:
 /// @code
-///    +--rw name                string
-///    +--rw test?               string
-///    +--rw only-if-required?   boolean
-///    +--rw option-data*
-///    +--rw option-def*
-///    +--rw next-server?        inet:ipv4-address
-///    +--rw server-hostname?    string
-///    +--rw boot-file-name?     string
-///    +--rw user-context?       string
+/// +--rw client-class* [name]
+///    +--rw name                  string
+///    +--rw test?                 string
+///    +--rw only-if-required?     boolean
+///    +--rw option-def* [code space]
+///    +--rw option-data* [code space]
+///    +--rw next-server?          inet:ipv4-address
+///    +--rw server-hostname?      string
+///    +--rw boot-file-name?       string
+///    +--rw valid-lifetime?       uint32
+///    +--rw min-valid-lifetime?   uint32
+///    +--rw max-valid-lifetime?   uint32
+///    +--rw user-context?         user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

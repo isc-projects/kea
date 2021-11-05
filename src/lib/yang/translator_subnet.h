@@ -98,26 +98,69 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46]-server is with id as the key:
 /// @code
-///  +--rw valid-lifetime?           uint32
-///  +--rw min-valid-lifetime?       uint32
-///  +--rw max-valid-lifetime?       uint32
-///  +--rw renew-timer?              uint32
-///  +--rw rebind-timer?             uint32
-///  +--rw calculate-tee-times?      boolean
-///  +--rw t1-percent?               decimal64
-///  +--rw t2-percent?               decimal64
-///  +--rw option-data*
-///  +--rw pool*
-///  +--rw subnet                    inet:ip-prefix
-///  +--rw interface?                string
-///  +--rw id                        uint32
-///  +--rw client-class?             string
-///  +--rw require-client-classes*   string
-///  +--rw host*
-///  +--rw reservation-mode?         enumeration
-///  +--rw relay                     ip-addresses*
-///  +--rw user-context?             string
-///  (DHCPv4 only)
+///  +--rw subnet[46]* [id]
+///     +--rw valid-lifetime?                 uint32
+///     +--rw min-valid-lifetime?             uint32
+///     +--rw max-valid-lifetime?             uint32
+///     +--rw renew-timer?                    uint32
+///     +--rw rebind-timer?                   uint32
+///     +--rw calculate-tee-times?            boolean
+///     +--rw t1-percent?                     decimal64
+///     +--rw t2-percent?                     decimal64
+///     +--rw option-data* [code space]
+///     |  +--rw code            uint8
+///     |  +--rw space           string
+///     |  +--rw name?           string
+///     |  +--rw data?           string
+///     |  +--rw csv-format?     boolean
+///     |  +--rw always-send?    boolean
+///     |  +--rw user-context?   user-context
+///     +--rw pool* [start-address end-address]
+///     |  +--rw prefix?                   inet:ipv4-prefix
+///     |  +--rw start-address             inet:ipv4-address
+///     |  +--rw end-address               inet:ipv4-address
+///     |  +--rw option-data* [code space]
+///     |  +--rw client-class?             string
+///     |  +--rw require-client-classes*   string
+///     |  +--rw user-context?             user-context
+///     +--rw subnet                          inet:ipv4-prefix
+///     +--rw interface?                      string
+///     +--rw id                              uint32
+///     +--rw client-class?                   string
+///     +--rw require-client-classes*         string
+///     +--rw host* [identifier-type identifier]
+///     |  +--rw identifier-type    host-identifier-type
+///     |  +--rw identifier         string
+///     |  +--rw ip-address?        inet:ipv4-address
+///     |  +--rw hostname?          string
+///     |  +--rw client-classes*    string
+///     |  +--rw option-data* [code space]
+///     |  +--rw next-server?       inet:ipv4-address
+///     |  +--rw server-hostname?   string
+///     |  +--rw boot-file-name?    string
+///     |  +--rw user-context?      user-context
+///     +--rw reservation-mode?               host-reservation-mode
+///     +--rw relay
+///     |  +--rw ip-addresses*   inet:ipv4-address
+///     +--rw cache-max-age?                  uint32
+///     +--rw cache-threshold?                decimal64
+///     +--rw ddns-generated-prefix?          string
+///     +--rw ddns-override-client-update?    boolean
+///     +--rw ddns-override-no-update?        boolean
+///     +--rw ddns-qualifying-suffix?         string
+///     +--rw ddns-replace-client-name?       string
+///     +--rw ddns-send-updates?              boolean
+///     +--rw ddns-update-on-renew?           boolean
+///     +--rw ddns-use-conflict-resolution?   boolean
+///     +--rw hostname-char-replacement?      string
+///     +--rw hostname-char-set?              string
+///     +--rw reservations-global?            boolean
+///     +--rw reservations-in-subnet?         boolean
+///     +--rw reservations-out-of-pool?       boolean
+///     +--rw store-extended-info?            boolean
+///     +--rw user-context?                   user-context
+///
+///  DHCPv4 only:
 ///  +--rw match-client-id?          boolean
 ///  +--rw next-server?              inet:ipv4-address
 ///  +--rw server-hostname?          string
@@ -126,7 +169,8 @@ namespace yang {
 ///  +--rw subnet-4o6-interface-id?  string
 ///  +--rw subnet-4o6-subnet?        inet:ipv6-prefix
 ///  +--rw authoritative?            boolean
-///  (DHCPv6 only)
+///
+///  DHCPv6 only:
 ///  +--rw preferred-lifetime?       uint32
 ///  +--rw min-preferred-lifetime?   uint32
 ///  +--rw max-preferred-lifetime?   uint32

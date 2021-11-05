@@ -49,13 +49,14 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp6-server is with prefix as the key.
 /// @code
-///  +--rw prefix?                  inet:ipv6-prefix
-///  +--rw delegated-len?           uint8
-///  +--rw excluded-prefix?         inet:ipv6-prefix
-///  +--rw option-data*
-///  +--rw client-class?            string
-///  +--rw require-client-classes*  string
-///  +--rw user-context?            string
+/// +--rw pd-pool* [prefix]
+///    +--rw prefix                    inet:ipv6-prefix
+///    +--rw delegated-len?            uint8
+///    +--rw option-data* [code space]
+///    +--rw client-class?             string
+///    +--rw require-client-classes*   string
+///    +--rw excluded-prefix?          inet:ipv6-prefix
+///    +--rw user-context?             user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

@@ -32,14 +32,15 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46] with code and space as keys is:
 /// @code
-///    +--rw name           string
-///    +--rw code           uint8 / uint16
-///    +--rw type           string
-///    +--rw record-types?  string
-///    +--rw space          string
-///    +--rw encapsulate?   string
-///    +--rw array?         boolean
-///    +--rw user-context?  string
+/// +--rw option-def* [code space]
+///    +--rw code            uint8
+///    +--rw space           string
+///    +--rw name            string
+///    +--rw type            string
+///    +--rw record-types?   string
+///    +--rw encapsulate?    string
+///    +--rw array?          boolean
+///    +--rw user-context?   user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

@@ -73,55 +73,65 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp4-server:config is:
 /// @code
-/// +--rw valid-lifetime?                uint32
-/// +--rw min-valid-lifetime?            uint32
-/// +--rw max-valid-lifetime?            uint32
-/// +--rw renew-timer?                   uint32
-/// +--rw rebind-timer?                  uint32
-/// +--rw calculate-tee-times?           boolean
-/// +--rw t1-percent?                    decimal64
-/// +--rw t2-percent?                    decimal64
-/// +--rw decline-probation-period?      uint32
-/// +--rw subnet4*
-/// +--rw shared-network*
+/// +--rw valid-lifetime?                   uint32
+/// +--rw min-valid-lifetime?               uint32
+/// +--rw max-valid-lifetime?               uint32
+/// +--rw renew-timer?                      uint32
+/// +--rw rebind-timer?                     uint32
+/// +--rw calculate-tee-times?              boolean
+/// +--rw t1-percent?                       decimal64
+/// +--rw t2-percent?                       decimal64
+/// +--rw decline-probation-period?         uint32
+/// +--rw subnet4* [id]
+/// +--rw shared-network* [name]
 /// +--rw interfaces-config
-///    +--rw interfaces*                 string
-///    +--rw dhcp-socket-type?           enumeration
-///    +--rw outbound-interface?         enumeration
-///    +--rw re-detect?                  boolean
-///    +--rw user-context?               string
-/// +--rw lease-database!                <database>
-/// +--rw hosts-database*
-/// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-class*
-/// +--rw option-def*
-/// +--rw option-data*
-/// +--rw hook-library*
-///    +--rw library                     string
-///    +--rw parameters?                 string
-/// +--rw expired-leases-processing      <expired-leases-processing>
-/// +--rw dhcp4o6-port?                  uint16
-/// +--rw control-socket!                <control-socket>
-/// +--rw hostname-char-set?             string
-/// +--rw hostname-char-replacement?     string
-/// +--rw dhcp-ddns                      <dhcp-ddns>
-/// +--rw echo-client-id?                boolean
-/// +--rw match-client-id?               boolean
-/// +--rw next-server?                   inet:ipv4-address
-/// +--rw server-hostname?               string
-/// +--rw boot-file-name?                string
-/// +--rw authoritative?                 boolean
-/// +--rw user-context?                  string
+/// +--rw lease-database!
+/// +--rw hosts-database* [database-type]
+/// +--rw host-reservation-identifiers*     host-identifier-type
+/// +--rw client-class* [name]
+/// +--rw option-def* [code space]
+/// +--rw option-data* [code space]
+/// +--rw hook-library* [library]
+/// +--rw expired-leases-processing
+/// +--rw dhcp4o6-port?                     uint16
+/// +--rw control-socket!
+/// +--rw hostname-char-set?                string
+/// +--rw hostname-char-replacement?        string
+/// +--rw dhcp-ddns
+/// +--rw echo-client-id?                   boolean
+/// +--rw match-client-id?                  boolean
+/// +--rw next-server?                      inet:ipv4-address
+/// +--rw server-hostname?                  string
+/// +--rw boot-file-name?                   string
+/// +--rw authoritative?                    boolean
+/// +--rw user-context?                     user-context
 /// +--rw sanity-checks
-///    +--rw lease-checks?               enumeration
-/// +--rw reservation-mode?              enumeration
-/// +--rw host*
+/// +--rw reservation-mode?                 host-reservation-mode
+/// +--rw host* [identifier-type identifier]
 /// +--rw config-control
-///    +--rw config-fetch-wait-time?     uint32
-///    +--rw config-database*
-/// +--rw server-tag                     string
-/// +--rw dhcp-queue-control             string
-/// +--rw logger*
+/// +--rw server-tag?                       string
+/// +--rw dhcp-queue-control?               string
+/// +--rw logger* [name]
+/// +--rw cache-max-age?                    uint32
+/// +--rw cache-threshold?                  decimal64
+/// +--rw compatibility
+/// +--rw ddns-generated-prefix?            string
+/// +--rw ddns-override-client-update?      boolean
+/// +--rw ddns-override-no-update?          boolean
+/// +--rw ddns-qualifying-suffix?           string
+/// +--rw ddns-replace-client-name?         string
+/// +--rw ddns-send-updates?                boolean
+/// +--rw ddns-update-on-renew?             boolean
+/// +--rw ddns-use-conflict-resolution?     boolean
+/// +--rw ip-reservations-unique?           boolean
+/// +--rw multi-threading
+/// +--rw parked-packet-limit?              uint32
+/// +--rw reservations-global?              boolean
+/// +--rw reservations-in-subnet?           boolean
+/// +--rw reservations-out-of-pool?         boolean
+/// +--rw statistic-default-sample-age?     uint32
+/// +--rw statistic-default-sample-count?   uint32
+/// +--rw store-extended-info?              boolean
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -227,55 +237,66 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp6-server:config is:
 /// @code
-/// +--rw data-directory?                string
-/// +--rw preferred-lifetime?            uint32
-/// +--rw min-preferred-lifetime?        uint32
-/// +--rw max-preferred-lifetime?        uint32
-/// +--rw valid-lifetime?                uint32
-/// +--rw min-valid-lifetime?            uint32
-/// +--rw max-valid-lifetime?            uint32
-/// +--rw renew-timer?                   uint32
-/// +--rw rebind-timer?                  uint32
-/// +--rw calculate-tee-times?           boolean
-/// +--rw t1-percent?                    decimal64
-/// +--rw t2-percent?                    decimal64
-/// +--rw decline-probation-period?      uint32
-/// +--rw subnet6*
-/// +--rw shared-network*
+/// +--rw data-directory?                   string
+/// +--rw preferred-lifetime?               uint32
+/// +--rw min-preferred-lifetime?           uint32
+/// +--rw max-preferred-lifetime?           uint32
+/// +--rw valid-lifetime?                   uint32
+/// +--rw min-valid-lifetime?               uint32
+/// +--rw max-valid-lifetime?               uint32
+/// +--rw renew-timer?                      uint32
+/// +--rw rebind-timer?                     uint32
+/// +--rw calculate-tee-times?              boolean
+/// +--rw t1-percent?                       decimal64
+/// +--rw t2-percent?                       decimal64
+/// +--rw decline-probation-period?         uint32
+/// +--rw subnet6* [id]
+/// +--rw shared-network* [name]
 /// +--rw interfaces-config
-///    +--rw interfaces*                 string
-///    +--rw re-detect?                  boolean
-///    +--rw user-context?               string
-/// +--rw lease-database!                <database>
-/// +--rw hosts-database*
-/// +--rw relay-supplied-options*        string
-/// +--rw mac-sources*                   string
-/// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-class*
-/// +--rw option-def*
-/// +--rw option-data*
-/// +--rw hook-library*
-///    +--rw library                     string
-///    +--rw parameters?                 string
-/// +--rw expired-leases-processing      <expired-leases-processing>
-/// +--rw server-id                      <server-id>
-/// +--rw dhcp4o6-port?                  uint16
-/// +--rw control-socket!                <control-socket>
-/// +--rw hostname-char-set?             string
-/// +--rw hostname-char-replacement?     string
-/// +--rw dhcp-ddns                      <dhcp-ddns>
-/// +--rw echo-client-id?                boolean
-/// +--rw user-context?                  string
+/// +--rw lease-database!
+/// +--rw hosts-database* [database-type]
+/// +--rw relay-supplied-options*           string
+/// +--rw mac-sources*                      string
+/// +--rw host-reservation-identifiers*     host-identifier-type
+/// +--rw client-class* [name]
+/// +--rw option-def* [code space]
+/// +--rw option-data* [code space]
+/// +--rw hook-library* [library]
+/// +--rw expired-leases-processing
+/// +--rw server-id!
+/// +--rw dhcp4o6-port?                     uint16
+/// +--rw control-socket!
+/// +--rw hostname-char-set?                string
+/// +--rw hostname-char-replacement?        string
+/// +--rw dhcp-ddns
+/// +--rw user-context?                     user-context
 /// +--rw sanity-checks
-///    +--rw lease-checks?               enumeration
-/// +--rw reservation-mode?              enumeration
-/// +--rw host*
+/// +--rw reservation-mode?                 host-reservation-mode
+/// +--rw host* [identifier-type identifier]
 /// +--rw config-control
-///    +--rw config-fetch-wait-time?     uint32
-///    +--rw config-database*
-/// +--rw server-tag                     string
-/// +--rw dhcp-queue-control             string
-/// +--rw logger*
+/// +--rw server-tag?                       string
+/// +--rw dhcp-queue-control?               string
+/// +--rw logger* [name]
+/// +--rw cache-max-age?                    uint32
+/// +--rw cache-threshold?                  decimal64
+/// +--rw compatibility
+/// +--rw ddns-generated-prefix?            string
+/// +--rw ddns-override-client-update?      boolean
+/// +--rw ddns-override-no-update?          boolean
+/// +--rw ddns-qualifying-suffix?           string
+/// +--rw ddns-replace-client-name?         string
+/// +--rw ddns-send-updates?                boolean
+/// +--rw ddns-update-on-renew?             boolean
+/// +--rw ddns-use-conflict-resolution?     boolean
+/// +--rw ip-reservations-unique?           boolean
+/// +--rw multi-threading
+/// +--rw parked-packet-limit?              uint32
+/// +--rw reservations-global?              boolean
+/// +--rw reservations-in-subnet?           boolean
+/// +--rw reservations-out-of-pool?         boolean
+/// +--rw statistic-default-sample-age?     uint32
+/// +--rw statistic-default-sample-count?   uint32
+/// +--rw store-extended-info?              boolean
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:

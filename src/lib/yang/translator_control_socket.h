@@ -27,11 +27,10 @@ namespace yang {
 ///
 /// YANG syntax is:
 /// @code
-///  +--rw control-socket   container
-///    |
-///    +--rw socket-name    string
-///    +--rw socket-type    enumeration
-///    +--rw user-context?  string
+/// +--rw control-socket!
+/// +--rw socket-name     string
+/// +--rw socket-type     enumeration
+/// +--rw user-context?   user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

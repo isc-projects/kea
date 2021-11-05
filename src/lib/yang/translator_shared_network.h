@@ -76,36 +76,58 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46]-server is with name as the list key:
 /// @code
-///  +--rw name                      string
-///  +--rw valid-lifetime?           uint32
-///  +--rw min-valid-lifetime?       uint32
-///  +--rw max-valid-lifetime?       uint32
-///  +--rw renew-timer?              uint32
-///  +--rw rebind-timer?             uint32
-///  +--rw calculate-tee-times?      boolean
-///  +--rw t1-percent?               decimal64
-///  +--rw t2-percent?               decimal64
-///  +--rw option-data*
-///  +--rw interface?                string
-///  +--rw client-class?             string
-///  +--rw require-client-classes*   string
-///  +--rw reservation-mode?         enumeration
-///  +--rw relay                     ip-addresses*
-///  +--rw user-context?             string
-///  (DHCPv4 only)
-///  +--rw subnet4*
-///  +--rw match-client-id?          boolean
-///  +--rw next-server?              inet:ipv4-address
-///  +--rw server-hostname?          string
-///  +--rw boot-file-name?           string
-///  +--rw authoritative?            boolean
-///  (DHCPv6 only)
-///  +--rw subnet6*
-///  +--rw preferred-lifetime?       uint32
-///  +--rw min-preferred-lifetime?   uint32
-///  +--rw max-preferred-lifetime?   uint32
-///  +--rw interface-id?             string
-///  +--rw rapid-commit?             boolean
+/// +--rw shared-network* [name]
+///    +--rw name                            string
+///    +--rw interface?                      string
+///    +--rw renew-timer?                    uint32
+///    +--rw rebind-timer?                   uint32
+///    +--rw option-data* [code space]
+///    +--rw reservation-mode?               host-reservation-mode
+///    +--rw client-class?                   string
+///    +--rw require-client-classes*         string
+///    +--rw valid-lifetime?                 uint32
+///    +--rw min-valid-lifetime?             uint32
+///    +--rw max-valid-lifetime?             uint32
+///    +--rw calculate-tee-times?            boolean
+///    +--rw t1-percent?                     decimal64
+///    +--rw t2-percent?                     decimal64
+///    +--rw cache-max-age?                  uint32
+///    +--rw cache-threshold?                decimal64
+///    +--rw ddns-generated-prefix?          string
+///    +--rw ddns-override-client-update?    boolean
+///    +--rw ddns-override-no-update?        boolean
+///    +--rw ddns-qualifying-suffix?         string
+///    +--rw ddns-replace-client-name?       string
+///    +--rw ddns-send-updates?              boolean
+///    +--rw ddns-update-on-renew?           boolean
+///    +--rw ddns-use-conflict-resolution?   boolean
+///    +--rw store-extended-info?            boolean
+///    +--rw hostname-char-replacement?      string
+///    +--rw hostname-char-set?              string
+///    +--rw reservations-global?            boolean
+///    +--rw reservations-in-subnet?         boolean
+///    +--rw reservations-out-of-pool?       boolean
+///    +--rw user-context?                   user-context
+///
+/// DHCPv4 only:
+///    +--rw subnet4*
+///    +--rw match-client-id?          boolean
+///    +--rw next-server?              inet:ipv4-address
+///    +--rw server-hostname?          string
+///    +--rw boot-file-name?           string
+///    +--rw authoritative?            boolean
+///    +--rw relay
+///    |  +--rw ip-addresses*   inet:ipv4-address
+///
+/// DHCPv6 only:
+///    +--rw subnet6*
+///    +--rw preferred-lifetime?       uint32
+///    +--rw min-preferred-lifetime?   uint32
+///    +--rw max-preferred-lifetime?   uint32
+///    +--rw interface-id?             string
+///    +--rw rapid-commit?             boolean
+///    +--rw relay
+///    |  +--rw ip-addresses*   inet:ipv6-address
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

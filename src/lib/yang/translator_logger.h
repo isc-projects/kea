@@ -40,18 +40,17 @@ namespace yang {
 ///
 /// YANG syntax for loggers is:
 /// @code
-///  +--rw logger               (list)
-///     |
-///     +--rw name?             string
-///     +--rw output-option*
-///     |     +--rw output      string
-///     |     +--rw maxver?     uint32
-///     |     +--rw maxsize?    uint32
-///     |     +--rw flush?      boolean
-///     |     +--rw pattern?    string
-///     +--rw debuglevel?       uint8
-///     +--rw severity?         enumeration
-///     +--rw user-context?     string
+/// +--rw logger* [name]
+///    +--rw name             string
+///    +--rw output-option* [output]
+///    |  +--rw output     string
+///    |  +--rw flush?     boolean
+///    |  +--rw maxsize?   uint32
+///    |  +--rw maxver?    uint32
+///    |  +--rw pattern?   string
+///    +--rw debuglevel?      uint8
+///    +--rw severity?        enumeration
+///    +--rw user-context?    user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

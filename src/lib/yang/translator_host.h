@@ -54,20 +54,22 @@ namespace yang {
 /// YANG syntax for kea-dhcp[46] is with identifier-type and identifier
 /// as the list keys:
 /// @code
-/// +--rw identifier-type          enumeration
-/// +--rw identifier               string
-/// +--rw hostname?                string
-/// +--rw option-data*
-/// +--rw client-classes*          string
-/// +--rw user-context?            string
-/// (DHCPv4 only)
-/// +--rw ip-address?              inet:ipv4-address
-/// +--rw next-server?             inet:ipv4-address
-/// +--rw server-hostname?         string
-/// +--rw boot-file-name?          string
-/// (DHCPv6 only)
-/// +--rw ip-addresses*            inet:ipv6-address
-/// +--rw prefixes*                inet:ipv6-prefix
+/// +--rw identifier-type    host-identifier-type
+/// +--rw identifier         string
+/// +--rw hostname?          string
+/// +--rw client-classes*    string
+/// +--rw option-data* [code space]
+/// +--rw user-context?      user-context
+///
+/// DHCPv4 only:
+/// +--rw ip-address?        inet:ipv4-address
+/// +--rw next-server?       inet:ipv4-address
+/// +--rw server-hostname?   string
+/// +--rw boot-file-name?    string
+///
+/// DHCPv6 only:
+/// +--rw ip-addresses*      inet:ipv6-address
+/// +--rw prefixes*          inet:ipv6-prefix
 /// @endcode
 ///
 /// An example in JSON and YANG formats:

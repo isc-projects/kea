@@ -45,29 +45,29 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46] is using database-type as the list key:
 /// @code
-///  +--rw database                (list)
-///    |
-///    +--rw database-type?        string
-///    +--rw user?                 string
-///    +--rw password?             string
-///    +--rw host?                 string
-///    +--rw name?                 string
-///    +--rw persist?              boolean
-///    +--rw port?                 uint16
-///    +--rw lfc-interval?         uint32
-///    +--rw readonly?             boolean
-///    +--rw connect-timeout?      uint32
-///    +--rw contact-points?       string
-///    +--rw keyspace?             string
-///    +--rw max-reconnect-tries?  uint32
-///    +--rw reconnect-wait-time?  uint32
-///    +--rw request-timeout?      uint32
-///    +--rw tcp-keepalive?        uint32
-///    +--rw tcp-nodelay?          boolean
-///    +--rw consistency?          string
-///    +--rw serial-consistency?   string
-///    +--rw max-row-errors?       uint32
-///    +--rw user-context?         string
+/// +--rw database
+///    +--rw database-type          string
+///    +--rw user?                  string
+///    +--rw password?              string
+///    +--rw host?                  string
+///    +--rw name?                  string
+///    +--rw persist?               boolean
+///    +--rw port?                  uint16
+///    +--rw lfc-interval?          uint32
+///    +--rw readonly?              boolean
+///    +--rw connect-timeout?       uint32
+///    +--rw contact-points?        string
+///    +--rw keyspace?              string
+///    +--rw max-reconnect-tries?   uint32
+///    +--rw reconnect-wait-time?   uint32
+///    +--rw request-timeout?       uint32
+///    +--rw tcp-keepalive?         uint32
+///    +--rw tcp-nodelay?           boolean
+///    +--rw consistency?           string
+///    +--rw serial-consistency?    string
+///    +--rw max-row-errors?        uint32
+///    +--rw on-fail?               string
+///    +--rw user-context?          user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:
