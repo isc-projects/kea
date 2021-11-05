@@ -51,10 +51,7 @@ OpaqueDataTuple::getText() const {
 
 void
 OpaqueDataTuple::pack(isc::util::OutputBuffer& buf) const {
-    if (getLength() == 0) {
-        isc_throw(OpaqueDataTupleError, "failed to create on-wire format of the"
-                  " opaque data field, because the field appears to be empty");
-    } else if ((1 << (getDataFieldSize() * 8)) <= getLength()) {
+    if ((1 << (getDataFieldSize() * 8)) <= getLength()) {
         isc_throw(OpaqueDataTupleError, "failed to create on-wire format of the"
                   " opaque data field, because current data length "
                   << getLength() << " exceeds the maximum size for the length"

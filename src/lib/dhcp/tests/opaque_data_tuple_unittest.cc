@@ -270,17 +270,22 @@ TEST(OpaqueDataTuple, pack1Byte) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     // Initially, the tuple should be empty.
     ASSERT_EQ(0, tuple.getLength());
-    // The empty data doesn't make much sense, so the pack() should not
-    // allow it.
+    // It turns out that Option 124 can be sent with 0 length Opaque Data
+    // See #2021 for more details
     OutputBuffer out_buf(10);
-    EXPECT_THROW(tuple.pack(out_buf), OpaqueDataTupleError);
+    ASSERT_NO_THROW(tuple.pack(out_buf));
+    ASSERT_EQ(1, out_buf.getLength());
+    const uint8_t* zero_len = static_cast<const uint8_t*>(out_buf.getData());
+    ASSERT_EQ(0, *zero_len);
+    // Reset the output buffer for another test.
+    out_buf.clear();
     // Set the data for tuple.
     std::vector<uint8_t> data;
     for (uint8_t i = 0; i < 100; ++i) {
         data.push_back(i);
     }
     tuple.assign(data.begin(), data.size());
-    // The pack should now succeed.
+    // Packing the data should succeed.
     ASSERT_NO_THROW(tuple.pack(out_buf));
     // The rendered buffer should be 101 bytes long - 1 byte for length,
     // 100 bytes for the actual data.
@@ -329,17 +334,22 @@ TEST(OpaqueDataTuple, pack2Bytes) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially, the tuple should be empty.
     ASSERT_EQ(0, tuple.getLength());
-    // The empty data doesn't make much sense, so the pack() should not
-    // allow it.
+    // It turns out that Option 124 can be sent with 0 length Opaque Data
+    // See #2021 for more details
     OutputBuffer out_buf(10);
-    EXPECT_THROW(tuple.pack(out_buf), OpaqueDataTupleError);
+    ASSERT_NO_THROW(tuple.pack(out_buf));
+    ASSERT_EQ(2, out_buf.getLength());
+    const uint16_t* zero_len = static_cast<const uint16_t*>(out_buf.getData());
+    ASSERT_EQ(0, *zero_len);
+    // Reset the output buffer for another test.
+    out_buf.clear();
     // Set the data for tuple.
     std::vector<uint8_t> data;
     for (unsigned i = 0; i < 512; ++i) {
         data.push_back(i & 0xff);
     }
     tuple.assign(data.begin(), data.size());
-    // The pack should now succeed.
+    // Packing the data should succeed.
     ASSERT_NO_THROW(tuple.pack(out_buf));
     // The rendered buffer should be 514 bytes long - 2 bytes for length,
     // 512 bytes for the actual data.
@@ -401,6 +411,22 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
 
     EXPECT_EQ(0, tuple.getLength());
+}
+
+// This test verifies that the tuple having a length of 0, followed by no
+// data, is decoded from the wire format.
+TEST(OpaqueDataTuple, unpack1ByteZeroLengthNoData) {
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    OpaqueDataTuple::Buffer wire_data = {0};
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+}
+
+// This test verifies that the tuple having a length of 0, followed by no
+// data, is decoded from the wire format.
+TEST(OpaqueDataTuple, unpack2ByteZeroLengthNoData) {
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    OpaqueDataTuple::Buffer wire_data = {0, 0};
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
 }
 
 // This test verifies that exception is thrown if the empty buffer is being
