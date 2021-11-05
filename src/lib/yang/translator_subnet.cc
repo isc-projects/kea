@@ -242,6 +242,7 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
+    checkAndGetLeaf(result, xpath, "store-extended-info");
     return (result);
 }
 

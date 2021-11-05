@@ -515,17 +515,6 @@ protected:
     ///
     /// @param elem The JSON element.
     void setServerKeaDhcp6(isc::data::ConstElementPtr elem);
-
-    /// @brief Retrieves an item and stores in the specified storage.
-    ///
-    /// This will attempt to retrieve an item and, if exists, will
-    /// store it in the storage.
-    ///
-    /// @param storage ElementMap (result will be stored here)
-    /// @param xpath xpath location (data will be extracted from sysrepo)
-    /// @param name name of the parameter
-    void getParam(isc::data::ElementPtr& storage, const std::string& xpath,
-                  const std::string& name);
 };
 
 }; // end of namespace isc::yang

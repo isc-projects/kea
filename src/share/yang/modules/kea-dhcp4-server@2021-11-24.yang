@@ -418,6 +418,7 @@ module kea-dhcp4-server {
     uses dhcp:server-tag;
     uses dhcp:dhcp-queue-control;
     uses kea:loggers;
+    uses dhcp:store-extended-info;
   }
 
   /*
@@ -526,7 +527,5 @@ module kea-dhcp4-server {
         }
       }
     }
-
-    uses dhcp:store-extended-info;
   }
 }

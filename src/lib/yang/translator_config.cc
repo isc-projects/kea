@@ -94,15 +94,6 @@ TranslatorConfig::getConfigKea6() {
     return (result);
 }
 
-void
-TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
-                           const std::string& name) {
-    ConstElementPtr x = getItem(xpath + "/" + name);
-    if (x) {
-        storage->set(name, x);
-    }
-}
-
 ElementPtr TranslatorConfig::getHook(string const& xpath) {
     ElementPtr const& hook_library(Element::createMap());
     ElementPtr const& name(getItem(xpath + "/library"));
@@ -126,12 +117,12 @@ isc::data::ElementPtr
 TranslatorConfig::getExpiredKea(const std::string& xpath) {
     ElementPtr expired = Element::createMap();
 
-    getParam(expired, xpath, "reclaim-timer-wait-time");
-    getParam(expired, xpath, "flush-reclaimed-timer-wait-time");
-    getParam(expired, xpath, "hold-reclaimed-time");
-    getParam(expired, xpath, "max-reclaim-leases");
-    getParam(expired, xpath, "max-reclaim-time");
-    getParam(expired, xpath, "unwarned-reclaim-cycles");
+    checkAndGetLeaf(expired, xpath, "reclaim-timer-wait-time");
+    checkAndGetLeaf(expired, xpath, "flush-reclaimed-timer-wait-time");
+    checkAndGetLeaf(expired, xpath, "hold-reclaimed-time");
+    checkAndGetLeaf(expired, xpath, "max-reclaim-leases");
+    checkAndGetLeaf(expired, xpath, "max-reclaim-time");
+    checkAndGetLeaf(expired, xpath, "unwarned-reclaim-cycles");
 
     if (!expired->empty()) {
         return (expired);
@@ -143,21 +134,21 @@ TranslatorConfig::getExpiredKea(const std::string& xpath) {
 isc::data::ElementPtr
 TranslatorConfig::getDdnsKea(const std::string& xpath) {
     ElementPtr ddns = Element::createMap();
-    getParam(ddns, xpath, "enable-updates");
-    getParam(ddns, xpath, "qualifying-suffix");
-    getParam(ddns, xpath, "server-ip");
-    getParam(ddns, xpath, "server-port");
-    getParam(ddns, xpath, "sender-ip");
-    getParam(ddns, xpath, "sender-port");
-    getParam(ddns, xpath, "max-queue-size");
-    getParam(ddns, xpath, "ncr-protocol");
-    getParam(ddns, xpath, "ncr-format");
-    getParam(ddns, xpath, "override-no-update");
-    getParam(ddns, xpath, "override-client-update");
-    getParam(ddns, xpath, "replace-client-name");
-    getParam(ddns, xpath, "generated-prefix");
-    getParam(ddns, xpath, "hostname-char-set");
-    getParam(ddns, xpath, "hostname-char-replacement");
+    checkAndGetLeaf(ddns, xpath, "enable-updates");
+    checkAndGetLeaf(ddns, xpath, "qualifying-suffix");
+    checkAndGetLeaf(ddns, xpath, "server-ip");
+    checkAndGetLeaf(ddns, xpath, "server-port");
+    checkAndGetLeaf(ddns, xpath, "sender-ip");
+    checkAndGetLeaf(ddns, xpath, "sender-port");
+    checkAndGetLeaf(ddns, xpath, "max-queue-size");
+    checkAndGetLeaf(ddns, xpath, "ncr-protocol");
+    checkAndGetLeaf(ddns, xpath, "ncr-format");
+    checkAndGetLeaf(ddns, xpath, "override-no-update");
+    checkAndGetLeaf(ddns, xpath, "override-client-update");
+    checkAndGetLeaf(ddns, xpath, "replace-client-name");
+    checkAndGetLeaf(ddns, xpath, "generated-prefix");
+    checkAndGetLeaf(ddns, xpath, "hostname-char-set");
+    checkAndGetLeaf(ddns, xpath, "hostname-char-replacement");
 
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
@@ -176,7 +167,7 @@ TranslatorConfig::getDdnsKea(const std::string& xpath) {
 ElementPtr
 TranslatorConfig::getConfigControlKea(const string& xpath) {
     ElementPtr config_ctrl = Element::createMap();
-    getParam(config_ctrl, xpath, "config-fetch-wait-time");
+    checkAndGetLeaf(config_ctrl, xpath, "config-fetch-wait-time");
     ConstElementPtr databases = getDatabases(xpath + "/config-database");
     if (databases && !databases->empty()) {
         config_ctrl->set("config-databases", databases);
@@ -194,17 +185,17 @@ ElementPtr
 TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     ElementPtr result = Element::createMap();
 
-    getParam(result, xpath, "valid-lifetime");
-    getParam(result, xpath, "min-valid-lifetime");
-    getParam(result, xpath, "max-valid-lifetime");
-    getParam(result, xpath, "renew-timer");
-    getParam(result, xpath, "rebind-timer");
-    getParam(result, xpath, "calculate-tee-times");
-    getParam(result, xpath, "t1-percent");
-    getParam(result, xpath, "t2-percent");
-    getParam(result, xpath, "decline-probation-period");
-    getParam(result, xpath, "hostname-char-set");
-    getParam(result, xpath, "hostname-char-replacement");
+    checkAndGetLeaf(result, xpath, "valid-lifetime");
+    checkAndGetLeaf(result, xpath, "min-valid-lifetime");
+    checkAndGetLeaf(result, xpath, "max-valid-lifetime");
+    checkAndGetLeaf(result, xpath, "renew-timer");
+    checkAndGetLeaf(result, xpath, "rebind-timer");
+    checkAndGetLeaf(result, xpath, "calculate-tee-times");
+    checkAndGetLeaf(result, xpath, "t1-percent");
+    checkAndGetLeaf(result, xpath, "t2-percent");
+    checkAndGetLeaf(result, xpath, "decline-probation-period");
+    checkAndGetLeaf(result, xpath, "hostname-char-set");
+    checkAndGetLeaf(result, xpath, "hostname-char-replacement");
 
     ConstElementPtr networks = getSharedNetworks(xpath);
     if (networks && !networks->empty()) {
@@ -244,7 +235,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (expired) {
         result->set("expired-leases-processing", expired);
     }
-    getParam(result, xpath, "dhcp4o6-port");
+    checkAndGetLeaf(result, xpath, "dhcp4o6-port");
     ConstElementPtr socket = getControlSocket(xpath + "/control-socket");
     if (socket) {
         result->set("control-socket", socket);
@@ -263,7 +254,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         sanity->set("lease-checks", checks);
         result->set("sanity-checks", sanity);
     }
-    getParam(result, xpath, "reservation-mode");
+    checkAndGetLeaf(result, xpath, "reservation-mode");
     ConstElementPtr hosts = getHosts(xpath);
     if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
@@ -273,7 +264,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (config_ctrl) {
         result->set("config-control", config_ctrl);
     }
-    getParam(result, xpath, "server-tag");
+    checkAndGetLeaf(result, xpath, "server-tag");
     ConstElementPtr queue_ctrl = getItem(xpath + "/dhcp-queue-control");
     if (queue_ctrl) {
         result->set("dhcp-queue-control",
@@ -283,6 +274,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (loggers && !loggers->empty()) {
         result->set("loggers", loggers);
     }
+    checkAndGetLeaf(result, xpath, "store-extended-info");
     return (result);
 }
 
@@ -301,9 +293,9 @@ TranslatorConfig::getServerKeaDhcp4() {
     if (ifs && !ifs->empty()) {
         if_config->set("interfaces", ifs);
     }
-    getParam(if_config, xpath + "/interfaces-config", "dhcp-socket-type");
-    getParam(if_config, xpath + "/interfaces-config", "outbound-interface");
-    getParam(if_config, xpath + "/interfaces-config", "re-detect");
+    checkAndGetLeaf(if_config, xpath + "/interfaces-config", "dhcp-socket-type");
+    checkAndGetLeaf(if_config, xpath + "/interfaces-config", "outbound-interface");
+    checkAndGetLeaf(if_config, xpath + "/interfaces-config", "re-detect");
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
     if (context) {
@@ -314,12 +306,12 @@ TranslatorConfig::getServerKeaDhcp4() {
         result->set("interfaces-config", if_config);
     }
     // Handle DHCPv4 specific global parameters.
-    getParam(result, xpath, "echo-client-id");
-    getParam(result, xpath, "match-client-id");
-    getParam(result, xpath, "next-server");
-    getParam(result, xpath, "server-hostname");
-    getParam(result, xpath, "boot-file-name");
-    getParam(result, xpath, "authoritative");
+    checkAndGetLeaf(result, xpath, "echo-client-id");
+    checkAndGetLeaf(result, xpath, "match-client-id");
+    checkAndGetLeaf(result, xpath, "next-server");
+    checkAndGetLeaf(result, xpath, "server-hostname");
+    checkAndGetLeaf(result, xpath, "boot-file-name");
+    checkAndGetLeaf(result, xpath, "authoritative");
     return (result);
 }
 
@@ -328,10 +320,10 @@ TranslatorConfig::getServerKeaDhcp6() {
     string xpath = "/kea-dhcp6-server:config";
     ElementPtr result = getServerKeaDhcpCommon(xpath);
     // Handle DHCPv6 specific global parameters.
-    getParam(result, xpath, "data-directory");
-    getParam(result, xpath, "preferred-lifetime");
-    getParam(result, xpath, "min-preferred-lifetime");
-    getParam(result, xpath, "max-preferred-lifetime");
+    checkAndGetLeaf(result, xpath, "data-directory");
+    checkAndGetLeaf(result, xpath, "preferred-lifetime");
+    checkAndGetLeaf(result, xpath, "min-preferred-lifetime");
+    checkAndGetLeaf(result, xpath, "max-preferred-lifetime");
     // Handle subnets.
     ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && !subnets->empty()) {
@@ -343,7 +335,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     if (ifs && !ifs->empty()) {
         if_config->set("interfaces", ifs);
     }
-    getParam(if_config, xpath + "/interfaces-config", "re-detect");
+    checkAndGetLeaf(if_config, xpath + "/interfaces-config", "re-detect");
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
     if (context) {
@@ -365,12 +357,12 @@ TranslatorConfig::getServerKeaDhcp6() {
     // Handle server-id.
     // @todo: move to a DUID translator.
     ElementPtr server_id = Element::createMap();
-    getParam(server_id, xpath + "/server-id", "type");
-    getParam(server_id, xpath + "/server-id", "identifier");
-    getParam(server_id, xpath + "/server-id", "time");
-    getParam(server_id, xpath + "/server-id", "htype");
-    getParam(server_id, xpath + "/server-id", "enterprise-id");
-    getParam(server_id, xpath + "/server-id", "persist");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "type");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "identifier");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "time");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "htype");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "enterprise-id");
+    checkAndGetLeaf(server_id, xpath + "/server-id", "persist");
     context = getItem(xpath + "/server-id/user-context");
     if (context) {
         server_id->set("user-context",
@@ -726,6 +718,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     if (loggers) {
         setLoggers(xpath, loggers);
     }
+    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 void
@@ -790,7 +783,6 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     if (auth) {
         setItem(xpath + "/authoritative", auth, SR_BOOL_T);
     }
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 void
@@ -882,7 +874,6 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
             setItem(xpath + "/server-id/user-context", repr, SR_STRING_T);
         }
     }
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
 }
 
 }  // namespace yang

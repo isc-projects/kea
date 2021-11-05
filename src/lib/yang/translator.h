@@ -54,6 +54,18 @@ public:
     /// null when not found.
     isc::data::ElementPtr getItems(const std::string& xpath);
 
+    /// @brief Retrieves an item and stores in the specified storage.
+    ///
+    /// This will attempt to retrieve an item and, if exists, will
+    /// store it in the storage.
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param xpath xpath location of data that will be extracted from sysrepo
+    /// @param name name of the parameter
+    void checkAndGetLeaf(isc::data::ElementPtr& storage,
+                         const std::string& xpath,
+                         const std::string& name);
+
     /// @brief Get the values of all siblings at a certain xpath.
     ///
     /// @param xpath the xpath to the element to be retrieved from, usually a
