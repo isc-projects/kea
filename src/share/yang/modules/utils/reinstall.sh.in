@@ -24,6 +24,7 @@ Options:
   [-d|--debug]                              enable debug mode, showing every executed command
   [-h|--help]                               print usage (this text)
   [-s|--sysrepo ${SYSREPO_INSTALLATION}]    point to sysrepo installation which is needed for sysrepoctl
+  [-u|--uninstall-first]                    uninstall before installing
 ' \
     "$(basename "${0}")"
 }
@@ -49,6 +50,9 @@ while test ${#} -gt 0; do
     # [-s|--sysrepo ${SYSREPO_INSTALLATION}]    point to sysrepo installation which is needed for sysrepoctl
     '-s'|'--sysrepo') shift; sysrepo=${1} ;;
 
+    # [-u|--uninstall-first]                    uninstall before installing
+    '-u'|'--uninstall-first') uninstall_first=true ;;
+
     # Unrecognized argument
     *)
     printf "${red}ERROR: Unrecognized argument '%s'${reset}\\n" "${1}" 1>&2; print_usage; exit 1 ;;
@@ -57,6 +61,7 @@ done
 
 # Default arguments
 test -z "${sysrepo+x}" && sysrepo='/usr/local'
+test -z "${uninstall_first+x}" && uninstall_first='false'
 
 #------------------------------------------------------------------------------#
 
@@ -146,14 +151,8 @@ install_yang_modules() {
   install_kea_module 'kea-dhcp6-server'
 }
 
-# Uninstall all YANG modules in reverse dependency order.
-# Currently not working. It complains:
-#   Internal module "ietf-inet-types" cannot be uninstalled.
-# Something about another module depending on ietf-inet-types.
-# Might be related to a module that is internal to sysrepo.
-# Might be for the better to not uninstall them since installing YANG modules is
-# idempotent and actually has logic to only install if the revision is newer
-# which is arguably beneficial.
+# Uninstall all YANG modules in reverse dependency order. Only uninstalls Kea
+# modules. IETF modules might may be dependencies to sysrepo internal modules.
 uninstall_yang_modules() {
   uninstall_module 'kea-dhcp6-server'
   uninstall_module 'kea-dhcp4-server'
@@ -161,17 +160,10 @@ uninstall_yang_modules() {
   uninstall_module 'kea-dhcp-ddns'
   uninstall_module 'kea-dhcp-types'
   uninstall_module 'kea-types'
-  uninstall_module 'ietf-inet-types'
-  uninstall_module 'ietf-dhcpv6-types'
-  uninstall_module 'ietf-dhcpv6-options'
-  uninstall_module 'ietf-yang-types'
-  uninstall_module 'ietf-dhcpv6-server'
-  uninstall_module 'ietf-dhcpv6-relay'
-  uninstall_module 'ietf-dhcpv6-client'
-  uninstall_module 'ietf-dhcpv6-common'
-  uninstall_module 'ietf-interfaces'
   uninstall_module 'keatest-module'
 }
 
-# uninstall_yang_modules
+if "${uninstall_first}"; then
+  uninstall_yang_modules
+fi
 install_yang_modules
