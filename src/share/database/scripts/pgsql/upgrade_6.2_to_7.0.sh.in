@@ -1227,11 +1227,11 @@ CREATE INDEX dhcp4_client_class_dependency_id_idx on dhcp4_client_class_dependen
 -- class_id.
 --
 -- Parameters:
--- - class_id id client class,
--- - dependency_id id of the dependency.
+-- - p_class_id id client class,
+-- - p_dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassDependency(class_id BIGINT,
-                                                            dependency_id BIGINT)
+CREATE OR REPLACE FUNCTION checkDHCPv4ClientClassDependency(p_class_id BIGINT,
+                                                            p_dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS \$\$
@@ -1242,18 +1242,18 @@ BEGIN
     -- We could check the same with a constraint but later in this
     -- trigger we use this value to verify if the dependencies are
     -- met.
-    IF class_id IS NULL THEN
+    IF p_class_id IS NULL THEN
         RAISE EXCEPTION 'Client class id must not be NULL.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
-    IF dependency_id IS NULL THEN
+    IF p_dependency_id IS NULL THEN
         RAISE EXCEPTION 'Class dependency id must not be NULL.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Dependencies on self make no sense.
-    IF class_id = dependency_id THEN
+    IF p_class_id = p_dependency_id THEN
         RAISE EXCEPTION 'Client class must not have dependency on self.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
@@ -1261,20 +1261,20 @@ BEGIN
     -- Check position of our class in the hierarchy.
     SELECT o.order_index INTO class_index FROM dhcp4_client_class AS c
         INNER JOIN dhcp4_client_class_order AS o ON c.id = o.class_id
-        WHERE c.id = class_id;
+        WHERE c.id = p_class_id;
 
     IF class_index IS NULL THEN
-        RAISE EXCEPTION 'Client class with id % does not exist.', class_id
+        RAISE EXCEPTION 'Client class with id % does not exist.', p_class_id
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Check position of the dependency.
     SELECT o.order_index INTO dependency_index FROM dhcp4_client_class AS c
         INNER JOIN dhcp4_client_class_order AS o ON c.id = o.class_id
-        WHERE c.id = dependency_id;
+        WHERE c.id = p_dependency_id;
 
     IF dependency_index IS NULL THEN
-        RAISE EXCEPTION 'Client class with id % does not exist.', dependency_id
+        RAISE EXCEPTION 'Dependency class with id % does not exist.', p_dependency_id
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
@@ -1282,7 +1282,7 @@ BEGIN
     IF dependency_index > class_index THEN
         RAISE EXCEPTION
             'Client class with id % must not depend on class defined later with id %',
-            class_id, dependency_id USING ERRCODE = 'sql_routine_exception';
+            p_class_id, p_dependency_id USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Check if all servers associated with the new class have dependent
@@ -1298,8 +1298,8 @@ BEGIN
     IF EXISTS(
         SELECT 1 FROM dhcp4_client_class_server AS t1
             LEFT JOIN dhcp4_client_class_server AS t2
-                ON t2.class_id = dependency_id AND (t2.server_id = 1 OR t2.server_id = t1.server_id)
-        WHERE t1.class_id = class_id AND t2.server_id IS NULL
+                ON t2.class_id = p_dependency_id AND (t2.server_id = 1 OR t2.server_id = t1.server_id)
+        WHERE t1.class_id = p_class_id AND t2.server_id IS NULL
         LIMIT 1
     ) THEN
         RAISE EXCEPTION 'Unmet dependencies for client class with id %', class_id
@@ -1831,11 +1831,11 @@ CREATE INDEX dhcp6_client_class_dependency_id_idx on dhcp6_client_class_dependen
 -- class_id.
 --
 -- Parameters:
--- - class_id id client class,
--- - dependency_id id of the dependency.
+-- - p_class_id id client class,
+-- - p_dependency_id id of the dependency.
 -- -----------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassDependency(class_id BIGINT,
-                                                            dependency_id BIGINT)
+CREATE OR REPLACE FUNCTION checkDHCPv6ClientClassDependency(p_class_id BIGINT,
+                                                            p_dependency_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS \$\$
@@ -1846,18 +1846,18 @@ BEGIN
     -- We could check the same with a constraint but later in this
     -- trigger we use this value to verify if the dependencies are
     -- met.
-    IF class_id IS NULL THEN
+    IF p_class_id IS NULL THEN
         RAISE EXCEPTION 'Client class id must not be NULL.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
-    IF dependency_id IS NULL THEN
+    IF p_dependency_id IS NULL THEN
         RAISE EXCEPTION 'Class dependency id must not be NULL.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Dependencies on self make no sense.
-    IF class_id = dependency_id THEN
+    IF p_class_id = p_dependency_id THEN
         RAISE EXCEPTION 'Client class must not have dependency on self.'
             USING ERRCODE = 'sql_routine_exception';
     END IF;
@@ -1865,20 +1865,20 @@ BEGIN
     -- Check position of our class in the hierarchy.
     SELECT o.order_index INTO class_index FROM dhcp6_client_class AS c
         INNER JOIN dhcp6_client_class_order AS o ON c.id = o.class_id
-        WHERE c.id = class_id;
+        WHERE c.id = p_class_id;
 
     IF class_index IS NULL THEN
-        RAISE EXCEPTION 'Client class with id % does not exist.', class_id
+        RAISE EXCEPTION 'Client class with id % does not exist.', p_class_id
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Check position of the dependency.
     SELECT o.order_index INTO dependency_index FROM dhcp6_client_class AS c
         INNER JOIN dhcp6_client_class_order AS o ON c.id = o.class_id
-        WHERE c.id = dependency_id;
+        WHERE c.id = p_dependency_id;
 
     IF dependency_index IS NULL THEN
-        RAISE EXCEPTION 'Client class with id % does not exist.', dependency_id
+        RAISE EXCEPTION 'Dependency class with id % does not exist.', p_dependency_id
             USING ERRCODE = 'sql_routine_exception';
     END IF;
 
@@ -1886,7 +1886,7 @@ BEGIN
     IF dependency_index > class_index THEN
         RAISE EXCEPTION
             'Client class with id % must not depend on class defined later with id %',
-            class_id, dependency_id USING ERRCODE = 'sql_routine_exception';
+            p_class_id, p_dependency_id USING ERRCODE = 'sql_routine_exception';
     END IF;
 
     -- Check if all servers associated with the new class have dependent
@@ -1902,11 +1902,11 @@ BEGIN
     IF EXISTS(
         SELECT 1 FROM dhcp6_client_class_server AS t1
             LEFT JOIN dhcp6_client_class_server AS t2
-                ON t2.class_id = dependency_id AND (t2.server_id = 1 OR t2.server_id = t1.server_id)
-        WHERE t1.class_id = class_id AND t2.server_id IS NULL
+                ON t2.class_id = p_dependency_id AND (t2.server_id = 1 OR t2.server_id = t1.server_id)
+        WHERE t1.class_id = p_class_id AND t2.server_id IS NULL
         LIMIT 1
     ) THEN
-        RAISE EXCEPTION 'Unmet dependencies for client class with id %', class_id
+        RAISE EXCEPTION 'Unmet dependencies for client class with id %', p_class_id
             USING ERRCODE = 'sql_routine_exception';
     END IF;
     RETURN;
