@@ -1,10 +1,10 @@
 .. _high-availability-library:
 
-ha: High Availability
-=====================
+``ha``: High Availability
+=========================
 
-This section describes the High Availability hooks library, which can be
-loaded on a pair of DHCPv4 or DHCPv6 servers to increase the reliability
+The High Availability hook library can be
+loaded on a pair of DHCPv4 or DHCPv6 servers, to increase the reliability
 of the DHCP service in the event of an outage of one of the servers.
 This library was previously only available to ISC's paid subscribers,
 but is now part of the open source Kea, available to all users.
@@ -29,13 +29,13 @@ constraints, and is different than its v4 counterpart. Although it may
 be useful for some users to use a "standard" failover protocol, it seems
 that most Kea users are simply interested in a working solution which
 guarantees high availability of the DHCP service. Therefore, the Kea HA
-hook library derives major concepts from the DHCP Failover protocol but
+hook library derives major concepts from the DHCP failover protocol but
 uses its own solutions for communication and configuration. It offers
 its own state machine, which greatly simplifies its implementation and
 generally fits better into Kea, and it provides the same features in
-both DHCPv4 and DHCPv6. This document intentionally uses the term "High
-Availability" rather than "Failover" to emphasize that it is not the
-Failover protocol implementation.
+both DHCPv4 and DHCPv6. This document intentionally uses the term "high
+availability" rather than "failover" to emphasize that it is not the
+failover protocol implementation.
 
 The following sections describe the configuration and operation of the
 Kea HA hook library.
@@ -46,13 +46,13 @@ Supported Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Kea HA hook library supports three configurations, also known as HA
-modes: load-balancing, hot-standby and passive-backup. In the
+modes: ``load-balancing``, ``hot-standby``, and ``passive-backup``. In the
 load-balancing mode, two servers respond to DHCP requests. The
 load-balancing function is implemented as described in `RFC
 3074 <https://tools.ietf.org/html/rfc3074>`__, with each server
 responding to half the received DHCP queries. When one of the servers
 allocates a lease for a client, it notifies the partner server over the
-control channel (the RESTful API), so the partner can save the lease
+control channel (via the RESTful API), so the partner can save the lease
 information in its own database. If the communication with the partner
 is unsuccessful, the DHCP query is dropped and the response is not
 returned to the DHCP client. If the lease update is successful, the
@@ -63,8 +63,8 @@ can be switched to handle the entire DHCP traffic if its partner becomes
 unavailable.
 
 In the load-balancing configuration, one of the servers must be
-designated as ``"primary"`` and the other as ``"secondary."`` Functionally,
-there is no difference between the two during normal operation. This
+designated as "primary" and the other as "secondary." Functionally,
+there is no difference between the two during normal operation. However, this
 distinction is required when the two servers are started at (nearly) the
 same time and have to synchronize their lease databases. The primary
 server synchronizes the database first. The secondary server waits for
@@ -88,8 +88,8 @@ DHCP queries.
    between two instances, reducing the traffic processed by each of them.
    However, it is not always clear to the operators that using the
    ``load-balancing`` mode requires manually splitting the address pools
-   between two Kea instances using client classification. It precludes
-   two servers from allocating the same address to different clients.
+   between two Kea instances using client classification, to preclude
+   both servers from allocating the same address to different clients.
    Such a split is not needed in the ``hot-standby`` mode. Thus, the benefit
    of using the ``hot-standby`` over the ``load-balancing`` mode is that the former
    has a simpler configuration. Conversely, ``load-balancing`` has higher
@@ -97,62 +97,60 @@ DHCP queries.
    See :ref:`ha-load-balancing-config` for details on how to split the
    pools using client classification.
 
-
-In the configurations described above, the primary and secondary/standby
+In the configurations described above, both the primary and secondary/standby
 are referred to as ``"active"`` servers, because they receive lease
 updates and can automatically react to the partner's failures by
 responding to the DHCP queries which would normally be handled by the
-partner. The HA hook library supports another server type/role: ``"backup"``
+partner. The HA hook library supports another server type/role: the "backup"
 server. The use of a backup server is optional, and can be implemented in both
 load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
 however, the presence of backup servers may increase the latency
 of DHCP responses, because not only do active servers send lease updates
-to each other, but also to the backup servers. As of Kea 1.7.8 the active
-servers no longer expect the acknowledgments from the backup servers
-before responding to the DHCP clients, therefore the overhead of sending
-the lease updates to the backup servers is minimized compared to the
+to each other, but also to the backup servers. Since Kea 1.7.8, the active
+servers no longer expect acknowledgments from the backup servers
+before responding to the DHCP clients, so the overhead of sending
+lease updates to the backup servers is minimized compared to
 earlier Kea versions.
 
-The last supported configuration, passive-backup, has been introduced
-in Kea release 1.7.8. In this configuration there is only one active
+The last supported configuration, ``passive-backup``, was introduced
+in Kea 1.7.8. In this configuration, there is only one active
 server and typically one or more backup servers. A passive-backup
-configuration with no backup servers is also accepted but it is no
+configuration with no backup servers is also accepted, but it is no
 different than running a single server with no HA function at all.
 
 The passive-backup configuration is used in situations when an administrator
 wants to take advantage of the backup servers as an additional storage
-for leases without a need for running the fully blown failover setup.
-In this case, if the primary server fails, the DHCP service is lost
-and it requires that the administrator manually starts the primary to resume
-the DHCP service. The administrator may also configure one of the
-backup servers to provide the DHCP service to the clients as these
+for leases without a need for running the full-blown failover setup.
+In this case, if the primary server fails, the DHCP service is lost;
+it requires the administrator to manually start the primary to resume
+DHCP service. The administrator may also configure one of the
+backup servers to provide DHCP service to the clients, as these
 servers should have accurate or nearly accurate information about the
 allocated leases. The major advantage of the passive-backup mode is that
 it provides some redundancy of the lease information but with better
 performance of the primary server responding to the DHCP queries. Since
-Kea release 1.7.8, the primary server does not have to wait for the
+Kea 1.7.8, the primary server does not have to wait for
 acknowledgments to the lease updates from the backup servers before it
 sends a response to the DHCP client. This reduces the response time
-comparing to the load-balancing and hot-standby cases in which the
+compared to the load-balancing and hot-standby cases, in which the
 server responding to the DHCP query has to wait for the acknowledgment
 from the other active server before it can respond to the client.
 
 .. note::
 
    An interesting use case for a single active server running in the
-   passive-backup mode is a notification service in which a software
+   passive-backup mode is a notification service, in which software
    pretending to be a backup server receives live notifications about
    allocated and deleted leases from the primary server and can display
-   them on the monitoring screen, trigger alerts etc.
-
+   them on a monitoring screen, trigger alerts, etc.
 
 Clocks on Active Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Synchronized clocks are essential for the HA setup to operate reliably.
-The servers share lease information via lease updates and during
-synchronization of the databases. The lease information includes the
+The servers share lease information - via lease updates and during
+synchronization of the databases - including the
 time when the lease was allocated and when it expires. Some clock
 skew between the servers participating in the HA setup usually exists;
 this is acceptable as long as the clock skew is relatively low, compared
@@ -161,13 +159,13 @@ different lease expiration times on different servers may cause the HA
 system to malfunction. For example, one server may consider a lease to
 be expired when it is actually still valid. The lease reclamation
 process may remove a name associated with this lease from the DNS,
-causing problems when the client later attempts to renew the lease.
+causing problems when the client later attempts to renew its lease.
 
 Each active server monitors the clock skew by comparing its current time
 with the time returned by its partner in response to the heartbeat
 command. This gives a good approximation of the clock skew, although it
-doesn't take into account the time between sending the response by the
-partner and receiving this response by the server which sent the
+does not take into account the time between the partner sending the response
+and the receipt of this response by the server which sent the
 heartbeat command. If the clock skew exceeds 30 seconds, a warning log
 message is issued. The administrator may correct this problem by
 synchronizing the clocks (e.g. using NTP); the servers should notice the
@@ -183,52 +181,51 @@ clocks and restart the servers.
 
 .. note::
 
-   Prior to Kea 1.7.8 release, in order to recover from the terminated
-   state, the administrator had to shutdown both servers and then start
-   both of them. Since Kea 1.7.8 release it is allowed to restart the
-   servers sequentially, i.e. restart one server and then restart another
+   Prior to Kea 1.7.8, to recover from the terminated
+   state, the administrator had to shut down both servers and then start
+   both of them. Since Kea 1.7.8, it is possible to restart the
+   servers sequentially, i.e. restart one server and then restart the other
    one. The clocks must be in sync before restarting the servers.
 
 .. note::
 
-   The clock skew is only assessed between two active servers and
-   only the active servers may enter the terminated state if it is
-   too high. As of Kea 1.7.8, the clock skew between the active and
-   the backup servers is not assessed because the active servers do
-   not exchange heartbeat messages with the backup servers.
+   The clock skew is only assessed between two active servers, and
+   only the active servers enter the ``terminated`` state if the skew is
+   too high. Since Kea 1.7.8, clock skew between active and
+   backup servers is not assessed, because active servers do
+   not exchange heartbeat messages with backup servers.
 
 .. _ha-https-support:
 
 HTTPS Support
 ~~~~~~~~~~~~~
 
-Since version 1.9.7 HTTPS is supported by the High Availability hooks
-library using the TLS/HTTPS support described in :ref:`tls` where
-more details can be found.
+Since Kea 1.9.7, the High Availability hook library supports HTTPS
+via TLS, as described in :ref:`tls`.
 
 The HTTPS configuration parameters are:
 
-- the ``trust-anchor`` parameter specifies the name of a file or directory
-  where the certification authority (CA) certificate of a Control Agent can
+- ``trust-anchor`` - specifies the name of a file or directory
+  where the certification authority certificate of a Control Agent can
   be found.
 
-- the ``cert-file`` parameter specifies the name of the file containing
+- `cert-file`` - specifies the name of the file containing
   the end-entity certificate to use.
 
-- the ``key-file`` parameter specifies the private key of the end-entity
+- ``key-file`` - specifies the private key of the end-entity
   certificate to use.
 
-These parameters can be configured at the global level and at the peer
-level. When configured at both levels the peer value is used allowing
-to share common values with possible exceptions.
+These parameters can be configured at the global and peer
+levels. When configured at both levels the peer value is used, allowing
+common values to be shared.
 
 The three parameters must be either all not specified (HTTPS disabled)
-or all specified (HTTPS enabled). Configure to the empty string is
-considered as not specified: this can be used for instance to disable
+or all specified (HTTPS enabled). Specification of the empty string is
+considered not specified; this can be used, for instance, to disable
 HTTPS for a particular peer when it is enabled at the global level.
 
-As the High Availability hooks library is a HTTPS client there is no
-``cert-required`` parameter: it is configured at the Control Agent side.
+As the High Availability hook library is an HTTPS client, there is no
+``cert-required`` parameter: it is configured via the Control Agent.
 
 .. _ha-server-states:
 
@@ -238,7 +235,7 @@ Server States
 A DHCP server operating within an HA setup runs a state machine, and the
 state of the server can be retrieved by its peers using the
 ``ha-heartbeat`` command sent over the RESTful API. If the partner
-server doesn't respond to the ``ha-heartbeat`` command within the
+server does not respond to the ``ha-heartbeat`` command within the
 specified amount of time, the communication is considered interrupted
 and the server may, depending on the configuration, use additional
 measures (described later in this document) to verify that the partner
@@ -247,32 +244,45 @@ server transitions to the ``partner-down`` state to handle all the
 DHCP traffic directed to the system.
 
 In this case, the surviving server continues to send the
-``ha-heartbeat`` command to detect when the partner wakes up. At that
-time, the partner synchronizes the lease database and when it is again
+``ha-heartbeat`` command to detect whether the partner wakes up. At that
+time, the partner synchronizes the lease database; when it is again
 ready to operate, the surviving server returns to normal operation, i.e.
 the ``load-balancing`` or ``hot-standby`` state.
 
 The following is the list of all possible server states:
 
 -  ``backup`` - normal operation of the backup server. In this state it
-   receives lease updates from the active servers.
+   receives lease updates from the active server(s).
 
 -  ``communication-recovery`` - an active server running in load-balancing
    mode may transition to this state when it experiences communication
    issues with a partner server over the control channel. This is an
    intermediate state between the ``load-balancing`` and ``partner-down``
    states. In this state the server continues to respond to DHCP queries
-   but does not send lease updates to the partner. The lease updates are
-   queued and will be sent when the communication is resumed. If the
-   communication is not resumed the server may transition to the
+   but does not send lease updates to the partner. Lease updates are
+   queued and are sent when normal communication is resumed. If
+   communication does not resume within the time specified by XXX, the primary server
+   then transitions to the
    ``partner-down`` state. The ``communication-recovery`` state was
    introduced to ensure reliable DHCP service when both active servers
    remain operational but the communication between them is interrupted
-   for a prolonged period of time. The server can be configured to never
-   enter this state by setting the ``delayed-updates-limit`` to 0.
-   Disabling entry into this state will cause the server to begin testing
-   for and possibly enter ``partner-down`` state when the server is unable
-   to communicate with its partner.
+   for a prolonged period of time. Either server can be configured to never
+   enter this state by setting the ``delayed-updates-limit`` to 0. (Please refer to
+   :ref:`ha-load-balancing-config`, later in this chapter, for details on this
+   parameter.) Disabling entry into the ``communication-recovery`` state
+   causes the server to begin testing for the ``partner-down`` state
+   as soon as the server is unable to communicate with its partner.
+
+.. note::
+
+   In Kea 1.9.4, with the introduction of ``delayed-updates-limit``,
+   the default server's behavior
+   in load-balancing mode changed. When a server experiences
+   communication issues with its partner, it now enters the ``communication-recovery``
+   state and queues lease updates until communication is resumed. Prior to
+   Kea 1.9.4, a server that could not communicate with its partner in
+   ``load-balancing`` mode would immediately begin the transition to
+   the ``partner-down`` state.
 
 -  ``hot-standby`` - normal operation of the active server running in
    the hot-standby mode; both the primary and the standby server are in
@@ -289,13 +299,13 @@ The following is the list of all possible server states:
 -  ``in-maintenance`` - an active server transitions to this state as a result
    of being notified by its partner that the administrator requested
    maintenance of the HA setup. The administrator requests the maintenance
-   by sending the ``ha-maintenance-start`` to the server which is supposed
+   by sending the ``ha-maintenance-start`` command to the server which is supposed
    to take over the responsibility for responding to the DHCP clients while
    the other server is taken offline for maintenance. If the server is
    in the ``in-maintenance`` state it can be safely shut down. The partner
-   is in the ``partner-in-maintenance`` state from which it will transition
-   to the ``partner-down`` state immediately after it finds that the
-   server in maintenance was shut down.
+   is in the ``partner-in-maintenance`` state, from which it transitions
+   to the ``partner-down`` state immediately after it discovers that the
+   server in maintenance has been shut down.
 
 -  ``partner-down`` - an active server transitions to this state after
    detecting that its partner (another active server) is offline. The
@@ -318,12 +328,12 @@ The following is the list of all possible server states:
    the queries, but no longer sends lease updates.
 
 -  ``passive-backup`` - a primary server running in the passive-backup HA
-   mode transitions to this state immediately after it is booted up. The
-   primary server being in this state responds to the entire DHCP traffic
+   mode transitions to this state immediately after it boots up. The
+   primary server in this state responds to all DHCP traffic
    and sends lease updates to the backup servers it is connected to. By
-   default, the primary server does not wait for the acknowledgments from
-   the backup servers and responds to the DHCP query right after sending
-   the lease updates to all backup servers. If any of the lease updates
+   default, the primary server does not wait for acknowledgments from
+   the backup servers and responds to a DHCP query right after sending
+   lease updates to all backup servers. If any of the lease updates
    fail, a backup server misses the lease update but the DHCP client
    is still provisioned. This default configuration can be changed by
    setting the ``wait-backup-ack`` configuration parameter to ``true``,
@@ -338,7 +348,7 @@ The following is the list of all possible server states:
    synchronizing its lease database with an active partner. This state
    indicates to the partner - which may be in the ``partner-down`` state
    - that it should return to normal operation. If and when it does, the
-   server in the ``ready`` state will also start normal operation.
+   server in the ``ready`` state also starts normal operation.
 
 -  ``syncing`` - an active server transitions to this state to fetch
    leases from the active partner and update the local lease database.
@@ -347,35 +357,35 @@ The following is the list of all possible server states:
    fetched. The DHCP service is disabled for a maximum time of 60
    seconds, after which it is automatically re-enabled, in case the
    syncing partner was unable to re-enable the service. If the
-   synchronization is completed successfully, the synchronizing server
+   synchronization completes successfully, the synchronizing server
    issues the ``ha-sync-complete-notify`` command to notify the partner.
    In most states, the partner re-enables its DHCP service to continue
    responding to the DHCP queries. In the ``partner-down`` state, the
-   partner first ensures that the communication between the servers
+   partner first ensures that communication between the servers
    is re-established before enabling the DHCP service.
    The syncing operation is synchronous; the server waits for an answer
    from the partner and does nothing else while the lease
    synchronization takes place. A server that is configured not to
    synchronize the lease database with its partner, i.e. when the
    ``sync-leases`` configuration parameter is set to ``false``, will
-   never transition to this state. Instead, it will transition directly
+   never transition to this state. Instead, it transitions directly
    from the ``waiting`` state to the ``ready`` state.
 
 -  ``terminated`` - an active server transitions to this state when the
-   High Availability hooks library is unable to further provide reliable
+   High Availability hook library is unable to further provide reliable
    service and a manual intervention of the administrator is required to
    correct the problem. Various issues with the HA setup may cause the
    server to transition to this state. While in this state, the server
    continues responding to DHCP clients based on the HA mode selected
-   (load-balancing or hot-standby), but the lease updates are not
-   exchanged and the heartbeats are not sent. Once a server has entered
-   the "terminated" state, it will remain in this state until it is
+   (load-balancing or hot-standby), but lease updates are not
+   exchanged and heartbeats are not sent. Once a server has entered
+   the "terminated" state, it remains in this state until it is
    restarted. The administrator must correct the issue which caused this
    situation prior to restarting the server (e.g. synchronize the clocks);
    otherwise, the server will return to the "terminated" state once it
    finds that the issue persists.
 
--  ``waiting`` - each started server instance enters this state. The
+-  ``waiting`` - each started server instance enters this state. A
    backup server transitions directly from this state to the ``backup``
    state. An active server sends a heartbeat to its partner to check its
    state; if the partner appears to be unavailable, the server
@@ -388,23 +398,27 @@ The following is the list of all possible server states:
    ``waiting`` state until the primary transitions to the ``ready``
    state.
 
-..
-
 .. note::
 
    Currently, restarting the HA service from the ``terminated`` state
    requires restarting the DHCP server or reloading its configuration.
 
-Whether the server responds to the DHCP queries and which queries it
+Whether the server responds to DHCP queries and which queries it
 responds to is a matter of the server's state, if no administrative
 action is performed to configure the server otherwise. The following
 table provides the default behavior for various states.
 
-The ``DHCP Server Scopes`` denote what group of received DHCP queries
-the server responds to in the given state. An in-depth explanation of
-the scopes can be found below.
+The ``DHCP Service Scopes`` denote which group of received DHCP queries
+the server responds to in the given state. The HA configuration
+must specify a unique name for each server within the HA setup. This
+document uses the following convention within the provided examples:
+``server1`` for a primary server, ``server2`` for the secondary or
+standby server, and ``server3`` for the backup server. In real life any
+names can be used as long as they remain unique.
 
-.. table:: Default Behavior of the Server in Various HA States
+An in-depth explanation of the scopes can be found below.
+
+.. table:: Default behavior of the server in various HA states
 
    +------------------------+-----------------+-----------------+-----------------+
    | State                  | Server Type     | DHCP Service    | DHCP Service    |
@@ -447,18 +461,11 @@ the scopes can be found below.
    | waiting                | any server      | disabled        | none            |
    +------------------------+-----------------+-----------------+-----------------+
 
-The DHCP service scopes require some explanation. The HA configuration
-must specify a unique name for each server within the HA setup. This
-document uses the following convention within the provided examples:
-``server1`` for a primary server, ``server2`` for the secondary or
-standby server, and ``server3`` for the backup server. In real life any
-names can be used as long as they remain unique.
-
 In the load-balancing mode there are two scopes specified for the active
 servers: ``HA_server1`` and ``HA_server2``. The DHCP queries
 load-balanced to ``server1`` belong to the ``HA_server1`` scope and the
 queries load-balanced to ``server2`` belong to the ``HA_server2`` scope.
-If either of the servers is in the ``partner-down`` state, the active
+If either server is in the ``partner-down`` state, the active
 partner is responsible for serving both scopes.
 
 In the hot-standby mode, there is only one scope - ``HA_server1`` -
@@ -467,11 +474,11 @@ becomes unavailable, ``server2`` becomes responsible for this scope.
 
 The backup servers do not have their own scopes. In some cases they can
 be used to respond to queries belonging to the scopes of the active
-servers. Also, a server which is neither in the partner-down state nor
+servers. Also, a backup server which is neither in the partner-down state nor
 in normal operation serves no scopes.
 
 The scope names can be used to associate pools, subnets, and networks
-with certain servers, so only these servers can allocate addresses or
+with certain servers, so that only these servers can allocate addresses or
 prefixes from those pools, subnets, or networks. This is done via the
 client classification mechanism (see :ref:`ha-load-balancing-advanced-config`
 for more details).
@@ -485,7 +492,7 @@ When one of the servers finds that its partner is unavailable, it starts
 serving clients from both its own scope and the scope of the unavailable
 partner. This is straightforward for new clients, i.e. those sending
 DHCPDISCOVER (DHCPv4) or Solicit (DHCPv6), because those requests are
-not sent to any particular server. The available server will respond to
+not sent to any particular server. The available server responds to
 all such queries when it is in the ``partner-down`` state.
 
 When a client renews a lease, it sends its DHCPREQUEST (DHCPv4) or Renew
@@ -495,16 +502,16 @@ get no response. In that case, the client continues to use its lease and
 attempts to renew until the rebind timer (T2) elapses. The client then
 enters the rebinding phase, in which it sends a DHCPREQUEST (DHCPv4) or
 Rebind (DHCPv6) message to any available server. The surviving server
-will receive the rebinding request and will typically extend the
+receives the rebinding request and typically extends the
 lifetime of the lease. The client then continues to contact that new
 server to renew its lease as appropriate.
 
 If and when the other server once again becomes available, both active
-servers will eventually transition to the ``load-balancing`` or
-``hot-standby`` state, in which they will again be responsible for their
+servers will eventually transition to the load-balancing or
+hot-standby state, in which they will again be responsible for their
 own scopes. Some clients belonging to the scope of the restarted server
 will try to renew their leases via the surviving server, but this server
-will not respond to them anymore; the client will eventually transition
+will no longer respond to them; the client will eventually transition
 back to the correct server via the rebinding mechanism.
 
 .. _ha-load-balancing-config:
@@ -520,17 +527,17 @@ with the only difference that ``this-server-name`` should be set to
 
 .. note::
 
-   Remember! The ``load-balancing`` mode requires that the address pools and
-   delegated prefix pools are split between the active servers. During
+   Remember that the ``load-balancing`` mode requires the address pools and
+   delegated prefix pools to be split between the active servers. During
    normal operation, the servers use non-overlapping pools to avoid
    allocating the same lease to different clients by both instances.
    A server will only use the pool fragments owned by the partner when
-   the partner is not running. See the notes in the
+   the partner is not running. See the notes in
    :ref:`ha-supported-configurations` highlighting differences between
-   the ``load-balancing`` and ``hot-standby`` modes. The semantics of the pool
+   the ``load-balancing`` and ``hot-standby`` modes. The semantics of pool
    partitioning is explained further in this section.
-   The :ref:`ha-load-balancing-advanced-config` provides advanced pools
-   partitioning examples.
+   The :ref:`ha-load-balancing-advanced-config` section provides advanced
+   pool-partitioning examples.
 
 ::
 
@@ -590,17 +597,17 @@ with the only difference that ``this-server-name`` should be set to
        }]
    }
 
-Two hooks libraries must be loaded to enable HA:
+Two hook libraries must be loaded to enable HA:
 ``libdhcp_lease_cmds.so`` and ``libdhcp_ha.so``. The latter implements
 the HA feature, while the former enables control commands required by HA
 to fetch and manipulate leases on the remote servers. In the example
 provided above, it is assumed that Kea libraries are installed in the
 ``/usr/lib`` directory. If Kea is not installed in the /usr directory,
-the hooks libraries locations must be updated accordingly.
+the hook libraries locations must be updated accordingly.
 
 The HA configuration is specified within the scope of ``libdhcp_ha.so``.
 Note that the top-level parameter ``high-availability`` is a list, even
-though it currently contains only one entry.
+though it contains only one entry.
 
 The following are the global parameters which control the server's
 behavior with respect to HA:
@@ -609,20 +616,20 @@ behavior with respect to HA:
    this HA setup. It must match with one of the servers specified within
    the ``peers`` list.
 
--  ``mode`` - specifies an HA mode of operation. Currently supported
+-  ``mode`` - specifies an HA mode of operation. The currently supported
    modes are ``load-balancing`` and ``hot-standby``.
 
 -  ``heartbeat-delay`` - specifies a duration in milliseconds between
    sending the last heartbeat (or other command sent to the partner) and
-   the next heartbeat. The heartbeats are sent periodically to gather
+   the next heartbeat. Heartbeats are sent periodically to gather
    the status of the partner and to verify whether the partner is still
    operating. The default value of this parameter is 10000 ms.
 
 -  ``max-response-delay`` - specifies a duration in milliseconds since
    the last successful communication with the partner, after which the
    server assumes that communication with the partner is interrupted.
-   This duration should be greater than the ``heartbeat-delay``. Usually
-   it is greater than the duration of multiple ``heartbeat-delay``
+   This duration should be greater than the ``heartbeat-delay``; usually
+   it is greater than multiple ``heartbeat-delay``
    values. When the server detects that communication is interrupted, it
    may transition to the ``partner-down`` state (when
    ``max-unacked-clients`` is 0) or trigger the failure-detection
@@ -637,118 +644,105 @@ behavior with respect to HA:
    This parameter specifies the maximum time in milliseconds for the
    client to try to communicate with the DHCP server, after which this
    server assumes that the client failed to communicate with the DHCP
-   server (is "unacked"). The default value of this parameter is 10000.
+   server (is unacknowledged or "unacked"). The default value of this parameter is 10000.
 
 -  ``max-unacked-clients`` - specifies how many "unacked" clients are
    allowed (see ``max-ack-delay``) before this server assumes that the
    partner is offline and transitions to the ``partner-down`` state. The
    special value of 0 is allowed for this parameter, which disables the
-   failure-detection mechanism. In this case, a server that can't
+   failure-detection mechanism. In this case, a server that cannot
    communicate with its partner over the control channel assumes that
    the partner server is down and transitions to the ``partner-down``
    state immediately. The default value of this parameter is 10.
 
--  ``delayed-updates-limit`` - specifies a maximum number of lease
+-  ``delayed-updates-limit`` - specifies the maximum number of lease
    updates which can be queued while the server is in the
    ``communication-recovery`` state. This parameter was introduced in
-   Kea release 1.9.4. The special value of 0 configures the server to
+   Kea 1.9.4. The special value of 0 configures the server to
    never transition to the ``communication-recovery`` state and the
    server behaves as in earlier Kea versions. The default value of this
    parameter is 100.
 
 The values of ``max-ack-delay`` and ``max-unacked-clients`` must be
 selected carefully, taking into account the specifics of the network in
-which the DHCP servers are operating. Note that the server in question
-may not respond to some DHCP clients because these clients are not to be
-serviced by this server according to administrative policy. The server
-may also drop malformed queries from clients. Therefore, selecting too
+which the DHCP servers are operating. The server in question
+may not respond to some DHCP clients following administrative policy, or the server
+may drop malformed queries from clients. Therefore, selecting too
 low a value for the ``max-unacked-clients`` parameter may result in a
 transition to the ``partner-down`` state even though the partner is
 still operating. On the other hand, selecting too high a value may
 result in never transitioning to the ``partner-down`` state if the DHCP
 traffic in the network is very low (e.g. at night), because the number
-of distinct clients trying to communicate with the server could be lower
+of individual clients trying to communicate with the server could be lower
 than the ``max-unacked-clients`` setting.
 
 In some cases it may be useful to disable the failure-detection
 mechanism altogether, if the servers are located very close to each
 other and network partitioning is unlikely, i.e. failure to respond to
 heartbeats is only possible when the partner is offline. In such cases,
-set the ``max-unacked-clients`` to 0.
+set ``max-unacked-clients`` to 0.
 
-The ``delayed-updates-limit`` parameter was introduced in Kea 1.9.4. It
-is used to enable or disable the use of the communication recovery
-procedure and controls server's behavior in the ``communication-recovery``
-state which was introduced in the same release. This parameter may
-only be used in the load balancing mode.
+The ``delayed-updates-limit`` parameter
+is used to enable or disable the ``communication-recovery``
+procedure, and controls the server's behavior in the ``communication-recovery``
+state. This parameter can only be used in the load-balancing mode.
 
-.. note::
-
-   In Kea 1.9.4, with the introduction of the ``delayed-updates-limit``,
-   the default server's behavior has changed when the server
-   runs in the load balancing mode. When the server experiences
-   communication issues with its partner, it enters ``communication-recovery``
-   state and queues lease updates until communication is resumed. Before
-   Kea 1.9.4 the server would begin the failover procedure in the
-   ``load-balancing`` state and possibly transition straight to the
-   ``partner-down`` state when communication is not resumed.
-
-If the server is in the ``load-balancing`` state and it experiences
-communication issues with its partner (heartbeat or lease update fail),
+If a server in the ``load-balancing`` state experiences
+communication issues with its partner (a heartbeat or lease update fail),
 the server transitions to the ``communication-recovery`` state. In this
-state the server keeps responding to DHCP queries but it does not send
-lease updates to the partner. The lease updates are queued until the
-communication is re-established. This ensures that the DHCP service
+state, the server keeps responding to DHCP queries but does not send
+lease updates to the partner. The lease updates are queued until
+communication is re-established, to ensure that DHCP service
 remains available even in the event of the communication loss between
-the partners. Note that the communication loss may appear both when
-one of the servers terminated or when both servers remain available
-but can't communicate. In the former case, the surviving server will
-follow the normal failover procedure and should eventually transition to
-the ``partner-down`` state. In the latter case both servers should
+the partners. There may appear to be communication loss when either
+one of the servers has terminated, or when both servers remain available
+but cannot communicate with each other. In the former case, the surviving server will
+follow the normal procedure and should eventually transition to
+the ``partner-down`` state. In the latter case, both servers should
 transition to the ``communication-recovery`` state and should never
 transition to the ``partner-down`` state (if ``max-unacked-clients``
-is set to non zero value), because all DHCP queries are responded and
-servers would not see any unacked DHCP queries.
+is set to a non-zero value), because all DHCP queries are answered and
+neither server would see any unacked DHCP queries.
 
-Introduction of the communication recovery procedure was mostly
+Introduction of the ``communication-recovery`` procedure was
 motivated by issues which may appear when two servers remain online
-but the communication between them remains interrupted for a long
+but the communication between them remains interrupted for a
 period of time. In earlier Kea versions, the servers having communication
 issues used to drop DHCP packets before transitioning to the
 ``partner-down`` state. In some cases they both transitioned to the
-``partner-down`` state which could potentially result in allocations
+``partner-down`` state, which could potentially result in allocations
 of the same IP addresses or delegated prefixes to different clients
-by respective servers. By entering the intermediate ``communication-recovery``
-state these problems are avoided.
+by the respective servers. By entering the intermediate ``communication-recovery``
+state, these problems are avoided.
 
 If a server in the ``communication-recovery`` state re-establishes
-communication with its partner, it will try to send the partner all
-of the outstanding lease updates the server has queued. This is done
+communication with its partner, it tries to send the partner all
+of the outstanding lease updates it has queued. This is done
 synchronously and may take a considerable amount of time before the server
 transitions to the ``load-balancing`` state and resumes normal operation.
 The maximum number of lease updates which can be queued in the
-``communication-recovery`` state is controlled by the ``delayed-updates-limit``.
+``communication-recovery`` state is controlled by ``delayed-updates-limit``.
 If the limit is exceeded, the server stops queuing lease updates and
-will perform full database synchronization after re-establishing the
-connection with the partner instead of sending outstanding lease updates
-before transitioning to ``load-balancing`` state. Even if the limit is
+performs a full database synchronization after re-establishing the
+connection with the partner, instead of sending outstanding lease updates
+before transitioning to the ``load-balancing`` state. Even if the limit is
 exceeded, the server in the ``communication-recovery`` state remains
-responsive to the DHCP clients.
+responsive to DHCP clients.
 
 It may be preferable to set higher values of ``delayed-updates-limit`` when
 there is a risk of prolonged communication interruption between the
-servers and the lease database is large. This would avoid costly
-lease database synchronization. On the other hand, if the lease
-database is small the time required to send outstanding lease updates
-may be longer than lease database synchronization. In such cases it
-may be better to use a lower value, e.g. 10. The default value is 100
-which seems to be a reasonable compromise and should work well in
+servers and when the lease database is large, to avoid costly
+lease-database synchronization. On the other hand, if the lease
+database is small, the time required to send outstanding lease updates
+may be longer than the lease-database synchronization. In such cases it
+may be better to use a lower value, e.g. 10. The default value of 100
+is a reasonable compromise and should work well in
 most deployments with moderate traffic.
 
 .. note::
 
    This parameter is new and values for it that work well in some environments
-   may not work well in others.  Feedback from users will help us build a
+   may not work well in others. Feedback from users will help us build a
    better working set of recommendations.
 
 The ``peers`` parameter contains a list of servers within this HA setup.
@@ -757,7 +751,7 @@ server. It may also contain an unlimited number of backup servers. In
 this example, there is one backup server which receives lease updates
 from the active servers.
 
-Since Kea version 1.9.0 the basic HTTP authentication is available
+Since Kea version 1.9.0, basic HTTP authentication is available
 to protect the Kea control agent against local attackers.
 
 These are the parameters specified for each of the peers within this
@@ -769,14 +763,14 @@ list:
    the control channel. Other servers use this URL to send control
    commands to that server.
 
--  ``basic-auth-user`` - specifies the user id for basic HTTP
-   authentication. If not specified or specified as an empty string
+-  ``basic-auth-user`` - specifies the user ID for basic HTTP
+   authentication. If not specified or specified as an empty string,
    no authentication header will be added to HTTP transactions.
-   Must not contain the colon (:) character.
+   It must not contain the colon (:) character.
 
 -  ``basic-auth-password`` - specifies the password for basic HTTP
-   authentication. Ignored when the user id is not specified or empty.
-   The password is optional: if not specified an empty password is used.
+   authentication. This parameter is ignored when the user ID is not specified or is empty.
+   The password is optional; if not specified, an empty password is used.
 
 -  ``role`` - denotes the role of the server in the HA setup. The
    following roles are supported in the load-balancing configuration:
@@ -785,29 +779,28 @@ list:
 
 -  ``auto-failover`` - a boolean value which denotes whether a server
    detecting a partner's failure should automatically start serving the
-   partner's clients. The default value of this parameter is true.
+   partner's clients. The default value of this parameter is ``true``.
 
-In our example configuration, both active servers can allocate leases
+In our example configuration above, both active servers can allocate leases
 from the subnet "192.0.3.0/24". This subnet contains two address pools:
 "192.0.3.100 - 192.0.3.150" and "192.0.3.200 - 192.0.3.250", which are
 associated with HA server scopes using client classification. When
 ``server1`` processes a DHCP query, it uses the first pool for lease
 allocation. Conversely, when ``server2`` processes a DHCP query it uses
-the second pool. When either of the servers is in the ``partner-down``
-state, it can serve leases from both pools and it selects the pool which
+the second pool. If either of the servers is in the ``partner-down``
+state, the other can serve leases from both pools; it selects the pool which
 is appropriate for the received query. In other words, if the query
 would normally be processed by ``server2`` but this server is not
-available, ``server1`` will allocate the lease from the pool of
-"192.0.3.200 - 192.0.3.250". The Kea control agent in front of the
-``server3`` requires basic HTTP authentication and authorizes the
-user id "foo" with the password "bar".
+available, ``server1`` allocates the lease from the pool of
+"192.0.3.200 - 192.0.3.250". The Kea control agent in front of
+``server3`` requires basic HTTP authentication, and authorizes the
+user ID "foo" with the password "bar".
 
 .. note::
 
-   The ``url`` schema can be ``http`` or ``https`` but since Kea
-   version 1.9.6 the ``https`` schema requires a TLS setup which
-   should be implemented for Kea version 1.9.7. The hostname part
-   must be an IPv4 address or an IPv6 address between square
+   The ``url`` schema can be ``http`` or ``https``, but since Kea
+   version 1.9.6 the ``https`` schema requires a TLS setup.
+   The hostname part must be an IPv4 address or an IPv6 address between square
    brackets, e.g. ``http://[2001:db8::1]:8080/``. Names are not
    accepted.
 
@@ -819,28 +812,28 @@ Load Balancing with Advanced Classification
 In the previous section, we provided an example of a load-balancing
 configuration with client classification limited to the ``HA_server1``
 and ``HA_server2`` classes, which are dynamically assigned to the
-received DHCP queries. In many cases, HA will be needed in deployments
+received DHCP queries. In many cases, HA is needed in deployments
 which already use some other client classification.
 
 Suppose there is a system which classifies devices into two groups:
 phones and laptops, based on some classification criteria specified in the
 Kea configuration file. Both types of devices are allocated leases from
-different address pools. Introducing HA in the load-balancing mode
+different address pools. Introducing HA in load-balancing mode
 results in a further split of each of those pools, as each server
 allocates leases for some phones and some laptops. This requires each of
 the existing pools to be split between ``HA_server1`` and
 ``HA_server2``, so we end up with the following classes:
 
--  phones_server1
+-  ``phones_server1``
 
--  laptops_server1
+-  ``laptops_server1``
 
--  phones_server2
+-  ``phones_server2``
 
--  laptops_server2
+-  ``laptops_server2``
 
-The corresponding server configuration using advanced classification
-(and the ``member`` expression) is provided below. For brevity's sake, the
+The corresponding server configuration, using advanced classification
+(and the ``member`` expression), is provided below. For brevity's sake, the
 HA hook library configuration has been removed from this example.
 
 ::
@@ -904,7 +897,7 @@ HA hook library configuration has been removed from this example.
    }
 
 The configuration provided above splits the address range into four
-pools: two pools dedicated to server1 and two to server2. Each server
+pools: two pools dedicated to ``HA_server1`` and two to ``HA_server2``. Each server
 can assign leases to both phones and laptops. Both groups of devices are
 assigned addresses from different pools. The ``HA_server1`` and
 ``HA_server2`` classes are built-in (see
@@ -923,7 +916,7 @@ expression and class dependencies.
 Hot-Standby Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following is an example configuration of the primary server in the
+The following is an example configuration of the primary server in a
 hot-standby configuration:
 
 ::
@@ -987,12 +980,12 @@ differences.
 The ``mode`` is now set to ``hot-standby``, in which only one server
 responds to DHCP clients. If the primary server is online, it responds
 to all DHCP queries. The ``standby`` server takes over all DHCP traffic
-if it discovers that the primary is unavailable.
+only if it discovers that the primary is unavailable.
 
 In this mode, the non-primary active server is called ``standby`` and
 that is its role.
 
-Finally, because there is always one server responding to DHCP queries,
+Finally, because there is always only one server responding to DHCP queries,
 there is only one scope - ``HA_server1`` - in use within pool
 definitions. In fact, the ``client-class`` parameter could be removed
 from this configuration without harm, because there can be no conflicts
@@ -1173,7 +1166,7 @@ lease file (therefore ``sync-leases`` is set to ``false``), but lease
 updates should be conducted as usual (``send-lease-updates`` is set to
 ``true``). It should be noted that Kea does not natively support such
 use cases, but users may develop their own scripts and tools around Kea
-to provide such mechanisms. The HA hooks library configuration is
+to provide such mechanisms. The HA hook library configuration is
 designed to maximize flexibility of administration.
 
 .. _ha-syncing-page-limit:
@@ -1311,7 +1304,7 @@ and remain in this state while leases are being added. In particular,
 the servers should not attempt to synchronize their lease databases nor
 start serving DHCP clients.
 
-The HA hooks library provides configuration parameters and a command to
+The HA hook library provides configuration parameters and a command to
 control when the HA state machine should be paused and resumed. The
 following configuration causes the HA state machine to pause in the
 ``waiting`` state after server startup.
@@ -1372,7 +1365,7 @@ state, which instructs the server never to pause the state machine.
 In order to "unpause" the state machine, the ``ha-continue`` command
 must be sent to the paused server. This command does not take any
 arguments. See :ref:`ha-control-commands` for details about commands
-specific to the HA hooks library.
+specific to the HA hook library.
 
 It is possible to configure the state machine to pause in more than one
 state. Consider the following configuration:
@@ -1463,7 +1456,7 @@ Control Agent Configuration
 
 :ref:`kea-ctrl-agent` describes in detail the Kea daemon, which
 provides a RESTful interface to control the Kea servers. The same
-functionality is used by the High Availability hooks library to establish
+functionality is used by the High Availability hook library to establish
 communication between the HA peers. Therefore, the HA library requires
 that the Control Agent (CA) be started for each DHCP instance within the
 HA setup. If the Control Agent is not started, the peers will not be
@@ -1691,7 +1684,7 @@ service. For example, an administrator can perform an upgrade of one of
 the servers while the other one continues to respond to the DHCP queries.
 When the upgraded server is back online, the upgrade can be performed for
 the second server. The typical problem reported for the earlier versions
-of the High Availability hooks library was that the administrator did not
+of the High Availability hook library was that the administrator did not
 have direct control over the state of the DHCP server. Shutting down
 one of the servers for maintenance did not necessarily cause the other
 server to start responding to all DHCP queries, because the failure
@@ -1704,7 +1697,7 @@ to instruct one of the servers to instantly start serving all DHCP clients,
 and the other server to instantly stop serving any DHCP clients, so it
 can be safely shut down.
 
-The maintenance feature of the High Availability hooks library addresses
+The maintenance feature of the High Availability hook library addresses
 this problem. The ``ha-maintenance-start`` command was introduced to allow
 the administrator to put the pair of the active servers in states in which
 one of them is responding to all DHCP queries and the other one is awaiting
@@ -1755,7 +1748,7 @@ Upgrading from Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The maintenance mechanism was first introduced in the Kea 1.7.4 release.
-In order to upgrade the HA hooks library from the older version the
+In order to upgrade the HA hook library from the older version the
 administrator must shut down one of the servers and rely on the
 failover mechanism to get the online server to transition to the
 partner-down state and start serving all DHCP clients. After the
