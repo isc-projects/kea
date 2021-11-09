@@ -1749,12 +1749,12 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
--- Stores a SMALLINT value to a session variable
+-- Stores a BOOLEAN value to a session variable
 -- Note the value converted to TEXT and then stored as Postgresql does
 -- not support any other data type in session variables.
 -- name name of session variable to set
--- value SMALLINT value to store
-CREATE OR REPLACE FUNCTION set_session_value(name text, value SMALLINT)
+-- value BOOLEAN value to store
+CREATE OR REPLACE FUNCTION set_session_value(name text, value BOOLEAN)
 RETURNS VOID
 AS $$
 BEGIN
@@ -1766,6 +1766,7 @@ BEGIN
         RAISE EXCEPTION 'set_session_value(%) : value:[%] failed, sqlstate: %', name, value, sqlstate;
 END;$$
 LANGUAGE plpgsql;
+
 
 -- Fetches a text value from the session configuration.
 -- param name name of the session variable to fetch
@@ -1805,8 +1806,8 @@ BEGIN
     IF text_value is NULL or text_value = '' THEN
         RETURN(0);
     END IF;
-   
-    int_value = cast(text_value as BIGINT); 
+
+    int_value = cast(text_value as BIGINT);
     RETURN(int_value);
 
     EXCEPTION
@@ -1816,30 +1817,31 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
-
--- Fetches an SMALLINT value from the session configuration.
+-- Fetches an BOOLEAN value from the session configuration.
 -- param name name of the session variable to fetch
 -- If the name is not found it returns zero.
-CREATE OR REPLACE FUNCTION get_session_small_int(name text)
-RETURNS SMALLINT
+CREATE OR REPLACE FUNCTION get_session_boolean(name text)
+RETURNS BOOLEAN
 AS $$
 DECLARE
-    int_value SMALLINT := 0;
+    bool_value BOOLEAN := false;
     text_value TEXT := '';
-BEGIN text_value = get_session_value(name);
+BEGIN
+    text_value = get_session_value(name);
     IF text_value is NULL or text_value = '' THEN
-        RETURN(0);
+        RETURN(false);
     END IF;
-   
-    int_value = cast(text_value as SMALLINT); 
-    RETURN(int_value);
+
+    bool_value = cast(text_value as BOOLEAN);
+    RETURN(bool_value);
 
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE EXCEPTION 'get_session_small_int(%) failed - text:[%] , sqlstate: %', name, text_value, sqlstate;
+        RAISE EXCEPTION 'get_session_boolean(%) failed - text:[%] , sqlstate: %', name, text_value, sqlstate;
 
 END;$$
 LANGUAGE plpgsql;
+
 
 -- -----------------------------------------------------
 -- Stored procedure which creates a new entry in the
@@ -1876,18 +1878,18 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE,
                                                     server_tag VARCHAR(256),
                                                     audit_log_message TEXT,
-                                                    cascade_transaction SMALLINT)
+                                                    cascade_transaction BOOLEAN)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    disable_audit SMALLINT := 0;
+    disable_audit BOOLEAN := false;
     audit_revision_id BIGINT;
     srv_id BIGINT;
 BEGIN
     -- Fetch session value for disable_audit.
-    disable_audit := get_session_small_int('kea.disable_audit');
-    IF disable_audit = 0 THEN
+    disable_audit := get_session_boolean('kea.disable_audit');
+    IF disable_audit = false THEN
         SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
         INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
@@ -1927,12 +1929,12 @@ LANGUAGE plpgsql
 as $$
 DECLARE
     audit_revision_id BIGINT;
-    disable_audit SMALLINT := 0;
+    disable_audit BOOLEAN := false;
 BEGIN
     -- Fetch session value for disable_audit.
-    disable_audit := get_session_small_int('kea.disable_audit');
+    disable_audit := get_session_boolean('kea.disable_audit');
 
-    IF disable_audit IS NULL OR disable_audit = 0 THEN
+    IF disable_audit IS NULL OR disable_audit = false THEN
         -- Fetch session value most recently created audit_revision_id.
         audit_revision_id := get_session_big_int('kea.audit_revision_id');
         INSERT INTO dhcp4_audit (object_type, object_id, modification_type, revision_id)
@@ -1965,11 +1967,11 @@ CREATE TABLE IF NOT EXISTS dhcp4_client_class (
     next_server INET DEFAULT NULL,
     server_hostname VARCHAR(128) DEFAULT NULL,
     boot_file_name VARCHAR(512) DEFAULT NULL,
-    only_if_required SMALLINT NOT NULL DEFAULT '0',
+    only_if_required BOOLEAN NOT NULL DEFAULT false,
     valid_lifetime BIGINT DEFAULT NULL,
     min_valid_lifetime BIGINT DEFAULT NULL,
     max_valid_lifetime BIGINT DEFAULT NULL,
-    depend_on_known_directly SMALLINT NOT NULL DEFAULT '0',
+    depend_on_known_directly BOOLEAN NOT NULL DEFAULT false,
     follow_class_name VARCHAR(128) DEFAULT NULL,
     modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -2000,7 +2002,7 @@ CREATE INDEX key_dhcp4_client_class_modification_ts on dhcp4_client_class (modif
 CREATE TABLE IF NOT EXISTS dhcp4_client_class_order (
     class_id BIGINT PRIMARY KEY NOT NULL,
     order_index BIGINT NOT NULL,
-    depend_on_known_indirectly SMALLINT NOT NULL DEFAULT 0,
+    depend_on_known_indirectly BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT fk_dhcp4_client_class_order_class_id FOREIGN KEY (class_id)
         REFERENCES dhcp4_client_class (id) ON DELETE CASCADE
 );
@@ -2054,8 +2056,9 @@ BEGIN
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
         -- This value will be later adjusted when dependencies are inserted.
         -- TKM should we update the session value also or is it moot?
-        UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = 0
+        UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = false
             WHERE class_id = id;
+        RETURN;
     END IF;
 
     IF new_follow_class_name IS NOT NULL THEN
@@ -2113,7 +2116,7 @@ BEGIN
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
     -- ON CONFLICT required 9.5 or later
-    UPDATE dhcp4_client_class_order 
+    UPDATE dhcp4_client_class_order
         SET order_index = follow_class_index + 1,
             depend_on_known_indirectly = l_depend_on_known_indirectly
         WHERE class_id = id;
@@ -2337,7 +2340,7 @@ RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    dependency SMALLINT;
+    dependency BOOLEAN;
 BEGIN
     -- Check if the dependency class references KNOWN/UNKNOWN.
     SELECT depend_on_known_directly INTO dependency FROM dhcp4_client_class
@@ -2345,14 +2348,14 @@ BEGIN
 
     -- If it doesn't, check if the dependency references KNOWN/UNKNOWN
     -- indirectly (via other classes).
-    IF dependency = 0 THEN
+    IF dependency = false THEN
         SELECT depend_on_known_indirectly INTO dependency FROM dhcp4_client_class_order
             WHERE class_id = dependency_id;
     END IF;
 
-    IF dependency <> 0 THEN
+    IF dependency = true THEN
         UPDATE dhcp4_client_class_order
-            SET depend_on_known_indirectly = 1
+            SET depend_on_known_indirectly = true
         WHERE class_id = client_class_id;
     END IF;
     RETURN;
@@ -2389,11 +2392,11 @@ RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    depended SMALLINT := 0;
-    depends SMALLINT := 0;
+    depended BOOLEAN := false;
+    depends BOOLEAN := false;
     client_class_id BIGINT;
-    depend_on_known_directly SMALLINT;
-    depend_on_known_indirectly SMALLINT;
+    depend_on_known_directly BOOLEAN;
+    depend_on_known_indirectly BOOLEAN;
 BEGIN
 
     -- Session variables are set upon a client class update.
@@ -2407,10 +2410,10 @@ BEGIN
         ) THEN
             -- Using the session variables, determine whether the client class
             -- depended on KNOWN/UNKNOWN before the update.
-            depend_on_known_directly := get_session_small_int('kea.depend_on_known_directly');
-            depend_on_known_indirectly := get_session_small_int('kea.depend_on_known_indirectly');
-            IF depend_on_known_directly <> 0 OR depend_on_known_indirectly <> 0 THEN
-                SET depended = 1;
+            depend_on_known_directly := get_session_boolean('kea.depend_on_known_directly');
+            depend_on_known_indirectly := get_session_boolean('kea.depend_on_known_indirectly');
+            IF depend_on_known_directly = true OR depend_on_known_indirectly = true THEN
+                SET depended = true;
             END IF;
 
             -- Check if the client class depends on KNOWN/UNKNOWN after the update.
@@ -2418,7 +2421,7 @@ BEGIN
                 WHERE id = client_class_id;
 
             -- If it doesn't depend directly, check indirect dependencies.
-            IF depends = 0 THEN
+            IF depends = false THEN
                 SELECT depend_on_known_indirectly INTO depends FROM dhcp4_client_class_order
                     WHERE class_id = client_class_id;
             END IF;
@@ -2485,18 +2488,18 @@ CREATE INDEX fk_dhcp4_client_class_server_id ON dhcp4_client_class_server (serve
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE,
                                                     server_tag VARCHAR(256),
                                                     audit_log_message TEXT,
-                                                    cascade_transaction SMALLINT)
+                                                    cascade_transaction BOOLEAN)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    disable_audit SMALLINT := 0;
+    disable_audit BOOLEAN := false;
     audit_revision_id BIGINT;
     srv_id BIGINT;
 BEGIN
     -- Fetch session value for disable_audit.
-    disable_audit := get_session_small_int('kea.disable_audit');
-    IF disable_audit = 0 THEN
+    disable_audit := get_session_boolean('kea.disable_audit');
+    IF disable_audit = false THEN
         SELECT id INTO srv_id FROM dhcp6_server WHERE tag = server_tag;
         INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
@@ -2536,11 +2539,11 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     audit_revision_id BIGINT;
-    disable_audit SMALLINT := 0;
+    disable_audit BOOLEAN := false;
 BEGIN
     -- Fetch session value for disable_audit.
-    disable_audit := get_session_small_int('kea.disable_audit');
-    IF disable_audit = 0 THEN
+    disable_audit := get_session_boolean('kea.disable_audit');
+    IF disable_audit = false THEN
         -- Fetch session value most recently created audit_revision_id.
         audit_revision_id := get_session_big_int('kea.audit_revision_id');
         INSERT INTO dhcp6_audit (object_type, object_id, modification_type, revision_id)
@@ -2570,11 +2573,11 @@ CREATE TABLE IF NOT EXISTS dhcp6_client_class (
     id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(128) UNIQUE NOT NULL,
     test TEXT,
-    only_if_required SMALLINT NOT NULL DEFAULT '0',
+    only_if_required BOOLEAN NOT NULL DEFAULT false,
     valid_lifetime BIGINT DEFAULT NULL,
     min_valid_lifetime BIGINT DEFAULT NULL,
     max_valid_lifetime BIGINT DEFAULT NULL,
-    depend_on_known_directly SMALLINT NOT NULL DEFAULT '0',
+    depend_on_known_directly BOOLEAN NOT NULL DEFAULT false,
     follow_class_name VARCHAR(128) DEFAULT NULL,
     modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -2605,7 +2608,7 @@ CREATE INDEX key_dhcp6_client_class_modification_ts on dhcp6_client_class (modif
 CREATE TABLE IF NOT EXISTS dhcp6_client_class_order (
     class_id BIGINT PRIMARY KEY NOT NULL,
     order_index BIGINT NOT NULL,
-    depend_on_known_indirectly SMALLINT NOT NULL DEFAULT 0,
+    depend_on_known_indirectly BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT fk_dhcp6_client_class_order_class_id FOREIGN KEY (class_id)
         REFERENCES dhcp6_client_class (id) ON DELETE CASCADE
 );
@@ -2658,8 +2661,9 @@ BEGIN
         -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
         -- This value will be later adjusted when dependencies are inserted.
         -- TKM should we update the session value also or is it moot?
-        UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = 0
+        UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = false
             WHERE class_id = id;
+        RETURN;
     END IF;
 
     IF new_follow_class_name IS NOT NULL THEN
@@ -2717,7 +2721,7 @@ BEGIN
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
     -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
-    UPDATE dhcp6_client_class_order 
+    UPDATE dhcp6_client_class_order
         SET order_index = follow_class_index + 1,
             depend_on_known_indirectly = l_depend_on_known_indirectly
         WHERE class_id = id;
@@ -2941,7 +2945,7 @@ RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    dependency SMALLINT;
+    dependency BOOLEAN;
 BEGIN
     -- Check if the dependency class references KNOWN/UNKNOWN.
     SELECT depend_on_known_directly INTO dependency FROM dhcp6_client_class
@@ -2949,14 +2953,14 @@ BEGIN
 
     -- If it doesn't, check if the dependency references KNOWN/UNKNOWN
     -- indirectly (via other classes).
-    IF dependency = 0 THEN
+    IF dependency = false THEN
         SELECT depend_on_known_indirectly INTO dependency FROM dhcp6_client_class_order
             WHERE class_id = dependency_id;
     END IF;
 
-    IF dependency <> 0 THEN
+    IF dependency = true THEN
         UPDATE dhcp6_client_class_order
-            SET depend_on_known_indirectly = 1
+            SET depend_on_known_indirectly = true
         WHERE class_id = client_class_id;
     END IF;
     RETURN;
@@ -2993,11 +2997,11 @@ RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    depended SMALLINT := 0;
-    depends SMALLINT := 0;
+    depended BOOLEAN := false;
+    depends BOOLEAN := false;
     client_class_id BIGINT;
-    depend_on_known_directly SMALLINT;
-    depend_on_known_indirectly SMALLINT;
+    depend_on_known_directly BOOLEAN;
+    depend_on_known_indirectly BOOLEAN;
 BEGIN
 
     -- Session variables are set upon a client class update.
@@ -3011,10 +3015,10 @@ BEGIN
         ) THEN
             -- Using the session variables, determine whether the client class
             -- depended on KNOWN/UNKNOWN before the update.
-            depend_on_known_directly := get_session_small_int('kea.depend_on_known_directly');
-            depend_on_known_indirectly := get_session_small_int('kea.depend_on_known_indirectly');
-            IF depend_on_known_directly <> 0 OR depend_on_known_indirectly <> 0 THEN
-                SET depended = 1;
+            depend_on_known_directly := get_session_boolean('kea.depend_on_known_directly');
+            depend_on_known_indirectly := get_session_boolean('kea.depend_on_known_indirectly');
+            IF depend_on_known_directly = true OR depend_on_known_indirectly = true THEN
+                SET depended = true;
             END IF;
 
             -- Check if the client class depends on KNOWN/UNKNOWN after the update.
@@ -3022,7 +3026,7 @@ BEGIN
                 WHERE id = client_class_id;
 
             -- If it doesn't depend directly, check indirect dependencies.
-            IF depends = 0 THEN
+            IF depends = false THEN
                 SELECT depend_on_known_indirectly INTO depends FROM dhcp6_client_class_order
                     WHERE class_id = client_class_id;
             END IF;
@@ -3248,7 +3252,7 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 -- - pool_id: identifier of the pool if the option
 --   belongs to the pool.
 -- - p_modification_ts: modification timestamp of the
---   option. 
+--   option.
 --   Some arguments are prefixed with "p_" to avoid ambiguity
 --   with column names in SQL statments. PostgreSQL does not
 --   allow table aliases to be used with column names in update
@@ -3270,24 +3274,24 @@ DECLARE
     -- we will select.
     snid VARCHAR(128);
     sid BIGINT;
-    cascade_transaction SMALLINT := 0;
+    cascade_transaction BOOLEAN := true;
     ct TEXT;
 BEGIN
-    -- Cascade transaction flag is set to 1 to prevent creation of
+    -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
     -- created as part of the parent object creation or update.
     -- For example: when the option is added as part of the subnet
-    -- addition, the cascade transaction flag is equal to 1. If
+    -- addition, the cascade transaction flag is equal to true. If
     -- the option is added into the existing subnet the cascade
-    -- transaction is equal to 0. Note that depending on the option
+    -- transaction is equal to false. Note that depending on the option
     -- scope the audit entry will contain the object_type value
     -- of the parent object to cause the server to replace the
     -- entire subnet. The only case when the object_type will be
     -- set to 'dhcp4_options' is when a global option is added.
     -- Global options do not have the owner.
 
-    cascade_transaction := get_session_small_int('kea.cascade_transaction');
-    IF cascade_transaction = 0 THEN
+    cascade_transaction := get_session_boolean('kea.cascade_transaction');
+    IF cascade_transaction = false THEN
         -- todo: host manager hasn't been updated to use audit
         -- mechanisms so ignore host specific options for now.
         IF scope_id = 0 THEN
@@ -3534,23 +3538,23 @@ DECLARE
     -- we will select.
     snid VARCHAR(128);
     sid BIGINT;
-    cascade_transaction SMALLINT := 0;
+    cascade_transaction BOOLEAN := false;
 
 BEGIN
-    -- Cascade transaction flag is set to 1 to prevent creation of
+    -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
     -- created as part of the parent object creation or update.
     -- For example: when the option is added as part of the subnet
-    -- addition, the cascade transaction flag is equal to 1. If
+    -- addition, the cascade transaction flag is equal to true. If
     -- the option is added into the existing subnet the cascade
-    -- transaction is equal to 0. Note that depending on the option
+    -- transaction is equal to false. Note that depending on the option
     -- scope the audit entry will contain the object_type value
     -- of the parent object to cause the server to replace the
     -- entire subnet. The only case when the object_type will be
     -- set to 'dhcp6_options' is when a global option is added.
     -- Global options do not have the owner.
-    cascade_transaction := get_session_small_int('kea.cascade_transaction');
-    IF cascade_transaction = 0 THEN
+    cascade_transaction := get_session_boolean('kea.cascade_transaction');
+    IF cascade_transaction = false THEN
         -- todo: host manager hasn't been updated to use audit
         -- mechanisms so ignore host specific options for now.
         IF scope_id = 0 THEN

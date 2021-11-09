@@ -312,26 +312,23 @@ pgsql_upgrade_6_2_to_7_0() {
     assert_eq 0 "${EXIT_CODE}" "the dhcp6_server table is broken or missing. (expected status code %d, returned %d)"
 
     # Verify that session variable setting is present and functional.
-    # First we try fetching big and small int values that do not exist, we should get 0.
-    # Then we set an integer value and fetch it as big and small.
     session_sql="\
-select get_session_small_int('kea.test_val'); \
-select get_session_small_int('kea.test_val'); \
-select set_session_value('kea.test_val', '987'); \
-select get_session_value('kea.test_val'); \
-select get_session_big_int('kea.test_val'); \
-select get_session_small_int('kea.test_val'); \
-select set_session_value('kea.test_val', cast('984' as SMALLINT)); \
-select get_session_small_int('kea.test_val'); \
-select set_session_value('kea.test_val', cast('1984' as BIGINT)); \
-select get_session_big_int('kea.test_val'); \
+select get_session_value('kea.text'); \
+select set_session_value('kea.text', 'booya'); \
+select get_session_value('kea.text'); \
+select get_session_boolean('kea.bool'); \
+select set_session_value('kea.bool', true); \
+select get_session_boolean('kea.bool'); \
+select get_session_big_int('kea.bigint'); \
+select set_session_value('kea.bigint', cast('1984' as BIGINT)); \
+select get_session_big_int('kea.bigint'); \
 "
     run_command \
         pgsql_execute "$session_sql"
 
     assert_eq 0 "${EXIT_CODE}" "session variable handling broken. (expected status code %d, returned %d)"
     clean_out=$(echo "${OUTPUT}" | tr '\n' ' ')
-    assert_str_eq "0 0  987 987 987  984  1984 "  "${clean_out}" "session variable output incorrect"
+    assert_str_eq "  booya f  t 0  1984 "  "${clean_out}" "session variable output incorrect"
 }
 
 pgsql_upgrade_test() {
