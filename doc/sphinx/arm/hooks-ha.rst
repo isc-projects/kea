@@ -182,10 +182,10 @@ clocks and restart the servers.
 .. note::
 
    Prior to Kea 1.7.8, to recover from the terminated
-   state, the administrator had to shut down both servers and then start
+   state, the administrator had to shut down both servers and then restart
    both of them. Since Kea 1.7.8, it is possible to restart the
-   servers sequentially, i.e. restart one server and then restart the other
-   one. The clocks must be in sync before restarting the servers.
+   servers one at a time, in sequence. The clocks must be in sync
+   before restarting the servers.
 
 .. note::
 
@@ -660,8 +660,9 @@ behavior with respect to HA:
    ``communication-recovery`` state. This parameter was introduced in
    Kea 1.9.4. The special value of 0 configures the server to
    never transition to the ``communication-recovery`` state and the
-   server behaves as in earlier Kea versions. The default value of this
-   parameter is 100.
+   server behaves as in earlier Kea versions, i.e. if the server
+   cannot reach its partner, it goes straight into the ``partner-down`` state.
+   The default value of this parameter is 100.
 
 The values of ``max-ack-delay`` and ``max-unacked-clients`` must be
 selected carefully, taking into account the specifics of the network in
