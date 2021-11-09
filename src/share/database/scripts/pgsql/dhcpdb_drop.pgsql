@@ -31,18 +31,18 @@ DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
 DROP TABLE IF EXISTS logs CASCADE;
 
 -- config backend procedures for DHCPv6
-DROP FUNCTION IF EXISTS createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(256), 
+DROP FUNCTION IF EXISTS createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(64),
                                                  audit_log_message TEXT, cascade_transaction BOOLEAN);
 DROP FUNCTION IF EXISTS createAuditEntryDHCP6(object_type_val VARCHAR(256), object_id_val BIGINT,
                                               modification_type_val VARCHAR(32));
 DROP FUNCTION IF EXISTS createOptionAuditDHCP6(modification_type VARCHAR, scope_id SMALLINT,
-                                               option_id INT, subnet_id BIGINT, host_id INT, 
+                                               option_id INT, subnet_id BIGINT, host_id INT,
                                                network_name VARCHAR, pool_id BIGINT, pd_pool_id BIGINT,
                                                modification_ts TIMESTAMP WITH TIME ZONE);
 DROP FUNCTION IF EXISTS setClientClass6Order(id BIGINT, follow_class_name VARCHAR(128),
                                              old_follow_class_name VARCHAR(128));
 DROP FUNCTION IF EXISTS checkDHCPv6ClientClassDependency(class_id BIGINT, dependency_id BIGINT);
-DROP FUNCTION IF EXISTS updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT, 
+DROP FUNCTION IF EXISTS updateDHCPv6ClientClassKnownDependency(client_class_id BIGINT,
                                                                dependency_id BIGINT);
 DROP FUNCTION IF EXISTS checkDHCPv6ClientClassKnownDependencyChange();
 
@@ -95,18 +95,18 @@ DROP FUNCTION IF EXISTS func_dhcp6_subnet_BDEL();
 DROP FUNCTION IF EXISTS func_dhcp6_pd_pool_BDEL();
 
 -- config backend procedures for DHCPv4
-DROP FUNCTION IF EXISTS createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(256), 
+DROP FUNCTION IF EXISTS createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(64),
                                                  audit_log_message TEXT, cascade_transaction BOOLEAN);
 DROP FUNCTION IF EXISTS createAuditEntryDHCP4(object_type_val VARCHAR(256), object_id_val BIGINT,
                                               modification_type_val VARCHAR(32));
 DROP FUNCTION IF EXISTS createOptionAuditDHCP4(modification_type VARCHAR, scope_id SMALLINT,
-                                               option_id INT, subnet_id BIGINT, host_id INT, 
+                                               option_id INT, subnet_id BIGINT, host_id INT,
                                                network_name VARCHAR, pool_id BIGINT,
                                                modification_ts TIMESTAMP WITH TIME ZONE);
 DROP FUNCTION IF EXISTS setClientClass4Order(id BIGINT, follow_class_name VARCHAR(128),
                                              old_follow_class_name VARCHAR(128));
 DROP FUNCTION IF EXISTS checkDHCPv4ClientClassDependency(class_id BIGINT, dependency_id BIGINT);
-DROP FUNCTION IF EXISTS updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT, 
+DROP FUNCTION IF EXISTS updateDHCPv4ClientClassKnownDependency(client_class_id BIGINT,
                                                                dependency_id BIGINT);
 DROP FUNCTION IF EXISTS checkDHCPv4ClientClassKnownDependencyChange();
 

@@ -883,7 +883,7 @@ LANGUAGE plpgsql;
 --   being null.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP4(audit_ts TIMESTAMP WITH TIME ZONE,
-                                                    server_tag VARCHAR(256),
+                                                    server_tag VARCHAR(64),
                                                     audit_log_message TEXT,
                                                     cascade_transaction BOOLEAN)
 RETURNS VOID
@@ -1493,7 +1493,7 @@ CREATE INDEX fk_dhcp4_client_class_server_id ON dhcp4_client_class_server (serve
 --   being null.
 -- -----------------------------------------------------
 CREATE OR REPLACE FUNCTION createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE,
-                                                    server_tag VARCHAR(256),
+                                                    server_tag VARCHAR(64),
                                                     audit_log_message TEXT,
                                                     cascade_transaction BOOLEAN)
 RETURNS VOID
