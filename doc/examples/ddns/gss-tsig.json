@@ -28,7 +28,8 @@
                     },
                     { // This server also has an entry there, so will
                       // use GSS-TSIG, too.
-                        "ip-address": "192.0.2.2"
+                        "ip-address": "192.0.2.2",
+                        "port": 5300
                     }
                 ]
             }
@@ -68,9 +69,11 @@
 
             "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
             "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
-            "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+            "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
             "credentials-cache": "FILE:/etc/ccache", // toplevel only
-            "tkey-lifetime": 3600,
+            "tkey-lifetime": 3600, // 1h
+            "rekey-interval": 2700, // 45mn
+            "retry-interval": 120, // 2mn
             "tkey-protocol": "TCP",
             "fallback": false,
 
@@ -86,7 +89,9 @@
                     "port": 53,
                     "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                     "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                    "tkey-lifetime": 86400, // 24h
+                    "tkey-lifetime": 7200, // 2h
+                    "rekey-interval": 3600, // 1h
+                    "retry-interval": 600, // 10mn
                     "tkey-protocol": "TCP",
                     "fallback": true // if no key is available fallback to the
                                      // standard behavior (vs skip this server)

@@ -559,8 +559,8 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "tkey-lifetime": 3600, // 1h
-                "rekey-interval": 2700, // 45m
-                "retry-interval": 120, // 2m
+                "rekey-interval": 2700, // 45mn
+                "retry-interval": 120, // 2mn
                 "tkey-protocol": "TCP",
                 "fallback": false,
 
@@ -576,9 +576,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                         "port": 53,
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                        "tkey-lifetime": 86400, // 24h
-                        "rekey-interval": 64800, // 18h
-                        "retry-interval": 3600, // 1h
+                        "tkey-lifetime": 7200, // 2h
+                        "rekey-interval": 3600, // 1h
+                        "retry-interval": 600, // 10mn
                         "tkey-protocol": "TCP",
                         "fallback": true // if no key is available fallback to the
                                          // standard behavior (vs skip this server)
@@ -655,15 +655,19 @@ The parameters have the following meaning:
   (one hour) if not specified.
 
 - ``rekey-interval`` governs the time interval the keys for each configured
-  server are checked if they expires before the next check cycle, so that
-  new keys are created. The value must be smaller than the ``tkey-lifetime``
-  value. It is expressed in seconds and it defaults to 2700 seconds
-  (45 minutes) if not specified.
+  server are checked for rekeying, i.e. a new key is created to replace
+  the current usable one when its age is greater than the ``rekey-interval``
+  value. The value must be smaller than the ``tkey-lifetime``
+  value, we recommend between 50 and 80 percent of it.
+  It is expressed in seconds and it defaults to 2700 seconds
+  (45 minutes, 75 percent of one hour) if not specified.
 
 - ``retry-interval`` governs the time interval to retry to create a key if
-  any error occured on any key. The value must be smaller than the
-  ``rekey-interval`` value. It is expressed in seconds and it defaults to
-  120 seconds (2 minutes) if not specified.
+  any error occurred on creating a key for a configured server.
+  The value must be smaller than the
+  ``rekey-interval`` value, and should be at most the third of the difference
+  between ``tkey-lifetime`` and ``rekey-interval``. It is expressed in
+  seconds and it defaults to 120 seconds (2 minutes) if not specified.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
@@ -716,14 +720,21 @@ The server map parameters are:
   takes precedence. Default and supported values are the same as for the
   global level parameter.
 
-- ``rekey-interval`` governs the time interval the keys for each configured
-  server are checked if they expires before the next check cycle, so that
-  new keys are created. The rekey interval parameter per server takes
+- ``rekey-interval`` governs the time interval the keys for this particular
+  server are checked for rekeying, i.e. a new key is created to replace
+  the current usable one when its age is greater than the ``rekey-interval``
+  value. The value must be smaller than the ``tkey-lifetime``
+  value, we recommend between 50 and 80 percent of it.
+  The rekey interval parameter per server takes
   precedence. Default and supported values are the same as for the global
   level parameter.
 
 - ``retry-interval`` governs the time interval to retry to create a key if
-  any error occured on any key of this particular server. The retry interval
+  any error occurred creating a key for this server.
+  The value must be smaller than the
+  ``rekey-interval`` value, and should be at most the third of the difference
+  between ``tkey-lifetime`` and ``rekey-interval``.
+  The retry interval
   parameter per server takes precedence. Default and supported values are
   the same as for the global level parameter.
 
