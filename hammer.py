@@ -1477,7 +1477,7 @@ def prepare_system_local(features, check_times):
         if 'docs' in features:
             execute('virtualenv-3 ~/venv',
                     env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx==3.5.4 sphinx-rtd-theme==0.5.2',
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
 
         if 'cql' in features:
@@ -1658,7 +1658,7 @@ def prepare_system_local(features, check_times):
         if 'docs' in features and revision == '8':
             execute('virtualenv -p /usr/bin/python3 ~/venv',
                     env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx typing sphinx-rtd-theme',
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
 
         if 'cql' in features and revision != '8':
