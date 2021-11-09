@@ -451,8 +451,8 @@ After a shared secret key is generated and put in a key table file:
 The ``dhcp.keytab`` takes the same usage as for Unix Kerberos.
 
 
-Kerberos Errors
-~~~~~~~~~~~~~~~
+GSS troubleshooting
+~~~~~~~~~~~~~~~~~~~
 
 While testing GSS-TSIG integration with Active Directory we came across
 one very cryptic error:
