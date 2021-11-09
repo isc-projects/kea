@@ -420,8 +420,9 @@ Windows Active Directory Configuration
 
 This sub-section is based on an Amazon AWS provided Microsoft Windows Server
 2016 with Active Directory pre-installed so describes only the steps used
-for GSS-TSIG deployment (more exactly as other parts of the deployment and
-using sections that the QA ISC department uses for internal tests).
+for GSS-TSIG deployment (for complete configuration process please refer to
+Microsoft documentation or other external resources. We found `this <https://www.tenforums.com/tutorials/51456-windows-server-2016-setup-local-domain-controller.html>`__ tutorial very
+useful during configuration of our internal QA testing systems.
 
 Two Active Directory (AD) user accounts are needed:
  - the first account is used to download AD information, for instance
@@ -447,7 +448,26 @@ After a shared secret key is generated and put in a key table file:
 
     ktpass -princ DHCP/kea.<domain>@<REALM> -mapuser kea +rndpass -mapop set -ptype KRB5_NT_PRINCIPAL -out dhcp.keytab
 
-The ```dhcp.keytab`` takes the same usage as for Unix Kerberos.
+The ``dhcp.keytab`` takes the same usage as for Unix Kerberos.
+
+
+Kerberos Errors
+~~~~~~~~~~~~~~~
+
+While testing GSS-TSIG integration with Active Directory we came across
+one very cryptic error:
+
+.. code-block:: console
+
+   INFO  [kea-dhcp-ddns.gss-tsig-hooks/4678.139690935890624] GSS_TSIG_VERIFY_FAILED GSS-TSIG verify failed: gss_verify_mic failed with GSSAPI error:
+   Major = 'A token had an invalid Message Integrity Check (MIC)' (393216), Minor = 'Packet was replayed in wrong direction' (100002).
+
+In our case problem was that Kea DDNS was trying to perform update of reverse
+DNS zone while it was not configured. Easy solution was to add reverse DNS
+zone similar to the one configured in Kea. To do it open `DNS Manager` choose
+DNS from the list, from drop down list choose `Reverse Lookup Zones`
+click `Action` and `New Zone` then follow New Zone Wizard to add new zone.
+
 
 .. _gss-tsig-using:
 
