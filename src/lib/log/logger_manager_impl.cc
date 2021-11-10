@@ -157,9 +157,8 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
         // so stop here instead.
         if (std::numeric_limits<int32_t>::max() < maxsize) {
             isc_throw(BadValue, "expected maxsize < "
-                                    << std::numeric_limits<int32_t>::max()
-                                    << "MB , but instead got "
-                                    << max_file_size);
+                                << std::numeric_limits<int32_t>::max()
+                                << "MB, but instead got " << max_file_size);
         }
 
         properties.setProperty("MaxFileSize", max_file_size);
