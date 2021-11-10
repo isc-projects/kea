@@ -610,16 +610,80 @@ authentication or authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
 
 Second, the ``libddns_gss_tsig.so`` library has to be specified on the
-``hooks-libraries`` list. This hook takes many parameters. The most
-important one is `servers`, which is a list of GSS-TSIG capable
-servers.  If there are several servers and they share some
-characteristics, the values can be specified in `parameters` scope as
-defaults. In the example above, the defaults that apply to all servers
-unless otherwise specified on per server scope, are defined in lines
-63 through 68. The defaults can be skipped if there is only one server
+``hooks-libraries`` list. This hook takes many parameters. The most important
+one is `servers`, which is a list of GSS-TSIG capable servers.  If there are
+several servers and they share some characteristics, the values can be specified
+in `parameters` scope as defaults. In the example above, the defaults that apply
+to all servers unless otherwise specified on per server scope, are defined in
+lines 63 through 68. The defaults can be skipped if there is only one server
 defined or all servers have different values.
 
-The parameters have the following meaning:
+.. table:: List of available parameters
+
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | Name              | Scope      | Type    | Default value | Description                    |
+   |                   |            |         |               |                                |
+   +===================+============+=========+===============+================================+
+   | client-keytab     | global and | string  | empty         | the Kerberos **client** key    |
+   |                   | per server |         |               | table                          |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | credentials-cache | global and | string  | empty         | the Kerberos credentials cache |
+   |                   | per server |         |               |                                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | server-principal  | global and | string  | empty         | the Kerberos principal name of |
+   |                   | per server |         |               | the DNS server that will       |
+   |                   |            |         |               | receive updates                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | client-principal  | global and | string  | empty         | the Kerberos principal name of |
+   |                   | per server |         |               | the Kea D2 service             |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | tkey-protocol     | global and | TCP or  | TCP           | the protocol used to establish |
+   |                   | per server | UDP     |               | the security context with the  |
+   |                   |            |         |               | DNS servers                    |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | tkey-lifetime     | global and | uint32  | 3600 seconds  | the lifetime of GSS-TSIG keys  |
+   |                   | per server |         | (1 hour)      |                                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | rekey-interval    | global and | uint32  | 2700 seconds  | the time interval the keys are |
+   |                   | per server |         | (45 minutes)  | checked for rekeying           |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | retry-interval    | global and | uint32  | 120 seconds   | the time interval to retry to  |
+   |                   | per server |         | (2 minutes)   | create a key if any error      |
+   |                   |            |         |               | occurred previously            |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | fallback          | global and | true or | false         | the behavior to fallback to    |
+   |                   | per server | false   |               | non GSS-TSIG when GSS-TSIG     |
+   |                   |            |         |               | should be used but no GSS-TSIG |
+   |                   |            |         |               | key is available.              |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | exchange-timeout  | global and | uint32  | 3000          | the time used to wait for the  |
+   |                   | per server |         | milliseconds  | GSS-TSIG TKEY exchange to      |
+   |                   |            |         | (3 seconds)   | finish before it timeouts      |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | user-context      | global and | string  | empty         | the user comments              |
+   |                   | per server |         |               |                                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | comment           | global and | string  | empty         | ignored                        |
+   |                   | per server |         |               |                                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | id                | per server | string  | empty         | identifier to a DNS server     |
+   |                   |            |         |               |                                |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | domain-names      | per server | string  | empty         | the many to one relationship   |
+   |                   |            |         |               | between D2 DNS servers and     |
+   |                   |            |         |               | GSS-TSIG DNS servers           |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | ip-address        | per server | IPv4 or | empty         | the IP address at which the    |
+   |                   |            | IPv6    |               | GSS-TSIG DNS server listens    |
+   |                   |            | address |               | for DDNS and TKEY requests     |
+   +-------------------+------------+---------+---------------+--------------------------------+
+   | port              | per server | uint32  | 53            | the DNS transport port at      |
+   |                   |            |         |               | which the GSS-TSIG DNS server  |
+   |                   |            |         |               | listens for DDNS and TKEY      |
+   |                   |            |         |               | requests                       |
+   +-------------------+------------+---------+---------------+--------------------------------+
+
+The global parameters with are described below:
 
 - ``client-keytab`` specifies the Kerberos **client** key table.
   For instance, ``FILE:<filename>`` can be used to point to a specific file.
@@ -663,10 +727,10 @@ The parameters have the following meaning:
   specified.
 
 - ``retry-interval`` governs the time interval to retry to create a key if any
-  error occurred on creating one for any configured server. The value must be
-  smaller than the ``rekey-interval`` value, and should be at most 1/3 of the
-  difference between ``tkey-lifetime`` and ``rekey-interval``. It is expressed
-  in seconds and it defaults to 120 seconds (2 minutes) if not specified.
+  error occurred previously for any configured server. The value must be smaller
+  than the ``rekey-interval`` value, and should be at most 1/3 of the difference
+  between ``tkey-lifetime`` and ``rekey-interval``. It is expressed in seconds
+  and it defaults to 120 seconds (2 minutes) if not specified.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
@@ -686,7 +750,7 @@ The parameters have the following meaning:
 
 - ``servers`` specifies the list of DNS servers where GSS-TSIG is enabled.
 
-The server map parameters are:
+The server map parameters are described below:
 
 - ``id`` assigns an identifier to a DNS server. It is used for statistics
   and commands. It is required, must be not empty and unique.
@@ -732,7 +796,7 @@ The server map parameters are:
   same as for the global level parameter.
 
 - ``retry-interval`` governs the time interval to retry to create a key if any
-  error occurred on creating one for this particular server. The value must be
+  error occurred previously for this particular server. The value must be
   smaller than the ``rekey-interval`` value, and should be at most 1/3 of the
   difference between ``tkey-lifetime`` and ``rekey-interval``. The retry
   interval parameter per server takes precedence. Default and supported values
