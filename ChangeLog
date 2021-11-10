@@ -1,3 +1,7 @@
+1964.	[func]		andrei
+	Increase the value that "maxsize" can take from 2GB to 2PB.
+	(Gitlab #2130)
+
 1963.	[func]		andrei
 	A few improvements on hammer.py: vagrant will be automatically
 	upgraded if it is too outdated, error messages are more clear

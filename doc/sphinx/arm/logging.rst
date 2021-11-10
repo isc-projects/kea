@@ -575,7 +575,9 @@ This is referred to as rotation.
 
 The default value is 10240000 (10MB). The smallest value that can be
 specified without disabling rotation is 204800. Any value less than
-this, including 0, disables rotation.
+this, including 0, disables rotation. The greatest value is INT_MAX MB which is
+approximately 2PB.
+
 
 .. note::
 

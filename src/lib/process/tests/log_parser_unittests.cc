@@ -452,6 +452,54 @@ TEST_F(LoggingTest, emptyPattern) {
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].pattern_.empty());
 }
 
+void testMaxSize(uint64_t maxsize_candidate, uint64_t expected_maxsize) {
+    std::string const logger(R"(
+    {
+      "loggers": [
+        {
+
+          "debuglevel": 99,
+          "name": "kea",
+          "output_options": [
+            {
+              "output": "kea.test.log",
+              "flush": true,
+              "maxsize": )" + std::to_string(maxsize_candidate) + R"(,
+              "maxver": 2
+            }
+          ],
+          "severity": "DEBUG"
+        }
+      ]
+    }
+    )");
+
+    // Create our server config container.
+    ConfigPtr server_cfg(boost::make_shared<ConfigBase>());
+
+    // LogConfigParser expects a list of loggers, so parse
+    // the JSON text and extract the "loggers" element from it
+    ConstElementPtr config(Element::fromJSON(logger));
+    config = config->get("loggers");
+
+    // Parse the config and then apply it.
+    LogConfigParser parser(server_cfg);
+    ASSERT_NO_THROW(parser.parseConfiguration(config));
+    ASSERT_NO_THROW(server_cfg->applyLoggingCfg());
+
+    EXPECT_EQ(server_cfg->getLoggingInfo()[0].destinations_[0].maxsize_, expected_maxsize);
+}
+
+// Test that maxsize can be configured with high values.
+TEST_F(LoggingTest, maxsize) {
+    testMaxSize(TEST_MAX_SIZE, TEST_MAX_SIZE);
+    testMaxSize(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
+    testMaxSize(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
+    testMaxSize(std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max());
+
+    // @todo: add a test for uint64_t when ElementPtr will allow it.
+}
+
 /// @todo Add tests for malformed logging configuration
 
 /// @todo There is no easy way to test applyConfiguration() and defaultLogging().
@@ -461,4 +509,4 @@ TEST_F(LoggingTest, emptyPattern) {
 /// check if the file is indeed created or configure stdout destination, then
 /// swap console file descriptors and check that messages are really logged.
 
-};
+}  // namespace

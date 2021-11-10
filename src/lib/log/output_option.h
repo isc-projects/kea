@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,14 +63,14 @@ struct OutputOption {
                      maxsize(0), maxver(0), pattern("")
     {}
 
-    /// Members. 
+    /// Members.
 
     Destination     destination;        ///< Where the output should go
     Stream          stream;             ///< stdout/stderr if console output
     bool            flush;              ///< true to flush after each message
     std::string     facility;           ///< syslog facility
     std::string     filename;           ///< Filename if file output
-    size_t          maxsize;            ///< 0 if no maximum size
+    uint64_t        maxsize;            ///< 0 if no maximum size
     unsigned int    maxver;             ///< Maximum versions (none if <= 0)
     std::string     pattern;            ///< log content pattern
 };

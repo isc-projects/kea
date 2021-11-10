@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -241,7 +241,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
 
 // Check if the file rolls over when it gets above a certain size.
 TEST_F(LoggerManagerTest, FileSizeRollover) {
-    // Set to a suitable minimum that log4cplus can copy with
+    // Set to a suitable minimum that log4cplus can cope with.
     static const size_t SIZE_LIMIT = 204800;
 
     // Set up the name of the file.

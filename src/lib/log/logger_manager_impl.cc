@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <array>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
@@ -140,8 +141,19 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     } else {
         log4cplus::helpers::Properties properties;
         properties.setProperty("File", opt.filename);
-        properties.setProperty("MaxFileSize",
-                               lexical_cast<string>(opt.maxsize));
+
+        // log4cplus supports file sizes past INT_MAX only in suffixed format.
+        // Convert from integer.
+        uint64_t maxsize(opt.maxsize);
+        size_t i(0);
+        while (std::numeric_limits<int32_t>::max() < maxsize && i < 2) {
+            maxsize /= 1000;
+            ++i;
+        }
+        std::array<std::string, 3> const suffixes({"", "KB", "MB"});
+        std::string const maxFileSize(to_string(maxsize) + suffixes[i]);
+        properties.setProperty("MaxFileSize", maxFileSize);
+
         properties.setProperty("MaxBackupIndex",
                                lexical_cast<string>(opt.maxver));
         properties.setProperty("ImmediateFlush", opt.flush ? "true" : "false");
