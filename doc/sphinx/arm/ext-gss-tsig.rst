@@ -667,17 +667,18 @@ defined or all servers have different values.
    |                   | per server |         |               |                                |
    +-------------------+------------+---------+---------------+--------------------------------+
    | id                | per server | string  | empty         | identifier to a DNS server     |
-   |                   |            |         |               |                                |
+   |                   |            |         |               | (required)                     |
    +-------------------+------------+---------+---------------+--------------------------------+
-   | domain-names      | per server | string  | empty         | the many to one relationship   |
-   |                   |            |         |               | between D2 DNS servers and     |
+   | domain-names      | per server | list of | empty         | the many to one relationship   |
+   |                   |            | strings |               | between D2 DNS servers and     |
    |                   |            |         |               | GSS-TSIG DNS servers           |
    +-------------------+------------+---------+---------------+--------------------------------+
    | ip-address        | per server | IPv4 or | empty         | the IP address at which the    |
    |                   |            | IPv6    |               | GSS-TSIG DNS server listens    |
    |                   |            | address |               | for DDNS and TKEY requests     |
+   |                   |            |         |               | (required)                     |
    +-------------------+------------+---------+---------------+--------------------------------+
-   | port              | per server | uint32  | 53            | the DNS transport port at      |
+   | port              | per server | uint16  | 53            | the DNS transport port at      |
    |                   |            |         |               | which the GSS-TSIG DNS server  |
    |                   |            |         |               | listens for DDNS and TKEY      |
    |                   |            |         |               | requests                       |
