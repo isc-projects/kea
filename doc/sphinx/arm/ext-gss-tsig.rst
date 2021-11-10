@@ -660,8 +660,9 @@ defined or all servers have different values.
    |                   | per server |         | milliseconds  | GSS-TSIG TKEY exchange to      |
    |                   |            |         | (3 seconds)   | finish before it timeouts      |
    +-------------------+------------+---------+---------------+--------------------------------+
-   | user-context      | global and | string  | empty         | the user comments              |
-   |                   | per server |         |               |                                |
+   | user-context      | global and | string  | empty         | the user provided data in JSON |
+   |                   | per server |         |               | format (will not be used by    |
+   |                   |            |         |               | the GSS-TSIG hook)             |
    +-------------------+------------+---------+---------------+--------------------------------+
    | comment           | global and | string  | empty         | ignored                        |
    |                   | per server |         |               |                                |
