@@ -264,8 +264,8 @@ ClientClassDictionary::addClass(const std::string& name,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename,
-                                const Triplet<uint32_t>& valid,
-                                const Triplet<uint32_t>& preferred) {
+                                const util::Triplet<uint32_t>& valid,
+                                const util::Triplet<uint32_t>& preferred) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
     cclass->setRequired(required);

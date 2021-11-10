@@ -112,12 +112,12 @@ public:
     virtual ~PgSqlConfigBackendImpl();
 
     /// @todo: implement condCreateInteger(const util::Optional<T>& value)
-    static db::PsqlBindArrayPtr createBinding(const Triplet<uint32_t>& triplet);
-    static db::PsqlBindArrayPtr createMaxBinding(const Triplet<uint32_t>& triplet);
-    static db::PsqlBindArrayPtr createMinBinding(const Triplet<uint32_t>& triplet);
+    static db::PsqlBindArrayPtr createBinding(const isc::util::Triplet<uint32_t>& triplet);
+    static db::PsqlBindArrayPtr createMaxBinding(const isc::util::Triplet<uint32_t>& triplet);
+    static db::PsqlBindArrayPtr createMinBinding(const isc::util::Triplet<uint32_t>& triplet);
 #if 0
-    static Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& binding);
-    static Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& def_binding,
+    static isc::util::Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& binding);
+    static isc::util::Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& def_binding,
         const db::PsqlBindArrayPtr& min_binding, const db::PsqlBindArrayPtr& max_binding);
 #endif
 

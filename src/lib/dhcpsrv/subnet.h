@@ -15,7 +15,7 @@
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -541,9 +541,9 @@ public:
     /// @param id arbitrary subnet id, default value of 0 triggers
     /// autogeneration of subnet id
     Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
-            const Triplet<uint32_t>& t1,
-            const Triplet<uint32_t>& t2,
-            const Triplet<uint32_t>& valid_lifetime,
+            const util::Triplet<uint32_t>& t1,
+            const util::Triplet<uint32_t>& t2,
+            const util::Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
     /// @brief Factory function creating an instance of the @c Subnet4.
@@ -564,9 +564,9 @@ public:
     /// @return Pointer to the @c Subnet4 instance.
     static Subnet4Ptr
     create(const isc::asiolink::IOAddress& prefix, uint8_t length,
-           const Triplet<uint32_t>& t1,
-           const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime,
+           const util::Triplet<uint32_t>& t1,
+           const util::Triplet<uint32_t>& t2,
+           const util::Triplet<uint32_t>& valid_lifetime,
            const SubnetID id = 0);
 
     /// @brief Returns next subnet within shared network.
@@ -690,10 +690,10 @@ public:
     /// @param id arbitrary subnet id, default value of 0 triggers
     /// autogeneration of subnet id
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
-            const Triplet<uint32_t>& t1,
-            const Triplet<uint32_t>& t2,
-            const Triplet<uint32_t>& preferred_lifetime,
-            const Triplet<uint32_t>& valid_lifetime,
+            const util::Triplet<uint32_t>& t1,
+            const util::Triplet<uint32_t>& t2,
+            const util::Triplet<uint32_t>& preferred_lifetime,
+            const util::Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
     /// @brief Factory function creating an instance of the @c Subnet4.
@@ -715,10 +715,10 @@ public:
     /// @return Pointer to the @c Subnet6 instance.
     static Subnet6Ptr
     create(const isc::asiolink::IOAddress& prefix, uint8_t length,
-           const Triplet<uint32_t>& t1,
-           const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& preferred_lifetime,
-           const Triplet<uint32_t>& valid_lifetime,
+           const util::Triplet<uint32_t>& t1,
+           const util::Triplet<uint32_t>& t2,
+           const util::Triplet<uint32_t>& preferred_lifetime,
+           const util::Triplet<uint32_t>& valid_lifetime,
            const SubnetID id = 0);
 
     /// @brief Returns next subnet within shared network.

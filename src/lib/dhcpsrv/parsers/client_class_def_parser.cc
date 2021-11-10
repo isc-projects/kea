@@ -22,6 +22,7 @@
 
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::util;
 using namespace std;
 
 /// @file client_class_def_parser.cc

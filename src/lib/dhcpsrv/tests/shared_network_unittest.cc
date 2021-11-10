@@ -12,7 +12,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <exceptions/exceptions.h>
 #include <testutils/test_to_element.h>
 #include <testutils/multi_threading_utils.h>

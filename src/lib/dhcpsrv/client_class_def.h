@@ -12,7 +12,7 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -197,28 +197,28 @@ public:
     /// @brief Return valid-lifetime value
     ///
     /// @return a triplet containing the valid lifetime.
-    Triplet<uint32_t> getValid() const {
+    util::Triplet<uint32_t> getValid() const {
         return (valid_);
     }
 
     /// @brief Sets new valid lifetime
     ///
     /// @param valid New valid lifetime in seconds.
-    void setValid(const Triplet<uint32_t>& valid) {
+    void setValid(const util::Triplet<uint32_t>& valid) {
         valid_ = valid;
     }
 
     /// @brief Return preferred-lifetime value
     ///
     /// @return a triplet containing the preferred lifetime.
-    Triplet<uint32_t> getPreferred() const {
+    util::Triplet<uint32_t> getPreferred() const {
         return (preferred_);
     }
 
     /// @brief Sets new preferred lifetime
     ///
     /// @param preferred New valid lifetime in seconds.
-    void setPreferred(const Triplet<uint32_t>& preferred) {
+    void setPreferred(const util::Triplet<uint32_t>& preferred) {
         preferred_ = preferred;
     }
 
@@ -279,10 +279,10 @@ private:
     std::string filename_;
 
     /// @brief a Triplet (min/default/max) holding allowed valid lifetime values
-    Triplet<uint32_t> valid_;
+    util::Triplet<uint32_t> valid_;
 
     /// @brief a Triplet (min/default/max) holding allowed preferred lifetime values
-    Triplet<uint32_t> preferred_;
+    util::Triplet<uint32_t> preferred_;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -339,8 +339,8 @@ public:
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string(),
-                  const Triplet<uint32_t>&valid = Triplet<uint32_t>(),
-                  const Triplet<uint32_t>&preferred = Triplet<uint32_t>());
+                  const util::Triplet<uint32_t>&valid = util::Triplet<uint32_t>(),
+                  const util::Triplet<uint32_t>&preferred = util::Triplet<uint32_t>());
 
     /// @brief Adds a new class to the list
     ///

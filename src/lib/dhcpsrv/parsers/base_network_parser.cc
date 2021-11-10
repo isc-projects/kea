@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
 #include <util/optional.h>
 #include <util/strutil.h>

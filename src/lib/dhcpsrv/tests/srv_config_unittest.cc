@@ -21,6 +21,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::util;
 
 // Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more

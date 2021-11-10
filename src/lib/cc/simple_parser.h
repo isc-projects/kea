@@ -10,7 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -329,8 +329,8 @@ public:
     /// to be parsed.
     /// @param name Base name of the parameter.
     /// @return A triplet with the parsed value.
-    const dhcp::Triplet<uint32_t> parseIntTriplet(const data::ConstElementPtr& scope,
-                                                  const std::string& name);
+    const isc::util::Triplet<uint32_t> parseIntTriplet(const data::ConstElementPtr& scope,
+                                                       const std::string& name);
 };
 
 };

@@ -49,6 +49,7 @@ using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::dhcp::test;
+using namespace isc::util;
 
 namespace {
 

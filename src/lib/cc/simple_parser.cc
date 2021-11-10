@@ -281,7 +281,7 @@ SimpleParser::deriveParams(ConstElementPtr parent,
     return (cnt);
 }
 
-const Triplet<uint32_t>
+const util::Triplet<uint32_t>
 SimpleParser::parseIntTriplet(const ConstElementPtr& scope,
                               const std::string& name) {
     // Initialize as some compilers complain otherwise.
@@ -304,7 +304,7 @@ SimpleParser::parseIntTriplet(const ConstElementPtr& scope,
         has_max = true;
     }
     if (!has_value && !has_min && !has_max) {
-        return (Triplet<uint32_t>());
+        return (util::Triplet<uint32_t>());
     }
     if (has_value) {
         if (!has_min && !has_max) {
@@ -359,7 +359,7 @@ SimpleParser::parseIntTriplet(const ConstElementPtr& scope,
                   << min_value << ") and max-" << name << " ("
                   << max_value << ")");
     }
-    return (Triplet<uint32_t>(min_value, value, max_value));
+    return (util::Triplet<uint32_t>(min_value, value, max_value));
 }
 
 }; // end of isc::dhcp namespace

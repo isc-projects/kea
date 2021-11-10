@@ -17,7 +17,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/d2_client_cfg.h>
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <util/optional.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -337,7 +337,7 @@ public:
     /// @brief Return valid-lifetime for addresses in that prefix
     ///
     /// @param inheritance inheritance mode to be used.
-    Triplet<uint32_t> getValid(const Inheritance& inheritance = Inheritance::ALL) const {
+    isc::util::Triplet<uint32_t> getValid(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getValid, valid_, inheritance,
                                      "valid-lifetime", "min-valid-lifetime",
                                      "max-valid-lifetime"));
@@ -346,35 +346,35 @@ public:
     /// @brief Sets new valid lifetime for a network.
     ///
     /// @param valid New valid lifetime in seconds.
-    void setValid(const Triplet<uint32_t>& valid) {
+    void setValid(const isc::util::Triplet<uint32_t>& valid) {
         valid_ = valid;
     }
 
     /// @brief Returns T1 (renew timer), expressed in seconds
     ///
     /// @param inheritance inheritance mode to be used.
-    Triplet<uint32_t> getT1(const Inheritance& inheritance = Inheritance::ALL) const {
+    isc::util::Triplet<uint32_t> getT1(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getT1, t1_, inheritance, "renew-timer"));
     }
 
     /// @brief Sets new renew timer for a network.
     ///
     /// @param t1 New renew timer value in seconds.
-    void setT1(const Triplet<uint32_t>& t1) {
+    void setT1(const isc::util::Triplet<uint32_t>& t1) {
         t1_ = t1;
     }
 
     /// @brief Returns T2 (rebind timer), expressed in seconds
     ///
     /// @param inheritance inheritance mode to be used.
-    Triplet<uint32_t> getT2(const Inheritance& inheritance = Inheritance::ALL) const {
+    isc::util::Triplet<uint32_t> getT2(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getT2, t2_, inheritance, "rebind-timer"));
     }
 
     /// @brief Sets new rebind timer for a network.
     ///
     /// @param t2 New rebind timer value in seconds.
-    void setT2(const Triplet<uint32_t>& t2) {
+    void setT2(const isc::util::Triplet<uint32_t>& t2) {
         t2_ = t2;
     }
 
@@ -798,7 +798,7 @@ protected:
         return (property);
     }
 
-    /// @brief The @c getGlobalProperty specialization for Triplet<T>.
+    /// @brief The @c getGlobalProperty specialization for isc::util::Triplet<T>.
     ///
     /// @note: use overloading vs specialization because full specialization
     /// is not allowed in this scope.
@@ -817,7 +817,7 @@ protected:
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
     template<typename NumType>
-    Triplet<NumType> getGlobalProperty(Triplet<NumType> property,
+    isc::util::Triplet<NumType> getGlobalProperty(isc::util::Triplet<NumType> property,
                                        const std::string& global_name,
                                        const std::string& min_name = "",
                                        const std::string& max_name = "") const {
@@ -841,7 +841,7 @@ protected:
                         if (max_param) {
                             max_value = static_cast<NumType>(max_param->intValue());
                         }
-                        return (Triplet<NumType>(min_value, def_value, max_value));
+                        return (isc::util::Triplet<NumType>(min_value, def_value, max_value));
                     }
                 }
             }
@@ -879,7 +879,7 @@ protected:
     ///
     /// This template method provides a generic mechanism to retrieve a
     /// network parameter using inheritance. It is called from public
-    /// accessor methods which return an @c OptionalValue or @c Triplet.
+    /// accessor methods which return an @c OptionalValue or @c isc::util::Triplet.
     ///
     /// @tparam BaseType Type of this instance, e.g. @c Network, @c Network4
     /// etc, which exposes a method to be called.
@@ -1043,14 +1043,14 @@ protected:
     /// incoming packet and their evaluation will be required.
     ClientClasses required_classes_;
 
-    /// @brief a Triplet (min/default/max) holding allowed renew timer values
-    Triplet<uint32_t> t1_;
+    /// @brief a isc::util::Triplet (min/default/max) holding allowed renew timer values
+    isc::util::Triplet<uint32_t> t1_;
 
-    /// @brief a Triplet (min/default/max) holding allowed rebind timer values
-    Triplet<uint32_t> t2_;
+    /// @brief a isc::util::Triplet (min/default/max) holding allowed rebind timer values
+    isc::util::Triplet<uint32_t> t2_;
 
-    /// @brief a Triplet (min/default/max) holding allowed valid lifetime values
-    Triplet<uint32_t> valid_;
+    /// @brief a isc::util::Triplet (min/default/max) holding allowed valid lifetime values
+    isc::util::Triplet<uint32_t> valid_;
 
     /// @brief Enables global reservations.
     util::Optional<bool> reservations_global_;
@@ -1276,7 +1276,7 @@ public:
     ///
     /// @param inheritance inheritance mode to be used.
     /// @return a triplet with preferred lifetime
-    Triplet<uint32_t>
+    isc::util::Triplet<uint32_t>
     getPreferred(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network6>(&Network6::getPreferred, preferred_,
                                       inheritance, "preferred-lifetime",
@@ -1287,7 +1287,7 @@ public:
     /// @brief Sets new preferred lifetime for a network.
     ///
     /// @param preferred New preferred lifetime in seconds.
-    void setPreferred(const Triplet<uint32_t>& preferred) {
+    void setPreferred(const isc::util::Triplet<uint32_t>& preferred) {
         preferred_ = preferred;
     }
 
@@ -1335,7 +1335,7 @@ public:
 private:
 
     /// @brief a triplet with preferred lifetime (in seconds)
-    Triplet<uint32_t> preferred_;
+    isc::util::Triplet<uint32_t> preferred_;
 
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;

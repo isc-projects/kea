@@ -6,14 +6,14 @@
 
 #include <config.h>
 
-#include <dhcpsrv/triplet.h>
+#include <util/triplet.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
 
 #include <stdint.h>
 
-using namespace isc::dhcp;
+using namespace isc::util;
 using namespace isc;
 
 namespace {

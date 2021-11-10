@@ -16,6 +16,7 @@
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::util;
 
 namespace {
 
@@ -29,13 +30,16 @@ public:
         params["password"] = "keatest";
         params["user"] = "keatest";
 
-        createDummySchema();
+        //createDummySchema();
+        createFullSchema();
 
         cbptr_.reset(new PgSqlConfigBackendImpl(params, 0));
     }
 
     ~PgsqlConfigBackendTest() {
-        destroyDummySchema();
+        destroyFullSchema();
+
+        //destroyDummySchema();
     }
 
     /// @brief Creates the absolute minimum schema.
@@ -57,6 +61,7 @@ public:
 
         // Dummy schema queries
         const char* sql[] = {
+            "DROP TABLE IF EXISTS schema_version;",
             "CREATE TABLE schema_version (version INT PRIMARY KEY NOT NULL, minor INT);",
             "INSERT INTO schema_version VALUES (7,0);"
         };
@@ -92,7 +97,7 @@ public:
     /// Don't forget to tear it down with @ref destroyFullSchema();
     void createFullSchema() {
         // Create the actual full Kea schema.
-        isc::db::test::createPgSQLSchema(true, true);
+        isc::db::test::createPgSQLSchema();
     }
 
     /// @brief destroys the full schema (slow!)
@@ -100,7 +105,7 @@ public:
     /// Don't forget to call this method once you're done, if you used @ref createFullSchema().
     void destroyFullSchema() {
         // Clean up after ourselves.
-        isc::db::test::destroyPgSQLSchema(true, true);
+        isc::db::test::destroyPgSQLSchema();
     }
 
     /// @brief checks if specified triplet generating function stores the values properly.
