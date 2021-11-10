@@ -179,12 +179,11 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
         // Clear the update attempts count on initial transition.
         clearUpdateAttempts();
     }
-    // No reuse of the request on retries.
-    clearDnsUpdateRequest();
 
     switch(getNextEvent()) {
     case SERVER_SELECTED_EVT:
         try {
+            clearDnsUpdateRequest();
             buildRemoveFwdAddressRequest();
         } catch (const std::exception& ex) {
             // While unlikely, the build might fail if we have invalid
@@ -287,13 +286,12 @@ NameRemoveTransaction::removingFwdRRsHandler() {
         // Clear the update attempts count on initial transition.
         clearUpdateAttempts();
     }
-    // No reuse of the request on retries.
-    clearDnsUpdateRequest();
 
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
     case SERVER_SELECTED_EVT:
         try {
+            clearDnsUpdateRequest();
             buildRemoveFwdRRsRequest();
         } catch (const std::exception& ex) {
             // While unlikely, the build might fail if we have invalid
@@ -445,12 +443,11 @@ NameRemoveTransaction::removingRevPtrsHandler() {
         // Clear the update attempts count on initial transition.
         clearUpdateAttempts();
     }
-    // No reuse of the request on retries.
-    clearDnsUpdateRequest();
 
     switch(getNextEvent()) {
     case SERVER_SELECTED_EVT:
         try {
+            clearDnsUpdateRequest();
             buildRemoveRevPtrsRequest();
         } catch (const std::exception& ex) {
             // While unlikely, the build might fail if we have invalid
