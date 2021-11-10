@@ -451,8 +451,8 @@ After a shared secret key is generated and put in a key table file:
 The ``dhcp.keytab`` takes the same usage as for Unix Kerberos.
 
 
-GSS troubleshooting
-~~~~~~~~~~~~~~~~~~~
+GSS-TSIG Troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 While testing GSS-TSIG integration with Active Directory we came across
 one very cryptic error:
@@ -816,6 +816,14 @@ The server map parameters are described below:
   for a general description of user contexts in Kea).
 
 - ``comment`` is allowed but currently ignored.
+
+
+GSS-TSIG Automatic Key Removal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The server will periodically delete keys which expired more than 3 times the
+maximum key lifetime.
+
 
 GSS-TSIG Configuration for Deployment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
