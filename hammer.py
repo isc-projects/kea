@@ -1055,9 +1055,8 @@ def _install_sysrepo_from_sources():
         sysrepo_version = '1.4.140'
 
     # Create repository for YANG modules and change ownership to current user.
-    # pw usershow command is for BSD OSs.
     execute('sudo mkdir -p /etc/sysrepo')
-    execute('sudo chown -R "${USER}:$(stat -c %G "${HOME}" || pw usershow ${USER} | cut -d ":" -f 9)" /etc/sysrepo')
+    execute('sudo chown -R "${USER}:$(id -gn)" /etc/sysrepo')
 
     execute('rm -rf /tmp/sysrepo')
     try:
@@ -1198,11 +1197,20 @@ def _configure_pgsql(system, features):
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
-        execute('[ ! -d /var/db/postgres/data11 ] && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true')
-        # if the file '/var/db/postgres/data11/postmaster.opts' does not exist the 'restart' of postgresql will fail with error:
-        #    pg_ctl: could not read file "/var/db/postgres/data11/postmaster.opts"
+        # Stop any hypothetical existing postgres service.
+        execute('sudo service postgresql stop || true')
+
+        # Get the path to the data directory.
+        _, output = execute('sudo echo /var/db/postgres/data*', capture=True)
+        var_db_postgres_data = output.rstrip()
+
+        # Create postgres internals.
+        execute('sudo test ! -d {} && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true'.format(var_db_postgres_data))
+
+        # if the file '/var/db/postgres/data*/postmaster.opts' does not exist the 'restart' of postgresql will fail with error:
+        #    pg_ctl: could not read file "/var/db/postgres/data*/postmaster.opts"
         # the initial start of the postgresql will create the 'postmaster.opts' file
-        execute('sudo [ ! -f /var/db/postgres/data11/postmaster.opts ] && sudo service postgresql onestart > /dev/null')
+        execute('sudo test ! -f {}/postmaster.opts && sudo service postgresql onestart || true'.format(var_db_postgres_data))
 
     _enable_postgresql(system)
     _restart_postgresql(system)
@@ -1220,7 +1228,10 @@ def _configure_pgsql(system, features):
     if 0 != execute("sudo cat {} | grep -E '^local.*all.*postgres'".format(hba_file), raise_error=False):
         auth_header='# TYPE  DATABASE        USER            ADDRESS                 METHOD'
         postgres_auth_line='local   all             postgres                                ident'
-        execute("sudo sed -i.bak '/{}/a {}' '{}'".format(auth_header, postgres_auth_line, hba_file))
+        # The "\\" followed by newline is for BSD support.
+        execute("""sudo sed -i.bak '/{}/a\\
+{}
+' '{}'""".format(auth_header, postgres_auth_line, hba_file))
 
     _restart_postgresql(system)
 
@@ -1402,7 +1413,7 @@ def prepare_system_local(features, check_times):
 
         if 'netconf' in features:
             if int(revision) <= 33:
-                packages.extend(['cmake', 'pcre2-devel'])
+                packages.extend(['cmake', 'pcre-devel'])
                 deferred_functions.extend([
                     _install_libyang_from_sources,
                     _install_sysrepo_from_sources,
@@ -1693,7 +1704,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['git'])
 
         if 'gssapi' in features:
-            packages.extend(['krb5'])
+            packages.extend(['krb5', 'krb5-devel'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1703,7 +1714,7 @@ def prepare_system_local(features, check_times):
             # libyang-cpp which results in this error when building sysrepo:
             # "Required libyang C++ bindings not found!"
             # So until it is added, install libyang from sources.
-            packages.append('cmake')
+            packages.extend(['cmake', 'pcre'])
             deferred_functions.extend([
                 _install_libyang_from_sources,
                 _install_sysrepo_from_sources,
@@ -1897,10 +1908,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'gssapi' in features:
-        if system == 'freebsd':
-            cmd += ' --with-gssapi=/usr/local/bin/krb5-config'
-        else:
-            cmd += ' --with-gssapi'
+        cmd += ' --with-gssapi'
     if 'shell' in features:
         cmd += ' --enable-shell'
     if 'perfdhcp' in features:
