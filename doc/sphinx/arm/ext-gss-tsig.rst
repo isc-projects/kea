@@ -484,7 +484,7 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-104
+   :emphasize-lines: 57-107
 
 
     {
@@ -738,7 +738,7 @@ The global parameters are described below:
   If configured to false (the default) this server is skipped, if
   configured to true the DNS server is ignored and the DNS update
   is sent with the configured DHCP-DDNS protection e.g. TSIG key or
-  unsecure.
+  without any protection when none was configured.
 
 - ``exchange-timeout`` governs the time used to wait for the GSS-TSIG TKEY
   exchange to finish before it timeouts. It is expressed in milliseconds and it
