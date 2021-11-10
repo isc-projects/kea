@@ -400,7 +400,7 @@ loaded by the correct process per the table below.
    |                 |               |still operational. The hook library also provides an ability|
    |                 |               |to send lease updates to external backup servers, making it |
    |                 |               |much easier to have a replacement that is up-to-date.       |
-    +-----------------+---------------+------------------------------------------------------------+
+   +-----------------+---------------+------------------------------------------------------------+
    | Statistics      | Kea open      |This library provides additional                            |
    | Commands        | source        |commands for retrieving accurate DHCP lease statistics, for |
    |                 |               |Kea DHCP servers that share the same lease database. This   |
@@ -451,7 +451,7 @@ loaded by the correct process per the table below.
    | Leasequery      | ISC support   |This library adds support for DHCPv4                        |
    |                 | customers     |Leasequery as described in RFC 4388; and for DHCPv6         |
    |                 |               |Leasequery as described in RFC 5007.                        |
-    +-----------------+---------------+------------------------------------------------------------+
+   +-----------------+---------------+------------------------------------------------------------+
    | Run Script      | Kea open      |This hook library adds support to run external              |
    |                 | source        |scripts for specific packet-processing hook points. There   |
    |                 |               |are several exported environment variables available for    |
