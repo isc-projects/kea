@@ -112,14 +112,6 @@ public:
     virtual ~PgSqlConfigBackendImpl();
 
     /// @todo: implement condCreateInteger(const util::Optional<T>& value)
-    static db::PsqlBindArrayPtr createBinding(const isc::util::Triplet<uint32_t>& triplet);
-    static db::PsqlBindArrayPtr createMaxBinding(const isc::util::Triplet<uint32_t>& triplet);
-    static db::PsqlBindArrayPtr createMinBinding(const isc::util::Triplet<uint32_t>& triplet);
-#if 0
-    static isc::util::Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& binding);
-    static isc::util::Triplet<uint32_t> createTriplet(const db::PsqlBindArrayPtr& def_binding,
-        const db::PsqlBindArrayPtr& min_binding, const db::PsqlBindArrayPtr& max_binding);
-#endif
 
     /// @brief Returns server tag associated with the particular selector.
     ///
@@ -435,6 +427,8 @@ public:
     /// @todo implement void attachElementToServers(const int index, ...)
 
     /// @todo implement
+    /// @note this needs to accept an PsqlBindArrayPtr and should add
+    /// necessary bindings to it.  It cannot create a new array.
     db::PsqlBindArrayPtr createInputRelayBinding(const NetworkPtr& network);
 
     /// @todo implement template<typename T> db::MySqlBindingPtr
@@ -443,6 +437,8 @@ public:
     /// @todo implement db::MySqlBindingPtr createInputContextBinding(const T& config_element) {
 
     /// @todo implement
+    /// @note this needs to accept an PsqlBindArrayPtr and should add
+    /// necessary bindings to it.  It cannot create a new array.
     db::PsqlBindArrayPtr createOptionValueBinding(const OptionDescriptorPtr& option);
 
     /// @brief Retrieves a server.
