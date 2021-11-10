@@ -684,7 +684,7 @@ defined or all servers have different values.
    |                   |            |         |               | requests                       |
    +-------------------+------------+---------+---------------+--------------------------------+
 
-The global parameters with are described below:
+The global parameters are described below:
 
 - ``client-keytab`` specifies the Kerberos **client** key table.
   For instance, ``FILE:<filename>`` can be used to point to a specific file.
