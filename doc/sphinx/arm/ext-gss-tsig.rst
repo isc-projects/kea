@@ -611,9 +611,9 @@ exception that static TSIG keys are not referenced by name.
 
 Second, the ``libddns_gss_tsig.so`` library has to be specified on the
 ``hooks-libraries`` list. This hook takes many parameters. The most important
-one is `servers`, which is a list of GSS-TSIG capable servers.  If there are
+one is ``servers``, which is a list of GSS-TSIG capable servers.  If there are
 several servers and they share some characteristics, the values can be specified
-in `parameters` scope as defaults. In the example above, the defaults that apply
+in ``parameters`` scope as defaults. In the example above, the defaults that apply
 to all servers unless otherwise specified on per server scope, are defined in
 lines 63 through 68. The defaults can be skipped if there is only one server
 defined or all servers have different values.
@@ -823,7 +823,7 @@ GSS-TSIG Automatic Key Removal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The server will periodically delete keys which expired more than 3 times the
-maximum key lifetime.
+maximum key lifetime (``tkey-lifetime`` parameter).
 
 
 GSS-TSIG Configuration for Deployment
