@@ -558,9 +558,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                 "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
                 "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
-                "tkey-lifetime": 3600, // 1h
-                "rekey-interval": 2700, // 45mn
-                "retry-interval": 120, // 2mn
+                "tkey-lifetime": 3600, // 1 hour
+                "rekey-interval": 2700, // 45 minutes
+                "retry-interval": 120, // 2 minutes
                 "tkey-protocol": "TCP",
                 "fallback": false,
 
@@ -576,9 +576,9 @@ An excerpt from D2 server is provided below. More examples are available in the
                         "port": 53,
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                        "tkey-lifetime": 7200, // 2h
-                        "rekey-interval": 3600, // 1h
-                        "retry-interval": 600, // 10mn
+                        "tkey-lifetime": 7200, // 2 hours
+                        "rekey-interval": 5400, // 90 minutes
+                        "retry-interval": 240, // 4 minutes
                         "tkey-protocol": "TCP",
                         "fallback": true // if no key is available fallback to the
                                          // standard behavior (vs skip this server)
@@ -655,19 +655,18 @@ The parameters have the following meaning:
   (one hour) if not specified.
 
 - ``rekey-interval`` governs the time interval the keys for each configured
-  server are checked for rekeying, i.e. a new key is created to replace
-  the current usable one when its age is greater than the ``rekey-interval``
-  value. The value must be smaller than the ``tkey-lifetime``
-  value, we recommend between 50 and 80 percent of it.
-  It is expressed in seconds and it defaults to 2700 seconds
-  (45 minutes, 75 percent of one hour) if not specified.
+  server are checked for rekeying, i.e. a new key is created to replace the
+  current usable one when its age is greater than the ``rekey-interval`` value.
+  The value must be smaller than the ``tkey-lifetime`` value (it is recommend
+  between 50% and 80% of the ``tkey-lifetime`` value). It is expressed in
+  seconds and it defaults to 2700 seconds (45 minutes, 75% of one hour) if not
+  specified.
 
-- ``retry-interval`` governs the time interval to retry to create a key if
-  any error occurred on creating a key for a configured server.
-  The value must be smaller than the
-  ``rekey-interval`` value, and should be at most the third of the difference
-  between ``tkey-lifetime`` and ``rekey-interval``. It is expressed in
-  seconds and it defaults to 120 seconds (2 minutes) if not specified.
+- ``retry-interval`` governs the time interval to retry to create a key if any
+  error occurred on creating one for any configured server. The value must be
+  smaller than the ``rekey-interval`` value, and should be at most 1/3 of the
+  difference between ``tkey-lifetime`` and ``rekey-interval``. It is expressed
+  in seconds and it defaults to 120 seconds (2 minutes) if not specified.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
@@ -675,6 +674,10 @@ The parameters have the following meaning:
   configured to true the DNS server is ignored and the DNS update
   is sent with the configured DHCP-DDNS protection e.g. TSIG key or
   unsecure.
+
+- ``exchange-timeout`` governs the time used to wait for the GSS-TSIG TKEY
+  exchange to finish before it timeouts. It is expressed in milliseconds and it
+  defaults to 3000 milliseconds (3 seconds) if not specified.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).
@@ -721,27 +724,29 @@ The server map parameters are:
   global level parameter.
 
 - ``rekey-interval`` governs the time interval the keys for this particular
-  server are checked for rekeying, i.e. a new key is created to replace
-  the current usable one when its age is greater than the ``rekey-interval``
-  value. The value must be smaller than the ``tkey-lifetime``
-  value, we recommend between 50 and 80 percent of it.
-  The rekey interval parameter per server takes
-  precedence. Default and supported values are the same as for the global
-  level parameter.
+  server are checked for rekeying, i.e. a new key is created to replace the
+  current usable one when its age is greater than the ``rekey-interval`` value.
+  The value must be smaller than the ``tkey-lifetime`` value (it is recommend
+  between 50% and 80% of the ``tkey-lifetime`` value). The rekey interval
+  parameter per server takes precedence. Default and supported values are the
+  same as for the global level parameter.
 
-- ``retry-interval`` governs the time interval to retry to create a key if
-  any error occurred creating a key for this server.
-  The value must be smaller than the
-  ``rekey-interval`` value, and should be at most the third of the difference
-  between ``tkey-lifetime`` and ``rekey-interval``.
-  The retry interval
-  parameter per server takes precedence. Default and supported values are
-  the same as for the global level parameter.
+- ``retry-interval`` governs the time interval to retry to create a key if any
+  error occurred on creating one for this particular server. The value must be
+  smaller than the ``rekey-interval`` value, and should be at most 1/3 of the
+  difference between ``tkey-lifetime`` and ``rekey-interval``. The retry
+  interval parameter per server takes precedence. Default and supported values
+  are the same as for the global level parameter.
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
   The fallback parameter per server takes precedence. Default and
   supported values are the same as for the global level parameter.
+
+- ``exchange-timeout`` governs the time used to wait for the GSS-TSIG TKEY
+  exchange to finish before it timeouts. The exchange timeout parameter per
+  server takes precedence. Default and supported values are the same as for the
+  global level parameter.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).

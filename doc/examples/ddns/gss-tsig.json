@@ -36,7 +36,7 @@
         ]
     },
 
-    // Reverse zone: we want to update the reverse zone "2.0.192.in-addr-arpa".
+    // Reverse zone: we want to update the reverse zone "2.0.192.in-addr.arpa".
     "reverse-ddns":
     {
         "ddns-domains":
@@ -71,9 +71,9 @@
             "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
             "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
             "credentials-cache": "FILE:/etc/ccache", // toplevel only
-            "tkey-lifetime": 3600, // 1h
-            "rekey-interval": 2700, // 45mn
-            "retry-interval": 120, // 2mn
+            "tkey-lifetime": 3600, // 1 hour
+            "rekey-interval": 2700, // 45 minutes
+            "retry-interval": 120, // 2 minutes
             "tkey-protocol": "TCP",
             "fallback": false,
 
@@ -89,9 +89,9 @@
                     "port": 53,
                     "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                     "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                    "tkey-lifetime": 7200, // 2h
-                    "rekey-interval": 3600, // 1h
-                    "retry-interval": 600, // 10mn
+                    "tkey-lifetime": 7200, // 2 hours
+                    "rekey-interval": 5400, // 90 minutes
+                    "retry-interval": 240, // 4 minutes
                     "tkey-protocol": "TCP",
                     "fallback": true // if no key is available fallback to the
                                      // standard behavior (vs skip this server)
