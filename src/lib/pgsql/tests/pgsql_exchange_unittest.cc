@@ -19,6 +19,7 @@
 
 using namespace isc;
 using namespace isc::db;
+using namespace isc::util;
 
 namespace {
 
@@ -72,6 +73,9 @@ TEST(PsqlBindArray, addDataTest) {
 
         // Add the vector
         b.add(bytes);
+
+        // Add an empty string.
+        b.add(std::string(""));
     }
 
     // We've left bind scope, everything should be intact.
@@ -86,7 +90,42 @@ TEST(PsqlBindArray, addDataTest) {
         "7 : \"FALSE\"\n"
         "8 : \"3221360418\"\n"
         "9 : \"3001::1\"\n"
-        "10 : 0x0102030405060708090a\n";
+        "10 : 0x0102030405060708090a\n"
+        "11 : empty\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
+/// @brief Verifies the ability to add Triplets to
+/// the bind array.
+TEST(PsqlBindArray, addTriplet) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Triplet<uint32_t> empty;
+        Triplet<uint32_t> not_empty(1,2,3);
+
+        // Add an unspecified triplet value.
+        b.add(empty);
+        b.add(not_empty);
+        b.addMin(empty);
+        b.addMin(not_empty);
+        b.addMax(empty);
+        b.addMax(not_empty);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(6, b.size());
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"2\"\n"
+        "2 : empty\n"
+        "3 : \"1\"\n"
+        "4 : empty\n"
+        "5 : \"3\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }

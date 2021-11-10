@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <pgsql/pgsql_connection.h>
+#include <util/triplet.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
@@ -175,10 +176,29 @@ struct PsqlBindArray {
     /// in the SQL statement should be NULL.
     void addNull(const int format = PsqlBindArray::TEXT_FMT);
 
-    //std::vector<const std::string> getBoundStrs() {
-    std::vector<ConstStringPtr> getBoundStrs() {
-        return (bound_strs_);
-    }
+    /// @brief Adds an integer Triplet's value to the bind array
+    ///
+    /// Stores the current value of a triplet to the bind array.
+    /// If it is unspecified it stores a NULL.
+    ///
+    /// @param triple Triplet instance from which to get the value.
+    void add(const isc::util::Triplet<uint32_t>& triplet);
+
+    /// @brief Adds an integer Triplet's minimum value to the bind array
+    ///
+    /// Stores the minimum value of a triplet to the bind array.
+    /// If it is unspecified it stores a NULL.
+    ///
+    /// @param triple Triplet instance from which to get the value.
+    void addMin(const isc::util::Triplet<uint32_t>& triplet);
+
+    /// @brief Adds an integer Triplet's maximum value to the bind array
+    ///
+    /// Stores the maximum value of a triplet to the bind array.
+    /// If it is unspecified it stores a NULL.
+    ///
+    /// @param triple Triplet instance from which to get the value.
+    void addMax(const isc::util::Triplet<uint32_t>& triplet);
 
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump

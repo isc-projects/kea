@@ -16,6 +16,8 @@
 #include <sstream>
 #include <vector>
 
+using namespace isc::util;
+
 namespace isc {
 namespace db {
 
@@ -82,6 +84,33 @@ void PsqlBindArray::addNull(const int format) {
     formats_.push_back(format);
 }
 
+void
+PsqlBindArray::add(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified()) {
+        addNull();
+    } else {
+        add<uint32_t>(triplet.get());
+    }
+}
+
+void
+PsqlBindArray::addMin(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMin() == triplet.get())) {
+        addNull();
+    } else {
+        add<uint32_t>(triplet.getMin());
+    }
+}
+
+void
+PsqlBindArray::addMax(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMax() == triplet.get())) {
+        addNull();
+    } else {
+        add<uint32_t>(triplet.getMax());
+    }
+}
+
 /// @todo Eventually this could replace add(std::string&)? This would mean
 /// all bound strings would be internally copies rather than perhaps belonging
 /// to the originating object such as Host::hostname_.  One the one hand it
@@ -96,8 +125,9 @@ std::string PsqlBindArray::toText() const {
     std::ostringstream stream;
     for (int i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
+#if 0
         if (formats_[i] == TEXT_FMT) {
-            stream << "\"" << values_[i] << "\"" << std::endl;
+                stream << "\"" << values_[i] << "\"" << std::endl;
         } else {
             const char *data = values_[i];
             if (lengths_[i] == 0) {
@@ -113,6 +143,26 @@ std::string PsqlBindArray::toText() const {
                 stream << std::setbase(10);
             }
         }
+#else
+        if (lengths_[i] == 0) {
+            stream << "empty" << std::endl;
+            continue;
+        }
+
+        if (formats_[i] == TEXT_FMT) {
+                stream << "\"" << values_[i] << "\"" << std::endl;
+        } else {
+            const char *data = values_[i];
+            stream << "0x";
+            for (int x = 0; x < lengths_[i]; ++x) {
+                stream << std::setfill('0') << std::setw(2)
+                       << std::setbase(16)
+                       << static_cast<unsigned int>(data[x]);
+            }
+            stream << std::endl;
+            stream << std::setbase(10);
+        }
+#endif
     }
 
     return (stream.str());
