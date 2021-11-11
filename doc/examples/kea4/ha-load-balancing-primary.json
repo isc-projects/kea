@@ -105,7 +105,7 @@
                     "heartbeat-delay": 10000,
                     // Maximum time for partner's response to a heartbeat, after which
                     // failure detection is started. This is specified in milliseconds.
-                    "max-response-delay": 10000,
+                    "max-response-delay": 60000,
                     // The following parameters control how the server detects the
                     // partner's failure. The ACK delay sets the threshold for the
                     // 'secs' field of the received discovers. This is specified in
