@@ -12,7 +12,7 @@ CLEANFILES = *.gcno *.gcda
 # convenience archive
 
 noinst_LTLIBRARIES = libpgsqlcb.la
-
+ 	
 libpgsqlcb_la_SOURCES  = pgsql_cb_callouts.cc
 
 # Commented out for now - see kea#95
@@ -31,8 +31,11 @@ libpgsqlcb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libpgsqlcb_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 # install the shared object into $(libdir)/kea/hooks
-lib_hooksdir = $(libdir)/kea/hooks
-lib_hooks_LTLIBRARIES = libdhcp_pgsql_cb.la
+# @todo When we are ready to start installing this hook library,
+# delete the noinst_LTLIBRARIES line, and uncomment the next two lines.
+noinst_LTLIBRARIES += libdhcp_pgsql_cb.la
+#lib_hooksdir = $(libdir)/kea/hooks
+#lib_hooks_LTLIBRARIES = libdhcp_pgsql_cb.la
 
 libdhcp_pgsql_cb_la_SOURCES  =
 libdhcp_pgsql_cb_la_LDFLAGS  = $(AM_LDFLAGS) $(pgsql_LIBS)
