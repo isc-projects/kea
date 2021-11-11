@@ -261,7 +261,7 @@ The following is the list of all possible server states:
    states. In this state the server continues to respond to DHCP queries
    but does not send lease updates to the partner; lease updates are
    queued and are sent when normal communication is resumed. If
-   communication does not resume, the primary server
+   communication does not resume within the time specified, the primary server
    then transitions to the
    ``partner-down`` state. The ``communication-recovery`` state was
    introduced to ensure reliable DHCP service when both active servers
