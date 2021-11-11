@@ -63,7 +63,7 @@ can be switched to handle the entire DHCP traffic if its partner becomes
 unavailable.
 
 In the load-balancing configuration, one of the servers must be
-designated as "primary" and the other as "secondary." Functionally,
+designated as ``primary`` and the other as ``secondary``. Functionally,
 there is no difference between the two during normal operation. However, this
 distinction is required when the two servers are started at (nearly) the
 same time and have to synchronize their lease databases. The primary
@@ -101,8 +101,8 @@ In the configurations described above, both the primary and secondary/standby
 are referred to as ``"active"`` servers, because they receive lease
 updates and can automatically react to the partner's failures by
 responding to the DHCP queries which would normally be handled by the
-partner. The HA hook library supports another server type/role: the "backup"
-server. The use of a backup server is optional, and can be implemented in both
+partner. The HA hook library supports another server type/role: ``backup``.
+The use of a backup server is optional, and can be implemented in both
 load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
 however, the presence of backup servers may increase the latency
@@ -159,7 +159,7 @@ different lease expiration times on different servers may cause the HA
 system to malfunction. For example, one server may consider a lease to
 be expired when it is actually still valid. The lease reclamation
 process may remove a name associated with this lease from the DNS,
-causing problems when the client later attempts to renew its lease.
+causing problems when the client later attempts to renew the lease.
 
 Each active server monitors the clock skew by comparing its current time
 with the time returned by its partner in response to the heartbeat
@@ -181,9 +181,9 @@ clocks and restart the servers.
 
 .. note::
 
-   Prior to Kea 1.7.8, to recover from the terminated
-   state, the administrator had to shut down both servers and then restart
-   both of them. Since Kea 1.7.8, it is possible to restart the
+   Prior to Kea 1.7.8, the administrator had to shut down both servers
+   and then restart both of them to recover from the terminated state.
+   Since Kea 1.7.8, it is possible to restart the
    servers one at a time, in sequence. The clocks must be in sync
    before restarting the servers.
 
@@ -244,8 +244,8 @@ server transitions to the ``partner-down`` state to handle all the
 DHCP traffic directed to the system.
 
 In this case, the surviving server continues to send the
-``ha-heartbeat`` command to detect whether the partner wakes up. At that
-time, the partner synchronizes the lease database; when it is again
+``ha-heartbeat`` command to detect when the partner wakes up. At that
+time, the partner synchronizes the lease database. When it is again
 ready to operate, the surviving server returns to normal operation, i.e.
 the ``load-balancing`` or ``hot-standby`` state.
 
@@ -259,9 +259,9 @@ The following is the list of all possible server states:
    issues with a partner server over the control channel. This is an
    intermediate state between the ``load-balancing`` and ``partner-down``
    states. In this state the server continues to respond to DHCP queries
-   but does not send lease updates to the partner. Lease updates are
+   but does not send lease updates to the partner; lease updates are
    queued and are sent when normal communication is resumed. If
-   communication does not resume within the time specified by XXX, the primary server
+   communication does not resume, the primary server
    then transitions to the
    ``partner-down`` state. The ``communication-recovery`` state was
    introduced to ensure reliable DHCP service when both active servers
@@ -379,7 +379,7 @@ The following is the list of all possible server states:
    continues responding to DHCP clients based on the HA mode selected
    (load-balancing or hot-standby), but lease updates are not
    exchanged and heartbeats are not sent. Once a server has entered
-   the "terminated" state, it remains in this state until it is
+   the ``terminated`` state, it remains in this state until it is
    restarted. The administrator must correct the issue which caused this
    situation prior to restarting the server (e.g. synchronize the clocks);
    otherwise, the server will return to the "terminated" state once it
@@ -412,8 +412,8 @@ The ``DHCP Service Scopes`` denote which group of received DHCP queries
 the server responds to in the given state. The HA configuration
 must specify a unique name for each server within the HA setup. This
 document uses the following convention within the provided examples:
-``server1`` for a primary server, ``server2`` for the secondary or
-standby server, and ``server3`` for the backup server. In real life any
+"server1" for a primary server, "server2" for the secondary or
+standby server, and "server3" for the backup server. In real life any
 names can be used as long as they remain unique.
 
 An in-depth explanation of the scopes can be found below.
@@ -523,11 +523,11 @@ The following is the configuration snippet to enable high availability
 on the primary server within the load-balancing configuration. The same
 configuration should be applied on the secondary and backup servers,
 with the only difference that ``this-server-name`` should be set to
-``server2`` and ``server3`` on those servers, respectively.
+"server2" and "server3" on those servers, respectively.
 
 .. note::
 
-   Remember that the ``load-balancing`` mode requires the address pools and
+   Remember that ``load-balancing`` mode requires the address pools and
    delegated prefix pools to be split between the active servers. During
    normal operation, the servers use non-overlapping pools to avoid
    allocating the same lease to different clients by both instances.
@@ -606,8 +606,8 @@ provided above, it is assumed that Kea libraries are installed in the
 the hook libraries locations must be updated accordingly.
 
 The HA configuration is specified within the scope of ``libdhcp_ha.so``.
-Note that the top-level parameter ``high-availability`` is a list, even
-though it contains only one entry.
+Note that while the top-level parameter ``high-availability`` is a list,
+only a single entry is currently supported.
 
 The following are the global parameters which control the server's
 behavior with respect to HA:
@@ -628,9 +628,9 @@ behavior with respect to HA:
 -  ``max-response-delay`` - specifies a duration in milliseconds since
    the last successful communication with the partner, after which the
    server assumes that communication with the partner is interrupted.
-   This duration should be greater than the ``heartbeat-delay``; usually
-   it is greater than multiple ``heartbeat-delay``
-   values. When the server detects that communication is interrupted, it
+   This duration should be greater than the ``heartbeat-delay``; typically
+   it should be a multiple of ``heartbeat-delay``.
+   When the server detects that communication is interrupted, it
    may transition to the ``partner-down`` state (when
    ``max-unacked-clients`` is 0) or trigger the failure-detection
    procedure using the values of the two parameters below. The default
@@ -674,7 +674,7 @@ transition to the ``partner-down`` state even though the partner is
 still operating. On the other hand, selecting too high a value may
 result in never transitioning to the ``partner-down`` state if the DHCP
 traffic in the network is very low (e.g. at night), because the number
-of individual clients trying to communicate with the server could be lower
+of distinct clients trying to communicate with the server could be lower
 than the ``max-unacked-clients`` setting.
 
 In some cases it may be useful to disable the failure-detection
@@ -822,16 +822,13 @@ Kea configuration file. Both types of devices are allocated leases from
 different address pools. Introducing HA in load-balancing mode
 results in a further split of each of those pools, as each server
 allocates leases for some phones and some laptops. This requires each of
-the existing pools to be split between ``HA_server1`` and
-``HA_server2``, so we end up with the following classes:
+the existing pools to be split between "HA_server1" and
+"HA_server2", so we end up with the following classes:
 
--  ``phones_server1``
-
--  ``laptops_server1``
-
--  ``phones_server2``
-
--  ``laptops_server2``
+-  "phones_server1"
+-  "laptops_server1"
+-  "phones_server2"
+-  "laptops_server2"
 
 The corresponding server configuration, using advanced classification
 (and the ``member`` expression), is provided below. For brevity's sake, the
@@ -898,15 +895,15 @@ HA hook library configuration has been removed from this example.
    }
 
 The configuration provided above splits the address range into four
-pools: two pools dedicated to ``HA_server1`` and two to ``HA_server2``. Each server
+pools: two pools dedicated to "HA_server1" and two to "HA_server2". Each server
 can assign leases to both phones and laptops. Both groups of devices are
-assigned addresses from different pools. The ``HA_server1`` and
-``HA_server2`` classes are built-in (see
+assigned addresses from different pools. The "HA_server1" and
+"HA_server2" classes are built-in (see
 :ref:`classification-using-vendor`) and do not need to be declared.
 They are assigned dynamically by the HA hook library as a result of the
-load-balancing algorithm. ``phones_*`` and ``laptop_*`` evaluate to
+load-balancing algorithm. "phones_*" and "laptop_*" evaluate to
 ``true`` when the query belongs to a given combination of other classes,
-e.g. ``HA_server1`` and ``phones``. The pool is selected accordingly as
+e.g. "HA_server1" and "phones". The pool is selected accordingly as
 a result of such an evaluation.
 
 Consult :ref:`classify` for details on how to use the ``member``
@@ -987,7 +984,7 @@ In this mode, the non-primary active server is called ``standby`` and
 that is its role.
 
 Finally, because there is always only one server responding to DHCP queries,
-there is only one scope - ``HA_server1`` - in use within pool
+there is only one scope - "HA_server1" - in use within pool
 definitions. In fact, the ``client-class`` parameter could be removed
 from this configuration without harm, because there can be no conflicts
 in lease allocations by different servers as they do not allocate leases
