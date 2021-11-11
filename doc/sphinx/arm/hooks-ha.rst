@@ -426,19 +426,19 @@ An in-depth explanation of the scopes can be found below.
    +========================+=================+=================+=================+
    | backup                 | backup server   | disabled        | none            |
    +------------------------+-----------------+-----------------+-----------------+
-   | communication-recovery | primary or      | enabled         | "HA_server1"  |
+   | communication-recovery | primary or      | enabled         | "HA_server1"    |
    |                        | secondary       |                 | or              |
-   |                        | (load-balancing |                 | "HA_server2"  |
+   |                        | (load-balancing |                 | "HA_server2"    |
    |                        | mode only)      |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
-   | hot-standby            | primary or      | enabled         | "HA_server1"  |
+   | hot-standby            | primary or      | enabled         | "HA_server1"    |
    |                        | standby         |                 | if primary,     |
    |                        | (hot-standby    |                 | none otherwise  |
    |                        | mode)           |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
-   | load-balancing         | primary or      | enabled         | "HA_server1"  |
+   | load-balancing         | primary or      | enabled         | "HA_server1"    |
    |                        | secondary       |                 | or              |
-   |                        | (load-balancing |                 | "HA_server2"  |
+   |                        | (load-balancing |                 | "HA_server2"    |
    |                        | mode)           |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
    | in-maintenance         | active server   | disabled        | none            |
