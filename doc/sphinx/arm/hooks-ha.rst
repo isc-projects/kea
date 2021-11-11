@@ -426,19 +426,19 @@ An in-depth explanation of the scopes can be found below.
    +========================+=================+=================+=================+
    | backup                 | backup server   | disabled        | none            |
    +------------------------+-----------------+-----------------+-----------------+
-   | communication-recovery | primary or      | enabled         | ``HA_server1``  |
+   | communication-recovery | primary or      | enabled         | "HA_server1"  |
    |                        | secondary       |                 | or              |
-   |                        | (load-balancing |                 | ``HA_server2``  |
+   |                        | (load-balancing |                 | "HA_server2"  |
    |                        | mode only)      |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
-   | hot-standby            | primary or      | enabled         | ``HA_server1``  |
+   | hot-standby            | primary or      | enabled         | "HA_server1"  |
    |                        | standby         |                 | if primary,     |
    |                        | (hot-standby    |                 | none otherwise  |
    |                        | mode)           |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
-   | load-balancing         | primary or      | enabled         | ``HA_server1``  |
+   | load-balancing         | primary or      | enabled         | "HA_server1"  |
    |                        | secondary       |                 | or              |
-   |                        | (load-balancing |                 | ``HA_server2``  |
+   |                        | (load-balancing |                 | "HA_server2"  |
    |                        | mode)           |                 |                 |
    +------------------------+-----------------+-----------------+-----------------+
    | in-maintenance         | active server   | disabled        | none            |
@@ -462,13 +462,13 @@ An in-depth explanation of the scopes can be found below.
    +------------------------+-----------------+-----------------+-----------------+
 
 In the load-balancing mode there are two scopes specified for the active
-servers: ``HA_server1`` and ``HA_server2``. The DHCP queries
-load-balanced to ``server1`` belong to the ``HA_server1`` scope and the
-queries load-balanced to ``server2`` belong to the ``HA_server2`` scope.
+servers: "HA_server1" and "HA_server2". The DHCP queries
+load-balanced to ``server1`` belong to the "HA_server1" scope and the
+queries load-balanced to ``server2`` belong to the "HA_server2" scope.
 If either server is in the ``partner-down`` state, the active
 partner is responsible for serving both scopes.
 
-In the hot-standby mode, there is only one scope - ``HA_server1`` -
+In the hot-standby mode, there is only one scope - "HA_server1" -
 because only ``server1`` is responding to DHCP queries. If that server
 becomes unavailable, ``server2`` becomes responsible for this scope.
 
@@ -552,7 +552,7 @@ with the only difference that ``this-server-name`` should be set to
                    "this-server-name": "server1",
                    "mode": "load-balancing",
                    "heartbeat-delay": 10000,
-                   "max-response-delay": 10000,
+                   "max-response-delay": 60000,
                    "max-ack-delay": 5000,
                    "max-unacked-clients": 5,
                    "delayed-updates-limit": 100,
@@ -811,8 +811,8 @@ Load Balancing with Advanced Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the previous section, we provided an example of a load-balancing
-configuration with client classification limited to the ``HA_server1``
-and ``HA_server2`` classes, which are dynamically assigned to the
+configuration with client classification limited to the "HA_server1"
+and "HA_server2" classes, which are dynamically assigned to the
 received DHCP queries. In many cases, HA is needed in deployments
 which already use some other client classification.
 
@@ -930,7 +930,7 @@ hot-standby configuration:
                    "this-server-name": "server1",
                    "mode": "hot-standby",
                    "heartbeat-delay": 10000,
-                   "max-response-delay": 10000,
+                   "max-response-delay": 60000,
                    "max-ack-delay": 5000,
                    "max-unacked-clients": 5,
                    "peers": [{
@@ -1861,7 +1861,7 @@ has the following structure (DHCPv4 server case):
    }
 
 This command configures the server to handle traffic from both the
-``HA_server1`` and ``HA_server2`` scopes. To disable all scopes
+"HA_server1" and "HA_server2" scopes. To disable all scopes
 specify an empty list:
 
 ::
