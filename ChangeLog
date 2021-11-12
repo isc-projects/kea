@@ -1,3 +1,9 @@
+1961.	[func]		tomek,tmark
+	The initial, stubbed version of the PostgreSQL CB hook
+	library has been created.  The library is not yet functional
+	and does not installed.
+	(Gitlab #1848)
+
 1960.	[build]		andrei
 	Froze sphinx dependency versions used to build documentation.
 	Added the update-python-dependencies Makefile rule to bump the
