@@ -67,6 +67,7 @@ SYSTEMS = {
         #'8',
         '9',
         '10',
+        '11'
     ],
     'freebsd': [
         '11.2',
@@ -131,6 +132,7 @@ IMAGE_TEMPLATES = {
     'debian-9-virtualbox':     {'bare': 'debian/stretch64',            'kea': 'godfryd/kea-debian-9'},
     'debian-10-lxc':           {'bare': 'isc/lxc-debian-10',           'kea': 'isc/kea-debian-10'},
     'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
+    'debian-11-lxc':           {'bare': 'isc/lxc-debian-11',           'kea': 'isc/kea-debian-11'},
 
     # freebsd
     'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
@@ -1606,7 +1608,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'netconf' in features:
-            if int(revision) <= 10:
+            if int(revision) <= 11:
                 packages.extend(['cmake', 'libpcre3-dev'])
                 deferred_functions.extend([
                     _install_libyang_from_sources,
