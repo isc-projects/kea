@@ -1,3 +1,8 @@
+1959.	[doc]		djt
+	Move documentation for acceptable format strings into the Kea
+	ARM. The relevent section of the ARM was previously referring
+	to a dead link in the Log4cpp documentation.
+
 1958.	[func]		tomek
 	PostgreSQL database schema has been extended with tables for
 	Config Backend (CB). This is the first step towards PostgreSQL
