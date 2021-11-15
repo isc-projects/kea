@@ -303,7 +303,7 @@ ALTER TABLE lease6
     ADD CONSTRAINT fk_lease6_hwaddr_source FOREIGN KEY (hwaddr_source)
     REFERENCES lease_hwaddr_source (hwaddr_source);
 
-# FUNCTION that returns a result set containing the column names for lease4 dumps
+# Procedure that returns a result set containing the column names for lease4 dumps
 DROP PROCEDURE IF EXISTS lease4DumpHeader;
 DELIMITER $$
 CREATE PROCEDURE lease4DumpHeader()
@@ -312,7 +312,7 @@ SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_r
 END  $$
 DELIMITER ;
 
-# FUNCTION that returns a result set containing the data for lease4 dumps
+# Procedure that returns a result set containing the data for lease4 dumps
 DROP PROCEDURE IF EXISTS lease4DumpData;
 DELIMITER $$
 CREATE PROCEDURE lease4DumpData()
@@ -335,7 +335,7 @@ ORDER BY l.address;
 END $$
 DELIMITER ;
 
-# FUNCTION that returns a result set containing the column names for lease6 dumps
+# Procedure that returns a result set containing the column names for lease6 dumps
 DROP PROCEDURE IF EXISTS lease6DumpHeader;
 DELIMITER $$
 CREATE PROCEDURE lease6DumpHeader()
@@ -344,7 +344,7 @@ SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,ia
 END  $$
 DELIMITER ;
 
-# FUNCTION that returns a result set containing the data for lease6 dumps
+# Procedure that returns a result set containing the data for lease6 dumps
 DROP PROCEDURE IF EXISTS lease6DumpData;
 DELIMITER $$
 CREATE PROCEDURE lease6DumpData()
@@ -691,7 +691,7 @@ SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_r
 END  $$
 DELIMITER ;
 
-# FUNCTION that returns a result set containing the data for lease4 dumps
+# Procedure that returns a result set containing the data for lease4 dumps
 DROP PROCEDURE IF EXISTS lease4DumpData;
 DELIMITER $$
 CREATE PROCEDURE lease4DumpData()
@@ -723,7 +723,7 @@ SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,ia
 END  $$
 DELIMITER ;
 
-# FUNCTION that returns a result set containing the data for lease6 dumps
+# Procedure that returns a result set containing the data for lease6 dumps
 DROP PROCEDURE IF EXISTS lease6DumpData;
 DELIMITER $$
 CREATE PROCEDURE lease6DumpData()
@@ -4075,6 +4075,138 @@ ALTER TABLE dhcp6_options
 # Update the schema version number
 UPDATE schema_version
     SET version = '12', minor = '0';
+
+DROP FUNCTION IF EXISTS colonSeparatedHex;
+DELIMITER $$
+CREATE FUNCTION colonSeparatedHex(hex VARCHAR(64))
+RETURNS VARCHAR(64)
+DETERMINISTIC
+BEGIN
+    DECLARE i INT;
+    DECLARE length INT;
+    DECLARE output VARCHAR(64);
+    SET i = 3;
+    SET length = LENGTH(hex);
+    SET output = SUBSTR(hex, 1, 2);
+    label: WHILE i < length DO
+        SET output = CONCAT(output, ':', SUBSTR(hex, i, 2));
+        SET i = i + 2;
+    END WHILE label;
+    SET output = LOWER(output);
+    RETURN output;
+END $$
+DELIMITER ;
+
+# Modify the procedure to call colonSeparatedHex() on MAC addresses.
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+    IFNULL(colonSeparatedHex(HEX(l.client_id)), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    s.name,
+    IFNULL(l.user_context, '')
+FROM
+    lease4 l
+    LEFT OUTER JOIN lease_state s on (l.state = s.state)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Procedure used in lease-export to output a memfile-ready CSV file
+DROP PROCEDURE IF EXISTS lease4ExportData;
+DELIMITER $$
+CREATE PROCEDURE lease4ExportData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+    IFNULL(colonSeparatedHex(HEX(l.client_id)), ''),
+    l.valid_lifetime,
+    UNIX_TIMESTAMP(l.expire),
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    l.state,
+    IFNULL(l.user_context, '')
+FROM
+    lease4 l
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Modify the procedure to call colonSeparatedHex() on MAC addresses.
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(colonSeparatedHex(HEX(l.duid)), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.pref_lifetime,
+    IFNULL(t.name, ''),
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(h.name, ''),
+    IFNULL(s.name, ''),
+    IFNULL(l.user_context, '')
+FROM lease6 l
+    left outer join lease6_types t on (l.lease_type = t.lease_type)
+    left outer join lease_state s on (l.state = s.state)
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Procedure used in lease-export to output a memfile-ready CSV file
+DROP PROCEDURE IF EXISTS lease6ExportData;
+DELIMITER $$
+CREATE PROCEDURE lease6ExportData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(colonSeparatedHex(HEX(l.duid)), ''),
+    l.valid_lifetime,
+    UNIX_TIMESTAMP(l.expire),
+    l.subnet_id,
+    l.pref_lifetime,
+    l.lease_type,
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(h.name, ''),
+    l.state,
+    IFNULL(l.user_context, '')
+FROM lease6 l
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Update the schema version number
+UPDATE schema_version
+    SET version = '13', minor = '0';
 
 # This line concludes database upgrade to version 12.
 

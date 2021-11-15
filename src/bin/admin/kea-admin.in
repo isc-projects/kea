@@ -62,7 +62,8 @@ COMMAND: Currently supported operations are:
  - db-version: Checks version of the existing database schema. Useful
  -             for checking database version when preparing for an upgrade.
  - db-upgrade: Upgrades your database schema.
- - lease-dump: Dumps current leases to a CSV file.
+ - lease-dump: Dumps current leases to a human-readable CSV file.
+ - lease-export: Dumps current leases to a memfile-ready CSV file.
  - stats-recount: Recounts lease statistics.
 
 BACKEND - one of the supported backends: memfile|mysql|pgsql|cql
@@ -79,7 +80,7 @@ PARAMETERS: Parameters are optional in general, but may be required
  -d or --directory - path to upgrade scripts (default: %s)
  -v or --version - print kea-admin version and quit.
 
- Parameters specific to lease-dump:
+ Parameters specific to lease-dump, lease-export:
      -4 to dump IPv4 leases to file
      -6 to dump IPv6 leases to file
      -o or --output - name of file to which leases will be dumped
@@ -632,6 +633,38 @@ cql_dump() {
     exit 0
 }
 
+mysql_export() {
+    # Check the lease type was specified.
+    if test "${dump_type}" != '4' && test "${dump_type}" != '6'; then
+        log_error "lease-export: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
+    # Check that an output file was specified.
+    if test -z "${dump_file}"; then
+        log_error "you must specify an output file for lease-export"
+        usage
+        exit 1
+    fi
+
+    # If output file exists, notify user, give them a chance to bail.
+    check_file_overwrite "${dump_file}"
+
+    # Run the SQL query.
+    sql_query="
+        CALL lease${dump_type}DumpHeader;
+        CALL lease${dump_type}ExportData;
+    "
+    output="$(mysql_execute "${sql_query}")"
+
+    # Translate tabs to commas and write to file.
+    printf '%s\n' "${output}" | tr '\t' ',' > "${dump_file}"
+
+    # Print a confirmation message.
+    printf 'lease%s successfully exported to %s.\n' "${dump_type}" "${dump_file}"
+}
+
 ### Functions used for recounting statistics
 mysql_recount() {
     printf "Recount lease statistics from database\n"
@@ -689,7 +722,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "db-init db-version db-upgrade lease-dump stats-recount"
+is_in_list "${command}" "db-init db-version db-upgrade lease-dump lease-export stats-recount"
 if [ "${_inlist}" -eq 0 ]; then
     log_error "invalid command: ${command}"
     usage
@@ -892,6 +925,22 @@ case ${command} in
                 ;;
             cql)
                 cql_dump
+                ;;
+            esac
+        ;;
+    lease-export)
+        case ${backend} in
+            memfile)
+                log_error 'exporting from memfile to memfile'
+                ;;
+            mysql)
+                mysql_export
+                ;;
+            pgsql)
+                pgsql_export
+                ;;
+            cql)
+                log_error 'lease-export cql is deprecated'
                 ;;
             esac
         ;;
