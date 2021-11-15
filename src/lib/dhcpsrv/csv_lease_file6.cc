@@ -59,8 +59,6 @@ CSVLeaseFile6::append(const Lease6& lease) {
     if (lease.hwaddr_) {
         // We may not have hardware information
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
-        row.writeAt(getColumnIndex("hwtype"), lease.hwaddr_->htype_);
-        row.writeAt(getColumnIndex("hwaddr_source"), lease.hwaddr_->source_);
     }
     row.writeAt(getColumnIndex("state"), lease.state_);
     // User context is optional.
@@ -150,8 +148,6 @@ CSVLeaseFile6::initColumns() {
     addColumn("fqdn_rev", "1.0");
     addColumn("hostname", "1.0");
     addColumn("hwaddr", "2.0");
-    addColumn("hwtype", "4.0", "1" /* == HTYPE_ETHER */);
-    addColumn("hwaddr_source", "4.0", "0" /* == HWADDR_SOURCE_UNKNOWN */);
     addColumn("state", "3.0", "0");
     addColumn("user_context", "3.1");
     // Any file with less than hostname is invalid
@@ -239,13 +235,10 @@ HWAddrPtr
 CSVLeaseFile6::readHWAddr(const CSVRow& row) {
 
     try {
-        uint16_t hwtype(readHWType(row));
-        HWAddr hwaddr(HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")), hwtype));
+        const HWAddr& hwaddr = HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")));
         if (hwaddr.hwaddr_.empty()) {
             return (HWAddrPtr());
         }
-
-        hwaddr.source_ = readHWAddrSource(row);
 
         /// @todo: HWAddr returns an object, not a pointer. Without HWAddr
         /// refactoring, at least one copy is unavoidable.
@@ -261,16 +254,6 @@ CSVLeaseFile6::readHWAddr(const CSVRow& row) {
 
         return (HWAddrPtr());
     }
-}
-
-uint16_t
-CSVLeaseFile6::readHWType(const CSVRow& row) {
-    return row.readAndConvertAt<uint16_t>(getColumnIndex("hwtype"));
-}
-
-uint32_t
-CSVLeaseFile6::readHWAddrSource(const CSVRow& row) {
-    return row.readAndConvertAt<uint32_t>(getColumnIndex("hwaddr_source"));
 }
 
 uint32_t

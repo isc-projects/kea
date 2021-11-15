@@ -99,8 +99,6 @@ private:
     /// - fqdn_rev
     /// - hostname
     /// - hwaddr
-    /// - hwtype
-    /// - hwaddr_source
     /// - state
     /// - user_context
     void initColumns();
@@ -175,18 +173,6 @@ private:
     /// @param row CSV file row holding lease information.
     /// @return pointer to the HWAddr structure that was read
     HWAddrPtr readHWAddr(const util::CSVRow& row);
-
-    /// @brief Reads hardware address type from the CSV file row.
-    ///
-    /// @param row CSV file row holding lease information.
-    /// @return pointer to the HWAddr structure that was read
-    uint16_t readHWType(const util::CSVRow& row);
-
-    /// @brief Reads hardware address source from the CSV file row.
-    ///
-    /// @param row CSV file row holding lease information.
-    /// @return pointer to the HWAddr structure that was read
-    uint32_t readHWAddrSource(const util::CSVRow& row);
 
     /// @brief Reads lease state from the CSV file row.
     ///
