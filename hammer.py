@@ -1200,8 +1200,9 @@ def _configure_pgsql(system, features):
         # Stop any hypothetical existing postgres service.
         execute('sudo service postgresql stop || true')
 
-        # Get the path to the data directory.
-        _, output = execute('sudo echo /var/db/postgres/data*', capture=True)
+        # Get the path to the data directory e.g. /var/db/postgres/data11 for
+        # FreeBSD 12 and /var/db/postgres/data13 for FreeBSD 13.
+        _, output = execute('ls -1d /var/db/postgres/data*', capture=True)
         var_db_postgres_data = output.rstrip()
 
         # Create postgres internals.
