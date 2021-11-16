@@ -1,3 +1,9 @@
+1960.	[build]		andrei
+	Froze sphinx dependency versions used to build documentation.
+	Added the update-python-dependencies Makefile rule to bump the
+	versions.
+	(Gitlab #2161)
+
 1959.	[doc]		djt
 	Move documentation for acceptable format strings into the Kea
 	ARM. The relevent section of the ARM was previously referring
