@@ -92,16 +92,7 @@ PgSqlConfigBackendImpl::createAuditRevision(const int /* index */,
         tag = tags.begin()->get();
     }
 
-#if 0
-    PsqlBindArray in_bindings = {
-        PsqlBindArray::createTimestamp(audit_ts),
-        PsqlBindArray::createString(tag),
-        PsqlBindArray::createString(log_message),
-        PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))
-    };
-    conn_.insertQuery(index, in_bindings);
-    audit_revision_created_ = true;
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 void
@@ -115,7 +106,7 @@ PgSqlConfigBackendImpl::getRecentAuditEntries(const int /* index */,
                                               const boost::posix_time::ptime& /* modification_time */,
                                               const uint64_t& /* modification_id */,
                                               AuditEntryCollection& /* audit_entries */) {
-    isc_throw(NotImplemented, "");
+    isc_throw(NotImplemented, "todo");
 }
 
 uint64_t
@@ -144,85 +135,8 @@ void
 PgSqlConfigBackendImpl::getGlobalParameters(const int /* index */,
                                             const PsqlBindArray& /* in_bindings */,
                                             StampedValueCollection& /* parameters */) {
-#if 0
-    // The following parameters from the dhcp[46]_global_parameter table are
-    // returned:
-    // - id
-    // - name - parameter name
-    // - value - parameter value
-    // - modification_ts - modification timestamp.
-    PsqlBindArray out_bindings = {
-        PsqlBindArray::createInteger<uint64_t>(), // id
-        PsqlBindArray::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
-        PsqlBindArray::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
-        PsqlBindArray::createInteger<uint8_t>(), // parameter_type
-        PsqlBindArray::createTimestamp(), // modification_ts
-        PsqlBindArray::createString(SERVER_TAG_BUF_LENGTH) // server_tag
-    };
 
-    StampedValuePtr last_param;
-
-    StampedValueCollection local_parameters;
-
-    conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&last_param, &local_parameters]
-                      (PsqlBindArray& out_bindings) {
-
-        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
-
-        // If we're starting or if this is new parameter being processed...
-        if (!last_param || (last_param->getId() != id)) {
-
-            // parameter name
-            std::string name = out_bindings[1]->getString();
-
-            if (!name.empty()) {
-                last_param = StampedValue::create(name,
-                                                  out_bindings[2]->getString(),
-                                                  static_cast<Element::types>
-                                                  (out_bindings[3]->getInteger<uint8_t>()));
-
-                // id
-                last_param->setId(id);
-
-                // modification_ts
-                last_param->setModificationTime(out_bindings[4]->getTimestamp());
-
-                // server_tag
-                ServerTag last_param_server_tag(out_bindings[5]->getString());
-                last_param->setServerTag(last_param_server_tag.get());
-                // If we're fetching parameters for a given server (explicit server
-                // tag is provided), it takes precedence over the same parameter
-                // specified for all servers. Therefore, we check if the given
-                // parameter already exists and belongs to 'all'.
-                auto& index = local_parameters.get<StampedValueNameIndexTag>();
-                auto existing = index.find(name);
-                if (existing != index.end()) {
-                    // This parameter was already fetched. Let's check if we should
-                    // replace it or not.
-                    if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
-                        // Replace parameter specified for 'all' with the one associated
-                        // with the particular server tag.
-                        local_parameters.replace(existing, last_param);
-                        return;
-                    }
-
-                }
-
-                // If there is no such parameter yet or the existing parameter
-                // belongs to a different server and the inserted parameter is
-                // not for all servers.
-                if ((existing == index.end()) ||
-                    (!(*existing)->hasServerTag(last_param_server_tag) &&
-                     !last_param_server_tag.amAll())) {
-                    local_parameters.insert(last_param);
-                }
-            }
-        }
-    });
-
-    parameters.insert(local_parameters.begin(), local_parameters.end());
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 OptionDefinitionPtr
@@ -239,14 +153,7 @@ PgSqlConfigBackendImpl::getOptionDef(const int /* index */,
     auto tag = getServerTag(server_selector, "fetching option definition");
 
     OptionDefContainer option_defs;
-#if 0
-    PsqlBindArray in_bindings = {
-        PsqlBindArray::createString(tag),
-        PsqlBindArray::createInteger<uint16_t>(code),
-        PsqlBindArray::createString(space)
-    };
-    getOptionDefs(index, in_bindings, option_defs);
-#endif
+    isc_throw(NotImplemented, "todo");
     return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
 }
 
@@ -255,14 +162,7 @@ PgSqlConfigBackendImpl::getAllOptionDefs(const int /* index */,
                                          const ServerSelector& server_selector,
                                          OptionDefContainer& /* option_defs */) {
     auto tags = server_selector.getTags();
-#if 0
-    for (auto tag : tags) {
-        PsqlBindArray in_bindings = {
-            PsqlBindArray::createString(tag.get())
-        };
-        getOptionDefs(index, in_bindings, option_defs);
-    }
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 void
@@ -271,15 +171,7 @@ PgSqlConfigBackendImpl::getModifiedOptionDefs(const int /* index */,
                                               const boost::posix_time::ptime& /* modification_time */,
                                               OptionDefContainer& /* option_defs */) {
     auto tags = server_selector.getTags();
-#if 0
-    for (auto tag : tags) {
-        PsqlBindArray in_bindings = {
-            PsqlBindArray::createString(tag.get()),
-            PsqlBindArray::createTimestamp(modification_time)
-        };
-        getOptionDefs(index, in_bindings, option_defs);
-    }
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 void
@@ -288,132 +180,7 @@ PgSqlConfigBackendImpl::getOptionDefs(const int /* index */,
                                       OptionDefContainer& /* option_defs*/ ) {
     // Create output bindings. The order must match that in the prepared
     // statement.
-#if 0
-    PsqlBindArray out_bindings = {
-        PsqlBindArray::createInteger<uint64_t>(), // id
-        PsqlBindArray::createInteger<uint16_t>(), // code
-        PsqlBindArray::createString(OPTION_NAME_BUF_LENGTH), // name
-        PsqlBindArray::createString(OPTION_SPACE_BUF_LENGTH), // space
-        PsqlBindArray::createInteger<uint8_t>(), // type
-        PsqlBindArray::createTimestamp(), // modification_ts
-        PsqlBindArray::createInteger<uint8_t>(), // array
-        PsqlBindArray::createString(OPTION_ENCAPSULATE_BUF_LENGTH), // encapsulate
-        PsqlBindArray::createString(OPTION_RECORD_TYPES_BUF_LENGTH), // record_types
-        PsqlBindArray::createString(USER_CONTEXT_BUF_LENGTH), // user_context
-        PsqlBindArray::createString(SERVER_TAG_BUF_LENGTH) // server_tag
-    };
-
-    uint64_t last_def_id = 0;
-
-    OptionDefContainer local_option_defs;
-
-    // Run select query.
-    conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&local_option_defs, &last_def_id]
-                      (PsqlBindArray& out_bindings) {
-        // Get pointer to last fetched option definition.
-        OptionDefinitionPtr last_def;
-        if (!local_option_defs.empty()) {
-            last_def = *local_option_defs.rbegin();
-        }
-
-        // See if the last fetched definition is the one for which we now got
-        // the row of data. If not, it means that we need to create new option
-        // definition.
-        if ((last_def_id == 0) ||
-            (last_def_id != out_bindings[0]->getInteger<uint64_t>())) {
-
-            last_def_id = out_bindings[0]->getInteger<uint64_t>();
-
-            // Check array type, because depending on this value we have to use
-            // different constructor.
-            bool array_type = static_cast<bool>(out_bindings[6]->getInteger<uint8_t>());
-            if (array_type) {
-                // Create array option.
-                last_def = OptionDefinition::create(out_bindings[2]->getString(),
-                                                    out_bindings[1]->getInteger<uint16_t>(),
-                                                    out_bindings[3]->getString(),
-                                                    static_cast<OptionDataType>
-                                                    (out_bindings[4]->getInteger<uint8_t>()),
-                                                    array_type);
-            } else {
-                // Create non-array option.
-                last_def = OptionDefinition::create(out_bindings[2]->getString(),
-                                                    out_bindings[1]->getInteger<uint16_t>(),
-                                                    out_bindings[3]->getString(),
-                                                    static_cast<OptionDataType>
-                                                    (out_bindings[4]->getInteger<uint8_t>()),
-                                                    out_bindings[7]->getStringOrDefault("").c_str());
-            }
-
-            // id
-            last_def->setId(last_def_id);
-
-            // record_types
-            ElementPtr record_types_element = out_bindings[8]->getJSON();
-            if (record_types_element) {
-                if (record_types_element->getType() != Element::list) {
-                    isc_throw(BadValue, "invalid record_types value "
-                              << out_bindings[8]->getString());
-                }
-                // This element must contain a list of integers specifying
-                // types of the record fields.
-                for (auto i = 0; i < record_types_element->size(); ++i) {
-                    auto type_element = record_types_element->get(i);
-                    if (type_element->getType() != Element::integer) {
-                        isc_throw(BadValue, "record type values must be integers");
-                    }
-                    last_def->addRecordField(static_cast<OptionDataType>
-                                             (type_element->intValue()));
-                }
-            }
-
-            // Update modification time.
-            last_def->setModificationTime(out_bindings[5]->getTimestamp());
-
-            // server_tag
-            ServerTag last_def_server_tag(out_bindings[10]->getString());
-            last_def->setServerTag(last_def_server_tag.get());
-
-            // If we're fetching option definitions for a given server
-            // (explicit server tag is provided), it takes precedence over
-            // the same option definition specified for all servers.
-            // Therefore, we check if the given option already exists and
-            // belongs to 'all'.
-            auto& index = local_option_defs.get<1>();
-            auto existing_it_pair = index.equal_range(last_def->getCode());
-            auto existing_it = existing_it_pair.first;
-            bool found = false;
-            for ( ; existing_it != existing_it_pair.second; ++existing_it) {
-                if ((*existing_it)->getOptionSpaceName() == last_def->getOptionSpaceName()) {
-                    found = true;
-                    // This option definition was already fetched. Let's check
-                    // if we should replace it or not.
-                    if (!last_def_server_tag.amAll() && (*existing_it)->hasAllServerTag()) {
-                        index.replace(existing_it, last_def);
-                        return;
-                    }
-                    break;
-                }
-            }
-
-            // If there is no such option definition yet or the existing option
-            // definition belongs to a different server and the inserted option
-            // definition is not for all servers.
-            if (!found ||
-                (!(*existing_it)->hasServerTag(last_def_server_tag) &&
-                 !last_def_server_tag.amAll())) {
-                static_cast<void>(local_option_defs.push_back(last_def));
-            }
-        }
-    });
-
-    // Append the option definition fetched by this function into the container
-    // supplied by the caller. The container supplied by the caller may already
-    // hold some option definitions fetched for other server tags.
-    option_defs.insert(option_defs.end(), local_option_defs.begin(),
-                       local_option_defs.end());
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 void
@@ -437,53 +204,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     for (auto field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
-#if 0
-    PsqlBindArrayPtr record_types_binding = record_types->empty() ?
-        PsqlBindArray::createNull() : PsqlBindArray::createString(record_types->str());
-
-    PsqlBindArray in_bindings = {
-        PsqlBindArray::createInteger<uint16_t>(option_def->getCode()),
-        PsqlBindArray::createString(option_def->getName()),
-        PsqlBindArray::createString(option_def->getOptionSpaceName()),
-        PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getType())),
-        PsqlBindArray::createTimestamp(option_def->getModificationTime()),
-        PsqlBindArray::createBool(option_def->getArrayType()),
-        PsqlBindArray::createString(option_def->getEncapsulatedSpace()),
-        record_types_binding,
-        createInputContextBinding(option_def),
-        PsqlBindArray::createString(tag),
-        PsqlBindArray::createInteger<uint16_t>(option_def->getCode()),
-        PsqlBindArray::createString(option_def->getOptionSpaceName())
-    };
-
-    PgSqlTransaction transaction(conn_);
-
-    // Create scoped audit revision. As long as this instance exists
-    // no new audit revisions are created in any subsequent calls.
-    ScopedAuditRevision audit_revision(this,
-                                       create_audit_revision,
-                                       server_selector,
-                                       "option definition set",
-                                       true);
-
-    if (conn_.updateDeleteQuery(update_option_def, in_bindings) == 0) {
-        // Remove the bindings used only during the update.
-        in_bindings.resize(in_bindings.size() - 3);
-        conn_.insertQuery(insert_option_def, in_bindings);
-
-        // Fetch unique identifier of the inserted option definition and use it
-        // as input to the next query.
-        uint64_t id = pgsql_insert_id(conn_.pgsql_);
-
-        // Insert associations of the option definition with servers.
-        attachElementToServers(insert_option_def_server,
-                               server_selector,
-                               PsqlBindArray::createInteger<uint64_t>(id),
-                               PsqlBindArray::createTimestamp(option_def->getModificationTime()));
-    }
-
-    transaction.commit();
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 OptionDescriptorPtr
@@ -501,17 +222,7 @@ PgSqlConfigBackendImpl::getOption(const int /* index */,
     auto tag = getServerTag(server_selector, "fetching global option");
 
     OptionContainer options;
-#if 0
-    PsqlBindArray in_bindings;
-    in_bindings.push_back(PsqlBindArray::createString(tag));
-    if (universe == Option::V4) {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(code)));
-    } else {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint16_t>(code));
-    }
-    in_bindings.push_back(PsqlBindArray::createString(space));
-    getOptions(index, in_bindings, universe, options);
-#endif
+    isc_throw(NotImplemented, "todo");
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
@@ -523,14 +234,7 @@ PgSqlConfigBackendImpl::getAllOptions(const int /* index */,
     OptionContainer options;
     auto tags = server_selector.getTags();
 
-#if 0
-    for (auto tag : tags) {
-        PsqlBindArray in_bindings = {
-            PsqlBindArray::createString(tag.get())
-        };
-        getOptions(index, in_bindings, universe, options);
-    }
-#endif
+    isc_throw(NotImplemented, "todo");
 
     return (options);
 }
@@ -545,12 +249,10 @@ PgSqlConfigBackendImpl::getModifiedOptions(const int index,
     auto tags = server_selector.getTags();
     for (auto tag : tags) {
         PsqlBindArray in_bindings;
-#if 0
-        PsqlBindArray in_bindings = {
-            PsqlBindArray::createString(tag.get()),
-            PsqlBindArray::createTimestamp(modification_time)
-        };
-#endif
+
+        /// need to define binding parameters
+        isc_throw(NotImplemented, "todo");
+
         getOptions(index, in_bindings, universe, options);
     }
 
@@ -574,17 +276,8 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     OptionContainer options;
     PsqlBindArray in_bindings;
-#if 0
-    in_bindings.push_back(PsqlBindArray::createString(tag));
-    uint32_t id = static_cast<uint32_t>(subnet_id);
-    in_bindings.push_back(PsqlBindArray::createInteger<uint32_t>(id));
-    if (universe == Option::V4) {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(code)));
-    } else {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint16_t>(code));
-    }
-    in_bindings.push_back(PsqlBindArray::createString(space));
-#endif
+    isc_throw(NotImplemented, "todo");
+
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
@@ -614,17 +307,8 @@ PgSqlConfigBackendImpl::getOption(const int index,
     Option::Universe universe = Option::V4;
     OptionContainer options;
     PsqlBindArray in_bindings;
-#if 0
-    in_bindings.push_back(PsqlBindArray::createString(tag));
-    in_bindings.push_back(PsqlBindArray::createInteger<uint64_t>(pool_id));
-    if (pool_type == Lease::TYPE_V4) {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(code)));
-    } else {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint16_t>(code));
-        universe = Option::V6;
-    }
-    in_bindings.push_back(PsqlBindArray::createString(space));
-#endif
+    isc_throw(NotImplemented, "todo");
+
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
@@ -646,16 +330,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     OptionContainer options;
     PsqlBindArray in_bindings;
-#if 0
-    in_bindings.push_back(PsqlBindArray::createString(tag));
-    in_bindings.push_back(PsqlBindArray::createString(shared_network_name));
-    if (universe == Option::V4) {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint8_t>(static_cast<uint8_t>(code)));
-    } else {
-        in_bindings.push_back(PsqlBindArray::createInteger<uint16_t>(code));
-    }
-    in_bindings.push_back(PsqlBindArray::createString(space));
-#endif
+    isc_throw(NotImplemented, "todo");
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
@@ -665,176 +340,8 @@ PgSqlConfigBackendImpl::getOptions(const int /* index */,
                                    const db::PsqlBindArray& /* in_bindings */,
                                    const Option::Universe& /* universe */,
                                    OptionContainer& /* options */) {
-#if 0
-    // Create output bindings. The order must match that in the prepared
-    // statement.
-    PsqlBindArray out_bindings;
-    // option_id
-    out_bindings.push_back(PsqlBindArray::createInteger<uint64_t>());
-    // code
-    if (universe == Option::V4) {
-        out_bindings.push_back(PsqlBindArray::createInteger<uint8_t>());
-    } else {
-        out_bindings.push_back(PsqlBindArray::createInteger<uint16_t>());
-    }
-    // value
-    out_bindings.push_back(PsqlBindArray::createBlob(OPTION_VALUE_BUF_LENGTH));
-    // forma\tted_value
-    out_bindings.push_back(PsqlBindArray::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
-    // space
-    out_bindings.push_back(PsqlBindArray::createString(OPTION_SPACE_BUF_LENGTH));
-    // persistent
-    out_bindings.push_back(PsqlBindArray::createInteger<uint8_t>());
-    // dhcp[46]_subnet_id
-    out_bindings.push_back(PsqlBindArray::createInteger<uint32_t>());
-    // scope_id
-    out_bindings.push_back(PsqlBindArray::createInteger<uint8_t>());
-    // user_context
-    out_bindings.push_back(PsqlBindArray::createString(USER_CONTEXT_BUF_LENGTH));
-    // shared_network_name
-    out_bindings.push_back(PsqlBindArray::createString(SHARED_NETWORK_NAME_BUF_LENGTH));
-    // pool_id
-    out_bindings.push_back(PsqlBindArray::createInteger<uint64_t>());
-    // modification_ts
-    out_bindings.push_back(PsqlBindArray::createTimestamp());
-    // server_tag
-    out_bindings.push_back(PsqlBindArray::createString(SERVER_TAG_BUF_LENGTH));
-    // pd_pool_id
-    if (universe == Option::V6) {
-        out_bindings.push_back(PsqlBindArray::createInteger<uint64_t>());
-    }
-
-    uint64_t last_option_id = 0;
-
-    OptionContainer local_options;
-
-    conn_.selectQuery(index, in_bindings, out_bindings,
-                      [this, universe, &local_options, &last_option_id]
-                      (PsqlBindArray& out_bindings) {
-        // Parse option.
-        if (!out_bindings[0]->amNull() &&
-            ((last_option_id == 0) ||
-             (last_option_id < out_bindings[0]->getInteger<uint64_t>()))) {
-            last_option_id = out_bindings[0]->getInteger<uint64_t>();
-
-            OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
-            if (desc) {
-                // server_tag for the global option
-                ServerTag last_option_server_tag(out_bindings[12]->getString());
-                desc->setServerTag(last_option_server_tag.get());
-
-                // If we're fetching options for a given server (explicit server
-                // tag is provided), it takes precedence over the same option
-                // specified for all servers. Therefore, we check if the given
-                // option already exists and belongs to 'all'.
-                auto& index = local_options.get<1>();
-                auto existing_it_pair = index.equal_range(desc->option_->getType());
-                auto existing_it = existing_it_pair.first;
-                bool found = false;
-                for ( ; existing_it != existing_it_pair.second; ++existing_it) {
-                    if (existing_it->space_name_ == desc->space_name_) {
-                        found = true;
-                        // This option was already fetched. Let's check if we should
-                        // replace it or not.
-                        if (!last_option_server_tag.amAll() && existing_it->hasAllServerTag()) {
-                            index.replace(existing_it, *desc);
-                            return;
-                        }
-                        break;
-                    }
-                }
-
-                // If there is no such global option yet or the existing option
-                // belongs to a different server and the inserted option is not
-                // for all servers.
-                if (!found ||
-                    (!existing_it->hasServerTag(last_option_server_tag) &&
-                     !last_option_server_tag.amAll())) {
-                    static_cast<void>(local_options.push_back(*desc));
-                }
-            }
-        }
-    });
-
-    // Append the options fetched by this function into the container supplied
-    // by the caller. The container supplied by the caller may already hold
-    // some options fetched for other server tags.
-    options.insert(options.end(), local_options.begin(), local_options.end());
-#endif
+    isc_throw(NotImplemented, "todo");
 }
-
-#if 0
-OptionDescriptorPtr
-PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
-                                         PsqlBindArray::iterator first_binding) {
-    // Some of the options have standard or custom definitions.
-    // Depending whether the option has a definition or not a different
-    // C++ class may be used to represent the option. Therefore, the
-    // first thing to do is to see if there is a definition for our
-    // parsed option. The option code and space is needed for it.
-    std::string space = (*(first_binding + 4))->getString();
-    uint16_t code;
-    if (universe == Option::V4) {
-        code = (*(first_binding + 1))->getInteger<uint8_t>();
-    } else {
-        code = (*(first_binding + 1))->getInteger<uint16_t>();
-    }
-
-
-    // Get formatted value if available.
-    std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
-
-    OptionPtr option = Option::create(universe, code);
-
-    // If we don't have a formatted value, check for a blob. Add it to the
-    // option if it exists.
-    if (formatted_value.empty()) {
-        std::vector<uint8_t> blob;
-        if (!(*(first_binding + 2))->amNull()) {
-            blob = (*(first_binding + 2))->getBlob();
-        }
-        option->setData(blob.begin(), blob.end());
-    }
-
-    // Check if the option is persistent.
-    bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));
-
-    // Create option descriptor which encapsulates our option and adds
-    // additional information, i.e. whether the option is persistent,
-    // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
-    desc->space_name_ = space;
-    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
-
-    // Set database id for the option.
-    if (!(*first_binding)->amNull()) {
-        desc->setId((*first_binding)->getInteger<uint64_t>());
-    }
-
-    return (desc);
-}
-
-void
-PgSqlConfigBackendImpl::attachElementToServers(const int index,
-                                               const ServerSelector& server_selector,
-                                               const PsqlBindArrayPtr& first_binding,
-                                               const PsqlBindArrayPtr& in_bindings...) {
-    // Create the vector from the parameter pack.
-    PsqlBindArray in_server_bindings = { first_binding, in_bindings };
-    for (auto tag : server_selector.getTags()) {
-        in_server_bindings.push_back(PsqlBindArray::createString(tag.get()));
-        // Handles the case where the server does not exists.
-        try {
-            conn_.insertQuery(index, in_server_bindings);
-        } catch (const NullKeyError&) {
-            // The message should give the tag value.
-            isc_throw(NullKeyError,
-                      "server '" << tag.get() << "' does not exist");
-        }
-        in_server_bindings.pop_back();
-    }
-}
-#endif
 
 PsqlBindArrayPtr
 PgSqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
@@ -845,13 +352,7 @@ PgSqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
             relay_element->add(Element::create(address.toText()));
         }
     }
-
-#if 0
-    return (relay_element->empty() ? PsqlBindArray::createNull() :
-            PsqlBindArray::condCreateString(relay_element->str()));
-#else
-    return (PsqlBindArrayPtr());
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 PsqlBindArrayPtr
@@ -878,6 +379,8 @@ PgSqlConfigBackendImpl::getServer(const int index, const ServerTag& /* server_ta
     PsqlBindArray in_bindings; /* = {
         PsqlBindArray::createString(server_tag.get())
     }; */
+    isc_throw(NotImplemented, "todo");
+
     getServers(index, in_bindings, servers);
 
     return (servers.empty() ? ServerPtr() : *servers.begin());
@@ -893,37 +396,7 @@ void
 PgSqlConfigBackendImpl::getServers(const int /* index */,
                                    const PsqlBindArray& /* in_bindings */,
                                    ServerCollection& /* servers */) {
-#if 0
-    PsqlBindArray out_bindings; = {
-        PsqlBindArray::createInteger<uint64_t>(),
-        PsqlBindArray::createString(SERVER_TAG_BUF_LENGTH),
-        PsqlBindArray::createString(SERVER_DESCRIPTION_BUF_LENGTH),
-        PsqlBindArray::createTimestamp()
-    };
-
-    conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&servers](PsqlBindArray& out_bindings) {
-
-        ServerPtr last_server;
-        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
-        if (!last_server || (last_server->getId() != id)) {
-
-            // Set description if it is non-null.
-            auto desc = (out_bindings[2]->amNull() ? "" : out_bindings[2]->getString());
-            last_server = Server::create(ServerTag(out_bindings[1]->getString()),
-                                         desc);
-
-            // id
-            last_server->setId(id);
-
-            // modification_ts
-            last_server->setModificationTime(out_bindings[3]->getTimestamp());
-
-            // New server fetched. Let's store it.
-            servers.insert(last_server);
-        }
-    });
-#endif
+    isc_throw(NotImplemented, "todo");
 }
 
 void
@@ -946,7 +419,10 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
 
     PgSqlTransaction transaction(conn_);
 
-    PsqlBindArray in_bindings; /* = {
+    PsqlBindArray in_bindings;
+    isc_throw(NotImplemented, "todo");
+
+     /* = {
         PsqlBindArray::createString(server->getServerTagAsText()),
         PsqlBindArray::createString(server->getDescription()),
         PsqlBindArray::createTimestamp(server->getModificationTime())
