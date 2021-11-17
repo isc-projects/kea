@@ -180,8 +180,8 @@ public:
     /// @throw isc::InvalidOperation if the binding does not represent
     /// a 32-bit unsigned integer.
     static util::Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& def_binding,
-                                                const db::MySqlBindingPtr& min_binding,
-                                                const db::MySqlBindingPtr& max_binding);
+                                                 const db::MySqlBindingPtr& min_binding,
+                                                 const db::MySqlBindingPtr& max_binding);
 
     /// @brief Returns server tag associated with the particular selector.
     ///
