@@ -125,25 +125,6 @@ std::string PsqlBindArray::toText() const {
     std::ostringstream stream;
     for (int i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
-#if 0
-        if (formats_[i] == TEXT_FMT) {
-                stream << "\"" << values_[i] << "\"" << std::endl;
-        } else {
-            const char *data = values_[i];
-            if (lengths_[i] == 0) {
-                stream << "empty" << std::endl;
-            } else {
-                stream << "0x";
-                for (int x = 0; x < lengths_[i]; ++x) {
-                    stream << std::setfill('0') << std::setw(2)
-                           << std::setbase(16)
-                           << static_cast<unsigned int>(data[x]);
-                }
-                stream << std::endl;
-                stream << std::setbase(10);
-            }
-        }
-#else
         if (lengths_[i] == 0) {
             stream << "empty" << std::endl;
             continue;
@@ -162,7 +143,6 @@ std::string PsqlBindArray::toText() const {
             stream << std::endl;
             stream << std::setbase(10);
         }
-#endif
     }
 
     return (stream.str());
