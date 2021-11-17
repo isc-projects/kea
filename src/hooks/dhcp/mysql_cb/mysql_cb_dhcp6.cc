@@ -29,6 +29,7 @@
 #include <util/buffer.h>
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
+#include <util/triplet.h>
 #include <mysql/mysql_connection.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>

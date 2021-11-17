@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::db;
+using namespace isc::util;
 using namespace isc::dhcp;
 
 namespace {
@@ -58,4 +59,3 @@ TEST(MySqlConfigBackendImplTest, createTripletFromBinding) {
 
 
 }
-
