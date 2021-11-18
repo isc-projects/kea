@@ -1,3 +1,21 @@
+1962.	[func]		andrei
+	kea-netconf updates: fixed store-extended-info. Added several
+	containers and leaves: compatibility, lenient-option-parsing,
+	multi-threading, enable-multi-threading, packet-queue-size,
+	thread-pool-size, valid-lifetime, min-valid-lifetime,
+	max-valid-lifetime, preferred-lifetime, min-preferred-lifetime,
+	max-preferred-lifetime, cache-max-age, cache-threshold,
+	lenient-option-parsing, ddns-generated-prefix,
+	ddns-override-client-update, ddns-override-no-update,
+	ddns-qualifying-suffix, ddns-replace-client-name,
+	ddns-send-updates, ddns-update-on-renew,
+	ddns-use-conflict-resolution, ip-reservations-unique,
+	parked-packet-limit, reservations-global,
+	reservations-in-subnet, reservations-out-of-pool,
+	statistic-default-sample-age, statistic-default-sample-count,
+	store-extended-info, on-fail.
+	(Gitlab #2136)
+
 1961.	[func]		tomek,tmark
 	The initial, stubbed version of the PostgreSQL CB hook
 	library has been created.  The library is not yet functional
