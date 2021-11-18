@@ -27,15 +27,14 @@ module kea-dhcp4-server {
                  valid-lifetime, min-valid-lifetime, max-valid-lifetime,
                  preferred-lifetime, min-preferred-lifetime,
                  max-preferred-lifetime, cache-max-age, cache-threshold,
-                 lenient-option-parsing, ddns-generated-prefix,
-                 ddns-override-client-update, ddns-override-no-update,
-                 ddns-qualifying-suffix, ddns-replace-client-name,
-                 ddns-send-updates, ddns-update-on-renew,
-                 ddns-use-conflict-resolution, ip-reservations-unique,
-                 parked-packet-limit, reservations-global,
-                 reservations-in-subnet, reservations-out-of-pool,
-                 statistic-default-sample-age, statistic-default-sample-count,
-                 store-extended-info, on-fail.";
+                 ddns-generated-prefix, ddns-override-client-update,
+                 ddns-override-no-update, ddns-qualifying-suffix,
+                 ddns-replace-client-name, ddns-send-updates,
+                 ddns-update-on-renew, ddns-use-conflict-resolution,
+                 ip-reservations-unique, parked-packet-limit,
+                 reservations-global, reservations-in-subnet,
+                 reservations-out-of-pool, statistic-default-sample-age,
+                 statistic-default-sample-count, store-extended-info, on-fail.";
   }
 
   revision 2021-08-25 {
