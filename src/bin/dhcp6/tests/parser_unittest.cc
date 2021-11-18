@@ -752,7 +752,8 @@ TEST(ParserTest, mapEntries) {
     loadFile(sample_dir + "reservations.json", sample_json);
     loadFile(sample_dir + "all-keys-netconf.json", sample_json);
     KeywordSet sample_keys = {
-        "hosts-database"
+        "hosts-database",
+        "reservation-mode"
     };
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
