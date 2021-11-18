@@ -22,7 +22,25 @@
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
-                "test": "member('HA_server1')"
+                "test": "member('HA_server1')",
+
+                // Class valid lifetime.
+                "valid-lifetime": 6000,
+
+                // Class min valid lifetime.
+                "min-valid-lifetime": 4000,
+
+                // Class max valid lifetime.
+                "max-valid-lifetime": 8000,
+
+                // Class preferred lifetime.
+                "preferred-lifetime": 7000,
+
+                // Class min preferred lifetime.
+                "min-preferred-lifetime": 5000,
+
+                // Class max preferred lifetime.
+                "max-preferred-lifetime": 9000
             },
             {
                 // Second class name.
@@ -51,6 +69,14 @@
             }
         ],
 
+        // Parameters for triggering behaviors compatible with broken or
+        // non-compliant clients, relays or other agents
+        "compatibility": {
+            // Parse options more leniently where fields can be deduced
+            // deterministically even if against RFC or common practice.
+            "lenient-option-parsing": true
+        },
+
         // Command control socket configuration parameters for Kea DHCPv6 server.
         "control-socket": {
             // Location of the unix domain socket file the DHCPv6 server uses
@@ -63,6 +89,65 @@
             "socket-type": "unix"
         },
 
+        // Specifies a prefix to be prepended to the generated Client FQDN.
+        // It may be specified at the global, shared-network and subnet levels.
+        "ddns-generated-prefix": "myhost",
+
+        // Boolean flag indicating that server should ignore DHCP client
+        // wishes to update DNS on its own. With that flag set to true
+        // the server will send DNS updates for both forward and
+        // reverse DNS data. The default value is false, which indicates
+        // that the server will delegate DNS update to the client when
+        // requested.  It may be specified at the global, shared-network
+        // and subnet levels.
+        "ddns-override-client-update": false,
+
+        // Boolean flag indicating that the server should override DHCP
+        // client's wish to not update the DNS. With this parameter
+        // set to true the server will send DNS update even when
+        // the client requested no update.  It may be specified at the
+        // global, shared-network and subnet levels.
+        "ddns-override-no-update": false,
+
+        // Suffix appended to the partial name sent to the DNS. The
+        // default value is an empty string which indicates that no
+        // suffix is appended.  It may be specified at the global,
+        // shared-network and subnet levels.
+        "ddns-qualifying-suffix": "",
+
+        // Enumeration specifying whether the server should honor
+        // hostname or Client FQDN sent by the client or replace
+        // this name. The acceptable values are: "never" (use the
+        // name the client sent), "always" (replace the name the
+        // client sent), "when-present" (replace the name the client
+        // sent, but do not generate one when the client didn't sent
+        // the name), "when-not-present" (generate the name when
+        // client didn't send one, otherwise leave the name the
+        // client sent). The default value is "never".  It may be
+        // specified at the global, shared-network and subnet levels.
+        "ddns-replace-client-name": "never",
+
+        // Boolean flag which enables or disables the DDNS updating. It
+        // defaults to true.  It may be specified at the global, shared-
+        // network and subnet levels. It works in conjunction with
+        // dhcp-ddns:enable-updates which must be true to enable connectivity
+        // to kea-dhcp-ddns.
+        "ddns-send-updates": true,
+
+        // Boolean flag, which when true instructs the server to always
+        // update DNS when leases are renewed, even if the DNS information
+        // has not changed.  The server's default behavior (i.e. flag is false)
+        // is to only update DNS if the DNS information has changed.  It
+        // may be specified at the global, shared-network and subnet levels.
+        "ddns-update-on-renew": true,
+
+        // Boolean flag, which is passed to kea-dhcp-ddns with each DDNS
+        // update request to indicate whether or not DNS update conflict
+        // resolution as described in RFC 4703 should be employed for the
+        // given update request.  The default value for this flag is true.
+        // It may be specified at the global, shared-network and subnet levels.
+        "ddns-use-conflict-resolution": true,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -71,22 +156,10 @@
         // NCRs are sent to Kea D2 module to update DNS upon allocation of the
         // DHCP leases.
         "dhcp-ddns": {
-            // Boolean flag indicating if Kea DHCPv6 server must generate NCRs.
-            // By default NCRs are not generated.
+            // Boolean flag indicating if Kea DHCPv6 server should connect to
+            // kea-dhcp-ddns.  This must be true for NCRs to be created and
+            // sent to kea-dhcp-ddns. By default NCRs are not generated.
             "enable-updates": false,
-
-            // Specifies a prefix to be prepended to the generated Client FQDN.
-            "generated-prefix": "myhost",
-
-            // String of zero or more characters with which to replace each
-            // invalid character in the hostname or Client FQDN. The default
-            // value is an empty string which will cause invalid characters
-            // to be omitted rather than replaced.
-            "hostname-char-replacement": "x",
-
-            // Regular expression describing the invalid character set in
-            // the hostname or Client FQDN.
-            "hostname-char-set": "[^A-Za-z0-9.-]",
 
             // Specifies maximum number of NCRs to queue waiting to be sent
             // to Kea D2 server.
@@ -99,36 +172,6 @@
             // Socket protocol to use when sending NCRs to D2. Currently,
             // only UDP is supported.
             "ncr-protocol": "UDP",
-
-            // Boolean flag indicating that server should ignore DHCP client
-            // wishes to update DNS on its own. With that flag set to true
-            // the server will send DNS updates for both forward and
-            // reverse DNS data. The default value is false, which indicates
-            // that the server will delegate DNS update to the client when
-            // requested.
-            "override-client-update": false,
-
-            // Boolean flag indicating that the server should override DHCP
-            // client's wish to not update the DNS. With this parameter
-            // set to true the server will send DNS update even when
-            // the client requested no update.
-            "override-no-update": false,
-
-            // Suffix appended to the partial name sent to the DNS. The
-            // default value is an empty string which indicates that no
-            // suffix is appended.
-            "qualifying-suffix": "",
-
-            // Enumeration specifying whether the server should honor
-            // hostname or Client FQDN sent by the client or replace
-            // this name. The acceptable values are: "never" (use the
-            // name the client sent), "always" (replace the name the
-            // client sent), "when-present" (replace the name the client
-            // sent, but do not generate one when the client didn't sent
-            // the name), "when-not-present" (generate the name when
-            // client didn't send one, otherwise leave the name the
-            // client sent). The default value is "never".
-            "replace-client-name": "never",
 
             // IP address that Kea DHCPv6 server should use to send
             // NCRs to D2. Default value of zero indicates that Kea
@@ -144,7 +187,20 @@
             "server-ip": "::1",
 
             // Port number on which D2 listens for NCRs.
-            "server-port": 53001
+            "server-port": 53001,
+
+            // The follow parameters are DEPRECATED.  They have been
+            // replaced with parameters that may be set at the global,
+            // shared-network, and subnet6 scopes.  They are listed here
+            // as configuration parsing still accepts them.  Eventually
+            // support for them will be removed.
+            "generated-prefix": "myhost",
+            "hostname-char-replacement": "x",
+            "hostname-char-set": "[^A-Za-z0-9.-]",
+            "override-client-update": false,
+            "override-no-update": false,
+            "qualifying-suffix": "",
+            "replace-client-name": "never"
         },
 
         // Specifies the first of the two consecutive ports of the UDP
@@ -217,7 +273,10 @@
                 "type": "mysql",
 
                 // User name to be used to access the database.
-                "user": "kea"
+                "user": "kea",
+
+                // Read only mode.
+                "readonly": false
             },
             {
                 // Name of the database to connect to.
@@ -268,7 +327,18 @@
                 "serial-consistency": "serial",
 
                 // Connection reconnect wait time.
-                "reconnect-wait-time": 100,
+                // This parameter governs how long Kea waits before attempting
+                // to reconnect. Expressed in milliseconds. The default is 2000 [ms]
+                // for Casandra and 0 (disabled) for MySQL and PostgreSQL.
+                "reconnect-wait-time": 3000,
+
+                // Connection maximum reconnect tries.
+                "max-reconnect-tries": 3,
+
+                // Action to take when connection recovery fails.
+                // Supported values: stop-retry-exit, serve-retry-exit,
+                // serve-retry-continue
+                "on-fail": "stop-retry-exit",
 
                 // Connection connect timeout.
                 "connect-timeout": 100,
@@ -313,6 +383,23 @@
             // re-detected.
             "re-detect": true
         },
+
+        // Boolean parameter which controls DHCP server's behavior with respect
+        // to creating host reservations for the same IP address or delegated
+        // prefix. By default this flag is set to true in which case the server
+        // prevents creation of multiple host reservations for the same IP address
+        // or delegated prefix. When this parameter is set to false, the server
+        // allows for creating multiple reservations for the same IP address or
+        // delegated prefix within a subnet. This setting is useful in deployments
+        // in which a given host may be communicating with a DHCP server over
+        // multiple interfaces and depending on the chosen interface different
+        // MAC address (or other identifier) will be used to identify the host.
+        // Note that some host backends do not support the mode in which multiple
+        // reservations for the same IP address or delegated prefix are used.
+        // If these backends are in use and this setting is attempted a
+        // configuration error will occur. The MySQL and PostgreSQL backends do
+        // support this mode.
+        "ip-reservations-unique": true,
 
         // Specifies credentials to access lease database.
         "lease-database": {
@@ -416,6 +503,18 @@
             }
         ],
 
+        // Global value which limits the number of client packets (e.g.
+        // REQUESTs,RENEWs...) that may be parked while waiting for
+        // hook library work to complete, prior to a response (e.g. REPLY)
+        // being sent back to the client.  A typical example is when kea-dhcp6
+        // parks a REQUEST while it sends the lease update(s) to its
+        // HA peer(s). The packet is unparked once the update(s) have been
+        // acknowledged.  This value limits the number of packets that can
+        // be held pending the updates. In times of heavy client traffic,
+        // this value can keep kea-dhcp6 from building an insurmountable
+        // backlog of updates.
+        "parked-packet-limit": 128,
+
         // Global (default) value of the preferred lifetime.
         "preferred-lifetime": 50,
 
@@ -435,6 +534,37 @@
         // Global value for the renew timer, i.e. the timer after which the
         // DHCP client renews the lease.
         "renew-timer": 30,
+
+        // Global value to store extended information (e.g. relay agent
+        // information) with each lease.
+        "store-extended-info": true,
+
+        // Statistics keep some samples per observation point.
+        // There are two default values: maximum count and maximum age.
+        // Set the maximum count to zero disables it.
+        "statistic-default-sample-count": 0,
+
+        // When the maximum count is 0 the maximum age (in seconds) applies.
+        "statistic-default-sample-age": 60,
+
+        // Multi-threading parameters.
+        "multi-threading": {
+            // By default Kea processes packets on a single thread (default
+            // 'false' value for this option). To enable multi-threading, this
+            // option can be set ('true' value).
+            "enable-multi-threading": false,
+
+            // When multi-threading is enabled, Kea will process packets on a
+            // number of multiple threads configurable through this option. The
+            // value must be a positive integer (0 means auto detect).
+            "thread-pool-size": 0,
+
+            // When multi-threading is enabled, Kea will read packets from the
+            // interface and append a working item to the thread pool. This
+            // option configures the maximum number of items that can be queued.
+            // The value must be a positive integer (0 means unlimited).
+            "packet-queue-size": 0
+        },
 
         // Governs how the Kea DHCPv6 server should deal with the invalid
         // data received from the client.
@@ -475,6 +605,36 @@
                 // that belong to the particular client class. If an
                 // empty string is provided, no restriction is applied.
                 "client-class": "",
+
+                // Shared network level value. See description at the global level.
+                "ddns-generated-prefix": "myhost",
+
+                // Shared network level value. See description at the global level.
+                "ddns-override-client-update": false,
+
+                // Shared network level value. See description at the global level.
+                "ddns-override-no-update": false,
+
+                // Shared network level value. See description at the global level.
+                "ddns-qualifying-suffix": "",
+
+                // Shared network level value. See description at the global level.
+                "ddns-replace-client-name": "never",
+
+                // Shared network level value. See description at the global level.
+                "ddns-send-updates": true,
+
+                // Shared network level value. See description at the global level.
+                "ddns-update-on-renew": true,
+
+                // Shared network level value. See description at the global level.
+                "ddns-use-conflict-resolution": true,
+
+                // Shared network level value. See description at the global level.
+                "hostname-char-replacement": "x",
+
+                // Shared network level value. See description at the global level.
+                "hostname-char-set": "[^A-Za-z0-9.-]",
 
                 // Specifies that this shared network is selected for the
                 // requests received on the particular interface.
@@ -526,13 +686,40 @@
                 // T2 = valid lifetime * .75.
                 "t2-percent": .75,
 
+                // Cache threshold = valid lifetime * .25.
+                "cache-threshold": .25,
+
+                // Cache maximum: when the client last transmission time
+                // is close enough the lease is not renewed and current
+                // lease is returned as it was "cached".
+                "cache-max-age": 10,
+
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
-                "reservation-mode": "all",
+                // "reservation-mode": "all",
+                // It is replaced by the "reservations-global",
+                // "reservations-in-subnet" and "reservations-out-of-pool"
+                // parameters.
+
+                // Specify if server should lookup global reservations.
+                "reservations-global": false,
+
+                // Specify if server should lookup in-subnet reservations.
+                "reservations-in-subnet": true,
+
+                // Specify if server can assume that all reserved addresses
+                // are out-of-pool.
+                // Ignored when reservations-in-subnet is false.
+                // If specified, it is inherited by "subnet6" levels.
+                "reservations-out-of-pool": false,
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
                 "require-client-classes": [ "late" ],
+
+                // Turn off storage of extended information (e.g. relay agent
+                // information) with each lease for this shared-network.
+                "store-extended-info": false,
 
                 // List of IPv6 subnets belonging to this shared network.
                 "subnet6": [
@@ -541,6 +728,36 @@
                         // to the particular client class. If an empty string is
                         // provided, no restriction is applied.
                         "client-class": "",
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-generated-prefix": "myhost",
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-override-client-update": false,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-override-no-update": false,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-qualifying-suffix": "",
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-replace-client-name": "never",
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-send-updates": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-update-on-renew": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-use-conflict-resolution": true,
+
+                        // Subnet level value. See description at the global level.
+                        "hostname-char-replacement": "x",
+
+                        // Subnet level value. See description at the global level.
+                        "hostname-char-set": "[^A-Za-z0-9.-]",
 
                         // Subnet unique identifier.
                         "id": 1,
@@ -553,6 +770,10 @@
                         // by relays to identify the interface on the relay to
                         // which the response is sent.
                         "interface-id": "",
+
+                        // Turn on storage of extended information (e.g. relay agent
+                        // information) with each lease for this subnet.
+                        "store-extended-info": true,
 
                         // Subnet level list of DHCP options.
                         "option-data": [
@@ -593,7 +814,7 @@
                                 "delegated-len": 64,
 
                                 // Excluded prefix (address) from client assignments.
-                                "excluded-prefix": "2001:db8::",
+                                "excluded-prefix": "2001:db8:1::",
 
                                 // Excluded prefix (length) from client assignments.
                                 "excluded-prefix-len": 72,
@@ -602,10 +823,10 @@
                                 "option-data": [],
 
                                 // Prefix range (address) used for client assignments.
-                                "prefix": "2001:db8::",
+                                "prefix": "2001:db8:1::",
 
                                 // Prefix range (length) used for client assignments.
-                                "prefix-len": 40,
+                                "prefix-len": 48,
 
                                 // List of client classes which must be evaluated
                                 // when this prefix pool is selected for client assignments.
@@ -676,7 +897,21 @@
 
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
-                        "reservation-mode": "all",
+                        // "reservation-mode": "all",
+                        // It is replaced by the "reservations-global",
+                        // "reservations-in-subnet" and
+                        // "reservations-out-of-pool" parameters.
+
+                        // Specify if server should lookup global reservations.
+                        "reservations-global": false,
+
+                        // Specify if server should lookup in-subnet reservations.
+                        "reservations-in-subnet": true,
+
+                        // Specify if server can assume that all reserved
+                        // addresses are out-of-pool.
+                        // Ignored when reservations-in-subnet is false.
+                        "reservations-out-of-pool": false,
 
                         // Subnet level compute T1 and T2 timers.
                         "calculate-tee-times": true,
@@ -686,6 +921,12 @@
 
                         // T2 = valid lifetime * .75.
                         "t2-percent": .75,
+
+                        // Cache threshold = valid lifetime * .25.
+                        "cache-threshold": .25,
+
+                        // Subnet level cache maximum.
+                        "cache-max-age": 10,
 
                         // List of static IPv6 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
@@ -788,11 +1029,29 @@
             "enable-queue": true,
 
             // Queue type was mandatory.
-            "queue-type": "kea-ring6"
+            "queue-type": "kea-ring6",
+
+            // Capacity is optional.
+            "capacity": 64
         },
 
         // Fetches host reservations.
-        "reservation-mode": "all",
+        // "reservation-mode": "all",
+        // It is replaced by the "reservations-global",
+        // "reservations-in-subnet" and "reservations-out-of-pool" parameters.
+
+        // Specify if server should lookup global reservations.
+        "reservations-global": false,
+
+        // Specify if server should lookup in-subnet reservations.
+        "reservations-in-subnet": true,
+
+        // Specify if server can assume that all reserved addresses
+        // are out-of-pool.
+        // Ignored when reservations-in-subnet is false.
+        // If specified, it is inherited by "shared-networks" and
+        // "subnet6" levels.
+        "reservations-out-of-pool": false,
 
         // Data directory.
         "data-directory": "/tmp",
@@ -806,14 +1065,20 @@
         // T2 = valid lifetime * .75.
         "t2-percent": .75,
 
+        // Cache threshold = valid lifetime * .25.
+        "cache-threshold": .25,
+
+        // Global cache maximum.
+        "cache-max-age": 10,
+
         // String of zero or more characters with which to replace each
-        // invalid character in the hostname or Client FQDN. The default
+        // invalid character in the Client FQDN. The default
         // value is an empty string which will cause invalid characters
         // to be omitted rather than replaced.
         "hostname-char-replacement": "x",
 
         // Regular expression describing the invalid character set in
-        // the hostname or Client FQDN.
+        // the Client FQDN.
         "hostname-char-set": "[^A-Za-z0-9.-]",
 
         // List of loggers used by the servers using this configuration file.
@@ -839,13 +1104,19 @@
                         "maxver": 1,
 
                         // Specifies logging destination.
-                        "output": "stdout"
+                        "output": "stdout",
+
+                        // Specifies log entry content
+                        "pattern": "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n"
                     }
                 ],
 
                 // Specifies logging severity, i.e. "ERROR", "WARN", "INFO", "DEBUG".
                 "severity": "INFO"
             }
-        ]
+        ],
+
+        // Look at advanced example for the use of user-contexts.
+        "user-context": { }
     }
 }
