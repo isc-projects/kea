@@ -4580,9 +4580,7 @@ TEST_F(MySqlAllocEngine4Test, bootpRenew4) {
     Lease4Ptr lease2 = engine->allocateLease4(ctx);
 
     // Check that we got a lease.
-    cerr << "failure here\n";
     ASSERT_TRUE(lease2);
-    cerr << "should not see this until the bug is fixed\n";
 
     // Check that is belongs to the right subnet and client.
     EXPECT_EQ(lease2->subnet_id_, subnet_->getID());
@@ -4753,9 +4751,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
     Lease4Ptr lease2 = engine->allocateLease4(ctx);
 
     // Check that we got a lease.
-    cerr << "failure here\n";
     ASSERT_TRUE(lease2);
-    cerr << "should not see this until the bug is fixed\n";
 
     // Check that is belongs to the right subnet and client.
     EXPECT_EQ(lease2->subnet_id_, subnet_->getID());

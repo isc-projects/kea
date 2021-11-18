@@ -2011,7 +2011,7 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     bind_array.add(state_str);
 
     // Expiration timestamp.
-    std::string timestamp_str = PgSqlLeaseExchange::convertToDatabaseTime(time(NULL));
+    std::string timestamp_str = PgSqlLeaseExchange::convertToDatabaseTime(time(0));
     bind_array.add(timestamp_str);
 
     // If the number of leases is 0, we will return all leases. This is
@@ -2081,8 +2081,14 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     std::string addr4_str = boost::lexical_cast<std::string>(lease->addr_.toUint32());
     bind_array.add(addr4_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
-                                                                       lease->current_valid_lft_);
+    std::string expire_str;
+    // Avoid overflow
+    if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
+    } else {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                               lease->current_valid_lft_);
+    }
     bind_array.add(expire_str);
 
     // Drop to common update code
@@ -2112,8 +2118,14 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     std::string addr_str = lease->addr_.toText();
     bind_array.add(addr_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
-                                                                       lease->current_valid_lft_);
+    std::string expire_str;
+    // Avoid overflow
+    if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
+    } else {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                               lease->current_valid_lft_);
+    }
     bind_array.add(expire_str);
 
     // Drop to common update code
@@ -2154,8 +2166,14 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     std::string addr4_str = boost::lexical_cast<std::string>(addr.toUint32());
     bind_array.add(addr4_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
-                                                                       lease->current_valid_lft_);
+    std::string expire_str;
+    // Avoid overflow
+    if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
+    } else {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                               lease->current_valid_lft_);
+    }
     bind_array.add(expire_str);
 
     auto affected_rows = deleteLeaseCommon(DELETE_LEASE4, bind_array);
@@ -2189,8 +2207,14 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);
 
-    std::string expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
-                                                                       lease->current_valid_lft_);
+    std::string expire_str;
+    // Avoid overflow
+    if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
+    } else {
+        expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_,
+                                                               lease->current_valid_lft_);
+    }
     bind_array.add(expire_str);
 
     auto affected_rows = deleteLeaseCommon(DELETE_LEASE6, bind_array);
@@ -2235,7 +2259,7 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     bind_array.add(state_str);
 
     // Expiration timestamp.
-    std::string expiration_str = PgSqlLeaseExchange::convertToDatabaseTime(time(NULL) -
+    std::string expiration_str = PgSqlLeaseExchange::convertToDatabaseTime(time(0) -
         static_cast<time_t>(secs));
     bind_array.add(expiration_str);
 
