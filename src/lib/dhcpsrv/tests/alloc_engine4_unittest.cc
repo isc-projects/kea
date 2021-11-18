@@ -21,6 +21,14 @@
 #include <mysql/testutils/mysql_schema.h>
 #endif
 
+#if defined HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
+
+#if defined HAVE_CQL
+#include <cql/testutils/cql_schema.h>
+#endif
+
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
@@ -4528,6 +4536,256 @@ TEST_F(MySqlAllocEngine4Test, bootpRenew4) {
     cerr << "failure here\n";
     ASSERT_TRUE(lease2);
     cerr << "should not see this until the bug is fixed\n";
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease2->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease2->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease2->addr_));
+    ASSERT_TRUE(lease2->client_id_);
+    EXPECT_TRUE(*lease2->client_id_ == *clientid_);
+    ASSERT_TRUE(lease2->hwaddr_);
+    EXPECT_TRUE(*lease2->hwaddr_ == *hwaddr_);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the max value.
+    EXPECT_EQ(infinity_lft, lease2->valid_lft_);
+}
+#endif
+
+#ifdef HAVE_PGSQL
+/// @brief Extension of the fixture class to use the PostgreSql backend.
+class PgSqlAllocEngine4Test : public AllocEngine4Test {
+public:
+    /// @brief Constructor.
+    PgSqlAllocEngine4Test() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createPgSQLSchema();
+        factory_.create(db::test::validPgSQLConnectionString());
+    }
+
+    /// @brief Destructor.
+    ~PgSqlAllocEngine4Test() {
+        // If data wipe enabled, delete transient data otherwise destroy
+        // the schema.
+        db::test::destroyPgSQLSchema();
+        LeaseMgrFactory::destroy();
+    }
+};
+
+// This test checks that simple allocation handles BOOTP queries.
+TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Make the query a BOOTP one.
+    ctx.query_->addClass("BOOTP");
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the valid lifetime is infinite.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    EXPECT_EQ(infinity_lft, lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    // The PostgreSql database does not keep the hwtype for DHCPv4 leases.
+    from_mgr->hwaddr_->htype_ = HTYPE_FDDI;
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks simple renewal handles BOOTP queries.
+TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Make the query a BOOTP one.
+    ctx.query_->addClass("BOOTP");
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease.
+    ASSERT_TRUE(lease);
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the valid lifetime is infinite.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    EXPECT_EQ(infinity_lft, lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease.
+    cerr << "failure here\n";
+    ASSERT_TRUE(lease2);
+    cerr << "should not see this until the bug is fixed\n";
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease2->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease2->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease2->addr_));
+    ASSERT_TRUE(lease2->client_id_);
+    EXPECT_TRUE(*lease2->client_id_ == *clientid_);
+    ASSERT_TRUE(lease2->hwaddr_);
+    EXPECT_TRUE(*lease2->hwaddr_ == *hwaddr_);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the max value.
+    EXPECT_EQ(infinity_lft, lease2->valid_lft_);
+}
+#endif
+
+#ifdef HAVE_CQL
+/// @brief Extension of the fixture class to use the Cassandra backend.
+class CqlAllocEngine4Test : public AllocEngine4Test {
+public:
+    /// @brief Constructor.
+    CqlAllocEngine4Test() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createCqlSchema();
+        factory_.create(db::test::validCqlConnectionString());
+    }
+
+    /// @brief Destructor.
+    ~CqlAllocEngine4Test() {
+        // If data wipe enabled, delete transient data otherwise destroy
+        // the schema.
+        db::test::destroyCqlSchema();
+        LeaseMgrFactory::destroy();
+    }
+};
+
+// This test checks that simple allocation handles BOOTP queries.
+TEST_F(CqlAllocEngine4Test, bootpAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Make the query a BOOTP one.
+    ctx.query_->addClass("BOOTP");
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the valid lifetime is infinite.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    EXPECT_EQ(infinity_lft, lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    // The Cassandra database does not keep the hwtype for DHCPv4 leases.
+    from_mgr->hwaddr_->htype_ = HTYPE_FDDI;
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks simple renewal handles BOOTP queries.
+TEST_F(CqlAllocEngine4Test, bootpRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Make the query a BOOTP one.
+    ctx.query_->addClass("BOOTP");
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease.
+    ASSERT_TRUE(lease);
+
+    // Check that is belongs to the right subnet and client.
+    EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_TRUE(*lease->client_id_ == *clientid_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
+
+    // Check the valid lifetime is infinite.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    EXPECT_EQ(infinity_lft, lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease.
+    ASSERT_TRUE(lease2);
 
     // Check that is belongs to the right subnet and client.
     EXPECT_EQ(lease2->subnet_id_, subnet_->getID());
