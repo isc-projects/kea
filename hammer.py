@@ -1640,6 +1640,8 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
             packages.extend(['bison', 'debhelper', 'flex', 'libboost-dev', 'python3-dev'])
+            if int(revision) >= 11:
+                packages.extend(['dh-python'])
 
         if 'mysql' in features:
             if revision == '8':
