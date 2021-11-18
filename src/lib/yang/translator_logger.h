@@ -43,11 +43,11 @@ namespace yang {
 /// +--rw logger* [name]
 ///    +--rw name             string
 ///    +--rw output-option* [output]
-///    |  +--rw output     string
-///    |  +--rw flush?     boolean
-///    |  +--rw maxsize?   uint32
-///    |  +--rw maxver?    uint32
-///    |  +--rw pattern?   string
+///    |  +--rw output        string
+///    |  +--rw flush?        boolean
+///    |  +--rw maxsize?      uint32
+///    |  +--rw maxver?       uint32
+///    |  +--rw pattern?      string
 ///    +--rw debuglevel?      uint8
 ///    +--rw severity?        enumeration
 ///    +--rw user-context?    user-context
