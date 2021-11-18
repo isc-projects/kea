@@ -54,7 +54,7 @@ public:
     /// null when not found.
     isc::data::ElementPtr getItems(const std::string& xpath);
 
-    /// @brief Retrieves an item and stores in the specified storage.
+    /// @brief Retrieves an item and stores it in the specified storage.
     ///
     /// This will attempt to retrieve an item and, if exists, will
     /// store it in the storage.

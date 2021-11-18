@@ -21,12 +21,21 @@ module kea-dhcp4-server {
                used to configure and manage a Kea DHCPv4 server.";
 
   revision 2021-11-24 {
-    description "Fixed store-extended-info. Added containers and leaves:
-                 cache-*, on-fail, compatibility, lenient-option-parsing,
-                 ddns-*, ip-reservations-unique,
-                 multi-threading and its children, reservations-*,
+    description "Fixed store-extended-info. Added several containers and leaves:
+                 compatibility, lenient-option-parsing, multi-threading,
+                 enable-multi-threading, packet-queue-size, thread-pool-size,
+                 valid-lifetime, min-valid-lifetime, max-valid-lifetime,
+                 preferred-lifetime, min-preferred-lifetime,
+                 max-preferred-lifetime, cache-max-age, cache-threshold,
+                 lenient-option-parsing, ddns-generated-prefix,
+                 ddns-override-client-update, ddns-override-no-update,
+                 ddns-qualifying-suffix, ddns-replace-client-name,
+                 ddns-send-updates, ddns-update-on-renew,
+                 ddns-use-conflict-resolution, ip-reservations-unique,
+                 parked-packet-limit, reservations-global,
+                 reservations-in-subnet, reservations-out-of-pool,
                  statistic-default-sample-age, statistic-default-sample-count,
-                 *valid-lifetime, *preferred-lifetime.";
+                 store-extended-info, on-fail.";
   }
 
   revision 2021-08-25 {
@@ -364,12 +373,12 @@ module kea-dhcp4-server {
       uses dhcp:ddns-send-updates;
       uses dhcp:ddns-update-on-renew;
       uses dhcp:ddns-use-conflict-resolution;
-      uses dhcp:store-extended-info;
       uses dhcp:hostname-char-replacement;
       uses dhcp:hostname-char-set;
       uses dhcp:reservations-global;
       uses dhcp:reservations-in-subnet;
       uses dhcp:reservations-out-of-pool;
+      uses dhcp:store-extended-info;
       uses dhcp:network-user-context;
     }
 

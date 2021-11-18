@@ -152,7 +152,7 @@ install_yang_modules() {
 }
 
 # Uninstall all YANG modules in reverse dependency order. Only uninstalls Kea
-# modules. IETF modules might may be dependencies to sysrepo internal modules.
+# modules. IETF modules might be dependencies to sysrepo internal modules.
 uninstall_yang_modules() {
   uninstall_module 'kea-dhcp6-server'
   uninstall_module 'kea-dhcp4-server'

@@ -94,7 +94,7 @@ module keatest-module {
       type string;
     }
     leaf id_ref {
-      type identityref{
+      type identityref {
         base base_id;
       }
     }
@@ -124,7 +124,7 @@ module keatest-module {
       type string;
     }
     leaf id_ref {
-      type identityref{
+      type identityref {
         base base_id;
       }
     }
@@ -132,7 +132,7 @@ module keatest-module {
        type instance-identifier;
     }
     leaf union {
-      type union{
+      type union {
           type uint8;
           type enumeration {
               enum "infinity";

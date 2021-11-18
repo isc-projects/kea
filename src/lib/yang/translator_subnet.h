@@ -108,40 +108,15 @@ namespace yang {
 ///     +--rw t1-percent?                     decimal64
 ///     +--rw t2-percent?                     decimal64
 ///     +--rw option-data* [code space]
-///     |  +--rw code            uint8
-///     |  +--rw space           string
-///     |  +--rw name?           string
-///     |  +--rw data?           string
-///     |  +--rw csv-format?     boolean
-///     |  +--rw always-send?    boolean
-///     |  +--rw user-context?   user-context
 ///     +--rw pool* [start-address end-address]
-///     |  +--rw prefix?                   inet:ipv4-prefix
-///     |  +--rw start-address             inet:ipv4-address
-///     |  +--rw end-address               inet:ipv4-address
-///     |  +--rw option-data* [code space]
-///     |  +--rw client-class?             string
-///     |  +--rw require-client-classes*   string
-///     |  +--rw user-context?             user-context
 ///     +--rw subnet                          inet:ipv4-prefix
 ///     +--rw interface?                      string
 ///     +--rw id                              uint32
 ///     +--rw client-class?                   string
 ///     +--rw require-client-classes*         string
 ///     +--rw host* [identifier-type identifier]
-///     |  +--rw identifier-type    host-identifier-type
-///     |  +--rw identifier         string
-///     |  +--rw ip-address?        inet:ipv4-address
-///     |  +--rw hostname?          string
-///     |  +--rw client-classes*    string
-///     |  +--rw option-data* [code space]
-///     |  +--rw next-server?       inet:ipv4-address
-///     |  +--rw server-hostname?   string
-///     |  +--rw boot-file-name?    string
-///     |  +--rw user-context?      user-context
 ///     +--rw reservation-mode?               host-reservation-mode
 ///     +--rw relay
-///     |  +--rw ip-addresses*   inet:ipv4-address
 ///     +--rw cache-max-age?                  uint32
 ///     +--rw cache-threshold?                decimal64
 ///     +--rw ddns-generated-prefix?          string
