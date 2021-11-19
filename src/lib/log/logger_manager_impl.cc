@@ -151,9 +151,18 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
             ++i;
         }
         std::array<std::string, 3> const suffixes({"", "KB", "MB"});
-        std::string const maxFileSize(to_string(maxsize) + suffixes[i]);
-        properties.setProperty("MaxFileSize", maxFileSize);
+        std::string const max_file_size(to_string(maxsize) + suffixes[i]);
 
+        // If maxsize is still past INT_MAX, it will overflow in log4cplus,
+        // so stop here instead.
+        if (std::numeric_limits<int32_t>::max() < maxsize) {
+            isc_throw(BadValue, "expected maxsize < "
+                                    << std::numeric_limits<int32_t>::max()
+                                    << "MB , but instead got "
+                                    << max_file_size);
+        }
+
+        properties.setProperty("MaxFileSize", max_file_size);
         properties.setProperty("MaxBackupIndex",
                                lexical_cast<string>(opt.maxver));
         properties.setProperty("ImmediateFlush", opt.flush ? "true" : "false");

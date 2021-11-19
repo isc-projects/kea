@@ -487,7 +487,8 @@ void testMaxSize(uint64_t maxsize_candidate, uint64_t expected_maxsize) {
     ASSERT_NO_THROW(parser.parseConfiguration(config));
     ASSERT_NO_THROW(server_cfg->applyLoggingCfg());
 
-    EXPECT_EQ(server_cfg->getLoggingInfo()[0].destinations_[0].maxsize_, expected_maxsize);
+    EXPECT_EQ(server_cfg->getLoggingInfo()[0].destinations_[0].maxsize_,
+              expected_maxsize);
 }
 
 // Test that maxsize can be configured with high values.

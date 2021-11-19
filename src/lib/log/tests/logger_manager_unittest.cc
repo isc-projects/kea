@@ -28,8 +28,8 @@
 #include <log/logger_specification.h>
 #include <log/message_initializer.h>
 #include <log/output_option.h>
-
 #include <log/tests/tempdir.h>
+#include <testutils/gtest_utils.h>
 
 #include <sys/types.h>
 #include <regex.h>
@@ -254,7 +254,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     opt->maxsize = SIZE_LIMIT;    // Bytes
     opt->maxver = 2;
 
-    // The current current output file does not exist (the creation of file_spec
+    // The current output file does not exist (the creation of file_spec
     // ensures that.  Check that previous versions don't either.
     vector<string> prev_name;
     for (int i = 0; i < 3; ++i) {
@@ -318,6 +318,24 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     for (vector<string>::size_type i = 0; i < prev_name.size(); ++i) {
        (void) remove(prev_name[i].c_str());
     }
+}
+
+// Check if an exception is thrown if maxsize is too large.
+TEST_F(LoggerManagerTest, TooLargeMaxsize) {
+    // Set up the name of the file.
+    SpecificationForFileLogger file_spec;
+    LoggerSpecification& spec(file_spec.getSpecification());
+
+    // UINT64_MAX should be large enough.
+    LoggerSpecification::iterator opt = spec.begin();
+    EXPECT_TRUE(opt != spec.end());
+    opt->maxsize = std::numeric_limits<uint64_t>::max();  // bytes
+
+    // Set up the file logger.
+    LoggerManager manager;
+    EXPECT_THROW_MSG(manager.process(spec), BadValue,
+                     "expected maxsize < 2147483647MB , but instead got "
+                     "18446744073709MB");
 }
 
 namespace { // begin unnamed namespace
