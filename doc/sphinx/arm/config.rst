@@ -53,6 +53,8 @@ Kea components use extended JSON with additional features allowed:
 -  File inclusion: JSON files can include other JSON files by using a
    statement of the form \<?include "file.json"?\>.
 
+-  Allowed trailing commas anywhere except after the root curly brackets.
+
 The configuration file consists of a single object (often colloquially
 called a map) started with a curly bracket. It comprises only one of
 the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent", or "Netconf" objects.
