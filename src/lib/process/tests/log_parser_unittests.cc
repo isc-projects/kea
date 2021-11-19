@@ -496,9 +496,8 @@ TEST_F(LoggingTest, maxsize) {
     testMaxSize(TEST_MAX_SIZE, TEST_MAX_SIZE);
     testMaxSize(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
     testMaxSize(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
-    testMaxSize(std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max());
-
-    // @todo: add a test for uint64_t when ElementPtr will allow it.
+    testMaxSize(1000LL * std::numeric_limits<int32_t>::max(), 1000LL * std::numeric_limits<int32_t>::max());
+    testMaxSize(1000000LL * std::numeric_limits<int32_t>::max(), 1000000LL * std::numeric_limits<int32_t>::max());
 }
 
 /// @todo Add tests for malformed logging configuration

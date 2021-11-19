@@ -336,6 +336,11 @@ TEST_F(LoggerManagerTest, TooLargeMaxsize) {
     EXPECT_THROW_MSG(manager.process(spec), BadValue,
                      "expected maxsize < 2147483647MB, but instead got "
                      "18446744073709MB");
+
+    opt->maxsize = 1000000LL * (std::numeric_limits<int32_t>::max() + 1LL);  // bytes
+    EXPECT_THROW_MSG(manager.process(spec), BadValue,
+                     "expected maxsize < 2147483647MB, but instead got "
+                     "2147483648MB");
 }
 
 namespace { // begin unnamed namespace
