@@ -1,3 +1,12 @@
+1963.	[func]		andrei
+	A few improvements on hammer.py: vagrant will be automatically
+	upgraded if it is too outdated, error messages are more clear
+	when running on unsupported systems and it is now able to detect
+	Arch Linux distributions, even though support for them is not on
+	par with the other systems: it is only able to prepare-system
+	with freeradius and netconf support.
+	(Gitlab #2111, #2112)
+
 1962.	[func]		andrei
 	kea-netconf updates: fixed store-extended-info, it was an
 	operational node instead of a config node. Added several

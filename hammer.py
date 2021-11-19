@@ -277,7 +277,6 @@ def get_system_revision():
         system = system.replace('"', '')
 
     system = system.lower()
-    print('Running on:', system, revision)
     return system, revision
 
 
