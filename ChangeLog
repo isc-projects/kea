@@ -1,3 +1,9 @@
+1965.	[func]		djt
+	Allow Kea to pack opaque data tuples within options with zero
+	length to accommodate some DHCP clients who have been observed
+	to send DHCPv4 option 124 with zero length tuples.
+	(Gitlab #2021)
+
 1964.	[func]		andrei
 	Increase the value that "maxsize" can take from 2GB to 2PB.
 	(Gitlab #2130)
