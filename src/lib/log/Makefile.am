@@ -48,7 +48,7 @@ libkea_log_la_LIBADD   = $(top_builddir)/src/lib/log/interprocess/libkea-log_int
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
-libkea_log_la_LDFLAGS = -no-undefined -version-info 22:0:0
+libkea_log_la_LDFLAGS = -no-undefined -version-info 33:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_log_includedir = $(pkgincludedir)/log

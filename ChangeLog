@@ -1,3 +1,8 @@
+1966.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.1 development
+	version.
+	(Gitlab #2195)
+
 1965.	[func]		djt
 	Allow Kea to pack opaque data tuples within options with zero
 	length to accommodate some DHCP clients who have been observed
