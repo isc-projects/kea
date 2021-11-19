@@ -334,7 +334,7 @@ TEST_F(LoggerManagerTest, TooLargeMaxsize) {
     // Set up the file logger.
     LoggerManager manager;
     EXPECT_THROW_MSG(manager.process(spec), BadValue,
-                     "expected maxsize < 2147483647MB , but instead got "
+                     "expected maxsize < 2147483647MB, but instead got "
                      "18446744073709MB");
 }
 
