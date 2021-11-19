@@ -1,4 +1,9 @@
-1971.   [func]      tmark,jad
+1972.	[func]		andrei
+	Kea servers now accept trailing commas in their JSON
+	configuration.
+	(Gitlab #2084)
+
+1971.	[func]		tmark, jad
 	Added support for embedded DHCPv6 DUIDs within DHCPv4
 	Client Identifier options per RFC 4361.  This allows
 	Kea to support DDNS in dual stack environments per
