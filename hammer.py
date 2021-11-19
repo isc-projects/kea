@@ -495,10 +495,10 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
 
 def get_image_template(key, variant):
     if key not in IMAGE_TEMPLATES:
-        print(f'ERROR: Image {key} not available.', file=sys.stderr)
+        print('ERROR: Image {} is not available.'.format(key), file=sys.stderr)
         sys.exit(1)
     if variant not in IMAGE_TEMPLATES[key]:
-        print(f'ERROR: Variant {variant} not available for image {key}.', file=sys.stderr)
+        print('ERROR: Variant {} is not available for image {}.'.format(variant, key), file=sys.stderr)
         sys.exit(1)
     return IMAGE_TEMPLATES[key][variant]
 
