@@ -506,14 +506,14 @@ An example result returned when the host was found:
    The client last transaction time (``cltt`` field) is bound to the
    valid lifetime (``valid-lft``) and to the expire date (not reported
    here but stored in databases) by the equation
-   :math:`cltt + valid_lft = expire`
+   :math:`cltt + valid\_lft = expire`
 
    at the exception of the infinite valid lifetime coded by the
    0xfffffff (4294967295) special value which makes the expire value
    to overflow on MySQL and old PostgreSQL backends where timestamps
    are 32 bit long. So in these lease databases the expire date is the
    same as the cltt i.e.
-   :math:`cltt = expire` when :math:`valid_lft = 0xffffffff` and the
+   :math:`cltt = expire` when :math:`valid\_lft = 4294967295` and the
    lease backend is MySQL or PostgreSQL.
 
 .. _command-lease4-get-all:
