@@ -1,3 +1,10 @@
+1979.	[bug]		fdupont
+	Update and delete operations on leases no longer raise
+	an error with infinite valid lifetime (used by BOOTP)
+	and MySQL or PostgreSQL backends where timestamps can
+	be limited to 32 bits.
+	(Gitlab 897)
+
 1978.	[doc]		tomek
 	The Kea Administrator Reference Manual now correctly states that
 	DHCPv6 authentication option has code 11, not 10.
