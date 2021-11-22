@@ -1894,7 +1894,7 @@ BEGIN
         INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
-        -- Update pertienent session variables.
+        -- Update pertinent session variables.
         PERFORM set_session_value('kea.audit_revision_id', audit_revision_id);
         PERFORM set_session_value('kea.cascade_transaction', cascade_transaction);
     END IF;
@@ -2504,7 +2504,7 @@ BEGIN
         INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
             VALUES (audit_ts, srv_id, audit_log_message) returning id INTO audit_revision_id;
 
-        -- Update pertienent session variables.
+        -- Update pertinent session variables.
         PERFORM set_session_value('kea.audit_revision_id', audit_revision_id);
         PERFORM set_session_value('kea.cascade_transaction', cascade_transaction);
     END IF;
@@ -3254,7 +3254,7 @@ CREATE TRIGGER dhcp4_option_def_ADEL
 -- - p_modification_ts: modification timestamp of the
 --   option.
 --   Some arguments are prefixed with "p_" to avoid ambiguity
---   with column names in SQL statments. PostgreSQL does not
+--   with column names in SQL statements. PostgreSQL does not
 --   allow table aliases to be used with column names in update
 --   set expressions.
 -- -----------------------------------------------------

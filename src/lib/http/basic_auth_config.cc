@@ -104,7 +104,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                   << config->getPosition() << ")");
     }
     if (type->getType() != Element::string) {
-        isc_throw(DhcpConfigError, "type is must be a string ("
+        isc_throw(DhcpConfigError, "type must be a string ("
                   << type->getPosition() << ")");
     }
     if (type->stringValue() != "basic") {
@@ -117,7 +117,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
     ConstElementPtr realm = config->get("realm");
     if (realm) {
         if (realm->getType() != Element::string) {
-            isc_throw(DhcpConfigError, "realm is must be a string ("
+            isc_throw(DhcpConfigError, "realm must be a string ("
                       << realm->getPosition() << ")");
         }
         setRealm(realm->stringValue());

@@ -31,7 +31,7 @@ else
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
-# First argument is must be the expected schema version <major>.<minor>
+# First argument must be the expected schema version <major>.<minor>
 # Check if it's passed at all.
 if [ "$#" -lt "1" ]; then
     printf "Required at least one parameter: schema version number, e.g. 7.0\n"

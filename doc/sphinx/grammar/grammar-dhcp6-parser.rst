@@ -1,5 +1,5 @@
 
-Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp6` for an explanation.
+Grammar generated from dhcp6_parser.yy. See Chapter :ref:`dhcp6` for an explanation.
 
 .. code-block:: BNF
    :linenos:
@@ -144,6 +144,7 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp6` for an explanati
                  | dhcp_multi_threading
                  | ip_reservations_unique
                  | compatibility
+                 | parked_packet_limit
                  | unknown_map_entry
 
      data_directory ::= "data-directory" ":" STRING
@@ -209,6 +210,8 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp6` for an explanati
      statistic_default_sample_age ::= "statistic-default-sample-age" ":" INTEGER
 
      server_tag ::= "server-tag" ":" STRING
+
+     parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
 
      ip_reservations_unique ::= "ip-reservations-unique" ":" BOOLEAN
 
@@ -786,6 +789,12 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp6` for an explanati
                        | option_data_list
                        | user_context
                        | comment
+                       | preferred_lifetime
+                       | min_preferred_lifetime
+                       | max_preferred_lifetime
+                       | valid_lifetime
+                       | min_valid_lifetime
+                       | max_valid_lifetime
                        | unknown_map_entry
 
      client_class_name ::= name

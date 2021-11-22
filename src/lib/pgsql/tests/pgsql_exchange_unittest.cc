@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -804,7 +804,7 @@ TEST_F(PgSqlBasicsTest, get) {
     EXPECT_THROW(bind_array.getInteger<uint32_t>(), OutOfRange);
     EXPECT_THROW(bind_array.getType(), OutOfRange);
 
-    // Now try again wi
+    // Now try again with proper values.
     bind_array.add(123); // This will be converted to "123" string.
     bind_array.addNull();
     bind_array.add("sagittarius");

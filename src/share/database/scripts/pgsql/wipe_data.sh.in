@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ else
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
-# First argument is must be the expected schema version <major>.<minor>
+# First argument must be the expected schema version <major>.<minor>
 # Check if it's passed at all.
 if [ "$#" -lt "1" ]; then
     printf "Required at least one parameter: schema version number, e.g. 7.0\n"

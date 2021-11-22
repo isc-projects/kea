@@ -31,9 +31,8 @@ fi
 # Get the output file
 base=$1
 output=
-now=$(date +"%Y-%m-%-d %H:%m")
 
-header="Grammar generated on $now. See Chapter $md_name for an explanation."
+header="Grammar generated from $(basename "${base}").yy. See Chapter ${md_name} for an explanation."
 
 if [ -f "${base}.yy" ]; then
     # We want to explicitly set the language to English. Otherwise

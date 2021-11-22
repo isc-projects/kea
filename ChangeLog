@@ -1,25 +1,47 @@
-1966.	[build]		razvan
+Kea 2.1.1 (development) released on Nov 24, 2021
+
+1970.	[build]		razvan
 	Library version numbers bumped for Kea 2.1.1 development
 	version.
 	(Gitlab #2195)
 
-1965.	[func]		djt
+1969.	[build]		andrei
+	Fixed "make check -j N" running tests in parallel in src/lib/log.
+	(Gitlab #2172)
+
+1968.	[build]		andrei
+	Fixed make check failing when googletest support was disabled.
+	(Gitlab #2167)
+
+1967.	[bug]		andrei
+	Fixed a bug where keactrl did not color the active status code
+	for kea-dhcp-ddns as it did for the other servers.
+	(Gitlab #2117)
+
+1966.	[func]		djt
 	Allow Kea to pack opaque data tuples within options with zero
 	length to accommodate some DHCP clients who have been observed
 	to send DHCPv4 option 124 with zero length tuples.
 	(Gitlab #2021)
 
-1964.	[func]		andrei
+1965.	[func]		andrei
 	Increase the value that "maxsize" can take from 2GB to 2PB.
 	(Gitlab #2130)
 
+1964.	[func]		wlodek
+	Added support for Debian 11 in hammer.py.
+	(Gitlab #2042, #2193)
+
 1963.	[func]		andrei
-	A few improvements on hammer.py: vagrant will be automatically
-	upgraded if it is too outdated, error messages are more clear
-	when running on unsupported systems and it is now able to detect
-	Arch Linux distributions, even though support for them is not on
-	par with the other systems: it is only able to prepare-system
-	with freeradius and netconf support.
+	hammer.py has had several improvements.
+	NETCONF and PostgreSQL will be properly configured when running
+	prepare-system on Fedora and FreeBSD.
+	vagrant will be automatically upgraded if it is too outdated.
+	Error messages are more clear when running on unsupported
+	systems.
+	hammer.py is now able to detect Arch Linux distributions and
+	offers limited support for it, being able to prepare-system with
+	freeradius and netconf support.
 	(Gitlab #2111, #2112)
 
 1962.	[func]		andrei
@@ -40,7 +62,7 @@
 	store-extended-info, on-fail.
 	(Gitlab #2136)
 
-1961.	[func]		tomek,tmark
+1961.	[func]		tomek, tmark
 	The initial, stubbed version of the PostgreSQL CB hook
 	library has been created.  The library is not yet functional
 	and does not installed.
@@ -54,15 +76,16 @@
 
 1959.	[doc]		djt
 	Move documentation for acceptable format strings into the Kea
-	ARM. The relevent section of the ARM was previously referring
+	ARM. The relevant section of the ARM was previously referring
 	to a dead link in the Log4cpp documentation.
+	(Gitlab #2134)
 
-1958.	[func]		tomek
+1958.	[func]		tomek, tmark
 	PostgreSQL database schema has been extended with tables for
 	Config Backend (CB). This is the first step towards PostgreSQL
 	CB. However, as there is no code yet to use those new tables,
 	they're not not functional yet.
-	(Gitlab #90)
+	(Gitlab #90, #2166)
 
 Kea 2.1.0 (development) released on Oct 27, 2021
 

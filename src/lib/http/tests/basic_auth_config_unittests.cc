@@ -149,7 +149,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     // The type must be a string.
     cfg->set("type", Element::create(true));
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "type is must be a string (:0:0)");
+                     "type must be a string (:0:0)");
 
     // The type must be basic.
     cfg->set("type", Element::create(string("foobar")));
@@ -162,7 +162,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     // The realm must be a string.
     cfg->set("realm", Element::createList());
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "realm is must be a string (:0:0)");
+                     "realm must be a string (:0:0)");
     cfg->set("realm", Element::create(string("my-realm")));
     EXPECT_NO_THROW(config.parse(cfg));
 

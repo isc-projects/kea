@@ -115,7 +115,7 @@ To run YANG/NETCONF/Sysrepo tests you need to compile Kea with Sysrepo support:
 @endverbatim
 
 For details, see Section "YANG/NETCONF support" in the Kea Administrator
-Reference Manual: https://kea.readthedocs.io/en/latest/arm/netconf.html.
+Reference Manual: https://kea.readthedocs.io/en/latest/arm/integrations.html#yang-netconf.
 
 You also need to install YANG modules, so the unit tests are able to
 retrieve, add, update and generally interact with the sysrepo information.

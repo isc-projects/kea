@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.6.
+// A Bison parser, made by GNU Bison 3.8.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -160,9 +160,9 @@ namespace isc { namespace dhcp {
   Dhcp6Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
   {}
 
-  /*---------------.
-  | symbol kinds.  |
-  `---------------*/
+  /*---------.
+  | symbol.  |
+  `---------*/
 
 
 
@@ -497,7 +497,7 @@ namespace isc { namespace dhcp {
   }
 
   void
-  Dhcp6Parser::yypop_ (int n)
+  Dhcp6Parser::yypop_ (int n) YY_NOEXCEPT
   {
     yystack_.pop (n);
   }
@@ -540,13 +540,13 @@ namespace isc { namespace dhcp {
   }
 
   bool
-  Dhcp6Parser::yy_pact_value_is_default_ (int yyvalue)
+  Dhcp6Parser::yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yypact_ninf_;
   }
 
   bool
-  Dhcp6Parser::yy_table_value_is_error_ (int yyvalue)
+  Dhcp6Parser::yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yytable_ninf_;
   }
@@ -4601,16 +4601,16 @@ namespace isc { namespace dhcp {
     // Actual number of expected tokens
     int yycount = 0;
 
-    int yyn = yypact_[+yyparser_.yystack_[0].state];
+    const int yyn = yypact_[+yyparser_.yystack_[0].state];
     if (!yy_pact_value_is_default_ (yyn))
       {
         /* Start YYX at -YYN if negative to avoid negative indexes in
            YYCHECK.  In other words, skip the first -YYN actions for
            this state because they are default actions.  */
-        int yyxbegin = yyn < 0 ? -yyn : 0;
+        const int yyxbegin = yyn < 0 ? -yyn : 0;
         // Stay within bounds of both yycheck and yytname.
-        int yychecklim = yylast_ - yyn + 1;
-        int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+        const int yychecklim = yylast_ - yyn + 1;
+        const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
         for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
           if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror
               && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
@@ -4628,6 +4628,9 @@ namespace isc { namespace dhcp {
       yyarg[0] = symbol_kind::S_YYEMPTY;
     return yycount;
   }
+
+
+
 
 
 
@@ -5977,7 +5980,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp6_parser.yy"
 } } // isc::dhcp
-#line 5981 "dhcp6_parser.cc"
+#line 5984 "dhcp6_parser.cc"
 
 #line 2864 "dhcp6_parser.yy"
 

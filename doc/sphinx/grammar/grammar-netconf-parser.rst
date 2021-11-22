@@ -1,5 +1,5 @@
 
-Grammar generated on 2021-06-22 19:06. See Chapter :ref:`netconf` for an explanation.
+Grammar generated from netconf_parser.yy. See Chapter :ref:`netconf` for an explanation.
 
 .. code-block:: BNF
    :linenos:

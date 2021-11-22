@@ -1,5 +1,5 @@
 
-Grammar generated on 2021-06-22 19:06. See Chapter :ref:`kea-ctrl-agent` for an explanation.
+Grammar generated from agent_parser.yy. See Chapter :ref:`kea-ctrl-agent` for an explanation.
 
 .. code-block:: BNF
    :linenos:
