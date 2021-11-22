@@ -559,7 +559,8 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            // Avoid overflow
+            // Avoid overflow with infinite valid lifetime by using
+            // expire = cltt_ when valid_lft_ = 0xffffffff
             uint32_t valid_lft = lease_->valid_lft_;
             if (valid_lft == Lease::INFINITY_LFT) {
                 valid_lft = 0;
@@ -766,7 +767,8 @@ public:
     ///         data.
     Lease4Ptr getLeaseData() {
         // Convert times received from the database to times for the lease
-        // structure
+        // structure. See the expire code of createBindForSend for
+        // the infinite valid lifetime special case.
         time_t cltt = 0;
         // Recover from overflow
         uint32_t valid_lft = valid_lifetime_;
@@ -1003,7 +1005,8 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            // Avoid overflow
+            // Avoid overflow with infinite valid lifetime by using
+            // expire = cltt_ when valid_lft_ = 0xffffffff
             uint32_t valid_lft = lease_->valid_lft_;
             if (valid_lft == Lease::INFINITY_LFT) {
                 valid_lft = 0;
@@ -1423,7 +1426,7 @@ public:
                                                     hostname, hwaddr,
                                                     prefix_len_));
         time_t cltt = 0;
-        // Recover from overflow
+        // Recover from overflow (see expire code of createBindForSend).
         uint32_t valid_lft = valid_lifetime_;
         if (valid_lft == Lease::INFINITY_LFT) {
             valid_lft = 0;
@@ -2846,6 +2849,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     bind.push_back(inbind[0]);
 
+    // See the expire code of createBindForSend for the
+    // infinite valid lifetime special case.
     MYSQL_TIME expire;
     uint32_t valid_lft = lease->current_valid_lft_;
     if (valid_lft == Lease::INFINITY_LFT) {
@@ -2897,6 +2902,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     bind.push_back(inbind[0]);
 
+    // See the expire code of createBindForSend for the
+    // infinite valid lifetime special case.
     MYSQL_TIME expire;
     uint32_t valid_lft = lease->current_valid_lft_;
     if (valid_lft == Lease::INFINITY_LFT) {
@@ -2959,6 +2966,8 @@ MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     inbind[0].buffer = reinterpret_cast<char*>(&addr4);
     inbind[0].is_unsigned = MLM_TRUE;
 
+    // See the expire code of createBindForSend for the
+    // infinite valid lifetime special case.
     MYSQL_TIME expire;
     uint32_t valid_lft = lease->current_valid_lft_;
     if (valid_lft == Lease::INFINITY_LFT) {
@@ -3009,6 +3018,8 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
+    // See the expire code of createBindForSend for the
+    // infinite valid lifetime special case.
     MYSQL_TIME expire;
     uint32_t valid_lft = lease->current_valid_lft_;
     if (valid_lft == Lease::INFINITY_LFT) {

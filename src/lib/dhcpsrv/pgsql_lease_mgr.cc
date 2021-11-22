@@ -502,7 +502,12 @@ public:
             valid_lifetime_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
             bind_array.add(valid_lifetime_str_);
 
-            // Avoid overflow
+            // The lease structure holds the client last transmission time (cltt_)
+            // For convenience for external tools, this is converted to lease
+            // expiry time (expire).  The relationship is given by:
+            // expire = cltt_ + valid_lft_
+            // Avoid overflow with infinite valid lifetime by using
+            // expire = cltt_ when valid_lft_ = 0xffffffff
             if (lease_->valid_lft_ == Lease::INFINITY_LFT) {
                 expire_str_ = convertToDatabaseTime(lease->cltt_, 0);
             } else {
@@ -562,7 +567,7 @@ public:
 
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
-            // Recover from overflow
+            // Recover from overflow (see createBindForSend)
             if (valid_lifetime_ == Lease::INFINITY_LFT) {
                 cltt_ = expire_;
             } else {
@@ -744,7 +749,12 @@ public:
             valid_lifetime_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
             bind_array.add(valid_lifetime_str_);
 
-            // Avoid overflow
+            // The lease structure holds the client last transmission time (cltt_)
+            // For convenience for external tools, this is converted to lease
+            // expiry time (expire).  The relationship is given by:
+            // expire = cltt_ + valid_lft_
+            // Avoid overflow with infinite valid lifetime by using
+            // expire = cltt_ when valid_lft_ = 0xffffffff
             if (lease_->valid_lft_ == Lease::INFINITY_LFT) {
                 expire_str_ = convertToDatabaseTime(lease->cltt_, 0);
             } else {
@@ -855,7 +865,7 @@ public:
             expire_ = convertFromDatabaseTime(getRawColumnValue(r, row,
                                                                 EXPIRE_COL));
 
-            // Recover from overflow
+            // Recover from overflow (see createBindForSend)
             if (valid_lifetime_ == Lease::INFINITY_LFT) {
                 cltt_ = expire_;
             } else {
@@ -2082,7 +2092,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bind_array.add(addr4_str);
 
     std::string expire_str;
-    // Avoid overflow
+    // Avoid overflow (see createBindForSend)
     if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
         expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
     } else {
@@ -2119,7 +2129,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bind_array.add(addr_str);
 
     std::string expire_str;
-    // Avoid overflow
+    // Avoid overflow (see createBindForSend)
     if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
         expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
     } else {
@@ -2167,7 +2177,7 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     bind_array.add(addr4_str);
 
     std::string expire_str;
-    // Avoid overflow
+    // Avoid overflow (see createBindForSend)
     if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
         expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
     } else {
@@ -2208,7 +2218,7 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     bind_array.add(addr6_str);
 
     std::string expire_str;
-    // Avoid overflow
+    // Avoid overflow (see createBindForSend)
     if (lease->current_valid_lft_ == Lease::INFINITY_LFT) {
         expire_str = PgSqlLeaseExchange::convertToDatabaseTime(lease->current_cltt_, 0);
     } else {
