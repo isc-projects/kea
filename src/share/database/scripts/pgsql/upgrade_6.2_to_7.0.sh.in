@@ -51,6 +51,7 @@ CREATE OR REPLACE FUNCTION modification_ts_update()
   RETURNS trigger AS \$modification_ts_update\$
   BEGIN
     new.modification_ts = CURRENT_TIMESTAMP;
+    RETURN NULL;
   END;
 
 -- Second, we need to specify which language it was written in.
@@ -110,9 +111,7 @@ CREATE TRIGGER dhcp6_server_modification_ts_update
   AFTER UPDATE ON dhcp6_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-INSERT INTO dhcp6_server VALUES (1,'all','special type: all servers');
-
-
+INSERT INTO dhcp6_server (tag, description) VALUES ('all','special type: all servers');
 
 -- Create a table for storing IPv6 shared networks
 CREATE TABLE dhcp6_shared_network (
@@ -177,7 +176,7 @@ CREATE INDEX dhcp6_shared_network_server_idx2 ON dhcp6_shared_network_server (se
 
 -- Create a list of IPv6 subnets
 CREATE TABLE dhcp6_subnet (
-  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_id BIGINT PRIMARY KEY NOT NULL,
   subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
   client_class VARCHAR(128) DEFAULT NULL,
   interface VARCHAR(128) DEFAULT NULL,
@@ -433,7 +432,7 @@ CREATE TRIGGER dhcp4_server_modification_ts_update
   AFTER UPDATE ON dhcp4_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-INSERT INTO dhcp4_server VALUES (1,'all','special type: all servers');
+INSERT INTO dhcp4_server (tag, description) VALUES ('all','special type: all servers');
 
 -- Create table for storing global DHCPv4 parameters.
 CREATE TABLE dhcp4_global_parameter (
@@ -533,7 +532,7 @@ CREATE INDEX dhcp4_shared_network_server_idx2 ON dhcp4_shared_network_server (se
 
 -- Create a list of IPv4 subnets
 CREATE TABLE dhcp4_subnet (
-  subnet_id SERIAL PRIMARY KEY NOT NULL,
+  subnet_id BIGINT PRIMARY KEY NOT NULL,
   subnet_prefix VARCHAR(64) UNIQUE NOT NULL,
   interface_4o6 VARCHAR(128) DEFAULT NULL,
   interface_id_4o6 VARCHAR(128) DEFAULT NULL,
@@ -716,7 +715,7 @@ CREATE TABLE dhcp4_audit (
     REFERENCES dhcp4_audit_revision (id) ON DELETE NO ACTION ON UPDATE CASCADE
 );
 CREATE TRIGGER dhcp4_audit_modification_ts_update
-  AFTER UPDATE ON dhcp6_audit
+  AFTER UPDATE ON dhcp4_audit
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX dhcp4_audit_idx1 ON dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
