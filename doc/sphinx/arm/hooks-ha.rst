@@ -997,7 +997,7 @@ hot-standby and load-balancing modes of operation.
 Passive-Backup Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following is an example configuration of the primary server in the
+The following is an example configuration file for the primary server in a
 passive-backup configuration:
 
 ::
@@ -1047,12 +1047,16 @@ passive-backup configuration:
        }]
    }
 
-The configurations of three peers are included, one for the primary and
-two for the backup servers. Many of the parameters present in the load-balancing
+The configurations of three peers are included: one for the primary and
+two for the backup servers.
+
+Many of the parameters present in the load-balancing
 and hot-standby configuration examples are not relevant in the passive-backup
 mode, thus they are not specified here. For example: ``heartbeat-delay``,
-``max-unacked-clients`` and others related to the automatic failover mechanism
-should not be specified in the passive-backup mode. The ``wait-backup-ack``
+``max-unacked-clients``, and others related to the automatic failover mechanism
+should not be specified in the passive-backup mode.
+
+``wait-backup-ack``
 is a boolean parameter not present in previous examples. It defaults to ``false`` and
 must not be modified in the load-balancing and hot-standby modes. In the passive-backup
 mode this parameter can be set to ``true``, which causes the primary server to expect
@@ -1062,7 +1066,7 @@ the client is given the lease, but it poses a risk of losing a DHCP service if
 there is a communication problem with one of the backup servers. This setting
 also increases the latency of the DHCP response, because of the time that the
 primary spends waiting for the acknowledgements. We recommend that the
-``wait-backup-ack`` setting be left at its default value, if the DHCP service reliability
+``wait-backup-ack`` setting be left at its default value (``false``) if the DHCP service reliability
 is more important than consistency of the lease information between the
 primary and the backups, and in all cases when the DHCP service latency should
 be minimal.
@@ -1070,19 +1074,19 @@ be minimal.
 .. note::
 
    Currently, active servers place lease updates to be sent to peers onto internal
-   queues (one queue per peer/URL).  In passive-backup mode, active servers do not
-   wait for lease updates to be acknowledged thus during times of heavy client
+   queues (one queue per peer/URL). In passive-backup mode, active servers do not
+   wait for lease updates to be acknowledged; thus during times of heavy client
    traffic it is possible for the number of lease updates queued for transmission
-   to accumulate faster than they can be delivered.  As client traffic lessens the
-   queues begin to empty.  As of Kea 2.0.0, active servers monitor the size of
-   these queues and will emit periodic warnings (see HTTP_CILENT_QUEUE_SIZE_GROWING
+   to accumulate faster than they can be delivered. As client traffic lessens the
+   queues begin to empty. Since Kea 2.0.0, active servers monitor the size of
+   these queues and emit periodic warnings (see HTTP_CILENT_QUEUE_SIZE_GROWING
    in :ref:`kea-messages`)
-   if they perceive a queue as growing too quickly.  The warnings will cease once
-   the queue size begins to shrink. These messages are intended as a bell-weather
+   if they perceive a queue as growing too quickly. The warnings cease once
+   the queue size begins to shrink. These messages are intended as a bellwether
    and seeing them sporadically during times of heavy traffic load does not
-   necessarily indicate a problem.  If, however, they occur continually during
-   times of routine traffic load they likely indicate potential mismatches in
-   server capabilities and/or configuration and this should be investigated as
+   necessarily indicate a problem. If, however, they occur continually during
+   times of routine traffic load, they likely indicate potential mismatches in
+   server capabilities and/or configuration; this should be investigated, as
    the size of the queues may eventually impair an active server's ability to
    respond to clients in a timely manner.
 
@@ -1104,15 +1108,15 @@ In some cases, though, it is desirable to disable lease updates and/or
 database synchronization between the active servers, if the exchange of
 information about the allocated leases is performed using some other
 mechanism. Kea supports various database types that can be used to store
-leases, including MySQL, PostgreSQL, and Cassandra. Those databases
+leases, including MySQL and PostgreSQL; Cassandra support is deprecated as of Kea 1.9.9. Those databases
 include built-in solutions for data replication which are often used by
 Kea administrators to provide redundancy.
 
 The HA hook library supports such scenarios by disabling lease updates
-over the control channel and/or lease database synchronization, leaving
+over the control channel and/or lease-database synchronization, leaving
 the server to rely on the database replication mechanism. This is
 controlled by the two boolean parameters ``send-lease-updates`` and
-``sync-leases``, whose values default to true:
+``sync-leases``, whose values default to ``true``:
 
 ::
 
@@ -1178,7 +1182,7 @@ uses commands described in :ref:`command-lease4-get-page` and
 :ref:`command-lease6-get-page` to fetch
 leases from its partner server (lease queries). The size of the results
 page (the maximum number of leases to be returned in a single response
-to one of these commands) can be controlled via configuration of the HA hooks
+to one of these commands) can be controlled via configuration of the HA hook
 library. Increasing the page size decreases the number of lease
 queries sent to the partner server, but it causes the partner server to
 generate larger responses, which lengthens transmission time as well as
@@ -1204,10 +1208,10 @@ interface. The server receives leases using the paging mechanism
 described in :ref:`ha-syncing-page-limit`. Before the page of leases is fetched,
 the synchronizing server sends a ``dhcp-disable`` command to disable the
 DHCP service on the partner server. If the service is already disabled,
-this command will reset the timeout for the DHCP service being disabled.
-This timeout value is by default set to 60 seconds. If fetching a single
+this command resets the timeout for the DHCP service being disabled,
+which by default is set to 60 seconds. If fetching a single
 page of leases takes longer than the specified time, the partner server
-will assume that the synchronizing server died and will resume its DHCP
+assumes that the synchronizing server has died and resumes its DHCP
 service. The connection of the synchronizing server with its partner is
 also protected by the timeout. If the synchronization of a single page
 of leases takes longer than the specified time, the synchronizing server
@@ -1274,24 +1278,24 @@ the Kea source at: ``src/lib/config/timeouts.h``.
 Pausing the HA State Machine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The high-availability state machine includes many different states
+The ``high-availability`` state machine includes many different states
 described in detail in :ref:`ha-server-states`. The server
 enters each state when certain conditions are met, most often taking
 into account the partner server's state. In some states the server
 performs specific actions, e.g. synchronization of the lease database in
-the ``syncing`` state or responding to DHCP queries according to the
+the ``syncing`` state, or responding to DHCP queries according to the
 configured mode of operation in the ``load-balancing`` and
 ``hot-standby`` states.
 
 By default, transitions between the states are performed automatically
-and the server administrator has no direct control when the transitions
+and the server administrator has no direct control over when the transitions
 take place; in most cases, the administrator does not need such control.
 In some situations, however, the administrator may want to "pause" the
 HA state machine in a selected state to perform some additional
 administrative actions before the server transitions to the next state.
 
 Consider a server failure which results in the loss of the entire lease
-database. Typically, the server will rebuild its lease database when it
+database. Typically, the server rebuilds its lease database when it
 enters the ``syncing`` state by querying the partner server for leases,
 but it is possible that the partner was also experiencing a failure and
 lacks lease information. In this case, it may be required to reconstruct
@@ -1303,7 +1307,7 @@ the servers should not attempt to synchronize their lease databases nor
 start serving DHCP clients.
 
 The HA hook library provides configuration parameters and a command to
-control when the HA state machine should be paused and resumed. The
+control pausing and resuming the HA state machine. The
 following configuration causes the HA state machine to pause in the
 ``waiting`` state after server startup.
 
@@ -1424,7 +1428,7 @@ to the ``partner-down`` state.
 
 Refer to :ref:`ha-server-states` for a complete list of
 server states. The state machine can be paused in any of the supported
-states; however, it is not practical for the ``backup`` and
+states; however, it is not practical to pause in the ``backup`` or
 ``terminated`` states because the server never transitions out of these
 states anyway.
 
@@ -1435,12 +1439,10 @@ states anyway.
    the state machine after lease-database synchronization, use the
    ``ready`` state instead.
 
-..
-
 .. note::
 
    The state of the HA state machine depends on the state of the
-   cooperating server. Therefore, it must be taken into account that
+   cooperating server. Therefore,
    pausing the state machine of one server may affect the operation of
    the partner server. For example: if the primary server is paused in
    the ``waiting`` state, the partner server will also remain in the
@@ -1457,8 +1459,8 @@ provides a RESTful interface to control the Kea servers. The same
 functionality is used by the High Availability hook library to establish
 communication between the HA peers. Therefore, the HA library requires
 that the Control Agent (CA) be started for each DHCP instance within the
-HA setup. If the Control Agent is not started, the peers will not be
-able to communicate with the particular DHCP server (even if the DHCP
+HA setup. If the Control Agent is not started, the peers cannot
+communicate with a particular DHCP server (even if the DHCP
 server itself is online) and may eventually consider this server to be
 offline.
 
@@ -1493,59 +1495,59 @@ load-balancing and the hot-standby cases presented in previous sections.
    }
    }
 
-Since Kea version 1.9.0 the basic HTTP authentication is supported.
+Since Kea 1.9.0, basic HTTP authentication is supported.
 
 .. _ha-mt-config:
 
-Multi-threaded Configuration (HA+MT)
+Multi-Threaded Configuration (HA+MT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 HA peer communication consists of specialized API commands sent between
-HA peers.  Prior to Kea 1.9.7, each peer must be paired with a local
-instance of kea-ctrl-agent in order to exchange commands. The agent receives
-HA commands via HTTP, communicates via Linux socket with the local peer to
-carry out the command, and then sends the response back to the requesting
-peer via HTTP.  To send HA commands, each peer opens its own HTTP client
+HA peers. Prior to Kea 1.9.7, each peer had to be paired with a local
+instance of ``kea-ctrl-agent`` in order to exchange commands. The agent received
+HA commands via HTTP, communicated via Linux socket with the local peer to
+carry out the command, and then sent the response back to the requesting
+peer via HTTP. To send HA commands, each peer opened its own HTTP client
 connection to the URL of each of its peers.
 
-As of Kea 1.9.7, it is possible to configure HA to use direct multi-
+In Kea 1.9.7 and newer, it is possible to configure HA to use direct multi-
 threaded communication between peers. We refer to this mode as HA+MT.
-With HA+MT enabled each peer runs its own dedicated, internal HTTP listener
+With HA+MT enabled, each peer runs its own dedicated, internal HTTP listener
 (i.e. server) which receives and responds to commands directly, thus
 eliminating the need for an agent to carry out HA protocol between
-peers.  In addition, both the listener and client components use multi-
-threading to support multiple, concurrent connections between peers.  By
+peers. In addition, both the listener and client components use multi-
+threading to support multiple, concurrent connections between peers. By
 eliminating the agent and executing multiple command exchanges in parallel,
 HA throughput between peers should improve considerably in most situations.
 
-The following parameters have been added to HA configuration, to support
+The following parameters have been added to the HA configuration, to support
 HA+MT operation:
 
 -  ``enable-multi-threading`` - enables or disables multi-threading HA
-   peer communication (HA+MT).  Please note that Kea core multi-threading
-   must be enabled in order for HA+MT to operate. When false (the default)
-   the server will operate as before, relying on kea-ctrl-agent and using
+   peer communication (HA+MT). Kea core multi-threading
+   must be enabled for HA+MT to operate. When ``false`` (the default),
+   the server operates as in earlier versions, relying on ``kea-ctrl-agent`` and using
    single-threaded HTTP client processing.
 
 -  ``http-dedicated-listener`` - enables or disables the creation of a
    dedicated, internal HTTP listener through which the server receives HA
-   messages from its peers.  The internal listener replaces the role of
-   kea-ctrl-agent traffic, allowing peers to send their HA commands directly
-   to each other.  The listener will listen on the peer's ``url``.  When
-   false (the default) the server will rely on kea-ctrl-agent.  This parameter
-   has been provided largely for flexibility and testing, running HA+MT without
+   messages from its peers. The internal listener replaces the role of
+   ``kea-ctrl-agent`` traffic, allowing peers to send their HA commands directly
+   to each other. The listener listens on the peer's ``url``. When
+   false (the default), the server relies on ``kea-ctrl-agent``. This parameter
+   has been provided largely for flexibility and testing; running HA+MT without
    dedicated listeners enabled will substantially limit HA throughput.
 
--  ``http-listener-threads`` - maximum number of threads the dedicated listener
-   should use.  A value 0 instructs the server to use the same number of threads
-   as Kea core is using for DHCP multi-threading.  Defaults to 0.
+-  ``http-listener-threads`` - indicates the maximum number of threads the dedicated listener
+   should use. A value of 0 instructs the server to use the same number of threads
+   that the Kea core is using for DHCP multi-threading. The default is 0.
 
--  ``http-client-threads`` - maximum number of threads that should be used
-   to send HA messages to its peers. A value 0 instructs the server to use
-   the same number of threads as Kea core is using for DHCP multi-threading.
-   Defaults to 0.
+-  ``http-client-threads`` - indicates the maximum number of threads that should be used
+   to send HA messages to its peers. A value of 0 instructs the server to use
+   the same number of threads that the Kea core is using for DHCP multi-threading.
+   The default is 0.
 
-They are grouped together under a map element, ``multi-threading``
+These parameters are grouped together under a map element, ``multi-threading``,
 as illustrated below:
 
 ::
@@ -1602,50 +1604,50 @@ and four threads for the client.
 
 .. note::
 
-   It is essential to configure the ports correctly. One common mistake that is easy to miss
-   is to configure CA to listen on port 8000 and configure dedicated listeners also to port
-   8000. In such configuration, the DHCP server will fail to bind sockets, but the communication
+   It is essential to configure the ports correctly. One common mistake
+   is to configure CA to listen on port 8000 and also configure dedicated listeners on port
+   8000. In such a configuration, the DHCP server will fail to bind sockets, but the communication
    will still work via CA, albeit slowly. Make sure your dedicated listeners use a different port
    (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
-   performance bottlenecks caused by single threaded nature of CA and the sequential nature of
-   UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
+   performance bottlenecks caused by the single-threaded nature of CA and the sequential nature of
+   the UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
 
 .. _ha-parked-packet-limit:
 
-Parked Packet Limit
+Parked-Packet Limit
 ~~~~~~~~~~~~~~~~~~~
 
 Kea servers contain a mechanism by which the response to a client packet may
-be held, pending completion of hook library work.  We refer to this as "parking"
+be held, pending completion of hook library work. We refer to this as "parking"
 the packet.  The HA hook library makes use of this mechanism. When an HA server
 needs to send a lease update to its peer(s) to notify it of the change to the
 lease, it will "park" the client response until the peer acknowledges the lease
 update.  At that point, the server will "unpark" the response and send it to the
-client.  This applies to client queries which cause lease changes such as
-DHCPREQUEST for DHCPv4 and REQUEST, RENEW, REBIND for DHCPv6. It does not apply
-to DHPCDISCOVERs (v4) or SOLICITs (v6).
+client.  This applies to client queries which cause lease changes, such as
+DHCPREQUEST for DHCPv4 and Request, Renew, and Rebind for DHCPv6. It does not apply
+to DHPCDISCOVERs (v4) or Solicits (v6).
 
 There is a global parameter, ``parked-packet-limit``, that may be used to limit
-the number of responses that may be parked at any given time.  This acts as a
+the number of responses that may be parked at any given time. This acts as a
 form of congestion handling and protects the server from being swamped when
 the volume of client queries is outpacing the server's ability to respond. Once
-the limit is reached, the server will emit a log and drop any new responses
+the limit is reached, the server emits a log and drops any new responses
 until parking spaces are available.
 
 In general, smaller values for the parking lot limit are likely to cause more
 drops but with shorter response times. Larger values are likely to result in
-fewer drops but with longer response times.  Currently, the default value for
-parked-packet-limit is 256.
+fewer drops but with longer response times. Currently, the default value for
+``parked-packet-limit`` is 256.
 
 .. warning::
 
-   Using too small of a value may result in an unnecessarily high drop rate,
-   while using too large of a value may lead to responses times that are
-   simply too long to be useful.  A value of 0, while allowed, disables the
-   limit altogether but this is highly discouraged as it may lead to Kea servers
-   becoming unresponsive to clients. Choosing the best value is very site
-   specific so we recommend you leave it at the default value of 256 and observe
-   how your system behaves over time with varying load conditions.
+   Using too small a value may result in an unnecessarily high drop rate,
+   while using too large a value may lead to response times that are
+   simply too long to be useful. A value of 0, while allowed, disables the
+   limit altogether, but this is highly discouraged as it may lead to Kea servers
+   becoming unresponsive to clients. Choosing the best value is very
+   site-specific; we recommend users initially leave it at the default value of 256 and observe
+   how the system behaves over time with varying load conditions.
 
 ::
 
@@ -1668,7 +1670,7 @@ parked-packet-limit is 256.
 
 .. note::
 
-   While parked-packet-limit is not specifically tied to HA, currently HA
+   While ``parked-packet-limit`` is not specifically tied to HA, currently HA
    is the only ISC hook that employs packet parking.
 
 .. _ha-maintenance:
