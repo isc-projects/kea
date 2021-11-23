@@ -1,0 +1,21 @@
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libd2srv libkea-d2srv - Kea D2 Server Library
+
+This library contains most of the DNS classes used by the Kea D2 server
+(kea-dhcp-ddns) but is organized as an independent library so that it
+can be reused as needed by other components.
+
+For a more detaliled documentation about the design and class separation
+see @ref src/bin/d2/d2.dox.
+
+@section d2srvMTConsiderations Multi-Threading Consideration for D2 Server Library
+
+By default this library is not thread safe.
+
+*/

@@ -6,13 +6,6 @@ GSS-TSIG
 
 .. _gss-tsig-overview:
 
-
-.. note::
-
-   The GSS-TSIG feature is considered experimental. It is possible to perform
-   the TKEY exchanges and sign the DNS updates using GSS-TSIG, but some error
-   handling and fallback scenarios are not covered yet. Use with caution.
-
 GSS-TSIG Overview
 -----------------
 
@@ -24,11 +17,6 @@ additional capabilities as using negotiated dynamic keys.
 
 Kea provides the support of GSS-TSIG to protect DNS updates sent by
 the Kea DHCP-DDNS (aka D2) server in a premium hook, called `gss_tsig`.
-
-.. note::
-
-    This library is still in the experimental phase and is not recommended
-    nor supported for use in production. Use with care!
 
 The GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2

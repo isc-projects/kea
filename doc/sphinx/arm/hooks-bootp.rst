@@ -3,11 +3,6 @@
 BOOTP Support
 =============
 
-.. note::
-
-   This library is still in the experimental phase. Use with care!
-
-
 This hook library adds support for BOOTP with vendor-information extensions
 (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__). Received BOOTP
 requests are recognized, translated into DHCPREQUEST packets by adding
