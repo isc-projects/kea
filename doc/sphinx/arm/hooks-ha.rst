@@ -1681,94 +1681,95 @@ Controlled Shutdown and Maintenance of DHCP servers
 Having a pair of servers providing High Availability allows for controlled
 shutdown and maintenance of those servers without disrupting the DHCP
 service. For example, an administrator can perform an upgrade of one of
-the servers while the other one continues to respond to the DHCP queries.
-When the upgraded server is back online, the upgrade can be performed for
-the second server. The typical problem reported for the earlier versions
+the servers while the other one continues to respond to DHCP queries.
+When the first server is upgraded and back online, the upgrade can be performed for
+the second server.
+
+A typical problem reported without early versions
 of the High Availability hook library was that the administrator did not
 have direct control over the state of the DHCP server. Shutting down
 one of the servers for maintenance did not necessarily cause the other
-server to start responding to all DHCP queries, because the failure
-detection algorithm described in :ref:`ha-scope-transition` requires that
+server to start responding to all DHCP queries, because the
+failure-detection algorithm described in :ref:`ha-scope-transition` requires that
 the partner not respond for a configured period of time and,
 depending on the configuration, may also require that a number of DHCP
-requests are not responded to for a configured period of time. The
+requests not be responded to for a specified period of time. The
 maintenance procedure, however, requires that the administrator be able
 to instruct one of the servers to instantly start serving all DHCP clients,
 and the other server to instantly stop serving any DHCP clients, so it
 can be safely shut down.
 
 The maintenance feature of the High Availability hook library addresses
-this problem. The ``ha-maintenance-start`` command was introduced to allow
+this situation. The ``ha-maintenance-start`` command was introduced to allow
 the administrator to put the pair of the active servers in states in which
 one of them is responding to all DHCP queries and the other one is awaiting
-a shutdown.
+shutdown.
 
-Suppose that the HA setup includes two active servers, e.g. ``server1``
-and ``server2`` and the latter needs to be shut down for maintenance.
-The administrator should send the ``ha-maintenance-start`` to server1,
+Suppose that the HA setup includes two active servers, ``server1``
+and ``server2``, and the latter needs to be shut down for maintenance.
+The administrator can send the ``ha-maintenance-start`` command to ``server1``,
 as this is the server which is going to handle the DHCP traffic while the
-other one is offline. The server1 may respond with an error if its state
-or the partner's state does not allow for the maintenance. For example,
-the maintenance is not supported for the backup server or the server being
-in the terminated state. Also, an error will be returned if the maintenance
+other one is offline. ``server1`` responds with an error if its state
+or the partner's state does not allow for a maintenance shutdown: for example,
+if maintenance is not supported for the backup server or if the server is
+in the ``terminated`` state. Also, an error is returned if the ``ha-maintenance-start``
 request was already sent to the other server.
 
-Upon receiving the ``ha-maintenance-start`` command, server1 will
-send the ``ha-maintenance-notify`` command to server2 to put this
-server in the ``in-maintenance`` state. If server2 confirms, server1
-will transition to the ``partner-in-maintenance`` state. This is similar
+Upon receiving the ``ha-maintenance-start`` command, ``server1``
+sends the ``ha-maintenance-notify`` command to ``server2`` to put it
+in the ``in-maintenance`` state. If ``server2`` confirms, ``server1``
+transitions to the ``partner-in-maintenance`` state. This is similar
 to the ``partner-down`` state, except that in the ``partner-in-maintenance``
-state server1 continues to send lease updates to server2 until
-the administrator shuts down server2. Server1 now responds to all
+state ``server1`` continues to send lease updates to ``server2`` until
+the administrator shuts down ``server2``. ``server1`` now responds to all
 DHCP queries.
 
-The administrator may safely shut down server2 it being in the
-``in-maintenance`` state and perform necessary maintenance actions. When
-server2 is offline, server1 will encounter communication issues
-with the partner and will immediately transition to the ``partner-down``
-state in which it will continue to respond to all DHCP queries but will
-no longer send lease updates to server2. Starting server2 after
-the maintenance will trigger normal state negotiation, lease database
-synchronization and, ultimately, a transition to the load-balancing or
-hot-standby state. The maintenance can now be performed on server1.
-It should be initiated by sending the ``ha-maintenance-start`` to the
-server2.
+The administrator can safely shut down ``server2`` in the
+``in-maintenance`` state and perform any necessary maintenance actions. While
+``server2`` is offline, ``server1`` will obviously not be able to communicate
+with its partner, so it will immediately transition to the ``partner-down``
+state; it will continue to respond to all DHCP queries but will
+no longer send lease updates to ``server2``. Restarting ``server2`` after
+the maintenance will trigger normal state negotiation, lease-database
+synchronization, and, ultimately, a transition to the normal ``load-balancing`` or
+``hot-standby`` state. Maintenance can then be performed on ``server1``,
+after sending the ``ha-maintenance-start`` command to ``server2``.
 
 If the ``ha-maintenance-start`` command was sent to the server and the
-server has transitioned to the ``partner-in-maintenance`` state it is
-possible to transition it and its partner back to the previous states
+server has transitioned to the ``partner-in-maintenance`` state, it is
+possible to transition both it and its partner back to their previous states
 to resume the normal operation of the HA pair. This is achieved by
-sending the ``ha-maintenance-cancel`` command to the server being
+sending the ``ha-maintenance-cancel`` command to the server that is
 in the ``partner-in-maintenance`` state. However, if the server has
 already transitioned to the ``partner-down`` state as a result of
 detecting that the partner is offline, canceling the maintenance
-is no longer possible.
+is no longer possible. In that case, it is necessary to restart the other server
+and allowing it to complete its normal state negotiation process.
 
 Upgrading from Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The maintenance mechanism was first introduced in the Kea 1.7.4 release.
-In order to upgrade the HA hook library from the older version the
+The HA maintenance mechanism was first introduced in the Kea 1.7.4 release.
+To upgrade from an older HA hook library to the current version, the
 administrator must shut down one of the servers and rely on the
-failover mechanism to get the online server to transition to the
-partner-down state and start serving all DHCP clients. After the
-successful upgrade of one of the servers to the version supporting
-the maintenance mechanism it is possible to benefit from this
-mechanism during the upgrade of the second server.
+failover mechanism to force the online server to transition to the
+``partner-down`` state and start serving all DHCP clients. Once the hook
+library on the first server is upgraded to a current version, the
+``ha-maintenance-start`` command can be used to upgrade the second server.
 
 In such a case, shut down the server running the old version. Next,
-send the ``ha-maintenance-start`` to the server that has been
-upgraded and supports the maintenance mechanism. This server should
-immediately transition to the partner-down state as it cannot
-communicate with the partner being offline. In the partner-down
-state the server will be responding to all DHCP requests.
+send the ``ha-maintenance-start`` command to the server that has been
+upgraded. This server should
+immediately transition to the ``partner-down`` state as it cannot
+communicate with its offline partner. In the ``partner-down``
+state the first (upgraded) server will respond to all DHCP requests, allowing the
+administrator to perform the upgrade on the second server.
 
 .. note::
 
    Do not send the ``ha-maintenance-start`` command while the server
-   running the old version is still online. The server receiving
-   this command will return an error seeing that the partner does
-   not support the maintenance mechanism.
+   running the old hook library is still online. The server receiving
+   this command will return an error.
 
 
 .. _ha-control-commands:
@@ -1778,39 +1779,39 @@ Control Commands for High Availability
 
 Even though the HA hook library is designed to automatically resolve
 issues with DHCP service interruptions by redirecting the DHCP traffic
-to a surviving server and synchronizing the lease database when
-required, it may be useful for the administrator to have more control
-over the server behavior. In particular, it may be useful to be able to
-trigger lease-database synchronization on demand. It may also be useful
+to a surviving server and synchronizing the lease database as
+needed, it may be useful for the administrator to have more control
+over both servers' behavior. In particular, it may be useful to be able to
+trigger lease-database synchronization on demand, or
 to manually set the HA scopes that are being served.
 
-Note that the backup server can sometimes be used to handle DHCP traffic
+The backup server can sometimes be used to handle DHCP traffic
 if both active servers are down. The backup server does not perform the
 failover function automatically; thus, in order to use the backup server
 to respond to DHCP queries, the server administrator must enable this
 function manually.
 
-The following sections describe commands supported by the HA hooks
+The following sections describe commands supported by the HA hook
 library which are available for the administrator.
 
 .. _command-ha-sync:
 
-The ha-sync Command
--------------------
+The ``ha-sync`` Command
+-----------------------
 
 The ``ha-sync`` command instructs the server to synchronize its local
 lease database with the selected peer. The server fetches all leases
-from the peer and updates those locally stored leases which are older
+from the peer and updates any locally stored leases which are older
 than those fetched. It also creates new leases when any of those fetched
 do not exist in the local database. All leases that are not returned by
 the peer but are in the local database are preserved. The database
 synchronization is unidirectional; only the database on the server to
-which the command has been sent is updated. In order to synchronize the
-peer's database a separate ``ha-sync`` command must be issued to that peer.
+which the command has been sent is updated. To synchronize the
+peer's database, a separate ``ha-sync`` command must be issued to that peer.
 
 Database synchronization may be triggered for both active and backup
 server types. The ``ha-sync`` command has the following structure
-(DHCPv4 server case):
+(in a DHCPv4 example):
 
 ::
 
@@ -1843,14 +1844,14 @@ database inconsistencies.
 
 .. _command-ha-scopes:
 
-The ha-scopes Command
----------------------
+The ``ha-scopes`` Command
+-------------------------
 
-This command allows modification of the HA scopes that the server is
-serving. Consult :ref:`ha-load-balancing-config` and
-:ref:`ha-hot-standby-config` to learn what scopes are
-available for different HA modes of operation. The ``ha-scopes`` command
-has the following structure (DHCPv4 server case):
+This command allows an administrator to modify the HA scopes being
+served. Consult :ref:`ha-load-balancing-config` and
+:ref:`ha-hot-standby-config` to learn which scopes are
+available for the different HA modes of operation. The ``ha-scopes`` command
+has the following structure (in a DHCPv4 example):
 
 ::
 
@@ -1878,12 +1879,12 @@ specify an empty list:
 
 .. _command-ha-continue:
 
-The ha-continue Command
------------------------
+The ``ha-continue`` Command
+---------------------------
 
 This command is used to resume the operation of the paused HA state
 machine, as described in :ref:`ha-pause-state-machine`. It takes no arguments, so the
-command structure is as simple as:
+command structure is simply:
 
 ::
 
@@ -1894,16 +1895,16 @@ command structure is as simple as:
 
 .. _command-ha-heartbeat:
 
-The ha-heartbeat Command
-------------------------
+The ``ha-heartbeat`` Command
+----------------------------
 
 The :ref:`ha-server-states` section describes how the ``ha-heartbeat`` command is
-used by the active HA servers to detect a failure of one of them. This command, however,
+used by a pair of active HA servers to detect one partner's failure. This command, however,
 can also be sent by the system administrator to one or both servers to check their
-state with regards to the HA relationship. This allows for hooking up a monitoring
-system to the HA enabled servers to periodically check if they are operational
-or if any manual intervention is required. The ``ha-heartbeat`` command takes no
-arguments, e.g.:
+HA state. This allows a monitoring
+system to be deployed on the HA enabled servers to periodically check whether they are operational
+or whether any manual intervention is required. The ``ha-heartbeat`` command takes no
+arguments:
 
 ::
 
@@ -1912,7 +1913,7 @@ arguments, e.g.:
        "service": [ "dhcp4" ]
    }
 
-Upon successful communication with the server a response similar to this should
+Upon successful communication with the server, a response similar to this should
 be returned:
 
 ::
@@ -1929,31 +1930,32 @@ be returned:
           }
    }
 
-The returned state value may be one of the values listed in :ref:`ha-server-states`.
+The returned ``state`` value should be one of the values listed in :ref:`ha-server-states`.
 In the example above, the ``partner-down`` state is returned, which indicates that
-the server which responded to the command is assuming that its partner is offline;
-thus, it is serving all DHCP requests sent to the servers. In order to ensure that
+the server which responded to the command believes that its partner is offline;
+thus, it is serving all DHCP requests sent to the servers. To ensure that
 the partner is indeed offline, the administrator should send the ``ha-heartbeat``
-command to the second server. If sending the command fails, e.g. due to inability
-to establish TCP connection to the Control Agent or the Control Agent reports
+command to the second server. If sending the command fails, e.g. due to an inability
+to establish a TCP connection to the Control Agent, or if the Control Agent reports
 issues with communication with the DHCP server, it is very likely that the server
 is not running.
 
 The ``date-time`` parameter conveys the server's notion of time.
 
-The ``unsent-update-count`` value is incremented by the partner sending the heartbeat
-response when it cannot send the lease update. Suppose it is a result of the
+The ``unsent-update-count`` value is a cumulative count of all unsent lease updates
+since the server was booted; its value is set to 0 when the server is started.
+It is never reset to 0 during the server's operation, even after the partner
+synchronizes the database. It is incremented by the partner sending the heartbeat
+response when it cannot send the lease update. For example, suppose the failure is a result of a
 temporary communication interruption. In that case, the partner receiving the
-heartbeat response tracks the value changes and can determine whether there are
-any new lease updates that it did not receive. When the communication is
-re-established, the server uses this value to decide whether or not it should
-synchronize its lease database. The value is set to 0 when the server is started.
-It is never reset to 0 during the server operation, even after the partner
-synchronizes the database. It is a cumulative count of all unsent lease updates
-since the server boot. A non-zero value itself is not an indication of any present
-issues with lease updates. Constantly incrementing value is.
+``partner-down`` heartbeat response tracks the value changes and can determine, once communication
+is reestablished, whether there are
+any new lease updates that it did not receive. If the values on both servers do not match,
+it is an indication that the partner should synchronize its lease database.
+A non-zero value itself is not an indication of any present
+issues with lease updates, but a constantly incrementing value is.
 
-The typical response returned by one of the servers when both servers are
+The typical response returned by one server when both are
 operational is:
 
 ::
@@ -1970,35 +1972,29 @@ operational is:
           }
    }
 
-In most cases it is desired to send the ``ha-heartbeat`` command to both HA
-enabled servers to verify the state of the entire HA setup. In particular,
-if the response sent to one of the servers indicates that the server is in the
-``load-balancing`` state, it merely means that this server is operating as if
-the partner is still functional. When the partner dies it actually takes some
+In most cases, the ``ha-heartbeat`` command should be sent to both
+HA-enabled servers to verify the state of the entire HA setup. In particular,
+if one of the servers indicates that it is in the
+``load-balancing`` state, it means that this server is operating as if
+its partner is functional. When a partner goes down, it takes some
 time for the surviving server to realize it. The :ref:`ha-scope-transition`
 section describes the algorithm which the surviving server follows before
 it transitions to the ``partner-down`` state. If the ``ha-heartbeat`` command
 is sent during the time window between the failure of one of the servers and the
 transition of the surviving server to the ``partner-down`` state, the response
-from the surviving server doesn't reflect the failure. Sending the command
-to the failing server allows for detecting the failure.
-
-.. note::
-
-  Remember! Always send the ``ha-heartbeat`` command to both active HA servers
-  to check the state of the entire HA setup. Sending it to only one of the
-  servers may not reflect issues with one of the servers that just began.
-
+from the surviving server does not reflect the failure. Resending the command
+detects the failure once the surviving server has entered the ``partner-down``
+state.
 
 .. _command-ha-status-get:
 
-The status-get Command
-------------------------
+The ``status-get`` Command
+--------------------------
 
 ``status-get`` is a general-purpose command supported by several Kea daemons,
-not only DHCP servers. However, when sent to the DHCP server with HA enabled, it
-can be used to get insight into the details of the HA-specific status information
-of the servers used in the HA configuration. Not only does the response contain
+not only the DHCP servers. However, when sent to a DHCP server with HA enabled, it
+can be used to get insight into the details of the HA-specific server status.
+Not only does the response contain
 the status information of the server receiving this command, but also the
 information about its partner if it is available.
 
@@ -2044,12 +2040,8 @@ the HA status of two load-balancing servers:
        }
    }
 
-The ``high-availability`` argument is a list which currently always comprises
-one element. There are plans to extend the HA implementation to facilitate
-multiple HA relationships for a single server instance. In that case, the
-returned list will comprise more elements, each describing the status of
-a different relationship in which the server participates. Currently, it
-is only one status.
+The ``high-availability`` argument is a list which currently comprises
+only one element.
 
 .. note::
 
@@ -2057,97 +2049,94 @@ is only one status.
    ``status-get`` response. Previously, the HA status for a single relationship
    was returned within the ``arguments`` map. As of Kea 1.7.8, the returned status
    is enclosed in the list as described above. Any existing code relying on the
-   previous syntax must be updated to work with the new Kea versions.
-
+   previous syntax must be updated to work with newer Kea versions.
 
 The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
-contains the status information of the server which received the command. The
+contains the status information of the server which received the command, while the
 latter contains the status information known to the local server about the
 partner. The ``role`` of the partner server is gathered from the local
-configuration file, therefore it should always be available. The remaining
-status information such as ``last-scopes`` and ``last-state`` is not available
+configuration file, and thus should always be available. The remaining
+status information, such as ``last-scopes`` and ``last-state``, is not available
 until the local server communicates with the remote by successfully sending
-the ``ha-heartbeat`` command. If at least one such communication took place,
-the returned value of ``in-touch`` parameter is set to ``true``. By examining
-this value, the command sender can determine whether the information about
+the ``ha-heartbeat`` command. If at least one such communication has taken place,
+the returned value of the ``in-touch`` parameter is set to ``true``. By examining
+this value, the command's sender can determine whether the information about
 the remote server is reliable.
 
-The ``last-scopes`` and ``last-state`` contain the information about the
-HA scopes served by the partner and its state. Note that this information
+The ``last-scopes`` and ``last-state`` parameters contain information about the
+HA scopes served by the partner and its state. This information
 is gathered during the heartbeat command exchange, so it may not be
-accurate if the communication problem occur between the partners and this
+accurate if a communication problem occurs between the partners and this
 status information is not refreshed. In such a case, it may be useful to
 send the ``status-get`` command to the partner server directly to check
-its current state. The ``age`` parameter specifies the number of seconds
-since the information from the partner was gathered (the age of this
-information).
+its current state. The ``age`` parameter specifies the age
+of the information from the partner, in seconds.
 
-The ``communication-interrupted`` boolean value indicates if the server
-receiving the ``status-get`` command (local server) has been unable to
+The ``communication-interrupted`` boolean value indicates whether the server
+receiving the ``status-get`` command (the local server) has been unable to
 communicate with the partner longer than the duration specified as
-``max-response-delay``. In such a situation we say that active servers are
-in the communication interrupted state or that the communication between
-them is interrupted. At this point, the local server may start monitoring
+``max-response-delay``. In such a situation, the active servers are
+considered to be in the ``communication-interrupted`` state. At this point,
+the local server may start monitoring
 the DHCP traffic directed to the partner to see if the partner is
 responding to this traffic. More about the failover procedure can be found
 in :ref:`ha-load-balancing-config`.
 
-The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``
-and ``analyzed-packets`` parameters have been introduced together with the
-``communication-interrupted`` parameter in the Kea 1.7.8 release and they
+The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``,
+and ``analyzed-packets`` parameters were introduced with the
+``communication-interrupted`` parameter in Kea 1.7.8; they
 convey useful information about the state of the DHCP traffic monitoring
-in the communication interrupted state. If the server leaves the
-communication interrupted state these parameters are all reset to 0.
+in the ``communication-interrupted`` state. Once the server leaves the
+``communication-interrupted`` state, these parameters are all reset to 0.
 
-These parameters have the following meaning in the communication interrupted
+These parameters have the following meaning in the ``communication-interrupted``
 state:
 
--  ``connecting-clients`` - number of different clients which have attempted
-   to get a lease from the remote server. The clients are differentiated by
+-  ``connecting-clients`` - this is the number of different clients which have attempted
+   to get a lease from the remote server. These clients are differentiated by
    their MAC address and client identifier (in DHCPv4) or DUID (in DHCPv6).
-   This number includes both "unacked" clients (for which "secs" field or
+   This number includes "unacked" clients (for which the "secs" field or
    "elapsed time" value exceeded the ``max-response-delay``).
 
--  ``unacked-clients`` - number of different clients which have been considered
-   "unacked", i.e. the clients which have been trying to get the lease long
-   enough, so as the value of the "secs" field or "elapsed time" exceeded the
-   ``max-response-delay``.
+-  ``unacked-clients`` - this is the number of different clients which have been considered
+   "unacked", i.e. the clients which have been trying to get the lease longer
+   than the value of the "secs" field, or for which the "elapsed time" exceeded the
+   ``max-response-delay`` setting.
 
--  ``unacked-clients-left`` - number of additional clients which have to be
-   considered "unacked" before the server enters the partner-down state.
+-  ``unacked-clients-left`` - this indicates the number of additional clients which have to be
+   considered "unacked" before the server enters the ``partner-down`` state.
    This value decreases when the ``unacked-clients`` value increases. The
-   local server will enter the ``partner-down`` state when this value
+   local server enters the ``partner-down`` state when this value
    decreases to 0.
 
--  ``analyzed-packets`` - total number of all packets directed to the partner
+-  ``analyzed-packets`` - this is the total number of packets directed to the partner
    server and analyzed by the local server since entering the communication
    interrupted state. It includes retransmissions from the same clients.
 
 Monitoring these values helps to predict when the local server will
-enter the partner-down state or why the server hasn't yet entered this
+enter the ``partner-down`` state or to understand why the server has not yet entered this
 state.
 
-The last parameter introduced in the Kea 1.7.8 release was the ``ha-mode``.
+The last parameter introduced in Kea 1.7.8 was ``ha-mode``.
 It returns the HA mode of operation selected using the ``mode`` parameter
 in the configuration file. It can hold one of the following values:
-``load-balancing``, ``hot-standby`` or ``passive-backup``.
+``load-balancing``, ``hot-standby``, or ``passive-backup``.
 
 The ``status-get`` response has the format described above only in the
 ``load-balancing`` and ``hot-standby`` modes. In the ``passive-backup``
 mode the ``remote`` map is not included in the response because in this
-mode there is only one active server (local). The response comprises no
+mode there is only one active server (local). The response includes no
 information about the status of the backup servers.
 
 .. _command-ha-maintenance-start:
 
-The ha-maintenance-start Command
---------------------------------
+The ``ha-maintenance-start`` Command
+------------------------------------
 
 This command is used to initiate transition of the server's partner into
 the ``in-maintenance`` state and the transition of the server receiving the
 command into the ``partner-in-maintenance`` state. See the
-:ref:`ha-maintenance` for the details.
-
+:ref:`ha-maintenance` section for details.
 
 ::
 
@@ -2156,18 +2145,17 @@ command into the ``partner-in-maintenance`` state. See the
        "service": [ "dhcp4" ]
    }
 
-
 .. _command-ha-maintenance-cancel:
 
-The ha-maintenance-cancel Command
----------------------------------
+The ``ha-maintenance-cancel`` Command
+-------------------------------------
 
 This command is used to cancel the maintenance previously initiated using
 the ``ha-maintenance-start`` command. The server receiving this command
-will first send the ``ha-maintenance-notify`` with the cancel flag set
-to true to its partner. Next, the server will revert from the
-``partner-in-maintenance`` state to the previous state. See the
-:ref:`ha-maintenance` for the details.
+first sends ``ha-maintenance-notify``, with the ``cancel`` flag set
+to ``true``, to its partner. Next, the server reverts from the
+``partner-in-maintenance`` state to its previous state. See the
+:ref:`ha-maintenance` section for details.
 
 ::
 
@@ -2176,16 +2164,15 @@ to true to its partner. Next, the server will revert from the
        "service": [ "dhcp4" ]
    }
 
-
 .. _command-ha-maintenance-notify:
 
-The ha-maintenance-notify Command
----------------------------------
+The ``ha-maintenance-notify`` Command
+-------------------------------------
 
 This command is sent by the server receiving the ``ha-maintenance-start``
-or the ``ha-maintenance-cancel`` command to its partner to cause the
+or the ``ha-maintenance-cancel`` command to its partner, to cause the
 partner to transition to the ``in-maintenance`` state or to revert from this
-state to a previous state. See the :ref:`ha-maintenance` for the details.
+state to a previous state. See the :ref:`ha-maintenance` section for details.
 
 ::
 
@@ -2199,29 +2186,29 @@ state to a previous state. See the :ref:`ha-maintenance` for the details.
 
 .. warning::
 
-   The ``ha-maintenance-notify`` command is not meant to be used by the
+   The ``ha-maintenance-notify`` command is not meant to be used by
    system administrators. It is used for internal communication between
-   a pair of HA enabled DHCP servers. Direct use of this command is not
+   a pair of HA-enabled DHCP servers. Direct use of this command is not
    supported and may produce unintended consequences.
 
 .. _command-ha-reset:
 
-The ha-reset Command
---------------------
+The ``ha-reset`` Command
+------------------------
 
 This command causes the server to reset its High Availability state machine
-by transitioning it to the waiting state. A partner in the
+by transitioning it to the ``waiting`` state. A partner in the
 ``communication-recovery`` state may send this command to cause the server
-to synchronize its lease database. The database synchronization is required
+to synchronize its lease database. Database synchronization is required
 when the partner has failed to send all lease database updates after
 re-establishing connection after a temporary connection failure. It is also
-required when the ``delayed-updates-limit`` is exceeded when the server is
+required when the ``delayed-updates-limit`` is exceeded, when the server is
 in the ``communication-recovery`` state.
 
 A server administrator may send the command to reset a misbehaving state
 machine.
 
-This command includes no arguments, e.g.:
+This command includes no arguments:
 
 ::
 
@@ -2230,7 +2217,7 @@ This command includes no arguments, e.g.:
        "service": [ "dhcp4" ]
    }
 
-The response:
+And elicits the response:
 
 ::
 
@@ -2239,21 +2226,23 @@ The response:
        "text": "HA state machine reset."
    }
 
-If the server receiving this command is already in the waiting state,
+If the server receiving this command is already in the ``waiting`` state,
 the command has no effect.
 
 .. _command-ha-sync-complete-notify:
 
-The ha-sync-complete-notify Command
------------------------------------
+The ``ha-sync-complete-notify`` Command
+---------------------------------------
 
-A server sends this command to its partner to notify that it has completed
-lease database synchronization. The partner may enable its DHCP service if
+A server sends this command to its partner to signal that it has completed
+lease-database synchronization. The partner may enable its DHCP service if
 it can allocate new leases in its current state. The partner does not enable
-the DHCP service in the partner-down state until it sends a successful
-heartbeat testing connection with the server. If the connection is still
-unavailable, the server in the partner-down state enables the DHCP service
-to continue responding to the clients.
+the DHCP service in the ``partner-down`` state until it sends a successful
+heartbeat test to its partner server. If the connection is still
+unavailable, the server in the ``partner-down`` state enables its own DHCP service
+to continue responding to clients.
+
+This command includes no arguments:
 
 ::
 
@@ -2262,7 +2251,7 @@ to continue responding to the clients.
        "service": [ "dhcp4" ]
    }
 
-The response:
+And elicits the response:
 
 ::
 
@@ -2273,7 +2262,7 @@ The response:
 
 .. warning::
 
-   The ``ha-sync-complete-notify`` command is not meant to be used by the
+   The ``ha-sync-complete-notify`` command is not meant to be used by
    system administrators. It is used for internal communication between
-   a pair of HA enabled DHCP servers. Direct use of this command is not
+   a pair of HA-enabled DHCP servers. Direct use of this command is not
    supported and may produce unintended consequences.
