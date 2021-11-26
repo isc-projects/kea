@@ -358,7 +358,8 @@ TEST_F(NetworkTest, inheritanceSupport4) {
 TEST_F(NetworkTest, inheritanceSupport6) {
     // Set global values for each parameter.
     globals_->set("preferred-lifetime", Element::create(80));
-    globals_->set("rapid-commit", Element::create(false));
+    // Rapid commit is not a global parameter.
+    // globals_->set("rapid-commit", Element::create(false));
     globals_->set("ddns-send-updates", Element::create(true));
     globals_->set("ddns-override-no-update", Element::create(true));
     globals_->set("ddns-override-client-update", Element::create(true));
@@ -379,12 +380,6 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getPreferred,
                                              &Network6::setPreferred,
                                              60, 80);
-    }
-    {
-        SCOPED_TRACE("rapid-commit");
-        testNetworkInheritance<TestNetwork6>(&Network6::getRapidCommit,
-                                             &Network6::setRapidCommit,
-                                             true, false);
     }
     {
         SCOPED_TRACE("ddns-send-updates");

@@ -47,6 +47,7 @@ CfgGlobals::nameToIndex = {
     { "ip-reservations-unique", IP_RESERVATIONS_UNIQUE },
     { "ddns-update-on-renew", DDNS_UPDATE_ON_RENEW },
     { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
+    { "parked-packet-limit", PARKED_PACKET_LIMIT },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },

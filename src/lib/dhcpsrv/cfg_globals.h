@@ -70,6 +70,7 @@ public:
         IP_RESERVATIONS_UNIQUE,
         DDNS_UPDATE_ON_RENEW,
         DDNS_USE_CONFLICT_RESOLUTION,
+        PARKED_PACKET_LIMIT,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,

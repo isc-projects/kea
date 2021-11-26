@@ -52,6 +52,41 @@ BaseNetworkParser::moveReservationMode(ElementPtr config) {
 }
 
 void
+BaseNetworkParser::moveReservationMode(CfgGlobalsPtr config) {
+    if (!config->get("reservation-mode")) {
+        return;
+    }
+    if (config->get("reservations-global") ||
+        config->get("reservations-in-subnet") ||
+        config->get("reservations-out-of-pool")) {
+        isc_throw(DhcpConfigError, "invalid use of both 'reservation-mode'"
+                  " and one of 'reservations-global', 'reservations-in-subnet'"
+                  " or 'reservations-out-of-pool' parameters");
+    }
+    std::string hr_mode = config->get("reservation-mode")->stringValue();
+    if ((hr_mode == "disabled") || (hr_mode == "off")) {
+        config->set("reservations-global", Element::create(false));
+        config->set("reservations-in-subnet", Element::create(false));
+    } else if (hr_mode == "out-of-pool") {
+        config->set("reservations-global", Element::create(false));
+        config->set("reservations-in-subnet", Element::create(true));
+        config->set("reservations-out-of-pool", Element::create(true));
+    } else if (hr_mode == "global") {
+        config->set("reservations-global", Element::create(true));
+        config->set("reservations-in-subnet", Element::create(false));
+    } else if (hr_mode == "all") {
+        config->set("reservations-global", Element::create(false));
+        config->set("reservations-in-subnet", Element::create(true));
+        config->set("reservations-out-of-pool", Element::create(false));
+    } else {
+        isc_throw(DhcpConfigError, "invalid reservation-mode parameter: '"
+                  << hr_mode << "' ("
+                  << config->get("reservation-mode")->getPosition() << ")");
+    }
+    config->set("reservation-mode", ConstElementPtr());
+}
+
+void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                                NetworkPtr& network) {
     bool has_renew = network_data->contains("renew-timer");

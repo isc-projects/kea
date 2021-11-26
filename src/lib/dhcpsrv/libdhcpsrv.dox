@@ -16,6 +16,7 @@ client, relay and other tools like perfdhcp) code, please see
 
 This library contains several crucial elements for the operation of the DHCP server:
 
+- isc::dhcp::CfgGlobals - global scalar (i.e. not list or map) parameters.
 - isc::dhcp::LeaseMgr - lease manager is the name for the database backend that stores
   leases.
 - isc::dhcp::CfgMgr - configuration manager that holds DHCP specific
@@ -28,6 +29,30 @@ This library contains several crucial elements for the operation of the DHCP ser
   the communication between the DHCP server and the D2 component.
 - isc::dhcp::Dhcp4o6IpcBase - common part (base class) of DHCPv4-over-DHCPv6
   inter server communication (aka IPC).
+
+@section cfgglobals Global Parameters
+
+The global paramaters handle direct (vs using a search in a name to
+value table) access to global scalar (i.e. not list or map) parameter values.
+
+This is related to the procedure to add a new global scalar parameter to
+the DHCPv4 or DHCPv6 (DHCPvX below) server implementation:
+
+- update the src/bin/dhcpX/dhcpX_lexer.ll to add the new token
+- update the src/bin/dhcpX/dhcpX_parser.yy to add the new syntax
+- update the src/bin/dhcpX/json_config_parser.cc to add the new parameter
+  in the global parameter big if statement
+- update the src/lib/dhcpsrv/parsers/simple_parserX.cc file to add the new
+  parameter in the GLOBALX_PARAMETERS keyword list and eventually in the
+  GLOBALX_DEFAULTS list
+- update the cfg_globals.h and cfg_globals.cc files, note that specific to
+  v4 or v6 parameters are after no specific
+- if the parameter exists for shared networks, subnets, etc,
+  the corresponding tables must be updated in simple parser files
+
+Note there is nothing to update for a global parameter in the configuration
+backend: no new column in database schemas, no code in hooks. Of course
+this does not apply to parameters which exist at not global level too.
 
 @section leasemgr Lease Manager
 

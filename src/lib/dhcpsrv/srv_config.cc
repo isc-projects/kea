@@ -233,13 +233,12 @@ SrvConfig::merge6(SrvConfig& other) {
 void
 SrvConfig::mergeGlobals(SrvConfig& other) {
     auto config_set = getConfiguredGlobals();
-    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
     // If the deprecated reservation-mode is found in database, overwrite other
     // reservation flags so there is no conflict when merging to new flags.
-    if (other.getConfiguredGlobals()->find("reservation-mode")) {
-        mutable_cfg->remove("reservations-global");
-        mutable_cfg->remove("reservations-in-subnet");
-        mutable_cfg->remove("reservations-out-of-pool");
+    if (other.getConfiguredGlobal("reservation-mode")) {
+        config_set->set("reservations-global", ConstElementPtr());
+        config_set->set("reservations-in-subnet", ConstElementPtr());
+        config_set->set("reservations-out-of-pool", ConstElementPtr());
     }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
@@ -248,7 +247,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     }
 
     // Merge the reservation-mode to new reservation flags.
-    BaseNetworkParser::moveReservationMode(mutable_cfg);
+    BaseNetworkParser::moveReservationMode(config_set);
 
     // A handful of values are stored as members in SrvConfig. So we'll
     // iterate over the merged globals, setting approprate members.

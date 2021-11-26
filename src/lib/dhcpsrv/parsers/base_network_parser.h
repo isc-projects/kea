@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcpsrv/cfg_globals.h>
 #include <dhcpsrv/network.h>
 
 namespace isc {
@@ -26,6 +27,14 @@ public:
     /// @throw DhcpConfigError on error e.g. when both reservation-mode
     /// and a flag are specified.
     static void moveReservationMode(isc::data::ElementPtr config);
+
+    /// @brief Moves deprecated reservation-mode parameter to
+    /// new reservations flags.
+    ///
+    /// @param config [in/out] global parameters to alter.
+    /// @throw DhcpConfigError on error e.g. when both reservation-mode
+    /// and a flag are specified.
+    static void moveReservationMode(CfgGlobalsPtr config);
 
 protected:
 

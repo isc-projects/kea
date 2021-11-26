@@ -1311,13 +1311,15 @@ public:
     /// @brief Returns boolean value indicating that the Rapid Commit option
     /// is supported or unsupported for the subnet.
     ///
+    /// @note This parameter does not exist at the global level.
+    ///
     /// @param inheritance inheritance mode to be used.
     /// @return true if the Rapid Commit option is supported, false otherwise.
     util::Optional<bool>
     getRapidCommit(const Inheritance& inheritance = Inheritance::ALL) const {
 
         return (getProperty<Network6>(&Network6::getRapidCommit, rapid_commit_,
-                                      inheritance, "rapid-commit"));
+                                      inheritance));
     }
 
     /// @brief Enables or disables Rapid Commit option support for the subnet.
