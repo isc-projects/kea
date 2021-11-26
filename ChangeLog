@@ -1,6 +1,8 @@
 1972.	[func]		andrei
-	Kea servers now accept trailing commas in their JSON
-	configuration.
+	Kea servers now accept trailing commas in file configurations.
+	While parsing, a warning is printed with the location of the
+	comma to give the user the ability to correct a potential
+	mistake.
 	(Gitlab #2084)
 
 1971.	[func]		tmark, jad

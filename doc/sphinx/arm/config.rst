@@ -53,7 +53,10 @@ Kea components use extended JSON with additional features allowed:
 -  File inclusion: JSON files can include other JSON files by using a
    statement of the form \<?include "file.json"?\>.
 
--  Allowed trailing commas anywhere except after the root curly brackets.
+-  Extra commas: to remove the inconvenience of errors caused by leftover commas
+   after making changes to configuration. While parsing, a warning is printed
+   with the location of the comma to give the user the ability to correct a
+   potential mistake.
 
 The configuration file consists of a single object (often colloquially
 called a map) started with a curly bracket. It comprises only one of
