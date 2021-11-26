@@ -90,7 +90,7 @@ public:
 
     /// @brief Error handler
     ///
-    /// @param loc location within the parsed file when experienced a problem.
+    /// @param loc location within the parsed file where the problem was experienced.
     /// @param what string explaining the nature of the error.
     static void error(const isc::eval::location& loc, const std::string& what);
 

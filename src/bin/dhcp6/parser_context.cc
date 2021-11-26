@@ -225,5 +225,16 @@ Parser6Context::contextName() {
     }
 }
 
+void
+Parser6Context::warning(const isc::dhcp::location& loc,
+                        const std::string& what,
+                        size_t pos /* = 0 */) {
+    if (pos == 0) {
+        std::cerr << loc << ": " << what << std::endl;
+    } else {
+        std::cerr << loc << " (near " << pos << "): " << what << std::endl;
+    }
+}
+
 }  // namespace dhcp
 }  // namespace isc
