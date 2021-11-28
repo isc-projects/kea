@@ -63,6 +63,7 @@ using namespace std;
   CLIENTS "clients"
   USER "user"
   USER_FILE "user-file"
+  PASSWORD "password"
   PASSWORD_FILE "password-file"
 
   TRUST_ANCHOR "trust-anchor"
