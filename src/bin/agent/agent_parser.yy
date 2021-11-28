@@ -59,9 +59,11 @@ using namespace std;
   TYPE "type"
   BASIC "basic"
   REALM "realm"
+  DIRECTORY "directory"
   CLIENTS "clients"
   USER "user"
-  PASSWORD "password"
+  USER_FILE "user-file"
+  PASSWORD_FILE "password-file"
 
   TRUST_ANCHOR "trust-anchor"
   CERT_FILE "cert-file"
@@ -589,6 +591,7 @@ auth_params: auth_param
 
 auth_param: auth_type
           | realm
+          | directory
           | clients
           | comment
           | user_context
@@ -604,7 +607,7 @@ auth_type: TYPE {
 };
 
 auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
-         ;
+               ;
 
 realm: REALM {
     ctx.unique("realm", ctx.loc2pos(@1));
@@ -612,6 +615,15 @@ realm: REALM {
 } COLON STRING {
     ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("realm", realm);
+    ctx.leave();
+};
+
+directory: DIRECTORY {
+    ctx.unique("directory", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr directory(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("directory", directory);
     ctx.leave();
 };
 
@@ -653,7 +665,9 @@ clients_params: clients_param
               ;
 
 clients_param: user
+             | user_file
              | password
+             | password_file
              | user_context
              | comment
              | unknown_map_entry
@@ -668,12 +682,30 @@ user: USER {
     ctx.leave();
 };
 
+user_file: USER_FILE {
+    ctx.unique("user-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("user-file", user);
+    ctx.leave();
+};
+
 password: PASSWORD {
     ctx.unique("password", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("password", password);
+    ctx.leave();
+};
+
+password_file: PASSWORD_FILE {
+    ctx.unique("password-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("password-file", password);
     ctx.leave();
 };
 

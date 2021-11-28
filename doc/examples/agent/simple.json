@@ -27,6 +27,10 @@
             // Its default is "kea-control-agent".
             "realm": "kea-control-agent",
 
+            // This optional parameter can be used to specify a common
+            // prefix for files handling client credentials.
+            "directory": "/tmp/ca",
+
             // This list specifies the user ids and passwords to use for
             // basic HTTP authentication. If empty or not present any client
             // is authorized.
@@ -42,7 +46,22 @@
 
                     // If password is not specified an empty password is used.
                     "password": "1234"
-                }
+                },
+
+                // This specifies a hiddent client.
+                {
+                    // The user id is the content of the file /tmp/ca/hiddenu.
+                    "user-file": "hiddenu",
+
+                    // The password is the content of the file /tmp/ca/hiddenp.
+                    "password-file": "hiddenp"
+                },
+
+                // This specifies a hidden client using a secret in a file.
+                {
+                    // The secret is the content of the file /tmp/ca/hiddens
+                    // which must be in the <user-id>%<password> format.
+                    "password-file": "hiddens"
             ]
         },
 

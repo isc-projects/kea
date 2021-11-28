@@ -47,8 +47,9 @@ const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
 
 /// @brief This table defines default values for authentication.
 const SimpleDefaults AgentSimpleParser::AUTH_DEFAULTS = {
-    { "type",   Element::string,  "basic" },
-    { "realm",  Element::string,  "kea-control-agent" }
+    { "type",       Element::string,  "basic" },
+    { "realm",      Element::string,  "kea-control-agent" },
+    { "directory",  Element::string,  "" }
 };
 
 /// @brief This table defines default values for control sockets.

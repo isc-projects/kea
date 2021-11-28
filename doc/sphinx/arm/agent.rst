@@ -173,6 +173,23 @@ is used.
    in UTF-8, but the current Kea JSON syntax only supports the Latin-1
    (i.e. 0x00..0xff) Unicode subset.
 
+To avoid to expose the password or both the user ID and the associated
+password these values can be read from files. The syntax was extended by:
+
+-  The ``directory`` authentication parameter which handles the common
+   part of file paths. By default the value is the empty string.
+
+-  The``password-file`` client parameter which with the ``directory``
+   parameter specifies the path of a file where the password or when no
+   user ID is given the whole basic HTTP authentication secret before
+   encoding can be read.
+
+-  The ``user-file`` client parameter which with the ``directory`` parameter
+   specifies the path of a file where the user ID can be read.
+
+When files are used they are read when the configuration is loaded in order
+to detect configuration errors as soon as possible.
+
 Hook libraries can be loaded by the Control Agent in the same way as
 they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
 supports one hook point - ``control_command_receive`` - which makes it

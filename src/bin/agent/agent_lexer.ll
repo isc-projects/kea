@@ -263,6 +263,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"directory\" {
+    switch(driver.ctx_) {
+    case ParserContext::AUTHENTICATION:
+        return AgentParser::make_DIRECTORY(driver.loc_);
+    default:
+        return AgentParser::make_STRING("directory", driver.loc_);
+    }
+}
+
 \"clients\" {
     switch(driver.ctx_) {
     case ParserContext::AUTHENTICATION:
@@ -281,12 +290,30 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"user-file\" {
+    switch(driver.ctx_) {
+    case ParserContext::CLIENTS:
+        return AgentParser::make_USER_FILE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("user-file", driver.loc_);
+    }
+}
+
 \"password\" {
     switch(driver.ctx_) {
     case ParserContext::CLIENTS:
         return AgentParser::make_PASSWORD(driver.loc_);
     default:
         return AgentParser::make_STRING("password", driver.loc_);
+    }
+}
+
+\"password-file\" {
+    switch(driver.ctx_) {
+    case ParserContext::CLIENTS:
+        return AgentParser::make_PASSWORD_FILE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("password-file", driver.loc_);
     }
 }
 
