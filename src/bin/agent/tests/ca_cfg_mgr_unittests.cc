@@ -152,7 +152,7 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
 
     BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
     auth->setRealm("foobar");
-    auth->add("foo", "bar");
+    auth->add("foo", "", "bar", "");
     EXPECT_NO_THROW(ctx.setAuthConfig(auth));
 
     // Make a copy.
@@ -216,8 +216,8 @@ TEST(CtrlAgentCfgMgr, contextAuthConfig) {
     EXPECT_NO_THROW(ctx.setAuthConfig(auth));
 
     auth->setRealm("foobar");
-    auth->add("foo", "bar");
-    auth->add("test", "123\xa3");
+    auth->add("foo", "", "bar", "");
+    auth->add("test", "", "123\xa3", "");
 
     const HttpAuthConfigPtr& stored_auth = ctx.getAuthConfig();
     ASSERT_TRUE(stored_auth);
@@ -538,8 +538,8 @@ TEST_F(AgentParserTest, configParseAuth) {
     // Check clients.
     BasicHttpAuthConfig expected;
     expected.setRealm("foobar");
-    expected.add("foo", "bar");
-    expected.add("test", "123\xa3");
+    expected.add("foo", "", "bar", "");
+    expected.add("test", "", "123\xa3", "");
     EXPECT_EQ(expected.toElement()->str(), basic_auth->toElement()->str());
 }
 

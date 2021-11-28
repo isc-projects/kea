@@ -340,7 +340,7 @@ public:
     /// @param password The password.
     void addBasicAuth(const std::string& user, const std::string& password) {
         std::lock_guard<std::mutex> lk(mutex_);
-        basic_auth_.add(user, password);
+        basic_auth_.add(user, "", password, "");
     }
 
 private:

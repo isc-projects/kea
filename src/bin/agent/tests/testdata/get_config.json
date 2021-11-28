@@ -10,6 +10,7 @@
                     }
                 }
             ],
+            "directory": "/tmp/ca",
             "realm": "kea-control-agent",
             "type": "basic"
         },

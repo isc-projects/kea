@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,23 +46,26 @@ TEST(BasicHttpAuthConfigTest, basic) {
     // Initial configuration is empty.
     EXPECT_TRUE(config.empty());
     EXPECT_TRUE(config.getRealm().empty());
+    EXPECT_TRUE(config.getDirectory().empty());
     EXPECT_TRUE(config.getClientList().empty());
     EXPECT_TRUE(config.getCredentialMap().empty());
 
-    // Set the realm and user context.
+    // Set the realm, directory and user context.
     EXPECT_NO_THROW(config.setRealm("my-realm"));
     EXPECT_EQ("my-realm", config.getRealm());
+    EXPECT_NO_THROW(config.setDirectory("/tmp"));
+    EXPECT_EQ("/tmp", config.getDirectory());
     ConstElementPtr horse = Element::fromJSON("{ \"value\": \"a horse\" }");
     EXPECT_NO_THROW(config.setContext(horse));
     EXPECT_TRUE(horse->equals(*config.getContext()));
 
     // Add rejects user id with embedded ':'.
-    EXPECT_THROW(config.add("foo:", "bar"), BadValue);
+    EXPECT_THROW(config.add("foo:", "", "bar", ""), BadValue);
 
     // Add a client.
     EXPECT_TRUE(config.empty());
     ConstElementPtr ctx = Element::fromJSON("{ \"foo\": \"bar\" }");
-    EXPECT_NO_THROW(config.add("foo", "bar", ctx));
+    EXPECT_NO_THROW(config.add("foo", "", "bar", "", false, ctx));
     EXPECT_FALSE(config.empty());
 
     // Check the client.
@@ -88,12 +91,13 @@ TEST(BasicHttpAuthConfigTest, basic) {
     clients->add(elem);
     expected->set("type", Element::create(string("basic")));
     expected->set("realm", Element::create(string("my-realm")));
+    expected->set("directory", Element::create(string("/tmp")));
     expected->set("user-context", horse);
     expected->set("clients", clients);
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 
     // Add a second client and test it.
-    EXPECT_NO_THROW(config.add("test", "123\xa3"));
+    EXPECT_NO_THROW(config.add("test", "", "123\xa3", ""));
     ASSERT_EQ(2, config.getClientList().size());
     EXPECT_EQ("foo", config.getClientList().front().getUser());
     EXPECT_EQ("test", config.getClientList().back().getUser());
@@ -106,8 +110,8 @@ TEST(BasicHttpAuthConfigTest, basic) {
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 
     // Add clients again.
-    EXPECT_NO_THROW(config.add("test", "123\xa3"));
-    EXPECT_NO_THROW(config.add("foo", "bar", ctx));
+    EXPECT_NO_THROW(config.add("test", "", "123\xa3", ""));
+    EXPECT_NO_THROW(config.add("foo", "", "bar", "", false, ctx));
 
     // Check that toElement keeps add order.
     ElementPtr elem0 = Element::createMap();
@@ -133,6 +137,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     ElementPtr expected = Element::createMap();
     expected->set("type", Element::create(string("basic")));
     expected->set("realm", Element::create(string("")));
+    expected->set("directory", Element::create(string("")));
     expected->set("clients", Element::createList());
     runToElementTest<BasicHttpAuthConfig>(expected, config);
 
@@ -164,6 +169,13 @@ TEST(BasicHttpAuthConfigTest, parse) {
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
                      "realm must be a string (:0:0)");
     cfg->set("realm", Element::create(string("my-realm")));
+    EXPECT_NO_THROW(config.parse(cfg));
+
+    // The directory must be a string.
+    cfg->set("directory", Element::createMap());
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "directory must be a string (:0:0)");
+    cfg->set("directory", Element::create(string("/tmp")));
     EXPECT_NO_THROW(config.parse(cfg));
 
     // The user context must be a map.

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,9 +35,23 @@ public:
 
     /// @brief Returns the realm.
     ///
-    /// @return The basic HTTP authentication realm.
+    /// @return The HTTP authentication realm.
     const std::string& getRealm() const {
         return (realm_);
+    }
+
+    /// @brief Set the common part for file paths (usually a directory)
+    ///
+    /// @param directory New directory.
+    void setDirectory(const std::string& directory) {
+        directory_ = directory;
+    }
+
+    /// @brief Returns the common part for file paths (usually a directory).
+    ///
+    /// @return The common part for file paths (usually a directory).
+    const std::string& getDirectory() const {
+        return (directory_);
     }
 
     /// @brief Empty predicate.
@@ -73,6 +87,9 @@ private:
 
     /// @brief The realm.
     std::string realm_;
+
+    /// @brief Common part for file paths (usually a directory).
+    std::string directory_;
 };
 
 /// @brief Type of shared pointers to HTTP authentication configuration.

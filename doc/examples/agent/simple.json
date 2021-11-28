@@ -46,7 +46,7 @@
 
                     // If password is not specified an empty password is used.
                     "password": "1234"
-                },
+                }/* temporary disabled because it requires files ,
 
                 // This specifies a hiddent client.
                 {
@@ -60,8 +60,9 @@
                 // This specifies a hidden client using a secret in a file.
                 {
                     // The secret is the content of the file /tmp/ca/hiddens
-                    // which must be in the <user-id>%<password> format.
+                    // which must be in the <user-id>:<password> format.
                     "password-file": "hiddens"
+                }*/
             ]
         },
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ class BasicHttpAuthClient : public isc::data::UserContext,
                             public isc::data::CfgToElement {
 public:
 
-    /// @brief Constructor.
+    /// @brief Constructor (legacy).
     ///
     /// @param user User id
     /// @param password Password
@@ -36,14 +36,45 @@ public:
                         const std::string& password,
                         const isc::data::ConstElementPtr& user_context);
 
+    /// @brief Constructor.
+    ///
+    /// @param user User id
+    /// @param user_file File with the user id
+    /// @param password Password
+    /// @param password_file File with the password
+    /// @param password_file_only Flag true if the password file includes
+    /// the user id too.
+    /// @param user_context Optional user context
+    BasicHttpAuthClient(const std::string& user,
+                        const std::string& user_file,
+                        const std::string& password,
+                        const std::string& password_file,
+                        bool password_file_only,
+                        const isc::data::ConstElementPtr& user_context);
+
     /// @brief Returns the user id.
     const std::string& getUser() const {
         return (user_);
     }
 
+    /// @brief Returns the user id file.
+    const std::string& getUserFile() const {
+        return (user_file_);
+    }
+
     /// @brief Returns the password.
     const std::string& getPassword() const {
         return (password_);
+    }
+
+    /// @brief Returns the password file.
+    const std::string& getPasswordFile() const {
+        return (password_file_);
+    }
+
+    /// @brief Returns the password file only flag.
+    bool getPasswordFileOnly() const {
+        return (password_file_only_);
     }
 
     /// @brief Unparses basic HTTP authentication client configuration.
@@ -56,8 +87,17 @@ private:
     /// @brief The user id e.g. johndoe.
     std::string user_;
 
+    /// @brief The user id file.
+    std::string user_file_;
+
     /// @brief The password e.g. secret1.
     std::string password_;
+
+    /// @brief The password file.
+    std::string password_file_;
+
+    /// @brief The password file only flag.
+    bool password_file_only_;
 };
 
 /// @brief Type of basic HTTP authentication client configuration list.
@@ -66,18 +106,24 @@ typedef std::list<BasicHttpAuthClient> BasicHttpAuthClientList;
 /// @brief Basic HTTP authentication configuration.
 class BasicHttpAuthConfig : public HttpAuthConfig {
 public:
-
     /// @brief Destructor.
     virtual ~BasicHttpAuthConfig() { }
 
     /// @brief Add a client configuration.
     ///
     /// @param user User id
+    /// @param user_file File with the user id
     /// @param password Password
+    /// @param password_file File with the password
+    /// @param password_file_only Flag true if the password file includes
+    /// the user id too.
     /// @param user_context Optional user context
     /// @throw BadValue if the user id contains the ':' character.
     void add(const std::string& user,
+             const std::string& user_file,
              const std::string& password,
+             const std::string& password_file,
+             bool password_file_only = false,
              const isc::data::ConstElementPtr& user_context = isc::data::ConstElementPtr());
 
     /// @brief Empty predicate.
@@ -87,6 +133,12 @@ public:
 
     /// @brief Clear configuration.
     virtual void clear();
+
+    /// @brief Get the content of <directory>/<file-name> regular file.
+    ///
+    /// @param file_name The file name.
+    /// @return The content of the <directory>/<file-name> regular file.
+    std::string getFileContent(const std::string& file_name) const;
 
     /// @brief Returns the list of client configuration.
     ///

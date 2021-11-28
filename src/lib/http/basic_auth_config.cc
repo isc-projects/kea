@@ -10,6 +10,10 @@
 #include <http/basic_auth_config.h>
 #include <util/strutil.h>
 
+#include <cerrno>
+#include <cstring>
+#include <sys/stat.h>
+
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -22,7 +26,21 @@ namespace http {
 BasicHttpAuthClient::BasicHttpAuthClient(const std::string& user,
                                          const std::string& password,
                                          const isc::data::ConstElementPtr& user_context)
-    : user_(user), password_(password) {
+    : user_(user), user_file_(""), password_(password),
+      password_file_(""), password_file_only_(false) {
+    if (user_context) {
+        setContext(user_context);
+    }
+}
+
+BasicHttpAuthClient::BasicHttpAuthClient(const std::string& user,
+                                         const std::string& user_file,
+                                         const std::string& password,
+                                         const std::string& password_file,
+                                         bool password_file_only,
+                                         const isc::data::ConstElementPtr& user_context)
+    : user_(user), user_file_(user_file), password_(password),
+      password_file_(password_file), password_file_only_(password_file_only) {
     if (user_context) {
         setContext(user_context);
     }
@@ -35,21 +53,36 @@ BasicHttpAuthClient::toElement() const {
     // Set user-context
     contextToElement(result);
 
-    // Set user
-    result->set("user", Element::create(user_));
+    // Set password file or password.
+    if (!password_file_.empty()) {
+        result->set("password-file", Element::create(password_file_));
+    } else {
+        result->set("password", Element::create(password_));
+    }
 
-    // Set password
-    result->set("password", Element::create(password_));
+    // Set user-file or user.
+    if (!password_file_only_) {
+        if (!user_file_.empty()) {
+            result->set("user-file", Element::create(user_file_));
+        } else {
+            result->set("user", Element::create(user_));
+        }
+    }
 
     return (result);
 }
 
 void
 BasicHttpAuthConfig::add(const std::string& user,
+                         const std::string& user_file,
                          const std::string& password,
+                         const std::string& password_file,
+                         bool password_file_only,
                          const ConstElementPtr& user_context) {
     BasicHttpAuth basic_auth(user, password);
-    list_.push_back(BasicHttpAuthClient(user, password, user_context));
+    list_.push_back(BasicHttpAuthClient(user, user_file, password,
+                                        password_file, password_file_only,
+                                        user_context));
     map_[basic_auth.getCredential()] = user;
 }
 
@@ -64,6 +97,55 @@ BasicHttpAuthConfig::empty() const {
     return (map_.empty());
 }
 
+string
+BasicHttpAuthConfig::getFileContent(const std::string& file_name) const {
+    // Build path.
+    string path = getDirectory();
+    // Add a trailing '/' if the last character is not alreay a '/'.
+    if (path.empty() || (path[path.size() - 1] != '/')) {
+        path += "/";
+    }
+    // Note add a second '/'.
+    if (file_name.empty() || (file_name[0] != '/')) {
+        path += file_name;
+    } else {
+        path += file_name.substr(1);
+    }
+
+    // Open the file.
+    int fd = ::open(path.c_str(), O_RDONLY);
+    if (fd < 0) {
+        isc_throw(DhcpConfigError, "can't open file '" << path << "': "
+                  << std::strerror(errno));
+    }
+    try {
+        struct stat stats;
+        if (fstat(fd, &stats) < 0) {
+            isc_throw(DhcpConfigError, "can't stat file '" << path << "': "
+                      << std::strerror(errno));
+        }
+        if ((stats.st_mode & S_IFMT) != S_IFREG) {
+            isc_throw(DhcpConfigError, "'" << path
+                      << "' must be a regular file");
+        }
+        string content(stats.st_size, ' ');
+        ssize_t got = ::read(fd, &content[0], stats.st_size);
+        if (got < 0) {
+            isc_throw(DhcpConfigError, "can't read file '" << path << "': "
+                      << std::strerror(errno));
+        }
+        if (got != stats.st_size) {
+            isc_throw(DhcpConfigError, "can't read whole file '" << path
+                      << "' (got " << got << " of " << stats.st_size);
+        }
+        close(fd);
+        return (content);
+    } catch (const std::exception&) {
+        close(fd);
+        throw;
+    }
+}
+
 ElementPtr
 BasicHttpAuthConfig::toElement() const {
     ElementPtr result = Element::createMap();
@@ -76,6 +158,9 @@ BasicHttpAuthConfig::toElement() const {
 
     // Set realm
     result->set("realm", Element::create(getRealm()));
+
+    // Set directory.
+    result->set("directory", Element::create(getDirectory()));
 
     // Set clients
     ElementPtr clients = Element::createList();
@@ -123,6 +208,16 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
         setRealm(realm->stringValue());
     }
 
+    // Get the directory.
+    ConstElementPtr directory = config->get("directory");
+    if (directory) {
+        if (directory->getType() != Element::string) {
+            isc_throw(DhcpConfigError, "directory must be a string ("
+                      << directory->getPosition() << ")");
+        }
+        setDirectory(directory->stringValue());
+    }
+
     // Get user context
     ConstElementPtr user_context_cfg = config->get("user-context");
     if (user_context_cfg) {
@@ -150,26 +245,6 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                       << client->getPosition() << ")");
         }
 
-        // user
-        ConstElementPtr user_cfg = client->get("user");
-        if (!user_cfg) {
-            isc_throw(DhcpConfigError, "user is required in clients items ("
-                      << client->getPosition() << ")");
-        }
-        if (user_cfg->getType() != Element::string) {
-            isc_throw(DhcpConfigError, "user must be a string ("
-                      << user_cfg->getPosition() << ")");
-        }
-        string user = user_cfg->stringValue();
-        if (user.empty()) {
-            isc_throw(DhcpConfigError, "user must be not be empty ("
-                      << user_cfg->getPosition() << ")");
-        }
-        if (user.find(':') != string::npos) {
-            isc_throw(DhcpConfigError, "user must not contain a ':': '"
-                      << user << "' (" << user_cfg->getPosition() << ")");
-        }
-
         // password
         string password;
         ConstElementPtr password_cfg = client->get("password");
@@ -179,6 +254,97 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                           << password_cfg->getPosition() << ")");
             }
             password = password_cfg->stringValue();
+        }
+
+        // password file.
+        string password_file;
+        ConstElementPtr password_file_cfg = client->get("password-file");
+        if (password_file_cfg) {
+            if (password_cfg) {
+                isc_throw(DhcpConfigError, "password ("
+                          << password_cfg->getPosition()
+                          << ") and password-file ("
+                          << password_file_cfg->getPosition()
+                          << ") are mutually exclusive");
+            }
+            if (password_file_cfg->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "password-file must be a string ("
+                          << password_file_cfg->getPosition() << ")");
+            }
+            password_file = password_file_cfg->stringValue();
+        }
+
+        // user file.
+        ConstElementPtr user_cfg = client->get("user");
+        ConstElementPtr user_file_cfg = client->get("user-file");
+        string user;
+        bool password_file_only = false;
+        if (!user_cfg && !user_file_cfg) {
+            if (password_file_cfg) {
+                password_file_only = true;
+            } else {
+                isc_throw(DhcpConfigError, "user is required in clients "
+                          << "items (" << client->getPosition() << ")");
+            }
+        }
+        if (user_cfg) {
+            if (user_file_cfg) {
+                isc_throw(DhcpConfigError, "user (" << user_cfg->getPosition()
+                          << ") and user-file ("
+                          << user_file_cfg->getPosition()
+                          << ") are mutually exclusive");
+            }
+            if (user_cfg->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "user must be a string ("
+                          << user_cfg->getPosition() << ")");
+            }
+            user = user_cfg->stringValue();
+            if (user.empty()) {
+                isc_throw(DhcpConfigError, "user must be not be empty ("
+                          << user_cfg->getPosition() << ")");
+            }
+            if (user.find(':') != string::npos) {
+                isc_throw(DhcpConfigError, "user must not contain a ':': '"
+                          << user << "' (" << user_cfg->getPosition() << ")");
+            }
+        }
+
+        // user file.
+        string user_file;
+        if (user_file_cfg) {
+            if (user_file_cfg->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "user-file must be a string ("
+                          << user_file_cfg->getPosition() << ")");
+            }
+            user_file = user_file_cfg->stringValue();
+            user = getFileContent(user_file);
+            if (user.empty()) {
+                isc_throw(DhcpConfigError, "user must be not be empty "
+                          << "from user-file '" << user_file << "' ("
+                          << user_file_cfg->getPosition() << ")");
+            }
+            if (user.find(':') != string::npos) {
+                isc_throw(DhcpConfigError, "user must not contain a ':' "
+                          << "from user-file '" << user_file << "' ("
+                          << user_file_cfg->getPosition() << ")");
+            }
+        }
+
+        // Solve password file.
+        if (password_file_cfg) {
+            if (password_file_only) {
+                string content = getFileContent(password_file);
+                auto pos = content.find(':');
+                if (pos == string::npos) {
+                    isc_throw(DhcpConfigError, "can't find the user id part "
+                              << "in password-file '" << password_file << "' ("
+                              << password_file_cfg->getPosition() << ")");
+                }
+                user = content.substr(0, pos);
+                password = content.substr(pos + 1);
+            } else {
+                password = getFileContent(password_file);
+            }
         }
 
         // user context
@@ -192,7 +358,8 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
 
         // add it.
         try {
-            add(user, password, user_context);
+            add(user, user_file, password, password_file, password_file_only,
+                user_context);
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << client->getPosition() << ")");

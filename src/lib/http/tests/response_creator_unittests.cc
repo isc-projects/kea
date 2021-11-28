@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,7 +142,7 @@ class HttpResponseCreatorAuthTest : public LogContentTest { };
 TEST_F(HttpResponseCreatorAuthTest, noAuth) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
-    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    EXPECT_NO_THROW(auth_config->add("test", "", "123\xa3", ""));
     const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
     auto cred = credentials.find("dGVzdDoxMjPCow==");
     EXPECT_NE(cred, credentials.end());
@@ -179,7 +179,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
 TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
-    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    EXPECT_NO_THROW(auth_config->add("test", "", "123\xa3", ""));
     const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
     auto cred = credentials.find("dGVzdDoxMjPCow==");
     EXPECT_NE(cred, credentials.end());
@@ -219,7 +219,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
 TEST_F(HttpResponseCreatorAuthTest, badScheme) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
-    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    EXPECT_NO_THROW(auth_config->add("test", "", "123\xa3", ""));
     const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
     auto cred = credentials.find("dGVzdDoxMjPCow==");
     EXPECT_NE(cred, credentials.end());
@@ -259,7 +259,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
 TEST_F(HttpResponseCreatorAuthTest, notMatching) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
-    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    EXPECT_NO_THROW(auth_config->add("test", "", "123\xa3", ""));
     const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
     auto cred = credentials.find("dGVzdDoxMjPCow==");
     EXPECT_NE(cred, credentials.end());
@@ -299,7 +299,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
 TEST_F(HttpResponseCreatorAuthTest, matching) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr auth_config(new BasicHttpAuthConfig());
-    EXPECT_NO_THROW(auth_config->add("test", "123\xa3"));
+    EXPECT_NO_THROW(auth_config->add("test", "", "123\xa3", ""));
     const BasicHttpAuthMap& credentials = auth_config->getCredentialMap();
     auto cred = credentials.find("dGVzdDoxMjPCow==");
     EXPECT_NE(cred, credentials.end());

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param secret user:password string
-    /// @throw BadValue if secret does not contain the ';' character.
+    /// @throw BadValue if secret does not contain the ':' character.
     BasicHttpAuth(const std::string& secret);
 
     /// @brief Returns the secret.

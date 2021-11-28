@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -260,7 +260,7 @@ TEST_F(CtrlAgentResponseCreatorTest, noAuth) {
     BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
     ASSERT_NO_THROW(ctx->setAuthConfig(auth));
     auth->setRealm("ISC.ORG");
-    auth->add("foo", "bar");
+    auth->add("foo", "", "bar", "");
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
@@ -302,7 +302,7 @@ TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
     ASSERT_NO_THROW(ctx->setAuthConfig(auth));
     // In fact the realm is used only on errors... set it anyway.
     auth->setRealm("ISC.ORG");
-    auth->add("foo", "bar");
+    auth->add("foo", "", "bar", "");
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
