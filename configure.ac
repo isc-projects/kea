@@ -815,6 +815,13 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+# allow building kea programs with a PostgreSQL without OpenSSL.
+AC_ARG_ENABLE([pgsql-ssl],
+  [AS_HELP_STRING([--enable-pgsql-ssl],
+    [enable OpenSSL support in PostgreSQL [default=yes]])],
+  [pgsql_ssl=yes], [pgsql_ssl=no], [pgsql_ssl=yes])
+AC_DEFINE([HAVE_PGSQL_SSL], [1], [PostgreSQL was built with OpenSSL support])
+
 # allow building kea programs with static link to cassandra cpp-driver.
 AC_ARG_ENABLE([cql-static-lib],
   [AS_HELP_STRING([--enable-cql-static-lib],

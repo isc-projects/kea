@@ -544,7 +544,11 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"tcp-nodelay\": false, \n"
         "\"type\": \"memfile\", \n"
         "\"user\": \"user_str\", \n"
-        "\"max-row-errors\": 50 \n"
+        "\"max-row-errors\": 50, \n"
+        "\"trust-anchor\": \"my-ca\", \n"
+        "\"cert-file\": \"my-cert.crt\", \n"
+        "\"key-file\": \"my-key.key\", \n"
+        "\"cipher-list\": \"!SSLv3\" \n"
         "}\n"
     };
 

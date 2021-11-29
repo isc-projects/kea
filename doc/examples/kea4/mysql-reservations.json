@@ -63,7 +63,11 @@
     "user": "kea",
     "password": "kea",
     "host": "localhost",
-    "port": 3306
+    "port": 3306,
+    "trust-anchor": "my-ca",
+    "cert-file": "my-cert",
+    "key-file": "my-key",
+    "cipher-list": "!SSLv3"
   },
 
 // Define a subnet with a single pool of dynamic addresses. Addresses from

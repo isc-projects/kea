@@ -1092,7 +1092,7 @@ serial_consistency: SERIAL_CONSISTENCY {
 
 trust_anchor: TRUST_ANCHOR {
     ctx.unique("trust-anchor", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr ca(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("trust-anchor", ca);
@@ -1101,7 +1101,7 @@ trust_anchor: TRUST_ANCHOR {
 
 cert_file: CERT_FILE {
     ctx.unique("cert-file", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cert(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("cert-file", cert);
@@ -1110,7 +1110,7 @@ cert_file: CERT_FILE {
 
 key_file: KEY_FILE {
     ctx.unique("key-file", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr key(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("key-file", key);
@@ -1119,7 +1119,7 @@ key_file: KEY_FILE {
 
 cipher_list: CIPHER_LIST {
     ctx.unique("cipher-list", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cl(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("cipher-list", cl);

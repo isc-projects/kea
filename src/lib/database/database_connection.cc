@@ -259,7 +259,11 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "consistency") ||
                    (keyword == "serial-consistency") ||
                    (keyword == "keyspace") ||
-                   (keyword == "on-fail")) {
+                   (keyword == "on-fail") ||
+                   (keyword == "trust-anchor") ||
+                   (keyword == "cert-file") ||
+                   (keyword == "key-file") ||
+                   (keyword == "cipher-list")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
             LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)

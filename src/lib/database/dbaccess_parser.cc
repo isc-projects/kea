@@ -117,6 +117,10 @@ DbAccessParser::parse(std::string& access_string,
                 // consistency
                 // serial-consistency
                 // on-fail
+                // trust-anchor
+                // cert-file
+                // key-file
+                // cipher-list
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {

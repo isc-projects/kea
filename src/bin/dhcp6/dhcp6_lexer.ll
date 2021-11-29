@@ -829,12 +829,12 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"trust-anchor\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::LEASE_DATABASE:
-    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_TRUST_ANCHOR(driver.loc_);
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_TRUST_ANCHOR(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("trust-anchor", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("trust-anchor", driver.loc_);
     }
 }
 

@@ -583,6 +583,19 @@ Use the following command to perform an upgrade:
 
    $ kea-admin db-upgrade pgsql -u database-user -p database-password -n database-name
 
+.. _pgsl-ssl:
+
+PostgreSQL without OpenSSL support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usually the PostgreSQL database client library is built with the OpenSSL
+support but in the case it was not Kea can be configured to handle this
+case:
+
+.. code-block:: console
+
+   $ ./configure [other-options] --disable-pgsql-ssl 
+
 .. _cql-database:
 
 Cassandra
