@@ -84,6 +84,7 @@ extern const isc::log::MessageID DHCPSRV_CQL_HOST_GET4 = "DHCPSRV_CQL_HOST_GET4"
 extern const isc::log::MessageID DHCPSRV_CQL_HOST_GET6 = "DHCPSRV_CQL_HOST_GET6";
 extern const isc::log::MessageID DHCPSRV_CQL_HOST_GET_ALL = "DHCPSRV_CQL_HOST_GET_ALL";
 extern const isc::log::MessageID DHCPSRV_CQL_LEASE_EXCEPTION_THROWN = "DHCPSRV_CQL_LEASE_EXCEPTION_THROWN";
+extern const isc::log::MessageID DHCPSRV_CQL_NO_TLS_SUPPORT = "DHCPSRV_CQL_NO_TLS_SUPPORT";
 extern const isc::log::MessageID DHCPSRV_CQL_ROLLBACK = "DHCPSRV_CQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR4 = "DHCPSRV_CQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_CQL_UPDATE_ADDR6 = "DHCPSRV_CQL_UPDATE_ADDR6";
@@ -198,8 +199,10 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
 extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED = "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT = "DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT";
+extern const isc::log::MessageID DHCPSRV_MYSQL_NO_TLS = "DHCPSRV_MYSQL_NO_TLS";
 extern const isc::log::MessageID DHCPSRV_MYSQL_ROLLBACK = "DHCPSRV_MYSQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION = "DHCPSRV_MYSQL_START_TRANSACTION";
+extern const isc::log::MessageID DHCPSRV_MYSQL_TLS_CIPHER = "DHCPSRV_MYSQL_TLS_CIPHER";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR4 = "DHCPSRV_MYSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR6 = "DHCPSRV_MYSQL_UPDATE_ADDR6";
 extern const isc::log::MessageID DHCPSRV_NOTYPE_DB = "DHCPSRV_NOTYPE_DB";
@@ -245,8 +248,10 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
 extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED = "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT = "DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT";
+extern const isc::log::MessageID DHCPSRV_PGSQL_NO_TLS_SUPPORT = "DHCPSRV_PGSQL_NO_TLS_SUPPORT";
 extern const isc::log::MessageID DHCPSRV_PGSQL_ROLLBACK = "DHCPSRV_PGSQL_ROLLBACK";
 extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION = "DHCPSRV_PGSQL_START_TRANSACTION";
+extern const isc::log::MessageID DHCPSRV_PGSQL_TLS_SUPPORT = "DHCPSRV_PGSQL_TLS_SUPPORT";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR4 = "DHCPSRV_PGSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR6 = "DHCPSRV_PGSQL_UPDATE_ADDR6";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR = "DHCPSRV_QUEUE_NCR";
@@ -345,6 +350,7 @@ const char* values[] = {
     "DHCPSRV_CQL_HOST_GET6", "Retrieving one DHCPv6 host from a CQL database",
     "DHCPSRV_CQL_HOST_GET_ALL", "Retrieving multiple hosts from a CQL database",
     "DHCPSRV_CQL_LEASE_EXCEPTION_THROWN", "Exception thrown during Cassandra operation: %1",
+    "DHCPSRV_CQL_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for CQL): %1",
     "DHCPSRV_CQL_ROLLBACK", "rolling back Cassandra database.",
     "DHCPSRV_CQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_CQL_UPDATE_ADDR6", "updating IPv6 lease for address %1",
@@ -459,8 +465,10 @@ const char* values[] = {
     "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
+    "DHCPSRV_MYSQL_NO_TLS", "TLS was required but is not used",
     "DHCPSRV_MYSQL_ROLLBACK", "rolling back MySQL database",
     "DHCPSRV_MYSQL_START_TRANSACTION", "starting new MySQL transaction",
+    "DHCPSRV_MYSQL_TLS_CIPHER", "TLS cipher: %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
     "DHCPSRV_NOTYPE_DB", "no 'type' keyword to determine database backend: %1",
@@ -506,8 +514,10 @@ const char* values[] = {
     "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
+    "DHCPSRV_PGSQL_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "DHCPSRV_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DHCPSRV_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
+    "DHCPSRV_PGSQL_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
     "DHCPSRV_QUEUE_NCR", "%1: Name change request to %2 DNS entry queued: %3",

@@ -39,6 +39,8 @@ const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
+bool PgSqlConnection::warned_about_tls = false;
+
 PgSqlResult::PgSqlResult(PGresult *result)
     : result_(result), rows_(0), cols_(0) {
     if (!result) {

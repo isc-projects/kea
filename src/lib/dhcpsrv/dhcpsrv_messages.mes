@@ -406,6 +406,11 @@ An informational message logged when multiple hosts from a CQL database are retr
 
 % DHCPSRV_CQL_LEASE_EXCEPTION_THROWN Exception thrown during Cassandra operation: %1
 
+% DHCPSRV_CQL_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for CQL): %1
+This error message is printed when TLS support was required in the Kea
+configuration: this feature is not supported for Cassandra/CQL. The
+parameters of the connection are logged.
+
 % DHCPSRV_CQL_ROLLBACK rolling back Cassandra database.
 The code has issued a rollback call. For Cassandra, this is a no-op.
 
@@ -979,6 +984,10 @@ in the MySQL database returned a negative value. This shows a problem
 which can be fixed only by an offline direct recount on the database.
 This message is issued only once.
 
+% DHCPSRV_MYSQL_NO_TLS TLS was required but is not used
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
 % DHCPSRV_MYSQL_ROLLBACK rolling back MySQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
@@ -991,6 +1000,10 @@ transactions in this case. This message is issued when data is
 inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
+
+% DHCPSRV_MYSQL_TLS_CIPHER TLS cipher: %1
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
 
 % DHCPSRV_MYSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
@@ -1203,6 +1216,11 @@ in the PostgreSQL database returned a negative value. This shows a problem
 which can be fixed only by an offline direct recount on the database.
 This message is issued only once.
 
+% DHCPSRV_PGSQL_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature was disabled for PostgreSQL.
+The parameters of the connection are logged.
+
 % DHCPSRV_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
@@ -1215,6 +1233,12 @@ transactions in this case. This message is issued when data is
 inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
+
+% DHCPSRV_PGSQL_TLS_SUPPORT Attempt to configure TLS: %1
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
 
 % DHCPSRV_PGSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4

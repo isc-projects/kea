@@ -2227,6 +2227,28 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
 
+    // Check TLS support.
+    size_t tls(0);
+    tls += parameters.count("trust-anchor");
+    tls += parameters.count("cert-file");
+    tls += parameters.count("key-file");
+    tls += parameters.count("cipher-list");
+#ifdef HAVE_PGSQL_SSL
+    if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
+        PgSqlConnection::warned_about_tls = true;
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_TLS_SUPPORT)
+            .arg(DatabaseConnection::redactedAccessString(parameters_));
+        PQinitSSL(1);
+    }
+#else
+    if (tls > 0) {
+        LOG_ERR(dhcpsrv_logger, DHCPSRV_PGSQL_NO_TLS_SUPPORT)
+            .arg(DatabaseConnection::redactedAccessString(parameters_));
+        isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
+                  << "backend (built with this feature disabled)");
+    }
+#endif
+
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
                                                PG_SCHEMA_VERSION_MINOR);
