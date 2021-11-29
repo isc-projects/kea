@@ -90,6 +90,10 @@ using namespace std;
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
   MAX_ROW_ERRORS "max-row-errors"
+  TRUST_ANCHOR "trust-anchor"
+  CERT_FILE "cert-file"
+  KEY_FILE "key-file"
+  CIPHER_LIST "cipher-list"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   MIN_PREFERRED_LIFETIME "min-preferred-lifetime"
@@ -914,6 +918,10 @@ database_map_param: database_type
                   | consistency
                   | serial_consistency
                   | max_row_errors
+                  | trust_anchor
+                  | cert_file
+                  | key_file
+                  | cipher_list
                   | unknown_map_entry
                   ;
 
@@ -1079,6 +1087,42 @@ serial_consistency: SERIAL_CONSISTENCY {
 } COLON STRING {
     ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("serial-consistency", c);
+    ctx.leave();
+};
+
+trust_anchor: TRUST_ANCHOR {
+    ctx.unique("trust-anchor", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr ca(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("trust-anchor", ca);
+    ctx.leave();
+};
+
+cert_file: CERT_FILE {
+    ctx.unique("cert-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr cert(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("cert-file", cert);
+    ctx.leave();
+};
+
+key_file: KEY_FILE {
+    ctx.unique("key-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr key(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("key-file", key);
+    ctx.leave();
+};
+
+cipher_list: CIPHER_LIST {
+    ctx.unique("cipher-list", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr cl(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("cipher-list", cl);
     ctx.leave();
 };
 

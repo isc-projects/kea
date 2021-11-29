@@ -827,6 +827,50 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"trust-anchor\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TRUST_ANCHOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("trust-anchor", driver.loc_);
+    }
+}
+
+\"cert-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_CERT_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cert-file", driver.loc_);
+    }
+}
+
+\"key-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_KEY_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("key-file", driver.loc_);
+    }
+}
+
+\"cipher-list\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_CIPHER_LIST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cipher-list", driver.loc_);
+    }
+}
+
 \"preferred-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
