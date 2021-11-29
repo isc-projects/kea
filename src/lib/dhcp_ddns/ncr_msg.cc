@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +99,32 @@ D2Dhcid::toStr() const {
 void
 D2Dhcid::fromClientId(const std::vector<uint8_t>& clientid_data,
                       const std::vector<uint8_t>& wire_fqdn) {
-    createDigest(DHCID_ID_CLIENTID, clientid_data, wire_fqdn);
+    // IPv4 Client ID containing a DUID looks like this in RFC4361
+    //  Type  IAID                DUID
+    // +-----+----+----+----+----+----+----+---
+    // | 255 | i1 | i2 | i3 | i4 | d1 | d2 |...
+    // +-----+----+----+----+----+----+----+---
+    if (!clientid_data.empty() && clientid_data[0] == 255) {
+        if (clientid_data.size() <= 5) {
+            isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
+                      "unable to compute DHCID from client identifier, embedded DUID "
+                      "length of: " << clientid_data.size() << ", is too short");
+        }
+        // RFC3315 states that the DUID is a type code of 2 octets followed
+        // by no more then 128 octets. So add the 5 from above and make sure
+        // the length is not too long.
+        if (clientid_data.size() > 135) {
+            isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
+                      "unable to compute DHCID from client identifier, embedded DUID "
+                      "length of: " << clientid_data.size() << ", is too long");
+        }
+        std::vector<uint8_t>::const_iterator start = clientid_data.begin() + 5;
+        std::vector<uint8_t>::const_iterator end = clientid_data.end();
+        std::vector<uint8_t> duid(start, end);
+        createDigest(DHCID_ID_DUID, duid, wire_fqdn);
+    } else {
+        createDigest(DHCID_ID_CLIENTID, clientid_data, wire_fqdn);
+    }
 }
 
 void
@@ -346,7 +371,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
 
     // For backward compatibility  use-conflict-resolution is optional
     // and defaults to true.
-    auto found = element_map.find("use-conflict-resolution"); 
+    auto found = element_map.find("use-conflict-resolution");
     if (found != element_map.end()) {
         ncr->setConflictResolution(found->second);
     } else {

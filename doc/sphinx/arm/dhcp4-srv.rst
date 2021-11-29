@@ -3666,7 +3666,10 @@ ones are:
    information stored in DHCPv4 and DHCPv6 servers for a particular
    host. Using common identification information by the DHCPv4 and
    DHCPv6 clients allows the network administrator to achieve this
-   correlation and better administer the network.
+   correlation and better administer the network.  Beginning with
+   release 2.1.2, Kea supports DHCPv6 DUIDs embedded within DHCPv4
+   Client Identifier options as described in
+   `RFC 4361 <https://tools.ietf.org/html/rfc4361>`__.
 
 DHCPv4 uses two distinct identifiers which are placed by the client in
 the queries sent to the server and copied by the server to its responses

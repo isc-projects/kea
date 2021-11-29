@@ -1,3 +1,11 @@
+1971.   [func]      tmark,jad
+	Added support for embedded DHCPv6 DUIDs within DHCPv4
+	Client Identifier options per RFC 4361.  This allows
+	Kea to support DDNS in dual stack environments per
+	RFC 4703(Sec 5.2). Thanks to John Dickinson for
+	contributing the patch!
+	(Gitlab #1934)
+
 Kea 2.1.1 (development) released on Nov 24, 2021
 
 1970.	[build]		razvan

@@ -79,7 +79,7 @@ the configuration parameter ``ddns-use-conflict-resolution``, supported
 by both ``kea-dhcp4`` and ``kea-dhcp6``. These servers use this parameter to
 set a flag within each NameChangeRequest they send that tells D2
 whether conflict resolution should be employed for that request.
-By default, conflict resolution is enabled. For more details, please refer 
+By default, conflict resolution is enabled. For more details, please refer
 to discussions of ``ddns-use-conflict-resolution`` in :ref:`dhcp4-ddns-config` and :ref:`dhcp6-ddns-config`.
 
 When conflict resolution is disabled, D2 still adds DHCID RRs but does
@@ -97,9 +97,9 @@ issues that may arise with dual-stack clients. These are clients that
 wish to have both IPv4 and IPv6 mappings for the same FQDN.
 To work properly, clients must embed their IPv6 DUID
 within their IPv4 client identifier option, as described in `RFC
-4703 <https://tools.ietf.org/html/rfc4361>`__. In this way, DNS updates
-for both IPv4 and IPv6 can be managed under the same DHCID RR. Kea does not
-currently support this feature.
+4361 <https://tools.ietf.org/html/rfc4361>`__. In this way, DNS updates
+for both IPv4 and IPv6 can be managed under the same DHCID RR. This feature
+is supported by Kea beginning with release 2.1.2.
 
 .. _dhcp-ddns-server-start-stop:
 

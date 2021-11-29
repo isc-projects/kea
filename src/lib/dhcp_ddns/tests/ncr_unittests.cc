@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -453,6 +453,48 @@ TEST_F(DhcidTest, fromClientId) {
                  isc::dhcp_ddns::DhcidRdataComputeError);
 
 
+}
+
+// This test verifies that DHCID is properly computed from a buffer holding
+// client identifier data that contains a DUID.
+TEST_F(DhcidTest, fromClientIdDUID) {
+    D2Dhcid dhcid;
+
+    // Create a buffer holding client id..
+    uint8_t clientid_data[] = { 0xff, 0x5d, 0xe2, 0x6c, 0x15, 0x00, 0x02,
+        0x00, 0x00, 0xab, 0x11, 0x9a, 0x57, 0x20, 0x95, 0x71, 0x61, 0xbd, 0xd0 };
+    std::vector<uint8_t> clientid(clientid_data,
+                                  clientid_data + sizeof(clientid_data));
+
+    // Create DHCID.
+    ASSERT_NO_THROW(dhcid.fromClientId(clientid, wire_fqdn_));
+
+    // The reference DHCID (represented as string of hexadecimal digits)
+    std::string dhcid_ref = "000201A250D060B9352AE68E5014B78D25"
+        "1C30EFB0D5F64E48303B2BC56E6938F129E7";
+
+    // Make sure that the DHCID is valid.
+    EXPECT_EQ(dhcid_ref, dhcid.toStr());
+
+    // Make sure that a too long client identifier is not accepted.
+    clientid.resize(136);
+    EXPECT_THROW_MSG(dhcid.fromClientId(clientid, wire_fqdn_),
+                     isc::dhcp_ddns::DhcidRdataComputeError,
+                     "unable to compute DHCID from client identifier,"
+                     " embedded DUID length of: 136, is too long");
+
+    // Make sure that a too short client identifier is not accepted.
+    clientid.resize(5);
+    EXPECT_THROW_MSG(dhcid.fromClientId(clientid, wire_fqdn_),
+                     isc::dhcp_ddns::DhcidRdataComputeError,
+                     "unable to compute DHCID from client identifier,"
+                     " embedded DUID length of: 5, is too short");
+
+    // Make sure an empty client identifier is not accepted.
+    clientid.clear();
+    EXPECT_THROW_MSG(dhcid.fromClientId(clientid, wire_fqdn_),
+                     isc::dhcp_ddns::DhcidRdataComputeError,
+                     "empty DUID used to create DHCID");
 }
 
 // This test verifies that DHCID is properly computed from a HW address.

@@ -235,3 +235,8 @@ We have received the following contributions:
 
  - Brad Smith
    2021-08: compilation fix for upcoming boost 1.77
+
+ - John Dickinson
+   2021-11: Patch that adds support for v6 DUIDs to be embedded in v4 client
+            identifiers per RFC 4361.  This allows Kea to support DDNS for
+            dual-stack clients per RFC 4703.
