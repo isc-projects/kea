@@ -2802,6 +2802,18 @@ MySqlHostDataSourceImpl::createContext() const {
     // Open the database.
     ctx->conn_.openDatabase();
 
+    // Check if we have TLS when we required it.
+    if (ctx->conn_.getTls()) {
+        std::string cipher = ctx->conn_.getTlsCipher();
+        if (cipher.empty()) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_NO_TLS);
+        } else {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_MYSQL_TLS_CIPHER)
+                .arg(cipher);
+        }
+    }
+
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.

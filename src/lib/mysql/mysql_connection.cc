@@ -16,6 +16,21 @@
 #include <stdint.h>
 #include <string>
 #include <limits>
+#include <sys/stat.h>
+
+namespace { // anonymous namespace
+
+// C++17 has this function but Kea is still C++11 so provide it.
+bool
+isDir(const std::string& name) {
+    struct stat stats;
+    if (::stat(name.c_str(), &stats) < 0) {
+        return (false);
+    }
+    return ((stats.st_mode & S_IFMT) == S_IFDIR);
+}
+
+} // end of namespace
 
 using namespace isc;
 using namespace std;
@@ -48,7 +63,6 @@ MySqlTransaction::commit() {
     conn_.commit();
     committed_ = true;
 }
-
 
 // Open the database using the parameters passed to the constructor.
 
@@ -156,6 +170,51 @@ MySqlConnection::openDatabase() {
         }
     }
 
+    const char* ca_file(0);
+    const char* ca_dir(0);
+    string sca;
+    try {
+        sca = getParameter("trust-anchor");
+        tls_ = true;
+        if (isDir(sca)) {
+            ca_dir = sca.c_str();
+        } else {
+            ca_file = sca.c_str();
+        }
+    } catch (...) {
+        // No trust anchor
+    }
+
+    const char* cert_file(0);
+    string scert;
+    try {
+        scert = getParameter("cert-file");
+        tls_ = true;
+        cert_file = scert.c_str();
+    } catch (...) {
+        // No client certificate file
+    }
+
+    const char* key_file(0);
+    string skey;
+    try {
+        skey = getParameter("key-file");
+        tls_ = true;
+        key_file = skey.c_str();
+    } catch (...) {
+        // No private key file
+    }
+
+    const char* cipher_list(0);
+    string scipher;
+    try {
+        scipher = getParameter("cipher-list");
+        tls_ = true;
+        cipher_list = scipher.c_str();
+    } catch (...) {
+        // No cipher list
+    }
+
     // Set options for the connection:
     //
     // Set options for the connection:
@@ -194,6 +253,13 @@ MySqlConnection::openDatabase() {
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set database connection timeout: " <<
                   mysql_error(mysql_));
+    }
+
+    // If TLS is enabled set it. If something should go wrong it will be later
+    // at the mysql_real_connect call.
+    if (tls_) {
+        mysql_ssl_set(mysql_, key_file, cert_file, ca_file, ca_dir,
+                      cipher_list);
     }
 
     // Open the database.

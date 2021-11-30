@@ -250,7 +250,7 @@ public:
                     DbCallback callback = DbCallback())
         : DatabaseConnection(parameters, callback),
           io_service_accessor_(io_accessor), io_service_(),
-          transaction_ref_count_(0) {
+          transaction_ref_count_(0), tls_(false) {
     }
 
     /// @brief Destructor
@@ -697,6 +697,21 @@ public:
         }
     }
 
+    /// @brief Get the TLS flag.
+    ///
+    /// @return True if TLS was required, false otherwise.
+    bool getTls() const {
+        return (tls_);
+    }
+
+    /// @brief Get the TLS cipher
+    ///
+    /// This method is used to check if required TLS was setup.
+    std::string getTlsCipher() {
+        const char* cipher = mysql_get_ssl_cipher(mysql_);
+        return (cipher ? std::string(cipher) : "");
+    }
+
     /// @brief Prepared statements
     ///
     /// This field is public, because it is used heavily from MySqlConnection
@@ -734,6 +749,9 @@ public:
     /// started. We want to not start new transactions when one is already
     /// in progress.
     int transaction_ref_count_;
+
+    /// @brief TLS flag (true when TLS was required, false otherwise).
+    bool tls_;
 };
 
 } // end of isc::db namespace
