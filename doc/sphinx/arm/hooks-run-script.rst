@@ -3,11 +3,11 @@
 Run Script Support
 ==================
 
-This hooks library adds support for calling an external script for specific
-packet processing hook points.
+This hook library adds support for calling an external script for specific
+packet-processing hook points.
 
-The library is available since Kea 1.9.5 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhcp4`` and
+The library, which was added in Kea 1.9.5, can be loaded in a
+similar way to other hook libraries by the ``kea-dhcp4`` and
 ``kea-dhcp6`` processes.
 
 .. code-block:: json
@@ -24,12 +24,12 @@ similar way as other hook libraries by the ``kea-dhcp4`` and
         ]
     }
 
-The parameters contain the 'name' which indicates the full path to the external
-script to be called on each hookpoint, and also the 'sync' option to be able
+The parameters contain the ``name``, which indicates the full path to the external
+script to be called on each hook point, and also the ``sync`` option, to be able
 to wait synchronously for the script to finish execution.
-If the 'sync' parameter is false, then the script will be launched and Kea
+If the ``sync`` parameter is ``false``, then the script will launch and Kea
 will not wait for the execution to finish, causing all the OUT parameters of
-the script (including next step) to be ignored.
+the script (including the next step) to be ignored.
 
 .. note::
 
@@ -37,13 +37,12 @@ the script (including next step) to be ignored.
 
 .. note::
 
-   Currently the functionality underneath 'sync' parameter is not implemented
-   and enabling synchronous calls to external scripts is not supported.
+   Currently, enabling synchronous calls to external scripts is not supported.
 
 .. _hooks-run-script-hook-points:
 
-This library has several hook points functions implemented which will be
-called at the specific packet processing stage.
+This library has several hook-point functions implemented, which are
+called at the specific packet-processing stage.
 
 The dhcpv4 hook points:
 
@@ -75,7 +74,7 @@ using the child process environment.
 The only parameter passed to the call of the target script is the name of
 the hook point.
 
-An example of a script implementing all hook points is presented below.
+An example of a script implementing all hook points is presented below:
 
 ::
 
@@ -191,7 +190,7 @@ Available parameters for each hook point are presented below.
 
 DHCPv4:
 
-lease4_renew
+``lease4_renew``
 
 ::
 
@@ -237,7 +236,7 @@ lease4_renew
    LEASE4_VALID_LIFETIME
    LEASE4_CLIENT_ID
 
-lease4_expire
+``lease4_expire``
 
 ::
 
@@ -252,7 +251,7 @@ lease4_expire
    LEASE4_CLIENT_ID
    REMOVE_LEASE
 
-lease4_recover
+``lease4_recover``
 
 ::
 
@@ -266,7 +265,7 @@ lease4_recover
    LEASE4_VALID_LIFETIME
    LEASE4_CLIENT_ID
 
-leases4_committed
+``leases4_committed``
 
 ::
 
@@ -298,8 +297,8 @@ leases4_committed
    LEASES4_SIZE
    DELETED_LEASES4_SIZE
 
-If LEASES4_SIZE or DELETED_LEASES4_SIZE are non zero, then each lease
-will have its own unique identifier as shown below. First index starts
+If ``LEASES4_SIZE`` or ``DELETED_LEASES4_SIZE`` is non-zero, then each lease
+has its own unique identifier, as shown below. The first index starts
 at 0.
 
 ::
@@ -323,7 +322,7 @@ at 0.
    DELETED_LEASES4_AT0_VALID_LIFETIME
    DELETED_LEASES4_AT0_CLIENT_ID
 
-lease4_release
+``lease4_release``
 
 ::
 
@@ -362,7 +361,7 @@ lease4_release
    LEASE4_VALID_LIFETIME
    LEASE4_CLIENT_ID
 
-lease4_decline
+``lease4_decline``
 
 ::
 
@@ -403,7 +402,7 @@ lease4_decline
 
 DHCPv6:
 
-lease6_renew
+``lease6_renew``
 
 ::
 
@@ -437,7 +436,7 @@ lease6_renew
    PKT6_IA_IA_T1
    PKT6_IA_IA_T2
 
-lease6_rebind
+``lease6_rebind``
 
 ::
 
@@ -471,7 +470,7 @@ lease6_rebind
    PKT6_IA_IA_T1
    PKT6_IA_IA_T2
 
-lease6_expire
+``lease6_expire``
 
 ::
 
@@ -490,7 +489,7 @@ lease6_expire
    LEASE6_TYPE
    REMOVE_LEASE
 
-lease6_recover
+``lease6_recover``
 
 ::
 
@@ -508,7 +507,7 @@ lease6_recover
    LEASE6_PREFIX_LEN
    LEASE6_TYPE
 
-leases6_committed
+``leases6_committed``
 
 ::
 
@@ -527,8 +526,8 @@ leases6_committed
    LEASES6_SIZE
    DELETED_LEASES6_SIZE
 
-If LEASES6_SIZE or DELETED_LEASES6_SIZE are non zero, then each lease
-will have its own unique identifier as shown below. First index starts
+If ``LEASES6_SIZE`` or ``DELETED_LEASES6_SIZE`` is non-zero, then each lease
+has its own unique identifier, as shown below. The first index starts
 at 0.
 
 ::
@@ -560,7 +559,7 @@ at 0.
    DELETED_LEASES6_AT0_PREFIX_LEN
    DELETED_LEASES6_AT0_TYPE
 
-lease6_release
+``lease6_release``
 
 ::
 
@@ -590,7 +589,7 @@ lease6_release
    LEASE6_PREFIX_LEN
    LEASE6_TYPE
 
-lease6_decline
+``lease6_decline``
 
 ::
 
