@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <pgsql/pgsql_exchange.h>
-#include <pgsql/pgsql_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>

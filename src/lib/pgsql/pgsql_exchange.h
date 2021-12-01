@@ -8,13 +8,14 @@
 #define PGSQL_EXCHANGE_H
 
 #include <asiolink/io_address.h>
-#include <pgsql/pgsql_connection.h>
+#include <database/database_connection.h>
 #include <util/triplet.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <libpq-fe.h>
 
 #include <stdint.h>
 #include <vector>
@@ -22,6 +23,110 @@
 
 namespace isc {
 namespace db {
+
+/// @}
+
+/// @brief RAII wrapper for PostgreSQL Result sets
+///
+/// When a Postgresql statement is executed, the results are returned
+/// in pointer allocated structure, PGresult*. Data and status information
+/// are accessed via calls to functions such as PQgetvalue() which require
+/// the results pointer.  In order to ensure this structure is freed, any
+/// invocation of Psql function which returns a PGresult* (e.g. PQexec and
+
+/// class. Examples:
+/// {{{
+///       PgSqlResult r(PQexec(conn_, "ROLLBACK"));
+/// }}}
+///
+/// This eliminates the need for an explicit release via, PQclear() and
+/// guarantees that the resources are released even if the an exception is
+/// thrown.
+
+class PgSqlResult : public boost::noncopyable {
+public:
+    /// @brief Constructor
+    ///
+    /// Store the pointer to the result set to being fetched.  Set row
+    /// and column counts for convenience.
+    ///
+    /// @param result - pointer to the Postgresql client layer result
+    /// If the value of is NULL, row and col values will be set to -1.
+    /// This allows PgSqlResult to be passed into statement error
+    /// checking.
+    PgSqlResult(PGresult *result);
+
+    /// @brief Destructor
+    ///
+    /// Frees the result set
+    ~PgSqlResult();
+
+    /// @brief Returns the number of rows in the result set.
+    int getRows() const {
+        return (rows_);
+    }
+
+    /// @brief Returns the number of columns in the result set.
+    int getCols() const {
+        return (cols_);
+    }
+
+    /// @brief Determines if a row index is valid
+    ///
+    /// @param row index to range check
+    ///
+    /// @throw DbOperationError if the row index is out of range
+    void rowCheck(int row) const;
+
+    /// @brief Determines if a column index is valid
+    ///
+    /// @param col index to range check
+    ///
+    /// @throw DbOperationError if the column index is out of range
+    void colCheck(int col) const;
+
+    /// @brief Determines if both a row and column index are valid
+    ///
+    /// @param row index to range check
+    /// @param col index to range check
+    ///
+    /// @throw DbOperationError if either the row or column index
+    /// is out of range
+    void rowColCheck(int row, int col) const;
+
+    /// @brief Fetches the name of the column in a result set
+    ///
+    /// Returns the column name of the column from the result set.
+    /// If the column index is out of range it will return the
+    /// string "Unknown column:<index>"
+    ///
+    /// @param col index of the column name to fetch
+    /// @return string containing the name of the column
+    /// This method is exception safe.
+    std::string getColumnLabel(const int col) const;
+
+    /// @brief Conversion Operator
+    ///
+    /// Allows the PgSqlResult object to be passed as the result set argument to
+    /// PQxxxx functions.
+    operator PGresult*() const {
+        return (result_);
+    }
+
+    /// @brief Boolean Operator
+    ///
+    /// Allows testing the PgSqlResult object for emptiness: "if (result)"
+    operator bool() const {
+        return (result_);
+    }
+
+private:
+    PGresult*     result_;     ///< Result set to be freed
+    int rows_;   ///< Number of rows in the result set
+    int cols_;   ///< Number of columns in the result set
+};
+
+typedef boost::shared_ptr<PgSqlResult> PgSqlResultPtr;
 
 /// @brief Structure used to bind C++ input values to dynamic SQL parameters
 /// The structure contains three vectors which store the input values,

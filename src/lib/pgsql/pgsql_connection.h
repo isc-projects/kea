@@ -7,9 +7,8 @@
 #define PGSQL_CONNECTION_H
 
 #include <asiolink/io_service.h>
-#include <database/database_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
-#include <libpq-fe.h>
 #include <boost/scoped_ptr.hpp>
 
 #include <vector>
@@ -65,107 +64,6 @@ const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
 const size_t OID_TIMESTAMP = 1114;
 /// @}
-
-/// @brief RAII wrapper for PostgreSQL Result sets
-///
-/// When a Postgresql statement is executed, the results are returned
-/// in pointer allocated structure, PGresult*. Data and status information
-/// are accessed via calls to functions such as PQgetvalue() which require
-/// the results pointer.  In order to ensure this structure is freed, any
-/// invocation of Psql function which returns a PGresult* (e.g. PQexec and
-
-/// class. Examples:
-/// {{{
-///       PgSqlResult r(PQexec(conn_, "ROLLBACK"));
-/// }}}
-///
-/// This eliminates the need for an explicit release via, PQclear() and
-/// guarantees that the resources are released even if the an exception is
-/// thrown.
-
-class PgSqlResult : public boost::noncopyable {
-public:
-    /// @brief Constructor
-    ///
-    /// Store the pointer to the result set to being fetched.  Set row
-    /// and column counts for convenience.
-    ///
-    /// @param result - pointer to the Postgresql client layer result
-    /// If the value of is NULL, row and col values will be set to -1.
-    /// This allows PgSqlResult to be passed into statement error
-    /// checking.
-    PgSqlResult(PGresult *result);
-
-    /// @brief Destructor
-    ///
-    /// Frees the result set
-    ~PgSqlResult();
-
-    /// @brief Returns the number of rows in the result set.
-    int getRows() const {
-        return (rows_);
-    }
-
-    /// @brief Returns the number of columns in the result set.
-    int getCols() const {
-        return (cols_);
-    }
-
-    /// @brief Determines if a row index is valid
-    ///
-    /// @param row index to range check
-    ///
-    /// @throw DbOperationError if the row index is out of range
-    void rowCheck(int row) const;
-
-    /// @brief Determines if a column index is valid
-    ///
-    /// @param col index to range check
-    ///
-    /// @throw DbOperationError if the column index is out of range
-    void colCheck(int col) const;
-
-    /// @brief Determines if both a row and column index are valid
-    ///
-    /// @param row index to range check
-    /// @param col index to range check
-    ///
-    /// @throw DbOperationError if either the row or column index
-    /// is out of range
-    void rowColCheck(int row, int col) const;
-
-    /// @brief Fetches the name of the column in a result set
-    ///
-    /// Returns the column name of the column from the result set.
-    /// If the column index is out of range it will return the
-    /// string "Unknown column:<index>"
-    ///
-    /// @param col index of the column name to fetch
-    /// @return string containing the name of the column
-    /// This method is exception safe.
-    std::string getColumnLabel(const int col) const;
-
-    /// @brief Conversion Operator
-    ///
-    /// Allows the PgSqlResult object to be passed as the result set argument to
-    /// PQxxxx functions.
-    operator PGresult*() const {
-        return (result_);
-    }
-
-    /// @brief Boolean Operator
-    ///
-    /// Allows testing the PgSqlResult object for emptiness: "if (result)"
-    operator bool() const {
-        return (result_);
-    }
-
-private:
-    PGresult*     result_;     ///< Result set to be freed
-    int rows_;   ///< Number of rows in the result set
-    int cols_;   ///< Number of columns in the result set
-};
-
 
 /// @brief Postgresql connection handle Holder
 ///
@@ -302,6 +200,9 @@ public:
     /// @brief Define the PgSql error state for a duplicate key error.
     static const char DUPLICATE_KEY[];
 
+    /// @brief Function invoked to process fetched row.
+    typedef std::function<void(PgSqlResult&, int)> ConsumeResultRowFun;
+
     /// @brief Constructor
     ///
     /// Initialize PgSqlConnection object with parameters needed for connection.
@@ -436,6 +337,58 @@ public:
             }
         }
     }
+
+    /// @brief Executes SELECT query using prepared statement.
+    ///
+    /// The statement parameter refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided input bindings and
+    /// calls @c process_result_row function for each returned row. The
+    /// @c process_result function is implemented by the caller and should
+    /// gather and store each returned row in an external data structure prior.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings input bindings holding values to substitue placeholders
+    /// in the query.
+    /// @param process_result_row Pointer to the function to be invoked for each
+    /// retrieved row. This function consumes the retrieved data from the
+    /// result set.
+    void selectQuery(PgSqlTaggedStatement& statement,
+                     const PsqlBindArray& in_bindings,
+                     ConsumeResultRowFun process_result_row);
+
+    /// @brief Executes INSERT prepared statement.
+    ///
+    /// The @c statement must refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided bindings to
+    /// insert data into the database.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings input bindings holding values to substitue placeholders
+    /// in the query.
+    void insertQuery(PgSqlTaggedStatement& statement,
+                     const PsqlBindArray& in_bindings);
+
+
+    /// @brief Executes UPDATE or DELETE prepared statement and returns
+    /// the number of affected rows.
+    ///
+    /// The @c statement must refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings Input bindings holding values to substitute placeholders
+    /// in the query.
+    ///
+    /// @return Number of affected rows.
+    uint64_t updateDeleteQuery(PgSqlTaggedStatement& statement,
+                               const PsqlBindArray& in_bindings);
 
     /// @brief PgSql connection handle
     ///

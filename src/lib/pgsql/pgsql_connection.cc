@@ -8,7 +8,6 @@
 
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
-#include <pgsql/pgsql_exchange.h>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of
@@ -388,6 +387,62 @@ PgSqlConnection::rollback() {
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "rollback failed: " << error_message);
     }
+}
+
+void
+PgSqlConnection::selectQuery(PgSqlTaggedStatement& statement,
+                             const PsqlBindArray& in_bindings,
+                             ConsumeResultRowFun process_result_row) {
+    checkUnusable();
+
+    PgSqlResultPtr result_set(new PgSqlResult(PQexecPrepared(conn_, statement.name,
+                                                             statement.nbparams,
+                                                             &in_bindings.values_[0],
+                                                             &in_bindings.lengths_[0],
+                                                             &in_bindings.formats_[0], 0)));
+    checkStatementError(*result_set, statement);
+
+    // Do we want to check for multiple rows when only expecting one
+    // or is that a function of row func?  I would say the latter.
+    int rows = result_set->getRows();
+    for (int row = 0; row < rows; ++row) {
+        try {
+            process_result_row(*result_set, row);
+        } catch (const std::exception& ex) {
+            // Rethrow the exception with a bit more data.
+            isc_throw(BadValue, ex.what() << ". Statement is <" <<
+                      statement.text << ">");
+        }
+    }
+}
+
+void
+PgSqlConnection::insertQuery(PgSqlTaggedStatement& statement,
+                             const PsqlBindArray& in_bindings) {
+    checkUnusable();
+
+    PgSqlResultPtr result_set(new PgSqlResult(PQexecPrepared(conn_, statement.name,
+                                                             statement.nbparams,
+                                                             &in_bindings.values_[0],
+                                                             &in_bindings.lengths_[0],
+                                                             &in_bindings.formats_[0], 0)));
+    checkStatementError(*result_set, statement);
+}
+
+uint64_t
+PgSqlConnection::updateDeleteQuery(PgSqlTaggedStatement& statement,
+                                   const PsqlBindArray& in_bindings) {
+    checkUnusable();
+
+    PgSqlResultPtr result_set(new PgSqlResult(PQexecPrepared(conn_, statement.name,
+                                                             statement.nbparams,
+                                                             &in_bindings.values_[0],
+                                                             &in_bindings.lengths_[0],
+                                                             &in_bindings.formats_[0], 0)));
+    checkStatementError(*result_set, statement);
+
+    // Return the number of affected rows.
+    return (boost::lexical_cast<int>(PQcmdTuples(*result_set)));
 }
 
 } // end of isc::db namespace
