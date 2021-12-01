@@ -214,7 +214,8 @@ public:
                     IOServiceAccessorPtr io_accessor = IOServiceAccessorPtr(),
                     DbCallback callback = DbCallback())
         : DatabaseConnection(parameters, callback),
-          io_service_accessor_(io_accessor), io_service_() {
+          io_service_accessor_(io_accessor), io_service_(),
+          transaction_ref_count_(0) {
     }
 
     /// @brief Destructor
@@ -274,6 +275,11 @@ public:
     ///
     /// @throw DbOperationError If the transaction start failed.
     void startTransaction();
+
+    /// @brief Checks if there is a transaction in progress.
+    ///
+    /// @return true if a transaction has been started, false otherwise.
+    bool isTransactionStarted() const;
 
     /// @brief Commit Transactions
     ///
@@ -422,6 +428,14 @@ public:
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Reference counter for transactions.
+    ///
+    /// It precludes starting and committing nested transactions. MySQL
+    /// implicitly commits current transaction when new transaction is
+    /// started. We want to not start new transactions when one is already
+    /// in progress.
+    int transaction_ref_count_;
 };
 
 /// @brief Defines a pointer to a PgSqlConnection

@@ -357,6 +357,11 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 
 void
 PgSqlConnection::startTransaction() {
+    // If it is nested transaction, do nothing.
+    if (++transaction_ref_count_ > 1) {
+        return;
+    }
+
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_START_TRANSACTION);
     checkUnusable();
     PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
@@ -367,8 +372,22 @@ PgSqlConnection::startTransaction() {
     }
 }
 
+bool
+PgSqlConnection::isTransactionStarted() const {
+    return (transaction_ref_count_ > 0);
+}
+
 void
 PgSqlConnection::commit() {
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "commit called for not started transaction - coding error");
+    }
+
+    // When committing nested transaction, do nothing.
+    if (--transaction_ref_count_ > 0) {
+        return;
+    }
+
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_COMMIT);
     checkUnusable();
     PgSqlResult r(PQexec(conn_, "COMMIT"));
@@ -380,6 +399,15 @@ PgSqlConnection::commit() {
 
 void
 PgSqlConnection::rollback() {
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "rollback called for not started transaction - coding error");
+    }
+
+    // When rolling back nested transaction, do nothing.
+    if (--transaction_ref_count_ > 0) {
+        return;
+    }
+
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_ROLLBACK);
     checkUnusable();
     PgSqlResult r(PQexec(conn_, "ROLLBACK"));

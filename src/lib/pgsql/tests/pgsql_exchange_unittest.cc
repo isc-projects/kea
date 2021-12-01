@@ -133,6 +133,35 @@ TEST(PsqlBindArray, addTriplet) {
     EXPECT_EQ(expected, b.toText());
 }
 
+/// @brief Verifies the ability to add OptionalIntegers to
+/// the bind array.
+TEST(PsqlBindArray, addOptionalInteger) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Optional<uint32_t> empty;
+        Optional<uint32_t> not_empty(123);
+
+        ASSERT_TRUE(empty.unspecified());
+
+        // Add an unspecified triplet value.
+        b.addOptionalInteger(empty);
+        b.addOptionalInteger(not_empty);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(2, b.size());
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"123\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
+
 /// @brief Verifies that PgResultSet row and column meta-data is correct
 TEST_F(PgSqlBasicsTest, rowColumnBasics) {
     // We fetch the table contents, which at this point should be no rows.

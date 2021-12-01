@@ -305,9 +305,27 @@ struct PsqlBindArray {
     /// @param triple Triplet instance from which to get the value.
     void addMax(const isc::util::Triplet<uint32_t>& triplet);
 
+    /// @brief Adds an @c Optional of integer type to 0the bind array.
+    ///
+    /// @tparam T Numeric type corresponding to the binding type, e.g.
+    /// @c uint8_t, @c uint16_t etc.
+    /// @param value Optional integer of type T.
+    template<typename T>
+    void addOptionalInteger(const util::Optional<T>& value) {
+        if (value.unspecified()) {
+            addNull();
+        } else {
+            add(value);
+        }
+    }
+
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
     std::string toText() const;
+
+    /// @brief Dumps the contents of an array element's value to a string.
+    /// @return std::string containing the dump
+    std::string toText(size_t index) const;
 
     // --- the following methods are mostly useful for testing -----
 

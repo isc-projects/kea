@@ -124,24 +124,36 @@ std::string PsqlBindArray::toText() const {
     std::ostringstream stream;
     for (int i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
-        if (lengths_[i] == 0) {
-            stream << "empty" << std::endl;
-            continue;
-        }
+        stream << toText(i) << std::endl;
+    }
 
-        if (formats_[i] == TEXT_FMT) {
-                stream << "\"" << values_[i] << "\"" << std::endl;
-        } else {
-            const char *data = values_[i];
-            stream << "0x";
-            for (int x = 0; x < lengths_[i]; ++x) {
+    return (stream.str());
+}
+
+std::string
+PsqlBindArray::toText(size_t index) const {
+    if (index >= values_.size()) {
+        // We don't throw to keep this exception safe for logging.
+        return(std::string("<index-out-of-range>"));
+    }
+
+    if (lengths_[index] == 0) {
+        return(std::string("empty"));
+    }
+
+    std::ostringstream stream;
+    if (formats_[index] == TEXT_FMT) {
+        stream << "\"" << values_[index] << "\"";
+    } else {
+        const char *data = values_[index];
+        stream << "0x";
+        for (int x = 0; x < lengths_[index]; ++x) {
                 stream << std::setfill('0') << std::setw(2)
                        << std::setbase(16)
                        << static_cast<unsigned int>(data[x]);
-            }
-            stream << std::endl;
-            stream << std::setbase(10);
         }
+
+        stream << std::setbase(10);
     }
 
     return (stream.str());

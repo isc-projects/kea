@@ -73,13 +73,12 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
 }
 
 /// @brief Test fixture for excercising higher order PgSqlConnection functions
-/// selectQuery, insertQuery, updateDeleteQuery.  These tests only use two of 
-/// the columns in the BASICS table: int_col and text_col.  Inserting rows with 
-/// varying types and values are tested above.  These tests focus on the higher 
+/// selectQuery, insertQuery, updateDeleteQuery.  These tests only use two of
+/// the columns in the BASICS table: int_col and text_col.  Inserting rows with
+/// varying types and values are tested above.  These tests focus on the higher
 /// order fucntion mechanics.
-class PgSqlConnectionFuncTest : public PgSqlBasicsTest {
-public:
-    /// @brief Indexes of prepared statements used within the tests.
+class PgSqlConnectionTest : public PgSqlBasicsTest {
+public: /// @brief Indexes of prepared statements used within the tests.
     enum StatementIndex {
         GET_BY_INT_VALUE,
         GET_BY_INT_RANGE,
@@ -119,8 +118,8 @@ public:
     /// int_col and text_col.  Inserting rows with varying types and values
     /// are tested above.  These tests focus on the higher order mechanics.
     struct TestRow {
-        int int_col;       
-        std::string text_col;       
+        int int_col;
+        std::string text_col;
 
         bool operator==(const TestRow& other) const {
             return (int_col == other.int_col &&
@@ -132,21 +131,25 @@ public:
     typedef std::vector<TestRow> TestRowSet;
 
     /// @brief Constructor.
-    PgSqlConnectionFuncTest() : PgSqlBasicsTest() {}; 
+    PgSqlConnectionTest() : PgSqlBasicsTest() {};
 
     /// @brief Destructor.
-    virtual ~PgSqlConnectionFuncTest() {}; 
+    virtual ~PgSqlConnectionTest() {
+        if (conn_->isTransactionStarted()) {
+            conn_->rollback();
+        }
+    };
 
     /// @brief SetUp function which prepares the tagged statements.
     virtual void SetUp() {
-        ASSERT_NO_THROW_LOG(conn_->prepareStatements(tagged_statements.begin(), 
+        ASSERT_NO_THROW_LOG(conn_->prepareStatements(tagged_statements.begin(),
                                                      tagged_statements.end()));
     }
 
     /// @brief Tests inserting data into the database.
     ///
     /// @param insert_rows Collection of rows of data to insert. Note that
-    /// each row is inserted as a separate statement execution. 
+    /// each row is inserted as a separate statement execution.
     void testInsert(const TestRowSet& insert_rows) {
         for (auto row : insert_rows ) {
             // Set the insert parameters based on the current insert row.
@@ -155,20 +158,20 @@ public:
             in_bindings.add(row.text_col);
 
             // Insert the row into the database.
-            conn_->insertQuery(tagged_statements[INSERT_VALUE], in_bindings); 
+            conn_->insertQuery(tagged_statements[INSERT_VALUE], in_bindings);
         }
     }
 
     /// @brief Tests fetching data using PgSqlConnection::selectQuery()
     ///
     /// Selects rows from the BASICS table whose int_col value falls within
-    /// an inclusive range. 
+    /// an inclusive range.
     ///
     /// @param expected_rows Collection of rows of data that we expect to be
     /// fetched. Note the rows should be in the order you expedct them to be
     /// returned from the database.
-    /// @param begin_int beginning of the range to include. 
-    /// @param end_int end fo the range to include. 
+    /// @param begin_int beginning of the range to include.
+    /// @param end_int end fo the range to include.
     void testSelect(const TestRowSet& expected_rows, const int begin_int, const int end_int) {
         // Set the where clause parameters to the desired range values.
         PsqlBindArray in_bindings;
@@ -180,7 +183,7 @@ public:
 
         // Run the select.  The row consumption lambda should populate
         // fethched_rows based on the the result set returned by the select.
-        conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings, 
+        conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings,
                            [&](PgSqlResult& r, int row) {
             TestRow fetched_row;
             if (row >= expected_rows.size()) {
@@ -217,9 +220,9 @@ public:
     ///
     /// In this test, the input data is a set of rows that describe
     /// which rows in the database to udpate and how. For each row
-    /// in the set we find the record in the database with matching 
+    /// in the set we find the record in the database with matching
     /// int_col value and replace its text_col value with the the
-    /// text value from the input the row. 
+    /// text value from the input the row.
     ///
     /// @param update_rows Collection of rows of data to update.
     void testUpdate(const TestRowSet& update_rows) {
@@ -232,8 +235,8 @@ public:
             in_bindings.add(row.text_col);
 
             // Update the database.
-            update_count += conn_->updateDeleteQuery(tagged_statements[UPDATE_BY_INT_VALUE], 
-                                                     in_bindings); 
+            update_count += conn_->updateDeleteQuery(tagged_statements[UPDATE_BY_INT_VALUE],
+                                                     in_bindings);
         }
 
         // Number of rows updated should match rows we passed in.
@@ -243,12 +246,12 @@ public:
     /// @brief Tests deleting data using PgSqlConnection::updateDeleteQuery()
     ///
     /// Deletes rows from the BASICS table whose int_col value falls within
-    /// an inclusive range. 
+    /// an inclusive range.
     ///
-    /// @param begin_int beginning of the range to include. 
-    /// @param end_int end fo the range to include. 
+    /// @param begin_int beginning of the range to include.
+    /// @param end_int end fo the range to include.
     /// @param expected_delete_count number of rows of data we expect to be
-    /// deleted. 
+    /// deleted.
     void testDelete(const int begin_int, const int end_int, size_t expected_delete_count) {
         // Set the where clause parameters to the desired ragne values.
         PsqlBindArray in_bindings;
@@ -257,7 +260,7 @@ public:
 
         // Execute the delete statement.
         size_t delete_count = 0;
-        delete_count = conn_->updateDeleteQuery(tagged_statements[DELETE_BY_INT_RANGE], 
+        delete_count = conn_->updateDeleteQuery(tagged_statements[DELETE_BY_INT_RANGE],
                                                 in_bindings);
 
         // Verify the number of records deleted is as expected.
@@ -268,7 +271,7 @@ public:
 /// @brief Verify that we can insert rows with
 /// PgSqlConnection::insertQuery() and fetch
 /// them using PgSqlConnection::selectQuery().
-TEST_F(PgSqlConnectionFuncTest, insertSelectTest) {
+TEST_F(PgSqlConnectionTest, insertSelectTest) {
 
     // Define the list of rows we want to insert.
     TestRowSet insert_rows = {
@@ -277,7 +280,7 @@ TEST_F(PgSqlConnectionFuncTest, insertSelectTest) {
         { 9, "nine" },
     };
 
-    // Insert the rows. 
+    // Insert the rows.
     ASSERT_NO_THROW_LOG(testInsert(insert_rows));
 
     // Make sure we can fetch a single row.
@@ -289,7 +292,7 @@ TEST_F(PgSqlConnectionFuncTest, insertSelectTest) {
 
 /// @brief Verify that we can update rows with
 /// PgSqlConnection::updateDeleteQuery()
-TEST_F(PgSqlConnectionFuncTest, updateTest) {
+TEST_F(PgSqlConnectionTest, updateTest) {
 
     // Define the list of rows we want to insert.
     TestRowSet insert_rows = {
@@ -298,7 +301,7 @@ TEST_F(PgSqlConnectionFuncTest, updateTest) {
         { 9, "nine" },
     };
 
-    // Insert the rows. 
+    // Insert the rows.
     ASSERT_NO_THROW_LOG(testInsert(insert_rows));
 
     // Define the list of updates.
@@ -316,7 +319,7 @@ TEST_F(PgSqlConnectionFuncTest, updateTest) {
 
 /// @brief Verify that we can delete rows with
 /// PgSqlConnection::updateDeleteQuery()
-TEST_F(PgSqlConnectionFuncTest, deleteTest) {
+TEST_F(PgSqlConnectionTest, deleteTest) {
 
     // Define the list of rows we want to insert.
     TestRowSet insert_rows = {
@@ -326,7 +329,7 @@ TEST_F(PgSqlConnectionFuncTest, deleteTest) {
         { 9, "nine" },
     };
 
-    // Insert the rows. 
+    // Insert the rows.
     ASSERT_NO_THROW_LOG(testInsert(insert_rows));
 
     // Fetch the all rows.
@@ -339,4 +342,86 @@ TEST_F(PgSqlConnectionFuncTest, deleteTest) {
     ASSERT_NO_THROW_LOG(testSelect(TestRowSet({{6, "six"}, {9, "nine"}}), 0, 10));
 }
 
+TEST_F(PgSqlConnectionTest, transactions) {
+    ASSERT_FALSE(conn_->isTransactionStarted());
+
+    // Two inserts within a transaction and successful commit.
+    TestRowSet two_rows = {{1, "one"}, {2, "two"}};
+    conn_->startTransaction();
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert(two_rows));
+    conn_->commit();
+
+    // Should not be in a transaction and we should have both
+    // rows we inserted.
+    ASSERT_FALSE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testSelect(two_rows, 0, 10));
+
+    // Add third row but roll back the transaction. We should still have
+    // two rows in the table.
+    conn_->startTransaction();
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert({{ 3, "three"}}));
+    conn_->rollback();
+
+    // We should not be in a transaction and should still have
+    // only the first two rows.
+    ASSERT_FALSE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testSelect(two_rows, 0, 10));
+
+    // Nested transaction. The inner transaction should be ignored and the outer
+    // transaction rolled back. We should have only the original two rows in the
+    // database.
+    conn_->startTransaction();
+    EXPECT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert({{ 3, "three"}}));
+
+    conn_->startTransaction();
+    EXPECT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert({{ 4, "four"}}));
+
+    // First commit should do nothing other than decrement
+    // the transaction ref count.
+    conn_->commit();
+    ASSERT_TRUE(conn_->isTransactionStarted());
+
+    // Rollback should end the transaction without commiting changes.
+    conn_->rollback();
+    ASSERT_FALSE(conn_->isTransactionStarted());
+
+    // We should still have only the first two rows.
+    ASSERT_NO_THROW_LOG(testSelect(two_rows, 0, 10));
+
+    // Nested transaction. The inner transaction is rolled back but this should
+    // be ignored because nested transactions are not supported. We should
+    // have two new rows.
+
+    // Insert five row.
+    conn_->startTransaction();
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    TestRow row_five({ 5, "five" });
+    ASSERT_NO_THROW_LOG(testInsert(TestRowSet({ row_five })));
+    two_rows.push_back(row_five);
+
+    // Insert six row.
+    conn_->startTransaction();
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    TestRow row_six({ 6, "six" });
+    ASSERT_NO_THROW_LOG(testInsert(TestRowSet({ row_six })));
+    two_rows.push_back(row_six);
+
+    // Rollback should do nothing other than decrement the
+    // reference count.
+    conn_->rollback();
+    EXPECT_TRUE(conn_->isTransactionStarted());
+
+    // Commit should complete the transaction and commit the inserts.
+    conn_->commit();
+    EXPECT_FALSE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testSelect(two_rows, 0, 10));
+
+    // Committing or rolling back a not started transaction is a coding error.
+    EXPECT_THROW(conn_->commit(), isc::Unexpected);
+    EXPECT_THROW(conn_->rollback(), isc::Unexpected);
+}
 }; // namespace
