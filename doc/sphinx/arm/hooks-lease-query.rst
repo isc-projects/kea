@@ -19,7 +19,7 @@ The Leasequery library is only available to ISC customers with a paid support co
 DHCPv4 Leasequery
 ~~~~~~~~~~~~~~~~~
 
-DHCPv4 Leasequery provides a requester the ability to query for
+DHCPv4 simple Leasequery provides a requester the ability to query for
 active lease information for either a single IP address or a single client.
 RFC 4388 calls for three such queries:
 
@@ -149,7 +149,7 @@ addresses:
 DHCPv6 Leasequery
 ~~~~~~~~~~~~~~~~~
 
-DHCPv6 Leasequery gives a requester the ability to query for
+DHCPv6 simple Leasequery gives a requester the ability to query for
 active lease information for either a single IP address or a single client
 DUID. The query type and parameters are conveyed in an ``lq-query`` option (44)
 attached to a ``DHCPV6_LEASEQUERY`` message:
