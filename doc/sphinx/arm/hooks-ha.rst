@@ -1685,7 +1685,7 @@ the servers while the other one continues to respond to DHCP queries.
 When the first server is upgraded and back online, the upgrade can be performed for
 the second server.
 
-A typical problem reported without early versions
+A typical problem reported with early versions
 of the High Availability hook library was that the administrator did not
 have direct control over the state of the DHCP server. Shutting down
 one of the servers for maintenance did not necessarily cause the other
@@ -1724,7 +1724,7 @@ state ``server1`` continues to send lease updates to ``server2`` until
 the administrator shuts down ``server2``. ``server1`` now responds to all
 DHCP queries.
 
-The administrator can safely shut down ``server2`` in the
+The administrator can now safely shut down ``server2`` in the
 ``in-maintenance`` state and perform any necessary maintenance actions. While
 ``server2`` is offline, ``server1`` will obviously not be able to communicate
 with its partner, so it will immediately transition to the ``partner-down``
@@ -1986,6 +1986,12 @@ from the surviving server does not reflect the failure. Resending the command
 detects the failure once the surviving server has entered the ``partner-down``
 state.
 
+.. note:
+
+  Always send the ``ha-heartbeat`` command to both active HA servers
+  to check the state of the entire HA setup. Sending it to only one of the
+  servers may not reflect issues with one of the servers that just began.
+
 .. _command-ha-status-get:
 
 The ``status-get`` Command
@@ -2152,7 +2158,7 @@ The ``ha-maintenance-cancel`` Command
 
 This command is used to cancel the maintenance previously initiated using
 the ``ha-maintenance-start`` command. The server receiving this command
-first sends ``ha-maintenance-notify``, with the ``cancel`` flag set
+will first send ``ha-maintenance-notify``, with the ``cancel`` flag set
 to ``true``, to its partner. Next, the server reverts from the
 ``partner-in-maintenance`` state to its previous state. See the
 :ref:`ha-maintenance` section for details.
