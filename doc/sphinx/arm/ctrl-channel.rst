@@ -29,7 +29,7 @@ machine.
 
 Network administrators usually prefer using some form of a RESTful API
 to control the servers, rather than using UNIX domain sockets directly.
-Therefore, Kea includes a component called the Control Agent (or CA), which
+Therefore, Kea includes a component called the Control Agent (CA), which
 exposes a RESTful API to the controlling clients and can forward
 commands to the respective Kea services over the UNIX domain sockets.
 The CA configuration is described in
@@ -44,15 +44,15 @@ services, it requires additional "forwarding" information to be included
 in the client's messages. This forwarding information is carried within
 the ``service`` parameter of the received command. If the ``service``
 parameter is not included, or if the parameter is a blank list, the CA
-will assume that the control command is targeted at the CA itself and
-will try to handle it on its own.
+assumes that the control command is targeted at the CA itself and
+attempts to respond.
 
 Control connections over both HTTP and UNIX domain sockets are guarded
-with timeouts. The default timeout value is set to 10 seconds and is not
+with timeouts. The timeout value is set to 10 seconds and is not
 configurable.
 
 This API can be used by external tools to manage and monitor Kea operation.
-An example of such a monitoring tool is ISC Stork. For details, see
+An example of such a monitoring tool is ISC's Stork. For details, see
 :ref:`stork`.
 
 .. _ctrl-channel-syntax:
@@ -61,7 +61,7 @@ Data Syntax
 ===========
 
 Communication over the control channel is conducted using JSON
-structures. If configured, Kea will open a socket and listen for
+structures. If configured, Kea opens a socket and listens for
 incoming connections. A process connecting to this socket is expected to
 send JSON commands structured as follows:
 
@@ -77,7 +77,7 @@ send JSON commands structured as follows:
        }
    }
 
-The same command sent over the RESTful interface to the CA will have the
+The same command sent over the RESTful interface to the CA has the
 following structure:
 
 ::
@@ -101,21 +101,21 @@ command. The exact content and format of the map are command-specific.
 
 ``service`` is a list of the servers at which the control command is
 targeted. In the example above, the control command is targeted at the
-DHCPv4 server. In most cases, the CA will simply forward this command to
+DHCPv4 server. In most cases, the CA simply forwards this command to
 the DHCPv4 server for processing via a UNIX domain socket. Sometimes,
 the command including a service value may also be processed by the CA,
-if the CA is running a hooks library which handles such a command for
-the given server. As an example, the hooks library loaded by the CA may
+if the CA is running a hook library which handles such a command for
+the given server. As an example, the hook library loaded by the CA may
 perform some operations on the database, such as adding host
 reservations, modifying leases, etc. An advantage of performing
 DHCPv4-specific administrative operations in the CA, rather than
 forwarding it to the DHCPv4 server, is the ability to perform these
 operations without disrupting the DHCPv4 service, since the DHCPv4
-server doesn't have to stop processing DHCP messages to apply changes to
-the database. Nevertheless, these situations are rather rare and, in
+server does not have to stop processing DHCP messages to apply changes to
+the database. Nevertheless, these situations are rather rare; in
 most cases, when the ``service`` parameter contains a name of the
-service the commands are simply forwarded by the CA. The forwarded
-command includes the ``service`` parameter but this parameter is ignored
+service, the commands are simply forwarded by the CA. The forwarded
+command includes the ``service`` parameter, but this parameter is ignored
 by the receiving server. This parameter is only meaningful to the CA.
 
 If the command received by the CA does not include a ``service``
@@ -133,9 +133,9 @@ forwarded:
 
 -  ``dhcp6`` - the command is forwarded to the ``kea-dhcp6`` server.
 
--  ``d2`` - the command is forwarded to the ``kea-d2`` server.
+-  ``d2`` - the command is forwarded to the ``kea-dhcp-ddns`` server.
 
-The server processing the incoming command will send a response of the
+The server processing the incoming command sends a response of the
 form:
 
 ::
@@ -159,7 +159,7 @@ example, a well-formed command that requests a subnet that exists in a
 server's configuration returns the result 0. If the server encounters an
 error condition, it returns 1. If the command asks for the IPv6 subnet,
 but was sent to a DHCPv4 server, it returns 2. If the query asks for a
-subnet-id and there is no subnet with such an id, the result is 3.
+``subnet-id`` and there is no subnet with such an ID, the result is 3.
 
 The ``text`` field typically appears when the result is non-zero and
 contains a description of the error encountered, but it often also
@@ -178,8 +178,8 @@ that depends on the specific command.
 
 .. note::
 
-   Since Kea 1.9.7 it is possible to put comments in the commands as
-   in the configuration file, for instance:
+   Since Kea 1.9.7, it is possible to put comments in commands as
+   in the configuration file. For instance:
 
 ::
 
@@ -245,8 +245,8 @@ Commands Supported by Both the DHCPv4 and DHCPv6 Servers
 
 .. _command-build-report:
 
-The build-report Command
-------------------------
+The ``build-report`` Command
+----------------------------
 
 The ``build-report`` command returns on the control channel what the
 command line ``-W`` argument displays, i.e. the embedded content of the
@@ -260,20 +260,20 @@ command line ``-W`` argument displays, i.e. the embedded content of the
 
 .. _command-config-get:
 
-The config-get Command
-----------------------
+The ``config-get`` Command
+--------------------------
 
 The ``config-get`` command retrieves the current configuration used by the
 server. This command does not take any parameters. The configuration
 returned is roughly equal to the configuration that was loaded using the
--c command line option during server start-up or later set using the
+``-c`` command-line option during server start-up, or was later set using the
 ``config-set`` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
 inclusion, the returned configuration will include all parameters from
-all the included files.
+all included files.
 
-Note that the returned configuration is not redacted, i.e. it will
-contain database passwords in plain text if those were specified in the
+The returned configuration is not redacted, i.e. it
+contains database passwords in plain text if those were specified in the
 original configuration. Care should be taken not to expose the command
 channel to unprivileged users.
 
@@ -287,19 +287,19 @@ An example command invocation looks like this:
 
 .. _command-config-reload:
 
-The config-reload Command
--------------------------
+The ``config-reload`` Command
+-----------------------------
 
 The ``config-reload`` command instructs Kea to load again the
 configuration file that was used previously. This operation is useful if
 the configuration file has been changed by some external source; for
-example, a sysadmin can tweak the configuration file and use this
+example, a system administrator can tweak the configuration file and use this
 command to force Kea pick up the changes.
 
 Caution should be taken when mixing this with ``config-set`` commands. Kea
 remembers the location of the configuration file it was started with,
 and this configuration can be significantly changed using the ``config-set``
-command. When ``config-reload`` is issued after ``config-set``, Kea will attempt
+command. When ``config-reload`` is issued after ``config-set``, Kea attempts
 to reload its original configuration from the file, possibly losing all
 changes introduced using ``config-set`` or other commands.
 
@@ -312,19 +312,19 @@ invocation looks like this:
        "command": "config-reload"
    }
 
-If the configuration file is incorrect reloading it can raise an error
-which leaves the server in an unusable state. Look at :ref:`command-config-set`
-what to do to recover a working server.
+If the configuration file is incorrect, reloading it can raise an error
+which leaves the server in an unusable state. See :ref:`command-config-set`
+to learn how to recover from a non-working server.
 
 .. _command-config-test:
 
-The config-test Command
------------------------
+The ``config-test`` Command
+---------------------------
 
 The ``config-test`` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
-target server, along with an optional Logger configuration. As for the
+target server, along with an optional logger configuration. As for the
 ``-t`` command, some sanity checks are not performed, so it is possible a
 configuration which successfully passes this command will still fail in
 the ``config-set`` command or at launch time. The structure of the
@@ -340,7 +340,7 @@ command is as follows:
         }
    }
 
-where <server> is the configuration element name for a given server such
+where <server> is the configuration element name for a given server, such
 as "Dhcp4" or "Dhcp6". For example:
 
 ::
@@ -354,8 +354,8 @@ as "Dhcp4" or "Dhcp6". For example:
         }
    }
 
-The server's response will contain a numeric code, "result" (0 for
-success, non-zero on failure), and a string, "text", describing the
+The server's response contains a numeric code, ``result`` (0 for
+success, non-zero on failure), and a string, ``text``, describing the
 outcome:
 
 ::
@@ -368,15 +368,15 @@ outcome:
 
 .. _command-config-write:
 
-The config-write Command
-------------------------
+The ``config-write`` Command
+----------------------------
 
 The ``config-write`` command instructs the Kea server to write its current
 configuration to a file on disk. It takes one optional argument, called
 "filename", that specifies the name of the file to write the
 configuration to. If not specified, the name used when starting Kea
-(passed as a -c argument) will be used. If a relative path is specified,
-Kea will write its files only in the directory it is running.
+(passed as a ``-c`` argument) is used. If a relative path is specified,
+Kea writes its files only in the directory where it is running.
 
 An example command invocation looks like this:
 
@@ -391,8 +391,8 @@ An example command invocation looks like this:
 
 .. _command-leases-reclaim:
 
-The leases-reclaim Command
---------------------------
+The ``leases-reclaim`` Command
+------------------------------
 
 The ``leases-reclaim`` command instructs the server to reclaim all expired
 leases immediately. The command has the following JSON syntax:
@@ -407,22 +407,22 @@ leases immediately. The command has the following JSON syntax:
    }
 
 The ``remove`` boolean parameter is mandatory and indicates whether the
-reclaimed leases should be removed from the lease database (if true), or
-left in the "expired-reclaimed" state (if false). The latter facilitates
-lease affinity, i.e. the ability to re-assign an expired lease to the
-same client that used this lease before. See :ref:`lease-affinity`
-for the details. Also, see :ref:`lease-reclamation` for general
+reclaimed leases should be removed from the lease database (if ``true``), or
+left in the ``expired-reclaimed`` state (if ``false``). The latter facilitates
+lease affinity, i.e. the ability to re-assign an expired lease to a
+returning client that previously used this lease. See :ref:`lease-affinity`
+for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
 .. _command-libreload:
 
-The libreload Command
----------------------
+The ``libreload`` Command
+-------------------------
 
 The ``libreload`` command first unloads and then loads all currently
-loaded hooks libraries. This is primarily intended to allow one or more
-hooks libraries to be replaced with newer versions without requiring Kea
-servers to be reconfigured or restarted. Note that the hooks libraries
+loaded hook libraries. This is primarily intended to allow one or more
+hook libraries to be replaced with newer versions, without requiring Kea
+servers to be reconfigured or restarted. The hook libraries
 are passed the same parameter values (if any) that were passed when they
 originally loaded.
 
@@ -433,13 +433,13 @@ originally loaded.
        "arguments": { }
    }
 
-The server will respond with a result of either 0, indicating success,
+The server responds with a result of either 0, indicating success,
 or 1, indicating failure.
 
 .. _command-list-commands:
 
-The list-commands Command
--------------------------
+The ``list-commands`` Command
+-----------------------------
 
 The ``list-commands`` command retrieves a list of all commands supported
 by the server. It does not take any arguments. An example command may
@@ -458,15 +458,15 @@ command.
 
 .. _command-config-set:
 
-The config-set Command
-----------------------
+The ``config-set`` Command
+--------------------------
 
 The ``config-set`` command instructs the server to replace its current
 configuration with the new configuration supplied in the command's
 arguments. The supplied configuration is expected to be the full
-configuration for the target server, along with an optional Logger
-configuration. While optional, the Logger configuration is highly
-recommended, as without it the server will revert to its default logging
+configuration for the target server, along with an optional logger
+configuration. While optional, the logger configuration is highly
+recommended, as without it the server reverts to its default logging
 configuration. The structure of the command is as follows:
 
 ::
@@ -479,7 +479,7 @@ configuration. The structure of the command is as follows:
         }
    }
 
-where <server> is the configuration element name for a given server such
+where <server> is the configuration element name for a given server, such
 as "Dhcp4" or "Dhcp6". For example:
 
 ::
@@ -494,18 +494,18 @@ as "Dhcp4" or "Dhcp6". For example:
    }
 
 If the new configuration proves to be invalid, the server retains its
-current configuration but in some cases a fatal error message is logged
+current configuration; however, in some cases a fatal error message is logged
 indicating that the server no longer provides any service: a working
 configuration must be loaded as soon as possible. If the control channel
-is dead the configuration file can still be reloaded using the SIGHUP
-signal. Of course a last chance solution is to restart the server.
+is dead, the configuration file can still be reloaded using the ``SIGHUP``
+signal. If that is unsuccessful, restart the server.
 
 Please note that the new configuration is
 retained in memory only; if the server is restarted or a configuration
 reload is triggered via a signal, the server uses the configuration
 stored in its configuration file. The server's response contains a
-numeric code, "result" (0 for success, non-zero on failure), and a
-string, "text", describing the outcome:
+numeric code, ``result`` (0 for success, non-zero on failure), and a
+string, ``text``, describing the outcome:
 
 ::
 
@@ -517,11 +517,11 @@ string, "text", describing the outcome:
 
 .. _command-shutdown:
 
-The shutdown Command
---------------------
+The ``shutdown`` Command
+------------------------
 
 The ``shutdown`` command instructs the server to initiate its shutdown
-procedure. It is the equivalent of sending a SIGTERM signal to the
+procedure. It is the equivalent of sending a ``SIGTERM`` signal to the
 process. This command does not take any arguments. An example command
 may look like this:
 
@@ -535,20 +535,20 @@ may look like this:
    }
 
 The server responds with a confirmation that the shutdown procedure has
-been initiated.  The optional parameter, "exit-value", specifies the
-numeric value with which the server process will exit to the system.
+been initiated.  The optional parameter, ``exit-value``, specifies the
+numeric value with which the server process exits to the system.
 The default value is zero.
 
-The DDNS daemon supports an extra parameter "type" which controls the way
+The DDNS daemon supports an extra parameter, ``type``, which controls the way
 the process cleans up on exit. The supported shutdown types are:
 
- -  "normal" - Stops the queue manager and finishes all current transactions
+ -  "normal" - stops the queue manager and finishes all current transactions
     before exiting. This is the default.
 
- -  "drain_first" - Stops the queue manager but continues processing requests
+ -  "drain_first" - stops the queue manager but continues processing requests
     from the queue until it is empty.
 
- -  "now" - Exits immediately.
+ -  "now" - exits immediately.
 
 An example command may look like this:
 
@@ -564,8 +564,8 @@ An example command may look like this:
 
 .. _command-dhcp-disable:
 
-The dhcp-disable Command
-------------------------
+The ``dhcp-disable`` Command
+----------------------------
 
 The ``dhcp-disable`` command globally disables the DHCP service. The
 server continues to operate, but it drops all received DHCP messages.
@@ -573,17 +573,17 @@ This command is useful when the server's maintenance requires that the
 server temporarily stop allocating new leases and renew existing leases.
 It is also useful in failover-like configurations during a
 synchronization of the lease databases at startup, or recovery after a
-failure. The optional parameter "max-period" specifies the time in
+failure. The optional parameter ``max-period`` specifies the time in
 seconds after which the DHCP service should be automatically re-enabled,
 if the ``dhcp-enable`` command is not sent before this time elapses.
 
-Since Kea 1.9.4 there is an additional "origin" parameter that specifies the
+Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
 command. This command can also be sent by the partner server running HA hooks
 library. In that case, the partner server sets the parameter to "ha-partner".
 This value is reserved for the communication between HA partners and should not
-be specified in the administrator's commands because it may interfere with the
+be specified in the administrator's commands, as it may interfere with
 HA operation. The administrator should either omit this parameter or set it to
 "user".
 
@@ -599,18 +599,18 @@ HA operation. The administrator should either omit this parameter or set it to
 
 .. _command-dhcp-enable:
 
-The dhcp-enable Command
------------------------
+The ``dhcp-enable`` Command
+---------------------------
 
 The ``dhcp-enable`` command globally enables the DHCP service.
 
-Since Kea 1.9.4 there is an additional "origin" parameter that specifies the
+Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. This command can also be sent by the partner server running HA hooks
+command. This command can also be sent by the partner server running the HA hook
 library. In that case, the partner server sets the parameter to "ha-partner".
 This value is reserved for the communication between HA partners and should not
-be specified in the administrator's commands because it may interfere with the
+be specified in the administrator's commands, as it may interfere with
 HA operation. The administrator should either omit this parameter or set it to
 "user".
 
@@ -625,42 +625,42 @@ HA operation. The administrator should either omit this parameter or set it to
 
 .. _command-status-get:
 
-The status-get Command
-----------------------
+The ``status-get`` Command
+--------------------------
 
-The ``status-get`` command returns server's runtime information:
+The ``status-get`` command returns the server's runtime information:
 
- - pid: process id.
+ - ``pid``: the process ID.
 
- - uptime: number of seconds since the start of the server.
+ - ``uptime``: the number of seconds since the start of the server.
 
- - reload: number of seconds since the last configuration (re)load.
+ - ``reload``: the number of seconds since the last configuration (re)load.
 
- - high-availability: HA specific status information about the DHCP servers
-   configured to use HA hooks library:
+ - ``high-availability``: HA-specific status information about the DHCP servers
+   configured to use the HA hook library:
 
-     * local: for the local server the state, the role (primary,
-       secondary, ...) and scopes (i.e. what the server is actually
-       processing).
+     * ``local``: the state, the role (primary,
+       secondary, ...), and the scopes (i.e. what the server is actually
+       processing) of the local server.
 
-     * remote: for the remote server the last known state, served
-       HA scopes and the role of the server in the HA relationship.
+     * ``remote``: the remote server's last known state, its served
+       HA scopes, and the role of the remote server in the HA relationship.
 
- - multi-threading-enabled: flag indicating if multi-threading is enabled.
+ - ``multi-threading-enabled``: a flag indicating whether multi-threading is enabled.
 
- - thread-pool-size: number of dhcp service threads.
+ - ``thread-pool-size``: the number of DHCP service threads.
 
- - packet-queue-size: maximum size of the packet queue. There is one queue,
-   regardless of how many threads are running.
+ - ``packet-queue-size``: the maximum size of the packet queue. There is one queue,
+   regardless of the number of running threads.
 
- - packet-queue-statistics: average queue size for last 10, 100 and 1000
-   packets. Statistics using an approach similar to the Unix ``top`` command.
-   The averaged queue size for the last 10 packets can be considered an
+ - ``packet-queue-statistics``: the average queue size for the last 10, 100, and 1000
+   packets, using an approach similar to the UNIX ``top`` command.
+   The average queue size for the last 10 packets can be considered an
    instantaneous value, while the average for the last 1000 packets shows
-   a longer term trend.
+   a longer-term trend.
 
 The ``high-availability`` information is returned only when the command is
-sent to the DHCP servers being in the HA setup. This parameter is
+sent to the DHCP servers in an HA setup. This parameter is
 never returned when the ``status-get`` command is sent to the
 Control Agent or DDNS daemon.
 
@@ -670,30 +670,30 @@ parameters and ``multi-threading-enabled`` are never returned when the
 ``status-get`` command is sent to the Control Agent or DDNS daemon.
 
 To learn more about the HA status information returned by the
-``status-get`` command please refer to the :ref:`command-ha-status-get`
+``status-get`` command, please refer to the :ref:`command-ha-status-get`
 section.
 
 
 .. _command-server-tag-get:
 
-The server-tag-get Command:
----------------------------
+The ``server-tag-get`` Command:
+-------------------------------
 
 The ``server-tag-get`` command returns the configured server tag of
-the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept)
+the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept).
 
 .. _command-config-backend-pull:
 
-The config-backend-pull Command:
---------------------------------
+The ``config-backend-pull`` Command:
+------------------------------------
 
-The ``config-backend-pull`` command triggers the polling of Config Backends
-(which should be configured for this command to do something)
+The ``config-backend-pull`` command triggers the polling of configuration backends
+(which must be configured for this command to have an effect),
 explained in :ref:`dhcp4-cb-json`.
 
 .. _command-version-get:
 
-The version-get Command
+The ``version-get`` Command
 -----------------------
 
 The ``version-get`` command returns extended information about the Kea
@@ -709,53 +709,53 @@ command-line argument. This command does not take any parameters.
 Commands Supported by the D2 Server
 ===================================
 
-The D2 server supports only a subset of DHCPv4 / DHCPv6 server commands:
+The D2 server supports only a subset of the DHCPv4/DHCPv6 server commands:
 
--  build-report
+-  ``build-report``
 
--  config-get
+-  ``config-get``
 
--  config-reload
+-  ``config-reload``
 
--  config-set
+-  ``config-set``
 
--  config-test
+-  ``config-test``
 
--  config-write
+-  ``config-write``
 
--  list-commands
+-  ``list-commands``
 
--  shutdown
+-  ``shutdown``
 
--  status-get
+-  ``status-get``
 
--  version-get
+- ``version-get``
 
 .. _agent-commands:
 
 Commands Supported by the Control Agent
 =======================================
 
-The following commands listed in :ref:`commands-common` are also supported by the
-Control Agent, i.e. when the ``service`` parameter is blank, the
+The following commands, listed in :ref:`commands-common`, are also supported by the
+Control Agent; when the ``service`` parameter is blank, the
 commands are handled by the CA and they relate to the CA process itself:
 
--  build-report
+-  ``build-report``
 
--  config-get
+-  ``config-get``
 
--  config-reload
+-  ``config-reload``
 
--  config-set
+-  ``config-set``
 
--  config-test
+-  ``config-test``
 
--  config-write
+-  ``config-write``
 
--  list-commands
+-  ``list-commands``
 
--  shutdown
+-  ``shutdown``
 
--  status-get
+-  ``status-get``
 
--  version-get
+-  ``version-get``
