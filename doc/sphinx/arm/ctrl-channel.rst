@@ -694,7 +694,7 @@ explained in :ref:`dhcp4-cb-json`.
 .. _command-version-get:
 
 The ``version-get`` Command
------------------------
+---------------------------
 
 The ``version-get`` command returns extended information about the Kea
 version. It is the same information available via the ``-V``
