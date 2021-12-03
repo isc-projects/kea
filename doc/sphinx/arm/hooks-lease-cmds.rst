@@ -931,7 +931,7 @@ parameters are incorrect or some other exception is encountered.
 all configured subnets. Also, the ``subnet-id`` parameter may be omitted. If
 not specified, leases from all subnets are wiped.
 
-Note: not all backends support this command.
+Note: currently only memfile lease storage supports this command.
 
 .. _command-lease4-resend-ddns:
 
