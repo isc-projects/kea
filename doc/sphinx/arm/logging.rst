@@ -7,7 +7,7 @@ Logging
 Logging Configuration
 =====================
 
-During its operation Kea may produce many messages. They differ in
+During its operation Kea may produce many log messages. They differ in
 severity (some are more important than others) and source (different
 components, like hooks, produce different messages). It is useful to
 understand which log messages are critical and which are not, and to
@@ -15,10 +15,9 @@ configure logging appropriately. For example, debug-level messages
 can be safely ignored in a typical deployment. They are, however, very
 useful when debugging a problem.
 
-The logging system in Kea is configured through the loggers entry in the
-server section of your configuration file. In previous Kea releases this
-entry was in an independent Logging section; this was still supported
-for backward compatibility until Kea 1.7.9 included.
+The logging system in Kea is configured through the ``loggers`` entry in the
+server section of the configuration file (Kea releases prior to 1.7.9 included this
+as an independent Logging section).
 
 Loggers
 -------
@@ -33,20 +32,20 @@ reception and transmission, another logger for messages related to lease
 allocation, and so on. Some of the libraries used by the Kea server,
 such as libdhcpsrv, use their own loggers.
 
-Users implementing hooks libraries (code attached to the server at
+Users implementing hook libraries (code attached to the server at
 runtime) are responsible for creating the loggers used by those
 libraries. Such loggers should have unique names, different from the
-logger names used by Kea. In this way the messages produced by the hooks
+logger names used by Kea. That way, the messages produced by the hook
 library can be distinguished from messages issued by the core Kea code.
-Unique names also allow the loggers to be configured independently of
-loggers used by Kea. Whenever it makes sense, a hooks library can use
+Unique names also allow the hook loggers to be configured independently of
+loggers used by Kea. Whenever it makes sense, a hook library can use
 multiple loggers to log messages pertaining to different logical parts
 of the library.
 
-In the server section of a configuration file the
+In the server section of a configuration file, the
 configuration for zero or more loggers (including loggers used by the
-proprietary hooks libraries) can be specified. If there are no loggers specified, the
-code will use default values; these cause Kea to log messages of INFO
+proprietary hook libraries) can be specified. If there are no loggers specified, the
+code uses default values; these cause Kea to log messages of INFO
 severity or greater to standard output. There is a small time window
 after Kea has been started but before it has read its configuration;
 logging in this short period can be controlled using environment
@@ -58,8 +57,8 @@ and ``output_commands`` (where to log). There is also a ``debuglevel``
 element, which is only relevant if debug-level logging has been
 selected.
 
-The name (string) Logger
-~~~~~~~~~~~~~~~~~~~~~~~~
+The ``name`` (string) Logger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each logger in the system has a name: that of the component binary file
 using it to log messages. For instance, to configure logging
@@ -78,7 +77,7 @@ different functional parts of the server, that can each be configured
 independently. If the user is reasonably confident that a problem
 originates in a specific function of the server, or that the problem is
 related to a specific type of operation, they may enable high verbosity
-only for the relevant logger, thereby limiting the debug messages to the
+only for the relevant logger, thereby limiting the DEBUG messages to the
 required minimum.
 
 The loggers are associated with a particular library or binary of Kea.
@@ -87,11 +86,11 @@ loggers. For example, the DHCPv4 server binary contains separate loggers
 for packet parsing, dropped packets, callouts, etc.
 
 The loggers form a hierarchy. For each program in Kea, there is a "root"
-logger, named after the program (e.g. the root logger for kea-dhcp, the
-DHCPv4 server) is named kea-dhcp4. All other loggers are children of
+logger, named after the program (e.g. the root logger for ``kea-dhcp4``, the
+DHCPv4 server, is named ``kea-dhcp4``). All other loggers are children of
 this logger and are named accordingly, e.g. the allocation engine in the
 DHCPv4 server logs messages using a logger called
-kea-dhcp4.alloc-engine.
+``kea-dhcp4.alloc-engine``.
 
 This relationship is important, as each child logger derives its default
 configuration from its parent root logger. In the typical case, the root
@@ -101,9 +100,9 @@ for a given logger, any attributes specified override those of the root
 logger, whereas any not specified are inherited from it.
 
 To illustrate this, suppose we are using the DHCPv4 server with the
-root logger “kea-dhcp4” logging at the INFO level. In order to enable
+root logger ``kea-dhcp4`` logging at the INFO level. In order to enable
 DEBUG verbosity for DHCPv4 packet drops, we must create a configuration
-entry for the logger called “kea-dhcp4.bad-packets” and specify severity
+entry for the logger called "kea-dhcp4.bad-packets” and specify severity
 DEBUG for this logger. All other configuration parameters may be omitted
 for this logger if the logger should use the default values specified in
 the root logger's configuration.
@@ -111,20 +110,20 @@ the root logger's configuration.
 If there are multiple logger specifications in the configuration that
 might match a particular logger, the specification with the more
 specific logger name takes precedence. For example, if there are entries
-for both “kea-dhcp4” and “kea-dhcp4.dhcpsrv”, the main DHCPv4 server
-program — and all libraries it uses other than the dhcpsrv library
-(libdhcpsrv) — will log messages according to the configuration in the
-first entry (“kea-dhcp4”). Messages generated by the dhcpsrv library
-will be logged according to the configuration set by the second entry.
+for both ``kea-dhcp4`` and ``kea-dhcp4.dhcpsrv``, the main DHCPv4 server
+program — and all libraries it uses other than the ``dhcpsrv`` library
+(libdhcpsrv) — logs messages according to the configuration in the
+first entry (``kea-dhcp4``). Messages generated by the ``dhcpsrv`` library
+are logged according to the configuration set by the second entry.
 
-Currently defined loggers are defined in the following table. The
+Currently defined loggers are listed in the following table. The
 "Software Package" column of this table specifies whether the particular
 loggers belong to the core Kea code (open source Kea binaries and
-libraries), or hooks libraries (open source or premium).
+libraries), or hook libraries (open source or premium).
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.2\linewidth}|p{0.6\linewidth}|
 
-.. table:: List of Loggers Supported by Kea Servers and Hooks Libraries Shipped With Kea and Premium Packages
+.. table:: List of loggers supported by Kea servers and hook libraries shipped with Kea/premium packages
    :class: longtable
    :widths: 20 20 60
 
@@ -231,7 +230,7 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | basic operations.              |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.dhcpsrv``,           | core                   | The base loggers for           |
-   | ``kea-dhcp6.dhcpsrv``            |                        | the libkea-dhcpsrv             |
+   | ``kea-dhcp6.dhcpsrv``            |                        | the ``libkea-dhcpsrv``         |
    |                                  |                        | library.                       |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.eval``,              | core                   | Used to log messages           |
@@ -240,29 +239,29 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | expression evaluation          |
    |                                  |                        | code.                          |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.host-cache-hooks``,  | libdhcp_host_cache     | This logger is used            |
+   | ``kea-dhcp4.host-cache-hooks``,  | libdhcp_host_cache     | Used                           |
    | ``kea-dhcp6.host-cache-hooks``   | premium hook library   | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the Host          |
-   |                                  |                        | Cache hooks library.           |
+   |                                  |                        | Cache hook library.            |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.flex-id-hooks``,     | libdhcp_flex_id        | This logger is used            |
+   | ``kea-dhcp4.flex-id-hooks``,     | libdhcp_flex_id        | Used                           |
    | ``kea-dhcp6.flex-id-hooks``      | premium hook library   | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
-   |                                  |                        | Flexible Identifiers           |
-   |                                  |                        | hooks library.                 |
+   |                                  |                        | Flexible Identifier            |
+   |                                  |                        | hook library.                  |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.ha-hooks``,          | libdhcp_ha hook        | This logger is used            |
+   | ``kea-dhcp4.ha-hooks``,          | libdhcp_ha hook        | Used                           |
    | ``kea-dhcp6.ha-hooks``           | library                | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the High          |
-   |                                  |                        | Availability hooks             |
+   |                                  |                        | Availability hook              |
    |                                  |                        | library.                       |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.hooks``,             | core                   | Used to log messages           |
    | ``kea-dhcp6.hooks``              |                        | related to the                 |
-   |                                  |                        | management of hooks            |
+   |                                  |                        | management of hook             |
    |                                  |                        | libraries, e.g.                |
    |                                  |                        | registration and               |
    |                                  |                        | deregistration of the          |
@@ -273,21 +272,21 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | points within the              |
    |                                  |                        | DHCP server.                   |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.host-cmds-hooks``,   | libdhcp_host_cmds      | This logger is used            |
+   | ``kea-dhcp4.host-cmds-hooks``,   | libdhcp_host_cmds      | Used                           |
    | ``kea-dhcp6.host-cmds-hooks``    | premium hook library   | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the Host          |
-   |                                  |                        | Commands hooks                 |
+   |                                  |                        | Commands hook                  |
    |                                  |                        | library. In general,           |
-   |                                  |                        | these will pertain to          |
+   |                                  |                        | these pertain to               |
    |                                  |                        | the loading and                |
    |                                  |                        | unloading of the               |
    |                                  |                        | library and the                |
    |                                  |                        | execution of commands          |
    |                                  |                        | by the library.                |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.hosts``,             | core                   | Used within the                |
-   | ``kea-dhcp6.hosts``              |                        | libdhcpsrv, it logs            |
+   | ``kea-dhcp4.hosts``,             | core                   | Used within                    |
+   | ``kea-dhcp6.hosts``              |                        | ``libdhcpsrv``, it logs        |
    |                                  |                        | messages related to            |
    |                                  |                        | the management of              |
    |                                  |                        | DHCP host                      |
@@ -297,13 +296,13 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | adding new                     |
    |                                  |                        | reservations.                  |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.lease-cmds-hooks``,  | libdhcp_lease_cmds     | This logger is used            |
+   | ``kea-dhcp4.lease-cmds-hooks``,  | libdhcp_lease_cmds     | Used                           |
    | ``kea-dhcp6.lease-cmds-hooks``   | hook library           | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
-   |                                  |                        | Lease Commands hooks           |
+   |                                  |                        | Lease Commands hook            |
    |                                  |                        | library. In general,           |
-   |                                  |                        | these will pertain to          |
+   |                                  |                        | these pertain to               |
    |                                  |                        | the loading and                |
    |                                  |                        | unloading of the               |
    |                                  |                        | library and the                |
@@ -322,12 +321,12 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | lease allocation,              |
    |                                  |                        | etc.                           |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.legal-log-hooks``,   | libdhcp_legal_log      | This logger is used            |
+   | ``kea-dhcp4.legal-log-hooks``,   | libdhcp_legal_log      | Used                           |
    | ``kea-dhcp6.legal-log-hooks``    | premium hook library   | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
    |                                  |                        | Forensic Logging               |
-   |                                  |                        | hooks library.                 |
+   |                                  |                        | hook library.                  |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.options``,           | core                   | Used by the DHCP               |
    | ``kea-dhcp6.options``            |                        | server to log                  |
@@ -343,7 +342,7 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | contained in the               |
    |                                  |                        | received packets.              |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.packets``,           | core                   | This logger is mostly          |
+   | ``kea-dhcp4.packets``,           | core                   | Mostly                         |
    | ``kea-dhcp6.packets``            |                        | used to log messages           |
    |                                  |                        | related to                     |
    |                                  |                        | transmission of the            |
@@ -374,47 +373,47 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | message carried in             |
    |                                  |                        | the packet is parsed.          |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.radius-hooks``,      | libdhcp_radius         | This logger is used            |
+   | ``kea-dhcp4.radius-hooks``,      | libdhcp_radius         | Used                           |
    | ``kea-dhcp6.radius-hooks``       | premium hook library   | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
-   |                                  |                        | RADIUS hooks library.          |
+   |                                  |                        | RADIUS hook library.           |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.stat-cmds-hooks``,   | libdhcp_stat_cmds      | This logger is used            |
+   | ``kea-dhcp4.stat-cmds-hooks``,   | libdhcp_stat_cmds      | Used                           |
    | ``kea-dhcp6.stat-cmds-hooks``    | hook library           | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
    |                                  |                        | Statistics Commands            |
-   |                                  |                        | hooks library. In              |
-   |                                  |                        | general, these will            |
+   |                                  |                        | hook library. In               |
+   |                                  |                        | general, these                 |
    |                                  |                        | pertain to loading             |
    |                                  |                        | and unloading the              |
    |                                  |                        | library and the                |
    |                                  |                        | execution of commands          |
    |                                  |                        | by the library.                |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.subnet-cmds-hooks``, | libdhcp_subnet_cmds    | This logger is used            |
+   | ``kea-dhcp4.subnet-cmds-hooks``, | libdhcp_subnet_cmds    | Used                           |
    | ``kea-dhcp6.subnet-cmds-hooks``  | hook library           | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
-   |                                  |                        | Subnet Commands hooks          |
+   |                                  |                        | Subnet Commands hook           |
    |                                  |                        | library. In general,           |
-   |                                  |                        | these will pertain to          |
+   |                                  |                        | these pertain to               |
    |                                  |                        | loading and unloading          |
    |                                  |                        | the library and the            |
    |                                  |                        | execution of commands          |
    |                                  |                        | by the library.                |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.mysql-cb-hooks``,    | libdhcp_mysql_cb_hooks | This logger is used            |
+   | ``kea-dhcp4.mysql-cb-hooks``,    | libdhcp_mysql_cb_hooks | Used                           |
    | ``kea-dhcp6.mysql-cb-hooks``     | hook library           | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
    |                                  |                        | MySQL Configuration            |
-   |                                  |                        | Backend hooks                  |
+   |                                  |                        | Backend hook                   |
    |                                  |                        | library.                       |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp-ddns``                | core                   | The root logger for            |
-   |                                  |                        | the kea-dhcp-ddns              |
+   |                                  |                        | the ``kea-dhcp-ddns``          |
    |                                  |                        | daemon. All                    |
    |                                  |                        | components used by             |
    |                                  |                        | this daemon inherit            |
@@ -425,24 +424,24 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | more specialized               |
    |                                  |                        | loggers.                       |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp-ddns.dctl``           | core                   | The logger used by             |
-   |                                  |                        | the kea-dhcp-ddns              |
-   |                                  |                        | daemon for logging             |
+   | ``kea-dhcp-ddns.dctl``           | core                   | Used by                        |
+   |                                  |                        | the ``kea-dhcp-ddns``          |
+   |                                  |                        | daemon to log                  |
    |                                  |                        | basic information              |
    |                                  |                        | about the process,             |
    |                                  |                        | received signals, and          |
    |                                  |                        | triggered                      |
    |                                  |                        | reconfigurations.              |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp-ddns.dhcpddns``       | core                   | The logger used by             |
-   |                                  |                        | the kea-dhcp-ddns              |
-   |                                  |                        | daemon for logging             |
+   | ``kea-dhcp-ddns.dhcpddns``       | core                   | Used by                        |
+   |                                  |                        | the ``kea-dhcp-ddns``          |
+   |                                  |                        | daemon to log                  |
    |                                  |                        | events related to              |
    |                                  |                        | DDNS operations.               |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp-ddns.dhcp-to-d2``     | core                   | Used by the                    |
-   |                                  |                        | kea-dhcp-ddns daemon           |
-   |                                  |                        | for logging                    |
+   |                                  |                        | ``kea-dhcp-ddns`` daemon       |
+   |                                  |                        | to log                         |
    |                                  |                        | information about              |
    |                                  |                        | events dealing with            |
    |                                  |                        | receiving messages             |
@@ -452,8 +451,8 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | processing.                    |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp-ddns.d2-to-dns``      | core                   | Used by the                    |
-   |                                  |                        | kea-dhcp-ddns daemon           |
-   |                                  |                        | for logging                    |
+   |                                  |                        | ``kea-dhcp-ddns`` daemon       |
+   |                                  |                        | to log                         |
    |                                  |                        | information about              |
    |                                  |                        | events dealing with            |
    |                                  |                        | sending and receiving          |
@@ -469,11 +468,11 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | is no specialized              |
    |                                  |                        | logger provided.               |
    +----------------------------------+------------------------+--------------------------------+
-   | ``kea-dhcp4.lease-query-hooks``, | libdhcp_lease_query    | This logger is used            |
+   | ``kea-dhcp4.lease-query-hooks``, | libdhcp_lease_query    | Used                           |
    | ``kea-dhcp6.lease-query-hooks``  | hook library           | to log messages                |
    |                                  |                        | related to the                 |
    |                                  |                        | operation of the               |
-   |                                  |                        | Leasequery hooks library       |
+   |                                  |                        | Leasequery hook library.       |
    +----------------------------------+------------------------+--------------------------------+
 
 Note that user-defined hook libraries should not use any of the loggers
@@ -493,8 +492,8 @@ The easiest way to find a logger name is to configure all logging to go
 to a single destination and look there for specific logger names. See
 :ref:`logging-message-format` for details.
 
-The severity (string) Logger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``severity`` (string) Logger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This specifies the category of messages logged. Each message is logged
 with an associated severity, which may be one of the following (in
@@ -504,19 +503,19 @@ descending order of severity):
    serious that the server cannot continue executing.
 
 -  ERROR - associated with messages generated by an error condition. The
-   server will continue executing, but the results may not be as
+   server continues executing, but the results may not be as
    expected.
 
 -  WARN - indicates an out-of-the-ordinary condition. However, the
-   server will continue executing normally.
+   server continues executing normally.
 
 -  INFO - an informational message marking some event.
 
 -  DEBUG - messages produced for debugging purposes.
 
-When the severity of a logger is set to one of these values, it will
-only log messages of that severity and above (e.g. setting the logging
-severity to INFO will log INFO, WARN, ERROR, and FATAL messages). The
+When the severity of a logger is set to one of these values, it
+only logs messages of that severity and above (e.g. setting the logging
+severity to INFO logs INFO, WARN, ERROR, and FATAL messages). The
 severity may also be set to NONE, in which case all messages from that
 logger are inhibited.
 
@@ -524,8 +523,8 @@ logger are inhibited.
 
    The ``keactrl`` tool, described in :ref:`keactrl`, can be configured
    to start the servers in verbose mode. If this is the case, the
-   settings of the logging severity in the configuration file will have
-   no effect; the servers will use a logging severity of DEBUG
+   settings of the logging severity in the configuration file have
+   no effect; the servers use a logging severity of DEBUG
    regardless of the logging settings specified in the configuration
    file. To control severity via the configuration file,
    please make sure that the ``kea_verbose`` value is set to "no" within
@@ -533,22 +532,22 @@ logger are inhibited.
 
 .. _debuglevel:
 
-The debuglevel (integer) Logger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``debuglevel`` (integer) Logger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When a logger's severity is set to DEBUG, this value specifies what
-level of debug messages should be printed. It ranges from 0 (least
+When a logger's severity is set to DEBUG, this value specifies the
+level of debug messages to be printed. It ranges from 0 (least
 verbose) to 99 (most verbose). If severity for the logger is not DEBUG,
 this value is ignored.
 
-The output_options (list) Logger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``output_options`` (list) Logger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each logger can have zero or more ``output_options``. These specify
 where log messages are sent and are explained in detail below.
 
-The output (string) Option
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``output`` (string) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This value determines the type of output. There are several special
 values allowed here: ``stdout`` (messages are printed on standard
@@ -557,77 +556,75 @@ output), ``stderr`` (messages are printed on stderr), ``syslog``
 (messages are logged to syslog using a specified name). Any other value is
 interpreted as a filename to which messages should be written.
 
-The flush (boolean) Option
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``flush`` (boolean) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Flush buffers after each log message. Doing this will reduce performance
-but will ensure that if the program terminates abnormally, all messages
+This flushes the buffers after each log message. Doing this reduces performance
+but ensures that if the program terminates abnormally, all messages
 up to the point of termination are output. The default is ``true``.
 
-The maxsize (integer) Option
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``maxsize`` (integer) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This option is only relevant when the destination is a file; this is the maximum size
 in bytes that a log file may reach. When the maximum size is reached,
-the file is renamed and a new file opened. For example, a ".1" is
+the file is renamed and a new file created. Initially, a ".1" is
 appended to the name; if a ".1" file exists, it is renamed ".2", etc.
 This is referred to as rotation.
 
 The default value is 10240000 (10MB). The smallest value that can be
 specified without disabling rotation is 204800. Any value less than
-this, including 0, disables rotation. The greatest value is INT_MAX MB which is
+this, including 0, disables rotation. The greatest possible value is INT_MAX MB, which is
 approximately 2PB.
-
 
 .. note::
 
    Due to a limitation of the underlying logging library (log4cplus),
-   rolling over the log files (from ".1" to ".2", etc) may show odd
+   rolling over the log files (from ".1" to ".2", etc.) may show odd
    results; there can be multiple small files at the timing of rollover.
    This can happen when multiple processes try to roll over the
    files simultaneously. Version 1.1.0 of log4cplus solved this problem,
    so if this version or later of log4cplus is used to build Kea, the
-   issue should not occur. Even for older versions, it is normally
+   issue should not occur. Even with older versions, it is normally
    expected to happen rarely unless the log messages are produced very
    frequently by multiple different processes.
 
-The maxver (integer) Option
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``maxver`` (integer) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This option is only relevant when the destination is a file and rotation is enabled
 (i.e. maxsize is large enough). This is the maximum number of rotated
 versions that will be kept. Once that number of files has been reached,
-the oldest file, "log-name.maxver", will be discarded each time the log
+the oldest file, "log-name.maxver", is discarded each time the log
 rotates. In other words, at most there will be the active log file plus
 maxver rotated files. The minimum and default value is 1.
 
-The pattern (string) Option
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``pattern`` (string) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option can be used to specify the layout pattern of log messages for
-a logger. Kea logging is implemented using the Log4Cplus library and whose
-output formatting is based, conceptually, on the printf formatting from C
-and is discussed in detail in the next section
+This option can be used to specify the layout pattern of messages for
+a logger. Kea logging is implemented using the log4cplus library and its
+output formatting is based, conceptually, on the printf formatting from C;
+this is discussed in detail in the next section,
 :ref:`logging-message-format`.
 
-Each output type (stdout, file, or syslog) has a default ``pattern`` which
+Each output type (``stdout``, file, or ``syslog``) has a default ``pattern`` which
 describes the content of its log messages. This parameter can be used to
-specify a desired pattern.  The pattern for each logger is governed
-individually so each configured logger can have its own pattern. Omitting
+specify a desired pattern. The pattern for each logger is governed
+individually, so each configured logger can have its own pattern. Omitting
 the ``pattern`` parameter or setting it to an empty string, "", causes
 Kea to use the default pattern for that logger's output type.
 
 In addition to the log text itself, the default patterns used for ``stdout``
 and files contain information such as date and time, logger level, and
-process information.  The default pattern for ``syslog`` is limited primarily
-to log level, source, and the log text.  This avoids duplicating information
+process information. The default pattern for ``syslog`` is limited primarily
+to log level, source, and the log text. This avoids duplicating information
 which is usually supplied by syslog.
 
 .. warning::
-    You are strongly encouraged to test your pattern(s) on a local,
+    Users are strongly encouraged to test their pattern(s) on a local,
     non-production instance of Kea, running in the foreground and
     logging to ``stdout``.
-
 
 .. _logging-message-format:
 
@@ -637,13 +634,13 @@ Logging Message Format
 As mentioned above, Kea log message content is controlled via a scheme similar
 to the C language's printf formatting. The "pattern" used for each message is
 described by a string containing one or more format components as part of a
-text string.  In addition to the components the string may contain any other
-arbitrary text you find useful.
+text string.  In addition to the components, the string may contain any other
+useful text for the administrator.
 
-The behavior of Kea's format strings is determined by Log4Cplus. The following
+The behavior of Kea's format strings is determined by log4cplus. The following
 format options are possible:
 
-.. table:: List of Supported Format String Components by Kea's Logger
+.. table:: List of supported format string components by Kea's logger
    :class: longtable
    :widths: 8 40
 
@@ -699,12 +696,12 @@ format options are possible:
    | ``%%``    | The percent sign                              |
    +-----------+-----------------------------------------------+
 
-Lookup the documentation for the ``strftime()`` function found in the
-``<ctime>`` header or the ``strftime(3)`` Unix manual page for more
+Refer to the documentation for the ``strftime()`` function found in the
+``<ctime>`` header or the ``strftime(3)`` UNIX manual page for more
 information.
 
 It is probably easiest to understand this by examining the default pattern
-for stdout and files (currently they are the same).  That pattern is shown
+for stdout and files; currently they are the same. That pattern is shown
 below:
 
 ::
@@ -717,16 +714,16 @@ and a typical log produced by this pattern looks something like this:
 
     2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475.12345] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
 
-That breaks down as like so:
+That breaks down to:
 
   - ``%D{%Y-%m-%d %H:%M:%S.%q}``
-    '%D' is the date and time in local time that the log message is generated,
-    while everything between the curly braces, '{}' are date and time components.
+    "%D" is the local date and time when the log message is generated,
+    while everything between the curly braces, "{}", are date and time components.
     From the example log above this produces:
     ``2019-08-05 14:27:45.871``
 
   - ``%-5p``
-    The severity of message, output as a minimum of five characters,
+    The severity of the message, output as a minimum of five characters,
     using right-padding with spaces. In our example log: ``DEBUG``
 
   - ``%c``
@@ -736,12 +733,12 @@ That breaks down as like so:
     library used by DHCP server implementations).
 
   - ``%i``
-    The process ID. From the example log: ``8475``
+    The process ID. From the example log: ``8475``.
 
   - ``%t``
     The thread ID. From the example log: ``12345``.
-    Note the format of the thread ID is OS dependent: e.g. on some systems
-    it is an address so it is displayed in hexadecimal.
+    The format of the thread ID is OS-dependent: e.g. on some systems
+    it is an address, so it is displayed in hexadecimal.
 
   - ``%m``
     The log message itself. Kea log messages all begin with a message identifier
@@ -756,41 +753,40 @@ That breaks down as like so:
 
 .. Warning::
 
-    Omitting ``%m`` will omit the log message text from your output making it
-    rather useless. You should consider ``%m`` mandatory.
+    Omitting ``%m`` omits the log message text from the output, making it
+    rather useless. ``%m`` should be considered mandatory.
 
 Finally, note that spacing between components, the square brackets around the
-log source and PID, and the final carriage return '\n' are all literal text
+log source and PID, and the final carriage return ``\n`` are all literal text
 specified as part of the pattern.
 
 .. Warning::
 
-    In order to ensure each log entry is a separate line, your patterns
-    must end with an ``\n``.  There may be use cases where it is not desired
-    so we do not enforce its inclusion.  Be aware that if you omit it from
-    your pattern that to common text tools or displays, the log entries
-    will run together in one long, endless "line".
+    To ensure that each log entry is a separate line, patterns
+    must end with an ``\n``. There may be use cases where it is not desired
+    so we do not enforce its inclusion. If it is omitted from
+    the pattern, the log entries will run together in one long "line".
 
 
-The default for pattern for syslog output is as follows:
+The default pattern for ``syslog`` output is:
 
 ::
 
     "%-5p [%c.%t] %m\n";
 
-You can see that it omits the date and time as well the process ID as this
-information is typically output by syslog.  Note that Kea uses the pattern
-to construct the text it sends to syslog (or any other destination). It has
-no influence on the content syslog may add or formatting it may do.
+It omits the date and time as well as the process ID, as this
+information is typically output by ``syslog``. Note that Kea uses the pattern
+to construct the text it sends to ``syslog`` (or any other destination). It has
+no influence on the content ``syslog`` may add or formatting it may do.
 
-Consult your OS documentation for "syslog" behavior as there are multiple
+Consult your OS documentation for ``syslog`` behavior, as there are multiple
 implementations.
 
 
 Example Logger Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this example we want to set the server logging to write to the
+In this example, we want to set the server logging to write to the
 console using standard output.
 
 ::
@@ -809,9 +805,9 @@ console using standard output.
        ]
    }
 
-In this second example, we want to store debug log messages in a file
+As a second example, we want to store DEBUG log messages in a file
 that is at most 2MB and keep up to eight copies of old log files. Once the
-logfile grows to 2MB, it will be renamed and a new file will be created.
+logfile grows to 2MB, it should be renamed and a new file should be created.
 
 ::
 
@@ -850,7 +846,7 @@ The logging configuration is specified in the configuration file.
 However, when Kea starts, the configuration file is not read until partway into the
 initialization process. Prior to that, the logging settings are set to
 default values, although it is possible to modify some aspects of the
-settings by means of environment variables. Note that in the absence of
+settings by means of environment variables. In the absence of
 any logging configuration in the configuration file, the settings of the
 (possibly modified) default configuration will persist while the program
 is running.
@@ -858,7 +854,7 @@ is running.
 The following environment variables can be used to control the behavior
 of logging during startup:
 
-KEA_LOCKFILE_DIR
+``KEA_LOCKFILE_DIR``
 
    Specifies a directory where the logging system should create its lock
    file. If not specified, it is prefix/var/run/kea, where "prefix"
@@ -867,7 +863,7 @@ KEA_LOCKFILE_DIR
    a lock file at all. This may cause issues if several processes log to
    the same file.
 
-KEA_LOGGER_DESTINATION
+``KEA_LOGGER_DESTINATION``
 
    Specifies logging output. There are several special values:
 
@@ -878,44 +874,42 @@ KEA_LOGGER_DESTINATION
    Log to standard error.
 
    ``syslog[:fac]``
-   Log via syslog. The optional fac (which is separated from the word
+   Log via syslog. The optional "fac" (which is separated from the word
    "syslog" by a colon) specifies the facility to be used for the log
-   messages. Unless specified, messages will be logged using the
+   messages. Unless specified, messages are logged using the
    facility "local0".
 
    Any other value is treated as a name of the output file. If not
-   specified otherwise, Kea will log to standard output.
+   otherwise specified, Kea logs to standard output.
 
-
-Logging levels
+Logging Levels
 ==============
 
-All Kea servers follow the overall intention to strike a balance between letting the user
-know what is going on and not overloading the logging system with too much information as that
-could easily be used as a Denial Of Service attack.
+All Kea servers follow the overall intention to let the user
+know what is going on while not overloading the logging system with too much information, as that
+could easily be used as a denial-of-service attack.
 
-A wealth of information is available on debug level. Opposed to ``FATAL``, ``ERROR``, ``WARN`` and
-``INFO`` levels, ``DEBUG`` has additional debuglevel parameters. The following table offers a rough
-idea of what kind of information is logged on which level. Sadly, that information is not very
-consistent. Future Kea versions may attempt to improve consistency in this regard. Also,
-keep in mind that sometimes the circumstances determine if an information is logged on higher
-or lower level. For example, if packet is being dropped due to configured classification, that
+Unlike the FATAL, ERROR, WARN and
+INFO levels, DEBUG has additional parameters. The following list details
+the basic information that is logged on each level. Sometimes the circumstances
+determine whether a piece of information is logged on a higher
+or lower level. For example, if a packet is being dropped due to configured classification, that
 is an execution of the configured policy and would be logged on debuglevel 15. However, if the
 packet is dropped due to an exception being thrown, it is much more important, as it may indicate
-software bug, serious problems with memory, database connectivity and similar. As such it may
-be logged on much higher levels, such as ``WARN`` or even ``ERROR``.
+a software bug, serious problems with memory, or database connectivity problems. As such it may
+be logged on much higher levels, such as WARN or even ERROR.
 
-- 0 - singular messages printed during start or shutdown of the server.
-- 10 - logs information about received API commands.
+- 0 - singular messages printed during startup or shutdown of the server.
+- 10 - log information about received API commands.
 - 15 - information about reasons why a packet was dropped.
-- 40 - a lot of tracing information, including processing decisions, results
-  of expression evaluations and more.
+- 40 - tracing information, including processing decisions, results
+  of expression evaluations, and more.
 - 45 - similar to level 40, but with more details, e.g. the subnet being
-  selected for incoming packet.
+  selected for an incoming packet.
 - 50 - evaluations of expressions, status received from hook points, lease
-  processing, packet processing details, including unpacking, packing, sending etc.
+  processing, packet processing details, including unpacking, packing, sending, etc.
 - 55 - includes all details available, including full packet contents
   with all options printed.
 
-The debug levels apply only to messages logged on ``DEBUG``. The debug levels are configured using
-the ``debuglevel`` option. See Section :ref:`debuglevel` for details.
+The debug levels apply only to messages logged on DEBUG, and are configured using
+the ``debuglevel`` option. See the :ref:`debuglevel` section for details.
