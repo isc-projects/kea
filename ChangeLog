@@ -1,3 +1,14 @@
+1973.	[func]		fdupont
+	MySQL backends now can be configured to use the SSL/TLS
+	support to protect connections to the server. New
+	database parameters are "cert-file", "key-file",
+	"trust-anchor" and "cipher-list". The negotiated cipher
+	name is logged so the MySQL service configuration can
+	be checked... PostgreSQL accepts the same parameters
+	but they only trigger on a call to the OpenSSL generic
+	initialization in the Pq C-API.
+	(Gitlab #34)
+
 1972.	[func]		andrei
 	Kea servers now can accept trailing commas in file
 	configurations. While parsing, a warning is printed with the
