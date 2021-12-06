@@ -11,7 +11,7 @@ Overview
 The Network Configuration Protocol, or NETCONF, is a network management protocol defined
 in `RFC 4741 <https://tools.ietf.org/html/rfc4741>`__. It uses YANG modeling language,
 defined in `RFC 6020 <https://tools.ietf.org/html/rfc6020>`__, to provide a uniform way
-of handling configuration syntax of varied networking devices. Kea provides optional
+of handling the configuration syntax of varied networking devices. Kea provides optional
 support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 
 .. _netconf-install:
@@ -19,10 +19,9 @@ support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 Installing NETCONF
 ------------------
 
-To get its NETCONF capabilities, Kea uses libyang v1.0.240 and sysrepo v1.4.140.
-Use packages if they are provided on your system. There is always the
-alternative method of building from sources which should work on all popular
-OSs:
+To get its NETCONF capabilities, Kea uses libyang v1.0.240 and Sysrepo v1.4.140.
+Use packages if they are provided by the system. If not, users can
+build from sources, which should work on all popular OSes:
 
 .. _libyang-install-sources:
 
@@ -42,7 +41,7 @@ Installing libyang From Sources
 
 .. _sysrepo-install-sources:
 
-Installing sysrepo From Sources
+Installing Sysrepo From Sources
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
@@ -61,19 +60,19 @@ Installing sysrepo From Sources
 Quick Sysrepo Overview
 ----------------------
 
-This section offers a rather brief overview of a subset of available
+This section offers a brief overview of a subset of available
 functions in Sysrepo. For more complete information, see the `Sysrepo
 homepage <https://www.sysrepo.org>`__.
 
 In YANG, configurations and state data are described in the YANG syntax
-in module files named: ``"module-name"``\ ``[@"revision"]``.yang
+in module files named: ``"module-name"``\``[@"revision"]``.yang
 
 The revision part is optional and has YYYY-MM-DD format. An alternate
 XML syntax YIN is defined but less user-friendly. Top-level modules are
 named in Kea models (a short version of schema models).
 
-There are two major modules that Kea is able to support: kea-dhcp4-server and
-kea-dhcp6-server. While there is an active effort in the DHC working group at
+There are two major modules that Kea is able to support: ``kea-dhcp4-server`` and
+``kea-dhcp6-server``. While there is an active effort in the DHC working group at
 IETF to develop a DHCPv6 YANG model, a similar initiative in the past for DHCPv4
 failed. Therefore, Kea uses its own dedicated models for DHCPv4 and DHCPv6 but
 partially supports the IETF model for DHCPv6.
@@ -88,13 +87,13 @@ To install modules from sources, do the following to install all modules:
 
     $ ./src/share/yang/modules/utils/reinstall.sh
 
-OR if you installed sysrepo in a custom path:
+If Sysrepo is installed in a custom path, use:
 
 .. code-block:: console
 
     $ ./src/share/yang/modules/utils/reinstall.sh -s /path/to/sysrepo
 
-If you want to individually install all modules:
+To individually install all modules:
 
 .. code-block:: console
 
@@ -263,7 +262,7 @@ it will update it automatically. Otherwise, it must first be uninstalled:
     $ sysrepoctl -u kea-dhcp4-server
 
 If the module is used (i.e. imported) by other modules, it can be uninstalled
-only after the dependant modules have been uninstalled first.
+only after the dependent modules have first been uninstalled.
 Installation and uninstallation must be done in dependency order and
 reverse-dependency order accordingly.
 
@@ -275,7 +274,7 @@ Supported YANG Models
 The only currently supported models are ``kea-dhcp4-server`` and
 ``kea-dhcp6-server``. There is partial support for
 ``ietf-dhcpv6-server``, but the primary focus of testing has been on Kea DHCP
-servers. Several other models (``kea-dhcp-ddns`` and ``kea-ctrl-agent``)
+servers. Other models (``kea-dhcp-ddns`` and ``kea-ctrl-agent``)
 are currently not supported.
 
 .. _using-netconf:
@@ -291,7 +290,7 @@ The NETCONF agent follows this algorithm:
 -  Open a connection with the Sysrepo environment and establish two
    sessions with the startup and running datastores.
 
--  Check that used (not essential) and required (essential) modules are
+-  Check that the used (not-essential) and required (essential) modules are
    installed in the Sysrepo repository at the right revision. If an
    essential module - that is, a module where the configuration schema for a
    managed server is defined - is not installed, raise a fatal error.
@@ -312,33 +311,33 @@ Configuration
 -------------
 
 The behavior described in :ref:`using-netconf`
-is controlled by a few configuration flags, which can be set in the
-global scope or in a specific managed-server scope. In the second case,
+is controlled by several configuration flags, which can be set in the
+global scope or in a specific managed-server scope. If the latter,
 the value defined in the managed-server scope takes precedence. These
 flags are:
 
 -  ``boot-update`` - controls the initial configuration phase; when
-   true (the default), the initial configuration retrieved from the
+   ``true`` (the default), the initial configuration retrieved from the
    classic Kea server JSON configuration file is loaded first, and then
    the startup YANG model is loaded. This setting lets administrators
    define a control socket in the local JSON file and then download the
-   configuration from YANG. When set to false, this phase is skipped.
+   configuration from YANG. When set to ``false``, this phase is skipped.
 
 -  ``subscribe-changes`` - controls the module change
-   subscription; when true (the default), a module change callback is
-   subscribed, but when false the phase is skipped and running
-   configuration updates are disabled. When set to true, the running
+   subscription; when ``true`` (the default), a module change callback is
+   subscribed, but when ``false`` the phase is skipped and running
+   configuration updates are disabled. When set to ``true``, the running
    datastore is used to subscribe for changes.
 
 -  ``validate-changes`` - controls how Kea monitors changes in
    the Sysrepo configuration. Sysrepo offers two stages where Kea can
    interact: validation and application. At the validation (or
-   SR_EV_CHANGE event, in the Sysrepo naming convention) stage, Kea
+   ``SR_EV_CHANGE`` event, in the Sysrepo naming convention) stage, Kea
    retrieves the newly committed configuration and verifies it. If the
    configuration is incorrect for any reason, the Kea servers reject it
    and the error is propagated back to the Sysrepo, which then returns
-   an error. This step only takes place if validate-changes is set to
-   true. In the application (or SR_EV_UPDATE event in the Sysrepo naming
+   an error. This step only takes place if ``validate-changes`` is set to
+   ``true``. In the application (or ``SR_EV_UPDATE`` event in the Sysrepo naming
    convention) stage, the actual configuration is applied. At this stage
    Kea can receive the configuration, but it is too late to signal back
    any errors as the configuration has already been committed.
@@ -358,8 +357,8 @@ making them manageable. For instance, for the DHCPv4 server:
         }
     }
 
-With module change subscriptions enabled, the ``kea-netconf`` daemon will
-monitor any configuration changes as they appear in the Sysrepo. Such
+With module change subscriptions enabled, the ``kea-netconf`` daemon
+monitors any configuration changes as they appear in the Sysrepo. Such
 changes can be done using the ``sysrepocfg`` tool or remotely using any
 NETCONF client. For details, please see the Sysrepo documentation or
 :ref:`operation-example`.
@@ -369,49 +368,49 @@ running datastore; to keep them between server reboots they must be
 copied to the startup datastore.
 
 When module changes are tracked (using ``subscribe-changes`` set to
-true) and the running configuration has changed (e.g. using
+``true``) and the running configuration has changed (e.g. using
 ``sysrepocfg`` or any NETCONF client), the callback validates the
-modified configuration (if ``validate-changes`` was not set to false)
+modified configuration (if ``validate-changes`` was not set to ``false``)
 and runs a second time to apply the new configuration. If the validation
-fails, the callback is still called again but with an SR_EV_ABORT
-(vs. SR_EV_DONE) event with rollback changes.
+fails, the callback is still called again but with an ``SR_EV_ABORT``
+(vs. ``SR_EV_DONE``) event with rollback changes.
 
-The returned code of the callback on an SR_EV_DONE event is ignored, as it is
+The returned code of the callback on an ``SR_EV_DONE`` event is ignored, as it is
 too late to refuse a bad configuration.
 
-There are four ways in which a modified YANG configuration could
-possibly be incorrect:
+There are four ways in which a modified YANG configuration might
+be incorrect:
 
-1. It can be non-compliant with the schema, e.g. an unknown entry, missing a
+1. It could be non-compliant with the schema, e.g. an unknown entry, missing a
    mandatory entry, a value with a bad type, or not matching a constraint.
 
-2. It can fail to be translated from YANG to JSON, e.g. an invalid user
+2. It could fail to be translated from YANG to JSON, e.g. an invalid user
    context.
 
-3. It can fail Kea server sanity checks, e.g. an out-of-subnet-pool range
+3. It could fail Kea server sanity checks, e.g. an out-of-subnet-pool range
    or an unsupported database type.
 
 4. The syntax may be correct and pass server sanity checks but the
-   configuration fails to run, e.g. the configuration specifies database
+   configuration could fail to run, e.g. the configuration specifies database
    credentials but the database refuses the connection.
 
 The first case is handled by Sysrepo. The second and third cases are
-handled by kea-netconf in the validation phase (if not disabled by
-setting ``validate-changes`` to true). The last case causes the
+handled by ``kea-netconf`` in the validation phase (if not disabled by
+setting ``validate-changes`` to ``true``). The last case causes the
 application phase to fail without a sensible report to Sysrepo.
 
-The managed Kea servers or agents are described in the
-``managed-servers`` section. Each sub-section begins by the service
+The managed Kea servers and agents are described in the
+``managed-servers`` section. Each sub-section begins with the service
 name: ``dhcp4``, ``dhcp6``, ``d2`` (the DHCP-DDNS server does not
-support the control channel feature yet), and ``ca`` (the control
+support the control-channel feature yet), and ``ca`` (the control
 agent).
 
-Each managed server entry contains optionally:
+Each managed server entry may contain:
 
 -  ``boot-update``, ``subscribe-changes``, and ``validate-changes`` -
-   control flags.
+   specify control flags.
 
--  ``model`` - specifies the YANG model / module name. For each service,
+-  ``model`` - specifies the YANG model/module name. For each service,
    the default is the corresponding Kea YANG model, e.g. for ``"dhcp4"``
    it is ``"kea-dhcp4-server"``.
 
@@ -425,7 +424,7 @@ A control socket is specified by:
    it is not really a socket, but it allows ``kea-netconf`` to run in
    debugging mode where everything is printed on stdout, and it can also be
    used to redirect commands easily. ``unix`` is the standard direct
-   server control channel, which uses UNIX sockets, and ``http`` uses
+   server control channel, which uses UNIX sockets; ``http`` uses
    a control agent, which accepts HTTP connections.
 
 -  ``socket-name`` - the local socket name for the ``unix`` socket type
@@ -440,10 +439,10 @@ enclosed in curly brackets). They are accepted at the NETCONF entry,
 i.e. below the top-level, managed-service entry, and control-socket
 entry scopes.
 
-Hooks libraries can be loaded by the NETCONF agent just as with other
+Hook libraries can be loaded by the NETCONF agent just as with other
 servers or agents; however, currently no hook points are defined. The
-``hooks-libraries`` list contains the list of hooks libraries that
-should be loaded by kea-netconf, along with their configuration
+``hooks-libraries`` list contains the list of hook libraries that
+should be loaded by ``kea-netconf``, along with their configuration
 information specified with ``parameters``.
 
 Please consult :ref:`logging` for details on how to configure
@@ -452,8 +451,8 @@ given in the example above.
 
 .. _netconf-example:
 
-A kea-netconf Configuration Example
------------------------------------
+A ``kea-netconf`` Configuration Example
+---------------------------------------
 
 The following example demonstrates the basic NETCONF configuration. More
 examples are available in the ``doc/examples/netconf`` directory in the
@@ -532,7 +531,7 @@ Kea sources.
                }
            },
 
-           // kea-netconf is able to load hooks libraries that augment its operation.
+           // kea-netconf is able to load hook libraries that augment its operation.
            // Currently there are no hook points defined in kea-netconf
            // processing.
            "hooks-libraries": [
@@ -582,7 +581,7 @@ Kea sources.
 Starting and Stopping the NETCONF Agent
 ---------------------------------------
 
-kea-netconf accepts the following command-line switches:
+``kea-netconf`` accepts the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file.
 
@@ -594,15 +593,15 @@ kea-netconf accepts the following command-line switches:
    verbosity, e.g. when debugging.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   Kea-netconf attempts to load it and conducts sanity checks; note that
+   ``kea-netconf`` attempts to load it and conducts sanity checks;
    certain checks are possible only while running the actual server. The
-   actual status is reported with exit code (0 = configuration looks ok,
-   1 = error encountered). Kea will print out log messages to standard
-   output and error to standard error when testing configuration.
+   actual status is reported with exit code (0 = configuration looks okay,
+   1 = error encountered). Kea prints out log messages to standard
+   output and error to standard error when testing the configuration.
 
--  ``-v`` - displays the version of kea-netconf and exits.
+-  ``-v`` - displays the version of ``kea-netconf`` and exits.
 
--  ``-V`` - displays the extended version information for kea-netconf
+-  ``-V`` - displays the extended version information for ``kea-netconf``
    and exits. The listing includes the versions of the libraries
    dynamically linked to Kea.
 
@@ -627,7 +626,7 @@ Setup of NETCONF Agent Operation Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The test box has an Ethernet interface named eth1. On some systems it is
-possible to rename interfaces, for instance on a Linux with an ens38
+possible to rename interfaces; for instance, on Linux with an ens38
 interface:
 
 .. code-block:: console
@@ -646,7 +645,7 @@ The Kea DHCPv6 server must be launched with the configuration specifying
 a control socket used to receive control commands. The ``kea-netconf``
 process uses this socket to communicate with the DHCPv6 server, i.e. it
 pushes translated configurations to that server using control commands.
-The following is the example control socket specification for the Kea
+The following is an example control socket specification for the Kea
 DHCPv6 server:
 
 .. code-block:: json
@@ -667,7 +666,7 @@ contained within the ``boot.json`` file, run:
 
     # kea-dhcp6 -d -c boot.json
 
-The current configuration of the server can be fetched via control
+The current configuration of the server can be fetched via a control
 socket by running:
 
 .. code-block:: console
@@ -759,7 +758,7 @@ datastore, i.e. changes are not permanent.
 Error Handling in NETCONF Operation Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are four classes of issues with the configurations applied via
+There are four classes of issues with configurations applied via
 NETCONF:
 
 1. The configuration does not comply with the YANG schema.
@@ -827,7 +826,7 @@ For example, consider this ``BAD-translator.xml`` file:
    </config>
 
 In the third case, the configuration is presented to the Kea DHCPv6
-server and fails to validate as in this ``BAD-config.xml`` file:
+server and fails to validate, as in this ``BAD-config.xml`` file:
 
 .. code-block:: xml
 
@@ -1025,37 +1024,36 @@ or by using a NETCONF client like ``netopeer2-cli`` from the
 
 .. _migrating-yang-v0-to-v1:
 
-Migrating YANG data from sysrepo v0.x to v1.x
+Migrating YANG Data from Sysrepo v0.x to v1.x
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start the migration after turning off kea-netconf to make sure that backups done
+Start the migration after turning off ``kea-netconf`` to make sure that backups
 for both datastores are done at the same configuration state and no change
 happens between exporting them.
 
-Unfortunately, sysrepo v0.x does not support import/export of all YANG modules.
-This was added in sysrepo v1.x. You will need to do per-module backup. It's
-probably for the best, for isolating potential failures and preventing them from
-affecting all your modules.
+Unfortunately, Sysrepo v0.x does not support import/export of all YANG modules.
+This was added in Sysrepo v1.x, so users of earlier versions will need to do per-module backup.
+This has the added benefit of isolating potential failures and preventing them from
+affecting all modules.
 
-With sysrepo v0.x:
+With Sysrepo v0.x:
 
 .. code-block:: console
 
     $ sysrepocfg --datastore running --export=save.xml --format=xml kea-dhcp6-server
     $ sysrepocfg --datastore startup --export=save.xml --format=xml kea-dhcp6-server
 
-Install sysrepo v1.x and then:
+Install Sysrepo v1.x and then:
 
 .. code-block:: console
 
     $ sysrepocfg --datastore running --edit=save.xml
     $ sysrepocfg --datastore startup --edit=save.xml
 
-Module name and format are optional for v1.x, they are detected automatically.
-In case of trouble, they can be provided with the ``--format xml`` and
+Module name and format are optional for v1.x; they are detected automatically.
+If necessary, they can be provided with the ``--format xml`` and
 ``--module kea-dhcp6-server`` flags.
 
-If you upgraded after a long time, there might also be changes to the YANG
-modules themselves. In that case the backups will need some minor massaging. But
-this will be a dilligence that will have to be carried out occasionally and
-completely independent of sysrepo upgrades.
+If upgrading from a very old version of Sysrepo, there may also be changes to the YANG
+modules themselves. In that case, the backups will need some minor massaging, as would
+be required with normal periodic maintenance.
