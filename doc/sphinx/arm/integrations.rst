@@ -1,5 +1,5 @@
 *********************************
-Integration with external systems
+Integration With External Systems
 *********************************
 
 Kea provides optional support for a variety of external systems, such as RADIUS, NETCONF,
