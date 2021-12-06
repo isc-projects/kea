@@ -126,7 +126,7 @@ public:
         ASSERT_GE(leases.size(), 6u);
 
         // Use the same current time for all leases.
-        time_t current_time = time(NULL);
+        time_t current_time = time(0);
 
         // Add them to the database
         for (size_t i = 0u; i < leases.size(); ++i) {
@@ -156,7 +156,7 @@ public:
                   expired_leases.size());
 
         // Update current time for the next test.
-        current_time = time(NULL);
+        current_time = time(0);
         // Also, remove expired leases collected during the previous test.
         expired_leases.clear();
 
@@ -235,7 +235,7 @@ public:
         ASSERT_GE(leases.size(), 6u);
 
         // Use the same current time for all leases.
-        time_t current_time = time(NULL);
+        time_t current_time = time(0);
 
         // Add them to the database
         for (size_t i = 0u; i < leases.size(); ++i) {
@@ -265,7 +265,7 @@ public:
                   expired_leases.size());
 
         // Update current time for the next test.
-        current_time = time(NULL);
+        current_time = time(0);
         // Also, remove expired leases collected during the previous test.
         expired_leases.clear();
 
@@ -379,7 +379,7 @@ TEST(CqlOpenTest, OpenDatabase) {
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        0, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
 
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
@@ -411,7 +411,7 @@ TEST(CqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+        CQL_VALID_TYPE, 0, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Check that invalid login data does not cause an exception, CQL should use
     // default values.
@@ -439,7 +439,28 @@ TEST(CqlOpenTest, OpenDatabase) {
 
     // Check that CQL allows the hostname to not be specified.
     EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+        CQL_VALID_TYPE, 0, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+
+    // Check that CQL does not support SSL/TLS.
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, VALID_CERT)),
+        DbOpenError);
+
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, 0, VALID_KEY)),
+        DbOpenError);
+
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, 0, 0, VALID_CA)),
+        DbOpenError);
+
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, 0, 0, 0, VALID_CIPHER)),
+        DbOpenError);
 
     // Tidy up after the test
     destroyCqlSchema();
@@ -464,7 +485,7 @@ TEST_F(CqlLeaseMgrTest, getType) {
 ///
 /// This test checks that the conversion is correct.
 TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
-    const time_t cltt = time(NULL);
+    const time_t cltt = time(0);
     const uint32_t valid_lft = 86400;  // 1 day
     cass_int64_t cql_expire;
 
@@ -634,7 +655,7 @@ TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease can handle NULL client-id.
+/// updateLease4() and deleteLease can handle null client-id.
 /// (client-id is optional and may not be present)
 TEST_F(CqlLeaseMgrTest, lease4NullClientId) {
     testLease4NullClientId();

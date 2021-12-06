@@ -1237,7 +1237,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     }
 #else
     if (tls > 0) {
-        LOG_ERR(dhcpsrv_logger, DHCPSRV_PGSQL_NO_TLS_SUPPORT)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_NO_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters_));
         isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
                   << "backend (built with this feature disabled)");

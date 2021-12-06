@@ -197,6 +197,17 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
+    // Check for SSL/TLS support.
+#ifdef HAVE_PGSQL_SSL
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, 0, 0, VALID_CA)));
+#else
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        0, 0, 0, 0, VALID_CA)), DbOpenError);
+#endif
+
     // Tidy up after the test
     destroyPgSQLSchema();
     LeaseMgrFactory::destroy();

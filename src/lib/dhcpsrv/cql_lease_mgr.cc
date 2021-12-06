@@ -2140,7 +2140,7 @@ CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
         // No cipher list.
     }
     if (tls) {
-        LOG_ERR(dhcpsrv_logger, DHCPSRV_CQL_NO_TLS_SUPPORT)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_CQL_NO_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         isc_throw(DbOpenError, "Attempt to configure TLS for CQL");
     }
