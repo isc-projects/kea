@@ -55,7 +55,7 @@
     "trust-anchor": "my-ca",
     "cert-file": "my-cert",
     "key-file": "my-key",
-    "cipher-list": "!SSLv3"
+    "cipher-list": "AES"
   },
 
 // Define a subnet with a pool of dynamic addresses and a pool of dynamic

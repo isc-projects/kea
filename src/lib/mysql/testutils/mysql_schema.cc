@@ -87,6 +87,54 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
     }
 }
 
+string getMySQLTlsEnv() {
+    const string name("KEA_MYSQL_HAVE_SSL");
+    const char* val = getenv(name.c_str());
+    return (val ? string(val) : "");
+}
+
+string getMySQLTlsServer() {
+    DatabaseConnection::ParameterMap parameters =
+        DatabaseConnection::parse(validMySQLConnectionString());
+    MySqlConnection conn(parameters);
+    MYSQL_RES* result(0);
+    try {
+        conn.openDatabase();
+        string sql("SHOW GLOBAL VARIABLES LIKE 'have_ssl'");
+        if (mysql_query(conn.mysql_, sql.c_str())) {
+            isc_throw(DbOperationError,
+                      sql << ": " << mysql_error(conn.mysql_));
+        }
+        result = mysql_use_result(conn.mysql_);
+        size_t count = mysql_num_fields(result);
+        if (count != 2) {
+            isc_throw(DbOperationError,
+                      sql << " returned " << count << " rows, expecting 2");
+        }
+        MYSQL_ROW row = mysql_fetch_row(result);
+        if (!row) {
+            isc_throw(DbOperationError, sql << " returned row is null");
+        }
+        // first column is 'have_ssl', second is the status.
+        string name(row[0]);
+        if (name != "have_ssl") {
+            isc_throw(DbOperationError,
+                      sql << " returned a wrong name '" << name
+                      << "', expected 'have_ssl'");
+        }
+        string value(row[1]);
+        const string env("KEA_MYSQL_HAVE_SSL");
+        static_cast<void>(setenv(env.c_str(), value.c_str(), 1));
+        mysql_free_result(result);
+        return (value);
+    } catch (...) {
+        if (result) {
+            mysql_free_result(result);
+        }
+        throw;
+    }
+}
+
 }  // namespace test
 }  // namespace db
 }  // namespace isc

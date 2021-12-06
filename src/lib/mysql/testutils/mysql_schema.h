@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,7 +69,6 @@ void destroyMySQLSchema(bool show_err = false, bool force = false);
 /// schema.
 void createMySQLSchema(bool show_err = false, bool force = false);
 
-
 /// @brief Attempts to wipe data from the MySQL unit test database
 ///
 /// Runs the shell script
@@ -99,8 +98,17 @@ bool wipeMySQLData(bool show_err = false);
 void runMySQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
-};
-};
-};
+/// @brief Get the SSL/TLS support status from the environment
+///
+/// The environment variable is KEA_MYSQL_HAVE_SSL
+std::string getMySQLTlsEnv();
+
+/// @brief Get the SSL/TLS support status from the server
+/// @note the returned value is set in the environment
+std::string getMySQLTlsServer();
+
+}
+}
+}
 
 #endif

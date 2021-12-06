@@ -658,4 +658,119 @@ TEST_F(MySqlSchemaTest, checkVersion) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
+/// @brief  Test fixture class for secure connection.
+class MySqlSecureConnectionTest : public ::testing::Test {
+public:
+
+    /// @brief Check if SSL/TLS support is available and configured.
+    bool hasMySQLTls() {
+        std::string tls = getMySQLTlsEnv();
+        if (tls.empty()) {
+            tls = getMySQLTlsEnv();
+        }
+        return (tls == "YES");
+    }
+};
+
+/// @brief Check that we can get the MySQL support status.
+TEST_F(MySqlSecureConnectionTest, getMySQLTls) {
+    std::string env;
+    try {
+        env = getMySQLTlsEnv();
+        std::cout << "getMySQLTlsEnv returns '" << env << "'\n";
+    } catch (const isc::Exception& ex) {
+        std::cerr << "getMySQLTlsEnv fails with " << ex.what() << "\n";
+    }
+    if (!env.empty()) {
+        return;
+    }
+    try {
+        std::cout << "getMySQLTlsServer returns '" << getMySQLTlsServer() << "'\n";
+    } catch (const isc::Exception& ex) {
+        std::cerr << "getMySQLTlsServer fails with " <<      ex.what() << "\n";
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection.
+TEST_F(MySqlSecureConnectionTest, Tls) {
+    if (!hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test\n";
+        return;
+    }
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW(conn.openDatabase());
+    EXPECT_TRUE(conn.getTls());
+    std::string cipher = conn.getTlsCipher();
+    EXPECT_FALSE(cipher.empty());
+    std::cout << "TLS cipher is '" << cipher << "'\n";
+}
+
+/// @brief Check the SSL/TLS protected connection still requires the password.
+TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
+    if (!hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test\n";
+        return;
+    }
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST, VALID_SECURE_USER,
+                                            INVALID_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+}
+
+/// @brief Check the SSL/TLS protected connection requires crypto parameters.
+TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
+    if (!hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test\n";
+        return;
+    }
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_PASSWORD);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+}
+
+/// @brief Check the SSL/TLS protected connection requires valid key.
+TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
+    if (!hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test\n";
+        return;
+    }
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, INVALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+}
+
+/// @brief Check the SSL/TLS protected connection requires a key.
+TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
+    if (!hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test\n";
+        return;
+    }
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, 0, VALID_CA,
+                                            VALID_CIPHER);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+}
+
 }  // namespace

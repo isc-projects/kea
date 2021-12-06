@@ -290,7 +290,7 @@
                 "key-file": "my key",
 
                 // Cipher list (see the OpenSSL ciohers command manual).
-                "cipher-list": "!SSLv3"
+                "cipher-list": "AES"
             },
             {
                 // Name of the database to connect to.

@@ -548,7 +548,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"trust-anchor\": \"my-ca\", \n"
         "\"cert-file\": \"my-cert.crt\", \n"
         "\"key-file\": \"my-key.key\", \n"
-        "\"cipher-list\": \"!SSLv3\" \n"
+        "\"cipher-list\": \"AES\" \n"
         "}\n"
     };
 
