@@ -8,7 +8,7 @@ Most administrators want to be able to monitor any Kea services that are running
 pieces of information - configuration files, API, statistics, logs, open database content, and more -
 that it may sometimes
 be overwhelming to keep up. ISC's Stork project is intended to address this problem for both Kea
-and BIND 9. Stork is useful in a variety of scenarios:
+and BIND 9. Stork is useful in a variety of ways:
 
 - Stork can be used as a dashboard. It provides insight into what exactly is happening
   on the servers. In particular, it allows users to: see up-to-date details regarding pool
@@ -28,7 +28,7 @@ and BIND 9. Stork is useful in a variety of scenarios:
 Stork is available as source code, but also as native deb and RPM packages, which makes it easy
 to install on most popular systems. For more details, please see the
 `Stork ARM <https://stork.readthedocs.io>`_ or the `Stork project page <https://gitlab.isc.org/isc-projects/stork>`_.
-The former has a nice collection of screenshots that is frequently updated, to give users
+The ARM has a nice collection of screenshots that is frequently updated, to give users
 an idea of what is currently available. Stork is in the midst of full development with
 monthly releases, so please check back frequently.
 
@@ -38,13 +38,13 @@ monthly releases, so please check back frequently.
 Kea Statistics in Grafana
 =========================
 
-The ISC Stork project provides an agent that can be deployed alongside Kea and BIND 9. It
+The ISC Stork project provides an agent that can be deployed alongside Kea. It
 exposes Kea statistics in a format that is accepted by Prometheus.
 One of the major benefits of Prometheus is that it turns repeated one-time observations into time series,
 which lets users monitor how certain behaviors change over time. It is easy to use other tools
 to visualize data available in Prometheus; the most common approach is to use
 Grafana to provide visual dashboards. The Stork project provides dashboard
-definitions for Kea and BIND 9 that can be imported into Grafana very easily.
+definitions for Kea that can be imported into Grafana very easily.
 
 Learn more about Prometheus and Grafana on their websites: `Prometheus <https://prometheus.io/>`
 and `Grafana <https://grafana.com/>`.
