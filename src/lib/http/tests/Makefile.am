@@ -1,10 +1,17 @@
 SUBDIRS = .
 
+# Add to the tarball:
+EXTRA_DIST = testdata/empty
+EXTRA_DIST += testdata/hiddenp
+EXTRA_DIST += testdata/hiddens
+EXTRA_DIST += testdata/hiddenu
+
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 TEST_CA_DIR = $(srcdir)/../../asiolink/testutils/ca
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(TEST_CA_DIR)\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DDATA_DIR=\"$(abs_srcdir)/testdata\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
