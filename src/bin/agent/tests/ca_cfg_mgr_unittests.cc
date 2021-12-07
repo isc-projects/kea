@@ -12,6 +12,7 @@
 #include <process/d_cfg_mgr.h>
 #include <http/basic_auth_config.h>
 #include <agent/tests/test_callout_libraries.h>
+#include <agent/tests/test_data_files_config.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -225,6 +226,27 @@ TEST(CtrlAgentCfgMgr, contextAuthConfig) {
     EXPECT_EQ(auth->toElement()->str(), stored_auth->toElement()->str());
 }
 
+// Test if the context can store and retrieve basic HTTP authentication
+// configuration using files.
+TEST(CtrlAgentCfgMgr, contextAuthConfigFile) {
+    CtrlAgentCfgContext ctx;
+
+    // By default there should be no authentication.
+    EXPECT_FALSE(ctx.getAuthConfig());
+    BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(ctx.setAuthConfig(auth));
+
+    auth->setRealm("foobar");
+    auth->setDirectory("/tmp");
+    auth->add("", "/tmp/foo", "", "/tmp/bar");
+    auth->add("", "/tmp/test", "", "/tmp/pwd");
+
+    const HttpAuthConfigPtr& stored_auth = ctx.getAuthConfig();
+    ASSERT_TRUE(stored_auth);
+    EXPECT_FALSE(stored_auth->empty());
+    EXPECT_EQ(auth->toElement()->str(), stored_auth->toElement()->str());
+}
+
 /// Control Agent configurations used in tests.
 const char* AGENT_CONFIGS[] = {
 
@@ -371,6 +393,30 @@ const char* AGENT_CONFIGS[] = {
     "    \"cert-file\": \"my-cert\",\n"
     "    \"key-file\": \"my-key\",\n"
     "    \"cert-required\": false\n"
+    "}",
+
+    // Configuration 10: http, 1 socket and authentication using files
+    "{\n"
+    "    \"http-host\": \"betelgeuse\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"authentication\": {\n"
+    "        \"type\": \"basic\",\n"
+    "        \"realm\": \"foobar\",\n"
+    "        \"directory\": \"" CA_TEST_DATA_DIR "\",\n"
+    "        \"clients\": ["
+    "            {"
+    "              \"user-file\": \"hiddenu\",\n"
+    "              \"password-file\": \"hiddenp\"\n"
+    "            },{\n"
+    "              \"password-file\": \"hiddens\"\n"
+    "            }\n"
+    "         ]\n"
+    "    },\n"
+    "    \"control-sockets\": {\n"
+    "        \"dhcp4\": {\n"
+    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "        }\n"
+    "    }\n"
     "}"
 };
 
@@ -617,6 +663,41 @@ TEST_F(AgentParserTest, configParseTls) {
     EXPECT_EQ("my-cert", ctx->getCertFile());
     EXPECT_EQ("my-key", ctx->getKeyFile());
     EXPECT_FALSE(ctx->getCertRequired());
+}
+
+// This test checks that the config file with basic HTTP authentication
+// using files can be loaded.
+TEST_F(AgentParserTest, configParseAuthFile) {
+    configParse(AGENT_CONFIGS[10], 0);
+    CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
+    ASSERT_TRUE(auth);
+    const BasicHttpAuthConfigPtr& basic_auth =
+        boost::dynamic_pointer_cast<BasicHttpAuthConfig>(auth);
+    ASSERT_TRUE(basic_auth);
+
+    // Check realm
+    EXPECT_EQ("foobar", basic_auth->getRealm());
+
+    // Check directory
+    EXPECT_EQ(std::string(CA_TEST_DATA_DIR), basic_auth->getDirectory());
+
+    // Check credentials
+    auto credentials = basic_auth->getCredentialMap();
+    EXPECT_EQ(2, credentials.size());
+    std::string user;
+    EXPECT_NO_THROW(user = credentials.at("a2VhdGVzdDpLZWFUZXN0"));
+    EXPECT_EQ("keatest", user);
+    EXPECT_NO_THROW(user = credentials.at("a2VhOnRlc3Q="));
+    EXPECT_EQ("kea", user);
+
+    // Check clients.
+    BasicHttpAuthConfig expected;
+    expected.setRealm("foobar");
+    expected.setDirectory(std::string(CA_TEST_DATA_DIR));
+    expected.add("", "hiddenu", "", "hiddenp");
+    expected.add("", "", "", "hiddens", true);
+    EXPECT_EQ(expected.toElement()->str(), basic_auth->toElement()->str());
 }
 
 } // end of anonymous namespace

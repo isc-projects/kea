@@ -2,6 +2,9 @@ SUBDIRS = .
 
 # Add to the tarball:
 EXTRA_DIST = testdata/get_config.json
+EXTRA_DIST += testdata/hiddenp
+EXTRA_DIST += testdata/hiddens
+EXTRA_DIST += testdata/hiddenu
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)

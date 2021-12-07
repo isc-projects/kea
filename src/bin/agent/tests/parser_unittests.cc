@@ -764,8 +764,7 @@ TEST(ParserTest, mapEntries) {
     ElementPtr sample_json = Element::createList();
     loadFile(sample_dir + "https.json", sample_json);
     loadFile(sample_dir + "simple.json", sample_json);
-    //// KeywordSet sample_keys;
-    KeywordSet sample_keys = { "password-file", "user-file" };
+    KeywordSet sample_keys;
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
         [] (ConstElementPtr json, KeywordSet& set) {
