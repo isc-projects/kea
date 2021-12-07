@@ -9,8 +9,8 @@
 #include <asiolink/io_service.h>
 #include <d2/simple_remove.h>
 #include <d2srv/d2_cfg_mgr.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
-#include <nc_test_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -605,23 +605,8 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_Timeout) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_remove->getDnsUpdateRequest();
-
         // Run removingFwdRRsHandler to send the request.
         EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_remove->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time around we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server IO timeout.
         name_remove->setDnsUpdateStatus(DNSClient::TIMEOUT);
@@ -669,23 +654,8 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_remove->getDnsUpdateRequest();
-
         // Run removingFwdRRsHandler to send the request.
         EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_remove->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time around we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a corrupt server response.
         name_remove->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
@@ -945,23 +915,8 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_Timeout) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_remove->getDnsUpdateRequest();
-
         // Run removingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_remove->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time around we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server IO timeout.
         name_remove->setDnsUpdateStatus(DNSClient::TIMEOUT);
@@ -1009,23 +964,8 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_CorruptResponse) {
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
-        const D2UpdateMessagePtr prev_msg = name_remove->getDnsUpdateRequest();
-
         // Run removingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
-
-        const D2UpdateMessagePtr curr_msg = name_remove->getDnsUpdateRequest();
-        if (i == 1) {
-            // First time around we should build the message.
-            EXPECT_FALSE(prev_msg);
-            EXPECT_TRUE(curr_msg);
-        } else {
-            // Subsequent passes should reuse the request. We are only
-            // looking to check that we have not replaced the pointer value
-            // with a new pointer.  This tests the on_entry() logic which
-            // clears the request ONLY upon initial entry into the state.
-            EXPECT_TRUE(prev_msg == curr_msg);
-        }
 
         // Simulate a server corrupt response.
         name_remove->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);

@@ -10,7 +10,7 @@
 /// @file nc_trans.h This file defines the class NameChangeTransaction.
 
 #include <asiolink/io_service.h>
-#include <d2/dns_client.h>
+#include <d2srv/dns_client.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_tsig_key.h>
 #include <dhcp_ddns/ncr_msg.h>
@@ -288,9 +288,11 @@ protected:
     /// @param request is the new request packet to assign.
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
-    /// @brief Destroys the current update request packet and resets
-    /// update attempts count.
+    /// @brief Destroys the current update request packet.
     void clearDnsUpdateRequest();
+
+    /// @brief Resets the update attempts count.
+    void clearUpdateAttempts();
 
     /// @brief Sets the update status to the given status value.
     ///

@@ -8,11 +8,11 @@
 
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <d2/d2_process.h>
+#include <d2/tests/test_configured_libraries.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <process/testutils/d_test_stubs.h>
-#include <d2/tests/nc_test_utils.h>
-#include <d2/tests/test_configured_libraries.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>

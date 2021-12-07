@@ -11,7 +11,7 @@
 
 #include <asiolink/io_service.h>
 #include <d2/d2_queue_mgr.h>
-#include <d2/nc_trans.h>
+#include <d2srv/nc_trans.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_log.h>
 #include <exceptions/exceptions.h>

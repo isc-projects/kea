@@ -28,14 +28,15 @@
                     },
                     { // This server also has an entry there, so will
                       // use GSS-TSIG, too.
-                        "ip-address": "192.0.2.2"
+                        "ip-address": "192.0.2.2",
+                        "port": 5300
                     }
                 ]
             }
         ]
     },
 
-    // Reverse zone: we want to update the reverse zone "2.0.192.in-addr-arpa".
+    // Reverse zone: we want to update the reverse zone "2.0.192.in-addr.arpa".
     "reverse-ddns":
     {
         "ddns-domains":
@@ -58,7 +59,7 @@
     // Need to add gss-tsig hook here
     "hooks-libraries": [
     {
-        "library": "/opt/lib/libdhcp_gss_tsig.so",
+        "library": "/opt/lib/libddns_gss_tsig.so",
         "parameters": {
             // This section governs the GSS-TSIG integration. Each server
             // mentioned in forward-ddns and/or reverse-ddns needs to have
@@ -68,10 +69,13 @@
 
             "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
             "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
-            "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+            "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
             "credentials-cache": "FILE:/etc/ccache", // toplevel only
-            "tkey-lifetime": 3600,
+            "tkey-lifetime": 3600, // 1 hour
+            "rekey-interval": 2700, // 45 minutes
+            "retry-interval": 120, // 2 minutes
             "tkey-protocol": "TCP",
+            "fallback": false,
 
             // The list of GSS-TSIG capable servers
             "servers": [
@@ -85,8 +89,12 @@
                     "port": 53,
                     "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                     "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                    "tkey-lifetime": 86400, // 24h
-                    "tkey-protocol": "TCP"
+                    "tkey-lifetime": 7200, // 2 hours
+                    "rekey-interval": 5400, // 90 minutes
+                    "retry-interval": 240, // 4 minutes
+                    "tkey-protocol": "TCP",
+                    "fallback": true // if no key is available fallback to the
+                                     // standard behavior (vs skip this server)
                 },
                 {
                     // The second server (it has most of the parameters missing

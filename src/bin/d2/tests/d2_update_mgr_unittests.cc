@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <asiolink/io_service.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <d2/d2_update_mgr.h>
-#include <nc_test_utils.h>
 #include <d2/nc_add.h>
 #include <d2/nc_remove.h>
 #include <d2/simple_add.h>
@@ -232,8 +232,8 @@ public:
             // value).  This is roughly ten times the number for the longest
             // test (currently, multiTransactionTimeout).
             if (passes > max_passes) {
-                ADD_FAILURE() << "processALL failed, too many passes: "
-                    << passes <<  ", total handlers executed: " << handlers;
+                FAIL() << "processALL failed, too many passes: "
+                       << passes <<  ", total handlers executed: " << handlers;
             }
         }
     }

@@ -8,13 +8,13 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
-#include <d2/nc_trans.h>
+#include <d2srv/nc_trans.h>
+#include <d2srv/testutils/nc_test_utils.h>
 #include <dns/opcode.h>
 #include <dns/messagerenderer.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
 #include <util/buffer.h>
-#include <nc_test_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -44,6 +44,8 @@ public:
     // NameChangeStub events
     static const int SEND_UPDATE_EVT = NCT_DERIVED_EVENT_MIN + 2;
 
+    /// @brief Flag which specifies if the NameChangeStub's callback should be
+    /// used instead of the NameChangeTransaction's callback.
     bool use_stub_callback_;
 
     /// @brief Constructor
@@ -235,6 +237,7 @@ public:
     using NameChangeTransaction::setNcrStatus;
     using NameChangeTransaction::setDnsUpdateRequest;
     using NameChangeTransaction::clearDnsUpdateRequest;
+    using NameChangeTransaction::clearUpdateAttempts;
     using NameChangeTransaction::setDnsUpdateStatus;
     using NameChangeTransaction::getDnsUpdateResponse;
     using NameChangeTransaction::setDnsUpdateResponse;
@@ -663,7 +666,7 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
 
     // The server selection process determines the current server,
     // instantiates a new DNSClient, and a DNS response message buffer.
-    //  We need to save the values before each selection, so we can verify
+    // We need to save the values before each selection, so we can verify
     // they are correct after each selection.
     DnsServerInfoPtr prev_server = name_change->getCurrentServer();
     DNSClientPtr prev_client = name_change->getDNSClient();
@@ -871,6 +874,12 @@ TEST_F(NameChangeTransactionTest, updateAttempts) {
 
     // Verify that the value is as expected.
     EXPECT_EQ(5, name_change->getUpdateAttempts());
+
+    // Clear it.
+    name_change->clearUpdateAttempts();
+
+    // Verify that it was cleared as expected.
+    EXPECT_EQ(0, name_change->getUpdateAttempts());
 }
 
 /// @brief Tests retryTransition method

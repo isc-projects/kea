@@ -7,13 +7,11 @@
 #ifndef DNS_CLIENT_H
 #define DNS_CLIENT_H
 
-#include <d2/d2_update_message.h>
-
 #include <asiolink/io_service.h>
-#include <util/buffer.h>
-
 #include <asiodns/io_fetch.h>
 #include <d2srv/d2_tsig_key.h>
+#include <d2srv/d2_update_message.h>
+#include <util/buffer.h>
 
 namespace isc {
 namespace d2 {
@@ -149,7 +147,8 @@ public:
                   const D2TsigKeyPtr& tsig_key = D2TsigKeyPtr());
 
 private:
-    DNSClientImpl* impl_;  ///< Pointer to DNSClient implementation.
+    /// @brief Pointer to DNSClient implementation.
+    std::unique_ptr<DNSClientImpl> impl_;
 };
 
 } // namespace d2

@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <d2/d2_update_message.h>
-#include <d2/d2_zone.h>
 #include <d2srv/d2_config.h>
+#include <d2srv/d2_update_message.h>
+#include <d2srv/d2_zone.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>

@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <d2/nc_trans.h>
 #include <d2srv/d2_log.h>
+#include <d2srv/nc_trans.h>
 #include <dns/qid_gen.h>
 #include <dns/rdata.h>
 #include <hooks/hooks.h>
@@ -301,8 +301,12 @@ NameChangeTransaction::setDnsUpdateRequest(D2UpdateMessagePtr& request) {
 
 void
 NameChangeTransaction::clearDnsUpdateRequest() {
-    update_attempts_ = 0;
     dns_update_request_.reset();
+}
+
+void
+NameChangeTransaction::clearUpdateAttempts() {
+    update_attempts_ = 0;
 }
 
 void

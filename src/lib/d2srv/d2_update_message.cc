@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <d2/d2_update_message.h>
+#include <d2srv/d2_update_message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/opcode.h>

@@ -237,6 +237,9 @@ private:
 
 };
 
+/// \brief Defines a pointer to an IOFetch.
+typedef boost::shared_ptr<IOFetch> IOFetchPtr;
+
 } // namespace asiodns
 } // namespace isc
 

@@ -10,7 +10,7 @@ GSS-TSIG
 .. note::
 
    The GSS-TSIG feature is considered experimental. It is possible to perform
-   the key exchanges and sign the DNS updates using GSS-TSIG, but some error
+   the TKEY exchanges and sign the DNS updates using GSS-TSIG, but some error
    handling and fallback scenarios are not covered yet. Use with caution.
 
 GSS-TSIG Overview
@@ -19,7 +19,7 @@ GSS-TSIG Overview
 Kea provides a support for DNS updates, which can be protected using
 Transaction Signatures (or TSIG). This protection is often adequate.
 However some systems, in particular Active Directory (AD) on Microsoft
-Windows systems, chose to adopt more complex GSS-TSIG approach that offers
+Windows servers, chose to adopt more complex GSS-TSIG approach that offers
 additional capabilities as using negotiated dynamic keys.
 
 Kea provides the support of GSS-TSIG to protect DNS updates sent by
@@ -131,7 +131,7 @@ detection, similar to this:
 
 7.  After compilation, the gss_tsig hook is available in the
     ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
-    the DHCP-DDNS (D2) daemon.
+    the Kea DHCP-DDNS (D2) daemon.
 
 
 The gss_tsig was developed using the MIT Kerberos 5 implementation but
@@ -250,7 +250,7 @@ You will be required to retype the password:
 
     Re-enter KDC database master key to verify:
 
-If succesfully applied, the following message will be displayed:
+If successfully applied, the following message will be displayed:
 
 .. code-block:: console
 
@@ -269,7 +269,7 @@ If succesfully applied, the following message will be displayed:
 
 Next step consists in creating the principals for the Bind9 DNS server
 (the service protected by the GSS-TSIG TKEY) and for the DNS client
-(the Kea DDNS server).
+(the Kea DHCP-DDNS server).
 
 The Bind9 DNS server principal (used for authentication) is created the
 following way:
@@ -278,28 +278,13 @@ following way:
 
     kadmin.local -q "addprinc -randkey DNS/server.example.org"
 
-If succesfully created, the following message will be displayed:
+If successfully created, the following message will be displayed:
 
 .. code-block:: console
 
     No policy specified for DNS/server.example.org@EXAMPLE.ORG; defaulting to no policy
     Authenticating as principal root/admin@EXAMPLE.ORG with password.
     Principal "DNS/server.example.org@EXAMPLE.ORG" created.
-
-The DNS client principal (used by the Kea DDNS server) is created the
-following way (please choose your own password here):
-
-.. code-block:: console
-
-    kadmin.local -q "addprinc -pw <password> DHCP/admin.example.org"
-
-If succesfully created, the following message will be displayed:
-
-.. code-block:: console
-
-    No policy specified for DHCP/admin.example.org@EXAMPLE.ORG; defaulting to no policy
-    Authenticating as principal root/admin@EXAMPLE.ORG with password.
-    Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
 
 The DNS server principal must be exported so that it can be used by the Bind 9
 DNS server. Only this principal is required and is is exported to the keytab
@@ -309,13 +294,36 @@ file with the name ``dns.keytab``.
 
     kadmin.local -q "ktadd -k /tmp/dns.keytab DNS/server.example.org"
 
-If succesfully exported, the following message will be displayed:
+If successfully exported, the following message will be displayed:
 
 .. code-block:: console
 
     Authenticating as principal root/admin@EXAMPLE.ORG with password.
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
     Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
+
+The DHCP client principal (used by the Kea DHCP-DDNS server) is created the
+following way:
+
+.. code-block:: console
+
+    kadmin.local -q "addprinc -randkey DHCP/admin.example.org"
+
+If successfully created, the following message will be displayed:
+
+.. code-block:: console
+
+    No policy specified for DHCP/admin.example.org@EXAMPLE.ORG; defaulting to no policy
+    Authenticating as principal root/admin@EXAMPLE.ORG with password.
+    Principal "DHCP/admin.example.org@EXAMPLE.ORG" created.
+
+The DHCP client principal must be exported so that it can be used by the
+Kea DHCP-DDNS server and GSS-TSIG hook library. It is exported to the client
+keytab file with the name ```dhcp.keytab```.
+
+.. code-block:: console
+
+    kadmin.local -q "ktadd -k /tmp/dhcp.keytab DHCP/admin.example.org"
 
 Finally, the krb5-admin-server must be restarted:
 
@@ -336,6 +344,7 @@ Updating the ``named.conf`` file is required:
         ...
         directory "/var/cache/bind";
         dnssec-validation auto;
+        listen-on-v6 { any; };
         tkey-gssapi-keytab "/etc/bind/dns.keytab";
     };
     zone "example.org" {
@@ -392,6 +401,74 @@ The ``/var/lib/bind/db.example.org`` file needs to be created or updated:
     kdc                 A       ${KDC_IP_ADDR}
     server              A       ${BIND9_IP_ADDR}
 
+After any configuration change the server must be reloaded or
+restarted:
+
+.. code-block:: console
+
+    systemctl restart named.service
+
+It is possible to get status or restart logs:
+
+.. code-block:: console
+
+    systemctl status named.service
+    journalctl -u named | tail -n 30
+
+Windows Active Directory Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This sub-section is based on an Amazon AWS provided Microsoft Windows Server
+2016 with Active Directory pre-installed so describes only the steps used
+for GSS-TSIG deployment (for complete configuration process please refer to
+Microsoft documentation or other external resources. We found `this <https://www.tenforums.com/tutorials/51456-windows-server-2016-setup-local-domain-controller.html>`__ tutorial very
+useful during configuration of our internal QA testing systems.
+
+Two Active Directory (AD) user accounts are needed:
+ - the first account is used to download AD information, for instance
+   the client key table of Kea
+ - the second account will be mapped to the Kea DHCP client principal
+
+Kea needs to know:
+ - the server IP address
+ - the domain/realm name: the domain is in lower case, the realm in upper
+   case, both without a final dot
+ - the server name
+
+The second account (named ``kea`` below) is used to create a Service
+Principal Name (SPN):
+
+.. code-block:: console
+
+    setspn -S DHCP/kea.<domain> kea
+
+After a shared secret key is generated and put in a key table file:
+
+.. code-block:: console
+
+    ktpass -princ DHCP/kea.<domain>@<REALM> -mapuser kea +rndpass -mapop set -ptype KRB5_NT_PRINCIPAL -out dhcp.keytab
+
+The ``dhcp.keytab`` takes the same usage as for Unix Kerberos.
+
+
+GSS-TSIG Troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+While testing GSS-TSIG integration with Active Directory we came across
+one very cryptic error:
+
+.. code-block:: console
+
+   INFO  [kea-dhcp-ddns.gss-tsig-hooks/4678.139690935890624] GSS_TSIG_VERIFY_FAILED GSS-TSIG verify failed: gss_verify_mic failed with GSSAPI error:
+   Major = 'A token had an invalid Message Integrity Check (MIC)' (393216), Minor = 'Packet was replayed in wrong direction' (100002).
+
+In our case problem was that Kea DDNS was trying to perform update of reverse
+DNS zone while it was not configured. Easy solution was to add reverse DNS
+zone similar to the one configured in Kea. To do it open `DNS Manager` choose
+DNS from the list, from drop down list choose `Reverse Lookup Zones`
+click `Action` and `New Zone` then follow New Zone Wizard to add new zone.
+
+
 .. _gss-tsig-using:
 
 Using GSS-TSIG
@@ -407,7 +484,8 @@ An excerpt from D2 server is provided below. More examples are available in the
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-97
+   :emphasize-lines: 57-107
+
 
     {
     "DhcpDdns": {
@@ -437,7 +515,8 @@ An excerpt from D2 server is provided below. More examples are available in the
                         },
                         { // This server also has an entry there, so will
                           // use GSS-TSIG, too.
-                            "ip-address": "192.0.2.2"
+                            "ip-address": "192.0.2.2",
+                            "port": 5300
                         }
                     ]
                 }
@@ -467,7 +546,7 @@ An excerpt from D2 server is provided below. More examples are available in the
         // Need to add gss-tsig hook here
         "hooks-libraries": [
         {
-            "library": "/opt/lib/libdhcp_gss_tsig.so",
+            "library": "/opt/lib/libddns_gss_tsig.so",
             "parameters": {
                 // This section governs the GSS-TSIG integration. Each server
                 // mentioned in forward-ddns and/or reverse-ddns needs to have
@@ -477,10 +556,13 @@ An excerpt from D2 server is provided below. More examples are available in the
 
                 "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
                 "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
-                "client-keytab": "FILE:/etc/krb5.keytab", // toplevel only
+                "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
-                "tkey-lifetime": 3600,
+                "tkey-lifetime": 3600, // 1 hour
+                "rekey-interval": 2700, // 45 minutes
+                "retry-interval": 120, // 2 minutes
                 "tkey-protocol": "TCP",
+                "fallback": false,
 
                 // The list of GSS-TSIG capable servers
                 "servers": [
@@ -494,8 +576,12 @@ An excerpt from D2 server is provided below. More examples are available in the
                         "port": 53,
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
-                        "tkey-lifetime": 86400, // 24h
-                        "tkey-protocol": "TCP"
+                        "tkey-lifetime": 7200, // 2 hours
+                        "rekey-interval": 5400, // 90 minutes
+                        "retry-interval": 240, // 4 minutes
+                        "tkey-protocol": "TCP",
+                        "fallback": true // if no key is available fallback to the
+                                         // standard behavior (vs skip this server)
                     },
                     {
                         // The second server (it has most of the parameters missing
@@ -523,23 +609,89 @@ specified, the default of 53 is assumed. This is similar to basic mode with no
 authentication or authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
 
-Second, the ``libdhcp_gss_tsig.so`` library has to be specified on the
-``hooks-libraries`` list. This hook takes many parameters. The most
-important one is `servers`, which is a list of GSS-TSIG capable
-servers.  If there are several servers and they share some
-characteristics, the values can be specified in `parameters` scope as
-defaults. In the example above, the defaults that apply to all servers
-unless otherwise specified on per server scope, are defined in lines
-63 through 68. The defaults can be skipped if there is only one server
+Second, the ``libddns_gss_tsig.so`` library has to be specified on the
+``hooks-libraries`` list. This hook takes many parameters. The most important
+one is ``servers``, which is a list of GSS-TSIG capable servers.  If there are
+several servers and they share some characteristics, the values can be specified
+in ``parameters`` scope as defaults. In the example above, the defaults that apply
+to all servers unless otherwise specified on per server scope, are defined in
+lines 63 through 68. The defaults can be skipped if there is only one server
 defined or all servers have different values.
 
-The parameters have the following meaning:
+.. table:: List of available parameters
+
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | Name              | Scope    | Type    | Default value       | Description                    |
+   |                   |          |         |                     |                                |
+   +===================+==========+=========+=====================+================================+
+   | client-keytab     | global / | string  | empty               | the Kerberos **client** key    |
+   |                   | server   |         |                     | table                          |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | credentials-cache | global / | string  | empty               | the Kerberos credentials cache |
+   |                   | server   |         |                     |                                |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | server-principal  | global / | string  | empty               | the Kerberos principal name of |
+   |                   | server   |         |                     | the DNS server that will       |
+   |                   |          |         |                     | receive updates                |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | client-principal  | global / | string  | empty               | the Kerberos principal name of |
+   |                   | server   |         |                     | the Kea D2 service             |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | tkey-protocol     | global / | string  | "TCP"               | the protocol used to establish |
+   |                   | server   | "TCP" / |                     | the security context with the  |
+   |                   |          | "UDP"   |                     | DNS servers                    |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | tkey-lifetime     | global / | uint32  | | 3600 seconds      | the lifetime of GSS-TSIG keys  |
+   |                   | server   |         | | ( 1 hour )        |                                |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | rekey-interval    | global / | uint32  | | 2700 seconds      | the time interval the keys are |
+   |                   | server   |         | | ( 45 minutes )    | checked for rekeying           |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | retry-interval    | global / | uint32  | | 120 seconds       | the time interval to retry to  |
+   |                   | server   |         | | ( 2 minutes )     | create a key if any error      |
+   |                   |          |         |                     | occurred previously            |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | fallback          | global / | true /  | false               | the behavior to fallback to    |
+   |                   | server   | false   |                     | non GSS-TSIG when GSS-TSIG     |
+   |                   |          |         |                     | should be used but no GSS-TSIG |
+   |                   |          |         |                     | key is available.              |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | exchange-timeout  | global / | uint32  | | 3000 milliseconds | the time used to wait for the  |
+   |                   | server   |         | | ( 3 seconds )     | GSS-TSIG TKEY exchange to      |
+   |                   |          |         |                     | finish before it timeouts      |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | user-context      | global / | string  | empty               | the user provided data in JSON |
+   |                   | server   |         |                     | format (will not be used by    |
+   |                   |          |         |                     | the GSS-TSIG hook)             |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | comment           | global / | string  | empty               | ignored                        |
+   |                   | server   |         |                     |                                |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | id                | server   | string  | empty               | identifier to a DNS server     |
+   |                   |          |         |                     | (required)                     |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | domain-names      | server   | list of | empty               | the many to one relationship   |
+   |                   |          | strings |                     | between D2 DNS servers and     |
+   |                   |          |         |                     | GSS-TSIG DNS servers           |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | ip-address        | server   | IPv4 /  | empty               | the IP address at which the    |
+   |                   |          | IPv6    |                     | GSS-TSIG DNS server listens    |
+   |                   |          | address |                     | for DDNS and TKEY requests     |
+   |                   |          |         |                     | (required)                     |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | port              | server   | uint16  | 53                  | the DNS transport port at      |
+   |                   |          |         |                     | which the GSS-TSIG DNS server  |
+   |                   |          |         |                     | listens for DDNS and TKEY      |
+   |                   |          |         |                     | requests                       |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+
+The global parameters are described below:
 
 - ``client-keytab`` specifies the Kerberos **client** key table.
   For instance, ``FILE:<filename>`` can be used to point to a specific file.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5_CLIENT_KTNAME`` environment
-  variable.
+  variable. The empty value is silently ignored.
 
 - ``credentials-cache`` specifies the Kerberos credentials cache.
   For instance ``FILE:<filename>`` can be used to point to a file or
@@ -547,7 +699,7 @@ The parameters have the following meaning:
   ``DIR:<directory-path>``.
   This parameter can be specified only once, in the parameters scope,
   and is the equivalent of setting the ``KRB5CCNAME`` environment
-  variable.
+  variable. The empty value is silently ignored.
 
 - ``server-principal`` is the Kerberos principal name of the DNS
   server that will receive updates.  In plain words, this is the
@@ -564,7 +716,34 @@ The parameters have the following meaning:
   values are TCP (the default) and UDP.
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
-  TKEY protocol, expressed in seconds. Default value is 3600 (one hour).
+  TKEY protocol. The value must be greater than the ``rekey-interval``
+  value. It is expressed in seconds and it default to 3600 seconds
+  (one hour) if not specified.
+
+- ``rekey-interval`` governs the time interval the keys for each configured
+  server are checked for rekeying, i.e. a new key is created to replace the
+  current usable one when its age is greater than the ``rekey-interval`` value.
+  The value must be smaller than the ``tkey-lifetime`` value (it is recommend
+  between 50% and 80% of the ``tkey-lifetime`` value). It is expressed in
+  seconds and it defaults to 2700 seconds (45 minutes, 75% of one hour) if not
+  specified.
+
+- ``retry-interval`` governs the time interval to retry to create a key if any
+  error occurred previously for any configured server. The value must be smaller
+  than the ``rekey-interval`` value, and should be at most 1/3 of the difference
+  between ``tkey-lifetime`` and ``rekey-interval``. It is expressed in seconds
+  and it defaults to 120 seconds (2 minutes) if not specified.
+
+- ``fallback`` governs the behavior when GSS-TSIG should be used (a
+  matching DNS server is configured) but no GSS-TSIG key is available.
+  If configured to false (the default) this server is skipped, if
+  configured to true the DNS server is ignored and the DNS update
+  is sent with the configured DHCP-DDNS protection e.g. TSIG key or
+  without any protection when none was configured.
+
+- ``exchange-timeout`` governs the time used to wait for the GSS-TSIG TKEY
+  exchange to finish before it timeouts. It is expressed in milliseconds and it
+  defaults to 3000 milliseconds (3 seconds) if not specified.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).
@@ -573,7 +752,7 @@ The parameters have the following meaning:
 
 - ``servers`` specifies the list of DNS servers where GSS-TSIG is enabled.
 
-The server map parameters are:
+The server map parameters are described below:
 
 - ``id`` assigns an identifier to a DNS server. It is used for statistics
   and commands. It is required, must be not empty and unique.
@@ -607,20 +786,139 @@ The server map parameters are:
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
   TKEY protocol for the DNS server. The TKEY lifetime parameter per server
-  takes precedence. Default and supported values are the same as for
-  the global level parameter.
+  takes precedence. Default and supported values are the same as for the
+  global level parameter.
+
+- ``rekey-interval`` governs the time interval the keys for this particular
+  server are checked for rekeying, i.e. a new key is created to replace the
+  current usable one when its age is greater than the ``rekey-interval`` value.
+  The value must be smaller than the ``tkey-lifetime`` value (it is recommend
+  between 50% and 80% of the ``tkey-lifetime`` value). The rekey interval
+  parameter per server takes precedence. Default and supported values are the
+  same as for the global level parameter.
+
+- ``retry-interval`` governs the time interval to retry to create a key if any
+  error occurred previously for this particular server. The value must be
+  smaller than the ``rekey-interval`` value, and should be at most 1/3 of the
+  difference between ``tkey-lifetime`` and ``rekey-interval``. The retry
+  interval parameter per server takes precedence. Default and supported values
+  are the same as for the global level parameter.
+
+- ``fallback`` governs the behavior when GSS-TSIG should be used (a
+  matching DNS server is configured) but no GSS-TSIG key is available.
+  The fallback parameter per server takes precedence. Default and
+  supported values are the same as for the global level parameter.
+
+- ``exchange-timeout`` governs the time used to wait for the GSS-TSIG TKEY
+  exchange to finish before it timeouts. The exchange timeout parameter per
+  server takes precedence. Default and supported values are the same as for the
+  global level parameter.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).
 
 - ``comment`` is allowed but currently ignored.
 
-.. _command-gss-tsig:
+
+GSS-TSIG Automatic Key Removal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The server will periodically delete keys which expired more than 3 times the
+maximum key lifetime (``tkey-lifetime`` parameter).
+The user has the option to purge keys on demand by using ``gss-tsig-purge-all``
+command (see :ref:`command-gss-tsig-purge-all`) or ``gss-tsig-purge`` command
+(see :ref:`command-gss-tsig-purge`).
+
+
+GSS-TSIG Configuration for Deployment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using the Kerberos 5 and Bind9 setup of :ref:`gss-tsig-deployment`
+the local resolver must point to the Bind9 named server address and
+local Kerberos be configured by putting in the ``krb5.conf`` file:
+
+.. code-block:: ini
+
+    [libdefaults]
+        default_realm = EXAMPLE.ORG
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+    [realms]
+        EXAMPLE.ORG = {
+                kdc = kdc.example.org
+                admin_server = kdc.example.org
+        }
+
+With Windows AD the DNS service is provided by AD. AD also provides
+the Kerberos service and the ``krb5.conf`` file becomes:
+
+.. code-block:: ini
+
+    [libdefaults]
+        default_realm = <REALM>
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+    [realms]
+        ${REALM} = {
+                kdc = <AD_IP_ADDR>
+                admin_server = <AD_IP_ADDR>
+        }
+
+Even when the GSS-API library can use the secret from the client key
+table it is far better to get and cache credentials.
+
+This can be done manually by:
+
+.. code-block:: console
+
+    kinit -k -t /tmp/dhcp.keytab DHCP/admin.example.org
+
+or when using AD:
+
+.. code-block:: console
+
+    kinit -k -t /tmp/dhcp.keytab DHCP/kea.<domain>
+
+The credential cache can be displayed using ``klist``.
+
+In production it is better to rely on a Kerberos Credential Manager as
+the System Security Services Daemon (``sssd``).
+
+The server principal will be "DNS/server.example.org@EXAMPLE.ORG¨ or
+for AD "DNS/<server>.<domain>@<REALM>".
+
+.. _stats-gss-tsig:
+
+GSS-TSIG Statistics
+-------------------
+
+The GSS-TSIG hook library introduces new statistics at global and
+per DNS server levels:
+
+-  ``gss-tsig-key-created`` - number of created GSS-TSIG keys
+-  ``tkey-sent`` - sent TKEY exchange initial requests
+-  ``tkey-success`` - TKEY exchanges which completed with a success
+-  ``tkey-timeout`` - TKEY exchanges which completed on timeout
+-  ``tkey-error`` - TKEY exchanges which completed with an error other than
+   timeout
+
+The relationship between keys and DNS servers are very different between
+the D2 code and static TSIG keys, and GSS-TSIG keys and DNS servers:
+
+ - a static TSIG key can be shared between many DNS servers
+ - a GSS-TSIG key is used only by one DNS server inside a dedicated
+   set of keys.
+
+.. _commands-gss-tsig:
 
 GSS-TSIG Commands
 -----------------
 
-The GSS-TSIG hook library supports some commands.
+The GSS-TSIG hook library supports some commands which are described below.
 
 .. _command-gss-tsig-get-all:
 
@@ -899,3 +1197,62 @@ An example response informing about 2 GSS-TSIG keys for server 'foo' being purge
         "result": 0,
         "text": "2 purged keys for GSS-TSIG server[foo]"
     }
+
+.. _command-gss-tsig-rekey-all:
+
+The gss-tsig-rekey-all Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The command rekeys i.e. unconditionally creates new GSS-TSIG keys for
+all DNS servers.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-rekey-all"
+    }
+
+An example response informing that a rekey was scheduled:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "rekeyed"
+    }
+
+This command should be use for instance when the DHCP-DDNS server is
+reconnected to the network.
+
+.. _command-gss-tsig-rekey:
+
+The gss-tsig-rekey Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The command rekeys i.e. unconditionally creates new GSS-TSIG keys for
+a specified DNS server.
+
+An example command invocation looks like this:
+
+.. code-block:: json
+
+    {
+        "command": "gss-tsig-purge",
+        "arguments": {
+            "server-id": "foo"
+        }
+    }
+
+An example response informing that a rekey was scheduled:
+
+.. code-block:: json
+
+    {
+        "result": 0,
+        "text": "GSS-TSIG server[foo] rekeyed"
+    }
+
+A typical usage of this command is when a DNS server was rebooted so
+existing GSS-TSIG keys shared with this server can no longer be used.
