@@ -109,6 +109,18 @@ pathReplacer(ConstElementPtr ca_cfg) {
     first_lib->set("library", Element::create(lib_path));
 }
 
+/// @brief Replace the credential directory
+void
+dirReplacer(ConstElementPtr ca_cfg) {
+    ConstElementPtr auth = ca_cfg->get("authentication");
+    if (!auth || auth->empty()) {
+        return;
+    }
+    ElementPtr mutable_auth = boost::const_pointer_cast<Element>(auth);
+    std::string dir_path(CA_TEST_DATA_DIR);
+    mutable_auth->set("directory", Element::create(dir_path));
+}
+
 /// @brief Almost regular agent CfgMgr with internal parse method exposed.
 class NakedAgentCfgMgr : public CtrlAgentCfgMgr {
 public:
@@ -173,6 +185,9 @@ public:
 
         // update hooks-libraries
         pathReplacer(ca);
+
+        // update authentication directory
+        dirReplacer(ca);
 
         // try AGENT configure
         ConstElementPtr status;
@@ -265,11 +280,12 @@ TEST_F(CtrlAgentGetCfgTest, simple) {
         ASSERT_NO_THROW(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
-        // replace the path by its actual value
+        // replace the paths by their actual values
         ConstElementPtr ca;
         ASSERT_NO_THROW(ca = jsonj->get("Control-agent"));
         ASSERT_TRUE(ca);
         pathReplacer(ca);
+        dirReplacer(ca);
         // check that unparsed and updated expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
         // check on pretty prints too

@@ -29,7 +29,7 @@
 
             // This optional parameter can be used to specify a common
             // prefix for files handling client credentials.
-            "directory": "/tmp/ca",
+            "directory": "/tmp/kea-creds",
 
             // This list specifies the user ids and passwords to use for
             // basic HTTP authentication. If empty or not present any client
@@ -46,7 +46,7 @@
 
                     // If password is not specified an empty password is used.
                     "password": "1234"
-                }/* temporary disabled because it requires files ,
+                },
 
                 // This specifies a hiddent client.
                 {
@@ -62,7 +62,7 @@
                     // The secret is the content of the file /tmp/ca/hiddens
                     // which must be in the <user-id>:<password> format.
                     "password-file": "hiddens"
-                }*/
+                }
             ]
         },
 

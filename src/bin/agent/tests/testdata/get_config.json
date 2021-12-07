@@ -8,9 +8,16 @@
                     "user-context": {
                         "comment": "admin is authorized"
                     }
+                },
+                {
+                    "password-file": "hiddenp",
+                    "user-file": "hiddenu"
+                },
+                {
+                    "password-file": "hiddens"
                 }
             ],
-            "directory": "/tmp/ca",
+            "directory": "/tmp/kea-creds",
             "realm": "kea-control-agent",
             "type": "basic"
         },
