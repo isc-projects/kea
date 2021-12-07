@@ -383,7 +383,7 @@ Time Series
 ===========
 
 With certain statistics, a single isolated data point may be useful. However,
-some processes, such as received
+some statistics, such as received
 packet size, packet processing time, or number of database queries needed to
 process a packet, are not cumulative and it is useful to keep many data
 points, perhaps to do some statistical analysis afterwards.
