@@ -272,10 +272,12 @@ comments are not retained. If the original configuration used file
 inclusion, the returned configuration will include all parameters from
 all included files.
 
-The returned configuration is not redacted, i.e. it
-contains database passwords in plain text if those were specified in the
-original configuration. Care should be taken not to expose the command
-channel to unprivileged users.
+.. warning::
+
+   The returned configuration is not redacted, i.e. it
+   contains database passwords in plain text, if those were specified in the
+   original configuration. Care should be taken not to expose the command
+   channel to unprivileged users.
 
 An example command invocation looks like this:
 
@@ -324,9 +326,10 @@ The ``config-test`` Command
 The ``config-test`` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
-target server, along with an optional logger configuration. As for the
-``-t`` command, some sanity checks are not performed, so it is possible a
-configuration which successfully passes this command will still fail in
+target server, along with an optional logger configuration. When ``config-test``
+is run with the command-line argument ``-t``, the configuration is verified
+but certain sanity checks are not performed; therefore, it is possible for a
+configuration which successfully passes this command to still fail in
 the ``config-set`` command or at launch time. The structure of the
 command is as follows:
 
@@ -410,7 +413,7 @@ The ``remove`` boolean parameter is mandatory and indicates whether the
 reclaimed leases should be removed from the lease database (if ``true``), or
 left in the ``expired-reclaimed`` state (if ``false``). The latter facilitates
 lease affinity, i.e. the ability to re-assign an expired lease to a
-returning client that previously used this lease. See :ref:`lease-affinity`
+returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
