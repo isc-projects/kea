@@ -9,6 +9,7 @@
 #include <pgsql/pgsql_exchange.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <iomanip>
@@ -120,40 +121,79 @@ void PsqlBindArray::addTempString(const std::string& str) {
     PsqlBindArray::add((bound_strs_.back())->c_str());
 }
 
-std::string PsqlBindArray::toText() const {
-    std::ostringstream stream;
-    for (int i = 0; i < values_.size(); ++i) {
-        stream << i << " : ";
-        stream << toText(i) << std::endl;
+void
+PsqlBindArray::addOptionalString(const util::Optional<std::string>& value) {
+    if (value.unspecified()) {
+        addNull();
+    } else {
+        add(value);
     }
+}
 
-    return (stream.str());
+void
+PsqlBindArray::addOptionalBool(const util::Optional<bool>& value) {
+    if (value.unspecified()) {
+        addNull();
+    } else {
+        add(value);
+    }
+}
+
+void
+PsqlBindArray::addOptionalIPv4Address(const util::Optional<isc::asiolink::IOAddress>& value) {
+    // If the value is unspecified it doesn't matter what the value is.
+    if (value.unspecified()) {
+        addNull();
+    } else {
+        // Make sure it is an IPv4 address.
+        if (!value.get().isV4()) {
+            isc_throw(BadValue, "unable to add address to PsqlBindAray '"
+                  << value.get().toText() << "' is not an IPv4 address");
+        }
+
+        add((value.get().toUint32()));
+    }
+}
+
+void
+PsqlBindArray::addTimestamp(const boost::posix_time::ptime& timestamp) {
+    time_t input_time = boost::posix_time::to_time_t(timestamp);
+    // Converts to timestamp to local date/time string.
+    addTempString(PgSqlExchange::convertToDatabaseTime(input_time));
+}
+
+void
+PsqlBindArray::addTimestamp() {
+    time_t now;
+    time(&now);
+    addTempString(PgSqlExchange::convertToDatabaseTime(now));
 }
 
 std::string
-PsqlBindArray::toText(size_t index) const {
-    if (index >= values_.size()) {
-        // We don't throw to keep this exception safe for logging.
-        return(std::string("<index-out-of-range>"));
-    }
-
-    if (lengths_[index] == 0) {
-        return(std::string("empty"));
-    }
-
+PsqlBindArray::toText() const {
     std::ostringstream stream;
-    if (formats_[index] == TEXT_FMT) {
-        stream << "\"" << values_[index] << "\"";
-    } else {
-        const char *data = values_[index];
-        stream << "0x";
-        for (int x = 0; x < lengths_[index]; ++x) {
-                stream << std::setfill('0') << std::setw(2)
-                       << std::setbase(16)
-                       << static_cast<unsigned int>(data[x]);
+
+    for (int i = 0; i < values_.size(); ++i) {
+        stream << i << " : ";
+
+        if (lengths_[i] == 0) {
+            stream << "empty" << std::endl;
+            continue;
         }
 
-        stream << std::setbase(10);
+        if (formats_[i] == TEXT_FMT) {
+            stream << "\"" << values_[i] << "\"" << std::endl;
+        } else {
+            const char *data = values_[i];
+            stream << "0x";
+            for (int x = 0; x < lengths_[i]; ++x) {
+                    stream << std::setfill('0') << std::setw(2)
+                           << std::setbase(16)
+                           << static_cast<unsigned int>(data[x]);
+            }
+
+            stream << std::endl << std::setbase(10);
+        }
     }
 
     return (stream.str());
@@ -177,6 +217,8 @@ PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
     struct tm tinfo;
     char buffer[20];
     localtime_r(&input_time, &tinfo);
+    // PostgreSQL will assume the value is already in local time since we
+    // do not specify timezone in the string.
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
     return (std::string(buffer));
 }
@@ -212,6 +254,13 @@ PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
     }
 
     return (new_time);
+}
+
+void
+PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val,
+                                       boost::posix_time::ptime& conv_time) {
+    time_t tmp_time = convertFromDatabaseTime(db_time_val);
+    conv_time = boost::posix_time::from_time_t(tmp_time);
 }
 
 const char*

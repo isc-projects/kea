@@ -207,7 +207,8 @@ public:
             "   id, bool_col, bytea_col, bigint_col, smallint_col, "
             "   int_col, text_col,"
             "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
-            "   varchar_col FROM basics";
+            "   varchar_col"
+            " FROM basics";
 
         runSql(r, sql, PGRES_TUPLES_OK, line);
         ASSERT_EQ(r->getRows(), exp_rows) << "fetch at line: " << line

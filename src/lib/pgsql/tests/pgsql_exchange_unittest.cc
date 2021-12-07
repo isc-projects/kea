@@ -23,6 +23,8 @@ using namespace isc;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::util;
+using namespace boost::posix_time;
+using namespace boost::gregorian;
 
 namespace {
 
@@ -111,7 +113,7 @@ TEST(PsqlBindArray, addTriplet) {
         Triplet<uint32_t> empty;
         Triplet<uint32_t> not_empty(1,2,3);
 
-        // Add an unspecified triplet value.
+        // Add triplets to the array.
         b.add(empty);
         b.add(not_empty);
         b.addMin(empty);
@@ -122,6 +124,8 @@ TEST(PsqlBindArray, addTriplet) {
 
     // We've left bind scope, everything should be intact.
     EXPECT_EQ(6, b.size());
+
+    // Verify contents are correct.
     std::string expected =
         "0 : empty\n"
         "1 : \"2\"\n"
@@ -132,6 +136,67 @@ TEST(PsqlBindArray, addTriplet) {
 
     EXPECT_EQ(expected, b.toText());
 }
+
+/// @brief Verifies the ability to add Optional strings to
+/// the bind array.
+TEST(PsqlBindArray, addOptionalString) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Optional<std::string> empty;
+        Optional<std::string> not_empty("whoopee!");
+
+        // Add strings to the array.
+        b.addOptionalString(empty);
+        b.addOptionalString(not_empty);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(2, b.size());
+
+    // Verify contents are correct.
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"whoopee!\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
+
+/// @brief Verifies the ability to add Optional booleans to
+/// the bind array.
+TEST(PsqlBindArray, addOptionalBool) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Optional<bool> empty;
+        Optional<bool> am_false(false);
+        Optional<bool> am_true(true);
+
+        // Add booleans to the array.
+        b.addOptionalBool(empty);
+        b.addOptionalBool(am_false);
+        b.addOptionalBool(am_true);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(3, b.size());
+
+    // Verify contents are correct.
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"0\"\n"
+        "2 : \"1\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
 
 /// @brief Verifies the ability to add OptionalIntegers to
 /// the bind array.
@@ -145,15 +210,15 @@ TEST(PsqlBindArray, addOptionalInteger) {
         Optional<uint32_t> empty;
         Optional<uint32_t> not_empty(123);
 
-        ASSERT_TRUE(empty.unspecified());
-
-        // Add an unspecified triplet value.
+        // Add the integers to the array..
         b.addOptionalInteger(empty);
         b.addOptionalInteger(not_empty);
     }
 
     // We've left bind scope, everything should be intact.
     EXPECT_EQ(2, b.size());
+
+    // Verify contents are correct.
     std::string expected =
         "0 : empty\n"
         "1 : \"123\"\n";
@@ -161,6 +226,39 @@ TEST(PsqlBindArray, addOptionalInteger) {
     EXPECT_EQ(expected, b.toText());
 }
 
+/// @brief Verifies the ability to add Optional IPv4 addresses to
+/// the bind array.
+TEST(PsqlBindArray, addOptionalIPv4Address) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Optional<asiolink::IOAddress> empty;
+        Optional<asiolink::IOAddress> not_empty(asiolink::IOAddress("192.16.1.1"));
+
+        // Verify we cannot add a v6 address.
+        Optional<asiolink::IOAddress> not_v4(asiolink::IOAddress("3001::1"));
+        ASSERT_THROW_MSG(b.addOptionalIPv4Address(not_v4), BadValue, 
+                         "unable to add address to PsqlBindAray"
+                         " '3001::1' is not an IPv4 address");
+
+        // Add the addresses to the array..
+        b.addOptionalInteger(empty);
+        b.addOptionalInteger(not_empty);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(2, b.size());
+
+    // Verify contents are correct.
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"192.16.1.1\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
 
 /// @brief Verifies that PgResultSet row and column meta-data is correct
 TEST_F(PgSqlBasicsTest, rowColumnBasics) {
@@ -805,6 +903,45 @@ TEST_F(PgSqlBasicsTest, timeStampTest) {
     ASSERT_THROW(PgSqlExchange::convertToDatabaseTime(times[0],
                                                       DatabaseConnection::
                                                       MAX_DB_TIME), BadValue);
+}
+
+/// @brief Verify that we can read and write ptime using TIMESTAMP columns.
+TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
+    // Create a prepared statement for inserting a TIMESTAMP
+    PgSqlTaggedStatement statement[] = {
+        { 1, { OID_TIMESTAMP }, "timestamp_insert",
+          "INSERT INTO BASICS (timestamp_col) values ($1)" }
+    };
+
+    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+
+    time_duration duration = hours(10) + minutes(14) + seconds(15);
+
+    // US National Ice Cream day
+    ptime nice_day(date(2021, Jul, 18), duration);
+
+    // Add timestamp with default/fractional seconds.
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+    bind_array->addTimestamp(nice_day);
+    std::cout << "bind array: " << bind_array->toText() << std::endl;
+
+    PgSqlResultPtr r;
+    RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Fetch the timestamp column
+    ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, TIMESTAMP_COL));
+    std::string timestamp_str = "";
+    ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, TIMESTAMP_COL,
+                                                  timestamp_str));
+
+    // Convert fetched values into a ptime.
+    ptime fetched_time;
+    ASSERT_NO_THROW(PgSqlExchange::convertFromDatabaseTime(timestamp_str, fetched_time));
+
+    ASSERT_EQ(fetched_time, nice_day);
 }
 
 }; // namespace

@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <database/database_connection.h>
 #include <util/triplet.h>
+#include <util/boost_time_utils.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
@@ -305,7 +306,17 @@ struct PsqlBindArray {
     /// @param triple Triplet instance from which to get the value.
     void addMax(const isc::util::Triplet<uint32_t>& triplet);
 
-    /// @brief Adds an @c Optional of integer type to 0the bind array.
+    /// @brief Adds an @c Optional string to the bind array.
+    ///
+    /// @param value Optional string value to add
+    void addOptionalString(const util::Optional<std::string>& value);
+
+    /// @brief Adds an @c Optional boolean to the bind array.
+    ///
+    /// @param value Optional boolean value to add
+    void addOptionalBool(const util::Optional<bool>& value);
+
+    /// @brief Adds an @c Optional of integer type to the bind array.
     ///
     /// @tparam T Numeric type corresponding to the binding type, e.g.
     /// @c uint8_t, @c uint16_t etc.
@@ -319,13 +330,27 @@ struct PsqlBindArray {
         }
     }
 
+    /// @brief Adds an @c Optional IPv4 address to the bind array.
+    ///
+    /// @param value Optional boolean value to add
+    /// @throw BadValue if the address is not a IPv4 address.
+    void addOptionalIPv4Address(const util::Optional<isc::asiolink::IOAddress>& value);
+
+    /// @brief Adds a timestamp from a ptime to the bind array.
+    ///
+    /// Precision is seconds.
+    ///
+    /// @param timestamp Timestamp value to be sent to the database.
+    void addTimestamp(const boost::posix_time::ptime& timestamp);
+
+    /// @brief Adds a timestamp of the current time to the bind array.
+    ///
+    /// Precision is seconds.
+    void addTimestamp();
+
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
     std::string toText() const;
-
-    /// @brief Dumps the contents of an array element's value to a string.
-    /// @return std::string containing the dump
-    std::string toText(size_t index) const;
 
     // --- the following methods are mostly useful for testing -----
 
@@ -431,6 +456,18 @@ public:
     /// expressed as base-10 integer string.
     /// @return Converted timestamp as time_t value.
     static time_t convertFromDatabaseTime(const std::string& db_time_val);
+
+    /// @brief Converts time stamp from the database to a boost::posix::ptime
+    ///
+    /// We're fetching timestamps as an integer string of seconds since the
+    /// epoch.  This method converts such a string int a time_t.
+    ///
+    /// @param db_time_val timestamp to be converted.  This value
+    /// is expected to be the number of seconds since the epoch
+    /// expressed as base-10 integer string.
+    /// @param[out] conv_time resulting time as a ptime (UTC)
+    static void convertFromDatabaseTime(const std::string& db_time_val,
+                                        boost::posix_time::ptime& conv_time);
 
     /// @brief Gets a pointer to the raw column value in a result set row
     ///

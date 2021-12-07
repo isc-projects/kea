@@ -1458,7 +1458,12 @@ PgSQLHostMgrTest::SetUp() {
 
 void
 PgSQLHostMgrTest::TearDown() {
-    HostMgr::instance().getHostDataSource()->rollback();
+    try {
+        HostMgr::instance().getHostDataSource()->rollback();
+    } catch(...) {
+        // we don't care if we aren't in a transaction.
+    }
+
     HostMgr::delBackend("postgresql");
     // If data wipe enabled, delete transient data otherwise destroy the schema
     db::test::destroyPgSQLSchema();
