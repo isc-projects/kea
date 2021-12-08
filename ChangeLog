@@ -1,3 +1,17 @@
+1985.	[func]		fdupont
+	Added support for using files to configure basic HTTP
+	credentials, instead of configuring a value the value
+	is taken from the content of a file. New parameters of
+	the Control Agent configuration are:
+	- 'user-file' pointing to a file vs 'user'
+	- 'password-file' pointing to a file vs 'password'
+	- 'password-file' pointing to a file with the secret
+	(which is <user>:<password>) vs 'user' and 'password'.
+	For the High Availability hook library the new parameter
+	is 'basic-auth-password-file' which can be used as an
+	alternative to 'basic-auth-password'.
+	(Gitlab #2006)
+
 1984.	[func]		andrei
 	Introduced the lease-upload command to kea-admin which can upload
 	leases from a memfile CSV file to a database backend.
