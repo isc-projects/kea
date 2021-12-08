@@ -473,7 +473,7 @@ Here is an example that simulates regular DHCPv4 traffic of 100 DHCPv4 devices (
 10 packets per second (-r 10), shows the query/response rate details (-xi),
 shows a report every 2 seconds (-t 2), and sends the packets to the IP 192.0.2.1:
 
-.. code-block::
+.. code-block:: console
 
    sudo perfdhcp -xi -t 2 -r 10 -R 100 192.0.2.1
 
@@ -483,7 +483,7 @@ traffic. ``all`` is a convenience alias for ``All_DHCP_Relay_Agents_and_Servers`
 (the multicast address FF02::1:2). It is also possible to use the ``servers`` alias
 to refer to ``All_DHCP_Servers`` (the multicast address FF05::1:3). The default is ``all``.
 
-.. code-block::
+.. code-block:: console
 
    sudo perfdhcp -6 -xi -t 1 -r 1 -R 10 -l eth0 all
 
@@ -496,7 +496,7 @@ uses the ``secs`` field and ``Elapsed Time`` option value as one of the indicato
 that the HA partner is not responding. When enabled with ``-y`` and ``-Y``, the ``secs``
 and ``Elapsed Time`` values increase steadily.
 
-.. code-block::
+.. code-block:: console
 
    sudo perfdhcp -xi -t 1 -r 1 -y 10 -Y 3 192.0.2.1
 
