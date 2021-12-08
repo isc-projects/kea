@@ -318,6 +318,14 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
     }
 }
 
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, boost::posix_time::ptime& value) {
+    std::string db_time_val;
+    PgSqlExchange::getColumnValue(r, row, col, db_time_val );
+    PgSqlExchange::convertFromDatabaseTime(db_time_val, value);
+}
+
 isc::asiolink::IOAddress
 PgSqlExchange::getIPv6Value(const PgSqlResult& r, const int row,
                             const size_t col) {

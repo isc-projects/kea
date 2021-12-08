@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -582,6 +582,18 @@ public:
                       << getColumnLabel(r, col) << " : " << ex.what());
         }
     }
+
+    /// @brief Fetches a timestamp column as a ptime.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value ptime parameter to receive the converted timestamp
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static void getColumnValue(const PgSqlResult& r, const int row,
+                               const size_t col, boost::posix_time::ptime& value);
 
     /// @brief Converts a column in a row in a result set to a binary bytes
     ///

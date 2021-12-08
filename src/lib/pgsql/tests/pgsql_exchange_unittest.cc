@@ -240,7 +240,7 @@ TEST(PsqlBindArray, addOptionalIPv4Address) {
 
         // Verify we cannot add a v6 address.
         Optional<asiolink::IOAddress> not_v4(asiolink::IOAddress("3001::1"));
-        ASSERT_THROW_MSG(b.addOptionalIPv4Address(not_v4), BadValue, 
+        ASSERT_THROW_MSG(b.addOptionalIPv4Address(not_v4), BadValue,
                          "unable to add address to PsqlBindAray"
                          " '3001::1' is not an IPv4 address");
 
@@ -931,15 +931,12 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Fetch the newly inserted row.
     FETCH_ROWS(r, 1);
 
-    // Fetch the timestamp column
+    // Timestamp column should not be null.
     ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, TIMESTAMP_COL));
-    std::string timestamp_str = "";
-    ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, TIMESTAMP_COL,
-                                                  timestamp_str));
 
-    // Convert fetched values into a ptime.
+    // Convert fetched value into a ptime.
     ptime fetched_time;
-    ASSERT_NO_THROW(PgSqlExchange::convertFromDatabaseTime(timestamp_str, fetched_time));
+    ASSERT_NO_THROW_LOG(PgSqlExchange::getColumnValue(*r, 0, TIMESTAMP_COL,
 
     ASSERT_EQ(fetched_time, nice_day);
 }
