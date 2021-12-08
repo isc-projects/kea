@@ -326,12 +326,11 @@ The ``config-test`` Command
 The ``config-test`` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
-target server, along with an optional logger configuration. When ``config-test``
-is run with the command-line argument ``-t``, the configuration is verified
-but certain sanity checks are not performed; therefore, it is possible for a
-configuration which successfully passes this command to still fail in
-the ``config-set`` command or at launch time. The structure of the
-command is as follows:
+target server, along with an optional logger configuration. The configuration
+is sanity-checked to the extent possible without the server actually
+attempting to load it; it is possible for a configuration which successfully
+passes this command to still fail in the ``config-set`` command or at launch
+time. The structure of the command is as follows:
 
 ::
 
