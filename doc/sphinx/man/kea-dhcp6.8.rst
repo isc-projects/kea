@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-dhcp6 - DHCPv6 server in Kea
---------------------------------
+``kea-dhcp6`` - DHCPv6 server in Kea
+------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -69,8 +69,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
@@ -93,8 +93,9 @@ History
 The ``b10-dhcp6`` daemon was first coded in June 2011 by Tomek
 Mrugalski.
 
-Kea became a standalone server and the BIND 10 framework was removed. The
-DHCPv6 server binary was renamed to kea-dhcp6 in July 2014.
+In mid-2014, Kea was decoupled from the BIND 10 framework and became a
+standalone DHCP server. The DHCPv6 server binary was renamed to
+``kea-dhcp6``. Kea 1.0.0 was released in December 2015.
 
 See Also
 ~~~~~~~~
