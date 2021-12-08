@@ -12,7 +12,7 @@
 #include <fstream>
 
 using namespace isc;
-using namespace isc::util;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {

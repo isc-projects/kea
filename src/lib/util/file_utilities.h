@@ -11,6 +11,7 @@
 
 namespace isc {
 namespace util {
+namespace file {
 
 /// @brief Get the content of a regular file.
 ///
@@ -19,6 +20,7 @@ namespace util {
 /// @throw BadValue when the file can't be opened or is not a regular one.
 std::string getContent(const std::string& file_name);
 
+} // namespace file
 } // namespace util
 } // namespace isc
 

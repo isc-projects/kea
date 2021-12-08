@@ -17,6 +17,7 @@ using namespace std;
 
 namespace isc {
 namespace util {
+namespace file {
 
 string
 getContent(const string& file_name) {
@@ -54,5 +55,6 @@ getContent(const string& file_name) {
     }
 }
 
+} // namespace file
 } // namespace log
 } // namespace isc
