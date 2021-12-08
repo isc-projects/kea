@@ -8,11 +8,8 @@
 
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
+#include <util/file_utilities.h>
 #include <util/strutil.h>
-
-#include <cerrno>
-#include <cstring>
-#include <sys/stat.h>
 
 using namespace isc;
 using namespace isc::data;
@@ -112,37 +109,10 @@ BasicHttpAuthConfig::getFileContent(const std::string& file_name) const {
         path += file_name.substr(1);
     }
 
-    // Open the file.
-    int fd = ::open(path.c_str(), O_RDONLY);
-    if (fd < 0) {
-        isc_throw(DhcpConfigError, "can't open file '" << path << "': "
-                  << std::strerror(errno));
-    }
     try {
-        struct stat stats;
-        if (fstat(fd, &stats) < 0) {
-            isc_throw(DhcpConfigError, "can't stat file '" << path << "': "
-                      << std::strerror(errno));
-        }
-        if ((stats.st_mode & S_IFMT) != S_IFREG) {
-            isc_throw(DhcpConfigError, "'" << path
-                      << "' must be a regular file");
-        }
-        string content(stats.st_size, ' ');
-        ssize_t got = ::read(fd, &content[0], stats.st_size);
-        if (got < 0) {
-            isc_throw(DhcpConfigError, "can't read file '" << path << "': "
-                      << std::strerror(errno));
-        }
-        if (got != stats.st_size) {
-            isc_throw(DhcpConfigError, "can't read whole file '" << path
-                      << "' (got " << got << " of " << stats.st_size);
-        }
-        close(fd);
-        return (content);
-    } catch (const std::exception&) {
-        close(fd);
-        throw;
+        return (file::getContent(path));
+    } catch (const isc::BadValue& ex) {
+        isc_throw(DhcpConfigError, ex.what());
     }
 }
 

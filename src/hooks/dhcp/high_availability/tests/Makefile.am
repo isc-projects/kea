@@ -7,6 +7,8 @@ AM_CPPFLAGS += -DLIBDHCP_HA_SO=\"$(abs_top_builddir)/src/hooks/dhcp/high_availab
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 TEST_CA_DIR = $(abs_top_srcdir)/src/lib/asiolink/testutils/ca
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
+TEST_HTTP_DIR = $(abs_top_srcdir)/src/lib/http/tests/testdata
+AM_CPPFLAGS += -DTEST_HTTP_DIR=\"$(TEST_HTTP_DIR)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

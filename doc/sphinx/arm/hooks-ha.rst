@@ -768,6 +768,10 @@ list:
    authentication. This parameter is ignored when the user ID is not specified or is empty.
    The password is optional; if not specified, an empty password is used.
 
+-  ``basic-auth-password-file`` - is an alternative to ``basic-auth-password``:
+   instead to put the password itself in the configuration file it is
+   in the file specifies by this parameter.
+
 -  ``role`` - denotes the role of the server in the HA setup. The
    following roles are supported in the load-balancing configuration:
    ``primary``, ``secondary``, and ``backup``. There must be exactly one

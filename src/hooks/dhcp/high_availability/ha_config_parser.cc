@@ -10,6 +10,7 @@
 #include <ha_log.h>
 #include <ha_service_states.h>
 #include <cc/dhcp_config_error.h>
+#include <util/file_utilities.h>
 #include <limits>
 #include <set>
 
@@ -271,7 +272,24 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         // Basic HTTP authentication password.
         std::string password;
         if ((*p)->contains("basic-auth-password")) {
+            if ((*p)->contains("basic-auth-password-file")) {
+                isc_throw(dhcp::DhcpConfigError, "only one of "
+                          << "basic-auth-password and "
+                          << "basic-auth-password-file parameter can be "
+                          << "configured in peer '"
+                          << cfg->getName() << "'");
+            }
             password = getString((*p), "basic-auth-password");
+        }
+        if ((*p)->contains("basic-auth-password-file")) {
+            std::string password_file =
+                getString((*p), "basic-auth-password-file");
+            try {
+                password = util::file::getContent(password_file);
+            } catch (const std::exception& ex) {
+                isc_throw(dhcp::DhcpConfigError, "bad password file in peer '"
+                          << cfg->getName() << "': " << ex.what());
+            }
         }
 
         // Basic HTTP authentication user.
