@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-admin - Shell script for managing Kea databases
----------------------------------------------------
+``kea-admin`` - Shell script for managing Kea databases
+-------------------------------------------------------
 
 Synopsis
 ~~~~~~~~
