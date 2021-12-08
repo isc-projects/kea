@@ -100,7 +100,7 @@ approach can be applied to other systems.
 The ``--with-gssapi`` parameter requires the ``krb5-config`` tool to be present. This
 tool is provided by both MIT Kerberos 5 and Heimdal; however, on some systems
 where both Kerberos 5 and Heimdal are installed, it is a symbolic link
-to one of them. If the tool not in the standard location, it can be specified
+to one of them. If the tool is not in the standard location, it can be specified
 with ``--with-gssapi=/path/to/krb5-config``. It is strongly recommended
 to use the default installation locations provided by the packages.
 
@@ -461,7 +461,7 @@ There are a number of steps required to enable the GSS-TSIG mechanism:
 1. The ``gss_tsig`` hook library must be loaded by the D2 server.
 2. The GSS-TSIG-capable DNS servers must be specified with their parameters.
 
-An excerpt from a D2 server is provided below; more examples are available in the
+An excerpt from a D2 server configuration is provided below; more examples are available in the
 ``doc/examples/ddns`` directory in the Kea sources.
 
 .. code-block:: javascript
@@ -699,22 +699,20 @@ The global parameters are described below:
 
 - ``tkey-lifetime`` determines the lifetime of GSS-TSIG keys in the
   TKEY protocol. The value must be greater than the ``rekey-interval``
-  value. It is expressed in seconds; it defaults to 3600 seconds
-  (one hour) if not specified.
+  value. It is expressed in seconds and defaults to 3600 (one hour).
 
 - ``rekey-interval`` governs the time interval at which the keys for each configured
   server are checked for rekeying, i.e. when a new key is created to replace the
   current usable one if its age is greater than the ``rekey-interval`` value.
   The value must be smaller than the ``tkey-lifetime`` value (it is recommended
   to be set between 50% and 80% of the ``tkey-lifetime`` value). It is expressed in
-  seconds; it defaults to 2700 seconds (45 minutes, or 75% of one hour) if not
-  specified.
+  seconds and defaults to 2700 (45 minutes, or 75% of one hour).
 
 - ``retry-interval`` governs the time interval at which to retry to create a key if any
   error occurred previously for any configured server. The value must be smaller
   than the ``rekey-interval`` value, and should be at most 1/3 of the difference
   between ``tkey-lifetime`` and ``rekey-interval``. It is expressed in seconds
-  and defaults to 120 seconds (2 minutes) if not specified.
+  and defaults to 120 (2 minutes).
 
 - ``fallback`` governs the behavior when GSS-TSIG should be used (a
   matching DNS server is configured) but no GSS-TSIG key is available.
@@ -725,7 +723,7 @@ The global parameters are described below:
 
 - ``exchange-timeout`` governs the amount of time to wait for the GSS-TSIG TKEY
   exchange to finish before the process times out. It is expressed in milliseconds and
-  defaults to 3000 milliseconds (3 seconds) if not specified.
+  defaults to 3000 (3 seconds).
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).
@@ -855,7 +853,7 @@ the Kerberos service. The required text in the ``krb5.conf`` file becomes:
         }
 
 Even when the GSS-API library can use the secret from the client key
-table, it is far better to get and cache credentials.
+table, it is far better for performance to get and cache credentials.
 
 This can be done manually via the command:
 
