@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-netconf - NETCONF agent for configuring Kea
------------------------------------------------
+``kea-netconf`` - NETCONF agent for configuring Kea
+---------------------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -61,8 +61,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
