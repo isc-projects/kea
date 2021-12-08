@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-ctrl-agent - Control Agent process in Kea
----------------------------------------------
+``kea-ctrl-agent`` - Control Agent process in Kea
+-------------------------------------------------
 
 Synopsis
 ~~~~~~~~
