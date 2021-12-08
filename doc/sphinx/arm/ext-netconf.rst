@@ -405,10 +405,9 @@ name: ``dhcp4``, ``dhcp6``, ``d2`` (the DHCP-DDNS server does not
 support the control-channel feature yet), and ``ca`` (the control
 agent).
 
-Each managed server entry may contain:
+Each managed server entry may specify the following control flags:
 
--  ``boot-update``, ``subscribe-changes``, and ``validate-changes`` -
-   specify control flags.
+-  ``boot-update``, ``subscribe-changes``, and ``validate-changes``
 
 -  ``model`` - specifies the YANG model/module name. For each service,
    the default is the corresponding Kea YANG model, e.g. for ``"dhcp4"``
@@ -595,7 +594,7 @@ Starting and Stopping the NETCONF Agent
 -  ``-t file`` - specifies the configuration file to be tested.
    ``kea-netconf`` attempts to load it and conducts sanity checks;
    certain checks are possible only while running the actual server. The
-   actual status is reported with exit code (0 = configuration looks okay,
+   actual status is reported with exit code (0 = configuration appears valid,
    1 = error encountered). Kea prints out log messages to standard
    output and error to standard error when testing the configuration.
 
