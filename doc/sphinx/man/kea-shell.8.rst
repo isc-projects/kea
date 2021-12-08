@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-shell - Text client for Control Agent process
--------------------------------------------------
+``kea-shell`` - Text client for Control Agent process
+-----------------------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -21,11 +21,11 @@ Description
 ~~~~~~~~~~~
 
 The ``kea-shell`` provides a REST client for the Kea Control Agent (CA).
-It takes command as a command-line parameter that is being sent to CA
+It takes commands as a command-line parameter that is sent to the CA
 with proper JSON encapsulation. Optional arguments may be specified on
 the standard input. The request is sent via HTTP and a response is
 retrieved, displayed on the standard output. Basic HTTP authentication
-and HTTPS i.e. TLS transport are supported.
+and HTTPS, i.e. TLS transport, are supported.
 
 
 Arguments
@@ -40,7 +40,7 @@ The arguments are as follows:
    Displays the version.
 
 ``--host``
-   Specifies the host to connect to. Control Agent must be running at the
+   Specifies the host to connect to. The Control Agent must be running at the
    specified host. If not specified, 127.0.0.1 is used.
 
 ``--port``
@@ -54,37 +54,36 @@ The arguments are as follows:
 
 ``--ca``
    Specifies the file or directory name of the Certification Authority.
-   If not specified HTTPS is not used.
+   If not specified, HTTPS is not used.
 
 ``--cert``
    Specifies the file name of the user end-entity public key certificate.
-   If specified the file name of the user key must be specified too.
+   If specified, the file name of the user key must also be specified.
 
 ``--key``
-   Specifies the file name of the user key file. If specified the file
-   name of the user certificate must be specified too. Note that
-   encrypted key files are not supported.
+   Specifies the file name of the user key file. If specified, the file
+   name of the user certificate must also be specified.
+   Encrypted key files are not supported.
 
 ``--auth-user``
-   Specifies the user id for basic HTTP authentication. If not specified
-   or specified as the empty string authentication is not used.
+   Specifies the user ID for basic HTTP authentication. If not specified,
+   or specified as the empty string, authentication is not used.
 
 ``--auth-password``
    Specifies the password for basic HTTP authentication. If not specified
-   but the user id is specified an empty password is used.
+   but the user ID is specified, an empty password is used.
 
 ``--timeout``
-   Specifies the connection timeout in seconds. If not specified, 10
-   (seconds) is used.
+   Specifies the connection timeout, in seconds. The default is 10.
 
 ``--service``
    Specifies the service that is the target of a command. If not
-   specified, Control Agent will be targeted. May be used more than once
+   specified, the Control Agent itself is targeted. May be used more than once
    to specify multiple targets.
 
 ``command``
-   Specifies the command to be sent to CA. If not specified,
-   "list-commands" is used.
+   Specifies the command to be sent to the CA. If not specified,
+   ``list-commands`` is used.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -98,8 +97,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
