@@ -457,6 +457,9 @@ loaded by the correct process per the table below.
    |                 |               |are several exported environment variables available for    |
    |                 |               |the script.                                                 |
    +-----------------+---------------+------------------------------------------------------------+
+   | GSS TSIG        | ISC support   |This hook library adds support to the Kea D2 server         |
+   |                 | customers     |(kea-dhcp-ddns) for using GSS-TSIG to sign DNS updates.     |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time
 progresses, developed both internally and externally. Since this list
