@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-keactrl - Shell script for managing Kea
----------------------------------------
+``keactrl`` - Shell script for managing Kea
+-------------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -23,8 +23,8 @@ Description
 ``keactrl`` is a shell script which controls the startup, shutdown, and
 reconfiguration of the Kea servers (``kea-dhcp4``, ``kea-dhcp6``,
 ``kea-dhcp-ddns``, ``kea-ctrl-agent``, and ``kea-netconf``). It also
-provides the means for checking the current status of the servers and
-determining the configuration files in use.
+provides a way to check the current status of the servers and
+determine the configuration files in use.
 
 Configuration File
 ~~~~~~~~~~~~~~~~~~
@@ -43,46 +43,46 @@ Options
 ``command``
    Specifies the command to be issued to the servers. It can be one of the following:
 
-   **start**
+   ``start``
       Starts the servers.
 
-   **stop**
+   ``stop``
       Stops the servers.
 
-   **reload**
+   ``reload``
       Instructs the servers to re-read the Kea configuration file. This
-      command is not supported by the Netconf agent.
+      command is not supported by the NETCONF agent.
 
-   **status**
+   ``status``
       Prints the status of the servers.
 
 ``-c|--ctrl-config keactrl-config-file``
    Specifies the ``keactrl`` configuration file. Without this switch,
-   ``keactrl`` attempts to use the file
+   ``keactrl`` uses the file
    ``[kea-install-dir]/etc/kea/keactrl.conf``.
 
 ``-s|--server server[,server,...]``
    Specifies a subset of the enabled servers to which the command should
-   be issued. The list of servers should be separated by commas with no
+   be issued. The list of servers should be separated by commas, with no
    intervening spaces. Acceptable values are:
 
-   **dhcp4**
+   ``dhcp4``
       DHCPv4 server (``kea-dhcp4``).
 
-   **dhcp6**
+   ``dhcp6``
       DHCPv6 server (``kea-dhcp6``).
 
-   **dhcp_ddns**
+   ``dhcp_ddns``
       DHCP DDNS server (``kea-dhcp-ddns``).
 
-   **ctrl_agent**
+   ``ctrl_agent``
       Control Agent (``kea-ctrl-agent``).
 
-   **netconf**
-      Netconf agent (``kea-netconf``).
+   ``netconf``
+      NETCONF agent (``kea-netconf``).
 
-   **all**
-      All servers, including Netconf if it was configured to be
+   ``all``
+      All servers, including NETCONF if it was configured to be
       built. This is the default.
 
 ``-v|--version``
@@ -100,8 +100,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
