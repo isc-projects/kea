@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-dhcp-ddns - DHCP-DDNS process in Kea
-----------------------------------------
+``kea-dhcp-ddns`` - DHCP-DDNS process in Kea
+--------------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -21,7 +21,7 @@ Description
 ~~~~~~~~~~~
 
 The ``kea-dhcp-ddns`` service process requests an update of DNS mapping
-based on DHCP lease change events. It runs as a separate process that
+based on DHCP lease-change events. It runs as a separate process that
 expects to receive Name Change Requests from Kea DHCP servers.
 
 Arguments
@@ -47,9 +47,9 @@ The arguments are as follows:
    may also contain configuration entries for other Kea services.
 
 ``-t config-file``
-   Checks the syntax of the configuration file and reports the first error
-   if any. Note that not all parameters are completely checked, in
-   particular, service socket is not opened.
+   Checks the syntax of the configuration file and reports the first error,
+   if any. Note that not all parameters are completely checked; in
+   particular, a service socket is not opened.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -63,8 +63,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
