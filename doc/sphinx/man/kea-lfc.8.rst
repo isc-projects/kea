@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-lfc - Lease File Cleanup process in Kea
--------------------------------------------
+``kea-lfc`` - Lease File Cleanup process in Kea
+-----------------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -38,24 +38,23 @@ The arguments are as follows:
    Specifies the file with the configuration for the ``kea-lfc``
    process. It may also contain configuration entries for other Kea
    services. Currently ``kea-lfc`` gets all of its arguments from the
-   command line; in the future it will be extended to obtain some arguments
-   from the configuration file.
+   command line.
 
 ``-p pid-file``
    Specifies the PID file. When the ``kea-lfc`` process starts, it attempts to
-   determine if another instance of the process is already running by
+   determine if another instance of the process is already running, by
    examining the PID file. If one is already running, the new process is
    terminated. If one is not running, Kea writes its PID into the PID file.
 
 ``-x previous-file``
    Specifies the previous or ex-lease file. When ``kea-lfc`` starts, this is the
    result of any previous run of ``kea-lfc``; when ``kea-lfc`` finishes,
-   it is the result of this run. If ``kea-lfc`` is interrupted before
+   it is the result of the current run. If ``kea-lfc`` is interrupted before
    completing, this file may not exist.
 
 ``-i copy-file``
    Specifies the input or copy of lease file. Before the DHCP server invokes
-   ``kea-lfc``, it will move the current lease file here and then call
+   ``kea-lfc``, it moves the current lease file here and then calls
    ``kea-lfc`` with this file.
 
 ``-o output-file``
@@ -100,8 +99,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
