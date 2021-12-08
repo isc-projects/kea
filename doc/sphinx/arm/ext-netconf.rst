@@ -405,9 +405,9 @@ name: ``dhcp4``, ``dhcp6``, ``d2`` (the DHCP-DDNS server does not
 support the control-channel feature yet), and ``ca`` (the control
 agent).
 
-Each managed server entry may specify the following control flags:
+Each managed server entry may contain:
 
--  ``boot-update``, ``subscribe-changes``, and ``validate-changes``
+-  control flags - ``boot-update``, ``subscribe-changes``, and/or ``validate-changes``.
 
 -  ``model`` - specifies the YANG model/module name. For each service,
    the default is the corresponding Kea YANG model, e.g. for ``"dhcp4"``
