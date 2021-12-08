@@ -9,8 +9,8 @@
    information regarding copyright ownership.
 
 
-kea-dhcp4 - DHCPv4 server in Kea
---------------------------------
+``kea-dhcp4`` - DHCPv4 server in Kea
+------------------------------------
 
 Synopsis
 ~~~~~~~~
@@ -69,8 +69,8 @@ available in various formats (.txt, .html, .pdf) with the Kea
 distribution. The Kea documentation is available at
 https://kea.readthedocs.io.
 
-Kea source code is documented in the Kea Developer's Guide. Its online
-version is available at https://reports.kea.isc.org/dev_guide/.
+Kea source code is documented in the Kea Developer's Guide,
+available at https://reports.kea.isc.org/dev_guide/.
 
 The Kea project website is available at https://kea.isc.org.
 
@@ -95,7 +95,7 @@ Mrugalski.
 
 In mid-2014, Kea was decoupled from the BIND 10 framework and became a
 standalone DHCP server. The DHCPv4 server binary was renamed to
-kea-dhcp4. Kea 1.0.0 was released in December 2015.
+``kea-dhcp4``. Kea 1.0.0 was released in December 2015.
 
 See Also
 ~~~~~~~~
