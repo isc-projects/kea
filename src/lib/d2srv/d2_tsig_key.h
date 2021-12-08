@@ -56,7 +56,7 @@ public:
     ///
     /// @note Derived classes can implement their own specific context.
     ///
-    /// @return The specific @ref TSIGContext of the @ref TSIGKey.
+    /// @return The specific @ref dns::TSIGContext of the @ref dns::TSIGKey.
     virtual dns::TSIGContextPtr createContext();
 
 private:

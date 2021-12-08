@@ -18,6 +18,19 @@ update the DNS data.
 The design documentation for D2 can be found here:
 <a href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/ddns-design">D2 Design</a>.
 
+The implementation is split in several libraries which can be used separately
+(linked only when required):
+- src/lib/dns (libkea-dns++) - contains classes and enumerations which define
+DNS update message, message content, EDNS, RData, RR Types, RCODEs, OPCODEs,
+DNS Name, TSIG key and TSIG record, exception types, etc.
+- src/lib/dhcp_ddns (libkea-dhcp_ddns) - contains classes to send and receive,
+encapsulate and decapsulate DNS messages, etc.
+- src/lib/d2srv (libkea-d2srv) - contains classes to handle NCR transactions,
+the DNS client implementation, statistics, configuration parser and manager,
+logger, DNS Zone, etc.
+- src/bin/d2 (kea-dhcp-ddns) - contains classes which handle message queues,
+D2 process and D2 controller internals, etc.
+
 This document contains several UML diagrams, and a few conventions used within
 these diagrams are worth noting:
 
@@ -37,15 +50,19 @@ in the diagram below:
 @image html d2_app_classes.svg "D2's CPL Derivations"
 
 - isc::d2::D2Controller - entry point for running D2, it processes command line
-options, starts and controls the application process, @c D2Process.
+options, starts and controls the application process, @c D2Process
+(see @ref src/bin/d2/d2_controller.h).
 
 - isc::d2::D2Process - creates and manages D2's primary resources and
-implements the main event loop described in @ref d2EventLoop.
+implements the main event loop described in @ref d2EventLoop section
+(see @ref src/bin/d2/d2_process.h).
 
 - isc::d2::D2CfgMgr - creates, updates, and provides access to D2's application
-configuration which is embodied by @c D2CfgContext.
+configuration which is embodied by @c D2CfgContext
+(see @ref src/lib/d2srv/d2_cfg_mgr.h).
 
-- isc::d2::D2CfgContext - warehouses D2's application configuration.
+- isc::d2::D2CfgContext - warehouses D2's application configuration
+(see @ref src/lib/d2srv/d2_cfg_mgr.h).
 
 @section d2ConfigMgt Configuration Management
 
@@ -69,17 +86,24 @@ The runtime classes that embody this model are shown in the following diagram:
 @image html config_data_classes.svg "D2's Configuration Data Classes"
 
 - isc::d2::D2CfgContext - D2-specific derivation of @c DCfgContextBase. It
-houses the "global" configuration for an instance of D2.
+houses the "global" configuration for an instance of D2
+(see @ref src/lib/d2srv/d2_cfg_mgr.h).
+
 - isc::d2::DdnsDomainListMgr - manages a list of domains.  Currently there is
 one manager instance for the list of forward domains,  and one for the list of
 reverse domains. In addition the domain list, it will may house other values
- specific to that list of domains (e.g. enable flag)
+specific to that list of domains (e.g. enable flag)
+(see @ref src/lib/d2srv/d2_config.h).
+
 - isc::d2::DdnsDomain - represents a DNS domain (really a zone).  When requests
-are received they are matched to a domain by comparing their FQDN to the domain's name.
+are received they are matched to a domain by comparing their FQDN to the
+domain's name (see @ref src/lib/d2srv/d2_config.h).
+
 - isc::d2::DnsServerInfo - describes a DNS server which supports DDNS for a
-given domain.
-- isc::d2::TSIGKeyInfo - describes a TSIG key used for authenticated DDNS for
-a given domain.
+given domain (see @ref src/lib/d2srv/d2_config.h).
+
+- isc::d2::TSIGKeyInfo - describes a TSIG key used for authenticated DDNS for a
+given domain (see @ref src/lib/d2srv/d2_config.h).
 
 The parsing classes, as one would expect, parallel the runtime classes quite
 closely. The parsers are named for the runtime class they instantiate and are
@@ -89,23 +113,29 @@ class.  The parser classes are shown in the diagram below:
 @image html config_parser_classes.svg "D2's Configuration Parsers"
 
 - isc::d2::DdnsDomainListMgrParser - parser for a domain list manager, it
-creates a domain list parser
+creates a domain list parser.
+
 - isc::d2::DdnsDomainListParser - parser for a list of domains, it creates a
-domain parser for domain described in a list domains
+domain parser for domain described in a list domains.
+
 - isc::d2::DdnsDomainParser - Parser for a domain, it creates a DNS server list
-parser
-- isc::d2::DnsServerInfoListParser -  parser for a list of DNS servers, it
-creates a DNS server parser for server described in a list of servers
-- isc::d2::DnsServerInfoParser - parser for DNS server
+parser.
+
+- isc::d2::DnsServerInfoListParser - parser for a list of DNS servers, it
+creates a DNS server parser for server described in a list of servers.
+
+- isc::d2::DnsServerInfoParser - parser for DNS server.
+
 - isc::d2::TSIGKeyInfoListParser - parser for a list of TSIG keys, it creates a
-parser for key described in a list of keys
-- isc::d2::TSIGKeyInfoParser
+parser for key described in a list of keys.
+
+- isc::d2::TSIGKeyInfoParser - parser for TSIG key.
+
+For more details on the parsers see @ref src/lib/d2srv/d2_config.h.
 
 The underlying common libraries for configuration parsing support configuration
 input in JSON format, that complies with a fixed set of generic constructs that
-may be described by a spec file (also JSON).  This mechanism is subject to
-change, but in the meantime, the spec file describe D2's configuration may be
-found here: @c src/bin/d2/dhcp-ddns.spec
+may be described by a spec file (also JSON).
 
 @section d2NCRReceipt Request Reception and Queuing
 
@@ -115,23 +145,29 @@ shown in the diagram below:
 
 @image html request_mgt_classes.svg  "Request Management Classes"
 
-- isc::d2::D2QueueMgr - owned by @c D2Process, it listens for @c NameChangeRequests
-and queues them for processing. It also provides services for adding,
-finding, and removing queue entries.  It owns the interface used to receive
-requests and thus shields the remainder of D2 from any specific knowledge or
-interaction with this interface.
-- isc::d2::RequestQueue - storage container for the received requests.
+- isc::d2::D2QueueMgr - owned by @c D2Process, it listens for
+@c NameChangeRequests and queues them for processing. It also provides services
+for adding, finding, and removing queue entries.  It owns the interface used to
+receive requests and thus shields the remainder of D2 from any specific
+knowledge or interaction with this interface
+(see @ref src/bin/d2/d2_queue_mgr.h).
+
+- isc::d2::RequestQueue - storage container for the received requests
+(see @ref src/bin/d2/d2_queue_mgr.h).
+
 - isc::dhcp_ddns::NameChangeListener - Abstract asynchronous interface for
 receiving requests which uses ASIO to process IO and invoke a callback upon
-request receipt
+request receipt (see @ref src/lib/dhcp_ddns/ncr_io.h).
+
 - isc::dhcp_ddns::NameChangeUDPListener - Derivation of NameChangeListener
 which supports receiving request via UDP socket
+(see @ref src/lib/dhcp_ddns/ncr_udp.h).
+
 - isc::dhcp_ddns::NameChangeRequest - embodies a request to update DNS entries
-based upon a DHCP lease change
+based upon a DHCP lease change (see @ref src/lib/dhcp_ddns/ncr_msg.h).
 
 D2QueueMgr is state-driven, albeit with a very simple state model. The states
-are defined by isc::d2::D2QueueMgr::State, and described in detail in in
-@ref d2_queue_mgr.h.
+are defined by isc::d2::D2QueueMgr::State (see @ref src/bin/d2/d2_queue_mgr.h).
 
 @section d2DDNSUpdateExecution Update Execution
 
@@ -154,34 +190,39 @@ following diagram:
 - isc::d2::D2UpdateMgr owned by @c D2Process, orchestrates the fulfillment of
 each request by managing the execution of its transaction.  Its high level
 method @ref isc::d2::D2UpdateMgr::sweep() is meant to be called whenever IO
-events occur.  The following steps are performed each time the method is called:
+events occur (see @ref src/bin/d2/d2_update_mgr.h). The following steps are
+performed each time the method is called:
     - Any transaction which has been completed, is logged and culled from the
     transaction list.
-    - Start a new transaction for the next queued request (if any)
+    - Start a new transaction for the next queued request (if any).
 
 - isc::d2::NameChangeTransaction -  abstract state-driven class which carries
 out the steps necessary to fulfill a single request.  Fulfilling a request is
-achieved as IO events in response it DDNS requests drive the transaction
-through its state model.  The type of transaction is based on the nature of
-the request, this is discussed further on @ref d2TransDetail
+achieved as IO events in response it DDNS requests drive the transaction through
+its state model (see @ref src/lib/d2srv/nc_trans.h).  The type of transaction is
+based on the nature of the request, this is discussed further on
+@ref d2TransDetail section.
 
 - isc::d2::DNSClient - an asynchronous worker which atomically performs a
 single DDNS packet exchange with a given server, providing the response via a
 callback mechanism.  Each time a transaction's state model calls for a packet
-exchange with a DNS server, it uses an instance of this class to do it.
+exchange with a DNS server, it uses an instance of this class to do it
+(see @ref src/lib/d2srv/dns_client.h).
 
 - isc::d2::D2UpdateMessage - container for sending and receiving DDNS packets
+(see @ref src/lib/d2srv/d2_update_message.h).
 
 @section d2EventLoop Main Event Loop
 
 Now that all of the primary components have been introduced it is worth while
 discussing D2's main event loop.  As mentioned earlier D2 is constructed around
-the CPL which is designed to be driven by asynchronous IO processed by a
-common IO service thread (isc::asiolink::io_service).  Any IO that needs to be
+the CPL which is designed to be driven by asynchronous IO processed by a common
+IO service thread (isc::asiolink::io_service).  Any IO that needs to be
 performed by the application thread uses this service to do so. This organizes
 the IO event processing into a single event loop centered around the service.
-(This does not preclude spinning off worker threads to conduct other tasks,
-with their own io_service instances).  D2's main event loop, implemented in @ref isc::d2::D2Process::run() may be paraphrased as follows:
+(This does not preclude spinning off worker threads to conduct other tasks, with
+their own io_service instances).  D2's main event loop, implemented in
+@ref isc::d2::D2Process::run() may be paraphrased as follows:
 
 @code
     As long as we should not shutdown repeat the following steps:
@@ -213,9 +254,14 @@ The transaction classes are shown in the following diagram:
 
 @image html trans_classes.svg "NameChangeTransaction Derivations"
 
-- isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add entries
-- isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove entries
+- isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add
+entries (see @ref src/bin/d2/nc_add.h).
+
+- isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove
+entries (see @ref src/bin/d2/nc_remove.h).
+
 - isc::util::StateModel - abstract state model described in @ref d2StateModel
+section (see @ref src/lib/util/state_model.h).
 
 The state models for these two transactions implement DDNS with conflict
 resolution as described in <a href="https://tools.ietf.org/html/rfc4703">RFC 4703</a>.
@@ -246,20 +292,19 @@ a common library.
 
 - isc::util::StateModel - provides the mechanics for executing a state model
 described by a dictionary events and states.  It provides methods to:
-    - initialize the model - constructs the dictionary of events and states
+    - initialize the model - constructs the dictionary of events and states.
     - start the model - sets the model to its initial state, posts a "start"
-      event and starts the model "running"
-      "start event"
+      event and starts the model "running".
     - run the model - process the posted event (if one) until the model reaches
       a wait state or reaches the end state.
-    - transition from one state to another
-- isc::d2::Event - Defines an event used to stimulate the model
+    - transition from one state to another.
+- isc::d2::Event - Defines an event used to stimulate the model.
 - isc::d2::State - Defines a state with the model, each state has a handler
-method that is executed upon transition "into" that state from another
+method that is executed upon transition "into" that state from another state.
 - isc::d2::LabeledValue - An abstract that associates a integer value with a
-text label
+text label.
 - isc::d2::LabeledValueSet - A collection of LabeledValues for which the integer
-values must be unique
+values must be unique.
 
 @subsection d2TransExecExample Transaction Execution Example
 
