@@ -10,24 +10,10 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/crypto_tls.h>
-
-#include <sys/stat.h>
+#include <util/file_utilities.h>
 
 using namespace isc::cryptolink;
-
-namespace { // anonymous namespace
-
-// C++17 has this function but Kea is still C++11 so provide it.
-bool
-isDir(const std::string& name) {
-    struct stat stats;
-    if (::stat(name.c_str(), &stats) < 0) {
-        return (false);
-    }
-    return ((stats.st_mode & S_IFMT) == S_IFDIR);
-}
-
-} // end of namespace
+using namespace isc::util;
 
 namespace isc {
 namespace asiolink {
@@ -42,7 +28,7 @@ TlsContextBase::configure(TlsContextPtr& context,
     try {
         context.reset(new TlsContext(role));
         context->setCertRequired(cert_required);
-        if (isDir(ca_file)) {
+        if (file::isDir(ca_file)) {
             try {
                 context->loadCaPath(ca_file);
             } catch (const std::exception& ex) {

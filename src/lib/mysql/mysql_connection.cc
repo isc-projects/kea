@@ -9,6 +9,7 @@
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
+#include <util/file_utilities.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -16,21 +17,6 @@
 #include <stdint.h>
 #include <string>
 #include <limits>
-#include <sys/stat.h>
-
-namespace { // anonymous namespace
-
-// C++17 has this function but Kea is still C++11 so provide it.
-bool
-isDir(const std::string& name) {
-    struct stat stats;
-    if (::stat(name.c_str(), &stats) < 0) {
-        return (false);
-    }
-    return ((stats.st_mode & S_IFMT) == S_IFDIR);
-}
-
-} // end of namespace
 
 using namespace isc;
 using namespace std;
@@ -176,7 +162,7 @@ MySqlConnection::openDatabase() {
     try {
         sca = getParameter("trust-anchor");
         tls_ = true;
-        if (isDir(sca)) {
+        if (util::file::isDir(sca)) {
             ca_dir = sca.c_str();
         } else {
             ca_file = sca.c_str();
