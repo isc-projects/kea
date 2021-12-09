@@ -173,7 +173,7 @@ Options
    with the ``-4`` option.
 
 ``-F release-rate``
-   Specifies the rate at which DHCPv4 or DHCPv6 release requests are sent to a server. This value
+   Specifies the rate at which DHCPv4 DHCPRELEASE or DHCPv6 Release requests are sent to a server. This value
    is only valid when used in conjunction with the exchange rate (given
    by ``-r rate``). Furthermore, the sum of this value and the renew-rate
    (given by ``-f rate``) must be equal to or less than the exchange
