@@ -36,7 +36,7 @@ default, if there is no response received with one second, a response is
 considered lost and ``perfdhcp`` continues with other transactions.
 
 A second scenario, called avalanche, is selected via ``--scenario avalanche``.
-It first sends as many Discovery or Solicit messages as requests in the ``-R`` option; then
+It first sends the number of Discovery or Solicit messages specified by the ``-R`` option; then
 a retransmission (with an exponential back-off mechanism) is used for each simulated client, until all requests are
 answered. It generates a report when all clients receive their addresses, or when
 it is manually stopped. This scenario attempts to replicate a
@@ -173,7 +173,7 @@ Options
    with the ``-4`` option.
 
 ``-F release-rate``
-   Specifies the rate at which Release requests are sent to a server. This value
+   Specifies the rate at which DHCPv4 or DHCPv6 release requests are sent to a server. This value
    is only valid when used in conjunction with the exchange rate (given
    by ``-r rate``). Furthermore, the sum of this value and the renew-rate
    (given by ``-f rate``) must be equal to or less than the exchange
@@ -416,9 +416,10 @@ Options Controlling a Test
    Sets the delay (in seconds) between two successive reports.
 
 ``-C separator``
-    Output reduced, an argument is a separator for periodic (-t) reports
-    generated in easy parsable mode. Data output won't be changed,
-    remain identical as in -t option.
+    Suppresses the preliminary output and causes the interim data to
+    only contain the values delimited by ``separator``. If used in
+    conjunction with ``-t``, this option produces easily parsable
+    reports at ``-t`` intervals.
 
 Arguments
 ~~~~~~~~~
