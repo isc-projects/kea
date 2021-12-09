@@ -68,7 +68,7 @@ Arguments
 
 ``-u|--user username``
    Specifies the username when connecting to a database.
-   The default value is **keatest**.
+   The default value is ``keatest``.
 
 ``-p|--password password``
    Specifies the password when connecting to a database.
