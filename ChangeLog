@@ -1,3 +1,13 @@
+1954.	[build]		razvan
+	Library version numbers bumped for Kea 2.0.1 stable version.
+	(Gitlab #2234)
+
+1953.	[func]		razvan, fdupont
+	Finish the GSS-TSIG hook library implementation.
+	(Gitlab #2228, #2122, #2173, #2175, #2177, #2138, #2174, #2121,
+	#2127, #2170, #2128, #2082, #2088, #2125, #2124, #2129, #2113,
+	#2089, #2056, #2120, #2095, #2092, #2109, #2114, #2115)
+
 Kea 2.0.0 (stable) released on September 29, 2021
 
 1952.	[build]		razvan
