@@ -5,7 +5,7 @@ Kea Security
 ************
 
 Kea was originally designed to be installed in a protected environment, in a network
-datacenter; it was not offer hardened security features. However, due to customer demand
+datacenter; it did not offer hardened security features. However, due to customer demand
 and evolving network requirements, support for basic HTTP authentication and Transport
 Layer Security (TLS) have been added to Kea.
 
@@ -229,10 +229,10 @@ stdout/stderr and files. Syslog may export the logs over the network, exposing t
 Cryptography Components
 -----------------------
 
-Kea has support for two cryptographic libraries: Botan and OpenSSL. This creates both compile and runtime
-dependencies. The binaries use only one library, which is
-chosen at compilation time. Most deployments use OpenSSL, because it is much more popular, but Botan
-remains a fully supported alternative.
+Kea supports the use of either of two cryptographic libraries: Botan or OpenSSL.
+The choice is made at compile time, and creates both compile and runtime dependencies
+between the Kea and the selected library. While OpenSSL is the most popular choice for
+deployments, Botan remains a fully supported alternative.
 
 The primary use cases for the cryptographic libraries are:
 
