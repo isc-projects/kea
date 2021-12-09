@@ -937,6 +937,7 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Convert fetched value into a ptime.
     ptime fetched_time;
     ASSERT_NO_THROW_LOG(PgSqlExchange::getColumnValue(*r, 0, TIMESTAMP_COL,
+                        fetched_time));
 
     ASSERT_EQ(fetched_time, nice_day);
 }
