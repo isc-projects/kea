@@ -20,6 +20,13 @@ namespace file {
 /// @throw BadValue when the file can't be opened or is not a regular one.
 std::string getContent(const std::string& file_name);
 
+/// @brief Is a directory predicate.
+///
+/// @param name The file or directory name.
+/// @return True if the name points to a directory, false if not including
+/// if the pointed location does not exist.
+bool isDir(const std::string& name);
+
 } // namespace file
 } // namespace util
 } // namespace isc

@@ -55,6 +55,15 @@ getContent(const string& file_name) {
     }
 }
 
+bool
+isDir(const string& name) {
+    struct stat stats;
+    if (::stat(name.c_str(), &stats) < 0) {
+        return (false);
+    }
+    return ((stats.st_mode & S_IFMT) == S_IFDIR);
+}
+
 } // namespace file
 } // namespace log
 } // namespace isc

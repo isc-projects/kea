@@ -75,4 +75,12 @@ TEST_F(FileUtilTest, basic) {
     EXPECT_EQ("abdc", content);
 }
 
+/// @brief Check isDir works.
+TEST_F(FileUtilTest, isDir) {
+    EXPECT_TRUE(isDir("/dev"));
+    EXPECT_FALSE(isDir("/dev/null"));
+    EXPECT_FALSE(isDir("/this/does/not/exists"));
+    EXPECT_FALSE(isDir("/etc/hosts"));
+}
+
 }
