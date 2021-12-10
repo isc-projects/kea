@@ -59,6 +59,8 @@ CSVLeaseFile6::append(const Lease6& lease) {
     if (lease.hwaddr_) {
         // We may not have hardware information
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
+        row.writeAt(getColumnIndex("hwtype"), lease.hwaddr_->htype_);
+        row.writeAt(getColumnIndex("hwaddr_source"), lease.hwaddr_->source_);
     }
     row.writeAt(getColumnIndex("state"), lease.state_);
     // User context is optional.
@@ -148,8 +150,17 @@ CSVLeaseFile6::initColumns() {
     addColumn("fqdn_rev", "1.0");
     addColumn("hostname", "1.0");
     addColumn("hwaddr", "2.0");
-    addColumn("state", "3.0", "0");
+    addColumn("state", "3.0", "0" /* == STATE_DEFAULT */);
     addColumn("user_context", "3.1");
+
+    // Default not added, because it depends on hwaddr having value, but in
+    // effect, when hwaddr is present, it is "1" /* == HTYPE_ETHER */.
+    addColumn("hwtype", "4.0");
+
+    // Default not added, because it depends on hwaddr having value, but in
+    // effect, when hwaddr is present, it is "0" /* == HWADDR_SOURCE_UNKNOWN */.
+    addColumn("hwaddr_source", "4.0");
+
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
 }
@@ -235,10 +246,14 @@ HWAddrPtr
 CSVLeaseFile6::readHWAddr(const CSVRow& row) {
 
     try {
-        const HWAddr& hwaddr = HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")));
+        uint16_t const hwtype(readHWType(row).value_or(HTYPE_ETHER));
+        HWAddr hwaddr(
+            HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")), hwtype));
         if (hwaddr.hwaddr_.empty()) {
             return (HWAddrPtr());
         }
+        hwaddr.source_ =
+            readHWAddrSource(row).value_or(HWAddr::HWADDR_SOURCE_UNKNOWN);
 
         /// @todo: HWAddr returns an object, not a pointer. Without HWAddr
         /// refactoring, at least one copy is unavoidable.
@@ -274,6 +289,24 @@ CSVLeaseFile6::readContext(const util::CSVRow& row) {
                   << "' is not a JSON map");
     }
     return (ctx);
+}
+
+std::optional<uint16_t>
+CSVLeaseFile6::readHWType(const CSVRow& row) {
+    size_t const index(getColumnIndex("hwtype"));
+    if (row.readAt(index).empty()) {
+        return std::nullopt;
+    }
+    return row.readAndConvertAt<uint16_t>(index);
+}
+
+std::optional<uint32_t>
+CSVLeaseFile6::readHWAddrSource(const CSVRow& row) {
+    size_t const index(getColumnIndex("hwaddr_source"));
+    if (row.readAt(index).empty()) {
+        return std::nullopt;
+    }
+    return row.readAndConvertAt<uint32_t>(index);
 }
 
 } // end of namespace isc::dhcp

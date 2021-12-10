@@ -13,7 +13,10 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_file_stats.h>
 #include <util/versioned_csv_file.h>
+
 #include <stdint.h>
+
+#include <optional>
 #include <string>
 
 namespace isc {
@@ -101,6 +104,8 @@ private:
     /// - hwaddr
     /// - state
     /// - user_context
+    /// - hwtype
+    /// - hwaddr_source
     void initColumns();
 
     ///
@@ -183,8 +188,23 @@ private:
     ///
     /// @param row CSV file row holding lease information.
     data::ConstElementPtr readContext(const util::CSVRow& row);
-    //@}
 
+    /// @brief Reads hardware address type from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information
+    ///
+    /// @return the integer value of the hardware address type that was read
+    /// or std::nullopt if the value is empty
+    std::optional<uint16_t> readHWType(const util::CSVRow& row);
+
+    /// @brief Reads hardware address source from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information
+    ///
+    /// @return the integer value of the hardware address source that was read
+    /// or std::nullopt if the value is empty
+    std::optional<uint32_t> readHWAddrSource(const util::CSVRow& row);
+    //@}
 };
 
 } // namespace isc::dhcp
