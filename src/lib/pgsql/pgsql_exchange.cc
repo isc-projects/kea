@@ -42,6 +42,28 @@ void PsqlBindArray::add(const std::string& value) {
     formats_.push_back(TEXT_FMT);
 }
 
+void PsqlBindArray::insert(const char* value, size_t index) {
+    if (index >= values_.size()) {
+        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index 
+                  << ", is larger than the array size: " << values_.size());
+    }
+
+    values_.insert(values_.begin() + index, value);
+    lengths_.insert(lengths_.begin() + index, strlen(value));
+    formats_.insert(formats_.begin() + index, TEXT_FMT);
+}
+
+void PsqlBindArray::insert(const std::string& value, size_t index) {
+    if (index >= values_.size()) {
+        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index 
+                  << ", is larger than the array size: " << values_.size());
+    }
+
+    values_.insert(values_.begin() + index, value.c_str());
+    lengths_.insert(lengths_.begin() + index, value.size());
+    formats_.insert(formats_.begin() + index, TEXT_FMT);
+}
+
 void PsqlBindArray::add(const std::vector<uint8_t>& data) {
     values_.push_back(reinterpret_cast<const char*>(&(data[0])));
     lengths_.push_back(data.size());

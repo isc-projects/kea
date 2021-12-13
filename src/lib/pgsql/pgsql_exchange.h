@@ -193,7 +193,7 @@ struct PsqlBindArray {
     /// @throw DbOperationError if value is NULL.
     void add(const char* value);
 
-    /// @brief Adds an string value to the bind array
+    /// @brief Adds a string value to the bind array
     ///
     /// Adds a TEXT formatted value to the end of the bind array using the
     /// given string as the data source.  The caller is responsible for
@@ -202,6 +202,35 @@ struct PsqlBindArray {
     ///
     /// @param value std::string containing the value to add.
     void add(const std::string& value);
+
+    /// @brief Inserts a string value to the bind array before the given index
+    ///
+    /// Inserts a TEXT_FMT value into the bind array before the element
+    /// position given by index, using the given char* as the data source.
+    /// The value is expected to be NULL terminated.  The caller is responsible
+    /// for ensuring that value remains in scope until the bind array has been
+    /// discarded.
+    ///
+    /// @param value char array containing the null-terminated text to add.
+    /// @param index element position before which the string should be inserted.
+    ///
+    /// @throw DbOperationError if value is NULL.
+    /// @throw OutOfRange if the index is beyond the end of the array.
+    void insert(const char* value, size_t index);
+
+    /// @brief Inserts a string value to the bind array before the given index
+    ///
+    /// Inserts a TEXT_FMT value into the bind array before the element
+    /// position given by index, using the given given string as the data source.
+    /// The caller is responsible for ensuring that string parameter remains in
+    /// scope until the bind array has been discarded.
+    ///
+    /// @param value char array containing the null-terminated text to add.
+    /// @param index element position before which the string should be inserted.
+    ///
+    /// @throw DbOperationError if value is NULL.
+    /// @throw OutOfRange if the index is beyond the end of the array.
+    void insert(const std::string& value, size_t index);
 
     /// @brief Adds a vector of binary data to the bind array.
     ///

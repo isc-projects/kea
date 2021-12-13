@@ -942,4 +942,41 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     ASSERT_EQ(fetched_time, nice_day);
 }
 
+/// @brief Verifies the ability to insert a string into
+/// the bind array.
+TEST(PsqlBindArray, insertString) {
+    PsqlBindArray b;
+
+    // Make not temporary strings to insert.
+    std::string one("one");
+//    std::string three("three");
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        b.add("two");
+        b.add("four");
+
+        ASSERT_THROW_MSG(b.insert(std::string("too far"), 5), OutOfRange, 
+                         "PsqlBindArray::insert - index: 5, "
+                         "is larger than the array size: 2");
+        b.insert(one, 0);
+        b.insert("three", 2);
+        b.add("five");
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(5, b.size());
+
+    // Verify contents are correct.
+    std::string expected =
+        "0 : \"one\"\n"
+        "1 : \"two\"\n"
+        "2 : \"three\"\n"
+        "3 : \"four\"\n"
+        "4 : \"five\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
 }; // namespace
