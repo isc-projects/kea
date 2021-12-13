@@ -1,5 +1,4 @@
-
-Grammar generated from dhcp6_parser.yy. See Chapter :ref:`dhcp6` for an explanation.
+This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more details.
 
 .. code-block:: BNF
    :linenos:
