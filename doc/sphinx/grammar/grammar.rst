@@ -14,9 +14,9 @@ Kea Configuration File Syntax (BNF)
 ===================================
 
 Kea consists of several daemons, each with its own configuration syntax. The following sections
-provide a complete syntax of all possible parameters, written as Backus-Naur Form (BNF).
-See `wikipedia article on BNF <https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form>`_ for
-background and explanation.
+provide a complete syntax of all possible parameters, written in Backus-Naur Form (BNF).
+See this `Wikipedia article on BNF <https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form>`_ for
+more information.
 
 BNF Grammar for DHCPv4
 ----------------------
@@ -38,7 +38,7 @@ BNF Grammar for DHCP-DDNS
 
 .. include:: grammar-d2-parser.rst
 
-BNF Grammar for Kea-netconf
----------------------------
+BNF Grammar for the Kea NETCONF Agent
+-------------------------------------
 
 .. include:: grammar-netconf-parser.rst
