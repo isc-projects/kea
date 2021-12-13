@@ -3,13 +3,14 @@
 Configuration Templates
 =======================
 
-The following sections include configuration templates that are proposed configuration for
-certain deployment types. The example configuration files are also available in the Kea sources
-in the `doc/examples` directory.
+The following sections include configuration templates for
+certain deployment types. The example configuration files are also available in the Kea sources,
+in the ``doc/examples`` directory.
 
 .. include:: template-power-user-home.md
 
-At the very least, the lines marked in yellow must be adjusted to match the actual deployment.
+Some tweaking of these templates may be required to match specific system needs: at a
+minimum, the lines highlighted in yellow must be adjusted to match the actual deployment.
 
 Server1's Control Agent configuration file:
 
