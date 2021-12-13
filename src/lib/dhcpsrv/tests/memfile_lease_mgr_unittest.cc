@@ -5,12 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/csv_lease_file4.h>
+#include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
@@ -18,6 +21,7 @@
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <testutils/gtest_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 #include <util/range_utilities.h>
@@ -30,6 +34,7 @@
 #include <fstream>
 #include <queue>
 #include <sstream>
+
 #include <unistd.h>
 
 using namespace std;
@@ -1397,14 +1402,14 @@ TEST_F(MemfileLeaseMgrTest, testLease6MacMultiThread) {
 TEST_F(MemfileLeaseMgrTest, versionCheck) {
     // Check that V4 backend reports versions correctly.
     startBackend(V4);
-    testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
-                Memfile_LeaseMgr::MINOR_VERSION);
+    testVersion(Memfile_LeaseMgr::MAJOR_VERSION_V4,
+                Memfile_LeaseMgr::MINOR_VERSION_V4);
     LeaseMgrFactory::destroy();
 
     // Check that V6 backends reports them ok, too.
     startBackend(V6);
-    testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
-                Memfile_LeaseMgr::MINOR_VERSION);
+    testVersion(Memfile_LeaseMgr::MAJOR_VERSION_V6,
+                Memfile_LeaseMgr::MINOR_VERSION_V6);
     LeaseMgrFactory::destroy();
 }
 
