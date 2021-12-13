@@ -53,14 +53,14 @@ The following is the directory layout of the complete Kea installation.
 Build Requirements
 ==================
 
-In addition to the run-time requirements (listed in
+In addition to the runtime requirements (listed in
 :ref:`required-software`), building Kea from source code requires
 various development include headers and program development tools.
 
 .. note::
 
    Some operating systems have split their distribution packages into a
-   run-time and a development package. The
+   runtime and a development package. The
    development package versions, which include header files and
    libraries, must be installed to build Kea from the source code.
 
