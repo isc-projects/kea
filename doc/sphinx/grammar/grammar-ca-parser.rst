@@ -1,5 +1,4 @@
-
-Grammar generated from agent_parser.yy. See Chapter :ref:`kea-ctrl-agent` for an explanation.
+This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` for more details.
 
 .. code-block:: BNF
    :linenos:
