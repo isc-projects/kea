@@ -111,8 +111,8 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
         lease->state_ = readState(row);
         if ((*lease->duid_ == DUID::EMPTY())
             && lease->state_ != Lease::STATE_DECLINED) {
-            isc_throw(isc::BadValue, "The Empty DUID is"
-                      "only valid for declined leases");
+            isc_throw(isc::BadValue,
+                      "The Empty DUID is only valid for declined leases");
         }
         ConstElementPtr ctx = readContext(row);
         if (ctx) {
@@ -153,12 +153,11 @@ CSVLeaseFile6::initColumns() {
     addColumn("state", "3.0", "0" /* == STATE_DEFAULT */);
     addColumn("user_context", "3.1");
 
-    // Default not added, because it depends on hwaddr having value, but in
-    // effect, when hwaddr is present, it is "1" /* == HTYPE_ETHER */.
+    // Default not added for hwtype and hwaddr_source, because they depend on
+    // hwaddr having value. When a CSV lease having a hwaddr is upgraded to 4.0,
+    // hwtype will have value "1" meaning HTYPE_ETHER and
+    // hwaddr_source will have value "0" meaning HWADDR_SOURCE_UNKNOWN.
     addColumn("hwtype", "4.0");
-
-    // Default not added, because it depends on hwaddr having value, but in
-    // effect, when hwaddr is present, it is "0" /* == HWADDR_SOURCE_UNKNOWN */.
     addColumn("hwaddr_source", "4.0");
 
     // Any file with less than hostname is invalid

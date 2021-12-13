@@ -60,7 +60,7 @@ memfile_header_v4() {
 
 # Print the entire header for v6.
 memfile_header_v6() {
-    printf '%s,hwaddr,state,user_context' "$(incomplete_memfile_header_v6)"
+    printf '%s,hwaddr,state,user_context,hwtype,hwaddr_source' "$(incomplete_memfile_header_v6)"
 }
 
 # Print "server-id" configuration. Not available for v4.

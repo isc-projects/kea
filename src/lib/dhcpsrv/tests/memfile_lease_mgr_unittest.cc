@@ -599,24 +599,25 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr,state,user_context\n";
+        "fqdn_rev,hostname,hwaddr,state,user_context,"
+        "hwtype,hwaddr_source\n";
 
     // This string contains the contents of the lease file with exactly
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,\n"
+        "8,100,0,7,0,1,1,,,1,,,\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
-        "8,100,0,7,0,1,1,,,1,{ \"bar\": true }\n"
+        "8,100,0,7,0,1,1,,,1,{ \"bar\": true },,\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,,\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -654,7 +655,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     std::string update_file_contents = new_file_contents +
         "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
-        "400,2,300,0,123,128,0,0,,,0,\n";
+        "400,2,300,0,123,128,0,0,,,0,,,\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
@@ -662,9 +663,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n"
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,,,\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile6_0.csv.2
@@ -713,15 +714,16 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr,state,user_context\n";
+        "fqdn_rev,hostname,hwaddr,state,user_context,"
+        "hwtype,hwaddr_source\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,\n"
+        "8,100,0,7,0,1,1,,,1,,,\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,,,\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -776,15 +778,16 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr,state,user_context\n";
+        "fqdn_rev,hostname,hwaddr,state,user_context,"
+        "hwtype,hwaddr_source\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,\n"
+        "8,100,0,7,0,1,1,,,1,,,\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -794,7 +797,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 
@@ -1571,31 +1574,31 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     startBackend(V6);
 
@@ -1637,22 +1640,22 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     startBackend(V6);
 
@@ -1685,20 +1688,20 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     startBackend(V6);
 
@@ -1732,38 +1735,38 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
 
     LeaseFileIO ioc(getLeaseFilePath("leasefile6_0.csv.completed"));
     ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
                   "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
-                  "400,1000,8,100,0,7,0,1,1,,,1,\n");
+                  "400,1000,8,100,0,7,0,1,1,,,1,,,\n");
 
     startBackend(V6);
 
@@ -1879,7 +1882,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
 /// @brief Verifies that LFC is automatically run during MemfileLeasemMgr construction
 /// when the lease file(s) being loaded need to be upgraded.
 TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
-    // Create header strings for all three schemas
+    // Create header strings for all schemas.
     std::string header_1_0 =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
@@ -1894,6 +1897,12 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
         "fqdn_rev,hostname,hwaddr,state,user_context\n";
+
+    std::string header_4_0 =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr,state,user_context,"
+        "hwtype,hwaddr_source\n";
 
     // The current lease file is schema 1.0 and has two entries for
     // the same lease
@@ -1925,9 +1934,9 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
 
     // Since lease files are loaded during lease manager
     // constructor, LFC should get launched automatically.
-    // The new lease file should been 3.0 and contain no leases.
+    // The new lease file should been 4.0 and contain no leases.
     ASSERT_TRUE(current_file.exists());
-    EXPECT_EQ(header_3_0, current_file.readFile());
+    EXPECT_EQ(header_4_0, current_file.readFile());
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
@@ -1937,17 +1946,17 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
         << "Executing the LFC process failed: make sure that"
         " the kea-lfc program has been compiled.";
 
-    // The LFC should have created a 3.0 schema cleaned file with one entry
+    // The LFC should have created a 4.0 schema cleaned file with one entry
     // for each lease as leasefile6_0.csv.2
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
     ASSERT_TRUE(input_file.exists());
 
     // Verify cleaned, converted contents
-    std::string result_file_contents = header_3_0 +
+    std::string result_file_contents = header_4_0 +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,0,\n"
+        "8,100,0,7,0,1,1,,,0,,,\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,11:22:33:44:55,0,\n";
+        "8,100,0,7,0,1,1,,11:22:33:44:55,0,,1,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
@@ -2254,6 +2263,318 @@ TEST_F(MemfileLeaseMgrTest, leaseStatsQueryAttribution4) {
 TEST_F(MemfileLeaseMgrTest, leaseStatsQueryAttribution6) {
     startBackend(V6);
     testLeaseStatsQueryAttribution6();
+}
+
+TEST_F(MemfileLeaseMgrTest, checkVersion4) {
+    // Create the backend.
+    DatabaseConnection::ParameterMap parameters;
+    parameters["type"] = "memfile";
+    parameters["universe"] = "4";
+    parameters["name"] = getLeaseFilePath("leasefile4_0.csv");
+    std::unique_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_NO_THROW_LOG(lease_mgr.reset(new NakedMemfileLeaseMgr(parameters)));
+
+    // Get the backend version.
+    auto const& backend_version(lease_mgr->getVersion());
+    std::stringstream s;
+    s << backend_version.first << '.' << backend_version.second;
+
+    // Get the CSV version.
+    CSVLeaseFile4 f(getLeaseFilePath("leasefile4_0.csv"));
+
+    // They should match.
+    EXPECT_EQ(s.str(), f.getSchemaVersion());
+
+    // DBVersion too.
+    EXPECT_EQ("Memfile backend " + s.str(),
+              lease_mgr->getDBVersion(Memfile_LeaseMgr::V4));
+}
+
+TEST_F(MemfileLeaseMgrTest, checkVersion6) {
+    // Create the backend.
+    DatabaseConnection::ParameterMap parameters;
+    parameters["type"] = "memfile";
+    parameters["universe"] = "6";
+    parameters["name"] = getLeaseFilePath("leasefile6_0.csv");
+    std::unique_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_NO_THROW_LOG(lease_mgr.reset(new NakedMemfileLeaseMgr(parameters)));
+
+    // Get the backend version.
+    auto const& backend_version(lease_mgr->getVersion());
+    std::stringstream s;
+    s << backend_version.first << '.' << backend_version.second;
+
+    // Get the CSV version.
+    CSVLeaseFile6 f(getLeaseFilePath("leasefile6_0.csv"));
+
+    // They should match.
+    EXPECT_EQ(s.str(), f.getSchemaVersion());
+
+    // DBVersion too.
+    EXPECT_EQ("Memfile backend " + s.str(),
+              lease_mgr->getDBVersion(Memfile_LeaseMgr::V6));
+}
+
+/// @brief Checks that complex user context can be read in v4.
+TEST_F(MemfileLeaseMgrTest, v4UserContext) {
+    // Add some leases to the CSV file.
+    LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
+    io.writeFile(
+        "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+        "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+
+        "192.0.0.1,01:01:01:01:01:01,,100,100,1,1,1,,1,"
+        "{}\n"
+
+        "192.0.0.2,02:02:02:02:02:02,,200,400,1,1,1,,0,"
+        "{ \"comment\": \"this lease is for the kitchen computer\"}\n"
+
+        // The next lines have escaped commas in user context.
+
+        "192.0.0.4,04:04:04:04:04:04,,400,1600,1,1,1,,0,"
+        "{ \"comment\": \"this lease is for the mainframe computer\"&#x2c"
+        "  \"comment2\": \"don't release it\" }\n"
+
+        "192.0.0.8,08:08:08:08:08:08,,800,6400,1,1,1,,0,"
+        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
+    );
+
+    startBackend(V4);
+
+    // Check the lease with no key-value pairs in the user context.
+    Lease4Ptr lease(lmptr_->getLease4(IOAddress("192.0.0.1")));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Address:       192.0.0.1\n"
+        "Valid life:    100\n"
+        "Cltt:          0\n"
+        "Hardware addr: 01:01:01:01:01:01\n"
+        "Client id:     (none)\n"
+        "Subnet ID:     1\n"
+        "State:         declined\n"
+        "User context:  {  }\n"
+    );
+
+    // Check the lease with one key-value pair in the user context.
+    lease = lmptr_->getLease4(IOAddress("192.0.0.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Address:       192.0.0.2\n"
+        "Valid life:    200\n"
+        "Cltt:          200\n"
+        "Hardware addr: 02:02:02:02:02:02\n"
+        "Client id:     (none)\n"
+        "Subnet ID:     1\n"
+        "State:         default\n"
+        "User context:  { \"comment\": \"this lease is for the kitchen computer\" }\n"
+    );
+
+    // Check the lease with two key-value pairs in the user context.
+    lease = lmptr_->getLease4(IOAddress("192.0.0.4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Address:       192.0.0.4\n"
+        "Valid life:    400\n"
+        "Cltt:          1200\n"
+        "Hardware addr: 04:04:04:04:04:04\n"
+        "Client id:     (none)\n"
+        "Subnet ID:     1\n"
+        "State:         default\n"
+        "User context:  "
+        "{ \"comment\": \"this lease is for the mainframe computer\", "
+        "\"comment2\": \"don't release it\" }\n"
+    );
+
+    // Check the lease with nested key-value pairs in the user context.
+    lease = lmptr_->getLease4(IOAddress("192.0.0.8"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Address:       192.0.0.8\n"
+        "Valid life:    800\n"
+        "Cltt:          5600\n"
+        "Hardware addr: 08:08:08:08:08:08\n"
+        "Client id:     (none)\n"
+        "Subnet ID:     1\n"
+        "State:         default\n"
+        "User context:  { \"a\": \"b\", \"c\": { \"d\": 1, \"e\": 2 } }\n"
+    );
+}
+
+/// @brief Checks that complex user context can be read in v4.
+TEST_F(MemfileLeaseMgrTest, v6UserContext) {
+    // Add some leases to the CSV file.
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"comment\": \"this lease is for the kitchen computer\"},,\n"
+
+        // The next lines have escaped commas in user context.
+
+        "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"comment\": \"this lease is for the mainframe computer\"&#x2c"
+        "  \"comment2\": \"don't release it\" },,\n"
+
+        "2001:db8:1::8,08:08:08:08:08:08:08:08:08:08:08:08:08,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
+    );
+
+    startBackend(V6);
+
+    // Check the lease with no key-value pairs in the user context.
+    Lease6Ptr lease(
+        lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Type:          IA_NA(0)\n"
+        "Address:       2001:db8:1::1\n"
+        "Prefix length: 0\n"
+        "IAID:          7\n"
+        "Pref life:     100\n"
+        "Valid life:    400\n"
+        "Cltt:          600\n"
+        "DUID:          01:01:01:01:01:01:01:01:01:01:01:01:01\n"
+        "Hardware addr: (none)\n"
+        "Subnet ID:     8\n"
+        "State:         declined\n"
+        "User context:  {  }\n"
+    );
+
+    // Check the lease with one key-value pair in the user context.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Type:          IA_NA(0)\n"
+        "Address:       2001:db8:1::2\n"
+        "Prefix length: 0\n"
+        "IAID:          7\n"
+        "Pref life:     100\n"
+        "Valid life:    200\n"
+        "Cltt:          0\n"
+        "DUID:          02:02:02:02:02:02:02:02:02:02:02:02:02\n"
+        "Hardware addr: (none)\n"
+        "Subnet ID:     8\n"
+        "State:         declined\n"
+        "User context:  { \"comment\": \"this lease is for the kitchen computer\" }\n"
+    );
+
+    // Check the lease with two key-value pairs in the user context.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    EXPECT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Type:          IA_NA(0)\n"
+        "Address:       2001:db8:1::4\n"
+        "Prefix length: 0\n"
+        "IAID:          7\n"
+        "Pref life:     100\n"
+        "Valid life:    200\n"
+        "Cltt:          0\n"
+        "DUID:          04:04:04:04:04:04:04:04:04:04:04:04:04\n"
+        "Hardware addr: (none)\n"
+        "Subnet ID:     8\n"
+        "State:         declined\n"
+        "User context:  { \"comment\": \"this lease is for the mainframe computer\","
+        " \"comment2\": \"don't release it\" }\n"
+    );
+
+    // Check the lease with nested key-value pairs in the user context.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::8"));
+    EXPECT_TRUE(lease);
+    EXPECT_EQ(
+        lease->toText(),
+        "Type:          IA_NA(0)\n"
+        "Address:       2001:db8:1::8\n"
+        "Prefix length: 0\n"
+        "IAID:          7\n"
+        "Pref life:     100\n"
+        "Valid life:    200\n"
+        "Cltt:          0\n"
+        "DUID:          08:08:08:08:08:08:08:08:08:08:08:08:08\n"
+        "Hardware addr: (none)\n"
+        "Subnet ID:     8\n"
+        "State:         declined\n"
+        "User context:  { \"a\": \"b\", \"c\": { \"d\": 1, \"e\": 2 } }\n"
+    );
+}
+
+/// @brief Checks that various hardware information is correctly imported from a
+/// CSV file.
+TEST_F(MemfileLeaseMgrTest, testHWAddr) {
+    // Add some leases to the CSV file.
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
+    std::stringstream contents;
+    contents << "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+                "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    // Create combinations with all valid values except for 255 which is an
+    // unused value for both hwtype and hwaddr_source, but lease construction
+    // doesn't complain in that case either.
+    std::vector<uint16_t> const hwtypes{0, 1, 6, 8, 255};
+    std::vector<uint32_t> const hwsources{
+        0xffffffff, 0x00000000, 0x00000001, 0x00000002, 0x00000004, 0x00000008,
+        0x00000010, 0x00000020, 0x00000040, 0x00000080, 0x000000ff};
+    int i = 0;
+    for (uint16_t hwtype : hwtypes) {
+        for (uint32_t hwsource : hwsources) {
+            std::stringstream hex;
+            hex << std::hex << std::setw(2) << std::setfill('0') << i;
+            contents << "2001:db8:1::" << hex.str()
+                     << ",00:00:00:00:00:" << hex.str()
+                     << std::dec << ",7200,8000,1,3600,0,1,128,0,0,,ff:ff:ff:ff:ff:"
+                     << hex.str() << ",1,," << hwtype << "," << hwsource << "\n";
+            ++i;
+        }
+    }
+
+    io.writeFile(contents.str());
+    startBackend(V6);
+
+    // Check leases.
+    i = 0;
+    for (uint16_t hwtype : hwtypes) {
+        for (uint32_t hwsource : hwsources) {
+            std::stringstream hex;
+            hex << std::hex << std::setw(2) << std::setfill('0') << i;
+            IOAddress address("2001:db8:1::" + hex.str());
+            Lease6Ptr lease(lmptr_->getLease6(Lease::TYPE_NA, address.toText()));
+
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->toText(),
+                    "Type:          IA_NA(0)\n"
+                    "Address:       " + address.toText() + "\n"
+                    "Prefix length: 128\n"
+                    "IAID:          1\n"
+                    "Pref life:     3600\n"
+                    "Valid life:    7200\n"
+                    "Cltt:          800\n"
+                    "DUID:          00:00:00:00:00:" + hex.str() + "\n"
+                    "Hardware addr: ff:ff:ff:ff:ff:" + hex.str() + "\n"
+                    "Subnet ID:     1\n"
+                    "State:         declined\n");
+            ASSERT_TRUE(lease->hwaddr_);
+            EXPECT_EQ(lease->hwaddr_->htype_, hwtype);
+            EXPECT_EQ(lease->hwaddr_->source_, hwsource);
+            ++i;
+        }
+    }
 }
 
 }  // namespace

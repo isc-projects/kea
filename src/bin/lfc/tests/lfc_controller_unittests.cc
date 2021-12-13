@@ -88,7 +88,8 @@ protected:
 
         v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state,user_context\n";
+                  "fqdn_rev,hostname,hwaddr,state,user_context,"
+                  "hwtype,hwaddr_source\n";
 
         // and remove any outstanding test files
         removeTestFile();
@@ -554,29 +555,29 @@ TEST_F(LFCControllerTest, launch6) {
     // We have several entries for different leases, the naming is:
     // <lease letter>_<version#>.
     string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n";
+                 "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n";
     string a_2 = "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,"
-                 "host.example.com,,1,\n";
+                 "host.example.com,,1,,,\n";
     string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,400,8,100,0,7,0,1,1,host.example.com,,1,\n";
+                 "200,400,8,100,0,7,0,1,1,host.example.com,,1,,,\n";
     string a_4 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                  "0,200,8,100,0,7,0,1,1,host.example.com,,1,"
-                 "{ \"foo\": true }\n";
+                 "{ \"foo\": true },,\n";
 
     string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,300,6,150,0,8,0,0,0,,,1,{ \"bar\": false }\n";
+                 "300,300,6,150,0,8,0,0,0,,,1,{ \"bar\": false },,\n";
     string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,800,6,150,0,8,0,0,0,,,1,\n";
+                 "300,800,6,150,0,8,0,0,0,,,1,,,\n";
     string b_3 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,1000,6,150,0,8,0,0,0,,,1,\n";
+                 "300,1000,6,150,0,8,0,0,0,,,1,,,\n";
 
     string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "100,200,8,0,2,16,64,0,0,,,1,\n";
+                 "100,200,8,0,2,16,64,0,0,,,1,,,\n";
     string c_2 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "100,400,8,0,2,16,64,0,0,,,1,\n";
+                 "100,400,8,0,2,16,64,0,0,,,1,,,\n";
 
     string d_1 = "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,600,8,100,0,7,0,1,1,host.example.com,,1,\n";
+                 "200,600,8,100,0,7,0,1,1,host.example.com,,1,,,\n";
 
     // Subtest 1: bot previous and copy available
     // Create the test previous file

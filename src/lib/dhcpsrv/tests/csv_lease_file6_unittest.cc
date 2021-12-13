@@ -102,16 +102,23 @@ void
 CSVLeaseFile6Test::writeSampleFile() const {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state,user_context\n"
+                  "fqdn_rev,hostname,hwaddr,state,user_context,"
+                  "hwtype,hwaddr_source\n"
                   "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n"
-                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1,\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
+                  "1,0\n"
+                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
+                  "1,0\n"
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
-                  "0,8,0,0,0,,,1,\n"
+                  "0,8,0,0,0,,,1,,"
+                  "1,0\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
-                  "16,64,0,0,,,1,{ \"foobar\": true }\n"
-                  "2001:db8:1::2,00,200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
-                  "2001:db8:1::3,00,200,200,8,100,0,7,0,1,1,host.example.com,,1,\n");
+                  "16,64,0,0,,,1,{ \"foobar\": true },,"
+                  "1,0\n"
+                  "2001:db8:1::2,00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
+                  "1,0\n"
+                  "2001:db8:1::3,00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
+                  "1,0\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -321,14 +328,14 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
-              "state,user_context\n"
+              "state,user_context,hwtype,hwaddr_source\n"
               "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "200,200,8,100,0,7,128,1,1,host.example.com,,0,\n"
+              "200,200,8,100,0,7,128,1,1,host.example.com,,0,,,\n"
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
-              ",300,300,6,150,0,8,128,0,0,,,0,\n"
+              ",300,300,6,150,0,8,128,0,0,,,0,,,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true }\n"
-              "2001:db8:2::10,00,300,300,6,150,0,8,128,0,0,,,1,\n",
+              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,\n"
+              "2001:db8:2::10,00,300,300,6,150,0,8,128,0,0,,,1,,,\n",
               io_.readFile());
 }
 
@@ -495,15 +502,15 @@ TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
 TEST_F(CSVLeaseFile6Test, downGrade) {
     // Create a mixed schema file
     io_.writeFile(
-             // schema 1.0 header
+             // schema 4.0 header
               "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state,user_context,FUTURE_COL\n"
+              "hwaddr,state,user_context,hwtype,hwaddr_source,FUTURE_COLUMN\n"
 
-              // schema 3.1 record - has hwaddr, state and user context
+              // schema 4.0 record
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
               "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
-              "{ \"foobar\": true },BOGUS\n");
+              "{ \"foobar\": true },1,0,FUTURE_VALUE\n");
 
     // Open should succeed in the event someone is downgrading.
     CSVLeaseFile6 lf(filename_);
@@ -538,6 +545,8 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     ASSERT_TRUE(lease->getContext());
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
+    EXPECT_EQ(1, lease->hwaddr_->htype_);
+    EXPECT_EQ(0, lease->hwaddr_->source_);
     }
 }
 
@@ -547,13 +556,14 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
 TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state,user_context\n"
+                  "fqdn_rev,hostname,hwaddr,state,user_context,"
+                  "hwtype,hwaddr_source\n"
                   "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
                   "2001:db8:1::1,,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
                   "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n");
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n");
 
     CSVLeaseFile6 lf(filename_);
     ASSERT_NO_THROW(lf.open());
@@ -564,22 +574,26 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     {
     SCOPED_TRACE("\"Empty\" DUID and not declined, invalid");
     EXPECT_FALSE(lf.next(lease));
-    ASSERT_FALSE(lease);
-    EXPECT_EQ(lf.getReadErrs(),1);
+    EXPECT_FALSE(lease);
+    EXPECT_EQ(lf.getReadErrs(), 1);
+    EXPECT_EQ(lf.getReadMsg(),
+              "The Empty DUID is only valid for declined leases");
     }
 
     {
     SCOPED_TRACE("Missing (blank) DUID and not declined, invalid");
     EXPECT_FALSE(lf.next(lease));
-    ASSERT_FALSE(lease);
-    EXPECT_EQ(lf.getReadErrs(),2);
+    EXPECT_FALSE(lease);
+    EXPECT_EQ(lf.getReadErrs(), 2);
+    EXPECT_EQ(lf.getReadMsg(), "Empty DUIDs are not allowed");
     }
 
     {
-    SCOPED_TRACE("\"Empty\" DUID and declined, valid");
+    SCOPED_TRACE("Empty DUID and declined, valid");
     EXPECT_TRUE(lf.next(lease));
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lf.getReadErrs(),2);
+    EXPECT_TRUE(lease);
+    EXPECT_EQ(lf.getReadErrs(), 2);
+    EXPECT_EQ(lf.getReadMsg(), "validation not started");
     }
 }
 
