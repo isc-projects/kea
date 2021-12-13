@@ -1,5 +1,4 @@
-
-Grammar generated from dhcp4_parser.yy. See Chapter :ref:`dhcp4` for an explanation.
+This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more details.
 
 .. code-block:: BNF
    :linenos:
