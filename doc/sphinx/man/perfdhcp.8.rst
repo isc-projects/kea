@@ -417,8 +417,8 @@ Options Controlling a Test
 
 ``-C separator``
     Suppresses the preliminary output and causes the interim data to
-    only contain the values delimited by ``separator``. If used in
-    conjunction with ``-t``, this option produces easily parsable
+    only contain the values delimited by ``separator``. Used in
+    conjunction with ``-t`` to produce easily parsable
     reports at ``-t`` intervals.
 
 Arguments
