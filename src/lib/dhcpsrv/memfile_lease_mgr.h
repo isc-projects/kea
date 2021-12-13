@@ -79,21 +79,36 @@ class LFCSetup;
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 
-    /// @defgroup versions Specified memfile backend version.
-    ///
-    /// @brief Defines major version of the memfile backend.
+    /// @defgroup v4 memfile backend versions
     ///
     /// Version history:
     /// 1.0 - initial version (released in Kea 0.9)
-    /// 2.0 - hwaddr column added (to be released in Kea 0.9.1)
-    /// 2.1 - user context column add (to be released in Kea 1.5)
+    /// 2.0 - hwaddr column added (released in Kea 0.9.1)
+    /// 2.1 - user context column added (released in Kea 1.4.0)
     ///
     /// @{
-    static const int MAJOR_VERSION = 2;
+    /// @brief the major version of the v4 memfile backend
+    static const int MAJOR_VERSION_V4 = 2;
 
-    /// Defines minor version of the memfile backend.
-    static const int MINOR_VERSION = 1;
+    /// @brief the minor version of the v4 memfile backend
+    static const int MINOR_VERSION_V4 = 1;
+    /// @}
 
+    /// @defgroup v6 memfile backend versions
+    ///
+    /// Version history:
+    /// 1.0 - initial version (released in Kea 0.9)
+    /// 2.0 - hwaddr column added (released in Kea 0.9.1)
+    /// 3.0 - state column added (released in Kea 0.9.2)
+    /// 3.1 - user context column added (released in Kea 1.4.0)
+    /// 4.0 - hwtype,hwaddr_source columns added (released in Kea 2.1.2)
+    ///
+    /// @{
+    /// @brief the major version of the v6 memfile backend
+    static const int MAJOR_VERSION_V6 = 4;
+
+    /// @brief the minor version of the v6 memfile backend
+    static const int MINOR_VERSION_V6 = 0;
     /// @}
 
 
@@ -139,7 +154,7 @@ public:
     virtual ~Memfile_LeaseMgr();
 
     /// @brief Local version of getDBVersion() class method
-    static std::string getDBVersion();
+    static std::string getDBVersion(Universe const& u);
 
     /// @brief Adds an IPv4 lease.
     ///
@@ -821,9 +836,7 @@ public:
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
-        return (std::make_pair(MAJOR_VERSION, MINOR_VERSION));
-    }
+    virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
     /// @brief Commit Transactions
     ///

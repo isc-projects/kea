@@ -325,8 +325,18 @@ LFCController::getVersion(const bool extended) const{
 
     version_stream << VERSION;
     if (extended) {
-        version_stream << std::endl << EXTENDED_VERSION << std::endl
-        << "database: " << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
+        std::string db_version;
+        if (protocol_version_ == 4) {
+            db_version = Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
+        } else if (protocol_version_ == 6) {
+            db_version = Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6);
+        }
+        if (!db_version.empty()) {
+            db_version = "database: " + db_version;
+        }
+        version_stream << std::endl
+                       << EXTENDED_VERSION << std::endl
+                       << db_version;
     }
 
     return (version_stream.str());

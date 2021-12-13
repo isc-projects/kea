@@ -625,8 +625,10 @@ private:
 
 // Explicit definition of class static constants.  Values are given in the
 // declaration so they're not needed here.
-const int Memfile_LeaseMgr::MAJOR_VERSION;
-const int Memfile_LeaseMgr::MINOR_VERSION;
+const int Memfile_LeaseMgr::MAJOR_VERSION_V4;
+const int Memfile_LeaseMgr::MINOR_VERSION_V4;
+const int Memfile_LeaseMgr::MAJOR_VERSION_V6;
+const int Memfile_LeaseMgr::MINOR_VERSION_V6;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
@@ -660,8 +662,9 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
         if (conversion_needed) {
+            auto const& version(getVersion());
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
-                    .arg(MAJOR_VERSION).arg(MINOR_VERSION);
+                    .arg(version.first).arg(version.second);
         }
         lfcSetup(conversion_needed);
     }
@@ -679,11 +682,15 @@ Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
 std::string
-Memfile_LeaseMgr::getDBVersion() {
+Memfile_LeaseMgr::getDBVersion(Universe const& u) {
     std::stringstream tmp;
-    tmp << "Memfile backend " << MAJOR_VERSION;
-    tmp << "." << MINOR_VERSION;
-    return (tmp.str());
+    tmp << "Memfile backend ";
+    if (u == V4) {
+        tmp << MAJOR_VERSION_V4 << "." << MINOR_VERSION_V4;
+    } else if (u == V6) {
+        tmp << MAJOR_VERSION_V6 << "." << MINOR_VERSION_V6;
+    }
+    return tmp.str();
 }
 
 bool
@@ -1653,6 +1660,17 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
 std::string
 Memfile_LeaseMgr::getDescription() const {
     return (std::string("In memory database with leases stored in a CSV file."));
+}
+
+std::pair<uint32_t, uint32_t>
+Memfile_LeaseMgr::getVersion() const {
+    std::string const& universe(conn_.getParameter("universe"));
+    if (universe == "4") {
+        return std::make_pair(MAJOR_VERSION_V4, MINOR_VERSION_V4);
+    } else if (universe == "6") {
+        return std::make_pair(MAJOR_VERSION_V6, MINOR_VERSION_V6);
+    }
+    isc_throw(BadValue, "cannot determine version for universe " << universe);
 }
 
 void

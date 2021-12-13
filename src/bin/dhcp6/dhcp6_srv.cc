@@ -4102,7 +4102,7 @@ Dhcpv6Srv::getVersion(bool extended) {
 #ifdef HAVE_CQL
         tmp << CqlLeaseMgr::getDBVersion() << endl;
 #endif
-        tmp << Memfile_LeaseMgr::getDBVersion();
+        tmp << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6);
 
         // @todo: more details about database runtime
     }
