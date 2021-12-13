@@ -1,5 +1,4 @@
-
-Grammar generated from d2_parser.yy. See Chapter :ref:`dhcp-ddns-server` for an explanation.
+This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for more details.
 
 .. code-block:: BNF
    :linenos:
