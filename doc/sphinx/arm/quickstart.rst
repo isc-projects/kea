@@ -13,7 +13,7 @@ respective chapters elsewhere in this Kea Administrator Reference Manual (ARM).
 Quick Start Guide Using tarball
 ===============================
 
-1.  Install required run-time and build dependencies. See
+1.  Install required runtime and build dependencies. See
     :ref:`build-requirements` for details.
 
 2.  Download the Kea source tarball from the `ISC.org downloads
