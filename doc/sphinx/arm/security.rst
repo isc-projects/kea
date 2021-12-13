@@ -295,7 +295,7 @@ If raw sockets are not required, disabling this access can improve security.
 Remote Administrative Access
 ----------------------------
 
-Kea's Control Agent (CA) exposes a REST API over HTTP or HTTPS (HTTP over TLS). The CA is an
+Kea's Control Agent (CA) exposes a RESTful API over HTTP or HTTPS (HTTP over TLS). The CA is an
 optional feature that is disabled by default, but it is very popular. When enabled, it listens on the
 loopback address (127.0.0.1 or ::1) by default, unless configured otherwise. See :ref:`tls`
 for information about protecting the TLS traffic. Limiting the incoming connections with a firewall, such as
@@ -304,8 +304,8 @@ iptables, is generally a good idea.
 Note that in High Availability (HA) deployments, DHCP partners connect to each other using a CA
 connection.
 
-Authentication for Kea's REST API
----------------------------------
+Authentication for Kea's RESTful API
+------------------------------------
 
 Kea 1.9.0 added support for basic HTTP authentication (`RFC 7617 <https://tools.ietf.org/html/rfc7617>`_),
 to control access for incoming REST commands over HTTP. The credentials (username, password) are
