@@ -1,5 +1,4 @@
-
-Grammar generated from netconf_parser.yy. See Chapter :ref:`netconf` for an explanation.
+This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for more details.
 
 .. code-block:: BNF
    :linenos:
