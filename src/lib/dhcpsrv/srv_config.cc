@@ -235,10 +235,10 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     auto config_set = getConfiguredGlobals();
     // If the deprecated reservation-mode is found in database, overwrite other
     // reservation flags so there is no conflict when merging to new flags.
-    if (other.getConfiguredGlobal("reservation-mode")) {
-        config_set->set("reservations-global", ConstElementPtr());
-        config_set->set("reservations-in-subnet", ConstElementPtr());
-        config_set->set("reservations-out-of-pool", ConstElementPtr());
+    if (other.getConfiguredGlobal(CfgGlobals::RESERVATION_MODE)) {
+        config_set->set(CfgGlobals::RESERVATIONS_GLOBAL, ConstElementPtr());
+        config_set->set(CfgGlobals::RESERVATIONS_IN_SUBNET, ConstElementPtr());
+        config_set->set(CfgGlobals::RESERVATIONS_OUT_OF_POOL, ConstElementPtr());
     }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.

@@ -101,13 +101,13 @@ Network::getRequiredClasses() const {
 
 Optional<IOAddress>
 Network::getGlobalProperty(Optional<IOAddress> property,
-                           const std::string& global_name,
-                           const std::string& /*min_name*/,
-                           const std::string& /*max_name*/) const {
-    if (!global_name.empty() && fetch_globals_fn_) {
+                           const int global_index,
+                           const int /*min_index*/,
+                           const int /*max_index*/) const {
+    if ((global_index >= 0) && fetch_globals_fn_) {
         ConstCfgGlobalsPtr globals = fetch_globals_fn_();
         if (globals) {
-            ConstElementPtr global_param = globals->get(global_name);
+            ConstElementPtr global_param = globals->get(global_index);
             if (global_param) {
                 std::string global_str = global_param->stringValue();
                 if (!global_str.empty()) {

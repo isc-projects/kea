@@ -152,6 +152,7 @@ public:
 // network parameters.
 TEST_F(NetworkTest, inheritanceSupport4) {
     // Set global values for each parameter.
+    // One day move to indexes...
     globals_->set("valid-lifetime", Element::create(80));
     globals_->set("renew-timer", Element::create(80));
     globals_->set("rebind-timer", Element::create(80));
