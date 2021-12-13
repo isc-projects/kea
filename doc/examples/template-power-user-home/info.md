@@ -122,5 +122,5 @@ may wish to consider the following changes:
   consider deploying Stork, which is a new but quickly developing dashboard for Kea. See :ref:`stork`
   for more information.
 
-- all Kea users should read :ref:`security: to learn about various trade-offs between
+- all Kea users should read :ref:`security`: to learn about various trade-offs between
   convenience and security in Kea.
