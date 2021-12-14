@@ -35,6 +35,13 @@ using namespace std;
 #include <d2/parser_context.h>
 }
 
+%code
+{
+template <typename ctx_t, typename location_t>
+void warnAboutExtraCommas(ctx_t& ctx, location_t& location) {
+    ctx.warning(location, "Extraneous comma. A piece of configuration may have been omitted.");
+}  // warnAboutExtraCommas
+}  // %code
 
 %define api.token.prefix {TOKEN_}
 // Tokens in an order which makes sense and related to the intended use.
@@ -183,7 +190,7 @@ not_empty_map: STRING COLON value {
                   ctx.stack_.back()->set($3, $5);
                   }
              | not_empty_map COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
              ;
 
@@ -207,7 +214,7 @@ not_empty_list: value {
                   ctx.stack_.back()->add($3);
                   }
               | not_empty_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
               ;
 
@@ -249,7 +256,7 @@ global_object: DHCPDDNS {
     ctx.leave();
 }
              | global_object COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
              ;
 
@@ -264,7 +271,7 @@ sub_dhcpddns: LCURLY_BRACKET {
 dhcpddns_params: dhcpddns_param
                | dhcpddns_params COMMA dhcpddns_param
                | dhcpddns_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                ;
 
@@ -416,7 +423,7 @@ ddns_mgr_params: %empty
 not_empty_ddns_mgr_params: ddns_mgr_param
                          | ddns_mgr_params COMMA ddns_mgr_param
                          | ddns_mgr_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                          ;
 
@@ -451,7 +458,7 @@ ddns_domain_list: %empty
 not_empty_ddns_domain_list: ddns_domain
                         | not_empty_ddns_domain_list COMMA ddns_domain
                         | not_empty_ddns_domain_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                         ;
 
@@ -473,7 +480,7 @@ sub_ddns_domain: LCURLY_BRACKET {
 ddns_domain_params: ddns_domain_param
                   | ddns_domain_params COMMA ddns_domain_param
                   | ddns_domain_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                   ;
 
@@ -533,7 +540,7 @@ sub_dns_servers: LSQUARE_BRACKET {
 dns_server_list: dns_server
                | dns_server_list COMMA dns_server
                | dns_server_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                ;
 
@@ -555,7 +562,7 @@ sub_dns_server: LCURLY_BRACKET {
 dns_server_params: dns_server_param
                | dns_server_params COMMA dns_server_param
                | dns_server_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                ;
 
@@ -630,7 +637,7 @@ tsig_keys_list: %empty
 not_empty_tsig_keys_list: tsig_key
                         | not_empty_tsig_keys_list COMMA tsig_key
                         | not_empty_tsig_keys_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                         ;
 
@@ -654,7 +661,7 @@ sub_tsig_key: LCURLY_BRACKET {
 tsig_key_params: tsig_key_param
                | tsig_key_params COMMA tsig_key_param
                | tsig_key_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                ;
 
@@ -732,7 +739,7 @@ control_socket: CONTROL_SOCKET {
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      | control_socket_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                      ;
 
@@ -781,7 +788,7 @@ hooks_libraries_list: %empty
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
     | not_empty_hooks_libraries_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
     ;
 
@@ -808,7 +815,7 @@ sub_hooks_library: LCURLY_BRACKET {
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             | hooks_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
             | unknown_map_entry
             ;
@@ -852,7 +859,7 @@ loggers: LOGGERS {
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                | loggers_entries COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                ;
 
@@ -868,7 +875,7 @@ logger_entry: LCURLY_BRACKET {
 logger_params: logger_param
              | logger_params COMMA logger_param
              | logger_params COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
              ;
 
@@ -919,7 +926,7 @@ output_options_list: OUTPUT_OPTIONS {
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
                            | output_options_list_content COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
                            ;
 
@@ -934,7 +941,7 @@ output_entry: LCURLY_BRACKET {
 output_params_list: output_params
              | output_params_list COMMA output_params
              | output_params_list COMMA {
-    ctx.warning(@1, "Extraneous comma. A piece of configuration may have been omitted.");
+    warnAboutExtraCommas(ctx, @1);
 }
              ;
 
