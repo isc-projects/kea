@@ -33,16 +33,7 @@ until the congestion subsides.
 Configuring Congestion Handling
 ===============================
 
-Prior to Kea 1.5, ``kea-dhcp4`` and ``kea-dhcp6`` read inbound packets directly
-from the interface sockets in the main application thread, which meant
-that packets waiting to be processed were held in socket buffers.
-Once these buffers filled, any new packets were discarded.
-Under swamped conditions, the servers ended up processing client packets
-that were no longer relevant, or worse, were redundant. In other words,
-the packets waiting in the first-in, first-out (FIFO) socket buffers became increasingly
-stale.
-
-Kea 1.5 introduced the Congestion Handling feature. Congestion handling
+Congestion handling
 offers the ability to configure the server to use a separate thread to
 read packets from the interface socket buffers. As the thread reads
 packets from the buffers, they are added to an internal packet queue,
