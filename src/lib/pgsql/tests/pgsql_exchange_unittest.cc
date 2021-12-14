@@ -1029,14 +1029,18 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     const char* st_name = "smallint_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
-          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" }
+          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" },
+        { 1, { OID_TEXT }, "check_where",
+          "select * from BASICS where inet_col = cast($1 as inet)" }
     };
 
     ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[1]));
 
     // Build our reference list of reference values
     std::vector<asiolink::IOAddress>inets;
     inets.push_back(asiolink::IOAddress("0.0.0.0"));
+    inets.push_back(asiolink::IOAddress("192.168.1.9"));
     inets.push_back(asiolink::IOAddress("192.168.1.1"));
 
     // Insert a row for each reference value
@@ -1053,15 +1057,24 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
 
     // Iterate over the rows, verifying each value against its reference
     int row = 0;
+    asiolink::IOAddress fetched_inet("0.0.0.0");
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET_COL));
 
         // Fetch and verify the column value
-        asiolink::IOAddress fetched_inet("0.0.0.0");
         ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, row, INET_COL));
         EXPECT_EQ(fetched_inet, inets[row]);
     }
+
+    // Verify that casting from string to inet works in where clauses.
+    r.reset();
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addInet4(inets[1]);
+    RUN_PREP(r, statement[1], bind_array, PGRES_TUPLES_OK);
+    ASSERT_EQ(r->getRows(),1);
+    ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, 0, INET_COL));
+    EXPECT_EQ(fetched_inet, inets[1]);
 
     // Clean out the table
     WIPE_ROWS(r);
