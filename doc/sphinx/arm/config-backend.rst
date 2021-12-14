@@ -8,8 +8,7 @@ Kea Configuration Backend
 Applicability
 -------------
 
-Kea Configuration Backend (CB or config backend) is a feature, first
-introduced in Kea 1.6.0, that gives Kea servers the ability
+Kea Configuration Backend (CB or config backend) gives Kea servers the ability
 to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
@@ -155,7 +154,6 @@ in two independent configuration sources.
 CB Components
 -------------
 
-Kea 1.6.0 version or later is required to use the configuration backend.
 The ``mysql_cb`` open source hook library implementing the configuration
 backend for MySQL must be compiled and loaded by the DHCP servers. This
 hook library is compiled when the ``--with-mysql`` configuration switch

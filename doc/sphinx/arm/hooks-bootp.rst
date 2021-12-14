@@ -14,7 +14,7 @@ The DHCP-specific options, such as ``dhcp-message-type``, are removed from
 the server's responses; responses shorter than the BOOTP minimum
 size of 300 octets are padded to this size.
 
-This open source library has been available since Kea 1.7.2. It is loaded
+This open source library is loaded
 similarly to other hook libraries by the ``kea-dhcp4`` process, and
 it takes no parameters.
 

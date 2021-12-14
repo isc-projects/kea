@@ -803,9 +803,9 @@ An example IPv4 lease deletion by ``"hw-address"`` is:
    }
 
 
-Since Kea 1.7.10, a new parameter, ``update-ddns``, is supported (IPv4 and IPv6).
-When ``true``, it instructs the server to queue a request to ``kea-dhcp-ddns`` to
-remove DNS entries after the lease is successfully deleted if:
+Another parameter called ``update-ddns``, when ``true``, instructs the server to
+queue a request to ``kea-dhcp-ddns`` to remove DNS entries after the lease is
+successfully deleted if:
 
 - DDNS updating is enabled (i.e. ``"dhcp-ddns":{ "enable-updates": true }``).
 - The lease's hostname is not empty.

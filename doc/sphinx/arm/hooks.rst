@@ -36,7 +36,7 @@ for specifics.
 When a Kea process unloads a library, it expects the ``dlclose`` function
 to remove all library symbols, as well as the library code, from address space.
 Although most OSes implement the ``dlclose`` function, this behavior is not
-required by the POSIX standard and not all systems support it; for example, the musl 
+required by the POSIX standard and not all systems support it; for example, the musl
 library, used by default by Alpine Linux, implements the ``dlclose`` function
 as a no operation. On such systems a library actually remains loaded for the
 lifetime of the process, which means that it must be restarted
@@ -214,15 +214,7 @@ configuration would be:
 
 .. note::
 
-   This syntax is effective as of Kea 1.1.0, to facilitate the
-   specification of library-specific parameters. Libraries should allow a
-   parameter entry for comments, as is the case with many configuration
-   scopes.
-
-.. note::
-
-   In all versions of Kea since 1.1.0, libraries
-   are reloaded even if their lists have not changed,
+   Libraries are reloaded even if their lists have not changed,
    because the parameters specified for the library (or the files those
    parameters point to) may have changed.
 
@@ -1852,21 +1844,30 @@ contract.
    This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
-Currently, six commands are supported: ``reservation-add``, which adds a new
-host reservation; ``reservation-get``, which returns an existing reservation
-if specified criteria are matched; ``reservation-get-all``, which returns
-all reservations in a specified subnet; ``reservation-get-page``, a variant
-of ``reservation-get-all`` that returns all reservations in a specified
-subnet by pages (and, since Kea version 1.9.0, all reservations);
-``reservation-get-by-hostname``, which returns all reservations
-with a specified hostname and optionally in a subnet; since Kea version
-1.7.1, ``reservation-get-by-id``, which returns all reservations with a
-specified identifier since Kea version 1.9.0;
-and ``reservation-del``, which attempts to delete a
-reservation matching specified criteria. To use the commands that change
-reservation information (i.e. ``reservation-add`` and
-``reservation-del``), the hosts database must be specified and it must not operate
-in read-only mode (for details, see
+Currently, the following commands are supported:
+
+- ``reservation-add``, which adds a new host reservation
+
+- ``reservation-get``, which returns an existing reservation if specified
+  criteria are matched
+
+- ``reservation-get-all``, which returns all reservations in a specified subnet
+
+- ``reservation-get-page``, a variant of ``reservation-get-all`` that returns
+  reservations by pages, either all or in a specified subnet
+
+- ``reservation-get-by-hostname``, which returns all reservations with a
+  specified hostname and optionally in a subnet
+
+- ``reservation-get-by-id``, which returns all reservations with a specified
+  identifier since Kea version 1.9.0
+
+- ``reservation-del``, which attempts to delete a reservation matching specified
+  criteria.
+
+To use the commands that change reservation information
+(i.e. ``reservation-add`` and ``reservation-del``), the hosts database must be
+specified and it must not operate in read-only mode (for details, see
 the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
 and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
 running in read-only mode, the ``host_cmds`` library will load, but any
@@ -2313,8 +2314,7 @@ retrieve all reservations with a specified hostname or in
 a specified subnet. This command uses parameters providing the mandatory
 ``hostname`` and the optional ``subnet-id``. Global host reservations
 can be retrieved by using a ``subnet-id`` value of zero (0).
-Hostname matching is case-insensitive. This command is available since
-Kea version 1.7.1.
+Hostname matching is case-insensitive.
 
 For instance, retrieving host reservations for "foobar" in the subnet 1:
 
@@ -3473,9 +3473,7 @@ useful if administrators want their comments to survive ``config-set`` or ``conf
 operations, for example.
 
 If user context is supported in a given context, the parser translates
-"comment" entries into user context with a "comment" entry. The pretty
-print of a configuration did the opposite operation and put "comment"
-entries at the beginning of maps, but this was withdrawn in 1.7.9.
+"comment" entries into user context with a "comment" entry.
 
 Kea supports user contexts at the following levels: global scope,
 interfaces configuration, shared networks,

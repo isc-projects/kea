@@ -147,14 +147,6 @@ curly bracket (or brace). Each configuration must contain an object
 specifying the configuration of the Kea module using it. In the example
 above, this object is called ``Dhcp6``.
 
-.. note::
-
-   In the current Kea release it is still possible to specify configurations
-   of multiple modules within a single configuration file, but this is
-   not recommended; support for this was removed in Kea 1.7.10,
-   including the ``Logging`` object. Its previous content, the list
-   of loggers, must now be inside the ``Dhcp6`` object.
-
 The ``Dhcp6`` configuration starts with the ``"Dhcp6": {`` line and ends
 with the corresponding closing brace (in the above example, the brace
 after the last comment). Everything defined between those lines is
@@ -1233,9 +1225,9 @@ Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
-Since Kea 1.6.0, it is also possible to specify data for binary options as
+It is also possible to specify data for binary options as
 a single-quoted text string within double quotes, as shown (note that
-``csv-format`` must be set to false):
+``csv-format`` must be set to ``false``):
 
 ::
 
@@ -2260,9 +2252,8 @@ specified explicitly or that are calculated as percentages of the
 preferred lease time. The server's behavior is determined by a combination
 of configuration parameters, of which T1 and T2 are only two.
 
-Since Kea 1.6.0, the lease's preferred and valid lifetimes are extended from
-single values to triplets with minimum, default, and maximum values, with
-the following settings:
+The lease's preferred and valid lifetimes are expressed as triplets with
+minimum, default, and maximum values using configuration entries:
 
 - ``min-preferred-lifetime`` - specifies the minimum preferred lifetime (optional).
 
@@ -2727,9 +2718,7 @@ NCR contains the following information:
 3. The Fully Qualified Domain Name (FQDN), lease address, and DHCID
    (information identifying the client associated with the FQDN).
 
-Prior to Kea 1.7.1, all parameters for controlling DDNS were within the
-global ``dhcp-ddns`` section of ``kea-dhcp6``. Beginning with Kea 1.7.1,
-DDNS-related parameters were split into two groups:
+DDNS-related parameters are split into two groups:
 
 1. Connectivity Parameters
 
@@ -2809,7 +2798,7 @@ The default configuration and values would appear as follows:
         ...
    }
 
-Since Kea 1.7.1, there are two parameters which determine if ``kea-dhcp6``
+There are two parameters which determine if ``kea-dhcp6``
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
 parameter, which now only controls whether ``kea-dhcp6`` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
@@ -2906,9 +2895,8 @@ For NCRs to reach the D2 server, ``kea-dhcp6`` must be able to communicate
 with it. ``kea-dhcp6`` uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - Since Kea 1.7.1, this parameter only enables
-   connectivity to ``kea-dhcp-ddns`` such that DDNS updates can be constructed
-   and sent. It must be ``true`` for NCRs to be generated and sent to D2.
+-  ``enable-updates`` - Enables connectivity to ``kea-dhcp-ddns`` such that DDNS
+   updates can be constructed and sent. It must be ``true`` for NCRs to be generated and sent to D2.
    It defaults to "false".
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
@@ -3193,23 +3181,16 @@ accomplished with the following two parameters:
    character set. This can be any valid, regular expression using POSIX
    extended expression syntax. Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
+   The default is ``"[^A-Za-z0-9.-]"``. This matches any character that is not
+   a letter, digit, dot, hyphen, or null.
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
    with which to replace each invalid character in the host name. An empty
    string causes invalid characters to be OMITTED rather than replaced.
-
-.. note::
-
-    Since Kea 1.7.5, the default values are as follows:
-
-    - "hostname-char-set": "[^A-Za-z0-9.-]",
-    - "hostname-char-replacement": ""
-
-    This enables sanitizing and omits any character that is not
-    a letter, digit, hyphen, dot, or null.
+   The default is ``""``.
 
 The following configuration replaces anything other than a letter,
-digit, hyphen, or dot with the letter "x":
+digit, dot, or hyphen with the letter "x":
 ::
 
     "Dhcp6": {
@@ -3253,7 +3234,7 @@ qualifying suffix (if one is defined and needed).
 
 .. note::
 
-   Since the 1.6.0 Kea release, it is possible to specify ``hostname-char-set``
+   It is possible to specify ``hostname-char-set``
    and/or ``hostname-char-replacement`` at the global scope. This allows
    host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
    a ``hostname-char`` parameter is defined at both the global scope and
@@ -3637,8 +3618,8 @@ specify a hostname and DHCPv6 options for a given host.
 
 .. note::
 
-   Kea versions 1.7.10 and newer require that the reserved address must
-   be within the subnet. This does not apply to reserved prefixes.
+   The reserved address must be within the subnet.
+   This does not apply to reserved prefixes.
 
 The following example shows how to reserve addresses and prefixes for
 specific hosts:
@@ -5626,9 +5607,7 @@ relays.
 
 .. note::
 
-   Since Kea 1.7.9, subnets are matched with
-   required conditions in ascending subnet identifier
-   order. When the selected subnet is a member of a shared network, the
+   When the selected subnet is a member of a shared network, the
    whole shared network is selected.
 
 A relay must have an interface connected to the link on which the
@@ -6524,8 +6503,8 @@ The DHCPv6 server supports the following statistics:
    This section describes DHCPv6-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-Since Kea 1.7.7, the DHCPv6 server provides two global
-parameters to control statistics default sample limits:
+The DHCPv6 server provides two global parameters to control default sample
+limits of statistics:
 
 - ``statistic-default-sample-count`` - determines the default maximum
   number of samples which are kept. The special value of 0

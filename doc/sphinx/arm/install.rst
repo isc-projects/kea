@@ -631,15 +631,14 @@ and 1548). Be sure to replace ``ens4`` with the specific interface name.
 Deprecated Features
 ===================
 
-This section lists significant features that have been or will be removed. We try to 
+This section lists significant features that have been or will be removed. We try to
 deprecate features before removing them to signal
 to current users to plan a migration. New users should not rely on deprecated features.
 
 Cassandra (CQL) Support
 -----------------------
 
-Cassandra is a non-relational NoSQL database. Kea added support for the CQL lease backend in
-Kea 1.1.0-beta1 and the CQL host backend in 1.4.0-beta1. This feature never gained much
+Cassandra is a non-relational NoSQL database. This feature never gained much
 traction with users, particularly compared to the level of interest in and deployments of
 the alternatives, MySQL and PostgreSQL.
 

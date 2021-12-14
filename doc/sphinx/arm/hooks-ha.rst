@@ -107,14 +107,12 @@ load-balancing and hot-standby setup, in addition to the active servers.
 There is no limit on the number of backup servers in the HA setup;
 however, the presence of backup servers may increase the latency
 of DHCP responses, because not only do active servers send lease updates
-to each other, but also to the backup servers. Since Kea 1.7.8, the active
-servers no longer expect acknowledgments from the backup servers
+to each other, but also to the backup servers. The active
+servers don't expect acknowledgments from the backup servers
 before responding to the DHCP clients, so the overhead of sending
-lease updates to the backup servers is minimized compared to
-earlier Kea versions.
+lease updates to the backup servers is minimized.
 
-The last supported configuration, ``passive-backup``, was introduced
-in Kea 1.7.8. In this configuration, there is only one active
+The last supported configuration, ``passive-backup``, there is only one active
 server and typically one or more backup servers. A passive-backup
 configuration with no backup servers is also accepted, but it is no
 different than running a single server with no HA function at all.
@@ -129,8 +127,8 @@ backup servers to provide DHCP service to the clients, as these
 servers should have accurate or nearly accurate information about the
 allocated leases. The major advantage of the passive-backup mode is that
 it provides some redundancy of the lease information but with better
-performance of the primary server responding to the DHCP queries. Since
-Kea 1.7.8, the primary server does not have to wait for
+performance of the primary server responding to the DHCP queries.
+The primary server does not have to wait for
 acknowledgments to the lease updates from the backup servers before it
 sends a response to the DHCP client. This reduces the response time
 compared to the load-balancing and hot-standby cases, in which the
@@ -181,17 +179,14 @@ clocks and restart the servers.
 
 .. note::
 
-   Prior to Kea 1.7.8, the administrator had to shut down both servers
-   and then restart both of them to recover from the terminated state.
-   Since Kea 1.7.8, it is possible to restart the
-   servers one at a time, in sequence. The clocks must be in sync
-   before restarting the servers.
+   It is possible to restart the servers one at a time, in no particular oder.
+   The clocks must be in sync before restarting the servers.
 
 .. note::
 
    The clock skew is only assessed between two active servers, and
    only the active servers enter the ``terminated`` state if the skew is
-   too high. Since Kea 1.7.8, clock skew between active and
+   too high. The clock skew between active and
    backup servers is not assessed, because active servers do
    not exchange heartbeat messages with backup servers.
 
@@ -1606,7 +1601,7 @@ and four threads for the client.
 
    It is essential to configure the ports correctly. One common mistake
    is to configure CA to listen on port 8000 and also configure dedicated listeners on port
-   8000. In such a configuration, the DHCP server will fail to bind sockets, but the communication
+   1.    In such a configuration, the DHCP server will fail to bind sockets, but the communication
    will still work via CA, albeit slowly. Make sure your dedicated listeners use a different port
    (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
    performance bottlenecks caused by the single-threaded nature of CA and the sequential nature of
@@ -1749,7 +1744,6 @@ and allowing it to complete its normal state negotiation process.
 Upgrading from Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The HA maintenance mechanism was first introduced in the Kea 1.7.4 release.
 To upgrade from an older HA hook library to the current version, the
 administrator must shut down one of the servers and rely on the
 failover mechanism to force the online server to transition to the
@@ -2049,14 +2043,6 @@ the HA status of two load-balancing servers:
 The ``high-availability`` argument is a list which currently comprises
 only one element.
 
-.. note::
-
-   In Kea 1.7.8 an incompatible change was introduced to the syntax of the
-   ``status-get`` response. Previously, the HA status for a single relationship
-   was returned within the ``arguments`` map. As of Kea 1.7.8, the returned status
-   is enclosed in the list as described above. Any existing code relying on the
-   previous syntax must be updated to work with newer Kea versions.
-
 The ``ha-servers`` map contains two structures: ``local`` and ``remote``. The former
 contains the status information of the server which received the command, while the
 latter contains the status information known to the local server about the
@@ -2089,8 +2075,8 @@ responding to this traffic. More about the failover procedure can be found
 in :ref:`ha-load-balancing-config`.
 
 The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``,
-and ``analyzed-packets`` parameters were introduced with the
-``communication-interrupted`` parameter in Kea 1.7.8; they
+and ``analyzed-packets`` parameters were introduced along with the
+``communication-interrupted`` parameter and they
 convey useful information about the state of the DHCP traffic monitoring
 in the ``communication-interrupted`` state. Once the server leaves the
 ``communication-interrupted`` state, these parameters are all reset to 0.
@@ -2123,8 +2109,7 @@ Monitoring these values helps to predict when the local server will
 enter the ``partner-down`` state or to understand why the server has not yet entered this
 state.
 
-The last parameter introduced in Kea 1.7.8 was ``ha-mode``.
-It returns the HA mode of operation selected using the ``mode`` parameter
+The ``ha-mode`` parameter returns the HA mode of operation selected using the ``mode`` parameter
 in the configuration file. It can hold one of the following values:
 ``load-balancing``, ``hot-standby``, or ``passive-backup``.
 

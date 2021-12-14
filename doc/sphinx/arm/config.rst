@@ -91,19 +91,6 @@ A very simple configuration for DHCPv4 could look like this:
 More examples are available in the installed ``share/doc/kea/examples``
 directory.
 
- .. note::
-
-   As of Kea 1.6.0, the "Logging" element was removed and its contents (the
-   "loggers" object) moved inside the configuration objects (maps) for the
-   respective Kea modules. For example, the "Dhcp4" map contains the
-   "loggers" object, specifying logging configuration for the DHCPv4
-   server. Support for the top-level "Logging" object was
-   removed in Kea 1.7.10.
-
-   The specification for supporting several elements (e.g. "Dhcp4", "Dhcp6")
-   in one file was removed in Kea 1.7.10, so each component
-   now requires a separate configuration file.
-
 To avoid repetition of mostly similar structures, examples in the rest
 of this guide will showcase only the subset of parameters appropriate
 for a given context. For example, when discussing the IPv6 subnets

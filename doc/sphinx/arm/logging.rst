@@ -16,8 +16,7 @@ can be safely ignored in a typical deployment. They are, however, very
 useful when debugging a problem.
 
 The logging system in Kea is configured through the ``loggers`` entry in the
-server section of the configuration file (Kea releases prior to 1.7.9 included this
-as an independent Logging section).
+server section of the configuration file.
 
 Loggers
 -------

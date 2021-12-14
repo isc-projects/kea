@@ -230,8 +230,8 @@ valid, uses the new configuration. A reload is executed as follows:
    INFO/keactrl: Reloading kea-ctrl-agent...
 
 If any of the servers are not running, an informational message is
-displayed as in the ``reload`` command output below. As of
-version 1.5.0, ``kea-netconf`` does not support the SIGHUP signal. If its
+displayed as in the ``reload`` command output below.
+``kea-netconf`` does not support the SIGHUP signal. If its
 configuration has changed, please stop and restart it for the change to
 take effect.
 

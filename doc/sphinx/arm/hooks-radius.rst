@@ -50,8 +50,8 @@ on CentOS 7.0. Other systems may differ slightly.
 
 .. note::
 
-   Since Kea 1.7.0, ISC provides Kea software and hooks in convenient-to-use
-   native DEB and RPM packages. This includes the RADIUS hook and the required patched version
+   ISC provides Kea software and hooks in convenient-to-use
+   native Alpine, deb and RPM packages. This includes the RADIUS hook and the required patched version
    of the FreeRADIUS client library. The software compilation for RADIUS is complicated; unless
    there are specific reasons to compile it, administrators should seriously consider using
    native packages.
@@ -120,8 +120,8 @@ Note that the ``b2`` script may optionally take extra parameters; one of
 them specifies the destination path where the sources are to be
 compiled.
 
-Alternatively, some systems provide newer Boost packages. For example, 
-CentOS 7 provides ``boost169-devel``. If it is installed with 
+Alternatively, some systems provide newer Boost packages. For example,
+CentOS 7 provides ``boost169-devel``. If it is installed with
 ``yum install boost169-devel``, Kea must be pointed to it with:
 
 .. code-block:: console

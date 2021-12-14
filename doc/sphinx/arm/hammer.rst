@@ -3,8 +3,7 @@
 Hammer Building Tool
 ====================
 
-An optional building tool called Hammer was introduced with Kea 1.6.0. It
-is a Python 3 script that lets users automate tasks related to building
+Hammer is a Python 3 script that lets users automate tasks related to building
 Kea, such as setting up virtual machines, installing Kea dependencies,
 compiling Kea with various options, running unit-tests and more. This
 tool was created primarily for internal QA purposes at ISC and it is not
