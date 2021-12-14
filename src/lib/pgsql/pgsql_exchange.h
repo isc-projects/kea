@@ -359,11 +359,40 @@ struct PsqlBindArray {
         }
     }
 
-    /// @brief Adds an @c Optional IPv4 address to the bind array.
+    /// @brief Adds an IPv4 address to the bind array.
+    ///
+    /// This is used for inet type columns.
     ///
     /// @param value Optional boolean value to add
     /// @throw BadValue if the address is not a IPv4 address.
-    void addOptionalIPv4Address(const util::Optional<isc::asiolink::IOAddress>& value);
+    void addInet4(const isc::asiolink::IOAddress& value);
+
+    /// @brief Adds an IPv6 address to the bind array.
+    ///
+    /// This is used for inet type columns.
+    ///
+    /// @param value Optional boolean value to add
+    /// @throw BadValue if the address is not a IPv6 address.
+    void addInet6(const isc::asiolink::IOAddress& value);
+
+    /// @brief Adds an @c Optional IPv4 address to the bind array.
+    ///
+    /// This is used for inet type columns.
+    ///
+    /// @param value Optional boolean value to add
+    /// @throw BadValue if the address is not a IPv4 address.
+    void addOptionalInet4(const util::Optional<isc::asiolink::IOAddress>& value);
+
+    /// @brief Adds an @c Optional IPv6 address to the bind array.
+    ///
+    /// This is used for inet type columns which expect
+    /// v4 addresses to be inserted in string form:
+    /// '3001::1'
+    ///
+    /// @param value Optional boolean value to add
+    /// @throw BadValue if the address is not a IPv6 address.
+    void addOptionalInet6(const util::Optional<isc::asiolink::IOAddress>& value);
+
 
     /// @brief Adds a timestamp from a ptime to the bind array.
     ///
@@ -564,7 +593,39 @@ public:
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, uint8_t &value);
 
+    /// @brief Converts a column in a row in a result set into IPv4 address.
+    ///
+    /// This is used to fetch values from inet type columns.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    ///
+    /// @return isc::asiolink::IOAddress containing the IPv4 address.
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static isc::asiolink::IOAddress getInetValue4(const PgSqlResult& r,
+                                                  const int row,
+                                                  const size_t col);
+
     /// @brief Converts a column in a row in a result set into IPv6 address.
+    ///
+    /// This is used to fetch values from inet type columns.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    ///
+    /// @return isc::asiolink::IOAddress containing the IPv6 address.
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static isc::asiolink::IOAddress getInetValue6(const PgSqlResult& r,
+                                                  const int row,
+                                                  const size_t col);
+
+    /// @brief Converts a column in a row in a result set into IPv6 address.
+    ///
+    /// This used for IPv6 columns stored as varchar.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set

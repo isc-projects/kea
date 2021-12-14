@@ -228,7 +228,7 @@ TEST(PsqlBindArray, addOptionalInteger) {
 
 /// @brief Verifies the ability to add Optional IPv4 addresses to
 /// the bind array.
-TEST(PsqlBindArray, addOptionalIPv4Address) {
+TEST(PsqlBindArray, addOptionalInet4) {
 
     PsqlBindArray b;
 
@@ -240,13 +240,13 @@ TEST(PsqlBindArray, addOptionalIPv4Address) {
 
         // Verify we cannot add a v6 address.
         Optional<asiolink::IOAddress> not_v4(asiolink::IOAddress("3001::1"));
-        ASSERT_THROW_MSG(b.addOptionalIPv4Address(not_v4), BadValue,
+        ASSERT_THROW_MSG(b.addOptionalInet4(not_v4), BadValue,
                          "unable to add address to PsqlBindAray"
                          " '3001::1' is not an IPv4 address");
 
-        // Add the addresses to the array..
-        b.addOptionalInteger(empty);
-        b.addOptionalInteger(not_empty);
+        // Add addresses to bind array.
+        b.addOptionalInet4(empty);
+        b.addOptionalInet4(not_empty);
     }
 
     // We've left bind scope, everything should be intact.
@@ -256,6 +256,40 @@ TEST(PsqlBindArray, addOptionalIPv4Address) {
     std::string expected =
         "0 : empty\n"
         "1 : \"192.16.1.1\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
+/// @brief Verifies the ability to add Optional IPv6 addresses to
+/// the bind array.
+TEST(PsqlBindArray, addOptionalInet6) {
+
+    PsqlBindArray b;
+
+    // Add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        Optional<asiolink::IOAddress> empty;
+        Optional<asiolink::IOAddress> not_empty(asiolink::IOAddress("3001::1"));
+
+        // Verify we cannot add a v6 address.
+        Optional<asiolink::IOAddress> not_v6(asiolink::IOAddress("192.168.1.1"));
+        ASSERT_THROW_MSG(b.addOptionalInet6(not_v6), BadValue,
+                         "unable to add address to PsqlBindAray"
+                         " '192.168.1.1' is not an IPv6 address");
+
+        // Add addresses to bind array.
+        b.addOptionalInet6(empty);
+        b.addOptionalInet6(not_empty);
+    }
+
+    // We've left bind scope, everything should be intact.
+    EXPECT_EQ(2, b.size());
+
+    // Verify contents are correct.
+    std::string expected =
+        "0 : empty\n"
+        "1 : \"3001::1\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }
@@ -947,21 +981,30 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
 TEST(PsqlBindArray, insertString) {
     PsqlBindArray b;
 
-    // Make not temporary strings to insert.
+    // Make a non-temporary string to insert.
     std::string one("one");
-//    std::string three("three");
 
     // Add all the items within a different scope. Everything should
     // still be valid once we exit this scope.
     {
-        b.add("two");
+        // Make sure you can "insert" at the front of an empty array.
+        b.insert("two", 0);
+
+        // Add a binding.
         b.add("four");
 
-        ASSERT_THROW_MSG(b.insert(std::string("too far"), 5), OutOfRange, 
+        // Verify an out of range index throws.
+        ASSERT_THROW_MSG(b.insert(std::string("too far"), 5), OutOfRange,
                          "PsqlBindArray::insert - index: 5, "
                          "is larger than the array size: 2");
+
+        // Insert a non-temporary string at the front.
         b.insert(one, 0);
+
+        // Insert a temporary string.
         b.insert("three", 2);
+
+        // Add another one.
         b.add("five");
     }
 
@@ -978,5 +1021,119 @@ TEST(PsqlBindArray, insertString) {
 
     EXPECT_EQ(expected, b.toText());
 }
+
+/// @brief Verify that we can read and write IPv4 addresses
+/// using INET columns.
+TEST_F(PgSqlBasicsTest, inetTest4) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "smallint_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 1, { OID_TEXT }, st_name,
+          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" }
+    };
+
+    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+
+    // Build our reference list of reference values
+    std::vector<asiolink::IOAddress>inets;
+    inets.push_back(asiolink::IOAddress("0.0.0.0"));
+    inets.push_back(asiolink::IOAddress("192.168.1.1"));
+
+    // Insert a row for each reference value
+    PsqlBindArrayPtr bind_array;
+    PgSqlResultPtr r;
+    for (int i = 0; i < inets.size(); ++i) {
+        bind_array.reset(new PsqlBindArray());
+        bind_array->addInet4(inets[i]);
+        RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+    }
+
+    // Fetch the newly inserted rows.
+    FETCH_ROWS(r, inets.size());
+
+    // Iterate over the rows, verifying each value against its reference
+    int row = 0;
+    for ( ; row  < inets.size(); ++row ) {
+        // Verify the column is not null.
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET_COL));
+
+        // Fetch and verify the column value
+        asiolink::IOAddress fetched_inet("0.0.0.0");
+        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, row, INET_COL));
+        EXPECT_EQ(fetched_inet, inets[row]);
+    }
+
+    // Clean out the table
+    WIPE_ROWS(r);
+
+    // Verify we can insert a NULL value.
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addNull();
+    RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Verify the column is null.
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET_COL));
+}
+
+/// @brief Verify that we can read and write IPv6 addresses
+/// using INET columns.
+TEST_F(PgSqlBasicsTest, inetTest6) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "smallint_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 1, { OID_TEXT }, st_name,
+          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" }
+    };
+
+    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+
+    // Build our reference list of reference values
+    std::vector<asiolink::IOAddress>inets;
+    inets.push_back(asiolink::IOAddress("::"));
+    inets.push_back(asiolink::IOAddress("3001::1"));
+
+    // Insert a row for each reference value
+    PsqlBindArrayPtr bind_array;
+    PgSqlResultPtr r;
+    for (int i = 0; i < inets.size(); ++i) {
+        bind_array.reset(new PsqlBindArray());
+        bind_array->addInet6(inets[i]);
+        RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+    }
+
+    // Fetch the newly inserted rows.
+    FETCH_ROWS(r, inets.size());
+
+    // Iterate over the rows, verifying each value against its reference
+    int row = 0;
+    for ( ; row  < inets.size(); ++row ) {
+        // Verify the column is not null.
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET_COL));
+
+        // Fetch and verify the column value
+        asiolink::IOAddress fetched_inet("::");
+        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, row, INET_COL));
+        EXPECT_EQ(fetched_inet, inets[row]);
+    }
+
+    // Clean out the table
+    WIPE_ROWS(r);
+
+    // Verify we can insert a NULL value.
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addNull();
+    RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Verify the column is null.
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET_COL));
+}
+
+
 
 }; // namespace

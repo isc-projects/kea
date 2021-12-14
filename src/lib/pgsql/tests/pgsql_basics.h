@@ -50,6 +50,7 @@ public:
         TEXT_COL,
         TIMESTAMP_COL,
         VARCHAR_COL,
+        INET_COL,
         NUM_BASIC_COLS
     };
     /// @brief Constructor
@@ -77,6 +78,7 @@ public:
         expectedColNames_[TEXT_COL] = "text_col";
         expectedColNames_[TIMESTAMP_COL] = "timestamp_col";
         expectedColNames_[VARCHAR_COL] = "varchar_col";
+        expectedColNames_[INET_COL] = "inet_col";
 
         destroySchema();
         createSchema();
@@ -123,7 +125,8 @@ public:
             "    int_col INT, "
             "    text_col TEXT, "
             "    timestamp_col TIMESTAMP WITH TIME ZONE, "
-            "    varchar_col VARCHAR(255) "
+            "    varchar_col VARCHAR(255), "
+            "    inet_col INET "
             "); ";
 
         PgSqlResult r(PQexec(*conn_, sql));
@@ -207,7 +210,7 @@ public:
             "   id, bool_col, bytea_col, bigint_col, smallint_col, "
             "   int_col, text_col,"
             "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
-            "   varchar_col"
+            "   varchar_col, inet_col"
             " FROM basics";
 
         runSql(r, sql, PGRES_TUPLES_OK, line);

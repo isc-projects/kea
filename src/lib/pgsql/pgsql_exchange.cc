@@ -43,8 +43,8 @@ void PsqlBindArray::add(const std::string& value) {
 }
 
 void PsqlBindArray::insert(const char* value, size_t index) {
-    if (index >= values_.size()) {
-        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index 
+    if (index && index >= values_.size()) {
+        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index
                   << ", is larger than the array size: " << values_.size());
     }
 
@@ -55,7 +55,7 @@ void PsqlBindArray::insert(const char* value, size_t index) {
 
 void PsqlBindArray::insert(const std::string& value, size_t index) {
     if (index >= values_.size()) {
-        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index 
+        isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index
                   << ", is larger than the array size: " << values_.size());
     }
 
@@ -162,18 +162,44 @@ PsqlBindArray::addOptionalBool(const util::Optional<bool>& value) {
 }
 
 void
-PsqlBindArray::addOptionalIPv4Address(const util::Optional<isc::asiolink::IOAddress>& value) {
+PsqlBindArray::addInet4(const isc::asiolink::IOAddress& value) {
+    if (!value.isV4()) {
+        isc_throw(BadValue, "unable to add address to PsqlBindAray '"
+                  << value.toText() << "' is not an IPv4 address");
+    }
+
+    // inet columns are inserted as string addresses.
+    addTempString(value.toText());
+}
+
+void
+PsqlBindArray::addOptionalInet4(const util::Optional<isc::asiolink::IOAddress>& value) {
     // If the value is unspecified it doesn't matter what the value is.
     if (value.unspecified()) {
         addNull();
     } else {
-        // Make sure it is an IPv4 address.
-        if (!value.get().isV4()) {
-            isc_throw(BadValue, "unable to add address to PsqlBindAray '"
-                  << value.get().toText() << "' is not an IPv4 address");
-        }
+        addInet4(value);
+    }
+}
 
-        add((value.get().toUint32()));
+void
+PsqlBindArray::addInet6(const isc::asiolink::IOAddress& value) {
+    if (!value.isV6()) {
+        isc_throw(BadValue, "unable to add address to PsqlBindAray '"
+                  << value.toText() << "' is not an IPv6 address");
+    }
+
+    // inet columns are inserted as string addresses.
+    addTempString(value.toText());
+}
+
+void
+PsqlBindArray::addOptionalInet6(const util::Optional<isc::asiolink::IOAddress>& value) {
+    // If the value is unspecified it doesn't matter what the value is.
+    if (value.unspecified()) {
+        addNull();
+    } else {
+        addInet6(value);
     }
 }
 
@@ -190,6 +216,7 @@ PsqlBindArray::addTimestamp() {
     time(&now);
     addTempString(PgSqlExchange::convertToDatabaseTime(now));
 }
+
 
 std::string
 PsqlBindArray::toText() const {
@@ -346,6 +373,43 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
     std::string db_time_val;
     PgSqlExchange::getColumnValue(r, row, col, db_time_val );
     PgSqlExchange::convertFromDatabaseTime(db_time_val, value);
+}
+
+isc::asiolink::IOAddress
+PgSqlExchange::getInetValue4(const PgSqlResult& r, const int row,
+                            const size_t col) {
+    const char* data = getRawColumnValue(r, row, col);
+    try {
+        asiolink::IOAddress addr(data);
+        if (!addr.isV4()) {
+            isc_throw(BadValue, "not a v4 address");
+        }
+
+        return(addr);
+    } catch (const std::exception& ex) {
+        isc_throw(DbOperationError, "Cannot convert data: " << data
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
+                  << " : " << ex.what());
+    }
+}
+
+
+isc::asiolink::IOAddress
+PgSqlExchange::getInetValue6(const PgSqlResult& r, const int row,
+                            const size_t col) {
+    const char* data = getRawColumnValue(r, row, col);
+    try {
+        asiolink::IOAddress addr(data);
+        if (!addr.isV6()) {
+            isc_throw(BadValue, "not a v6 address");
+        }
+
+        return(addr);
+    } catch (const std::exception& ex) {
+        isc_throw(DbOperationError, "Cannot convert data: " << data
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
+                  << " : " << ex.what());
+    }
 }
 
 isc::asiolink::IOAddress
