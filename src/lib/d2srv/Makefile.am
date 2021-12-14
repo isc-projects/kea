@@ -22,7 +22,7 @@ libkea_d2srv_la_SOURCES += d2_tsig_key.cc d2_tsig_key.h
 libkea_d2srv_la_SOURCES += d2_zone.cc d2_zone.h
 libkea_d2srv_la_SOURCES += dns_client.cc dns_client.h
 libkea_d2srv_la_SOURCES += nc_trans.cc nc_trans.h
-EXTRA_DIST += d2_messages.mes
+EXTRA_DIST += d2srv.dox d2_messages.mes
 
 libkea_d2srv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_d2srv_la_CPPFLAGS = $(AM_CPPFLAGS)
