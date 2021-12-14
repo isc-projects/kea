@@ -58,6 +58,11 @@ Kea components use extended JSON with additional features allowed:
    with the location of the comma to give the user the ability to correct a
    potential mistake.
 
+.. warning::
+
+   These features are meant to be used in a JSON configuration. Their usage in
+   any other way may result in errors.
+
 The configuration file consists of a single object (often colloquially
 called a map) started with a curly bracket. It comprises only one of
 the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent", or "Netconf" objects.
