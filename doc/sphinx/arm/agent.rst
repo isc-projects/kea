@@ -135,13 +135,6 @@ for the DHCPv4 server and the CA (for that server) must match. Consult
 :ref:`d2-ctrl-channel` to learn how the socket configuration is
 specified for the DHCPv4, DHCPv6, and D2 services.
 
-.. warning::
-
-   ``dhcp4-server``, ``dhcp6-server``, and ``d2-server`` were renamed to
-   ``dhcp4``, ``dhcp6``, and ``d2`` respectively in Kea 1.2. If
-   migrating from Kea 1.2, be sure to modify the CA configuration to use
-   this new naming convention.
-
 User contexts can store arbitrary data as long as they are in valid JSON
 syntax and their top-level element is a map (i.e. the data must be
 enclosed in curly brackets). Some hook libraries may expect specific
