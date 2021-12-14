@@ -1,3 +1,7 @@
+1976.	[func]		andrei
+	Added hwtype and hwaddr_source columns to v6 memfile.
+	(Gitlab #2236)
+
 1975.	[func]		tmark
 	Additional changes and corrections relating to Config Backend
 	were made to the PostgreSQL database schema.  In addition, the
