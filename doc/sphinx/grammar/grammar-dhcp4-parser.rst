@@ -1,5 +1,5 @@
 
-Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp4` for an explanation.
+Grammar generated on 2021-12-14 13:12. See Chapter :ref:`dhcp4` for an explanation.
 
 .. code-block:: BNF
    :linenos:
@@ -141,6 +141,7 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp4` for an explanati
                  | dhcp_multi_threading
                  | ip_reservations_unique
                  | compatibility
+                 | parked_packet_limit
                  | unknown_map_entry
 
      valid_lifetime ::= "valid-lifetime" ":" INTEGER
@@ -166,6 +167,8 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp4` for an explanati
      decline_probation_period ::= "decline-probation-period" ":" INTEGER
 
      server_tag ::= "server-tag" ":" STRING
+
+     parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
 
      echo_client_id ::= "echo-client-id" ":" BOOLEAN
 

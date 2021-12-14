@@ -1,5 +1,5 @@
 
-Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp-ddns-server` for an explanation.
+Grammar generated on 2021-12-14 13:12. See Chapter :ref:`dhcp-ddns-server` for an explanation.
 
 .. code-block:: BNF
    :linenos:
@@ -130,7 +130,7 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp-ddns-server` for a
                        | ddns_domain_params "," ddns_domain_param
 
      ddns_domain_param ::= ddns_domain_name
-                      | ddns_domain_key_name
+                      | ddns_key_name
                       | dns_servers
                       | user_context
                       | comment
@@ -138,7 +138,7 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp-ddns-server` for a
 
      ddns_domain_name ::= "name" ":" STRING
 
-     ddns_domain_key_name ::= "key-name" ":" STRING
+     ddns_key_name ::= "key-name" ":" STRING
 
      dns_servers ::= "dns-servers" ":" "[" dns_server_list "]"
 
@@ -157,6 +157,7 @@ Grammar generated on 2021-06-22 19:06. See Chapter :ref:`dhcp-ddns-server` for a
      dns_server_param ::= dns_server_hostname
                      | dns_server_ip_address
                      | dns_server_port
+                     | ddns_key_name
                      | user_context
                      | comment
                      | unknown_map_entry
