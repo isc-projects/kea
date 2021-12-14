@@ -5,7 +5,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-EXTRA_DIST  =
+EXTRA_DIST = d2srv.dox
 
 CLEANFILES = *.gcno *.gcda
 
