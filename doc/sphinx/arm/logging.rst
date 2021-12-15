@@ -766,7 +766,6 @@ specified as part of the pattern.
     so we do not enforce its inclusion. If it is omitted from
     the pattern, the log entries will run together in one long "line".
 
-
 The default pattern for ``syslog`` output is:
 
 ::
@@ -778,7 +777,7 @@ information is typically output by ``syslog``. Note that Kea uses the pattern
 to construct the text it sends to ``syslog`` (or any other destination). It has
 no influence on the content ``syslog`` may add or formatting it may do.
 
-Consult your OS documentation for ``syslog`` behavior, as there are multiple
+Consult the OS documentation for ``syslog`` behavior, as there are multiple
 implementations.
 
 
