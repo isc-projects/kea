@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -182,14 +182,9 @@ public:
     ///
     /// @param loc location within the parsed file where the problem was experienced
     /// @param what string explaining the nature of the error
-    /// @param pos optional position for in string errors. The optional position
-    /// for an error in a string begins by 1 so the caller should add 1 to the
-    /// position of the C++ string.
     ///
     /// @throw ParseError
-    void warning(const isc::netconf::location& loc,
-                 const std::string& what,
-                 size_t pos = 0);
+    void warning(const isc::netconf::location& loc, const std::string& what);
 
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {

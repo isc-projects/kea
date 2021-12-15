@@ -60,8 +60,8 @@ Kea components use extended JSON with additional features allowed:
 
 .. warning::
 
-   These features are meant to be used in a JSON configuration. Their usage in
-   any other way may result in errors.
+   These features are meant to be used in a JSON configuration file.
+   Their usage in any other way may result in errors.
 
 The configuration file consists of a single object (often colloquially
 called a map) started with a curly bracket. It comprises only one of

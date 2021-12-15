@@ -28,6 +28,7 @@ extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL;
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED;
 extern const isc::log::MessageID DHCP6_CONFIG_START;
+extern const isc::log::MessageID DHCP6_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE;

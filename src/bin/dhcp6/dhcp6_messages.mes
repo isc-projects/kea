@@ -123,6 +123,10 @@ This is a debug message that is issued every time the server receives a
 configuration. That happens start up and also when a server configuration
 change is committed by the administrator.
 
+% DHCP6_CONFIG_SYNTAX_WARNING configuration syntax warning: %1
+This warning message indicates that the DHCPv6 configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
 % DHCP6_CONFIG_UNRECOVERABLE_ERROR DHCPv6 server new configuration failed with an error which cannot be recovered
 This fatal error message is issued when a new configuration raised an error
 which cannot be recovered. A correct configuration must be applied as soon

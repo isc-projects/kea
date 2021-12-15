@@ -36,6 +36,7 @@ extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE = "DHCP4_CONFIG_O
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED = "DHCP4_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_START = "DHCP4_CONFIG_START";
+extern const isc::log::MessageID DHCP4_CONFIG_SYNTAX_WARNING = "DHCP4_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR = "DHCP4_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT = "DHCP4_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE = "DHCP4_CONFIG_UPDATE";
@@ -193,6 +194,7 @@ const char* values[] = {
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
     "DHCP4_CONFIG_RECEIVED", "received configuration %1",
     "DHCP4_CONFIG_START", "DHCPv4 server is processing the following configuration: %1",
+    "DHCP4_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP4_CONFIG_UNRECOVERABLE_ERROR", "DHCPv4 server new configuration failed with an error which cannot be recovered",
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
     "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",

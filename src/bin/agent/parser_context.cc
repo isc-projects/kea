@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +8,12 @@
 
 #include <agent/parser_context.h>
 #include <agent/agent_parser.h>
+#include <agent/ca_log.h>
 #include <exceptions/exceptions.h>
 #include <cc/dhcp_config_error.h>
 #include <cc/data.h>
 #include <fstream>
+#include <sstream>
 #include <limits>
 
 namespace isc {
@@ -186,13 +188,11 @@ ParserContext::contextName()
 
 void
 ParserContext::warning(const isc::agent::location& loc,
-                       const std::string& what,
-                       size_t pos /* = 0 */) {
-    if (pos == 0) {
-        std::cerr << loc << ": " << what << std::endl;
-    } else {
-        std::cerr << loc << " (near " << pos << "): " << what << std::endl;
-    }
+                       const std::string& what) {
+    std::ostringstream msg;
+    msg << loc << ": " << what;
+    LOG_WARN(agent_logger, CTRL_AGENT_CONFIG_SYNTAX_WARNING)
+        .arg(msg.str());
 }
 
 } // end of isc::eval namespace

@@ -27,6 +27,7 @@ extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL = "DHCP6_CONFIG_LOAD_FAI
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE = "DHCP6_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED = "DHCP6_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP6_CONFIG_START = "DHCP6_CONFIG_START";
+extern const isc::log::MessageID DHCP6_CONFIG_SYNTAX_WARNING = "DHCP6_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR = "DHCP6_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT = "DHCP6_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE = "DHCP6_CONFIG_UPDATE";
@@ -184,6 +185,7 @@ const char* values[] = {
     "DHCP6_CONFIG_PACKET_QUEUE", "DHCPv6 packet queue info after configuration: %1",
     "DHCP6_CONFIG_RECEIVED", "received configuration: %1",
     "DHCP6_CONFIG_START", "DHCPv6 server is processing the following configuration: %1",
+    "DHCP6_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP6_CONFIG_UNRECOVERABLE_ERROR", "DHCPv6 server new configuration failed with an error which cannot be recovered",
     "DHCP6_CONFIG_UNSUPPORTED_OBJECT", "DHCPv6 server configuration includes an unsupported object: %1",
     "DHCP6_CONFIG_UPDATE", "updated configuration received: %1",

@@ -56,6 +56,10 @@ This error message indicates that the DHCP-DDNS had failed configuration
 attempt. Details are provided. Additional details may be available
 in earlier log entries, possibly on lower levels.
 
+% DHCP_DDNS_CONFIG_SYNTAX_WARNING DHCP-DDNS server configuration syntax warning: %1
+This warning message indicates that the DHCP-DDNS configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
 % DHCP_DDNS_FAILED application experienced a fatal error: %1
 This is a debug message issued when the DHCP-DDNS application encounters an
 unrecoverable error from within the event loop.

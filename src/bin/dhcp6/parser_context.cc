@@ -8,10 +8,12 @@
 
 #include <dhcp6/parser_context.h>
 #include <dhcp6/dhcp6_parser.h>
+#include <dhcp6/dhcp6_log.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
+#include <sstream>
 #include <limits>
 
 namespace isc {
@@ -227,13 +229,11 @@ Parser6Context::contextName() {
 
 void
 Parser6Context::warning(const isc::dhcp::location& loc,
-                        const std::string& what,
-                        size_t pos /* = 0 */) {
-    if (pos == 0) {
-        std::cerr << loc << ": " << what << std::endl;
-    } else {
-        std::cerr << loc << " (near " << pos << "): " << what << std::endl;
-    }
+                        const std::string& what) {
+    std::ostringstream msg;
+    msg << loc << ": " << what;
+    LOG_WARN(dhcp6_logger, DHCP6_CONFIG_SYNTAX_WARNING)
+        .arg(msg.str());
 }
 
 }  // namespace dhcp

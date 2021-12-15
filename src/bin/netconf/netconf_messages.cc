@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/netconf/netconf_messages.mes
+// File created from netconf_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -12,6 +12,7 @@ extern const isc::log::MessageID NETCONF_CONFIG_CHANGED_DETAIL = "NETCONF_CONFIG
 extern const isc::log::MessageID NETCONF_CONFIG_CHANGE_EVENT = "NETCONF_CONFIG_CHANGE_EVENT";
 extern const isc::log::MessageID NETCONF_CONFIG_CHECK_FAIL = "NETCONF_CONFIG_CHECK_FAIL";
 extern const isc::log::MessageID NETCONF_CONFIG_FAIL = "NETCONF_CONFIG_FAIL";
+extern const isc::log::MessageID NETCONF_CONFIG_SYNTAX_WARNING = "NETCONF_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID NETCONF_FAILED = "NETCONF_FAILED";
 extern const isc::log::MessageID NETCONF_GET_CONFIG = "NETCONF_GET_CONFIG";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED = "NETCONF_GET_CONFIG_FAILED";
@@ -52,6 +53,7 @@ const char* values[] = {
     "NETCONF_CONFIG_CHANGE_EVENT", "Received YANG configuration change %1 event",
     "NETCONF_CONFIG_CHECK_FAIL", "Netconf configuration check failed: %1",
     "NETCONF_CONFIG_FAIL", "Netconf configuration failed: %1",
+    "NETCONF_CONFIG_SYNTAX_WARNING", "Netconf configuration syntax warning: %1",
     "NETCONF_FAILED", "application experienced a fatal error: %1",
     "NETCONF_GET_CONFIG", "got configuration from %1 server: %2",
     "NETCONF_GET_CONFIG_FAILED", "getting configuration from %1 server failed: %2",

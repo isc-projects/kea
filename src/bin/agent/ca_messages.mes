@@ -29,6 +29,10 @@ This error message indicates that the CA had failed configuration
 attempt. Details are provided. Additional details may be available
 in earlier log entries, possibly on lower levels.
 
+% CTRL_AGENT_CONFIG_SYNTAX_WARNING Control Agent configuration syntax warning: %1
+This warning message indicates that the CA configuration had a minor syntax
+error. The error was displayed and the configuration parsing resumed.
+
 % CTRL_AGENT_FAILED application experienced a fatal error: %1
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.

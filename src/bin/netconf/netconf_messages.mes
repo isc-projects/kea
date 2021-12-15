@@ -29,6 +29,10 @@ This error message indicates that Netconf had failed configuration
 attempt. Details are provided. Additional details may be available
 in earlier log entries, possibly on lower levels.
 
+% NETCONF_CONFIG_SYNTAX_WARNING Netconf configuration syntax warning: %1
+This warning message indicates that the Netconf configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
 % NETCONF_FAILED application experienced a fatal error: %1
 This is a fatal error message issued when the Netconf application
 got an unrecoverable error from within the event loop.

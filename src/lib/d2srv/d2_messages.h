@@ -18,6 +18,7 @@ extern const isc::log::MessageID DHCP_DDNS_CONFIGURE;
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP;
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL;
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_FAIL;
+extern const isc::log::MessageID DHCP_DDNS_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID DHCP_DDNS_FAILED;
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS;
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE;

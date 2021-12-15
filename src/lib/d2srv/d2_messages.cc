@@ -17,6 +17,7 @@ extern const isc::log::MessageID DHCP_DDNS_CONFIGURE = "DHCP_DDNS_CONFIGURE";
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP = "DHCP_DDNS_CONFIGURED_CALLOUT_DROP";
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL = "DHCP_DDNS_CONFIG_CHECK_FAIL";
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_FAIL = "DHCP_DDNS_CONFIG_FAIL";
+extern const isc::log::MessageID DHCP_DDNS_CONFIG_SYNTAX_WARNING = "DHCP_DDNS_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID DHCP_DDNS_FAILED = "DHCP_DDNS_FAILED";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS = "DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE = "DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE";
@@ -99,6 +100,7 @@ const char* values[] = {
     "DHCP_DDNS_CONFIGURED_CALLOUT_DROP", "configuration was rejected because a callout set the next step to 'drop': %1",
     "DHCP_DDNS_CONFIG_CHECK_FAIL", "DHCP-DDNS server configuration check failed: %1",
     "DHCP_DDNS_CONFIG_FAIL", "DHCP-DDNS server configuration failed: %1",
+    "DHCP_DDNS_CONFIG_SYNTAX_WARNING", "DHCP-DDNS server configuration syntax warning: %1",
     "DHCP_DDNS_FAILED", "application experienced a fatal error: %1",
     "DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while adding a forward address mapping for FQDN %3 to DNS server %4",
     "DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE", "DNS Request ID %1:  update message to add a forward DNS entry could not be constructed for this request: %2, reason: %3",

@@ -37,6 +37,7 @@ extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE;
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED;
 extern const isc::log::MessageID DHCP4_CONFIG_START;
+extern const isc::log::MessageID DHCP4_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE;

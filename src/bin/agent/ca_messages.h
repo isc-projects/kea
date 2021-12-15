@@ -13,6 +13,7 @@ extern const isc::log::MessageID CTRL_AGENT_COMMAND_FORWARD_BEGIN;
 extern const isc::log::MessageID CTRL_AGENT_COMMAND_FORWARD_FAILED;
 extern const isc::log::MessageID CTRL_AGENT_CONFIG_CHECK_FAIL;
 extern const isc::log::MessageID CTRL_AGENT_CONFIG_FAIL;
+extern const isc::log::MessageID CTRL_AGENT_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID CTRL_AGENT_FAILED;
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_STARTED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED;

@@ -65,12 +65,11 @@ means that some trickery with escaping double quotes will be involved. Note
 there is no need to escape any other character, unless you want to specify
 non-printable characters.
 
-Also, while Kea's JSON parser supports comments, multi-line strings and extra
-commas, they are not part of JSON standard. That means that external tools, such
-as python or Sphinx parsers are not able to deal with them. Therefore comments
-and extra commas must be removed. Long strings (such as command descriptions or
-example invocations) are to be presented as a list of strings
-e.g. [ "line1", "line2, "line3" ].
+Also, while Kea's JSON parser supports comments and multi-line string, they
+are not part of JSON standard. That means that external tools, such as python
+or Sphinx parsers are not able to deal with them. Therefore comments must
+be removed and long strings (such as command descriptions or example invocations)
+are to be presented as a list of strings ( e.g. [ "line1", "line2, "line3" ]).
 
 @section docsDevelGuide Generating Developer's Guide
 
