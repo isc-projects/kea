@@ -1026,7 +1026,7 @@ TEST(PsqlBindArray, insertString) {
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest4) {
     // Create a prepared statement for inserting a SMALLINT
-    const char* st_name = "smallint_insert";
+    const char* st_name = "inet_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
           "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" },
@@ -1095,7 +1095,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest6) {
     // Create a prepared statement for inserting a SMALLINT
-    const char* st_name = "smallint_insert";
+    const char* st_name = "inet_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
           "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" }
@@ -1147,6 +1147,59 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET_COL));
 }
 
+/// @brief Verify that we can read and write floats
+TEST_F(PgSqlBasicsTest, floatTest) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "float_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 1, { OID_TEXT }, st_name,
+          "INSERT INTO BASICS (float_col) values (cast($1 as float))" }
+    };
 
+    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+
+    // Build our reference list of reference values
+    std::vector<double>floats;
+    floats.push_back(1.345);
+    floats.push_back(200);
+
+    // Insert a row for each reference value
+    PsqlBindArrayPtr bind_array;
+    PgSqlResultPtr r;
+    for (int i = 0; i < floats.size(); ++i) {
+        bind_array.reset(new PsqlBindArray());
+        bind_array->add(floats[i]);
+        RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+    }
+
+    // Fetch the newly inserted rows.
+    FETCH_ROWS(r, floats.size());
+
+    // Iterate over the rows, verifying each value against its reference
+    int row = 0;
+    for ( ; row  < floats.size(); ++row ) {
+        // Verify the column is not null.
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, FLOAT_COL));
+
+        // Fetch and verify the column value
+        double fetched_float;
+        ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, row, FLOAT_COL, fetched_float));
+        EXPECT_EQ(fetched_float, floats[row]);
+    }
+
+    // Clean out the table
+    WIPE_ROWS(r);
+
+    // Verify we can insert a NULL value.
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addNull();
+    RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Verify the column is null.
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, FLOAT_COL));
+}
 
 }; // namespace
