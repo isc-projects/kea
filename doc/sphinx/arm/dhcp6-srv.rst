@@ -1963,7 +1963,7 @@ unsigned integers.
 .. note::
 
    In general, boolean values are specified as ``true`` or ``false``,
-   without quotes. Some specific boolean parameters may accept also
+   without quotes. Some specific boolean parameters may also accept
    ``"true"``, ``"false"``, ``0``, ``1``, ``"0"``, and ``"1"``.
 
 .. _dhcp6-vendor-opts:
