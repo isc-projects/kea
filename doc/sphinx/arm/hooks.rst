@@ -1846,21 +1846,21 @@ contract.
 
 Currently, the following commands are supported:
 
-- ``reservation-add``, which adds a new host reservation
+- ``reservation-add``, which adds a new host reservation.
 
 - ``reservation-get``, which returns an existing reservation if specified
-  criteria are matched
+  criteria are matched.
 
-- ``reservation-get-all``, which returns all reservations in a specified subnet
+- ``reservation-get-all``, which returns all reservations in a specified subnet.
 
 - ``reservation-get-page``, a variant of ``reservation-get-all`` that returns
-  reservations by pages, either all or in a specified subnet
+  reservations by pages, either all or in a specified subnet.
 
 - ``reservation-get-by-hostname``, which returns all reservations with a
-  specified hostname and optionally in a subnet
+  specified hostname and optionally in a subnet.
 
 - ``reservation-get-by-id``, which returns all reservations with a specified
-  identifier since Kea version 1.9.0
+  identifier (since Kea version 1.9.0).
 
 - ``reservation-del``, which attempts to delete a reservation matching specified
   criteria.

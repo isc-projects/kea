@@ -1846,7 +1846,7 @@ in the configuration file:
        ...
    }
 
-The ``"false"`` value of the ``array`` parameter determines that the option
+The ``false`` value of the ``array`` parameter determines that the option
 does NOT comprise an array of ``uint32`` values but is, instead, a single
 value. Two other parameters have been left blank: ``record-types`` and
 ``encapsulate``. The former specifies the comma-separated list of option
@@ -1860,7 +1860,7 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all
-others are optional. The ``array`` default value is ``"false"``. The
+others are optional. The ``array`` default value is ``false``. The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is ``dhcp6``.
 
@@ -2648,7 +2648,7 @@ shared network, subnet, or pool. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate
 test expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is "false"
+The first one is the per-class ``only-if-required`` flag, which is ``false``
 by default. When it is set to ``true``, the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
@@ -2842,13 +2842,13 @@ The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
 The value of this parameter is passed by ``kea-dhcp6`` to D2 with each DNS update
 request.  When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
-attempting to fulfill the update request. When "false", D2 simply attempts
+attempting to fulfill the update request. When ``false``, D2 simply attempts
 to update the DNS entries per the request, regardless of whether they
 conflict with existing entries owned by other DHCPv6 clients.
 
 .. note::
 
-    Setting ``ddns-use-conflict-resolution`` to "false" disables the overwrite
+    Setting ``ddns-use-conflict-resolution`` to ``false`` disables the overwrite
     safeguards that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
     prevent. This means that existing entries for an FQDN or an
@@ -2897,7 +2897,7 @@ control this communication:
 
 -  ``enable-updates`` - Enables connectivity to ``kea-dhcp-ddns`` such that DDNS
    updates can be constructed and sent. It must be ``true`` for NCRs to be generated and sent to D2.
-   It defaults to "false".
+   It defaults to ``false``.
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.
@@ -3099,11 +3099,11 @@ parameter, which provides the following modes of behavior:
 .. note::
 
    In early versions of Kea, this parameter was a boolean and
-   permitted only values of ``true`` and "false".
+   permitted only values of ``true`` and ``false``.
    Boolean values have been deprecated and are no longer accepted.
    Administrators currently using booleans must replace them with the
    desired mode name. A value of ``true`` maps to ``when-present``, while
-   "false" maps to ``never``.
+   ``false`` maps to ``never``.
 
 For example, to instruct ``kea-dhcp6`` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
@@ -3408,7 +3408,7 @@ additional information must be stored with each lease. Because the amount
 of information stored for each lease has ramifications in terms of
 performance and system resource consumption, storage of this additional
 information is configurable through the ``store-extended-info`` parameter.
-It defaults to "false" and may be set at the global, shared-network, and
+It defaults to ``false`` and may be set at the global, shared-network, and
 subnet levels.
 
 ::
@@ -3464,7 +3464,7 @@ threads. These settings can be found under the ``multi-threading`` structure and
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-   parallel. The default is "false".
+   parallel. The default is ``false``.
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
    parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
@@ -4007,7 +4007,7 @@ reserved class has been also assigned.
 
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to "false" have been evaluated.
+   ``only-if-required`` parameter set to ``false`` have been evaluated.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
    such a dependency is needed, the ``only-if-required`` must
@@ -4653,7 +4653,7 @@ enabled with the ``ip-reservations-unique`` global parameter.
 
 ``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
-for the same lease in a given subnet. Setting this parameter to "false"
+for the same lease in a given subnet. Setting this parameter to ``false``
 allows such reservations to be created both in the Kea configuration
 file and in the host database backend, via the ``host-cmds`` hook library.
 
@@ -4661,7 +4661,7 @@ This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
 Host Cache (see :ref:`hooks-host-cache`), or the RADIUS backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
-to "false" when any of these three backends is in use yields a
+to ``false`` when any of these three backends is in use yields a
 configuration error.
 
 .. note::
@@ -4722,7 +4722,7 @@ for the same IP address or delegated prefix.
    Currently the Kea server does not verify whether multiple reservations for
    the same IP address and/or delegated prefix exist in
    MySQL and/or PostgreSQL) host databases when ``ip-reservations-unique``
-   is updated from ``true`` to "false". This may cause issues with
+   is updated from ``true`` to ``false``. This may cause issues with
    lease allocations. The administrator must ensure that there is at
    most one reservation for each IP address and/or delegated prefix
    within each subnet, prior to the configuration update.
@@ -6503,7 +6503,7 @@ The DHCPv6 server supports the following statistics:
    This section describes DHCPv6-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-The DHCPv6 server provides two global parameters to control default sample
+The DHCPv6 server provides two global parameters to control the default sample
 limits of statistics:
 
 - ``statistic-default-sample-count`` - determines the default maximum

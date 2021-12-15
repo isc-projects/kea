@@ -2064,7 +2064,7 @@ Such an option can be defined by putting the following entry in the configuratio
        ...
    }
 
-The ``"false"`` value of the ``array`` parameter determines that the
+The ``false`` value of the ``array`` parameter determines that the
 option does NOT comprise an array of ``uint32`` values but is, instead, a
 single value. Two other parameters have been left blank:
 ``record-types`` and ``encapsulate``. The former specifies the
@@ -2078,7 +2078,7 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` default value is ``"false"``. The
+are optional. The ``array`` default value is ``false``. The
 ``record-types`` and ``encapsulate`` default values are blank (``""``).
 The default ``space`` is ``dhcp4``.
 
@@ -2528,7 +2528,7 @@ By default, Kea sends back
 only those options that are requested by a client, unless there are
 protocol rules that tell the DHCP server to always send an option. This
 approach works nicely in most cases and avoids problems with clients
-refusing responses with options they don't understand. However,
+refusing responses with options they do not understand. However,
 the situation with vendor options is more complex, as they
 are not requested the same way as other options, are
 not well-documented in official RFCs, or vary by vendor.
@@ -6578,7 +6578,7 @@ The DHCPv4 server supports the following statistics:
    This section describes DHCPv4-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 
-The DHCPv4 server provides two global parameters to control default sample
+The DHCPv4 server provides two global parameters to control the default sample
 limits of statistics:
 
 - ``statistic-default-sample-count`` - determines the default maximum

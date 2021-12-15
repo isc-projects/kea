@@ -51,7 +51,7 @@ Quick Start Guide Using tarball
 Quick Start Guide Using Native Packages
 =======================================
 
-ISC provides native Alpine, deb and RPM packages, which make Kea installation
+ISC provides native Alpine, deb, and RPM packages, which make Kea installation
 much easier. Unless specific compilation options are desired, it is usually
 easier to install Kea using native packages.
 

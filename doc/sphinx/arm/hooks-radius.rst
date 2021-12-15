@@ -51,7 +51,7 @@ on CentOS 7.0. Other systems may differ slightly.
 .. note::
 
    ISC provides Kea software and hooks in convenient-to-use
-   native Alpine, deb and RPM packages. This includes the RADIUS hook and the required patched version
+   native Alpine, deb, and RPM packages. This includes the RADIUS hook and the required patched version
    of the FreeRADIUS client library. The software compilation for RADIUS is complicated; unless
    there are specific reasons to compile it, administrators should seriously consider using
    native packages.

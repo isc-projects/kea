@@ -108,11 +108,11 @@ There is no limit on the number of backup servers in the HA setup;
 however, the presence of backup servers may increase the latency
 of DHCP responses, because not only do active servers send lease updates
 to each other, but also to the backup servers. The active
-servers don't expect acknowledgments from the backup servers
+servers do not expect acknowledgments from the backup servers
 before responding to the DHCP clients, so the overhead of sending
 lease updates to the backup servers is minimized.
 
-The last supported configuration, ``passive-backup``, there is only one active
+In the last supported configuration, ``passive-backup``, there is only one active
 server and typically one or more backup servers. A passive-backup
 configuration with no backup servers is also accepted, but it is no
 different than running a single server with no HA function at all.
@@ -179,7 +179,7 @@ clocks and restart the servers.
 
 .. note::
 
-   It is possible to restart the servers one at a time, in no particular oder.
+   It is possible to restart the servers one at a time, in no particular order.
    The clocks must be in sync before restarting the servers.
 
 .. note::
@@ -1600,11 +1600,13 @@ and four threads for the client.
 .. note::
 
    It is essential to configure the ports correctly. One common mistake
-   is to configure CA to listen on port 8000 and also configure dedicated listeners on port
-   1.    In such a configuration, the DHCP server will fail to bind sockets, but the communication
-   will still work via CA, albeit slowly. Make sure your dedicated listeners use a different port
-   (8001 is a suggested alternative). If you misconfigure ports or use the ports used by CA, the
-   performance bottlenecks caused by the single-threaded nature of CA and the sequential nature of
+   is to configure CA to listen on port 8000 and also configure dedicated listeners on port 8000.
+   In such a configuration, the communication will still work over CA,
+   but it will be slow and the DHCP server will fail to bind sockets.
+   Administrators should ensure that dedicated listeners use a different
+   port (8001 is a suggested alternative); if ports are misconfigured
+   or the ports dedicated to CA are used, the performance bottlenecks
+   caused by the single-threaded nature of CA and the sequential nature of
    the UNIX socket that connects CA to DHCP servers will nullify any performance gains offered by HA+MT.
 
 .. _ha-parked-packet-limit:
