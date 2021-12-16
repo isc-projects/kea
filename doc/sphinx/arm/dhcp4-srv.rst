@@ -1331,8 +1331,6 @@ Calculating the values is controlled by the following three parameters.
    T2. It is expressed as a real number between 0.0 and 1.0 and must be
    greater than ``t1-percent``. The default value is .875, per RFC 2131.
 
-..
-
 .. note::
 
    In the event that both explicit values are specified and

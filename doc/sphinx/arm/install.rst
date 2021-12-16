@@ -374,8 +374,6 @@ relevant linker cache configuration file for the OS):
 
    $ ldconfig
 
-..
-
 .. note::
 
    If ``ldconfig`` is not run where required, users may see

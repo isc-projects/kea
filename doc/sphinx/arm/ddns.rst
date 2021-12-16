@@ -246,8 +246,6 @@ illustrates how to change D2's global parameters so it will listen at
        }
    }
 
-..
-
 .. warning::
 
    It is possible for a malicious attacker to send bogus
@@ -557,8 +555,6 @@ running at "172.88.99.10", set the forward DNS server as follows:
        }
    }
 
-..
-
 .. note::
 
    Since ``hostname`` is not yet supported, the parameter ``ip-address``
@@ -691,8 +687,6 @@ service is running at "172.88.99.10", then set it as follows:
            ]
        }
    }
-
-..
 
 .. note::
 

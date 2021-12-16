@@ -210,8 +210,6 @@ configuration would be:
        :
    }
 
-..
-
 .. note::
 
    Libraries are reloaded even if their lists have not changed,

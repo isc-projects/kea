@@ -887,8 +887,8 @@ to members of the class, and they can be used to choose a subnet from
 which an address will be assigned to a class member.
 
 When options are defined as part of the class definition
-they override any global options that may be defined, and 
-in turn will be overridden by any options defined for an 
+they override any global options that may be defined, and
+in turn will be overridden by any options defined for an
 individual subnet.
 
 Classes and Hooks
@@ -978,9 +978,6 @@ The logging might then resemble this:
       2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0, string 0x666F6F626172 pushing result 0x666F6F
       2016-05-19 13:35:04.167 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string 'foo'
       2016-05-19 13:35:04.168 DEBUG [kea.eval/44478] EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F pushing result 'true'
-
-
-..
 
 .. note::
 

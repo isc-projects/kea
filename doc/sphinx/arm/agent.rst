@@ -284,8 +284,6 @@ server enables authentication of the clients using certificates.
        }
    }
 
-..
-
 .. note::
 
    The configuration snippet provided above is for testing

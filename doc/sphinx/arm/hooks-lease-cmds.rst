@@ -577,8 +577,6 @@ following format:
        "text": "2 IPv6 lease(s) found."
    }
 
-..
-
 .. warning::
 
    The ``lease4-get-all`` and ``lease6-get-all`` commands may result in

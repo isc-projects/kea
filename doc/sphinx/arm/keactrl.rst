@@ -99,9 +99,7 @@ The contents of ``keactrl.conf`` are:
    # Be verbose?
    kea_verbose=no
 
-..
-
- .. note::
+.. note::
 
    In the example above, strings of the form @something@ are replaced by
    the appropriate values when Kea is installed.
@@ -129,7 +127,7 @@ effect as long as ``kea_verbose`` is set to "yes." Setting it to
 Kea configuration file. If no logging configuration is specified, the
 default settings are used.
 
- .. note::
+.. note::
 
    The verbosity for the server is set when it is started. Once started,
    the verbosity can only be changed by stopping the server and starting
@@ -243,8 +241,6 @@ take effect.
    INFO/keactrl: kea-dhcp-ddns isn't running.
    INFO/keactrl: kea-ctrl-agent isn't running.
    INFO/keactrl: kea-netconf isn't running.
-
-..
 
 .. note::
 

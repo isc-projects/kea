@@ -1202,9 +1202,6 @@ with the addresses 2001:db8:1::cafe and 2001:db8:1::babe.
        ]
    }
 
-
-..
-
 .. note::
 
    The value for the setting of the ``data`` element is split across two
@@ -3319,8 +3316,6 @@ ISC tested the following configuration:
    }
 
    }
-
-..
 
 .. note::
 
