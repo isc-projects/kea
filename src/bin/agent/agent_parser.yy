@@ -195,7 +195,7 @@ not_empty_map: STRING COLON value {
                   ctx.stack_.back()->set($3, $5);
                   }
              | not_empty_map COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -218,7 +218,7 @@ not_empty_list: value {
                   ctx.stack_.back()->add($3);
                   }
               | not_empty_list COMMA {
-                  ctx.warnAboutExtraCommas(@1);
+                  ctx.warnAboutExtraCommas(@2);
                   }
               ;
 
@@ -269,13 +269,13 @@ global_object: CONTROL_AGENT {
              ;
 
 global_object_comma: global_object COMMA {
-    ctx.warnAboutExtraCommas(@1);
+    ctx.warnAboutExtraCommas(@2);
 };
 
 global_params: global_param
              | global_params COMMA global_param
              | global_params COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -415,7 +415,7 @@ hooks_libraries_list: %empty
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
     | not_empty_hooks_libraries_list COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -430,7 +430,7 @@ hooks_library: LCURLY_BRACKET {
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             | hooks_params COMMA {
-                ctx.warnAboutExtraCommas(@1);
+                ctx.warnAboutExtraCommas(@2);
                 }
             | unknown_map_entry
             ;
@@ -476,7 +476,7 @@ control_sockets: CONTROL_SOCKETS COLON LCURLY_BRACKET {
 control_sockets_params: control_socket
                       | control_sockets_params COMMA control_socket
                       | control_sockets_params COMMA {
-                          ctx.warnAboutExtraCommas(@1);
+                          ctx.warnAboutExtraCommas(@2);
                           }
                       ;
 
@@ -528,7 +528,7 @@ d2_server_socket: D2_SERVER {
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      | control_socket_params COMMA {
-                         ctx.warnAboutExtraCommas(@1);
+                         ctx.warnAboutExtraCommas(@2);
                          }
                      ;
 
@@ -583,7 +583,7 @@ authentication: AUTHENTICATION {
 auth_params: auth_param
            | auth_params COMMA auth_param
            | auth_params COMMA {
-               ctx.warnAboutExtraCommas(@1);
+               ctx.warnAboutExtraCommas(@2);
                }
            ;
 
@@ -633,7 +633,7 @@ clients_list: %empty
 not_empty_clients_list: basic_auth
                       | not_empty_clients_list COMMA basic_auth
                       | not_empty_clients_list COMMA {
-                          ctx.warnAboutExtraCommas(@1);
+                          ctx.warnAboutExtraCommas(@2);
                           }
                       ;
 
@@ -648,7 +648,7 @@ basic_auth: LCURLY_BRACKET {
 clients_params: clients_param
               | clients_params COMMA clients_param
               | clients_params COMMA {
-                  ctx.warnAboutExtraCommas(@1);
+                  ctx.warnAboutExtraCommas(@2);
                   }
               ;
 
@@ -697,7 +697,7 @@ loggers: LOGGERS {
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                | loggers_entries COMMA {
-                   ctx.warnAboutExtraCommas(@1);
+                   ctx.warnAboutExtraCommas(@2);
                    }
                ;
 
@@ -713,7 +713,7 @@ logger_entry: LCURLY_BRACKET {
 logger_params: logger_param
              | logger_params COMMA logger_param
              | logger_params COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -764,7 +764,7 @@ output_options_list: OUTPUT_OPTIONS {
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
                            | output_options_list_content COMMA {
-                               ctx.warnAboutExtraCommas(@1);
+                               ctx.warnAboutExtraCommas(@2);
                                }
                            ;
 
@@ -779,7 +779,7 @@ output_entry: LCURLY_BRACKET {
 output_params_list: output_params
              | output_params_list COMMA output_params
              | output_params_list COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 

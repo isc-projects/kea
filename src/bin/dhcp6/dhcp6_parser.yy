@@ -363,7 +363,7 @@ not_empty_map: STRING COLON value {
                   ctx.stack_.back()->set($3, $5);
                   }
              | not_empty_map COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -387,7 +387,7 @@ not_empty_list: value {
                   ctx.stack_.back()->add($3);
                   }
               | not_empty_list COMMA {
-                  ctx.warnAboutExtraCommas(@1);
+                  ctx.warnAboutExtraCommas(@2);
                   }
               ;
 
@@ -412,7 +412,7 @@ not_empty_list_strings: STRING {
                           ctx.stack_.back()->add(s);
                           }
                       | not_empty_list_strings COMMA {
-                          ctx.warnAboutExtraCommas(@1);
+                          ctx.warnAboutExtraCommas(@2);
                           }
                       ;
 
@@ -463,7 +463,7 @@ global_object: DHCP6 {
              ;
 
 global_object_comma: global_object COMMA {
-    ctx.warnAboutExtraCommas(@1);
+    ctx.warnAboutExtraCommas(@2);
 };
 
 // subparser: similar to the corresponding rule but without parent
@@ -480,7 +480,7 @@ sub_dhcp6: LCURLY_BRACKET {
 global_params: global_param
              | global_params COMMA global_param
              | global_params COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -800,7 +800,7 @@ sub_interfaces6: LCURLY_BRACKET {
 interfaces_config_params: interfaces_config_param
                         | interfaces_config_params COMMA interfaces_config_param
                         | interfaces_config_params COMMA {
-                            ctx.warnAboutExtraCommas(@1);
+                            ctx.warnAboutExtraCommas(@2);
                             }
                         ;
 
@@ -872,7 +872,7 @@ database_list: %empty
 not_empty_database_list: database
                        | not_empty_database_list COMMA database
                        | not_empty_database_list COMMA {
-                           ctx.warnAboutExtraCommas(@1);
+                           ctx.warnAboutExtraCommas(@2);
                            }
                        ;
 
@@ -889,7 +889,7 @@ database: LCURLY_BRACKET {
 database_map_params: database_map_param
                    | database_map_params COMMA database_map_param
                    | database_map_params COMMA {
-                       ctx.warnAboutExtraCommas(@1);
+                       ctx.warnAboutExtraCommas(@2);
                        }
                    ;
 
@@ -1096,7 +1096,7 @@ sanity_checks: SANITY_CHECKS {
 sanity_checks_params: sanity_checks_param
                     | sanity_checks_params COMMA sanity_checks_param
                     | sanity_checks_params COMMA {
-                        ctx.warnAboutExtraCommas(@1);
+                        ctx.warnAboutExtraCommas(@2);
                         }
                     ;
 
@@ -1135,7 +1135,7 @@ mac_sources: MAC_SOURCES {
 mac_sources_list: mac_sources_value
                 | mac_sources_list COMMA mac_sources_value
                 | mac_sources_list COMMA {
-                    ctx.warnAboutExtraCommas(@1);
+                    ctx.warnAboutExtraCommas(@2);
                     }
                 ;
 
@@ -1167,7 +1167,7 @@ host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
 host_reservation_identifiers_list: host_reservation_identifier
     | host_reservation_identifiers_list COMMA host_reservation_identifier
     | host_reservation_identifiers_list COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -1217,7 +1217,7 @@ dhcp_multi_threading: DHCP_MULTI_THREADING {
 multi_threading_params: multi_threading_param
                       | multi_threading_params COMMA multi_threading_param
                       | multi_threading_params COMMA {
-                          ctx.warnAboutExtraCommas(@1);
+                          ctx.warnAboutExtraCommas(@2);
                           }
                       ;
 
@@ -1265,7 +1265,7 @@ hooks_libraries_list: %empty
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
     | not_empty_hooks_libraries_list COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -1292,7 +1292,7 @@ sub_hooks_library: LCURLY_BRACKET {
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             | hooks_params COMMA {
-                ctx.warnAboutExtraCommas(@1);
+                ctx.warnAboutExtraCommas(@2);
                 }
             | unknown_map_entry
             ;
@@ -1334,7 +1334,7 @@ expired_leases_processing: EXPIRED_LEASES_PROCESSING {
 expired_leases_params: expired_leases_param
                      | expired_leases_params COMMA expired_leases_param
                      | expired_leases_params COMMA {
-                         ctx.warnAboutExtraCommas(@1);
+                         ctx.warnAboutExtraCommas(@2);
                          }
                      ;
 
@@ -1406,7 +1406,7 @@ subnet6_list_content: %empty
 not_empty_subnet6_list: subnet6
                       | not_empty_subnet6_list COMMA subnet6
                       | not_empty_subnet6_list COMMA {
-                          ctx.warnAboutExtraCommas(@1);
+                          ctx.warnAboutExtraCommas(@2);
                           }
                       ;
 
@@ -1454,7 +1454,7 @@ sub_subnet6: LCURLY_BRACKET {
 subnet6_params: subnet6_param
               | subnet6_params COMMA subnet6_param
               | subnet6_params COMMA {
-                  ctx.warnAboutExtraCommas(@1);
+                  ctx.warnAboutExtraCommas(@2);
                   }
               ;
 
@@ -1617,7 +1617,7 @@ shared_networks_content: %empty
 shared_networks_list: shared_network
                     | shared_networks_list COMMA shared_network
                     | shared_networks_list COMMA {
-                        ctx.warnAboutExtraCommas(@1);
+                        ctx.warnAboutExtraCommas(@2);
                         }
                     ;
 
@@ -1632,7 +1632,7 @@ shared_network: LCURLY_BRACKET {
 shared_network_params: shared_network_param
                      | shared_network_params COMMA shared_network_param
                      | shared_network_params COMMA {
-                         ctx.warnAboutExtraCommas(@1);
+                         ctx.warnAboutExtraCommas(@2);
                          }
                      ;
 
@@ -1712,7 +1712,7 @@ option_def_list_content: %empty
 not_empty_option_def_list: option_def_entry
                          | not_empty_option_def_list COMMA option_def_entry
                          | not_empty_option_def_list COMMA {
-                             ctx.warnAboutExtraCommas(@1);
+                             ctx.warnAboutExtraCommas(@2);
                              }
                          ;
 
@@ -1754,7 +1754,7 @@ option_def_params: %empty
 not_empty_option_def_params: option_def_param
                            | not_empty_option_def_params COMMA option_def_param
                            | not_empty_option_def_params COMMA {
-                               ctx.warnAboutExtraCommas(@1);
+                               ctx.warnAboutExtraCommas(@2);
                                }
                            ;
 
@@ -1850,7 +1850,7 @@ option_data_list_content: %empty
 not_empty_option_data_list: option_data_entry
                           | not_empty_option_data_list COMMA option_data_entry
                           | not_empty_option_data_list COMMA {
-                              ctx.warnAboutExtraCommas(@1);
+                              ctx.warnAboutExtraCommas(@2);
                               }
                           ;
 
@@ -1889,7 +1889,7 @@ option_data_params: %empty
 not_empty_option_data_params: option_data_param
     | not_empty_option_data_params COMMA option_data_param
     | not_empty_option_data_params COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -1956,7 +1956,7 @@ pools_list_content: %empty
 not_empty_pools_list: pool_list_entry
                     | not_empty_pools_list COMMA pool_list_entry
                     | not_empty_pools_list COMMA {
-                        ctx.warnAboutExtraCommas(@1);
+                        ctx.warnAboutExtraCommas(@2);
                         }
                     ;
 
@@ -1983,7 +1983,7 @@ sub_pool6: LCURLY_BRACKET {
 pool_params: pool_param
            | pool_params COMMA pool_param
            | pool_params COMMA {
-               ctx.warnAboutExtraCommas(@1);
+               ctx.warnAboutExtraCommas(@2);
                }
            ;
 
@@ -2080,7 +2080,7 @@ pd_pools_list_content: %empty
 not_empty_pd_pools_list: pd_pool_entry
                        | not_empty_pd_pools_list COMMA pd_pool_entry
                        | not_empty_pd_pools_list COMMA {
-                           ctx.warnAboutExtraCommas(@1);
+                           ctx.warnAboutExtraCommas(@2);
                            }
                        ;
 
@@ -2111,7 +2111,7 @@ sub_pd_pool: LCURLY_BRACKET {
 pd_pool_params: pd_pool_param
               | pd_pool_params COMMA pd_pool_param
               | pd_pool_params COMMA {
-                  ctx.warnAboutExtraCommas(@1);
+                  ctx.warnAboutExtraCommas(@2);
                   }
               ;
 
@@ -2185,7 +2185,7 @@ reservations_list: %empty
 not_empty_reservations_list: reservation
                            | not_empty_reservations_list COMMA reservation
                            | not_empty_reservations_list COMMA {
-                               ctx.warnAboutExtraCommas(@1);
+                               ctx.warnAboutExtraCommas(@2);
                                }
                            ;
 
@@ -2214,7 +2214,7 @@ reservation_params: %empty
 not_empty_reservation_params: reservation_param
     | not_empty_reservation_params COMMA reservation_param
     | not_empty_reservation_params COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -2345,7 +2345,7 @@ client_classes: CLIENT_CLASSES {
 client_classes_list: client_class_entry
                    | client_classes_list COMMA client_class_entry
                    | client_classes_list COMMA {
-                       ctx.warnAboutExtraCommas(@1);
+                       ctx.warnAboutExtraCommas(@2);
                        }
                    ;
 
@@ -2366,7 +2366,7 @@ client_class_params: %empty
 not_empty_client_class_params: client_class_param
     | not_empty_client_class_params COMMA client_class_param
     | not_empty_client_class_params COMMA {
-        ctx.warnAboutExtraCommas(@1);
+        ctx.warnAboutExtraCommas(@2);
         }
     ;
 
@@ -2421,7 +2421,7 @@ server_id: SERVER_ID {
 server_id_params: server_id_param
                 | server_id_params COMMA server_id_param
                 | server_id_params COMMA {
-                    ctx.warnAboutExtraCommas(@1);
+                    ctx.warnAboutExtraCommas(@2);
                     }
                 ;
 
@@ -2500,7 +2500,7 @@ control_socket: CONTROL_SOCKET {
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      | control_socket_params COMMA {
-                         ctx.warnAboutExtraCommas(@1);
+                         ctx.warnAboutExtraCommas(@2);
                          }
                      ;
 
@@ -2548,7 +2548,7 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
 queue_control_params: queue_control_param
                     | queue_control_params COMMA queue_control_param
                     | queue_control_params COMMA {
-                        ctx.warnAboutExtraCommas(@1);
+                        ctx.warnAboutExtraCommas(@2);
                         }
                     ;
 
@@ -2617,7 +2617,7 @@ sub_dhcp_ddns: LCURLY_BRACKET {
 dhcp_ddns_params: dhcp_ddns_param
                 | dhcp_ddns_params COMMA dhcp_ddns_param
                 | dhcp_ddns_params COMMA {
-                    ctx.warnAboutExtraCommas(@1);
+                    ctx.warnAboutExtraCommas(@2);
                     }
                 ;
 
@@ -2796,7 +2796,7 @@ sub_config_control: LCURLY_BRACKET {
 config_control_params: config_control_param
                      | config_control_params COMMA config_control_param
                      | config_control_params COMMA {
-                         ctx.warnAboutExtraCommas(@1);
+                         ctx.warnAboutExtraCommas(@2);
                          }
                      ;
 
@@ -2840,7 +2840,7 @@ loggers: LOGGERS {
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                | loggers_entries COMMA {
-                   ctx.warnAboutExtraCommas(@1);
+                   ctx.warnAboutExtraCommas(@2);
                    }
                ;
 
@@ -2856,7 +2856,7 @@ logger_entry: LCURLY_BRACKET {
 logger_params: logger_param
              | logger_params COMMA logger_param
              | logger_params COMMA {
-                 ctx.warnAboutExtraCommas(@1);
+                 ctx.warnAboutExtraCommas(@2);
                  }
              ;
 
@@ -2898,7 +2898,7 @@ output_options_list: OUTPUT_OPTIONS {
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
                            | output_options_list_content COMMA {
-                               ctx.warnAboutExtraCommas(@1);
+                               ctx.warnAboutExtraCommas(@2);
                                }
                            ;
 
@@ -2913,7 +2913,7 @@ output_entry: LCURLY_BRACKET {
 output_params_list: output_params
                   | output_params_list COMMA output_params
                   | output_params_list COMMA {
-                      ctx.warnAboutExtraCommas(@1);
+                      ctx.warnAboutExtraCommas(@2);
                       }
                   ;
 
@@ -2974,7 +2974,7 @@ compatibility: COMPATIBILITY {
 compatibility_params: compatibility_param
                     | compatibility_params COMMA compatibility_param
                     | compatibility_params COMMA {
-                        ctx.warnAboutExtraCommas(@1);
+                        ctx.warnAboutExtraCommas(@2);
                         }
                     ;
 
