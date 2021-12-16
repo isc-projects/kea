@@ -35,7 +35,6 @@ using namespace std;
 #include <dhcp6/parser_context.h>
 }
 
-%code
 
 %define api.token.prefix {TOKEN_}
 // Tokens in an order which makes sense and related to the intended use.
