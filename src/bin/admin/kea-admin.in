@@ -62,7 +62,7 @@ COMMAND: Currently supported operations are:
  - db-version: Checks version of the existing database schema. Useful
  -             for checking database version when preparing for an upgrade.
  - db-upgrade: Upgrades your database schema.
- - lease-dump: Dumps current leases to a CSV file.
+ - lease-dump: Dumps current leases to a memfile-ready CSV file.
  - stats-recount: Recounts lease statistics.
 
 BACKEND - one of the supported backends: memfile|mysql|pgsql|cql
@@ -153,6 +153,9 @@ mysql_can_create() {
         exit 1
     fi
 
+    # shellcheck disable=SC2153
+    # SC2153: Possible misspelling: ... may not be assigned, but ... is.
+    # Reason for disable: OUTPUT is assigned in run_command.
     printf "MySQL Version is: %s\n" "${OUTPUT}"
 
     # SQL to drop our test table and trigger

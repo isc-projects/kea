@@ -1,0 +1,135 @@
+#!/bin/sh
+
+# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# shellcheck disable=SC1091
+# SC1091: Not following: ... was not specified as input (see shellcheck -x).
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+else
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+fi
+
+# Check version.
+version=$(mysql_version "${@}")
+if test "${version}" != "12.0"; then
+    printf 'This script upgrades 12.0 to 13.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
+    exit 0
+fi
+
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in "${@}"
+do
+    if ! printf '%s' "${arg}" | grep -Eq '^\-\-'
+    then
+        schema="$arg"
+        break
+    fi
+done
+
+# Make sure we have the schema.
+if [ -z "$schema" ]
+then
+    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
+    exit 255
+fi
+
+mysql "$@" <<EOF
+-- Create a procedure that separates groups of two hexadecimals
+-- with colons.
+DROP FUNCTION IF EXISTS colonSeparatedHex;
+DELIMITER $$
+CREATE FUNCTION colonSeparatedHex(hex VARCHAR(64))
+RETURNS VARCHAR(64)
+DETERMINISTIC
+BEGIN
+    DECLARE i INT;
+    DECLARE length INT;
+    DECLARE output VARCHAR(64);
+    SET i = 3;
+    SET length = LENGTH(hex);
+    SET output = SUBSTR(hex, 1, 2);
+    label: WHILE i < length DO
+        SET output = CONCAT(output, ':', SUBSTR(hex, i, 2));
+        SET i = i + 2;
+    END WHILE label;
+    SET output = LOWER(output);
+    RETURN output;
+END $$
+DELIMITER ;
+
+-- Modify the procedure to output a memfile-ready CSV file.
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+    SELECT
+        INET_NTOA(l.address),
+        IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+        IFNULL(colonSeparatedHex(HEX(l.client_id)), ''),
+        l.valid_lifetime,
+        UNIX_TIMESTAMP(l.expire),
+        l.subnet_id,
+        l.fqdn_fwd,
+        l.fqdn_rev,
+        l.hostname,
+        l.state,
+        IFNULL(l.user_context, '')
+    FROM
+        lease4 l
+    ORDER BY l.address;
+END $$
+DELIMITER ;
+
+-- Modify the procedure to output a memfile-ready CSV file.
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+    SELECT
+        l.address,
+        IFNULL(colonSeparatedHex(HEX(l.duid)), ''),
+        l.valid_lifetime,
+        UNIX_TIMESTAMP(l.expire),
+        l.subnet_id,
+        l.pref_lifetime,
+        l.lease_type,
+        l.iaid,
+        l.prefix_len,
+        l.fqdn_fwd,
+        l.fqdn_rev,
+        l.hostname,
+        IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
+        IFNULL(l.hwtype, ''),
+        IFNULL(h.name, ''),
+        l.state,
+        IFNULL(l.user_context, '')
+    FROM lease6 l
+        LEFT OUTER JOIN lease_hwaddr_source h ON l.hwaddr_source = h.hwaddr_source
+    ORDER BY l.address;
+END $$
+DELIMITER ;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '13', minor = '0';
+
+-- This line concludes database upgrade to version 13.
+EOF

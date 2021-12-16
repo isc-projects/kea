@@ -31,6 +31,7 @@ mysql_SCRIPTS += upgrade_009.5_to_009.6.sh
 mysql_SCRIPTS += upgrade_009.6_to_010.0.sh
 mysql_SCRIPTS += upgrade_010_to_011.sh
 mysql_SCRIPTS += upgrade_011_to_012.sh
+mysql_SCRIPTS += upgrade_012_to_013.sh
 mysql_SCRIPTS += wipe_data.sh
 
 DISTCLEANFILES = ${mysql_SCRIPTS}
