@@ -212,5 +212,10 @@ D2ParserContext::warning(const isc::d2::location& loc,
         .arg(msg.str());
 }
 
+void
+D2ParserContext::warnAboutExtraCommas(const isc::d2::location& loc) {
+    warning(loc, "Extraneous comma. A piece of configuration may have been omitted.");
+}
+
 }  // namespace d2
 }  // namespace isc

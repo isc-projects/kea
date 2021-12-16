@@ -36,12 +36,6 @@ using namespace std;
 }
 
 %code
-{
-template <typename ctx_t, typename location_t>
-void warnAboutExtraCommas(ctx_t& ctx, location_t& location) {
-    ctx.warning(location, "Extraneous comma. A piece of configuration may have been omitted.");
-}  // warnAboutExtraCommas
-}  // %code
 
 %define api.token.prefix {TOKEN_}
 // Tokens in an order which makes sense and related to the intended use.
@@ -362,8 +356,8 @@ not_empty_map: STRING COLON value {
                   ctx.stack_.back()->set($3, $5);
                   }
              | not_empty_map COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                 ctx.warnAboutExtraCommas(@1);
+                 }
              ;
 
 list_generic: LSQUARE_BRACKET {
@@ -386,8 +380,8 @@ not_empty_list: value {
                   ctx.stack_.back()->add($3);
                   }
               | not_empty_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                  ctx.warnAboutExtraCommas(@1);
+                  }
               ;
 
 // This one is used in syntax parser and is restricted to strings.
@@ -411,8 +405,8 @@ not_empty_list_strings: STRING {
                           ctx.stack_.back()->add(s);
                           }
                       | not_empty_list_strings COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                          ctx.warnAboutExtraCommas(@1);
+                          }
                       ;
 
 // ---- generic JSON parser ends here ----------------------------------
@@ -458,10 +452,12 @@ global_object: DHCP4 {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-             | global_object COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+             | global_object_comma
              ;
+
+global_object_comma: global_object COMMA {
+    ctx.warnAboutExtraCommas(@1);
+};
 
 // subparser: similar to the corresponding rule but without parent
 // so the stack is empty at the rule entry.
@@ -477,8 +473,8 @@ sub_dhcp4: LCURLY_BRACKET {
 global_params: global_param
              | global_params COMMA global_param
              | global_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                 ctx.warnAboutExtraCommas(@1);
+                 }
              ;
 
 // These are the parameters that are allowed in the top-level for
@@ -778,8 +774,8 @@ interfaces_config: INTERFACES_CONFIG {
 interfaces_config_params: interfaces_config_param
                         | interfaces_config_params COMMA interfaces_config_param
                         | interfaces_config_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                            ctx.warnAboutExtraCommas(@1);
+                            }
                         ;
 
 interfaces_config_param: interfaces_list
@@ -871,8 +867,8 @@ sanity_checks: SANITY_CHECKS {
 sanity_checks_params: sanity_checks_param
                     | sanity_checks_params COMMA sanity_checks_param
                     | sanity_checks_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                        ctx.warnAboutExtraCommas(@1);
+                        }
                     ;
 
 sanity_checks_param: lease_checks;
@@ -927,8 +923,8 @@ database_list: %empty
 not_empty_database_list: database
                        | not_empty_database_list COMMA database
                        | not_empty_database_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                           ctx.warnAboutExtraCommas(@1);
+                           }
                        ;
 
 database: LCURLY_BRACKET {
@@ -944,8 +940,8 @@ database: LCURLY_BRACKET {
 database_map_params: database_map_param
                    | database_map_params COMMA database_map_param
                    | database_map_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                       ctx.warnAboutExtraCommas(@1);
+                       }
                    ;
 
 database_map_param: database_type
@@ -1152,8 +1148,8 @@ host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
 host_reservation_identifiers_list: host_reservation_identifier
     | host_reservation_identifiers_list COMMA host_reservation_identifier
     | host_reservation_identifiers_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+        ctx.warnAboutExtraCommas(@1);
+        }
     ;
 
 host_reservation_identifier: duid_id
@@ -1206,8 +1202,8 @@ dhcp_multi_threading: DHCP_MULTI_THREADING {
 multi_threading_params: multi_threading_param
                       | multi_threading_params COMMA multi_threading_param
                       | multi_threading_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                          ctx.warnAboutExtraCommas(@1);
+                          }
                       ;
 
 multi_threading_param: enable_multi_threading
@@ -1254,8 +1250,8 @@ hooks_libraries_list: %empty
 not_empty_hooks_libraries_list: hooks_library
     | not_empty_hooks_libraries_list COMMA hooks_library
     | not_empty_hooks_libraries_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+        ctx.warnAboutExtraCommas(@1);
+        }
     ;
 
 hooks_library: LCURLY_BRACKET {
@@ -1281,8 +1277,8 @@ sub_hooks_library: LCURLY_BRACKET {
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             | hooks_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                ctx.warnAboutExtraCommas(@1);
+                }
             | unknown_map_entry
             ;
 
@@ -1323,8 +1319,8 @@ expired_leases_processing: EXPIRED_LEASES_PROCESSING {
 expired_leases_params: expired_leases_param
                      | expired_leases_params COMMA expired_leases_param
                      | expired_leases_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                         ctx.warnAboutExtraCommas(@1);
+                         }
                      ;
 
 expired_leases_param: reclaim_timer_wait_time
@@ -1395,8 +1391,8 @@ subnet4_list_content: %empty
 not_empty_subnet4_list: subnet4
                       | not_empty_subnet4_list COMMA subnet4
                       | not_empty_subnet4_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                          ctx.warnAboutExtraCommas(@1);
+                          }
                       ;
 
 // --- Subnet definitions -------------------------------
@@ -1443,8 +1439,8 @@ sub_subnet4: LCURLY_BRACKET {
 subnet4_params: subnet4_param
               | subnet4_params COMMA subnet4_param
               | subnet4_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                  ctx.warnAboutExtraCommas(@1);
+                  }
               ;
 
 // This defines a list of allowed parameters for each subnet.
@@ -1620,8 +1616,8 @@ shared_networks_content: %empty
 shared_networks_list: shared_network
                     | shared_networks_list COMMA shared_network
                     | shared_networks_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                        ctx.warnAboutExtraCommas(@1);
+                        }
                     ;
 
 shared_network: LCURLY_BRACKET {
@@ -1635,8 +1631,8 @@ shared_network: LCURLY_BRACKET {
 shared_network_params: shared_network_param
                      | shared_network_params COMMA shared_network_param
                      | shared_network_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                         ctx.warnAboutExtraCommas(@1);
+                         }
                      ;
 
 shared_network_param: name
@@ -1715,8 +1711,8 @@ option_def_list_content: %empty
 not_empty_option_def_list: option_def_entry
                          | not_empty_option_def_list COMMA option_def_entry
                          | not_empty_option_def_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                             ctx.warnAboutExtraCommas(@1);
+                             }
                          ;
 
 // This defines the content of a single entry { ... } within
@@ -1757,8 +1753,8 @@ option_def_params: %empty
 not_empty_option_def_params: option_def_param
                            | not_empty_option_def_params COMMA option_def_param
                            | not_empty_option_def_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                               ctx.warnAboutExtraCommas(@1);
+                               }
                            ;
 
 option_def_param: option_def_name
@@ -1853,8 +1849,8 @@ option_data_list_content: %empty
 not_empty_option_data_list: option_data_entry
                           | not_empty_option_data_list COMMA option_data_entry
                           | not_empty_option_data_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                              ctx.warnAboutExtraCommas(@1);
+                              }
                           ;
 
 // This defines th content of a single entry { ... } within
@@ -1892,8 +1888,8 @@ option_data_params: %empty
 not_empty_option_data_params: option_data_param
     | not_empty_option_data_params COMMA option_data_param
     | not_empty_option_data_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+        ctx.warnAboutExtraCommas(@1);
+        }
     ;
 
 // Each single option-data parameter can be one of the following
@@ -1959,8 +1955,8 @@ pools_list_content: %empty
 not_empty_pools_list: pool_list_entry
                     | not_empty_pools_list COMMA pool_list_entry
                     | not_empty_pools_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                        ctx.warnAboutExtraCommas(@1);
+                        }
                     ;
 
 pool_list_entry: LCURLY_BRACKET {
@@ -1986,8 +1982,8 @@ sub_pool4: LCURLY_BRACKET {
 pool_params: pool_param
            | pool_params COMMA pool_param
            | pool_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+               ctx.warnAboutExtraCommas(@1);
+               }
            ;
 
 pool_param: pool_entry
@@ -2081,8 +2077,8 @@ reservations_list: %empty
 not_empty_reservations_list: reservation
                            | not_empty_reservations_list COMMA reservation
                            | not_empty_reservations_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                               ctx.warnAboutExtraCommas(@1);
+                               }
                            ;
 
 reservation: LCURLY_BRACKET {
@@ -2110,8 +2106,8 @@ reservation_params: %empty
 not_empty_reservation_params: reservation_param
     | not_empty_reservation_params COMMA reservation_param
     | not_empty_reservation_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+        ctx.warnAboutExtraCommas(@1);
+        }
     ;
 
 /// @todo probably need to add mac-address as well here
@@ -2279,8 +2275,8 @@ client_classes: CLIENT_CLASSES {
 client_classes_list: client_class_entry
                    | client_classes_list COMMA client_class_entry
                    | client_classes_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                       ctx.warnAboutExtraCommas(@1);
+                       }
                    ;
 
 client_class_entry: LCURLY_BRACKET {
@@ -2300,8 +2296,8 @@ client_class_params: %empty
 not_empty_client_class_params: client_class_param
     | not_empty_client_class_params COMMA client_class_param
     | not_empty_client_class_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+        ctx.warnAboutExtraCommas(@1);
+        }
     ;
 
 client_class_param: client_class_name
@@ -2361,8 +2357,8 @@ control_socket: CONTROL_SOCKET {
 control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      | control_socket_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                          ctx.warnAboutExtraCommas(@1);
+                          }
                      ;
 
 control_socket_param: control_socket_type
@@ -2409,8 +2405,8 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
 queue_control_params: queue_control_param
                     | queue_control_params COMMA queue_control_param
                     | queue_control_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                        ctx.warnAboutExtraCommas(@1);
+                        }
                     ;
 
 queue_control_param: enable_queue
@@ -2478,8 +2474,8 @@ sub_dhcp_ddns: LCURLY_BRACKET {
 dhcp_ddns_params: dhcp_ddns_param
                 | dhcp_ddns_params COMMA dhcp_ddns_param
                 | dhcp_ddns_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                    ctx.warnAboutExtraCommas(@1);
+                    }
                 ;
 
 dhcp_ddns_param: enable_updates
@@ -2657,8 +2653,8 @@ sub_config_control: LCURLY_BRACKET {
 config_control_params: config_control_param
                      | config_control_params COMMA config_control_param
                      | config_control_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                         ctx.warnAboutExtraCommas(@1);
+                         }
                      ;
 
 // This defines a list of allowed parameters for each subnet.
@@ -2701,8 +2697,8 @@ loggers: LOGGERS {
 loggers_entries: logger_entry
                | loggers_entries COMMA logger_entry
                | loggers_entries COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                   ctx.warnAboutExtraCommas(@1);
+                   }
                ;
 
 // This defines a single entry defined in loggers.
@@ -2717,8 +2713,8 @@ logger_entry: LCURLY_BRACKET {
 logger_params: logger_param
              | logger_params COMMA logger_param
              | logger_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                 ctx.warnAboutExtraCommas(@1);
+                 }
              ;
 
 logger_param: name
@@ -2759,8 +2755,8 @@ output_options_list: OUTPUT_OPTIONS {
 output_options_list_content: output_entry
                            | output_options_list_content COMMA output_entry
                            | output_options_list_content COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                               ctx.warnAboutExtraCommas(@1);
+                               }
                            ;
 
 output_entry: LCURLY_BRACKET {
@@ -2774,8 +2770,8 @@ output_entry: LCURLY_BRACKET {
 output_params_list: output_params
                   | output_params_list COMMA output_params
                   | output_params_list COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                      ctx.warnAboutExtraCommas(@1);
+                      }
                   ;
 
 output_params: output
@@ -2835,8 +2831,8 @@ compatibility: COMPATIBILITY {
 compatibility_params: compatibility_param
                     | compatibility_params COMMA compatibility_param
                     | compatibility_params COMMA {
-    warnAboutExtraCommas(ctx, @1);
-}
+                        ctx.warnAboutExtraCommas(@1);
+                        }
                     ;
 
 compatibility_param: lenient_option_parsing

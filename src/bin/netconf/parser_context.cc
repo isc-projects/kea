@@ -191,5 +191,10 @@ ParserContext::warning(const isc::netconf::location& loc,
         .arg(msg.str());
 }
 
+void
+ParserContext::warnAboutExtraCommas(const isc::netconf::location& loc) {
+    warning(loc, "Extraneous comma. A piece of configuration may have been omitted.");
+}
+
 }  // namespace netconf
 }  // namespace isc

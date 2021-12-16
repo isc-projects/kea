@@ -195,5 +195,10 @@ ParserContext::warning(const isc::agent::location& loc,
         .arg(msg.str());
 }
 
+void
+ParserContext::warnAboutExtraCommas(const isc::agent::location& loc) {
+    warning(loc, "Extraneous comma. A piece of configuration may have been omitted.");
+}
+
 } // end of isc::eval namespace
 } // end of isc namespace

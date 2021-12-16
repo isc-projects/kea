@@ -235,5 +235,10 @@ Parser4Context::warning(const isc::dhcp::location& loc,
         .arg(msg.str());
 }
 
+void
+Parser4Context::warnAboutExtraCommas(const isc::dhcp::location& loc) {
+    warning(loc, "Extraneous comma. A piece of configuration may have been omitted.");
+}
+
 }  // namespace dhcp
 }  // namespace isc

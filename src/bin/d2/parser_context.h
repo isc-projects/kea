@@ -203,6 +203,13 @@ public:
     /// @throw ParseError
     void warning(const isc::d2::location& loc, const std::string& what);
 
+    /// @brief Warning for extra commas
+    ///
+    /// @param loc location within the parsed file of the extra comma
+    ///
+    /// @throw ParseError
+    void warnAboutExtraCommas(const isc::d2::location& loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
