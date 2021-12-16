@@ -247,6 +247,34 @@ mysql_upgrade_schema_to_version() {
     echo "Schema upgraded to $version"
 }
 
+mysql_upgrade_12_to_13() {
+    # Check the output of colonSeparatedHex().
+    run_command \
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF123456789));'
+    assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
+    assert_str_eq 'f1:23:45:67:89' "${OUTPUT}"
+
+    run_command \
+        mysql_execute 'SELECT colonSeparatedHex("");'
+    assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
+
+    run_command \
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF));'
+    assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
+    assert_str_eq '0f' "${OUTPUT}"
+
+    run_command \
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF1));'
+    assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
+    assert_str_eq 'f1' "${OUTPUT}"
+
+    run_command \
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF12));'
+    assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
+    assert_str_eq '0f:12' "${OUTPUT}"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -261,10 +289,14 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 12.0.
+    # Ok, we have a 1.0 database. Let's upgrade it to 13.0.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
+
+    # Verify upgraded schema reports version 13.0.
+    version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "13.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -885,9 +917,8 @@ SET @disable_audit = 0;"
     qry="SELECT COUNT(*) from dhcp6_options"
     run_statement "dhcp6_options count" "$qry" 0
 
-    # Verify upgraded schema reports version 12.0
-    version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "12.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    # Check upgrade from 12.0 to 13.0.
+    mysql_upgrade_12_to_13
 
     # Let's wipe the whole database
     mysql_wipe
@@ -943,7 +974,7 @@ insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.exam
     # Compare the dump output to reference file, they should be identical
     run_command \
         cmp -s "${output_file}" "${ref_file}"
-    assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d"
+    assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
     # remove the output file
     rm $output_file
@@ -1002,7 +1033,7 @@ insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'thre
     # Compare the dump output to reference file, they should be identical
     run_command \
         cmp -s "${output_file}" "${ref_file}"
-    assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d"
+    assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
     # remove the output file
     rm $output_file
