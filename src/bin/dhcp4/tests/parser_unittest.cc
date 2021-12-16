@@ -10,6 +10,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
@@ -876,8 +877,23 @@ TEST(ParserTest, duplicateMapEntries) {
     cout << "checked " << cnt << " duplicated map entries\n";
 }
 
+/// @brief Test fixture for trailing commas.
+class TrailingCommasTest : public isc::dhcp::test::LogContentTest {
+public:
+    /// @brief Add a log entry.
+    ///
+    /// @param loc Location of the trailing comma.
+    void addLog(const string& loc) {
+        string log = "DHCP4_CONFIG_SYNTAX_WARNING configuration syntax ";
+        log += "warning: " + loc;
+        log += ": Extraneous comma. ";
+        log += "A piece of configuration may have been omitted.";
+        addString(log);
+    }
+};      
+
 // Test that trailing commas are allowed.
-TEST(ParserTest, trailingCommas) {
+TEST_F(TrailingCommasTest, tests) {
     string txt(R"({
   "Dhcp4": {
     "control-socket": {
@@ -929,6 +945,24 @@ TEST(ParserTest, trailingCommas) {
   },
 })");
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
+
+    addLog("<string>:5.28");
+    addLog("<string>:9.63");
+    addLog("<string>:10.8");
+    addLog("<string>:14.15");
+    addLog("<string>:15.8");
+    addLog("<string>:20.24");
+    addLog("<string>:28.31");
+    addLog("<string>:29.12");
+    addLog("<string>:31.28");
+    addLog("<string>:32.8");
+    addLog("<string>:43.37");
+    addLog("<string>:44.12");
+    addLog("<string>:46.35");
+    addLog("<string>:47.8");
+    addLog("<string>:48.6");
+    addLog("<string>:49.4");
+    EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.
     boost::replace_all(txt, ",", ",,,,");

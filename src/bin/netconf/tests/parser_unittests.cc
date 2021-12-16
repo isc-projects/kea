@@ -11,6 +11,7 @@
 #include <netconf/parser_context.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
@@ -917,8 +918,23 @@ TEST(ParserTest, duplicateMapEntries) {
     cout << "checked " << cnt << " duplicated map entries\n";
 }
 
+/// @brief Test fixture for trailing commas.
+class TrailingCommasTest : public isc::dhcp::test::LogContentTest {
+public:
+    /// @brief Add a log entry.
+    ///
+    /// @param loc Location of the trailing comma.
+    void addLog(const string& loc) {
+      string log = "NETCONF_CONFIG_SYNTAX_WARNING Netconf ";
+        log += "configuration syntax warning: " + loc;
+        log += ": Extraneous comma. ";
+        log += "A piece of configuration may have been omitted.";
+        addString(log);
+    }
+};
+
 // Test that trailing commas are allowed.
-TEST(ParserTest, trailingCommas) {
+TEST_F(TrailingCommasTest, tests) {
     string txt(R"({
   "Netconf": {
     "boot-update": true,
@@ -950,6 +966,10 @@ TEST(ParserTest, trailingCommas) {
   },
 })");
     testParser(txt, ParserContext::PARSER_NETCONF, false);
+
+    addLog("<string>:7.16");
+    /// @todo
+    EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.
     boost::replace_all(txt, ",", ",,,,");

@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <testutils/io_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
@@ -857,8 +858,23 @@ TEST(ParserTest, duplicateMapEntries) {
     cout << "checked " << cnt << " duplicated map entries\n";
 }
 
+/// @brief Test fixture for trailing commas.
+class TrailingCommasTest : public isc::dhcp::test::LogContentTest {
+public:
+    /// @brief Add a log entry.
+    ///
+    /// @param loc Location of the trailing comma.
+    void addLog(const string& loc) {
+      string log = "CTRL_AGENT_CONFIG_SYNTAX_WARNING Control Agent ";
+        log += "configuration syntax warning: " + loc;
+        log += ": Extraneous comma. ";
+        log += "A piece of configuration may have been omitted.";
+        addString(log);
+    }
+};
+
 // Test that trailing commas are allowed.
-TEST(ParserTest, trailingCommas) {
+TEST_F(TrailingCommasTest, tests) {
     string txt(R"({
   "Control-agent": {
     "control-sockets": {
@@ -892,6 +908,18 @@ TEST(ParserTest, trailingCommas) {
   },
 })");
     testParser(txt, ParserContext::PARSER_AGENT, false);
+
+    addLog("<string>:6.30");
+    addLog("<string>:10.30");
+    addLog("<string>:14.30");
+    addLog("<string>:15.8");
+    addLog("<string>:25.31");
+    addLog("<string>:26.12");
+    addLog("<string>:28.28");
+    addLog("<string>:29.8");
+    addLog("<string>:30.6");
+    addLog("<string>:31.4");
+    EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.
     boost::replace_all(txt, ",", ",,,,");
