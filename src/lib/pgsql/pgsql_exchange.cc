@@ -17,6 +17,7 @@
 #include <vector>
 
 using namespace isc::util;
+using namespace isc::data;
 
 namespace isc {
 namespace db {
@@ -217,6 +218,17 @@ PsqlBindArray::addTimestamp() {
     addTempString(PgSqlExchange::convertToDatabaseTime(now));
 }
 
+void
+PsqlBindArray::add(const ElementPtr& value) {
+    if (!value) {
+        addNull();
+        return;
+    }
+
+    std::ostringstream ss;
+    value->toJSON(ss);
+    addTempString(ss.str());
+}
 
 std::string
 PsqlBindArray::toText() const {
@@ -373,6 +385,19 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
     std::string db_time_val;
     PgSqlExchange::getColumnValue(r, row, col, db_time_val );
     PgSqlExchange::convertFromDatabaseTime(db_time_val, value);
+}
+
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, ElementPtr& value) {
+    const char* data = getRawColumnValue(r, row, col);
+    try {
+        value = Element::fromJSON(data);
+    } catch (const std::exception& ex) {
+        isc_throw(DbOperationError, "Cannot convert data: " << data
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
+                  << " : " << ex.what());
+    }
 }
 
 isc::asiolink::IOAddress

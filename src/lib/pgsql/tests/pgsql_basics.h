@@ -52,6 +52,7 @@ public:
         VARCHAR_COL,
         INET_COL,
         FLOAT_COL,
+        JSON_COL,
         NUM_BASIC_COLS
     };
     /// @brief Constructor
@@ -81,6 +82,7 @@ public:
         expectedColNames_[VARCHAR_COL] = "varchar_col";
         expectedColNames_[INET_COL] = "inet_col";
         expectedColNames_[FLOAT_COL] = "float_col";
+        expectedColNames_[JSON_COL] = "json_col";
 
         destroySchema();
         createSchema();
@@ -129,7 +131,8 @@ public:
             "    timestamp_col TIMESTAMP WITH TIME ZONE, "
             "    varchar_col VARCHAR(255), "
             "    inet_col INET, "
-            "    float_col FLOAT "
+            "    float_col FLOAT, "
+            "    json_col JSON "
             "); ";
 
         PgSqlResult r(PQexec(*conn_, sql));
@@ -213,7 +216,7 @@ public:
             "   id, bool_col, bytea_col, bigint_col, smallint_col, "
             "   int_col, text_col,"
             "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
-            "   varchar_col, inet_col, float_col"
+            "   varchar_col, inet_col, float_col, json_col"
             " FROM basics";
 
         runSql(r, sql, PGRES_TUPLES_OK, line);

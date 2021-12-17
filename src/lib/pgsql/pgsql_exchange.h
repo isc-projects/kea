@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <database/database_connection.h>
+#include <cc/data.h>
 #include <util/triplet.h>
 #include <util/boost_time_utils.h>
 #include <exceptions/exceptions.h>
@@ -406,6 +407,15 @@ struct PsqlBindArray {
     /// Precision is seconds.
     void addTimestamp();
 
+    /// @brief Adds an ElementPtr to the bind array
+    ///
+    /// Adds a TEXT_FMT value to the end of the bind array containing
+    /// the JSON text output by given ElementPtr::toJSON().
+    ///
+    /// @param value ElementPtr containing Element tree to add.
+    /// @throw DbOperationError if value is NULL.
+    void add(const data::ElementPtr& value);
+
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
     std::string toText() const;
@@ -684,6 +694,17 @@ public:
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, boost::posix_time::ptime& value);
+
+    /// @brief Fetches a JSON column as an ElementPtr.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static void getColumnValue(const PgSqlResult& r, const int row,
+                               const size_t col, data::ElementPtr& value);
 
     /// @brief Converts a column in a row in a result set to a binary bytes
     ///

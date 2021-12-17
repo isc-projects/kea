@@ -20,6 +20,7 @@
 #include <vector>
 
 using namespace isc;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::util;
@@ -81,6 +82,22 @@ TEST(PsqlBindArray, addDataTest) {
 
         // Add an empty string.
         b.add(std::string(""));
+
+        // Add a v4 address.
+        asiolink::IOAddress addr4("192.168.1.1");
+        b.addInet4(addr4);
+
+        // Add a v6 address.
+        asiolink::IOAddress addr6("3001::1");
+        b.addInet6(addr6);
+
+        // Add a double.  Not sure how portably reliable this test will be.
+        double dbl = 2.0;
+        b.add(dbl);
+
+        // Add a JSON.
+        ElementPtr elems = Element::fromJSON("{ \"foo\": \"bar\" }");
+        b.add(elems);
     }
 
     // We've left bind scope, everything should be intact.
@@ -96,7 +113,11 @@ TEST(PsqlBindArray, addDataTest) {
         "8 : \"3221360418\"\n"
         "9 : \"3001::1\"\n"
         "10 : 0x0102030405060708090a\n"
-        "11 : empty\n";
+        "11 : empty\n"
+        "12 : \"192.168.1.1\"\n"
+        "13 : \"3001::1\"\n"
+        "14 : \"2\"\n"
+        "15 : \"{ \"foo\": \"bar\" }\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }
@@ -164,7 +185,6 @@ TEST(PsqlBindArray, addOptionalString) {
 
     EXPECT_EQ(expected, b.toText());
 }
-
 
 /// @brief Verifies the ability to add Optional booleans to
 /// the bind array.
@@ -1200,6 +1220,61 @@ TEST_F(PgSqlBasicsTest, floatTest) {
 
     // Verify the column is null.
     ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, FLOAT_COL));
+}
+
+/// @brief Verify that we can read and write JSON columns.
+TEST_F(PgSqlBasicsTest, jsonTest) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "json_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 1, { OID_TEXT }, st_name,
+          "INSERT INTO BASICS (json_col) values (cast($1 as json))" }
+    };
+
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[0]));
+
+    // Build our reference list of reference values
+    std::vector<ElementPtr>elem_ptrs;
+    ASSERT_NO_THROW_LOG(elem_ptrs.push_back(Element::fromJSON("{ \"one\":1 }")));
+    ASSERT_NO_THROW_LOG(elem_ptrs.push_back(Element::fromJSON("{ \"two\":\"two\" }")));
+
+    // Insert a row for each reference value
+    PsqlBindArrayPtr bind_array;
+    PgSqlResultPtr r;
+    for (int i = 0; i < elem_ptrs.size(); ++i) {
+        bind_array.reset(new PsqlBindArray());
+        bind_array->add(elem_ptrs[i]);
+        RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+    }
+
+    // Fetch the newly inserted rows.
+    FETCH_ROWS(r, elem_ptrs.size());
+
+    // Iterate over the rows, verifying each value against its reference
+    int row = 0;
+    for ( ; row  < elem_ptrs.size(); ++row ) {
+        // Verify the column is not null.
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, JSON_COL));
+
+        // Fetch and verify the column value
+        ElementPtr fetched_ptr;
+        ASSERT_NO_THROW_LOG(PgSqlExchange::getColumnValue(*r, row, JSON_COL, fetched_ptr));
+        EXPECT_TRUE(fetched_ptr->equals(*(elem_ptrs[row])));
+    }
+
+    // Clean out the table
+    WIPE_ROWS(r);
+
+    // Verify we can insert a NULL value.
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addNull();
+    RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Verify the column is null.
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, JSON_COL));
 }
 
 }; // namespace
