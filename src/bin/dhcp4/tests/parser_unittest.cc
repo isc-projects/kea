@@ -890,7 +890,7 @@ public:
         log += "A piece of configuration may have been omitted.";
         addString(log);
     }
-};      
+};
 
 // Test that trailing commas are allowed.
 TEST_F(TrailingCommasTest, tests) {

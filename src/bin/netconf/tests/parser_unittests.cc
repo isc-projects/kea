@@ -925,7 +925,7 @@ public:
     ///
     /// @param loc Location of the trailing comma.
     void addLog(const string& loc) {
-      string log = "NETCONF_CONFIG_SYNTAX_WARNING Netconf ";
+        string log = "NETCONF_CONFIG_SYNTAX_WARNING Netconf ";
         log += "configuration syntax warning: " + loc;
         log += ": Extraneous comma. ";
         log += "A piece of configuration may have been omitted.";
@@ -967,8 +967,15 @@ TEST_F(TrailingCommasTest, tests) {
 })");
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 
-    addLog("<string>:7.16");
-    /// @todo
+    addLog("<string>:8.25");
+    addLog("<string>:9.8");
+    addLog("<string>:15.32");
+    addLog("<string>:17.36");
+    addLog("<string>:22.32");
+    addLog("<string>:24.36");
+    addLog("<string>:25.8");
+    addLog("<string>:28.29");
+    addLog("<string>:29.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.

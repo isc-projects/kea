@@ -815,7 +815,7 @@ public:
     ///
     /// @param loc Location of the trailing comma.
     void addLog(const string& loc) {
-      string log = "DHCP_DDNS_CONFIG_SYNTAX_WARNING DHCP-DDNS server ";
+        string log = "DHCP_DDNS_CONFIG_SYNTAX_WARNING DHCP-DDNS server ";
         log += "configuration syntax warning: " + loc;
         log += ": Extraneous comma. ";
         log += "A piece of configuration may have been omitted.";
