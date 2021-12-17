@@ -1,4 +1,4 @@
-// File created from netconf_messages.mes
+// File created from ../../../src/bin/netconf/netconf_messages.mes
 
 #ifndef NETCONF_MESSAGES_H
 #define NETCONF_MESSAGES_H

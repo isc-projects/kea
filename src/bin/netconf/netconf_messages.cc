@@ -1,4 +1,4 @@
-// File created from netconf_messages.mes
+// File created from ../../../src/bin/netconf/netconf_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
