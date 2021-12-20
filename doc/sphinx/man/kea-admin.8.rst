@@ -44,12 +44,13 @@ Arguments
       Conducts a database schema upgrade. This is useful when upgrading Kea.
 
    ``lease-dump``
-      Dumps the contents of the lease database (for MySQL or PostgreSQL
-      backends) to a CSV (comma-separated values) text file. (Support for
-      the Cassandra backend has been deprecated.)
-      The first line of the file contains the column names. This is meant
-      to be used as a diagnostic tool, so it provides a portable,
-      human-readable form of the lease data.
+      Dumps the contents of the lease database (for MySQL or
+      PostgreSQL backends) to a CSV (comma-separated values) text file. (Support
+      for the Cassandra backend has been deprecated.)
+      The first line of the file contains the column names. This can be used
+      as a way to switch from a database backend to a memfile backend.
+      Alternatively, it can be used as a diagnostic tool, so it provides a portable
+      form of the lease data.
 
    ``stats-recount``
       Recounts lease statistics for a MySQL or PostgreSQL database.

@@ -60,11 +60,13 @@ currently supported commands are:
 -  ``db-upgrade`` — conducts a database schema upgrade. This is
    useful when upgrading Kea.
 
--  ``lease-dump`` — dumps the contents of the lease database (for MySQL,
-   PostgreSQL, or CQL backends) to a CSV (comma-separated values) text
-   file. The first line of the file contains the column names. This is
-   meant to be used as a diagnostic tool, so it provides a portable,
-   human-readable form of the lease data.
+-  ``lease-dump`` — dumps the contents of the lease database (for MySQL or
+   PostgreSQL backends) to a CSV (comma-separated values) text file. (Support
+   for the Cassandra backend has been deprecated.)
+   The first line of the file contains the column names. This can be used
+   as a way to switch from a database backend to a memfile backend.
+   Alternatively, it can be used as a diagnostic tool, so it provides a portable
+   form of the lease data.
 
 ``backend`` specifies the type of backend database. The currently
 supported types are:
