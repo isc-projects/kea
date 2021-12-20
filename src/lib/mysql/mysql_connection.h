@@ -704,7 +704,7 @@ public:
         return (tls_);
     }
 
-    /// @brief Get the TLS cipher
+    /// @brief Get the TLS cipher.
     ///
     /// This method is used to check if required TLS was setup.
     std::string getTlsCipher() {

@@ -55,10 +55,10 @@ std::string connectionString(const char* type, const char* name = 0,
                              const char* host = 0, const char* user = 0,
                              const char* password = 0, const char* timeout = 0,
                              const char* readonly_db = 0,
-			     const char* cert_file = 0,
-			     const char* key_file = 0,
-			     const char* trust_anchor = 0,
-			     const char* cipher = 0);
+                             const char* cert_file = 0,
+                             const char* key_file = 0,
+                             const char* trust_anchor = 0,
+                             const char* cipher = 0);
 
 /// @brief Determines if  wiping only the data between tests is enabled
 ///
@@ -66,8 +66,8 @@ std::string connectionString(const char* type, const char* name = 0,
 /// defined as "true" or if it is not present.
 bool softWipeEnabled();
 
-};
-};
-};
+}
+}
+}
 
 #endif

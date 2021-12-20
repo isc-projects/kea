@@ -83,6 +83,7 @@ run_benchmarks_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 if HAVE_MYSQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 
 if HAVE_PGSQL

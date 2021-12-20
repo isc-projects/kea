@@ -43,9 +43,9 @@ const char* VALID_CIPHER = "cipher-list=AES";
 
 string connectionString(const char* type, const char* name, const char* host,
                         const char* user, const char* password,
-			const char* timeout, const char* readonly_db,
-			const char* cert_file, const char* key_file,
-			const char* trust_anchor, const char* cipher) {
+                        const char* timeout, const char* readonly_db,
+                        const char* cert_file, const char* key_file,
+                        const char* trust_anchor, const char* cipher) {
     const string space = " ";
     string result = "";
 
@@ -136,6 +136,6 @@ softWipeEnabled() {
     return (true);
 }
 
-};
-};
-};
+}
+}
+}

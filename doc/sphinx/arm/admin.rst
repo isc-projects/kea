@@ -589,12 +589,12 @@ PostgreSQL without OpenSSL support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Usually the PostgreSQL database client library is built with the OpenSSL
-support but in the case it was not Kea can be configured to handle this
-case:
+support but Kea can be configured to handle the case where it is not
+supported:
 
 .. code-block:: console
 
-   $ ./configure [other-options] --disable-pgsql-ssl 
+   $ ./configure [other-options] --disable-pgsql-ssl
 
 .. _cql-database:
 

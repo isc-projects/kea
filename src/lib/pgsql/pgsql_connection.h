@@ -203,7 +203,7 @@ public:
     /// @brief Function invoked to process fetched row.
     typedef std::function<void(PgSqlResult&, int)> ConsumeResultRowFun;
 
-    /// @brief Emit once the TLS support warning.
+    /// @brief Emit the TLS support warning only once.
     static bool warned_about_tls;
 
     /// @brief Constructor

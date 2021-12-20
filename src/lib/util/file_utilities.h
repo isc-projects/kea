@@ -23,7 +23,7 @@ std::string getContent(const std::string& file_name);
 /// @brief Is a directory predicate.
 ///
 /// @param name The file or directory name.
-/// @return True if the name points to a directory, false if not including
+/// @return True if the name points to a directory, false otherwise including
 /// if the pointed location does not exist.
 bool isDir(const std::string& name);
 

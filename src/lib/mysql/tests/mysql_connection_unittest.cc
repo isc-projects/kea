@@ -658,7 +658,7 @@ TEST_F(MySqlSchemaTest, checkVersion) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief  Test fixture class for secure connection.
+/// @brief Test fixture class for secure connection.
 class MySqlSecureConnectionTest : public ::testing::Test {
 public:
 
@@ -666,7 +666,7 @@ public:
     bool hasMySQLTls() {
         std::string tls = getMySQLTlsEnv();
         if (tls.empty()) {
-            tls = getMySQLTlsEnv();
+            tls = getMySQLTlsServer();
         }
         return (tls == "YES");
     }
@@ -687,7 +687,7 @@ TEST_F(MySqlSecureConnectionTest, getMySQLTls) {
     try {
         std::cout << "getMySQLTlsServer returns '" << getMySQLTlsServer() << "'\n";
     } catch (const isc::Exception& ex) {
-        std::cerr << "getMySQLTlsServer fails with " <<      ex.what() << "\n";
+        std::cerr << "getMySQLTlsServer fails with " << ex.what() << "\n";
     }
 }
 

@@ -4,8 +4,8 @@
 	database parameters are "cert-file", "key-file",
 	"trust-anchor" and "cipher-list". The negotiated cipher
 	name is logged so the MySQL service configuration can
-	be checked... PostgreSQL accepts the same parameters
-	but they only trigger on a call to the OpenSSL generic
+	be checked. PostgreSQL accepts the same parameters
+	but they only trigger the call to the OpenSSL generic
 	initialization in the Pq C-API.
 	(Gitlab #34)
 

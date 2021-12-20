@@ -201,7 +201,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   section in the <a href="https://kea.readthedocs.io/">Kea Administrator
   Reference Manual</a>).
 
- @subsection mysqlUnitTestsILS MySQL Database with SSL/TLS
+ @subsection mysqlUnitTestsTLS MySQL Database with SSL/TLS
 
   Usually MySQL is compiled with SSL/TLS support using OpenSSL.
   This is easy to verify using the:

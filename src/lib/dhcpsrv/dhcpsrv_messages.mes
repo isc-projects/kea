@@ -1218,7 +1218,7 @@ This message is issued only once.
 
 % DHCPSRV_PGSQL_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
 This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature was disabled for PostgreSQL.
+configuration: Kea was built with this feature disabled for PostgreSQL.
 The parameters of the connection are logged.
 
 % DHCPSRV_PGSQL_ROLLBACK rolling back PostgreSQL database

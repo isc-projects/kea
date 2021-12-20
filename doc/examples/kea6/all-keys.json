@@ -287,9 +287,9 @@
                 "cert-file": "my-cert",
 
                 // Private key file name.
-                "key-file": "my key",
+                "key-file": "my-key",
 
-                // Cipher list (see the OpenSSL ciohers command manual).
+                // Cipher list (see the OpenSSL ciphers command manual).
                 "cipher-list": "AES"
             },
             {
