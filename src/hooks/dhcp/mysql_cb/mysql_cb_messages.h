@@ -187,6 +187,7 @@ extern const isc::log::MessageID MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID;
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE4;
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE6;
 extern const isc::log::MessageID MYSQL_CB_INIT_OK;
+extern const isc::log::MessageID MYSQL_CB_NO_TLS;
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED4;
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED6;
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4;
@@ -195,6 +196,7 @@ extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED4;
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED6;
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE4;
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE6;
+extern const isc::log::MessageID MYSQL_CB_TLS_CIPHER;
 extern const isc::log::MessageID MYSQL_CB_UNREGISTER_BACKEND_TYPE4;
 extern const isc::log::MessageID MYSQL_CB_UNREGISTER_BACKEND_TYPE6;
 

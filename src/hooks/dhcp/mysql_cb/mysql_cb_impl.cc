@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <mysql_cb_impl.h>
+#include <mysql_cb_log.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
@@ -19,6 +20,7 @@ using namespace isc::asiolink;
 using namespace isc::cb;
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::log;
 using namespace isc::util;
 
 namespace isc {
@@ -65,6 +67,18 @@ MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
 
     // Open the database.
     conn_.openDatabase();
+
+    // Check if we have TLS when we required it.
+    if (conn_.getTls()) {
+        std::string cipher = conn_.getTlsCipher();
+        if (cipher.empty()) {
+            LOG_ERROR(mysql_cb_logger, MYSQL_CB_NO_TLS);
+        } else {
+            LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC,
+                      MYSQL_CB_TLS_CIPHER)
+                .arg(cipher);
+        }
+    }
 }
 
 MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {

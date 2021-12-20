@@ -547,6 +547,10 @@ Debug message issued when triggered an action to retrieve type
 This informational message indicates that the MySQL Configuration Backend hooks
 library has been loaded successfully.
 
+% MYSQL_CB_NO_TLS TLS was required but is not used
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
 % MYSQL_CB_RECONNECT_ATTEMPT_FAILED4 database reconnect failed: %1
 Error message issued when an attempt to reconnect has failed.
 
@@ -576,6 +580,10 @@ Debug message issued when triggered an action to register backend
 
 % MYSQL_CB_REGISTER_BACKEND_TYPE6 register backend
 Debug message issued when triggered an action to register backend
+
+% MYSQL_CB_TLS_CIPHER TLS cipher: %1
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
 
 % MYSQL_CB_UNREGISTER_BACKEND_TYPE4 unregister backend
 Debug message issued when triggered an action to unregister backend

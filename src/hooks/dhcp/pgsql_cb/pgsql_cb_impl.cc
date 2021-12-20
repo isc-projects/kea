@@ -12,7 +12,8 @@
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
 
-#include "pgsql_cb_impl.h"
+#include <pgsql_cb_impl.h>
+#include <pgsql_cb_log.h>
 #include <cstdint>
 #include <utility>
 
@@ -49,6 +50,28 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::Paramet
             IOServiceAccessorPtr(new IOServiceAccessor(PgSqlConfigBackendImpl::getIOService)),
             db_reconnect_callback),
       timer_name_(""), audit_revision_created_(false), parameters_(parameters) {
+
+    // Check TLS support.
+    size_t tls(0);
+    tls += parameters.count("trust-anchor");
+    tls += parameters.count("cert-file");
+    tls += parameters.count("key-file");
+    tls += parameters.count("cipher-list");
+#ifdef HAVE_PGSQL_SSL
+    if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
+        PgSqlConnection::warned_about_tls = true;
+        LOG_INFO(pgsql_cb_logger, PGSQL_CB_TLS_SUPPORT)
+            .arg(DatabaseConnection::redactedAccessString(parameters);
+        PQinitSSL(1);
+    }
+#else
+    if (tls > 0) {
+        LOG_ERROR(pgsql_cb_logger, PGSQL_CB_NO_TLS_SUPPORT)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
+                  << "backend (built with this feature disabled)");
+    }
+#endif
 
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);

@@ -487,6 +487,11 @@ Debug message issued when triggered an action to retrieve type
 This informational message indicates that the Postgres Configuration Backend hooks
 library has been loaded successfully.
 
+% PGSQL_CB_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
 % PGSQL_CB_RECONNECT_ATTEMPT_FAILED4 database reconnect failed: %1
 Error message issued when an attempt to reconnect has failed.
 
@@ -516,6 +521,12 @@ Debug message issued when triggered an action to register backend
 
 % PGSQL_CB_REGISTER_BACKEND_TYPE6 register backend
 Debug message issued when triggered an action to register backend
+
+% PGSQL_CB_TLS_SUPPORT Attempt to configure TLS: %1
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
 
 % PGSQL_CB_UNREGISTER_BACKEND_TYPE4 unregister backend
 Debug message issued when triggered an action to unregister backend

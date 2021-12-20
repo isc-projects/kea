@@ -186,6 +186,7 @@ extern const isc::log::MessageID MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID = "MYSQL_CB_G
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE4 = "MYSQL_CB_GET_TYPE4";
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE6 = "MYSQL_CB_GET_TYPE6";
 extern const isc::log::MessageID MYSQL_CB_INIT_OK = "MYSQL_CB_INIT_OK";
+extern const isc::log::MessageID MYSQL_CB_NO_TLS = "MYSQL_CB_NO_TLS";
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED4 = "MYSQL_CB_RECONNECT_ATTEMPT_FAILED4";
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED6 = "MYSQL_CB_RECONNECT_ATTEMPT_FAILED6";
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4 = "MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4";
@@ -194,6 +195,7 @@ extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED4 = "MYSQL_CB_RECONNEC
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_FAILED6 = "MYSQL_CB_RECONNECT_FAILED6";
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE4 = "MYSQL_CB_REGISTER_BACKEND_TYPE4";
 extern const isc::log::MessageID MYSQL_CB_REGISTER_BACKEND_TYPE6 = "MYSQL_CB_REGISTER_BACKEND_TYPE6";
+extern const isc::log::MessageID MYSQL_CB_TLS_CIPHER = "MYSQL_CB_TLS_CIPHER";
 extern const isc::log::MessageID MYSQL_CB_UNREGISTER_BACKEND_TYPE4 = "MYSQL_CB_UNREGISTER_BACKEND_TYPE4";
 extern const isc::log::MessageID MYSQL_CB_UNREGISTER_BACKEND_TYPE6 = "MYSQL_CB_UNREGISTER_BACKEND_TYPE6";
 
@@ -382,6 +384,7 @@ const char* values[] = {
     "MYSQL_CB_GET_TYPE4", "get type",
     "MYSQL_CB_GET_TYPE6", "get type",
     "MYSQL_CB_INIT_OK", "loading MYSQL CB hooks library successful",
+    "MYSQL_CB_NO_TLS", "TLS was required but is not used",
     "MYSQL_CB_RECONNECT_ATTEMPT_FAILED4", "database reconnect failed: %1",
     "MYSQL_CB_RECONNECT_ATTEMPT_FAILED6", "database reconnect failed: %1",
     "MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4", "scheduling attempt %1 of %2 in %3 milliseconds",
@@ -390,6 +393,7 @@ const char* values[] = {
     "MYSQL_CB_RECONNECT_FAILED6", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "MYSQL_CB_REGISTER_BACKEND_TYPE4", "register backend",
     "MYSQL_CB_REGISTER_BACKEND_TYPE6", "register backend",
+    "MYSQL_CB_TLS_CIPHER", "TLS cipher: %1",
     "MYSQL_CB_UNREGISTER_BACKEND_TYPE4", "unregister backend",
     "MYSQL_CB_UNREGISTER_BACKEND_TYPE6", "unregister backend",
     NULL

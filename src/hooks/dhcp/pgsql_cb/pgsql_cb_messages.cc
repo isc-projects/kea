@@ -166,6 +166,7 @@ extern const isc::log::MessageID PGSQL_CB_GET_SUBNET6_BY_SUBNET_ID = "PGSQL_CB_G
 extern const isc::log::MessageID PGSQL_CB_GET_TYPE4 = "PGSQL_CB_GET_TYPE4";
 extern const isc::log::MessageID PGSQL_CB_GET_TYPE6 = "PGSQL_CB_GET_TYPE6";
 extern const isc::log::MessageID PGSQL_CB_INIT_OK = "PGSQL_CB_INIT_OK";
+extern const isc::log::MessageID PGSQL_CB_NO_TLS_SUPPORT = "PGSQL_CB_NO_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_ATTEMPT_FAILED4 = "PGSQL_CB_RECONNECT_ATTEMPT_FAILED4";
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_ATTEMPT_FAILED6 = "PGSQL_CB_RECONNECT_ATTEMPT_FAILED6";
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4 = "PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4";
@@ -174,6 +175,7 @@ extern const isc::log::MessageID PGSQL_CB_RECONNECT_FAILED4 = "PGSQL_CB_RECONNEC
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_FAILED6 = "PGSQL_CB_RECONNECT_FAILED6";
 extern const isc::log::MessageID PGSQL_CB_REGISTER_BACKEND_TYPE4 = "PGSQL_CB_REGISTER_BACKEND_TYPE4";
 extern const isc::log::MessageID PGSQL_CB_REGISTER_BACKEND_TYPE6 = "PGSQL_CB_REGISTER_BACKEND_TYPE6";
+extern const isc::log::MessageID PGSQL_CB_TLS_SUPPORT = "PGSQL_CB_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_CB_UNREGISTER_BACKEND_TYPE4 = "PGSQL_CB_UNREGISTER_BACKEND_TYPE4";
 extern const isc::log::MessageID PGSQL_CB_UNREGISTER_BACKEND_TYPE6 = "PGSQL_CB_UNREGISTER_BACKEND_TYPE6";
 
@@ -342,6 +344,7 @@ const char* values[] = {
     "PGSQL_CB_GET_TYPE4", "get type",
     "PGSQL_CB_GET_TYPE6", "get type",
     "PGSQL_CB_INIT_OK", "loading Postgres CB hooks library successful",
+    "PGSQL_CB_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "PGSQL_CB_RECONNECT_ATTEMPT_FAILED4", "database reconnect failed: %1",
     "PGSQL_CB_RECONNECT_ATTEMPT_FAILED6", "database reconnect failed: %1",
     "PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4", "scheduling attempt %1 of %2 in %3 milliseconds",
@@ -350,6 +353,7 @@ const char* values[] = {
     "PGSQL_CB_RECONNECT_FAILED6", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "PGSQL_CB_REGISTER_BACKEND_TYPE4", "register backend",
     "PGSQL_CB_REGISTER_BACKEND_TYPE6", "register backend",
+    "PGSQL_CB_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "PGSQL_CB_UNREGISTER_BACKEND_TYPE4", "unregister backend",
     "PGSQL_CB_UNREGISTER_BACKEND_TYPE6", "unregister backend",
     NULL
