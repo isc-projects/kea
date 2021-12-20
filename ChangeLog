@@ -1,3 +1,8 @@
+1980.	[func]		andrei
+	The output of the lease-dump command of kea-admin can now be used
+	as a CSV lease file.
+	(Gitlab #2038)
+
 1979.	[bug]		fdupont
 	Update and delete operations on leases no longer raise
 	an error with infinite valid lifetime (used by BOOTP)
