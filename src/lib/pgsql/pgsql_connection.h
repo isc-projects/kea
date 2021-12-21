@@ -276,8 +276,8 @@ public:
     /// by calling @c commit() or rolled back by calling @c rollback().
     ///
     /// PostgreSQL does not support nested transactions directly. Issuing a
-    /// START TRANSACTION while already in a transaction will cause a warning to 
-    /// be emitted but otherwise does not alter the state of the current transaction. 
+    /// START TRANSACTION while already in a transaction will cause a warning to
+    /// be emitted but otherwise does not alter the state of the current transaction.
     /// In other words, the transaction will still end upon the next COMMIT or
     /// ROLLBACK statement.
     ///
@@ -455,8 +455,8 @@ public:
     /// @brief Reference counter for transactions.
     ///
     /// It precludes starting and committing nested transactions. PostgreSQL
-    /// logs but ignores START TRANSACTIONs (or BEGINs) issued from within an 
-    /// ongoing transaction. We do not want to start new transactions when one 
+    /// logs but ignores START TRANSACTIONs (or BEGINs) issued from within an
+    /// ongoing transaction. We do not want to start new transactions when one
     /// is already in progress.
     int transaction_ref_count_;
 };
