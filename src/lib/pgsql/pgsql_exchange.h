@@ -49,10 +49,10 @@ class PgSqlResult : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
-    /// Store the pointer to the result set to being fetched.  Set row
-    /// and column counts for convenience.
+    /// Store the pointer to the fetched result set.  Set row and column
+    /// counts for convenience.
     ///
-    /// @param result - pointer to the Postgresql client layer result
+    /// @param result pointer to the Postgresql client layer result
     /// If the value of is NULL, row and col values will be set to -1.
     /// This allows PgSqlResult to be passed into statement error
     /// checking.

@@ -280,7 +280,7 @@ TEST(PsqlBindArray, addOptionalInet4) {
     EXPECT_EQ(expected, b.toText());
 }
 
-/// @brief Verifies the ability to add Optional IPv6 addresses to
+/// @brief Verifies the ability to add optional IPv6 addresses to
 /// the bind array.
 TEST(PsqlBindArray, addOptionalInet6) {
 

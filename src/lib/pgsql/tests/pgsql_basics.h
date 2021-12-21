@@ -159,7 +159,7 @@ public:
     /// statement separated by semicolons.
     /// @param exp_outcome expected status value returned with within the
     /// result set such as PGRES_COMMAND_OK, PGRES_TUPLES_OK.
-    /// @lineno line number from where the call was invoked
+    /// @param lineno line number from where the call was invoked
     ///
     /// Asserts if the result set status does not equal the expected outcome.
     void runSql(PgSqlResultPtr& r, const std::string& sql, int exp_outcome,
@@ -180,7 +180,7 @@ public:
     /// along with the statement
     /// @param exp_outcome expected status value returned with within the
     /// result set such as PGRES_COMMAND_OK, PGRES_TUPLES_OK.
-    /// @lineno line number from where the call was invoked
+    /// @param lineno line number from where the call was invoked
     ///
     /// Asserts if the result set status does not equal the expected outcome.
     void runPreparedStatement(PgSqlResultPtr& r,
@@ -207,7 +207,7 @@ public:
     /// @param r pointer which will contain the result set returned by the
     /// statement's execution.
     /// @param exp_rows expected number of rows fetched. (This can be 0).
-    /// @lineno line number from where the call was invoked
+    /// @param lineno line number from where the call was invoked
     ///
     /// Asserts if the result set status does not equal the expected outcome.
     void fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {

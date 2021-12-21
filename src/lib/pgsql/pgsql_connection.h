@@ -346,13 +346,13 @@ public:
 
     /// @brief Executes SELECT query using prepared statement.
     ///
-    /// The statement parameter refer to an existing prepared statement
+    /// The statement parameter refers to an existing prepared statement
     /// associated with the connection. The @c in_bindings size must match
     /// the number of placeholders in the prepared statement.
     ///
     /// This method executes prepared statement using provided input bindings and
     /// calls @c process_result_row function for each returned row. The
-    /// @c process_result function is implemented by the caller and should
+    /// @c process_result_row function is implemented by the caller and should
     /// gather and store each returned row in an external data structure prior.
     ///
     /// @param statement reference to the precompiled tagged statement to execute

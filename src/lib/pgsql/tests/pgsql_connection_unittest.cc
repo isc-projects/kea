@@ -72,11 +72,11 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
 
 }
 
-/// @brief Test fixture for excercising higher order PgSqlConnection functions
+/// @brief Test fixture for exercising higher order PgSqlConnection functions
 /// selectQuery, insertQuery, updateDeleteQuery.  These tests only use two of
 /// the columns in the BASICS table: int_col and text_col.  Inserting rows with
 /// varying types and values are tested above.  These tests focus on the higher
-/// order fucntion mechanics.
+/// order function mechanics.
 class PgSqlConnectionTest : public PgSqlBasicsTest {
 public: /// @brief Indexes of prepared statements used within the tests.
     enum StatementIndex {
@@ -208,7 +208,7 @@ public: /// @brief Indexes of prepared statements used within the tests.
             // Fetch the text_col value.
             PgSqlExchange::getColumnValue(r, row, 1, fetched_row.text_col);
 
-            // Add the fecthed row into set of fetched rows.
+            // Add the fetched row into set of fetched rows.
             fetched_rows.push_back(fetched_row);
         });
 
@@ -249,11 +249,11 @@ public: /// @brief Indexes of prepared statements used within the tests.
     /// an inclusive range.
     ///
     /// @param begin_int beginning of the range to include.
-    /// @param end_int end fo the range to include.
+    /// @param end_int end of the range to include.
     /// @param expected_delete_count number of rows of data we expect to be
     /// deleted.
     void testDelete(const int begin_int, const int end_int, size_t expected_delete_count) {
-        // Set the where clause parameters to the desired ragne values.
+        // Set the where clause parameters to the desired range values.
         PsqlBindArray in_bindings;
         in_bindings.add(begin_int);
         in_bindings.add(end_int);
