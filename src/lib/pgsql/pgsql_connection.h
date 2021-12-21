@@ -455,9 +455,9 @@ public:
     /// @brief Reference counter for transactions.
     ///
     /// It precludes starting and committing nested transactions. PostgreSQL
-    /// logs but ignores BEGINs issued from within an ongoing transaction.
-    /// We do not want to start new transactions when one is already
-    /// in progress.
+    /// logs but ignores START TRANSACTIONs (or BEGINs) issued from within an 
+    /// ongoing transaction. We do not want to start new transactions when one 
+    /// is already in progress.
     int transaction_ref_count_;
 };
 
