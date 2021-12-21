@@ -21,6 +21,7 @@ pgsql_SCRIPTS += upgrade_5.1_to_6.0.sh
 pgsql_SCRIPTS += upgrade_6.0_to_6.1.sh
 pgsql_SCRIPTS += upgrade_6.1_to_6.2.sh
 pgsql_SCRIPTS += upgrade_6.2_to_7.0.sh
+pgsql_SCRIPTS += upgrade_7.0_to_8.0.sh
 pgsql_SCRIPTS += wipe_data.sh
 
 DISTCLEANFILES = ${pgsql_SCRIPTS}

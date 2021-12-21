@@ -3795,6 +3795,48 @@ UPDATE schema_version
 
 -- Schema 7.0 specification ends here.
 
+-- -----------------------------------------------------------------------
+-- Extend the table holding DHCPv4 option definitions with a nullable
+-- column matching option defintions with client classes.
+-- -----------------------------------------------------------------------
+ALTER TABLE dhcp4_option_def
+    ADD COLUMN class_id BIGINT NULL DEFAULT NULL;
+
+ALTER TABLE dhcp4_option_def
+  ADD CONSTRAINT fk_dhcp4_option_def_client_class_id
+    FOREIGN KEY (class_id)
+    REFERENCES dhcp4_client_class (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+-- -----------------------------------------------------------------------
+-- Extend the table holding DHCPv6 option definitions with a nullable
+-- column matching option defintions with client classes.
+-- -----------------------------------------------------------------------
+ALTER TABLE dhcp6_option_def
+    ADD COLUMN class_id BIGINT NULL DEFAULT NULL;
+
+ALTER TABLE dhcp6_option_def
+  ADD CONSTRAINT fk_dhcp6_option_def_client_class_id
+    FOREIGN KEY (class_id)
+    REFERENCES dhcp6_client_class (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+-- -----------------------------------------------------------------------
+-- Add missing preferred_lifetime columns to dhcp6_client_class table.
+-- -----------------------------------------------------------------------
+ALTER TABLE dhcp6_client_class
+    ADD COLUMN preferred_lifetime BIGINT DEFAULT NULL,
+    ADD COLUMN min_preferred_lifetime BIGINT DEFAULT NULL,
+    ADD COLUMN max_preferred_lifetime BIGINT DEFAULT NULL;
+
+-- Update the schema version number
+UPDATE schema_version
+    SET version = '8', minor = '0';
+
+-- Schema 8.0 specification ends here.
+
 -- Commit the script transaction
 COMMIT;
 

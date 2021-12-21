@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "8.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -289,20 +289,12 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
 }
 
 pgsql_upgrade_6_2_to_7_0() {
-    # Verify upgraded schema reports version 7.0.
-    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
-
     # dhcp4_server should have a single entry for 'all'
     select_sql="SELECT id, tag, description, modification_ts from dhcp4_server where id = 1 and tag = 'all';"
     run_command \
         pgsql_execute "$select_sql"
 
     assert_eq 0 "${EXIT_CODE}" "the dhcp4_server table is broken or missing. (expected status code %d, returned %d)"
-
-    # Verify upgraded schema reports version 7.0.
-    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # dhcp6_server should have a single entry for 'all'
     select_sql="SELECT id, tag, description, modification_ts from dhcp6_server where id = 1 and tag = 'all';"
@@ -329,6 +321,26 @@ select get_session_big_int('kea.bigint'); \
     assert_eq 0 "${EXIT_CODE}" "session variable handling broken. (expected status code %d, returned %d)"
     clean_out=$(echo "${OUTPUT}" | tr '\n' ' ')
     assert_str_eq "  booya f  t 0  1984 "  "${clean_out}" "session variable output incorrect"
+}
+
+pgsql_upgrade_7_0_to_8_0() {
+    run_command \
+        pgsql_execute "$session_sql"
+
+    # Added class_id to dhcp4_option_def
+    run_command \
+        pgsql_execute "select class_id from dhcp4_option_def;"
+    assert_eq 0 "${EXIT_CODE}" "dhcp4_option_def is missing class_id column. (expected status code %d, returned %d)"
+
+    # Added class_id to dhcp6_option_def
+    run_command \
+        pgsql_execute "select class_id from dhcp6_option_def;"
+    assert_eq 0 "${EXIT_CODE}" "dhcp6_option_def is missing class_id column. (expected status code %d, returned %d)"
+
+    # Added preferred lifetime columns to dhcp6_client_class.
+    run_command \
+        pgsql_execute "select preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime from dhcp6_client_class;"
+    assert_eq 0 "${EXIT_CODE}" "dhcp6_client_class is missing preferred lifetime column(s). (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {
@@ -360,6 +372,13 @@ pgsql_upgrade_test() {
 
     # Check 6.2 to 7.0 upgrade
     pgsql_upgrade_6_2_to_7_0
+
+    # Check 7.0 to 8.0 upgrade
+    pgsql_upgrade_7_0_to_8_0
+
+    # Verify upgraded schema reports version 8.0.
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "8.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
