@@ -269,12 +269,6 @@ public:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
-    /// @brief Start a transaction
-    ///
-    /// Starts a transaction.
-    ///
-    /// @throw DbOperationError If the transaction start failed.
-
     /// @brief Starts new transaction
     ///
     /// This function begins a new transaction by sending the START TRANSACTION
@@ -282,9 +276,9 @@ public:
     /// by calling @c commit() or rolled back by calling @c rollback().
     ///
     /// PostgreSQL does not support nested transactions directly. Issuing a
-    /// BEGIN while already in a transaction will a warning to be emitted but
-    /// otherwise does not alter that state of the current transaction. In
-    /// other words, the transaction will still end upon the next COMMIT or
+    /// START TRANSACTION while already in a transaction will cause a warning to 
+    /// be emitted but otherwise does not alter the state of the current transaction. 
+    /// In other words, the transaction will still end upon the next COMMIT or
     /// ROLLBACK statement.
     ///
     /// Therefore, this function checks if a transaction has already started and

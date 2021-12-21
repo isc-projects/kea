@@ -517,7 +517,7 @@ public:
     /// @brief Converts time stamp from the database to a time_t
     ///
     /// We're fetching timestamps as an integer string of seconds since the
-    /// epoch.  This method converts such a string int a time_t.
+    /// epoch.  This method converts such a string to a time_t.
     ///
     /// @param db_time_val timestamp to be converted.  This value
     /// is expected to be the number of seconds since the epoch

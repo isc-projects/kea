@@ -78,7 +78,7 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
 /// varying types and values are tested above.  These tests focus on the higher
 /// order function mechanics.
 class PgSqlConnectionTest : public PgSqlBasicsTest {
-public: 
+public:
 
     /// @brief Indexes of prepared statements used within the tests.
     enum StatementIndex {
