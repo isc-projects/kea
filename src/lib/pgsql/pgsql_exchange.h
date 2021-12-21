@@ -31,12 +31,12 @@ namespace db {
 /// @brief RAII wrapper for PostgreSQL Result sets
 ///
 /// When a Postgresql statement is executed, the results are returned
-/// in pointer allocated structure, PGresult*. Data and status information
+/// in a pointer allocated structure, PGresult*. Data and status information
 /// are accessed via calls to functions such as PQgetvalue() which require
 /// the results pointer.  In order to ensure this structure is freed, any
-/// invocation of Psql function which returns a PGresult* (e.g. PQexec and
-
-/// class. Examples:
+/// invocation of Psql function which returns a PGresult* (e.g. PQexec,
+/// PQExecPrepared, ...) must save the result to an instance of this
+/// class. Example:
 /// {{{
 ///       PgSqlResult r(PQexec(conn_, "ROLLBACK"));
 /// }}}
@@ -528,7 +528,7 @@ public:
     /// @brief Converts time stamp from the database to a boost::posix::ptime
     ///
     /// We're fetching timestamps as an integer string of seconds since the
-    /// epoch.  This method converts such a string int a time_t.
+    /// epoch. This method converts such a string to a boost::posix_time::ptime.
     ///
     /// @param db_time_val timestamp to be converted.  This value
     /// is expected to be the number of seconds since the epoch

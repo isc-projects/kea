@@ -18,7 +18,7 @@ TESTS =
 if HAVE_GTEST
 TESTS += libpgsql_unittests
 
-libpgsql_unittests_SOURCES  = pgsql_basics.h
+libpgsql_unittests_SOURCES  = pgsql_basics.cc pgsql_basics.h
 libpgsql_unittests_SOURCES += pgsql_connection_unittest.cc
 libpgsql_unittests_SOURCES += pgsql_exchange_unittest.cc
 libpgsql_unittests_SOURCES += run_unittests.cc

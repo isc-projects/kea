@@ -78,7 +78,9 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
 /// varying types and values are tested above.  These tests focus on the higher
 /// order function mechanics.
 class PgSqlConnectionTest : public PgSqlBasicsTest {
-public: /// @brief Indexes of prepared statements used within the tests.
+public: 
+
+    /// @brief Indexes of prepared statements used within the tests.
     enum StatementIndex {
         GET_BY_INT_VALUE,
         GET_BY_INT_RANGE,
@@ -342,6 +344,8 @@ TEST_F(PgSqlConnectionTest, deleteTest) {
     ASSERT_NO_THROW_LOG(testSelect(TestRowSet({{6, "six"}, {9, "nine"}}), 0, 10));
 }
 
+// Verifies that transaction nesting and operations: start, commit,
+// and rollback work correctly.
 TEST_F(PgSqlConnectionTest, transactions) {
     ASSERT_FALSE(conn_->isTransactionStarted());
 

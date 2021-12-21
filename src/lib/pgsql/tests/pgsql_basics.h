@@ -39,6 +39,7 @@ namespace test {
 /// the table.
 class PgSqlBasicsTest : public ::testing::Test {
 public:
+
     /// @brief Column index for each column
     enum BasicColIndex {
         ID_COL,
@@ -55,46 +56,18 @@ public:
         JSON_COL,
         NUM_BASIC_COLS
     };
+
     /// @brief Constructor
     ///
     /// Creates the database connection, opens the database, and destroys
     /// the table (if present) and then recreates it.
-    PgSqlBasicsTest() : expectedColNames_(NUM_BASIC_COLS) {
-        // Create database connection parameter list
-        DatabaseConnection::ParameterMap params;
-        params["name"] = "keatest";
-        params["user"] = "keatest";
-        params["password"] = "keatest";
-
-        // Create and open the database connection
-        conn_.reset(new PgSqlConnection(params));
-        conn_->openDatabase();
-
-        // Create the list of expected column names
-        expectedColNames_[ID_COL] = "id";
-        expectedColNames_[BOOL_COL] = "bool_col";
-        expectedColNames_[BYTEA_COL] = "bytea_col";
-        expectedColNames_[BIGINT_COL] = "bigint_col";
-        expectedColNames_[SMALLINT_COL] = "smallint_col";
-        expectedColNames_[INT_COL] = "int_col";
-        expectedColNames_[TEXT_COL] = "text_col";
-        expectedColNames_[TIMESTAMP_COL] = "timestamp_col";
-        expectedColNames_[VARCHAR_COL] = "varchar_col";
-        expectedColNames_[INET_COL] = "inet_col";
-        expectedColNames_[FLOAT_COL] = "float_col";
-        expectedColNames_[JSON_COL] = "json_col";
-
-        destroySchema();
-        createSchema();
-    }
+    PgSqlBasicsTest();
 
     /// @brief Destructor
     ///
     /// Destroys the table. The database resources are freed and the connection
     /// closed by the destruction of conn_.
-    virtual ~PgSqlBasicsTest () {
-        destroySchema();
-    }
+    virtual ~PgSqlBasicsTest ();
 
     /// @brief Gets the expected name of the column for a given column index
     ///
@@ -106,49 +79,15 @@ public:
     /// @return string containing the column name
     ///
     /// @throw BadValue if the index is out of range
-    const std::string& expectedColumnName(int col) {
-        if (col < 0 || col >= NUM_BASIC_COLS) {
-            isc_throw(BadValue,
-                      "definedColumnName: invalid column value" << col);
-        }
-
-        return (expectedColNames_[col]);
-    }
+    const std::string& expectedColumnName(int col);
 
     /// @brief Creates the basics table
     /// Asserts if the creation step fails
-    void createSchema() {
-        // One column for OID type, plus an auto-increment
-        const char* sql =
-            "CREATE TABLE basics ( "
-            "    id SERIAL PRIMARY KEY NOT NULL, "
-            "    bool_col BOOLEAN, "
-            "    bytea_col BYTEA, "
-            "    bigint_col  BIGINT, "
-            "    smallint_col  SMALLINT, "
-            "    int_col INT, "
-            "    text_col TEXT, "
-            "    timestamp_col TIMESTAMP WITH TIME ZONE, "
-            "    varchar_col VARCHAR(255), "
-            "    inet_col INET, "
-            "    float_col FLOAT, "
-            "    json_col JSON "
-            "); ";
-
-        PgSqlResult r(PQexec(*conn_, sql));
-        ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
-                 << " create basics table failed: " << PQerrorMessage(*conn_);
-    }
+    void createSchema();
 
     /// @brief Destroys the basics table
     /// Asserts if the destruction fails
-    void destroySchema() {
-        if (conn_) {
-            PgSqlResult r(PQexec(*conn_, "DROP TABLE IF EXISTS basics;"));
-            ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
-                 << " drop basics table failed: " << PQerrorMessage(*conn_);
-        }
-    }
+    void destroySchema();
 
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
@@ -163,12 +102,7 @@ public:
     ///
     /// Asserts if the result set status does not equal the expected outcome.
     void runSql(PgSqlResultPtr& r, const std::string& sql, int exp_outcome,
-                int lineno) {
-        r.reset(new PgSqlResult(PQexec(*conn_, sql.c_str())));
-        ASSERT_EQ(PQresultStatus(*r), exp_outcome)
-                  << " runSql at line: " << lineno << " failed, sql:[" << sql
-                  << "]\n reason: " << PQerrorMessage(*conn_);
-    }
+                int lineno);
 
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
@@ -186,17 +120,7 @@ public:
     void runPreparedStatement(PgSqlResultPtr& r,
                               PgSqlTaggedStatement& statement,
                               PsqlBindArrayPtr bind_array, int exp_outcome,
-                              int lineno) {
-        r.reset(new PgSqlResult(PQexecPrepared(*conn_, statement.name,
-                                statement.nbparams,
-                                &bind_array->values_[0],
-                                &bind_array->lengths_[0],
-                                &bind_array->formats_[0], 0)));
-        ASSERT_EQ(PQresultStatus(*r), exp_outcome)
-                  << " runPreparedStatement at line: " << lineno
-                  << " statement name:[" << statement.name
-                  << "]\n reason: " << PQerrorMessage(*conn_);
-    }
+                              int lineno);
 
     /// @brief Fetches all of the rows currently in the table
     ///
@@ -210,27 +134,13 @@ public:
     /// @param lineno line number from where the call was invoked
     ///
     /// Asserts if the result set status does not equal the expected outcome.
-    void fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {
-        std::string sql =
-            "SELECT"
-            "   id, bool_col, bytea_col, bigint_col, smallint_col, "
-            "   int_col, text_col,"
-            "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
-            "   varchar_col, inet_col, float_col, json_col"
-            " FROM basics";
-
-        runSql(r, sql, PGRES_TUPLES_OK, line);
-        ASSERT_EQ(r->getRows(), exp_rows) << "fetch at line: " << line
-                  << " wrong row count, expected: " << exp_rows
-                  << " , have: " << r->getRows();
-
-    }
+    void fetchRows(PgSqlResultPtr& r, int exp_rows, int line);
 
     /// @brief Database connection
     PgSqlConnectionPtr conn_;
 
     /// @brief List of column names as we expect them to be in fetched rows
-    std::vector<std::string> expectedColNames_;
+    std::vector<std::string> expected_col_names_;
 };
 
 // Macros defined to ease passing invocation line number for output tracing

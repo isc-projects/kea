@@ -274,6 +274,25 @@ public:
     /// Starts a transaction.
     ///
     /// @throw DbOperationError If the transaction start failed.
+
+    /// @brief Starts new transaction
+    ///
+    /// This function begins a new transaction by sending the START TRANSACTION
+    /// statement to the database. The transaction should be explicitly committed
+    /// by calling @c commit() or rolled back by calling @c rollback().
+    ///
+    /// PostgreSQL does not support nested transactions directly. Issuing a
+    /// BEGIN while already in a transaction will a warning to be emitted but
+    /// otherwise does not alter that state of the current transaction. In
+    /// other words, the transaction will still end upon the next COMMIT or
+    /// ROLLBACK statement.
+    ///
+    /// Therefore, this function checks if a transaction has already started and
+    /// does not start a new transaction. However, it increments a transaction
+    /// reference counter which is later decremented when @c commit() or @c
+    /// rollback() is called. When this mechanism is used properly, it
+    /// guarantees that nested transactions are not attempted, thus avoiding
+    /// unexpected commits or rollbacks of the pending transaction.
     void startTransaction();
 
     /// @brief Checks if there is a transaction in progress.
@@ -281,16 +300,26 @@ public:
     /// @return true if a transaction has been started, false otherwise.
     bool isTransactionStarted() const;
 
-    /// @brief Commit Transactions
+    /// @brief Commits current transaction
     ///
-    /// Commits all pending database operations.
+    /// Commits all pending database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// When this method is called for a nested transaction it decrements the
+    /// transaction reference counter incremented during the call to
+    /// @c startTransaction.
     ///
     /// @throw DbOperationError If the commit failed.
     void commit();
 
-    /// @brief Rollback Transactions
+    /// @brief Rollbacks current transaction
     ///
-    /// Rolls back all pending database operations.
+    /// Rolls back all pending database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// When this method is called for a nested transaction it decrements the
+    /// transaction reference counter incremented during the call to
+    /// @c startTransaction.
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();
@@ -431,9 +460,9 @@ public:
 
     /// @brief Reference counter for transactions.
     ///
-    /// It precludes starting and committing nested transactions. MySQL
-    /// implicitly commits current transaction when new transaction is
-    /// started. We want to not start new transactions when one is already
+    /// It precludes starting and committing nested transactions. PostgreSQL
+    /// logs but ignores BEGINs issued from within an ongoing transaction.
+    /// We do not want to start new transactions when one is already
     /// in progress.
     int transaction_ref_count_;
 };
