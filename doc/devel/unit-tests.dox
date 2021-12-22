@@ -231,12 +231,12 @@ configuration file works with MariaDB 10.6.4:
 @verbatim
 [mysqld]
 ssl_cert=<kea-sources>/src/lib/asiolink/testutils/ca/kea-server.crt
-ssl_keyt=<kea-sources>/src/lib/asiolink/testutils/ca/kea-server.key
+ssl_key=<kea-sources>/src/lib/asiolink/testutils/ca/kea-server.key
 ssl_ca=<kea-sources>/src/lib/asiolink/testutils/ca/kea-ca.crt
 
 [client-mariadb]
 ssl_cert=<kea-sources>/src/lib/asiolink/testutils/ca/kea-client.crt
-ssl_keyt=<kea-sources>/src/lib/asiolink/testutils/ca/kea-client.key
+ssl_key=<kea-sources>/src/lib/asiolink/testutils/ca/kea-client.key
 ssl_ca=<kea-sources>/src/lib/asiolink/testutils/ca/kea-ca.crt
 ssl-verify-server-cert
 @endverbatim
