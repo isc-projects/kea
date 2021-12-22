@@ -699,7 +699,7 @@ TEST_F(MySqlSecureConnectionTest, Tls) {
         return;
     }
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
-                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
                                             VALID_CERT, VALID_KEY, VALID_CA,
                                             VALID_CIPHER);
@@ -719,7 +719,7 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
         return;
     }
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
-                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
                                             INVALID_PASSWORD, 0, 0,
                                             VALID_CERT, VALID_KEY, VALID_CA,
                                             VALID_CIPHER);
@@ -735,7 +735,7 @@ TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
         return;
     }
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
-                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
     EXPECT_THROW(conn.openDatabase(), DbOpenError);
@@ -749,7 +749,7 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
         return;
     }
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
-                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
                                             VALID_CERT, INVALID_KEY, VALID_CA,
                                             VALID_CIPHER);
@@ -765,7 +765,7 @@ TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
         return;
     }
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
-                                            VALID_HOST, VALID_SECURE_USER,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
                                             VALID_CERT, 0, VALID_CA,
                                             VALID_CIPHER);

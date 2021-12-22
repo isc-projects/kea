@@ -23,6 +23,7 @@ const char* INVALID_TYPE = "type=unknown";
 const char* VALID_NAME = "name=keatest";
 const char* INVALID_NAME = "name=invalidname";
 const char* VALID_HOST = "host=localhost";
+const char* VALID_HOST_TCP = "host=127.0.0.1";
 const char* INVALID_HOST = "host=invalidhost";
 const char* VALID_USER = "user=keatest";
 const char* VALID_READONLY_USER = "user=keatest_readonly";
