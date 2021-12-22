@@ -39,6 +39,10 @@ DROP FUNCTION IF EXISTS createOptionAuditDHCP6(modification_type VARCHAR, scope_
                                                option_id INT, subnet_id BIGINT, host_id INT,
                                                network_name VARCHAR, pool_id BIGINT, pd_pool_id BIGINT,
                                                modification_ts TIMESTAMP WITH TIME ZONE);
+DROP FUNCTION IF EXISTS createOptionAuditDHCP6(modification_type VARCHAR, scope_id SMALLINT,
+                                               option_id INT, p_subnet_id BIGINT, host_id INT,
+                                               network_name VARCHAR, pool_id BIGINT, pd_pool_id BIGINT,
+                                               p_modification_ts TIMESTAMP WITH TIME ZONE);
 DROP FUNCTION IF EXISTS setClientClass6Order(id BIGINT, follow_class_name VARCHAR(128),
                                              old_follow_class_name VARCHAR(128));
 DROP FUNCTION IF EXISTS checkDHCPv6ClientClassDependency(class_id BIGINT, dependency_id BIGINT);
