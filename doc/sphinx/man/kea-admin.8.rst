@@ -52,6 +52,10 @@ Arguments
       Alternatively, it can be used as a diagnostic tool, so it provides a portable
       form of the lease data.
 
+   ``lease-upload``
+      Uploads leases from a CSV (comma-separated values) text file to a MySQL or
+      a PostgreSQL lease database. The CSV file needs to be in memfile format.
+
    ``stats-recount``
       Recounts lease statistics for a MySQL or PostgreSQL database.
 

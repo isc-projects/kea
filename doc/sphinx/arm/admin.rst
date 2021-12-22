@@ -68,6 +68,10 @@ currently supported commands are:
    Alternatively, it can be used as a diagnostic tool, so it provides a portable
    form of the lease data.
 
+-  ``lease-upload`` — uploads leases from a CSV (comma-separated values) text
+   file to a MySQL or a PostgreSQL lease database. The CSV file needs to be in
+   memfile format.
+
 ``backend`` specifies the type of backend database. The currently
 supported types are:
 
