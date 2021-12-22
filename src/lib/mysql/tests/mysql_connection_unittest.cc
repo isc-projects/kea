@@ -691,6 +691,15 @@ TEST_F(MySqlSecureConnectionTest, getMySQLTls) {
     }
 }
 
+/// @brief Check the enforced TCP connection.
+TEST_F(MySqlSecureConnectionTest, Tcp) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW(conn.openDatabase());
+}
+
 /// @brief Check the SSL/TLS protected connection.
 TEST_F(MySqlSecureConnectionTest, Tls) {
     if (!hasMySQLTls()) {
