@@ -123,3 +123,5 @@ DROP TRIGGER IF EXISTS dhcp6_client_class_AUPD;
 DROP TRIGGER IF EXISTS dhcp6_client_class_ADEL;
 DROP TRIGGER IF EXISTS dhcp6_client_class_dependency_BINS;
 DROP TRIGGER IF EXISTS dhcp6_client_class_dependency_AINS;
+DROP PROCEDURE IF EXISTS lease4Upload;
+DROP PROCEDURE IF EXISTS lease6Upload;

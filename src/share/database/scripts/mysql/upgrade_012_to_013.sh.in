@@ -52,6 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
+
 -- Create a function that separates a contiguous hexadecimal string
 -- into groups of two hexadecimals separated by colons.
 DROP FUNCTION IF EXISTS colonSeparatedHex;
@@ -147,6 +148,112 @@ BEGIN
         hwaddr_source
     FROM lease6
     ORDER BY address;
+END $$
+DELIMITER ;
+
+-- Create a procedure that inserts a v4 lease from memfile data.
+DELIMITER $$
+CREATE PROCEDURE lease4Upload(
+    IN address VARCHAR(15),
+    IN hwaddr VARCHAR(20),
+    IN client_id VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN state INT UNSIGNED,
+    IN user_context TEXT
+)
+BEGIN
+    INSERT INTO lease4 (
+        address,
+        hwaddr,
+        client_id,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        state,
+        user_context
+    ) VALUES (
+        INET_ATON(address),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        UNHEX(REPLACE(client_id, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        state,
+        REPLACE(user_context, '&#x2c', ',')
+    );
+END $$
+DELIMITER ;
+
+-- Create a procedure that inserts a v6 lease from memfile data.
+DELIMITER $$
+CREATE PROCEDURE lease6Upload(
+    IN address VARCHAR(39),
+    IN duid VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN pref_lifetime INT UNSIGNED,
+    IN lease_type TINYINT,
+    IN iaid INT UNSIGNED,
+    IN prefix_len TINYINT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN hwaddr VARCHAR(64),
+    IN state INT UNSIGNED,
+    IN user_context TEXT,
+    IN hwtype SMALLINT,
+    IN hwaddr_source INT UNSIGNED
+)
+BEGIN
+    INSERT INTO lease6 (
+        address,
+        duid,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        hwaddr,
+        state,
+        user_context,
+        hwtype,
+        hwaddr_source
+    ) VALUES (
+        address,
+        UNHEX(REPLACE(duid, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        state,
+        REPLACE(user_context, '&#x2c', ','),
+        hwtype,
+        hwaddr_source
+    );
 END $$
 DELIMITER ;
 
