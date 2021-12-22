@@ -172,3 +172,6 @@ DROP FUNCTION IF EXISTS get_session_value(name text);
 DROP FUNCTION IF EXISTS set_session_value(name text, value TEXT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BIGINT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BOOLEAN);
+
+DROP FUNCTION IF EXISTS lease4Upload();
+DROP FUNCTION IF EXISTS lease6Upload();

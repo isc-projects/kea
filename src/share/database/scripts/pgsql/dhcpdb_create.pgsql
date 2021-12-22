@@ -3777,7 +3777,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp6_subnet_BDEL
     BEFORE DELETE ON dhcp6_subnet
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_subnet_BDEL();
-
 -- Trigger function for dhcp6_pd_pool_BDEL called BEFORE DELETE on dhcp6_pd_pool
 CREATE OR REPLACE FUNCTION func_dhcp6_pd_pool_BDEL() RETURNS TRIGGER AS $dhcp6_pd_pool_BDEL$
 BEGIN
@@ -3793,7 +3792,8 @@ UPDATE schema_version
 
 -- Schema 7.0 specification ends here.
 
--- This starts schema update to 8.0.
+-- This starts schema update to 8.0. It adds a few missing elements for CB and
+-- functions for kea-admin's lease-dump and lease-upload commands.
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
@@ -3824,7 +3824,7 @@ ALTER TABLE dhcp6_option_def
     ON UPDATE CASCADE;
 
 -- -----------------------------------------------------------------------
--- Add preferred_lifetime columns to dhcp6_client_class table.
+-- Add missing preferred_lifetime columns to dhcp6_client_class table.
 -- -----------------------------------------------------------------------
 ALTER TABLE dhcp6_client_class
     ADD COLUMN preferred_lifetime BIGINT DEFAULT NULL,
@@ -4059,10 +4059,13 @@ END
 $$ LANGUAGE plpgsql;
 
 -- Modify the function to output a memfile-ready CSV file.
+-- Some columns that are SMALLINT in the lease4 table have their type promoted
+-- to INT in the declaration of this function for backwards compatibility with
+-- PostgreSQL versions.
 DROP FUNCTION IF EXISTS lease4DumpData();
 CREATE OR REPLACE FUNCTION lease4DumpData()
 RETURNS TABLE (
-    address inet,
+    address INET,
     hwaddr VARCHAR,
     client_id VARCHAR,
     valid_lifetime BIGINT,
@@ -4098,6 +4101,9 @@ RETURNS TEXT AS $$
 $$ LANGUAGE SQL;
 
 -- Modify the function to output a memfile-ready CSV file.
+-- Some columns that are SMALLINT in the lease6 table have their type promoted
+-- to INT in the declaration of this function for backwards compatibility with
+-- PostgreSQL versions.
 DROP FUNCTION IF EXISTS lease6DumpData();
 CREATE OR REPLACE FUNCTION lease6DumpData()
 RETURNS TABLE (
@@ -4140,6 +4146,116 @@ RETURNS TABLE (
     FROM lease6
     ORDER BY address;
 $$ LANGUAGE SQL;
+
+-- Create a procedure that inserts a v4 lease from memfile data.
+-- Some columns that are SMALLINT in the lease4 table have their type promoted
+-- to INT in the declaration of this function for backwards compatibility with
+-- PostgreSQL versions.
+CREATE OR REPLACE FUNCTION lease4Upload(
+    IN address VARCHAR,
+    IN hwaddr VARCHAR,
+    IN client_id VARCHAR,
+    IN valid_lifetime BIGINT,
+    IN expire BIGINT,
+    IN subnet_id BIGINT,
+    IN fqdn_fwd INT,
+    IN fqdn_rev INT,
+    IN hostname VARCHAR,
+    IN state INT8,
+    IN user_context VARCHAR
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO lease4 (
+        address,
+        hwaddr,
+        client_id,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        state,
+        user_context
+    ) VALUES (
+        address::inet - '0.0.0.0'::inet,
+        decode(replace(hwaddr, ':', ''), 'hex'),
+        decode(replace(client_id, ':', ''), 'hex'),
+        valid_lifetime,
+        to_timestamp(expire),
+        subnet_id,
+        fqdn_fwd::int::boolean,
+        fqdn_rev::int::boolean,
+        replace(hostname, '&#x2c', ','),
+        state,
+        replace(user_context, '&#x2c', ',')
+    );
+END
+$$ LANGUAGE plpgsql;
+
+-- Create a procedure that inserts a v6 lease from memfile data.
+-- Some columns that are SMALLINT in the lease6 table have their type promoted
+-- to INT in the declaration of this function for backwards compatibility with
+-- PostgreSQL versions.
+CREATE OR REPLACE FUNCTION lease6Upload(
+    IN address VARCHAR,
+    IN duid VARCHAR,
+    IN valid_lifetime BIGINT,
+    IN expire BIGINT,
+    IN subnet_id BIGINT,
+    IN pref_lifetime BIGINT,
+    IN lease_type INT,
+    IN iaid INT,
+    IN prefix_len INT,
+    IN fqdn_fwd INT,
+    IN fqdn_rev INT,
+    IN hostname VARCHAR,
+    IN hwaddr VARCHAR,
+    IN state INT8,
+    IN user_context VARCHAR,
+    IN hwtype INT,
+    IN hwaddr_source INT
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO lease6 (
+        address,
+        duid,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        hwaddr,
+        state,
+        user_context,
+        hwtype,
+        hwaddr_source
+    ) VALUES (
+        address,
+        decode(replace(duid, ':', ''), 'hex'),
+        valid_lifetime,
+        to_timestamp(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd::int::boolean,
+        fqdn_rev::int::boolean,
+        replace(hostname, '&#x2c', ','),
+        decode(replace(hwaddr, ':', ''), 'hex'),
+        state,
+        replace(user_context, '&#x2c', ','),
+        hwtype,
+        hwaddr_source
+    );
+END
+$$ LANGUAGE plpgsql;
 
 -- Update the schema version number.
 UPDATE schema_version

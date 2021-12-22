@@ -655,22 +655,6 @@ get_column_position() {
     fi
 }
 
-# Checks that an input file was provided and that it has at least one lease.
-lease_upload_checks() {
-    # Check that an input file was specified.
-    if test -z "${input_file-}"; then
-        log_error 'you must specify an input file with -i or --input for lease-upload'
-        usage
-        exit 1
-    fi
-
-    # Check that the input file has at least one row of values.
-    if test "$(wc -l < "${input_file}")" -le 1; then
-        log_error 'CSV file has no leases'
-        exit 1
-    fi
-}
-
 # Adds quotes around values at given positions starting with 1 in a CSV line.
 stringify_positions_in_line() {
     local positions="${1}"; shift
@@ -727,10 +711,20 @@ stringify_positions_in_line() {
     printf '%s' "${output}"
 }
 
-# Entry point for the lease-upload mysql command.
-mysql_lease_upload() {
-    # Do checks.
-    lease_upload_checks
+# Entry point for the lease-upload command.
+lease_upload() {
+    # Check that an input file was specified.
+    if test -z "${input_file-}"; then
+        log_error 'you must specify an input file with -i or --input for lease-upload'
+        usage
+        exit 1
+    fi
+
+    # Check that the input file has at least one row of values.
+    if test "$(wc -l < "${input_file}")" -le 1; then
+        log_error 'CSV file has no leases'
+        exit 1
+    fi
 
     # Determine the columns whose values need to be stringified to avoid syntax
     # errors in the MySQL client. These are columns which are VARCHARs or need
@@ -753,27 +747,36 @@ mysql_lease_upload() {
 
     # Construct the SQL insert statements.
     header_parsed=false
-    sql_statement='START TRANSACTION;\n'
+    sql_statement='START TRANSACTION;'
     while read -r line; do
         if "${header_parsed}"; then
             line=$(stringify_positions_in_line "${string_positions}" "${line}")
-            sql_statement="${sql_statement}CALL lease${dhcp_version}Upload(${line});\\n"
+            if test "${backend}" = 'mysql'; then
+                sql_statement="${sql_statement} CALL lease${dhcp_version}Upload(${line}); "
+            elif test "${backend}" = 'pgsql'; then
+                sql_statement="${sql_statement} SELECT lease${dhcp_version}Upload(${line}); "
+            else
+                log_error "lease-upload not implemented for ${backend}"
+                exit 1
+            fi
         else
             header_parsed=true
         fi
     done < "${input_file}"
-    sql_statement="${sql_statement}COMMIT;\n"
+    sql_statement="${sql_statement} COMMIT;"
 
     # Execute the SQL insert statements.
-    output="$(mysql_execute "${sql_statement}")"
+    if test "${backend}" = 'mysql'; then
+        output="$(mysql_execute "${sql_statement}")"
+    elif test "${backend}" = 'pgsql'; then
+        output="$(pgsql_execute "${sql_statement}")"
+    else
+        log_error "lease-upload not implemented for ${backend}"
+        exit 1
+    fi
 
     # Print a confirmation message.
     printf 'lease%s successfully updated.\n' "${dhcp_version}"
-}
-
-# Entry point for the lease-upload pgsql command.
-pgsql_lease_upload() {
-    log_error 'not implemented'
 }
 
 ### Functions used for recounting statistics
@@ -1056,10 +1059,10 @@ case ${command} in
                 exit 1
                 ;;
             mysql)
-                mysql_lease_upload
+                lease_upload
                 ;;
             pgsql)
-                pgsql_lease_upload
+                lease_upload
                 ;;
             cql)
                 log_error 'lease-export cql is deprecated'
