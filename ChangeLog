@@ -1,3 +1,8 @@
+1984.	[func]		andrei
+	Introduced the lease-upload command to kea-admin which can upload
+	leases from a memfile CSV file to a database backend.
+	(Gitlab #2039)
+
 1983.	[bug]		fdupont
 	Minimum and maximum values of lifetimes are no longer
 	skipped when the configuration is retrieved even when
