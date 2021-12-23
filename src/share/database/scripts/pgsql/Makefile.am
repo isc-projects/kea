@@ -9,19 +9,19 @@ pgsql_DATA += dhcpdb_drop.pgsql
 
 # executable
 pgsql_SCRIPTS  =
-pgsql_SCRIPTS += upgrade_1.0_to_2.0.sh
-pgsql_SCRIPTS += upgrade_2.0_to_3.0.sh
-pgsql_SCRIPTS += upgrade_3.0_to_3.1.sh
-pgsql_SCRIPTS += upgrade_3.1_to_3.2.sh
-pgsql_SCRIPTS += upgrade_3.2_to_3.3.sh
-pgsql_SCRIPTS += upgrade_3.3_to_4.0.sh
-pgsql_SCRIPTS += upgrade_4.0_to_5.0.sh
-pgsql_SCRIPTS += upgrade_5.0_to_5.1.sh
-pgsql_SCRIPTS += upgrade_5.1_to_6.0.sh
-pgsql_SCRIPTS += upgrade_6.0_to_6.1.sh
-pgsql_SCRIPTS += upgrade_6.1_to_6.2.sh
-pgsql_SCRIPTS += upgrade_6.2_to_7.0.sh
-pgsql_SCRIPTS += upgrade_7.0_to_8.0.sh
+pgsql_SCRIPTS += upgrade_001.0_to_002.0.sh
+pgsql_SCRIPTS += upgrade_002.0_to_003.0.sh
+pgsql_SCRIPTS += upgrade_003.0_to_003.1.sh
+pgsql_SCRIPTS += upgrade_003.1_to_003.2.sh
+pgsql_SCRIPTS += upgrade_003.2_to_003.3.sh
+pgsql_SCRIPTS += upgrade_003.3_to_004.0.sh
+pgsql_SCRIPTS += upgrade_004.0_to_005.0.sh
+pgsql_SCRIPTS += upgrade_005.0_to_005.1.sh
+pgsql_SCRIPTS += upgrade_005.1_to_006.0.sh
+pgsql_SCRIPTS += upgrade_006.0_to_006.1.sh
+pgsql_SCRIPTS += upgrade_006.1_to_006.2.sh
+pgsql_SCRIPTS += upgrade_006.2_to_007.0.sh
+pgsql_SCRIPTS += upgrade_007_to_008.sh
 pgsql_SCRIPTS += wipe_data.sh
 
 DISTCLEANFILES = ${pgsql_SCRIPTS}

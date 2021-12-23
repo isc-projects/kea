@@ -1814,32 +1814,32 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_011_to_012.sh],
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_6.0_to_6.1.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_6.1_to_6.2.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_6.2_to_7.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_6.2_to_7.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_7.0_to_8.0.sh],
-                [chmod +x src/share/database/scripts/pgsql/upgrade_7.0_to_8.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_001.0_to_002.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_001.0_to_002.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_002.0_to_003.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_002.0_to_003.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_003.0_to_003.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_003.0_to_003.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_003.1_to_003.2.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_003.1_to_003.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_003.2_to_003.3.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_003.2_to_003.3.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_003.3_to_004.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_003.3_to_004.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_004.0_to_005.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_004.0_to_005.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_005.0_to_005.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_005.0_to_005.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_005.1_to_006.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_005.1_to_006.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_006.0_to_006.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_006.0_to_006.1.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_006.1_to_006.2.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_006.1_to_006.2.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_006.2_to_007.0.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_006.2_to_007.0.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_007_to_008.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_007_to_008.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])

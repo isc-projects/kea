@@ -56,7 +56,7 @@ bool wipePgSQLData(bool show_err) {
     cmd << " sh " << DATABASE_SCRIPTS_DIR << "/pgsql/wipe_data.sh";
 
     // Add expected schema version as the wipe script's first argument.
-    cmd  << " " << PG_SCHEMA_VERSION_MAJOR  << "." << PG_SCHEMA_VERSION_MINOR;
+    cmd  << " " << PGSQL_SCHEMA_VERSION_MAJOR  << "." << PGSQL_SCHEMA_VERSION_MINOR;
 
     // Now add command line arguments for psql.
     cmd  << " --set ON_ERROR_STOP=1 -A -t -h localhost -q -U keatest -d keatest";

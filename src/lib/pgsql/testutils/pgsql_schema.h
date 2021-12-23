@@ -76,8 +76,8 @@ void createPgSQLSchema(bool show_err = false, bool force = false);
 ///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/wipe_data.sh
 ///
 /// This will fail if there is no schema, if the existing schema
-/// version is incorrect (i.e. does not match PG_SCHEMA_VERSION_MAJOR
-/// and PG_SCHEMA_VERSION_MINOR), or a SQL error occurs.  Otherwise,
+/// version is incorrect (i.e. does not match PGSQL_SCHEMA_VERSION_MAJOR
+/// and PGSQL_SCHEMA_VERSION_MINOR), or a SQL error occurs.  Otherwise,
 /// the script is should delete all transient data, leaving intact
 /// reference tables.
 ///

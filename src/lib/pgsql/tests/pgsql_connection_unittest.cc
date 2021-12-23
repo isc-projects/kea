@@ -59,15 +59,15 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
     // Get row 0, column 0 (i.e. version field)
     ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, 0));
     ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, 0, value));
-    EXPECT_EQ(value, PG_SCHEMA_VERSION_MAJOR)
-        << "invalid schema version reported, major expected " << PG_SCHEMA_VERSION_MAJOR
+    EXPECT_EQ(value, PGSQL_SCHEMA_VERSION_MAJOR)
+        << "invalid schema version reported, major expected " << PGSQL_SCHEMA_VERSION_MAJOR
         << ", actual:" << value;
 
     // Get row 0, column 1 (i.e. minor field)
     ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, 1));
     ASSERT_NO_THROW(PgSqlExchange::getColumnValue(*r, 0, 1, value));
-    EXPECT_EQ(value, PG_SCHEMA_VERSION_MINOR)
-        << "invalid schema version reported, minor expected " << PG_SCHEMA_VERSION_MINOR
+    EXPECT_EQ(value, PGSQL_SCHEMA_VERSION_MINOR)
+        << "invalid schema version reported, minor expected " << PGSQL_SCHEMA_VERSION_MINOR
         << ", actual:" << value;
 
 }

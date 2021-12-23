@@ -74,7 +74,7 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::Paramet
 #endif
 
     // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR, PGSQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = PgSqlConnection::getVersion(parameters);
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Postgres schema version mismatch: need version: "
