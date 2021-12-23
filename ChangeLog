@@ -1,3 +1,10 @@
+1975.	[func]		tmark
+	Additional changes and corrections relating to Config Backend
+	were made to the PostgreSQL database schema.  In addition, the
+	upgrade scripts were renamed to ensure proper file name ordering.
+	Note that PostgreSQL CB is not yet functional.
+	(Gitlab #2244)
+
 1974.	[func]		fdupont
 	The global parameter lookup has been refactored to provide better
 	performance. Proper return error code (CONTROL_RESULT_ERROR) has
