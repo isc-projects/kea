@@ -242,7 +242,14 @@ ssl-verify-server-cert
 @endverbatim
 
 The last statement requires mutual authentication named two way in the
-MariaDB documentation.
+MariaDB documentation. For MySQL versions greater than 5.7.11 this
+statement should be replaced by:
+
+@verbatim
+[client]
+...
+ssl-mode=VERIFY_IDENTITY
+@endverbatim
 
  @subsection pgsqlUnitTestsPrerequisites PostgreSQL Database
 
