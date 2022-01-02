@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -578,7 +578,7 @@ public:
         // If there is an audit entry for a subnet and the subnet modification
         // time is later than last audit revision time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets4();
-        auto found_subnet = subnets->getSubnet(1);
+        auto found_subnet = subnets->getBySubnetId(1);
         if (hasConfigElement("dhcp4_subnet") &&
             (getTimestamp("dhcp4_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
@@ -706,8 +706,8 @@ public:
         {
             SCOPED_TRACE("subnets");
             // One of the subnets should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgSubnets4()->getSubnet(2));
-            auto found_subnet = srv_cfg->getCfgSubnets4()->getSubnet(1);
+            EXPECT_TRUE(srv_cfg->getCfgSubnets4()->getBySubnetId(2));
+            auto found_subnet = srv_cfg->getCfgSubnets4()->getBySubnetId(1);
             if (deleteConfigElement("dhcp4_subnet", 1)) {
                 EXPECT_FALSE(found_subnet);
 
@@ -1374,7 +1374,7 @@ public:
         // If there is an audit entry for a subnet and the subnet modification
         // time is later than last audit revision time it should be merged.
         auto subnets = srv_cfg->getCfgSubnets6();
-        auto found_subnet = subnets->getSubnet(1);
+        auto found_subnet = subnets->getBySubnetId(1);
         if (hasConfigElement("dhcp6_subnet") &&
             (getTimestamp("dhcp6_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
@@ -1502,8 +1502,8 @@ public:
         {
             SCOPED_TRACE("subnets");
             // One of the subnets should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgSubnets6()->getSubnet(2));
-            auto found_subnet = srv_cfg->getCfgSubnets6()->getSubnet(1);
+            EXPECT_TRUE(srv_cfg->getCfgSubnets6()->getBySubnetId(2));
+            auto found_subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(1);
             if (deleteConfigElement("dhcp6_subnet", 1)) {
                 EXPECT_FALSE(found_subnet);
                 // If the subnet has been deleted, make sure that

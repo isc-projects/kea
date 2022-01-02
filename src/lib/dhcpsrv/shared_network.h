@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,7 +121,7 @@ public:
 
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.
-    const Subnet4Collection* getAllSubnets() const {
+    const Subnet4SimpleCollection* getAllSubnets() const {
         return (&subnets_);
     }
 
@@ -206,7 +206,7 @@ private:
     std::string name_;
 
     /// @brief Collection of IPv4 subnets within shared network.
-    Subnet4Collection subnets_;
+    Subnet4SimpleCollection subnets_;
 };
 
 /// @brief Multi index container holding shared networks.
@@ -331,7 +331,7 @@ public:
 
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.
-    const Subnet6Collection* getAllSubnets() const {
+    const Subnet6SimpleCollection* getAllSubnets() const {
         return (&subnets_);
     }
 
@@ -404,7 +404,7 @@ private:
     std::string name_;
 
     /// @brief Collection of IPv6 subnets within shared network.
-    Subnet6Collection subnets_;
+    Subnet6SimpleCollection subnets_;
 };
 
 /// @brief Multi index container holding shared networks.

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,6 +76,10 @@ public:
                         const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
+    ///
+    /// @note: Returning a Subnet4Collection instead of a
+    /// Subnet4SimpleCollection can be considered as overkilling
+    /// but makes this code far simpler.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.

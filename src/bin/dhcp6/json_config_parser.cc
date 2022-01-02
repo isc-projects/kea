@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -245,7 +245,7 @@ public:
         for (auto net = networks->begin(); net != networks->end(); ++net) {
 
             // For each network go through all the subnets in it.
-            const Subnet6Collection* subnets = (*net)->getAllSubnets();
+            const Subnet6SimpleCollection* subnets = (*net)->getAllSubnets();
             if (!subnets) {
                 // Shared network without subnets it weird, but we decided to
                 // accept such configurations.
@@ -309,7 +309,7 @@ public:
             // or don't have the interface specified at all.
             string iface = (*net)->getIface();
 
-            const Subnet6Collection* subnets = (*net)->getAllSubnets();
+            const Subnet6SimpleCollection* subnets = (*net)->getAllSubnets();
             if (subnets) {
 
                 bool rapid_commit = false;

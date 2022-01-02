@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -205,6 +205,7 @@ public:
     ///
     /// Warning: this method uses full scan. Its use is not recommended for
     /// packet processing.
+    /// Please use @ref getBySubnetId instead when possible.
     ///
     /// @return Subnet (or NULL)
     Subnet6Ptr getSubnet(const SubnetID id) const;

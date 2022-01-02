@@ -76,6 +76,10 @@ public:
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
     ///
+    /// @note: Returning a Subnet6Collection instead of a
+    /// Subnet6SimpleCollection can be considered as overkilling
+    /// but makes this code far simpler.
+    ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the

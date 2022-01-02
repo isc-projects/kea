@@ -740,6 +740,8 @@ public:
 
     /// @brief Checks if specified subnet is part of the collection
     ///
+    /// @tparam CollectionType type of subnet4 collections i.e.
+    /// either Subnet4SimpleCollection or Subnet4Collection
     /// @param col collection of subnets to be inspected
     /// @param subnet text notation (e.g. 192.0.2.0/24)
     /// @param t1 expected renew-timer value
@@ -750,11 +752,12 @@ public:
     /// @param max_valid expected max-valid-lifetime value
     ///        (0 (default) means same as valid)
     /// @return the subnet that was examined
+    template <typename CollectionType>
     Subnet4Ptr
-    checkSubnet(const Subnet4Collection& col, std::string subnet,
+    checkSubnet(const CollectionType& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t valid,
                 uint32_t min_valid = 0, uint32_t max_valid = 0) {
-        const auto& index = col.get<SubnetPrefixIndexTag>();
+        const auto& index = col.template get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
         if (subnet_it == index.cend()) {
             ADD_FAILURE() << "Unable to find expected subnet " << subnet;
@@ -6299,7 +6302,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksName) {
     EXPECT_EQ("foo", net->getName());
 
     // Verify that there are no subnets in this shared-network
-    const Subnet4Collection * subs = net->getAllSubnets();
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(0, subs->size());
 }
@@ -6337,18 +6340,18 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
     EXPECT_EQ("foo", net->getName());
 
     // It should have one subnet.
-    const Subnet4Collection * subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
-    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+    const Subnet4SimpleCollection* nsubs = net->getAllSubnets();
+    ASSERT_TRUE(nsubs);
+    EXPECT_EQ(1, nsubs->size());
+    checkSubnet(*nsubs, "192.0.2.0/24", 1000, 2000, 4000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     ASSERT_TRUE(subnets4);
 
-    subs = subnets4->getAll();
-    ASSERT_TRUE(subs);
-    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+    const Subnet4Collection* gsubs = subnets4->getAll();
+    ASSERT_TRUE(gsubs);
+    checkSubnet(*gsubs, "192.0.2.0/24", 1000, 2000, 4000);
 }
 
 // Test verifies that a proper shared-network (three subnets) is
@@ -6407,22 +6410,22 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
 
     EXPECT_EQ("foo", net->getName());
 
-    const Subnet4Collection * subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(3, subs->size());
-    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
-    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222, 111, 333);
-    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
+    const Subnet4SimpleCollection* nsubs = net->getAllSubnets();
+    ASSERT_TRUE(nsubs);
+    EXPECT_EQ(3, nsubs->size());
+    checkSubnet(*nsubs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
+    checkSubnet(*nsubs, "192.0.2.0/24", 2, 22, 222, 111, 333);
+    checkSubnet(*nsubs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     ASSERT_TRUE(subnets4);
 
-    subs = subnets4->getAll();
-    ASSERT_TRUE(subs);
-    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
-    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222, 111, 333);
-    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
+    const Subnet4Collection* gsubs = subnets4->getAll();
+    ASSERT_TRUE(gsubs);
+    checkSubnet(*gsubs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
+    checkSubnet(*gsubs, "192.0.2.0/24", 2, 22, 222, 111, 333);
+    checkSubnet(*gsubs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
 }
 
 // This test checks if parameters are derived properly:
@@ -6520,7 +6523,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(net);
 
     // The first shared network has two subnets.
-    const Subnet4Collection * subs = net->getAllSubnets();
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(2, subs->size());
 
@@ -6642,7 +6645,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_EQ("alpha", net->getClientClass().get());
 
     // The first shared network has two subnets.
-    const Subnet4Collection * subs = net->getAllSubnets();
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(2, subs->size());
 
@@ -6815,7 +6818,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     EXPECT_EQ("\"A shared network\"", ctx_net->get("comment")->str());
 
     // The shared network has a subnet.
-    const Subnet4Collection* subs = net->getAllSubnets();
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     ASSERT_EQ(1, subs->size());
     Subnet4Ptr sub = *subs->begin();

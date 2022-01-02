@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ public:
     /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
     /// or @ref Subnet6Ptr.
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @throw isc::BadValue if subnet is null.
     /// @throw isc::DuplicateSubnetID if a subnet with the given subnet id
@@ -81,7 +81,7 @@ public:
     /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
     /// or @ref Subnet6Ptr.
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @param [out] subnets Container holding subnets for this shared network.
     /// @param subnet Pointer to a subnet replacing the subnet with the same ID
@@ -125,7 +125,7 @@ public:
     /// @param subnet_id Identifier of a subnet to be removed.
     ///
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @return Erased subnet.
     /// @throw BadValue if a subnet with specified identifier doesn't exist.
@@ -152,7 +152,7 @@ public:
     /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
     /// or @ref Subnet6Ptr.
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @return Pointer to the subnet or null if the subnet doesn't exist.
     template<typename SubnetPtrType, typename SubnetCollectionType>
@@ -177,7 +177,7 @@ public:
     /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
     /// or @ref Subnet6Ptr.
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @return Pointer to the subnet or null if the subnet doesn't exist.
     template<typename SubnetPtrType, typename SubnetCollectionType>
@@ -226,7 +226,7 @@ public:
     /// @tparam SubnetPtrType Type of the pointer to a subnet, i.e.
     /// @ref Subnet4Ptr or @ref Subnet6Ptr.
     /// @tparam SubnetCollectionType Type of the container holding subnets, i.e.
-    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
     /// @return Pointer to next subnet or null pointer if no more subnets found.
     ///
@@ -285,6 +285,10 @@ public:
     /// The preferred subnet must also fulfil the condition of equal client class
     /// with the @c selected_subnet.
     ///
+    /// @tparam SubnetPtrType Type of the pointer to a subnet, i.e.
+    /// @ref Subnet4Ptr or @ref Subnet6Ptr.
+    /// @tparam SubnetCollectionType Type of the container holding subnets, i.e.
+    /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     /// @param subnets Container holding subnets belonging to this shared
     /// network.
     /// @param selected_subnet Pointer to a currently selected subnet.

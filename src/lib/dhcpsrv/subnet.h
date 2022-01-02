@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -810,6 +810,30 @@ struct SubnetServerIdIndexTag { };
 /// @brief Tag for the index for searching by subnet modification time.
 struct SubnetModificationTimeIndexTag { };
 
+/// @brief A simple collection of @c Subnet4 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by subnet identifier and subnet prefix.
+///
+/// The random access index is used for direct iteration over the collection.
+typedef boost::multi_index_container<
+    // Multi index container holds pointers to the subnets.
+    Subnet4Ptr,
+    // The following holds all indexes.
+    boost::multi_index::indexed_by<
+        // First index allows for searching using subnet identifier.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetSubnetIdIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
+        >,
+        // Second index allows for searching using an output from toText function.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >
+    >
+> Subnet4SimpleCollection;
+
 /// @brief A collection of @c Subnet4 objects.
 ///
 /// This container provides a set of indexes which can be used to retrieve
@@ -866,6 +890,30 @@ typedef boost::multi_index_container<
     >
 > Subnet4Collection;
 
+/// @brief A simple collection of @c Subnet6 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by subnet identifier and subnet prefix.
+///
+/// The random access index is used for direct iteration over the collection.
+typedef boost::multi_index_container<
+    // Multi index container holds pointers to the subnets.
+    Subnet6Ptr,
+    // The following holds all indexes.
+    boost::multi_index::indexed_by<
+        // First index allows for searching using subnet identifier.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetSubnetIdIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
+        >,
+        // Second index allows for searching using an output from toText function.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >
+    >
+> Subnet6SimpleCollection;
+
 /// @brief A collection of @c Subnet6 objects
 ///
 /// This container provides a set of indexes which can be used to retrieve
@@ -918,7 +966,8 @@ typedef boost::multi_index_container<
 ///
 /// @tparam ReturnPtrType Type of the returned object, i.e. @c Subnet4Ptr
 /// or @c Subnet6Ptr.
-/// @tparam CollectionType One of the @c Subnet4Collection or @c Subnet6Collection.
+/// @tparam CollectionType One of the @c Subnet4SimpleCollection,
+/// @c Subnet4Collection, @c Subnet6SimpleCollection or @c Subnet6Collection.
 template<typename ReturnPtrType, typename CollectionType>
 class SubnetFetcher {
 public:

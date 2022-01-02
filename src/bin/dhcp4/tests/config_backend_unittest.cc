@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -487,19 +487,19 @@ TEST_F(Dhcp4CBTest, mergeSubnets) {
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
 
     CfgSubnets4Ptr subnets = staging_cfg->getCfgSubnets4();
-    Subnet4Ptr staged_subnet;
+    ConstSubnet4Ptr staged_subnet;
 
     // Subnet1 should have been added from db1 config
-    staged_subnet = subnets->getSubnet(1);
+    staged_subnet = subnets->getBySubnetId(1);
     ASSERT_TRUE(staged_subnet);
 
     // Subnet2 should have come from the json config
-    staged_subnet = subnets->getSubnet(2);
+    staged_subnet = subnets->getBySubnetId(2);
     ASSERT_TRUE(staged_subnet);
 
     // Subnet3, which is in db2 should not have been merged, since it is
     // first found, first used?
-    staged_subnet = subnets->getSubnet(3);
+    staged_subnet = subnets->getBySubnetId(3);
     ASSERT_FALSE(staged_subnet);
 }
 

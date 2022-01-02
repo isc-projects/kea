@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2708,7 +2708,7 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     int rcode = parseConfiguration(config, false, false);
     ASSERT_EQ(0, rcode);
 
-    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getSubnet(123);
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getBySubnetId(123);
     ASSERT_TRUE(subnet);
 
     EXPECT_TRUE(subnet->hasFetchGlobalsFn());
@@ -2818,7 +2818,7 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     int rcode = parseConfiguration(config, true, false);
     ASSERT_EQ(0, rcode);
 
-    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getSubnet(123);
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(123);
     ASSERT_TRUE(subnet);
 
     EXPECT_TRUE(subnet->hasFetchGlobalsFn());

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ void checkMergedNetwork(const CfgSharedNetworks6& networks, const std::string& n
     auto network = networks.getByName(name);
     ASSERT_TRUE(network) << "expected network: " << name << " not found";
     ASSERT_EQ(exp_valid, network->getValid()) << " network valid lifetime wrong";
-    const Subnet6Collection* subnets = network->getAllSubnets();
+    const Subnet6SimpleCollection* subnets = network->getAllSubnets();
     ASSERT_EQ(exp_subnets.size(), subnets->size()) << " wrong number of subnets";
     for (auto exp_id : exp_subnets) {
         ASSERT_TRUE(network->getSubnet(exp_id))
