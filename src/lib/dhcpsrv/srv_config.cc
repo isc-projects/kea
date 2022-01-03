@@ -250,7 +250,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     BaseNetworkParser::moveReservationMode(config_set);
 
     // A handful of values are stored as members in SrvConfig. So we'll
-    // iterate over the merged globals, setting approprate members.
+    // iterate over the merged globals, setting appropriate members.
     for (auto merged_global : getConfiguredGlobals()->valuesMap()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;

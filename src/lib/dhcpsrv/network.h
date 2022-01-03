@@ -826,9 +826,9 @@ protected:
     /// of @c property.
     template<typename NumType>
     isc::util::Triplet<NumType> getGlobalProperty(isc::util::Triplet<NumType> property,
-                                       const int global_index,
-                                       const int min_index = -1,
-                                       const int max_index = -1) const {
+                                                  const int global_index,
+                                                  const int min_index = -1,
+                                                  const int max_index = -1) const {
 
         if ((global_index >= 0) && fetch_globals_fn_) {
             ConstCfgGlobalsPtr globals = fetch_globals_fn_();

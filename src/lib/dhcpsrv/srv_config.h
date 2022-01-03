@@ -776,13 +776,13 @@ public:
     /// global parameters.
     ///
     /// @return Object representing configured global parameters.
-    CfgGlobalsPtr  getConfiguredGlobals() {
+    CfgGlobalsPtr getConfiguredGlobals() {
         return (configured_globals_);
     }
 
     /// @brief Returns const pointer to configured global parameters.
     ///
-    /// This function returns a onst pointer to the configured
+    /// This function returns a const pointer to the configured
     /// global parameters.
     ///
     /// @return Object representing configured global parameters.
