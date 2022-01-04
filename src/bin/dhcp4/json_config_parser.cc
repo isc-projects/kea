@@ -41,12 +41,12 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 
-#include <limits>
 #include <iostream>
+#include <limits>
 #include <iomanip>
 #include <netinet/in.h>
 #include <vector>
@@ -54,8 +54,8 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;

@@ -38,8 +38,8 @@
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <hooks/hooks_parser.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
 #include <process/config_ctl_parser.h>
 
@@ -67,6 +67,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace isc::config;
 
 namespace {
 
