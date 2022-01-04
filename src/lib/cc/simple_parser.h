@@ -66,7 +66,7 @@ typedef std::vector<std::string> ParamsList;
 ///   they're defined in a single place (the DhcpConfigParser had the defaults
 ///   spread out in multiple files in multiple directories).
 class SimpleParser {
- public:
+public:
 
     /// @brief Checks that all required keywords are present.
     ///
@@ -333,7 +333,7 @@ public:
                                                        const std::string& name);
 };
 
-};
-};
+}
+}
 
 #endif

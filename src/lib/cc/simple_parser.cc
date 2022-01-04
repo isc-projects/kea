@@ -101,6 +101,7 @@ SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& na
                   << ") is not within expected range: (" << min << " - " << max
                   << ")");
     }
+
     return (tmp);
 }
 
@@ -163,6 +164,7 @@ SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr p
     if (!elem) {
         return (parent->getPosition());
     }
+
     return (elem->getPosition());
 }
 
@@ -359,8 +361,9 @@ SimpleParser::parseIntTriplet(const ConstElementPtr& scope,
                   << min_value << ") and max-" << name << " ("
                   << max_value << ")");
     }
+
     return (util::Triplet<uint32_t>(min_value, value, max_value));
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

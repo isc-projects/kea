@@ -81,7 +81,7 @@ struct CfgGlobalsChecks {
         for (auto it = CfgGlobals::nameToIndex.cbegin();
              it != CfgGlobals::nameToIndex.cend(); ++it) {
             int idx = it->second;
-            if ((idx < 0) || (idx > CfgGlobals::MAX_INDEX)) {
+            if ((idx < 0) || (idx >= CfgGlobals::SIZE)) {
                 isc_throw(Unexpected, "invalid index " << idx
                           << " for name " << it->first);
             }
@@ -93,7 +93,7 @@ struct CfgGlobalsChecks {
         }
 
         // No name should be empty.
-        for (int idx = 0; idx <= CfgGlobals::MAX_INDEX; ++idx) {
+        for (int idx = 0; idx < CfgGlobals::SIZE; ++idx) {
             if (names[idx].empty()) {
                 isc_throw(Unexpected, "missing name for " << idx);
             }
@@ -118,7 +118,7 @@ CfgGlobals::get(const std::string& name) const {
 
 ConstElementPtr
 CfgGlobals::get(int index) const {
-    if ((index < 0) || (index > MAX_INDEX)) {
+    if ((index < 0) || (index >= CfgGlobals::SIZE)) {
         isc_throw(OutOfRange, "invalid global parameter index " << index);
     }
     return (values_[index]);
@@ -135,7 +135,7 @@ CfgGlobals::set(const std::string& name, ConstElementPtr value) {
 
 void
 CfgGlobals::set(int index, ConstElementPtr value) {
-    if ((index < 0) || (index > MAX_INDEX)) {
+    if ((index < 0) || (index >= CfgGlobals::SIZE)) {
         isc_throw(OutOfRange, "invalid global parameter index " << index);
     }
     values_[index] = value;
@@ -143,7 +143,7 @@ CfgGlobals::set(int index, ConstElementPtr value) {
 
 void
 CfgGlobals::clear() {
-    for (int idx = 0; idx <= MAX_INDEX; ++idx) {
+    for (int idx = 0; idx < CfgGlobals::SIZE; ++idx) {
         if (values_[idx]) {
             values_[idx] = ConstElementPtr();
         }

@@ -84,16 +84,11 @@ public:
         DATA_DIRECTORY,
         PREFERRED_LIFETIME,
         MIN_PREFERRED_LIFETIME,
-        MAX_PREFERRED_LIFETIME
+        MAX_PREFERRED_LIFETIME,
+
+        // Size sentinel.
+        SIZE
     };
-
-    /// @brief Last index.
-    ///
-    /// @note: please update when a new element is appended to the Index enum.
-    static const int MAX_INDEX = MAX_PREFERRED_LIFETIME;
-
-    /// @brief Size of configured global objects.
-    static const size_t SIZE = MAX_INDEX + 1;
 
     /// @brief Name to index map.
     static const std::map<std::string, int> nameToIndex;
