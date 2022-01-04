@@ -1371,7 +1371,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"), 24,
-                                    def_triplet, def_triplet, 4000, SubnetID(1)));
+                                   def_triplet, def_triplet, 4000, SubnetID(1)));
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a subnet we need to set a callback function for each
     // subnet to allow for fetching global parameters.
@@ -1387,7 +1387,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
 
     // Add a shared subnet
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24,
-                                    def_triplet, def_triplet, 4000, SubnetID(2)));
+                                   def_triplet, def_triplet, 4000, SubnetID(2)));
 
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a subnet we need to set a callback function for each
