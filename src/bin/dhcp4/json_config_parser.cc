@@ -361,7 +361,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     ElementPtr mutable_cfg;
     SrvConfigPtr srv_cfg;
     try {
-        // Get the staging configuration
+        // Get the staging configuration.
         srv_cfg = CfgMgr::instance().getStagingCfg();
 
         // This is a way to convert ConstElementPtr to ElementPtr.
