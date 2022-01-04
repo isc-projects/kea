@@ -18,6 +18,7 @@
 
 using namespace isc::util;
 using namespace isc::data;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace db {
@@ -206,7 +207,19 @@ PsqlBindArray::addOptionalInet6(const util::Optional<isc::asiolink::IOAddress>& 
 
 void
 PsqlBindArray::addTimestamp(const boost::posix_time::ptime& timestamp) {
-    time_t input_time = boost::posix_time::to_time_t(timestamp);
+    // Convert the ptime to time_t, then use the existing conversion
+    // function to make db time.
+    //
+    // Sadly boost::posix_time::to_time_t() was not added until 1.58,
+    // so do it ourselves.
+    ptime epoch(boost::gregorian::date(1970,1,1));
+    time_duration::sec_type since_epoch = (timestamp - epoch).total_seconds();
+    time_t input_time(since_epoch);
+
+    if (input_time > DatabaseConnection::MAX_DB_TIME) {
+        isc_throw(isc::BadValue, "Time value is too large: " << input_time);
+    }
+
     // Converts to timestamp to local date/time string.
     addTempString(PgSqlExchange::convertToDatabaseTime(input_time));
 }

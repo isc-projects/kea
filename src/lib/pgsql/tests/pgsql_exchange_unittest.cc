@@ -969,13 +969,17 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
 
     ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
 
-    time_duration duration = hours(10) + minutes(14) + seconds(15);
-
-    // US National Ice Cream day
-    ptime nice_day(date(2021, Jul, 18), duration);
-
-    // Add timestamp with default/fractional seconds.
+    // Create an empty array.
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Make sure we catch values that are too big.
+    time_duration duration = hours(10) + minutes(14) + seconds(15);
+    ptime day_too_far(date(3021, Jan, 21), duration);
+    ASSERT_THROW_MSG(bind_array->addTimestamp(day_too_far), BadValue,
+                     "Time value is too large: 33168132855");
+
+    // Now add reasonable day, US National Ice Cream day.
+    ptime nice_day(date(2021, Jul, 18), duration);
     bind_array->addTimestamp(nice_day);
     std::cout << "bind array: " << bind_array->toText() << std::endl;
 

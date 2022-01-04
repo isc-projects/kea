@@ -400,6 +400,7 @@ struct PsqlBindArray {
     /// Precision is seconds.
     ///
     /// @param timestamp Timestamp value to be sent to the database.
+    /// @throw BadValue if the timestamp exceeds DatabaseConnection::MAX_DB_TIME.
     void addTimestamp(const boost::posix_time::ptime& timestamp);
 
     /// @brief Adds a timestamp of the current time to the bind array.
