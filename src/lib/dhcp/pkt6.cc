@@ -923,8 +923,14 @@ Pkt6::getMACFromRemoteIdRelayOption() {
                     hwtype = iface->getHWType();
                 }
 
+                size_t len = data.size() - 4;
+
+                if (len > HWAddr::MAX_HWADDR_LEN) {
+                    len = HWAddr::MAX_HWADDR_LEN;
+                }
+
                 // Skip the initial 4 bytes which are enterprise-number.
-                mac.reset(new HWAddr(&data[0] + 4, data.size() - 4, hwtype));
+                mac.reset(new HWAddr(&data[0] + 4, len, hwtype));
                 mac->source_ = HWAddr::HWADDR_SOURCE_REMOTE_ID;
             }
         }
