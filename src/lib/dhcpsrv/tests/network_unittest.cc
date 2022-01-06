@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -359,8 +359,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
 TEST_F(NetworkTest, inheritanceSupport6) {
     // Set global values for each parameter.
     globals_->set("preferred-lifetime", Element::create(80));
-    // Rapid commit is not a global parameter.
-    // globals_->set("rapid-commit", Element::create(false));
+    // Note that currently rapid commit is not a global parameter.
     globals_->set("ddns-send-updates", Element::create(true));
     globals_->set("ddns-override-no-update", Element::create(true));
     globals_->set("ddns-override-client-update", Element::create(true));
