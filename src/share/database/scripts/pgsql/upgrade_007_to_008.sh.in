@@ -201,6 +201,15 @@ BEGIN
     RETURN;
 END;\$\$;
 
+-- Fix mangled constraints on dhcp4_subnet_server table.
+ALTER TABLE dhcp4_subnet_server
+    DROP CONSTRAINT fk_dhcp6_subnet_server_server_id,
+    ADD CONSTRAINT fk_dhcp4_subnet_server_server_id
+        FOREIGN KEY (server_id) REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    DROP CONSTRAINT fk_dhcp6_subnet_server_subnet_id,
+    ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id
+        FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 -- Update the schema version number
 UPDATE schema_version
     SET version = '8', minor = '0';
