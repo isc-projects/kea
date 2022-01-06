@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,8 +109,23 @@ public:
     }
 
     /// @brief Retrieves the encapsulated value.
+    ///
+    /// @return the encapsulated value
     T get() const {
         return (default_);
+    }
+
+    /// @brief Retrieves the encapsulated value if specified, or the given value
+    /// otherwise.
+    ///
+    /// @param or_value the value it defaults to, if unspecified
+    ///
+    /// @return the encapsulated value or the default value
+    T valueOr(T const& or_value) const {
+        if (unspecified_) {
+            return or_value;
+        }
+        return default_;
     }
 
     /// @brief Modifies the flag that indicates whether the value is specified

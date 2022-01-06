@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -148,6 +148,15 @@ TEST(OptionalTest, stringEmpty) {
     value = "";
     ASSERT_NO_THROW(is_empty = value.empty());
     EXPECT_TRUE(is_empty);
+}
+
+// Checks that the valueOr function works correctly.
+TEST(OptionalTest, valueOr) {
+    Optional<std::string> optional("foo");
+    EXPECT_EQ(optional.valueOr("bar"), "foo");
+
+    Optional<std::string> unspecified_optional;
+    EXPECT_EQ(unspecified_optional.valueOr("bar"), "bar");
 }
 
 } // end of anonymous namespace

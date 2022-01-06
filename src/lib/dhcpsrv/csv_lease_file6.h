@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,11 +12,11 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_file_stats.h>
+#include <util/optional.h>
 #include <util/versioned_csv_file.h>
 
 #include <stdint.h>
 
-#include <optional>
 #include <string>
 
 namespace isc {
@@ -194,16 +194,16 @@ private:
     /// @param row CSV file row holding lease information
     ///
     /// @return the integer value of the hardware address type that was read
-    /// or std::nullopt if the value is empty
-    std::optional<uint16_t> readHWType(const util::CSVRow& row);
+    /// or an unspecified Optional if it is not specified in the CSV
+    isc::util::Optional<uint16_t> readHWType(const util::CSVRow& row);
 
     /// @brief Reads hardware address source from the CSV file row.
     ///
     /// @param row CSV file row holding lease information
     ///
     /// @return the integer value of the hardware address source that was read
-    /// or std::nullopt if the value is empty
-    std::optional<uint32_t> readHWAddrSource(const util::CSVRow& row);
+    /// or an unspecified Optional if it is not specified in the CSV
+    isc::util::Optional<uint32_t> readHWAddrSource(const util::CSVRow& row);
     //@}
 };
 

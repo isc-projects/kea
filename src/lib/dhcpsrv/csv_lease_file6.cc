@@ -1,12 +1,14 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/csv_lease_file6.h>
+
 #include <ctime>
 
 using namespace isc::asiolink;
@@ -56,8 +58,8 @@ CSVLeaseFile6::append(const Lease6& lease) {
     row.writeAt(getColumnIndex("fqdn_fwd"), lease.fqdn_fwd_);
     row.writeAt(getColumnIndex("fqdn_rev"), lease.fqdn_rev_);
     row.writeAtEscaped(getColumnIndex("hostname"), lease.hostname_);
+    // We may not have hardware information.
     if (lease.hwaddr_) {
-        // We may not have hardware information
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
         row.writeAt(getColumnIndex("hwtype"), lease.hwaddr_->htype_);
         row.writeAt(getColumnIndex("hwaddr_source"), lease.hwaddr_->source_);
@@ -245,14 +247,14 @@ HWAddrPtr
 CSVLeaseFile6::readHWAddr(const CSVRow& row) {
 
     try {
-        uint16_t const hwtype(readHWType(row).value_or(HTYPE_ETHER));
+        uint16_t const hwtype(readHWType(row).valueOr(HTYPE_ETHER));
         HWAddr hwaddr(
             HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")), hwtype));
         if (hwaddr.hwaddr_.empty()) {
             return (HWAddrPtr());
         }
         hwaddr.source_ =
-            readHWAddrSource(row).value_or(HWAddr::HWADDR_SOURCE_UNKNOWN);
+            readHWAddrSource(row).valueOr(HWAddr::HWADDR_SOURCE_UNKNOWN);
 
         /// @todo: HWAddr returns an object, not a pointer. Without HWAddr
         /// refactoring, at least one copy is unavoidable.
@@ -290,20 +292,20 @@ CSVLeaseFile6::readContext(const util::CSVRow& row) {
     return (ctx);
 }
 
-std::optional<uint16_t>
+Optional<uint16_t>
 CSVLeaseFile6::readHWType(const CSVRow& row) {
     size_t const index(getColumnIndex("hwtype"));
     if (row.readAt(index).empty()) {
-        return std::nullopt;
+        return Optional<uint16_t>();
     }
     return row.readAndConvertAt<uint16_t>(index);
 }
 
-std::optional<uint32_t>
+Optional<uint32_t>
 CSVLeaseFile6::readHWAddrSource(const CSVRow& row) {
     size_t const index(getColumnIndex("hwaddr_source"));
     if (row.readAt(index).empty()) {
-        return std::nullopt;
+        return Optional<uint16_t>();
     }
     return row.readAndConvertAt<uint32_t>(index);
 }
