@@ -1,3 +1,11 @@
+1974.	[func]		fdupont
+	The global parameter lookup has been refactored to provide better
+	performance. Proper return error code (CONTROL_RESULT_ERROR) has
+	been fixed in some cases when trying to apply the new
+	configuration. Old code was using wrong hardcoded '2' value
+	(CONTROL_RESULT_COMMAND_UNSUPPORTED).
+	(Gitlab #1082)
+
 1973.	[func]		fdupont
 	MySQL backends now can be configured to use the SSL/TLS
 	support to protect connections to the server. New
