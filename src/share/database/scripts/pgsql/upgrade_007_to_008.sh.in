@@ -222,6 +222,13 @@ ALTER TABLE dhcp4_subnet_server
 CREATE INDEX  fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
 
 -- dhcp6_options 
+-- Missing foreign key constraint and indexes
+ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_subnet
+    FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet(subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE INDEX fk_dhcp6_options_subnet ON dhcp6_options (dhcp6_subnet_id);
 CREATE INDEX fk_dhcp6_options_pd_pool ON dhcp6_options (pd_pool_id);
 CREATE INDEX fk_dhcp6_options_pool ON dhcp6_options (pool_id);
 CREATE INDEX fk_dhcp6_options_shared_network ON dhcp6_options (shared_network_name);
@@ -236,10 +243,20 @@ ALTER TABLE dhcp6_option_def_server
 
 CREATE INDEX fk_dhcp6_option_def_server_server_id ON dhcp6_option_def_server (server_id);
 
+-- dhcp6_option_def
+CREATE INDEX fk_dhcp6_option_def_client_class_id ON dhcp6_option_def (class_id);
+
 -- dhcp4_global_parameter_server
 CREATE INDEX  fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
 
 -- dhcp4_options
+-- Missing foreign key constraint and indexes
+ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_subnet
+    FOREIGN KEY (dhcp4_subnet_id)
+        REFERENCES dhcp4_subnet(subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE INDEX fk_dhcp4_options_subnet ON dhcp4_options (dhcp4_subnet_id);
 CREATE INDEX fk_dhcp4_options_pool ON dhcp4_options (pool_id);
 CREATE INDEX fk_dhcp4_options_shared_network ON dhcp4_options (shared_network_name);
 
@@ -255,9 +272,6 @@ CREATE INDEX fk_dhcp4_option_def_server_server_id ON dhcp4_option_def_server (se
 
 -- dhcp4_option_def
 CREATE INDEX fk_dhcp4_option_def_client_class_id ON dhcp4_option_def (class_id);
-
--- dhcp6_option_def
-CREATE INDEX fk_dhcp6_option_def_client_class_id ON dhcp6_option_def (class_id);
 
 -- Update the schema version number
 UPDATE schema_version
