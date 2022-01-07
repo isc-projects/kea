@@ -1164,8 +1164,6 @@ CREATE TABLE dhcp6_shared_network_server (
 CREATE INDEX dhcp6_shared_network_server_idx1 ON dhcp6_shared_network_server (modification_ts);
 CREATE INDEX dhcp6_shared_network_server_idx2 ON dhcp6_shared_network_server (server_id);
 
-
-
 -- Create a list of IPv6 subnets
 CREATE TABLE dhcp6_subnet (
   subnet_id BIGINT PRIMARY KEY NOT NULL,
@@ -1307,6 +1305,7 @@ CREATE TABLE dhcp6_global_parameter_server (
   CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
     REFERENCES dhcp6_server(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
+
 CREATE INDEX key_dhcp6_global_parameter_server_idx1 ON dhcp6_global_parameter_server(modification_ts);
 CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter_server
@@ -3853,7 +3852,7 @@ DROP FUNCTION IF EXISTS createOptionAuditDHCP6(modification_type VARCHAR(32),
 
 -- -----------------------------------------------------
 --
--- New version of the createOptionAuditDHCP4 stored
+-- New version of the createOptionAuditDHCP6 stored
 -- procedure which updates modification timestamp of
 -- a parent object when an option is modified.
 --
@@ -3961,6 +3960,55 @@ ALTER TABLE dhcp4_subnet_server
     DROP CONSTRAINT fk_dhcp6_subnet_server_subnet_id,
     ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id
         FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- Add missing foreign key indexes. PostgreSQL does not automatically create indexes for
+-- foreign key constraints. These have been added using the basic guideline:
+--
+-- If the constraint does not reference a static table (e.g. parameter_data_type),
+-- and the referencing column is not the primary key or the first
+-- column in the primary key, and does not already have an index, then an index 
+-- should be added to the table for the referencing column.
+--
+-- dhcp6_global_parameter_server
+CREATE INDEX  fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
+
+-- dhcp6_options 
+CREATE INDEX fk_dhcp6_options_pd_pool ON dhcp6_options (pd_pool_id);
+CREATE INDEX fk_dhcp6_options_pool ON dhcp6_options (pool_id);
+CREATE INDEX fk_dhcp6_options_shared_network ON dhcp6_options (shared_network_name);
+
+-- dhcp6_option_def_server
+-- Missing foreign key constraints and index
+ALTER TABLE dhcp6_option_def_server
+    ADD CONSTRAINT fk_dhcp6_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    ADD CONSTRAINT fk_dhcp6_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+CREATE INDEX fk_dhcp6_option_def_server_server_id ON dhcp6_option_def_server (server_id);
+
+-- dhcp4_global_parameter_server
+CREATE INDEX  fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
+
+-- dhcp4_options
+CREATE INDEX fk_dhcp4_options_pool ON dhcp4_options (pool_id);
+CREATE INDEX fk_dhcp4_options_shared_network ON dhcp4_options (shared_network_name);
+
+-- dhcp4_option_def_server
+-- Missing foreign key constraints and index
+ALTER TABLE dhcp4_option_def_server
+    ADD CONSTRAINT fk_dhcp4_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp4_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    ADD CONSTRAINT fk_dhcp4_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+CREATE INDEX fk_dhcp4_option_def_server_server_id ON dhcp4_option_def_server (server_id);
+
+-- dhcp4_option_def
+CREATE INDEX fk_dhcp4_option_def_client_class_id ON dhcp4_option_def (class_id);
+
+-- dhcp6_option_def
+CREATE INDEX fk_dhcp6_option_def_client_class_id ON dhcp6_option_def (class_id);
 
 -- Update the schema version number
 UPDATE schema_version

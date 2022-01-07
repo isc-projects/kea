@@ -58,7 +58,7 @@ fi
 # Delete transient data from tables.  We're using delete instead
 # of truncate because it is much faster since our unit tests
 # create very little data.
-# Note we disable revision auditing to avoid issues delete
+# Note we disable revision auditing to avoid issues with delete
 # triggers.
 psql "$@" >/dev/null <<EOF
 SELECT set_config('kea.disable_audit', 'true', false);
