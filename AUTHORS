@@ -240,3 +240,8 @@ We have received the following contributions:
    2021-11: Patch that adds support for v6 DUIDs to be embedded in v4 client
             identifiers per RFC 4361.  This allows Kea to support DDNS for
             dual-stack clients per RFC 4703.
+
+ - Peter Tirsek
+   2022-01: Patch that adds new parameter "timestamp-format" in forensic log
+            hook library to be able to configure the timestamp format for log
+            file.
