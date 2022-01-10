@@ -1,6 +1,6 @@
 1978.	[doc]		tomek
-	The Kea ARM now correctly states that DHCPv6 authentication
-	option has code 11, not 10.
+	The Kea Administrator Reference Manual now correctly states that
+	DHCPv6 authentication option has code 11, not 10.
 	(Gitlab #2207)
 
 1977.	[bug]		razvan
