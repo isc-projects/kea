@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,9 @@ clean_up() {
     remove_if_exists \
         "${config_file-}" \
         "${csv-}" \
-        "${csv_2-}"
+        "${csv_2-}" \
+        "@abs_top_builddir@/src/bin/admin/tests/kea.log" \
+        "@abs_top_builddir@/src/bin/admin/tests/kea.log.lock"
 }
 
 # Print location of CSV file. Accepts 4 or 6 as parameter.
@@ -63,6 +65,16 @@ memfile_header_v6() {
     printf '%s,hwaddr,state,user_context,hwtype,hwaddr_source' "$(incomplete_memfile_header_v6)"
 }
 
+# Print data copied from mysql_upgrade_12_to_13_test and pgsql_upgrade_7_0_to_8_0.
+# @{
+memfile_data_v4() {
+    printf '0.0.0.10,32:30,33:30,40,1643757330,50,1,1,one.example.com,0,'
+}
+memfile_data_v6() {
+    printf '::10,32:30,30,1643757330,40,50,1,60,70,1,1,one.example.com,38:30,0,,90,16'
+}
+# @}
+
 # Print "server-id" configuration. Not available for v4.
 server_id_v4() {
     :
@@ -82,12 +94,9 @@ server_id_v6() {
 # Accepts 4 or 6 as parameter.
 start_kea_dhcp() {
     local v="${1}"
-    if test -n "${DEBUG+x}"; then
-        "$(kea_dhcp "${v}")" -c "${config_file}" &
-    else
-        "$(kea_dhcp "${v}")" -c "${config_file}" > /dev/null 2>&1 &
-    fi
+    "$(kea_dhcp "${v}")" -c "${config_file}" >> "@abs_top_builddir@/src/bin/admin/tests/kea.log" 2>&1 &
     PID=${!}
+    sleep 1
 }
 
 # Test that Kea creates a correctly populated CSV file if configured with
@@ -96,6 +105,10 @@ memfile_init_test() {
     test_start 'memfile.init'
 
     for v in 4 6; do
+      for i in no-file some-data; do
+        if test -n "${DEBUG+x}"; then
+            printf 'TRACE %s, %s\n' "${v}" "${i}"
+        fi
         config=$(printf '%s%s%s' '
 {
   "Dhcpx": {
@@ -103,7 +116,19 @@ memfile_init_test() {
       "name": "@abs_top_builddir@/src/bin/admin/tests/kea-dhcpx.csv",
       "persist": true,
       "type": "memfile"
-    }' \
+    },
+    "loggers": [
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcpx",
+        "output_options": [
+          {
+            "output": "@abs_top_builddir@/src/bin/admin/tests/kea.log"
+          }
+        ],
+        "severity": "DEBUG"
+      }
+    ]' \
     "$(server_id_v${v})" \
     '
   }
@@ -111,15 +136,26 @@ memfile_init_test() {
 ')
         config_file="@abs_top_builddir@/src/bin/admin/tests/kea-dhcp${v}.conf"
         csv=$(csv_file "${v}")
+
+        if test "${i}" = 'some-data'; then
+            # Test that Kea accepts the output of lease-dump in memfile.
+            {
+              "memfile_header_v${v}"
+              printf '\n' >> "${csv}"
+              "memfile_data_v${v}"
+              printf '\n'
+            } > "${csv}"
+        else
+            # Make sure there is no CSV as the test requires.
+            rm -f "${csv}"
+        fi
+
+        # Set DHCP version in config.
         printf '%s\n' "${config}" | \
             sed "s#Dhcpx#Dhcp${v}#g;
-                 s#\"name\":.*,#\"name\": \"${csv}\",#g" \
+                 s#dhcpx#dhcp${v}#g" \
                 > "${config_file}"
-        if test -e "${csv}"; then
-            printf 'ERROR: garbage file "%s" should not exist.\n' "${csv}" >&2
-            clean_up
-            clean_exit 1
-        fi
+
         start_kea_dhcp "${v}"
         # This assumes that the CSV creation + writing to CSV is atomic. Not
         # sure if it is, but if this ever fails on the comparison further below,
@@ -134,7 +170,7 @@ memfile_init_test() {
             clean_up
             clean_exit 2
         fi
-        content=$(cat "${csv}")
+        content=$(head -n 1 "${csv}")
         expected=$(memfile_header_v${v})
         if test "${content}" != "${expected}"; then
             printf 'ERROR: %s does not contain expected header.\n< %s\n> %s\n' \
@@ -143,7 +179,15 @@ memfile_init_test() {
             clean_exit 3
         fi
 
+        if grep -Fi ERROR "@abs_top_builddir@/src/bin/admin/tests/kea.log"; then
+            printf 'ERROR: loading memfile failed. See error above.\n' >&2
+            cat "${csv}"
+            clean_up
+            clean_exit 4
+        fi
+
         clean_up
+      done
     done
 
     test_finish 0

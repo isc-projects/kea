@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,6 +49,9 @@ run_statement() {
     # Execute the statement
     run_command \
         mysql_execute "${qry}"
+    # shellcheck disable=SC2153
+    # SC2153: Possible misspelling: ... may not be assigned, but ... is.
+    # Reason for disable: OUTPUT is assigned in run_command.
     value="${OUTPUT}"
 
     # Execution should succeed
@@ -247,7 +250,9 @@ mysql_upgrade_schema_to_version() {
     echo "Schema upgraded to $version"
 }
 
-mysql_upgrade_12_to_13() {
+mysql_upgrade_12_to_13_test() {
+    mysql_wipe
+
     # Check the output of colonSeparatedHex().
     run_command \
         mysql_execute 'SELECT colonSeparatedHex(HEX(0xF123456789));'
@@ -273,6 +278,42 @@ mysql_upgrade_12_to_13() {
         mysql_execute 'SELECT colonSeparatedHex(HEX(0xF12));'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq '0f:12' "${OUTPUT}"
+
+    # Check lease4Dump*().
+    run_command \
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,'2022-02-002 01:15:30',50,1,1,'one.example.com',0,NULL);"
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
+
+    run_command \
+        mysql_execute "CALL lease4DumpHeader();"
+    assert_eq 0 "${EXIT_CODE}" 'lease4DumpHeader() failed, expected exit code %d, actual %d'
+    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' "${OUTPUT}"
+
+    run_command \
+        mysql_execute "CALL lease4DumpData();"
+    assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
+    output=$(printf '%s' "${OUTPUT}" | xargs)  # squash consecutive spaces
+    assert_str_eq '0.0.0.10 32:30 33:30 40 1643757330 50 1 1 one.example.com 0' "${output}"
+
+    # Check lease6Dump*().
+    run_command \
+        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,'2022-02-02 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);"
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
+
+    run_command \
+        mysql_execute "CALL lease6DumpHeader();"
+    assert_eq 0 "${EXIT_CODE}" 'lease6DumpHeader() failed, expected exit code %d, actual %d'
+    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' "${OUTPUT}"
+
+    run_command \
+        mysql_execute "CALL lease6DumpData();"
+    assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
+    output=$(printf '%s' "${OUTPUT}" | xargs)  # squash consecutive spaces
+    assert_str_eq '::10 32:30 30 1643757330 40 50 1 60 70 1 1 one.example.com 38:30 0 90 16' "${output}"
+
+    mysql_wipe
 }
 
 mysql_upgrade_test() {
@@ -374,7 +415,7 @@ mysql_upgrade_test() {
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "procedure text fetch for lease4DumpData failed. (returned status code %d, expected %d)"
-    count=$(echo "${OUTPUT}" | grep -Fci 'order by l.address') || true
+    count=$(echo "${OUTPUT}" | grep -Eci 'order by [a-z]*[\.]?address') || true
     assert_eq 1 "${count}" "lease4DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
     # verify  lease6DumpData has order by lease address
@@ -382,7 +423,7 @@ mysql_upgrade_test() {
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "procedure text fetch for lease6DumpData failed. (returned status code %d, expected %d)"
-    count=$(echo "${OUTPUT}" | grep -Fci 'order by l.address') || true
+    count=$(echo "${OUTPUT}" | grep -Eci 'order by [a-z]*[\.]?address') || true
     assert_eq 1 "${count}" "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
     #table: host_identifier_type (upgrade 4.1 -> 5.0)
@@ -918,7 +959,7 @@ SET @disable_audit = 0;"
     run_statement "dhcp6_options count" "$qry" 0
 
     # Check upgrade from 12.0 to 13.0.
-    mysql_upgrade_12_to_13
+    mysql_upgrade_12_to_13_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1017,9 +1058,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
-insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
-insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
+insert into lease6 values('::10',20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+insert into lease6 values('::11',NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
+insert into lease6 values('::12',21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1335,12 +1376,12 @@ mysql_lease_stat_recount_test() {
     run_statement "insert v4 leases" "$qry"
 
     qry=\
-"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
+"insert into lease6 (address, lease_type, subnet_id, state) values ('::111',0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::222',0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::333',1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::444',1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::555',1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::666',1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
     # Now we change some counters.

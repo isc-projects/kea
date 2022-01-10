@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4105,21 +4105,29 @@ DELIMITER $$
 CREATE PROCEDURE lease4DumpData()
 BEGIN
     SELECT
-        INET_NTOA(l.address),
-        IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
-        IFNULL(colonSeparatedHex(HEX(l.client_id)), ''),
-        l.valid_lifetime,
-        UNIX_TIMESTAMP(l.expire),
-        l.subnet_id,
-        l.fqdn_fwd,
-        l.fqdn_rev,
-        l.hostname,
-        l.state,
-        IFNULL(l.user_context, '')
-    FROM
-        lease4 l
-    ORDER BY l.address;
+        INET_NTOA(address),
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        IFNULL(colonSeparatedHex(HEX(client_id)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        state,
+        IFNULL(user_context, '')
+    FROM lease4
+    ORDER BY address;
 END $$
+DELIMITER ;
+
+-- hwtype and hwaddr_source need to be last to match memfile format.
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+    SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source';
+END  $$
 DELIMITER ;
 
 -- Modify the procedure to output a memfile-ready CSV file.
@@ -4128,26 +4136,25 @@ DELIMITER $$
 CREATE PROCEDURE lease6DumpData()
 BEGIN
     SELECT
-        l.address,
-        IFNULL(colonSeparatedHex(HEX(l.duid)), ''),
-        l.valid_lifetime,
-        UNIX_TIMESTAMP(l.expire),
-        l.subnet_id,
-        l.pref_lifetime,
-        l.lease_type,
-        l.iaid,
-        l.prefix_len,
-        l.fqdn_fwd,
-        l.fqdn_rev,
-        l.hostname,
-        IFNULL(colonSeparatedHex(HEX(l.hwaddr)), ''),
-        IFNULL(l.hwtype, ''),
-        IFNULL(h.name, ''),
-        l.state,
-        IFNULL(l.user_context, '')
-    FROM lease6 l
-        LEFT OUTER JOIN lease_hwaddr_source h ON l.hwaddr_source = h.hwaddr_source
-    ORDER BY l.address;
+        address,
+        IFNULL(colonSeparatedHex(HEX(duid)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        state,
+        IFNULL(user_context, ''),
+        hwtype,
+        hwaddr_source
+    FROM lease6
+    ORDER BY address;
 END $$
 DELIMITER ;
 
