@@ -1623,7 +1623,7 @@ returned by the Kea engine itself and in general should not be configured manual
    | relay-msg    | 9    | Used by relays to encapsulate the original client message. Kea uses it |
    |              |      | when sending back relayed responses to the relay agent.                |
    +--------------+------+------------------------------------------------------------------------+
-   | auth         | 10   | Used to pass authentication information between clients and server. The|
+   | auth         | 11   | Used to pass authentication information between clients and server. The|
    |              |      | support for this option is very limited.                               |
    +--------------+------+------------------------------------------------------------------------+
    | status-code  | 13   | An option that the server can attach in case of various failures, such |
