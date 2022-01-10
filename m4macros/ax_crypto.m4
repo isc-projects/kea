@@ -94,8 +94,8 @@ if test "${use_openssl}" != "auto" -a "${use_openssl}" != "no" ; then
    botan_config="no"
 fi
 AC_ARG_WITH([botan-config],
-  AS_HELP_STRING([--with-botan-config=PATH],
-    [specify the path to the botan-config script]),
+  [AS_HELP_STRING([--with-botan-config=PATH],
+    [specify the path to the botan-config script])],
   [botan_config="$withval"])
 distcheck_botan="--with-botan-config=$botan_config"
 if test "${botan_config}" = "no" ; then

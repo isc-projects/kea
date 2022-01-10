@@ -339,7 +339,7 @@ esac
 
 werror_extras=
 AC_ARG_WITH(werror,
-    AS_HELP_STRING([--with-werror],[Compile using -Werror (default=no)]),
+    [AS_HELP_STRING([--with-werror],[Compile using -Werror (default=no)])],
     [
      case "${withval}" in
          yes) with_werror=1 ;;
@@ -643,12 +643,12 @@ enable_benchmark="no"
 BENCHMARK_INCLUDES=
 
 AC_ARG_WITH([benchmark-source],
-            [AS_HELP_STRING([--with-benchmark-source=PATH],
+            [AS_HELP_STRING([--with-benchmark-source[[=PATH]]],
                             [location of the benchmark source])],
             [enable_benchmark="yes" ; BENCHMARK_SOURCE="$withval"])
 
 AC_ARG_WITH([benchmark],
-            [AS_HELP_STRING([--with-benchmark=PATH],
+            [AS_HELP_STRING([--with-benchmark[[=PATH]]],
                             [specify a path to benchmark header files (PATH/include) and library (PATH/lib)])],
         [benchmark_path="$withval"; enable_benchmark="yes"], [benchmark_path="no"])
 
@@ -665,8 +665,8 @@ defaultdirs="/usr /usr/local /usr/pkg /opt /opt/local"
 # the software is not built with MySQL support enabled.
 mysql_config="no"
 AC_ARG_WITH([mysql],
-  AS_HELP_STRING([--with-mysql=PATH],
-    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
+  [AS_HELP_STRING([--with-mysql[[=PATH]]],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)])],
   [mysql_config="$withval"])
 
 deprec_msg="no"
@@ -745,8 +745,8 @@ AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
 AC_ARG_WITH([pgsql],
-  AS_HELP_STRING([--with-pgsql=PATH],
-    [path to the PostgreSQL 'pg_config' script]),
+  [AS_HELP_STRING([--with-pgsql[[=PATH]]],
+    [path to the PostgreSQL 'pg_config' script])],
   [pg_config="$withval"])
 
 deprec_msg="no"
@@ -839,8 +839,8 @@ fi
 
 cql_config="no"
 AC_ARG_WITH([cql],
-  AS_HELP_STRING([--with-cql=PATH],
-    [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)]),
+  [AS_HELP_STRING([--with-cql[[=PATH]]],
+    [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)])],
   [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
@@ -1292,8 +1292,8 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   AM_PATH_PYTHON([2.7])
 
   AC_ARG_WITH(site-packages,
-           AS_HELP_STRING([--with-site-packages],
-                          [place to install Kea Python module]),
+           [AS_HELP_STRING([--with-site-packages],
+                          [place to install Kea Python module])],
            [pythondir=$withval;
             pkgpythondir=${pythondir}/$PACKAGE_NAME])
   if test "$pythondir" = "yes"; then
@@ -1346,11 +1346,11 @@ fi
 AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
 
 AC_ARG_WITH([sphinx],
-  AS_HELP_STRING([--with-sphinx=PATH],[path to sphinx-build tool]),
+  [AS_HELP_STRING([--with-sphinx=PATH],[path to sphinx-build tool])],
   [sphinx_path="$withval"])
 
 AC_ARG_WITH([pdflatex],
-  AS_HELP_STRING([--with-pdflatex=PATH],[path to pdflatex tool]),
+  [AS_HELP_STRING([--with-pdflatex=PATH],[path to pdflatex tool])],
   [pdflatex_path="$withval"])
 PDFLATEX=no
 

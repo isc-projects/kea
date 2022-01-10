@@ -4,17 +4,17 @@ enable_gtest="no"
 GTEST_INCLUDES=
 
 AC_ARG_WITH([gtest-source],
-            [AS_HELP_STRING([--with-gtest-source=PATH],
+            [AS_HELP_STRING([--with-gtest-source[[=PATH]]],
                             [location of the Googletest source])],
             [enable_gtest="yes" ; GTEST_SOURCE="$withval"])
 
 AC_ARG_WITH([gtest],
-            [AS_HELP_STRING([--with-gtest=PATH],
+            [AS_HELP_STRING([--with-gtest[[=PATH]]],
                             [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
         [gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
 
 AC_ARG_WITH([lcov],
-            [AS_HELP_STRING([--with-lcov=PROGRAM],
+            [AS_HELP_STRING([--with-lcov[[=PROGRAM]]],
                             [enable gtest and coverage target using the specified lcov])],
                             [lcov="$withval"],
                             [lcov="no"])

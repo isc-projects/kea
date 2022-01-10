@@ -50,8 +50,8 @@ boost_lib_path=
 #
 # If explicitly specified, use it.
 AC_ARG_WITH([boost-include],
-  AS_HELP_STRING([--with-boost-include=PATH],
-    [specify exact directory for Boost headers]),
+  [AS_HELP_STRING([--with-boost-include=PATH],
+    [specify exact directory for Boost headers])],
   [boost_include_path="$withval"])
 # If not specified, try some common paths.
 if test -z "$with_boost_include"; then
@@ -165,14 +165,14 @@ void testfn(void) { BOOST_STATIC_ASSERT(true); }
 
 # Get libs when explicitly configured
 AC_ARG_WITH([boost-libs],
-  AS_HELP_STRING([--with-boost-libs=SPEC],
-    [specify Boost libraries to link with, e.g., '-lboost_system']),
+  [AS_HELP_STRING([--with-boost-libs=SPEC],
+    [specify Boost libraries to link with, e.g., '-lboost_system'])],
   [BOOST_LIBS="$withval"
    DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
 
 # Get lib dir when explicitly configured
 AC_ARG_WITH([boost-lib-dir],
-  AS_HELP_STRING([--with-boost-lib-dir=PATH],[specify directory where to find Boost libraries]),
+  [AS_HELP_STRING([--with-boost-lib-dir=PATH],[specify directory where to find Boost libraries])],
     [BOOST_LIB_DIR="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-lib-dir=$withval"])
 
