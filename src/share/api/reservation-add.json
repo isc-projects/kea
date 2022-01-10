@@ -23,7 +23,7 @@
         "            \"hw-address\": <string>,",
         "            \"hostname\": <string>,",
         "            \"next-server\": <string (IPv4 address)>,",
-        "            \"option-data-list\": [ <comma-separated structures defining options> ],",
+        "            \"option-data\": [ <comma-separated structures defining options> ],",
         "            \"prefixes\": [ <comma-separated IPv6 prefixes> ],",
         "            \"client-classes\": [ <comma-separated strings> ],",
         "            \"server-hostname\": <string>,",
