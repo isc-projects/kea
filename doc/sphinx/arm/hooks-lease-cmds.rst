@@ -477,8 +477,9 @@ is assumed.
 and lease details, if found. The result has one of the following values: 0
 (success), 1 (error), or 3 (empty). An empty result means that a query
 has been completed properly, but the object (a lease in this case) has
-not been found. The lease parameters, if found, are returned as
-arguments.
+not been found.
+The lease parameters, if found, are returned as arguments.
+``client-id`` in not returned if empty.
 
 An example result returned when the host was found:
 
