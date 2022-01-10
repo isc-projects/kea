@@ -1,3 +1,8 @@
+1977.	[bug]		razvan
+	Use only MAX_HWADDR_LEN (20) bytes from remote-id when extracting
+	the MAC from relay options.
+	(Gitlab #2201)
+
 1976.	[func]		andrei
 	Added hwtype and hwaddr_source columns to v6 memfile.
 	(Gitlab #2236)
