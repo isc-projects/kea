@@ -479,7 +479,7 @@ and lease details, if found. The result has one of the following values: 0
 has been completed properly, but the object (a lease in this case) has
 not been found.
 The lease parameters, if found, are returned as arguments.
-``client-id`` in not returned if empty.
+``client-id`` is not returned if empty.
 
 An example result returned when the host was found:
 
