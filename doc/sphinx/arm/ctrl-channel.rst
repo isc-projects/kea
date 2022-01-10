@@ -666,10 +666,11 @@ sent to the DHCP servers in an HA setup. This parameter is
 never returned when the ``status-get`` command is sent to the
 Control Agent or DDNS daemon.
 
-The ``thread-pool-size`` and ``packet-queue-size`` parameters are returned only
-when the command is sent to DHCP servers with multi-threading enabled. These two
-parameters and ``multi-threading-enabled`` are never returned when the
-``status-get`` command is sent to the Control Agent or DDNS daemon.
+The ``thread-pool-size``, ``packet-queue-size`` and
+``packet-queue-statistics`` parameters are returned only when the
+command is sent to DHCP servers with multi-threading enabled. These
+three parameters and ``multi-threading-enabled`` are never returned when
+the ``status-get`` command is sent to the Control Agent or DDNS daemon.
 
 To learn more about the HA status information returned by the
 ``status-get`` command, please refer to the :ref:`command-ha-status-get`
