@@ -1,7 +1,6 @@
-EXTRA_DIST = mysql.lease4_dump_test.reference.csv \
-    mysql.lease6_dump_test.reference.csv \
-    pgsql.lease4_dump_test.reference.csv \
-    pgsql.lease6_dump_test.reference.csv \
+EXTRA_DIST = \
+    lease4_dump_test.reference.csv \
+    lease6_dump_test.reference.csv \
     cql.lease4_dump_test.reference.csv \
     cql.lease6_dump_test.reference.csv \
     cql.subnet_id_test.reference.csv \

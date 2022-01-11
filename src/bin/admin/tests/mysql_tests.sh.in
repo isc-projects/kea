@@ -977,7 +977,7 @@ mysql_lease4_dump_test() {
     output_file="$output_dir/data/mysql.lease4_dump_test.output.csv"
     tmp_file="$output_file.tmp"
 
-    ref_file="$test_dir/data/mysql.lease4_dump_test.reference.csv"
+    ref_file="$test_dir/data/lease4_dump_test.reference.csv"
 
     # wipe out any residuals from prior failed runs
     if [ -e $output_file ]
@@ -1036,7 +1036,7 @@ mysql_lease6_dump_test() {
     output_file="$output_dir/data/mysql.lease6_dump_test.output.csv"
     tmp_file="$output_file.tmp"
 
-    ref_file="$test_dir/data/mysql.lease6_dump_test.reference.csv"
+    ref_file="$test_dir/data/lease6_dump_test.reference.csv"
 
     # wipe out any residuals from prior failed runs
     if [ -e $output_file ]
