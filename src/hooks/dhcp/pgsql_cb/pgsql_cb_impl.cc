@@ -104,7 +104,7 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::Paramet
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Postgres schema version mismatch: need version: "
                                    << code_version.first << "." << code_version.second
-                                   << " found version:  " << db_version.first << "."
+                                   << " found version: " << db_version.first << "."
                                    << db_version.second);
     }
 

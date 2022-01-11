@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -585,7 +585,7 @@ pgsql_dump() {
             psql --set ON_ERROR_STOP=1 -t -h "${db_host}" -q --user="${db_user}" \
             --dbname="${db_name}" -w --no-align --field-separator=',' > "${dump_file}"
     ); then
-        log_error "lease-dump: psql call failed, exit code: ${EXIT_CODE}"
+        log_error "lease-dump: psql call failed, exit code: ${?}"
         exit 1
     fi
 

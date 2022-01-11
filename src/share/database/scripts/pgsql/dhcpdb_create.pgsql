@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3793,6 +3793,8 @@ UPDATE schema_version
 
 -- Schema 7.0 specification ends here.
 
+-- This starts schema update to 8.0.
+
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
 -- column matching option defintions with client classes.
@@ -3966,13 +3968,13 @@ ALTER TABLE dhcp4_subnet_server
 --
 -- If the constraint does not reference a static table (e.g. parameter_data_type),
 -- and the referencing column is not the primary key or the first
--- column in the primary key, and does not already have an index, then an index 
+-- column in the primary key, and does not already have an index, then an index
 -- should be added to the table for the referencing column.
 --
 -- dhcp6_global_parameter_server
 CREATE INDEX  fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
 
--- dhcp6_options 
+-- dhcp6_options
 -- Missing foreign key constraint and indexes
 ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_subnet
     FOREIGN KEY (dhcp6_subnet_id)
@@ -4024,13 +4026,128 @@ CREATE INDEX fk_dhcp4_option_def_server_server_id ON dhcp4_option_def_server (se
 -- dhcp4_option_def
 CREATE INDEX fk_dhcp4_option_def_client_class_id ON dhcp4_option_def (class_id);
 
--- Update the schema version number
+-- Create a function that separates groups of two hexadecimals
+-- with colons.
+CREATE OR REPLACE FUNCTION colonSeparatedHex(hex TEXT)
+RETURNS TEXT
+AS $$
+DECLARE
+    i INT := 3;
+    length INT := LENGTH(hex);
+    output TEXT;
+BEGIN
+    -- Add a leading zero if the first octet has a single hexadecimal character.
+    IF MOD(length, 2) = 1 THEN
+        hex := CONCAT('0', hex);
+        length := length + 1;
+    END IF;
+
+    -- Start with the first octet.
+    output := SUBSTR(hex, 1, 2);
+
+    -- Add one octet at a time and a leading colon with each.
+    WHILE i < length LOOP
+        output := CONCAT(output, ':', SUBSTR(hex, i, 2));
+        i := i + 2;
+    END LOOP;
+
+    -- Memfile uses lowercase hexadecimals.
+    output := LOWER(output);
+
+    RETURN output;
+END
+$$ LANGUAGE plpgsql;
+
+-- Modify the function to output a memfile-ready CSV file.
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE OR REPLACE FUNCTION lease4DumpData()
+RETURNS TABLE (
+    address inet,
+    hwaddr VARCHAR,
+    client_id VARCHAR,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id BIGINT,
+    fqdn_fwd INT,
+    fqdn_rev INT,
+    hostname VARCHAR,
+    state INT8,
+    user_context VARCHAR
+) AS $$
+    SELECT
+        ('0.0.0.0'::inet + address),
+        colonSeparatedHex(encode(hwaddr, 'hex')),
+        colonSeparatedHex(encode(client_id, 'hex')),
+        valid_lifetime,
+        extract(epoch from expire),
+        subnet_id,
+        fqdn_fwd::int,
+        fqdn_rev::int,
+        replace(hostname, ',', '&#x2c'),
+        state,
+        replace(user_context, ',', '&#x2c')
+    FROM lease4
+    ORDER BY address;
+$$ LANGUAGE SQL;
+
+-- hwtype and hwaddr_source need to be last to match memfile format.
+DROP FUNCTION IF EXISTS lease6DumpHeader;
+CREATE OR REPLACE FUNCTION lease6DumpHeader()
+RETURNS TEXT AS $$
+    SELECT CAST('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' AS TEXT) AS result;
+$$ LANGUAGE SQL;
+
+-- Modify the function to output a memfile-ready CSV file.
+DROP FUNCTION IF EXISTS lease6DumpData();
+CREATE OR REPLACE FUNCTION lease6DumpData()
+RETURNS TABLE (
+    address VARCHAR,
+    duid VARCHAR,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id BIGINT,
+    pref_lifetime BIGINT,
+    name VARCHAR,
+    iaid INT,
+    prefix_len SMALLINT,
+    fqdn_fwd INT,
+    fqdn_rev INT,
+    hostname VARCHAR,
+    hwaddr VARCHAR,
+    state INT8,
+    user_context VARCHAR,
+    hwtype SMALLINT,
+    hwaddr_source VARCHAR
+) AS $$
+    SELECT
+        address,
+        colonSeparatedHex(encode(duid, 'hex')),
+        valid_lifetime,
+        extract(epoch from expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd::int,
+        fqdn_rev::int,
+        replace(hostname, ',', '&#x2c'),
+        colonSeparatedHex(encode(hwaddr, 'hex')),
+        state,
+        replace(user_context, ',', '&#x2c'),
+        hwtype,
+        hwaddr_source
+    FROM lease6
+    ORDER BY address;
+$$ LANGUAGE SQL;
+
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '0';
 
 -- Schema 8.0 specification ends here.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 -- Notes:
