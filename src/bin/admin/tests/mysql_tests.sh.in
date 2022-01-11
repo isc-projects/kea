@@ -251,8 +251,6 @@ mysql_upgrade_schema_to_version() {
 }
 
 mysql_upgrade_12_to_13_test() {
-    mysql_wipe
-
     # Check the output of colonSeparatedHex().
     run_command \
         mysql_execute 'SELECT colonSeparatedHex(HEX(0xF123456789));'
@@ -281,7 +279,7 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease4Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,'2022-02-002 01:15:30',50,1,1,'one.example.com',0,NULL);"
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,'2022-02-002 01:15:30',50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }');"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -293,12 +291,12 @@ mysql_upgrade_12_to_13_test() {
     run_command \
         mysql_execute "CALL lease4DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
-    output=$(printf '%s' "${OUTPUT}" | xargs)  # squash consecutive spaces
-    assert_str_eq '0.0.0.10 32:30 33:30 40 1643757330 50 1 1 one.example.com 0' "${output}"
+    output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
+    assert_str_eq '0.0.0.10,32:30,33:30,40,1643757330,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${output}"
 
     # Check lease6Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,'2022-02-02 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);"
+        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,'2022-02-02 01:15:30',40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }');"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -310,10 +308,8 @@ mysql_upgrade_12_to_13_test() {
     run_command \
         mysql_execute "CALL lease6DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
-    output=$(printf '%s' "${OUTPUT}" | xargs)  # squash consecutive spaces
-    assert_str_eq '::10 32:30 30 1643757330 40 50 1 60 70 1 1 one.example.com 38:30 0 90 16' "${output}"
-
-    mysql_wipe
+    output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
+    assert_str_eq '::10,32:30,30,1643757330,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
 }
 
 mysql_upgrade_test() {
@@ -416,7 +412,7 @@ mysql_upgrade_test() {
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "procedure text fetch for lease4DumpData failed. (returned status code %d, expected %d)"
     count=$(echo "${OUTPUT}" | grep -Eci 'order by [a-z]*[\.]?address') || true
-    assert_eq 1 "${count}" "lease4DumpData doesn't have order by clause. (returned count %d, expected %d)"
+    assert_eq 1 "${count}" "lease4DumpData is missing order by clause. (expected count %d, returned %d)"
 
     # verify  lease6DumpData has order by lease address
     qry="show create procedure lease6DumpData"
@@ -999,9 +995,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0,NULL);\
-insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1,NULL);\
-insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2,NULL);"
+insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com',0,NULL);\
+insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'',1,'{}');\
+insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three,example,com',2,'{\"a\":1,\"b\":\"c\"}');"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1059,8 +1055,8 @@ mysql_lease6_dump_test() {
     # Insert the reference record
     insert_sql="\
 insert into lease6 values('::10',20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
-insert into lease6 values('::11',NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
-insert into lease6 values('::12',21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
+insert into lease6 values('::11',NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,'{}');\
+insert into lease6 values('::12',21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{\"a\":1,\"b\":\"c\"}');"
 
     run_command \
         mysql_execute "$insert_sql"

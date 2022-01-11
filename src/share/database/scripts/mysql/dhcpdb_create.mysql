@@ -4113,9 +4113,9 @@ BEGIN
         subnet_id,
         fqdn_fwd,
         fqdn_rev,
-        hostname,
+        REPLACE(hostname, ',', '&#x2c'),
         state,
-        IFNULL(user_context, '')
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c')
     FROM lease4
     ORDER BY address;
 END $$
@@ -4147,10 +4147,10 @@ BEGIN
         prefix_len,
         fqdn_fwd,
         fqdn_rev,
-        hostname,
+        REPLACE(hostname, ',', '&#x2c'),
         IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
         state,
-        IFNULL(user_context, ''),
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c'),
         hwtype,
         hwaddr_source
     FROM lease6
