@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,8 +152,8 @@ TEST(BackendSelectorTest, accessMapPortSpec) {
 TEST(BackendSelectorTest, stringToBackendType) {
     EXPECT_EQ(BackendSelector::Type::MYSQL,
               BackendSelector::stringToBackendType("mysql"));
-    EXPECT_EQ(BackendSelector::Type::PGSQL,
-              BackendSelector::stringToBackendType("pgsql"));
+    EXPECT_EQ(BackendSelector::Type::POSTGRESQL,
+              BackendSelector::stringToBackendType("postgresql"));
     EXPECT_EQ(BackendSelector::Type::CQL,
               BackendSelector::stringToBackendType("cql"));
     EXPECT_THROW(BackendSelector::stringToBackendType("unsupported"),
@@ -164,8 +164,8 @@ TEST(BackendSelectorTest, stringToBackendType) {
 TEST(BackendSelectorTest, backendTypeToString) {
     EXPECT_EQ("mysql",
               BackendSelector::backendTypeToString(BackendSelector::Type::MYSQL));
-    EXPECT_EQ("pgsql",
-              BackendSelector::backendTypeToString(BackendSelector::Type::PGSQL));
+    EXPECT_EQ("postgresql",
+              BackendSelector::backendTypeToString(BackendSelector::Type::POSTGRESQL));
     EXPECT_EQ("cql",
               BackendSelector::backendTypeToString(BackendSelector::Type::CQL));
 }

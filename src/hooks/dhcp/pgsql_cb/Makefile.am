@@ -24,7 +24,8 @@ libpgsqlcb_la_SOURCES  = pgsql_cb_callouts.cc
 libpgsqlcb_la_SOURCES += pgsql_cb_impl.cc pgsql_cb_impl.h
 libpgsqlcb_la_SOURCES += pgsql_cb_messages.cc pgsql_cb_messages.h
 libpgsqlcb_la_SOURCES += pgsql_cb_log.cc pgsql_cb_log.h
-libpgsqlcb_la_SOURCES += pgsql_macros.h
+libpgsqlcb_la_SOURCES += pgsql_query_macros.h
+libpgsqlcb_la_SOURCES += pgsql_cb_dhcp4.cc pgsql_cb_dhcp4.h
 libpgsqlcb_la_SOURCES += version.cc
 
 libpgsqlcb_la_CXXFLAGS = $(AM_CXXFLAGS)

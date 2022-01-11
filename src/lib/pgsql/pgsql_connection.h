@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@ const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 0;
 // @todo This allows us to use an initializer list (since we can't
 // require C++11).  It's unlikely we'd go past this many a single
 // statement.
-const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
+const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 128;
 
 /// @brief Define a PostgreSQL statement.
 ///
@@ -199,6 +199,8 @@ class PgSqlConnection : public db::DatabaseConnection {
 public:
     /// @brief Define the PgSql error state for a duplicate key error.
     static const char DUPLICATE_KEY[];
+    /// @brief Define the PgSql error state for a null foreign key error.
+    static const char NULL_KEY[];
 
     /// @brief Function invoked to process fetched row.
     typedef std::function<void(PgSqlResult&, int)> ConsumeResultRowFun;

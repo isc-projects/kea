@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ void PsqlBindArray::insert(const char* value, size_t index) {
 }
 
 void PsqlBindArray::insert(const std::string& value, size_t index) {
-    if (index >= values_.size()) {
+    if (index && index >= values_.size()) {
         isc_throw(OutOfRange, "PsqlBindArray::insert - index: " << index
                   << ", is larger than the array size: " << values_.size());
     }
@@ -64,6 +64,16 @@ void PsqlBindArray::insert(const std::string& value, size_t index) {
     values_.insert(values_.begin() + index, value.c_str());
     lengths_.insert(lengths_.begin() + index, value.size());
     formats_.insert(formats_.begin() + index, TEXT_FMT);
+}
+
+void PsqlBindArray::popBack() {
+    if (values_.size() == 0) {
+        isc_throw(OutOfRange, "PsqlBindArray::pop_back - array empty");
+    }
+
+    values_.erase(values_.end() - 1);
+    lengths_.erase(lengths_.end() - 1);
+    formats_.erase(formats_.end() - 1);
 }
 
 void PsqlBindArray::add(const std::vector<uint8_t>& data) {
@@ -146,20 +156,11 @@ void PsqlBindArray::addTempString(const std::string& str) {
 }
 
 void
-PsqlBindArray::addOptionalString(const util::Optional<std::string>& value) {
+PsqlBindArray::addOptional(const util::Optional<std::string>& value) {
     if (value.unspecified()) {
         addNull();
     } else {
-        add(value);
-    }
-}
-
-void
-PsqlBindArray::addOptionalBool(const util::Optional<bool>& value) {
-    if (value.unspecified()) {
-        addNull();
-    } else {
-        add(value);
+        addTempString(value);
     }
 }
 
@@ -233,6 +234,18 @@ PsqlBindArray::addTimestamp() {
 
 void
 PsqlBindArray::add(const ElementPtr& value) {
+    if (!value) {
+        addNull();
+        return;
+    }
+
+    std::ostringstream ss;
+    value->toJSON(ss);
+    addTempString(ss.str());
+}
+
+void
+PsqlBindArray::add(const ConstElementPtr& value) {
     if (!value) {
         addNull();
         return;

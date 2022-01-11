@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -222,16 +222,24 @@ struct PsqlBindArray {
     /// @brief Inserts a string value to the bind array before the given index
     ///
     /// Inserts a TEXT_FMT value into the bind array before the element
-    /// position given by index, using the given given string as the data source.
+    /// position given by index, using the given given string as the data
+    /// source.
+    ///
     /// The caller is responsible for ensuring that string parameter remains in
     /// scope until the bind array has been discarded.
     ///
     /// @param value char array containing the null-terminated text to add.
-    /// @param index element position before which the string should be inserted.
+    /// @param index element position before which the string should be
+    /// inserted.
     ///
     /// @throw DbOperationError if value is NULL.
     /// @throw OutOfRange if the index is beyond the end of the array.
     void insert(const std::string& value, size_t index);
+
+    /// @brief Removes the last entry in the bind array.
+    ///
+    /// @throw OutOfRange if array is empty.
+    void popBack();
 
     /// @brief Adds a vector of binary data to the bind array.
     ///
@@ -338,21 +346,19 @@ struct PsqlBindArray {
 
     /// @brief Adds an @c Optional string to the bind array.
     ///
+    /// Optional strings require adding a temp string to the
+    /// bind array, unlike other types which implicitly do so.
+    ///
     /// @param value Optional string value to add
-    void addOptionalString(const util::Optional<std::string>& value);
+    void addOptional(const util::Optional<std::string>& value);
 
-    /// @brief Adds an @c Optional boolean to the bind array.
+    /// @brief Adds an @c Optional<type> value to the bind array.
     ///
-    /// @param value Optional boolean value to add
-    void addOptionalBool(const util::Optional<bool>& value);
-
-    /// @brief Adds an @c Optional of integer type to the bind array.
-    ///
-    /// @tparam T Numeric type corresponding to the binding type, e.g.
-    /// @c uint8_t, @c uint16_t etc.
-    /// @param value Optional integer of type T.
+    /// @tparam T variable type corresponding to the binding type, e.g.
+    /// @c string, bool, uint8_t, @c uint16_t etc.
+    /// @param value Optional of type T.
     template<typename T>
-    void addOptionalInteger(const util::Optional<T>& value) {
+    void addOptional(const util::Optional<T>& value) {
         if (value.unspecified()) {
             addNull();
         } else {
@@ -416,6 +422,15 @@ struct PsqlBindArray {
     /// @param value ElementPtr containing Element tree to add.
     /// @throw DbOperationError if value is NULL.
     void add(const data::ElementPtr& value);
+
+    /// @brief Adds a ConstElementPtr to the bind array
+    ///
+    /// Adds a TEXT_FMT value to the end of the bind array containing
+    /// the JSON text output by given ElementPtr::toJSON().
+    ///
+    /// @param value ElementPtr containing Element tree to add.
+    /// @throw DbOperationError if value is NULL.
+    void add(const data::ConstElementPtr& value);
 
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump

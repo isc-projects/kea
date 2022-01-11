@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ public:
     /// @brief Returns backend type in the textual format.
     ///
     /// @return Name of the storage for configurations, e.g. "mysql",
-    /// "pgsql" and so forth.
+    /// "postgresql" and so forth.
     virtual std::string getType() const = 0;
 
     /// @brief Returns backend host.

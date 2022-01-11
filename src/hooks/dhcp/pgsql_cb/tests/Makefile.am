@@ -24,9 +24,9 @@ if HAVE_GTEST
 TESTS += pgsql_cb_unittests
 
 pgsql_cb_unittests_SOURCES  = pgsql_cb_impl_unittest.cc
+pgsql_cb_unittests_SOURCES  += pgsql_cb_dhcp4_unittest.cc
 
 # disabled for now, to be added in #95
-#pgsql_cb_unittests_SOURCES  = pgsql_cb_dhcp4_unittest.cc
 #pgsql_cb_unittests_SOURCES += pgsql_cb_dhcp4_mgr_unittest.cc
 
 # disabled for now, to be added in #96

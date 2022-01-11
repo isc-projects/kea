@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
+#include <database/db_exceptions.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
 
@@ -27,6 +28,30 @@ namespace isc {
 namespace dhcp {
 
 isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
+
+PgSqlTaggedStatement&
+PgSqlConfigBackendImpl::getStatement(size_t /* index */) const {
+    isc_throw(NotImplemented, "derivations must override this");
+}
+
+void
+PgSqlConfigBackendImpl::selectQuery(size_t index,
+                                    const PsqlBindArray& in_bindings,
+                                    PgSqlConnection::ConsumeResultRowFun process_result_row) {
+    conn_.selectQuery(getStatement(index), in_bindings, process_result_row);
+}
+
+void
+PgSqlConfigBackendImpl::insertQuery(size_t index,
+                                    const PsqlBindArray& in_bindings) {
+    conn_.insertQuery(getStatement(index), in_bindings);
+}
+
+uint64_t
+PgSqlConfigBackendImpl::updateDeleteQuery(size_t index,
+                                    const PsqlBindArray& in_bindings) {
+    return(conn_.updateDeleteQuery(getStatement(index), in_bindings));
+}
 
 PgSqlConfigBackendImpl::ScopedAuditRevision::ScopedAuditRevision(
     PgSqlConfigBackendImpl* impl,
@@ -93,11 +118,11 @@ PgSqlConfigBackendImpl::~PgSqlConfigBackendImpl() {
 }
 
 void
-PgSqlConfigBackendImpl::createAuditRevision(const int /* index */,
+PgSqlConfigBackendImpl::createAuditRevision(const int index,
                                             const ServerSelector& server_selector,
-                                            const boost::posix_time::ptime& /* audit_ts */,
-                                            const std::string& /* log_message */,
-                                            const bool /* cascade_transaction */) {
+                                            const boost::posix_time::ptime& audit_ts,
+                                            const std::string& log_message,
+                                            const bool cascade_transaction) {
     // Do not touch existing audit revision in case of the cascade update.
     if (audit_revision_created_) {
         return;
@@ -115,7 +140,13 @@ PgSqlConfigBackendImpl::createAuditRevision(const int /* index */,
         tag = tags.begin()->get();
     }
 
-    isc_throw(NotImplemented, "todo");
+    PsqlBindArray in_bindings;
+    in_bindings.addTimestamp(audit_ts);
+    in_bindings.add(tag);
+    in_bindings.add(log_message);
+    in_bindings.add(cascade_transaction);
+
+    insertQuery(index, in_bindings);
 }
 
 void
@@ -124,12 +155,59 @@ PgSqlConfigBackendImpl::clearAuditRevision() {
 }
 
 void
-PgSqlConfigBackendImpl::getRecentAuditEntries(const int /* index */,
-                                              const db::ServerSelector& /* server_selector */,
-                                              const boost::posix_time::ptime& /* modification_time */,
-                                              const uint64_t& /* modification_id */,
-                                              AuditEntryCollection& /* audit_entries */) {
-    isc_throw(NotImplemented, "todo");
+PgSqlConfigBackendImpl::getRecentAuditEntries(const int index,
+                                              const db::ServerSelector& server_selector,
+                                              const boost::posix_time::ptime& modification_time,
+                                              const uint64_t& modification_id,
+                                              AuditEntryCollection& audit_entries) {
+    auto tags = server_selector.getTags();
+    for (auto tag : tags) {
+        // Create the input parameters.
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(tag.get());
+        in_bindings.addTimestamp(modification_time);
+        in_bindings.add(modification_id);
+
+        // Execute select.
+        selectQuery(index, in_bindings,
+                    [&audit_entries] (PgSqlResult& r, int row) {
+            // Extract the column values for r[row].
+
+            // Get the object type. Column 0 is the entry ID which
+            // we don't need here.
+            std::string object_type;
+            PgSqlExchange::getColumnValue(r, row, 1, object_type);
+
+            // Get the object ID.
+            uint64_t object_id;
+            PgSqlExchange::getColumnValue(r, row, 2, object_id);
+
+            // Get the modification type.
+            uint8_t mod_typ_int;
+            PgSqlExchange::getColumnValue(r, row, 3, mod_typ_int);
+            AuditEntry::ModificationType mod_type =
+                static_cast<AuditEntry::ModificationType>(mod_typ_int);
+
+            // Get the modification time.
+            boost::posix_time::ptime mod_time;
+            PgSqlExchange::getColumnValue(r, row, 4, mod_time);
+
+            // Get the revision ID.
+            uint64_t revision_id;
+            PgSqlExchange::getColumnValue(r, row, 5, revision_id);
+
+            // Get the revision log message.
+            std::string log_message;
+            PgSqlExchange::getColumnValue(r, row, 6, log_message);
+
+            // Create new audit entry and add it to the collection of received
+            // entries.
+            AuditEntryPtr audit_entry =
+                AuditEntry::create(object_type, object_id, mod_type, mod_time,
+                                   revision_id, log_message);
+            audit_entries.insert(audit_entry);
+        });
+    }
 }
 
 uint64_t
@@ -147,37 +225,49 @@ PgSqlConfigBackendImpl::deleteFromTable(const int index,
 }
 
 uint64_t
-PgSqlConfigBackendImpl::deleteFromTable(const int /* index */,
-                                        const db::ServerSelector& /* server_selector */,
-                                        const std::string& /* operation */,
-                                        db::PsqlBindArray& /* bindings */) {
-    isc_throw(NotImplemented, "todo");
+PgSqlConfigBackendImpl::deleteFromTable(const int index,
+                                        const db::ServerSelector& server_selector,
+                                        const std::string& operation,
+                                        db::PsqlBindArray& in_bindings) {
+    // For ANY server, we use queries that lack server tag, otherwise
+    // we need to insert the server tag as the first input parameter.
+    if (!server_selector.amAny() && !server_selector.amUnassigned()) {
+        std::string tag = getServerTag(server_selector, operation);
+        in_bindings.insert(tag, 0);
+    }
+
+    return (updateDeleteQuery(index, in_bindings));
+}
+
+uint64_t
+PgSqlConfigBackendImpl::getLastInsertId(const int index, const std::string& table,
+                                        const std::string& column) {
+    PsqlBindArray in_bindings;
+    in_bindings.add(table);
+    in_bindings.add(column);
+    uint64_t last_id = 0;
+    conn_.selectQuery(getStatement(index), in_bindings,
+                    [&last_id] (PgSqlResult& r, int row) {
+            // Get the object type. Column 0 is the entry ID which
+            PgSqlExchange::getColumnValue(r, row, 0, last_id);
+        });
+
+    return (last_id);
 }
 
 void
 PgSqlConfigBackendImpl::getGlobalParameters(const int /* index */,
                                             const PsqlBindArray& /* in_bindings */,
                                             StampedValueCollection& /* parameters */) {
-
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 OptionDefinitionPtr
 PgSqlConfigBackendImpl::getOptionDef(const int /* index */,
-                                     const ServerSelector& server_selector,
+                                     const ServerSelector& /* server_selector */,
                                      const uint16_t /* code */,
                                      const std::string& /* space */) {
-
-    if (server_selector.amUnassigned()) {
-        isc_throw(NotImplemented, "managing configuration for no particular server"
-                                  " (unassigned) is unsupported at the moment");
-    }
-
-    auto tag = getServerTag(server_selector, "fetching option definition");
-
-    OptionDefContainer option_defs;
-    isc_throw(NotImplemented, "todo");
-    return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 void
@@ -185,7 +275,7 @@ PgSqlConfigBackendImpl::getAllOptionDefs(const int /* index */,
                                          const ServerSelector& server_selector,
                                          OptionDefContainer& /* option_defs */) {
     auto tags = server_selector.getTags();
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 void
@@ -194,7 +284,7 @@ PgSqlConfigBackendImpl::getModifiedOptionDefs(const int /* index */,
                                               const boost::posix_time::ptime& /* modification_time */,
                                               OptionDefContainer& /* option_defs */) {
     auto tags = server_selector.getTags();
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 void
@@ -203,7 +293,7 @@ PgSqlConfigBackendImpl::getOptionDefs(const int /* index */,
                                       OptionDefContainer& /* option_defs*/ ) {
     // Create output bindings. The order must match that in the prepared
     // statement.
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 void
@@ -227,7 +317,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     for (auto field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 OptionDescriptorPtr
@@ -245,7 +335,7 @@ PgSqlConfigBackendImpl::getOption(const int /* index */,
     auto tag = getServerTag(server_selector, "fetching global option");
 
     OptionContainer options;
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
@@ -257,7 +347,7 @@ PgSqlConfigBackendImpl::getAllOptions(const int /* index */,
     OptionContainer options;
     auto tags = server_selector.getTags();
 
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 
     return (options);
 }
@@ -274,7 +364,7 @@ PgSqlConfigBackendImpl::getModifiedOptions(const int index,
         PsqlBindArray in_bindings;
 
         /// need to define binding parameters
-        isc_throw(NotImplemented, "todo");
+        isc_throw(NotImplemented, NOT_IMPL_STR);
 
         getOptions(index, in_bindings, universe, options);
     }
@@ -299,7 +389,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
@@ -330,7 +420,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
     Option::Universe universe = Option::V4;
     OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
@@ -353,7 +443,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, "todo");
+    isc_throw(NotImplemented, NOT_IMPL_STR);
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
 }
@@ -363,46 +453,16 @@ PgSqlConfigBackendImpl::getOptions(const int /* index */,
                                    const db::PsqlBindArray& /* in_bindings */,
                                    const Option::Universe& /* universe */,
                                    OptionContainer& /* options */) {
-    isc_throw(NotImplemented, "todo");
-}
-
-PsqlBindArrayPtr
-PgSqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
-    ElementPtr relay_element = Element::createList();
-    const auto& addresses = network->getRelayAddresses();
-    if (!addresses.empty()) {
-        for (const auto& address : addresses) {
-            relay_element->add(Element::create(address.toText()));
-        }
-    }
-    isc_throw(NotImplemented, "todo");
-}
-
-PsqlBindArrayPtr
-PgSqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& option) {
-
-    PsqlBindArrayPtr p(new PsqlBindArray());
-    OptionPtr opt = option->option_;
-    if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
-        OutputBuffer buf(opt->len());
-        opt->pack(buf);
-        const char* buf_ptr = static_cast<const char*>(buf.getData());
-        std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(), buf_ptr + buf.getLength());
-
-        // return (PsqlBindArray::createBlob(blob.begin(), blob.end()));
-    }
-
-    // return (PsqlBindArray::createNull());
-    return (p);
+    isc_throw(NotImplemented, NOT_IMPL_STR);
 }
 
 ServerPtr
-PgSqlConfigBackendImpl::getServer(const int index, const ServerTag& /* server_tag */) {
+PgSqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
     ServerCollection servers;
-    PsqlBindArray in_bindings; /* = {
-        PsqlBindArray::createString(server_tag.get())
-    }; */
-    isc_throw(NotImplemented, "todo");
+
+    // Create input parameter bindings.
+    PsqlBindArray in_bindings;
+    in_bindings.addTempString(server_tag.get());
 
     getServers(index, in_bindings, servers);
 
@@ -416,16 +476,52 @@ PgSqlConfigBackendImpl::getAllServers(const int index, db::ServerCollection& ser
 }
 
 void
-PgSqlConfigBackendImpl::getServers(const int /* index */,
-                                   const PsqlBindArray& /* in_bindings */,
-                                   ServerCollection& /* servers */) {
-    isc_throw(NotImplemented, "todo");
+PgSqlConfigBackendImpl::getServers(const int index,
+                                   const PsqlBindArray& in_bindings,
+                                   ServerCollection& servers) {
+    // Track the last server added to avoid duplicates. This
+    // assumes the rows are ordered by server ID.
+    ServerPtr last_server;
+    selectQuery(index, in_bindings,
+                [&servers, &last_server](PgSqlResult& r, int row) {
+        // Extract the column values for r[row].
+
+        // Get the server ID.
+        uint64_t id;
+        PgSqlExchange::getColumnValue(r, row, 0, id);
+
+        // Get the server tag.
+        std::string tag;
+        PgSqlExchange::getColumnValue(r, row, 1, tag);
+
+        // Get the description.
+        std::string description;
+        PgSqlExchange::getColumnValue(r, row, 2, description);
+
+        // Get the modification time.
+        boost::posix_time::ptime mod_time;
+        PgSqlExchange::getColumnValue(r, row, 3, mod_time);
+
+        if (!last_server || (last_server->getId() != id)) {
+            // Create the server instance.
+            last_server = Server::create(ServerTag(tag), description);
+
+            // id
+            last_server->setId(id);
+
+            // modification_ts
+            last_server->setModificationTime(mod_time);
+
+            // New server fetched. Let's store it.
+            servers.insert(last_server);
+        }
+    });
 }
 
 void
 PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
-                                           const int& /* create_index */,
-                                           const int& /* update_index */,
+                                           const int& create_index,
+                                           const int& update_index,
                                            const ServerPtr& server) {
     // The server tag 'all' is reserved.
     if (server->getServerTag().amAll()) {
@@ -435,36 +531,58 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
                   " to the database and a server with this name may not be created");
     }
 
-    // Create scoped audit revision. As long as this instance exists
-    // no new audit revisions are created in any subsequent calls.
-    ScopedAuditRevision audit_revision(this, create_audit_revision, ServerSelector::ALL(),
-                                       "server set", true);
-
-    PgSqlTransaction transaction(conn_);
-
+    // Populate the input bindings.
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, "todo");
+    std::string tag = server->getServerTagAsText();
+    in_bindings.add(tag);
+    in_bindings.addTempString(server->getDescription());
+    in_bindings.addTimestamp(server->getModificationTime());
 
-     /* = {
-        PsqlBindArray::createString(server->getServerTagAsText()),
-        PsqlBindArray::createString(server->getDescription()),
-        PsqlBindArray::createTimestamp(server->getModificationTime())
-    };
+    bool inserted = false;
+    for (auto attempts = 0; !inserted && attempts < 2; ++attempts) {
+        // Start a new transaction.
+        PgSqlTransaction transaction(conn_);
 
-    try {
-        conn_.insertQuery(create_index, in_bindings);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision audit_revision(this, create_audit_revision, ServerSelector::ALL(),
+                                           "server set", true);
 
-    } catch (const DuplicateEntry&) {
-        in_bindings.push_back(PsqlBindArray::createString(server->getServerTagAsText()));
-        conn_.updateDeleteQuery(update_index, in_bindings);
-    }*/
+        // On the first attempt we try to insert.
+        if (attempts == 0) {
+            try {
+                // Attempt to insert the server.
+                insertQuery(create_index, in_bindings);
+                inserted = true;
+            } catch (const DuplicateEntry&) {
+                // Server already exists that means our current transaction has
+                // been aborted by PostgreSQL. We need to start over with a new
+                // transaction, but this time we'll do the update.
+                continue;
+            }
+        } else {
+            // Add another instance of tag to the bindings to be used
+            // as the where clause parameter. PostgreSQL uses
+            // numbered placeholders so we could use $1 again, but
+            // doing it this way leaves the SQL more generic.
+            in_bindings.add(tag);
 
-    transaction.commit();
+            // Attempt to update the server.
+            if (!updateDeleteQuery(update_index, in_bindings)) {
+                // Possible only if someone deleted it since we tried to insert it,
+                // the query is broken, or the bindings are nonesense.
+                isc_throw(Unexpected, "Update server failed to find server tag: " << tag);
+            }
+        }
+
+        // Commit the transaction.
+        transaction.commit();
+    }
 }
 
 std::string
 PgSqlConfigBackendImpl::getType() const {
-    return ("pgsql");
+    return ("postgresql");
 }
 
 std::string
@@ -489,6 +607,56 @@ PgSqlConfigBackendImpl::getPort() const {
     }
     return (0);
 }
+
+void
+PgSqlConfigBackendImpl::attachElementToServers(const int index,
+                                               const ServerSelector& server_selector,
+                                               const PsqlBindArray& in_bindings) {
+    // Copy the bindings because we're going to modify them.
+    PsqlBindArray server_bindings = in_bindings;
+    for (auto tag : server_selector.getTags()) {
+        // Add the server tag to end of the bindings.
+        std::string server_tag = tag.get();
+        server_bindings.add(server_tag);
+
+        // Insert the server assocation.
+        insertQuery(index, server_bindings);
+
+        // Remove the prior server tag.
+        server_bindings.popBack();
+    }
+}
+
+void
+PgSqlConfigBackendImpl::addRelayBinding(PsqlBindArray& bindings,
+                                        const NetworkPtr& network) {
+    ElementPtr relay_element = Element::createList();
+    const auto& addresses = network->getRelayAddresses();
+    if (!addresses.empty()) {
+        for (const auto& address : addresses) {
+            relay_element->add(Element::create(address.toText()));
+        }
+    }
+
+    bindings.add(relay_element);
+}
+
+void
+PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
+                                              const OptionDescriptorPtr& option) {
+    OptionPtr opt = option->option_;
+    if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
+        OutputBuffer buf(opt->len());
+        opt->pack(buf);
+        const char* buf_ptr = static_cast<const char*>(buf.getData());
+        std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
+                                  buf_ptr + buf.getLength());
+        bindings.add(blob);
+    } else {
+        bindings.addNull();
+    }
+}
+
 
 }  // namespace dhcp
 }  // end of namespace isc

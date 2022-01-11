@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,22 +158,22 @@ typedef boost::shared_ptr<TestConfigBackendImpl1> TestConfigBackendImpl1Ptr;
 /// @brief Second implementation of the test config backend.
 ///
 /// It simulates being a Postgres backend installed on the
-/// "pgsql-host" host and running on port 1234.
+/// "postgresql-host" host and running on port 1234.
 class TestConfigBackendImpl2 : public TestConfigBackend {
 public:
 
     /// @brief Returns backend type.
     ///
-    /// @return "pgsql".
+    /// @return "postgresql".
     virtual std::string getType() const {
-        return (std::string("pgsql"));
+        return (std::string("postgresql"));
     }
 
     /// @brief Returns backend host.
     ///
-    /// @return "pgsql-host".
+    /// @return "postgresql-host".
     virtual std::string getHost() const {
-        return (std::string("pgsql-host"));
+        return (std::string("postgresql-host"));
     }
 
     /// @brief Returns backend port.
@@ -350,20 +350,20 @@ public:
         config_mgr_.addBackend("type=mysql");
     }
 
-    /// @brief Creates example database backend called "pgsql".
+    /// @brief Creates example database backend called "postgresql".
     ///
     /// It uses @c TestConfigBackendImpl2.
     void addTestPgSQLBackend() {
-        config_mgr_.registerBackendFactory("pgsql", [](const DatabaseConnection::ParameterMap&)
+        config_mgr_.registerBackendFactory("postgresql", [](const DatabaseConnection::ParameterMap&)
                                           -> TestConfigBackendPtr {
             return (TestConfigBackendImpl2Ptr(new TestConfigBackendImpl2()));
         });
 
         // Actually create the backends.
-        config_mgr_.addBackend("type=pgsql");
+        config_mgr_.addBackend("type=postgresql");
     }
 
-    /// @brief Creates two example database backends called "mysql" and "pgsql".
+    /// @brief Creates two example database backends called "mysql" and "postgresql".
     ///
     /// It uses @c TestConfigBackendImpl1 and @c TestConfigBackendImpl2.
     void addTestBackends() {
@@ -382,9 +382,9 @@ public:
         // Add two properties into the second backend. Both properties share the
         // name so as we can test retrieving multiple records from the same backend.
         config_mgr_.getPool()->createProperty(std::make_pair("cats", 2),
-                                             BackendSelector(BackendSelector::Type::PGSQL));
+                                             BackendSelector(BackendSelector::Type::POSTGRESQL));
         config_mgr_.getPool()->createProperty(std::make_pair("cats", 4),
-                                             BackendSelector(BackendSelector::Type::PGSQL));
+                                             BackendSelector(BackendSelector::Type::POSTGRESQL));
     }
 
     /// Instance of the test configuration manager.
@@ -445,9 +445,9 @@ TEST_F(ConfigBackendMgrTest, getSingleProperty) {
     EXPECT_EQ(1, config_mgr_.getPool()->getProperty("dogs"));
     EXPECT_EQ(2, config_mgr_.getPool()->getProperty("cats"));
 
-    // No dogs in the pgsql backend and no cats in mysql backend.
+    // No dogs in the postgresql backend and no cats in mysql backend.
     EXPECT_EQ(0, config_mgr_.getPool()->getProperty("dogs",
-                                                   BackendSelector(BackendSelector::Type::PGSQL)));
+                                                   BackendSelector(BackendSelector::Type::POSTGRESQL)));
     EXPECT_EQ(0, config_mgr_.getPool()->getProperty("cats",
                                                    BackendSelector(BackendSelector::Type::MYSQL)));
 
@@ -456,7 +456,7 @@ TEST_F(ConfigBackendMgrTest, getSingleProperty) {
     EXPECT_EQ(1, config_mgr_.getPool()->getProperty("dogs",
                                                    BackendSelector(BackendSelector::Type::MYSQL)));
     EXPECT_EQ(2, config_mgr_.getPool()->getProperty("cats",
-                                                   BackendSelector(BackendSelector::Type::PGSQL)));
+                                                   BackendSelector(BackendSelector::Type::POSTGRESQL)));
 
     // Also make sure that the variant of getProperty function taking two arguments
     // would return the value.
@@ -490,11 +490,11 @@ TEST_F(ConfigBackendMgrTest, getMultipleProperties) {
                                                      BackendSelector(BackendSelector::Type::MYSQL));
     ASSERT_EQ(1, mysql_list.size());
 
-    // There are two cats entries in pgsql.
-    PropertiesList pgsql_list =
+    // There are two cats entries in postgresql.
+    PropertiesList postgresql_list =
         config_mgr_.getPool()->getProperties("cats",
-                                            BackendSelector(BackendSelector::Type::PGSQL));
-    ASSERT_EQ(2, pgsql_list.size());
+                                            BackendSelector(BackendSelector::Type::POSTGRESQL));
+    ASSERT_EQ(2, postgresql_list.size());
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",
@@ -514,10 +514,10 @@ TEST_F(ConfigBackendMgrTest, getAllProperties) {
         config_mgr_.getPool()->getAllProperties(BackendSelector(BackendSelector::Type::MYSQL));
     ASSERT_EQ(2, mysql_list.size());
 
-    // The pgsql backends also holds two entries.
-    PropertiesList pgsql_list =
-        config_mgr_.getPool()->getAllProperties(BackendSelector(BackendSelector::Type::PGSQL));
-    ASSERT_EQ(2, pgsql_list.size());
+    // The postgresql backends also holds two entries.
+    PropertiesList postgresql_list =
+        config_mgr_.getPool()->getAllProperties(BackendSelector(BackendSelector::Type::POSTGRESQL));
+    ASSERT_EQ(2, postgresql_list.size());
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+// Convenience string for emitting location info NotImplemented exceptions.
+#define NOT_IMPL_STR __FILE__ << ":" << __LINE__  << " - " << __FUNCTION__
 
 namespace isc {
 namespace dhcp {
@@ -154,7 +157,7 @@ public:
         return (s.str());
     }
 
-    /// @brief Invokes the corresponding stored procedure in MySQL.
+    /// @brief Invokes the corresponding stored procedure in PgSQL.
     ///
     /// The @c createAuditRevision stored procedure creates new audit
     /// revision and initializes several session variables to be used when
@@ -212,10 +215,66 @@ public:
                              const db::ServerSelector& server_selector,
                              const std::string& operation);
 
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @param index Index of the statement to be executed.
+    /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for logging purposes.
+    /// @param in_bindings Reference to the PgSQL input bindings. They are modified
+    /// as a result of this function - server tag is inserted into the beginning
+    /// of the bindings collection.
+    /// @return Number of deleted rows.
     uint64_t deleteFromTable(const int index,
                              const db::ServerSelector& server_selector,
                              const std::string& operation,
                              db::PsqlBindArray& bindings);
+
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @tparam KeyType Type of the key used as the second binding. The
+    /// server tag is used as first binding.
+    ///
+    /// @param index Index of the statement to be executed.
+    /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for error reporting purposes.
+    /// @param key Value to be used as input binding to the delete
+    /// statement. The default value is empty which indicates that the
+    /// key should not be used in the query.
+    /// @return Number of deleted rows.
+    /// @throw InvalidOperation if the server selector is unassigned or
+    /// if there are more than one server tags associated with the
+    /// server selector.
+    template<typename KeyType>
+    uint64_t deleteFromTable(const int index,
+                             const db::ServerSelector& server_selector,
+                             const std::string& operation,
+                             KeyType key) {
+        // When deleting by some key, we must use ANY.
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "deleting an unassigned object requires "
+                      "an explicit server tag or using ANY server. The UNASSIGNED "
+                      "server selector is currently not supported");
+        }
+
+        db::PsqlBindArray in_bindings;
+        in_bindings.add(key);
+        return (deleteFromTable(index, server_selector, operation, in_bindings));
+    }
+
+    /// @brief Returns the last sequence value for the given table and
+    /// column name.
+    ///
+    /// This relies on PostgreSQL's currval() function which will return
+    /// the last value generated for the sequence within the current session.
+    ///
+    /// @param table name of the table
+    /// @param column name of the sequence column
+    /// @return returns the most recently modified value for the given
+    /// sequence
+    uint64_t getLastInsertId(const int index, const std::string& table,
+                             const std::string& column);
 
     /// @brief Sends query to retrieve multiple global parameters.
     ///
@@ -424,22 +483,60 @@ public:
 
     /// @todo implement OptionDescriptorPtr processOptionRow(const Option::Universe& universe, ...)
 
-    /// @todo implement void attachElementToServers(const int index, ...)
+    /// @brief Associates a configuration element with multiple servers.
+    ///
+    /// @param index Query index.
+    /// @param server_selector Server selector, perhaps with multiple server tags.
+    /// @param in_bindings Parameter pack holding bindings for the query. The first
+    /// entry must be the primary key of the element to attach. Note that
+    /// the server tag (or server id) must be the last binding in the prepared
+    /// statement. The caller must not include this binding in the parameter pack.
+    void attachElementToServers(const int index,
+                                const db::ServerSelector& server_selector,
+                                const db::PsqlBindArray& in_bindings);
 
-    /// @todo implement
-    /// @note this needs to accept an PsqlBindArrayPtr and should add
-    /// necessary bindings to it.  It cannot create a new array.
-    db::PsqlBindArrayPtr createInputRelayBinding(const NetworkPtr& network);
+    /// @brief Adds network relays addresses to a bind array.
+    ///
+    /// Creates an Element tree of relay addresses add adds that to the end
+    /// of the given bind array.
+    ///
+    /// @param bindings PsqlBindArray to which the relay addresses should be added.
+    /// @param network Pointer to a shared network or subnet for which binding
+    /// should be created.
+    void addRelayBinding(db::PsqlBindArray& bindings, const NetworkPtr& network);
 
-    /// @todo implement template<typename T> db::MySqlBindingPtr
-    /// createInputRequiredClassesBinding(const T& object)
+    /// @brief Adds 'require_client_classes' parameter to a bind array.
+    ///
+    /// Creates an Element tree of required class names and adds that to the end
+    /// of the given bind array.
+    ///
+    /// @tparam T of pointer to objects with getRequiredClasses
+    /// method, e.g. shared network, subnet, pool or prefix delegation pool.
+    /// @param bindings PsqlBindArray to which the classes should be added.
+    /// @param object Pointer to an object with getRequiredClasses method
+    /// @return Pointer to the binding (possibly null binding if there are no
+    /// required classes specified).
+    template<typename T>
+    void addRequiredClassesBinding(db::PsqlBindArray& bindings, const T& object) {
+        // Create JSON list of required classes.
+        data::ElementPtr required_classes_element = data::Element::createList();
+        const auto& required_classes = object->getRequiredClasses();
+        for (auto required_class = required_classes.cbegin();
+             required_class != required_classes.cend();
+             ++required_class) {
+            required_classes_element->add(data::Element::create(*required_class));
+        }
 
-    /// @todo implement db::MySqlBindingPtr createInputContextBinding(const T& config_element) {
+        bindings.add(required_classes_element);
+    }
 
-    /// @todo implement
-    /// @note this needs to accept an PsqlBindArrayPtr and should add
-    /// necessary bindings to it.  It cannot create a new array.
-    db::PsqlBindArrayPtr createOptionValueBinding(const OptionDescriptorPtr& option);
+    /// @brief Adds an option value to a bind array.
+    ///
+    /// @param bindings PsqlBindArray to which the option value should be added.
+    /// @param option Option descriptor holding the option who's value should
+    /// added.
+    void addOptionValueBinding(db::PsqlBindArray& bindings,
+                               const OptionDescriptorPtr& option);
 
     /// @brief Retrieves a server.
     ///
@@ -460,7 +557,7 @@ public:
     /// @brief Sends query to retrieve servers.
     ///
     /// @param index Index of the query to be used.
-    /// @param bindings Reference to the MySQL input bindings.
+    /// @param bindings Reference to the PgSQL input bindings.
     /// @param [out] servers Reference to the container where fetched servers
     /// will be inserted.
     void
@@ -486,8 +583,27 @@ public:
                             const int& update_index,
                             const db::ServerPtr& server);
 
-    /// @todo implement template<typename T, typename... R> void multipleUpdateDeleteQueries(T
-    /// first_index, R... other_indexes)
+    /// @brief Executes multiple update and/or delete queries with no input
+    /// bindings.
+    ///
+    /// This is a convenience function which takes multiple query indexes as
+    /// arguments and for each index executes an update or delete query.
+    /// One of the applications of this function is to remove dangling
+    /// configuration elements after the server associated with these elements
+    /// have been deleted.
+    ///
+    /// @tparam T type of the indexes, e.g. @c PgSqlConfigBackendDHCPv4Impl::StatementIndex.
+    /// @tparam R parameter pack holding indexes of type @c T.
+    /// @param first_index first index.
+    /// @param other_indexes remaining indexes.
+    template<typename T, typename... R>
+    void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
+        std::vector<T> indexes({ first_index, other_indexes... });
+        db::PsqlBindArray in_bindings;
+        for (auto index : indexes) {
+            updateDeleteQuery(index, in_bindings);
+        }
+    }
 
     /// @brief Removes configuration elements from the index which don't match
     /// the specified server selector.
@@ -602,6 +718,66 @@ public:
     static isc::asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
+
+    /// @brief Fetches the SQL statement for a given statement index.
+    ///
+    /// Derivations must override the implementation. The reference
+    /// returned should be non-volatile over the entire lifetime
+    /// of the derivation instance.
+    ///
+    /// @param index index of the desired statement.
+    /// @throw NotImplemented, always
+    virtual db::PgSqlTaggedStatement& getStatement(size_t index) const;
+
+    /// @brief Executes SELECT using the prepared statement specified
+    /// by the given index.
+    ///
+    /// The @c index must refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided input bindings and
+    /// calls @c process_result_row function for each returned row. The
+    /// @c process_result function is implemented by the caller and should
+    /// gather and store each returned row in an external data structure prior.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings input bindings holding values to substitue placeholders
+    /// in the query.
+    /// @param process_result_row Pointer to the function to be invoked for each
+    /// retrieved row. This function consumes the retrieved data from the
+    /// result set.
+    void selectQuery(size_t index, const db::PsqlBindArray& in_bindings,
+                     db::PgSqlConnection::ConsumeResultRowFun process_result_row);
+
+    /// @brief Executes INSERT using the prepared statement specified
+    /// by the given index.
+    ///
+    /// The @c index must refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided bindings to
+    /// insert data into the database.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings input bindings holding values to substitue placeholders
+    /// in the query.
+    void insertQuery(size_t index, const db::PsqlBindArray& in_bindings);
+
+    /// @brief Executes UPDATE or DELETE using the prepared statement
+    /// specified by the given index, and returns the number of affected rows.
+    ///
+    /// The @c index must refer to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// @param statement reference to the precompiled tagged statement to execute
+    /// @param in_bindings Input bindings holding values to substitute placeholders
+    /// in the query.
+    ///
+    /// @return Number of affected rows.
+    uint64_t updateDeleteQuery(size_t index, const db::PsqlBindArray& in_bindings);
 
     /// @brief Represents connection to the Postgres database.
     db::PgSqlConnection conn_;

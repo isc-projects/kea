@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ public:
 // Setup() and which will ASSERT on failures.
 TEST_F(PgsqlConfigBackendTest, constructor) {
     //  Is this the right config backend type?
-    EXPECT_EQ("pgsql", cbptr_->getType());
+    EXPECT_EQ("postgresql", cbptr_->getType());
 }
 
 }  // namespace

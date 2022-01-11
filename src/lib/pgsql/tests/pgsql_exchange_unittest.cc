@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,8 +171,8 @@ TEST(PsqlBindArray, addOptionalString) {
         Optional<std::string> not_empty("whoopee!");
 
         // Add strings to the array.
-        b.addOptionalString(empty);
-        b.addOptionalString(not_empty);
+        b.addOptional(empty);
+        b.addOptional(not_empty);
     }
 
     // We've left bind scope, everything should be intact.
@@ -200,9 +200,9 @@ TEST(PsqlBindArray, addOptionalBool) {
         Optional<bool> am_true(true);
 
         // Add booleans to the array.
-        b.addOptionalBool(empty);
-        b.addOptionalBool(am_false);
-        b.addOptionalBool(am_true);
+        b.addOptional(empty);
+        b.addOptional(am_false);
+        b.addOptional(am_true);
     }
 
     // We've left bind scope, everything should be intact.
@@ -231,8 +231,8 @@ TEST(PsqlBindArray, addOptionalInteger) {
         Optional<uint32_t> not_empty(123);
 
         // Add the integers to the array..
-        b.addOptionalInteger(empty);
-        b.addOptionalInteger(not_empty);
+        b.addOptional(empty);
+        b.addOptional(not_empty);
     }
 
     // We've left bind scope, everything should be intact.
@@ -1042,6 +1042,42 @@ TEST(PsqlBindArray, insertString) {
         "2 : \"three\"\n"
         "3 : \"four\"\n"
         "4 : \"five\"\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
+TEST(PsqlBindArray, popBackTest) {
+    PsqlBindArray b;
+
+    // Popping on an empty array should throw.
+    ASSERT_THROW_MSG(b.popBack(), OutOfRange,
+                     "PsqlBindArray::pop_back - array empty");
+
+    // Add five integers.
+    for (int i = 1; i < 6; ++i) {
+        b.add(i);
+    }
+
+    // Verify size.
+    EXPECT_EQ(b.size(), 5);
+
+    // Pop one off.
+    ASSERT_NO_THROW_LOG(b.popBack());
+
+    // Verify size.
+    EXPECT_EQ(b.size(), 4);
+
+    // Pop another one off.
+    ASSERT_NO_THROW_LOG(b.popBack());
+
+    // Verify size.
+    EXPECT_EQ(b.size(), 3);
+
+    // This is what we should have left.
+    std::string expected =
+        "0 : \"1\"\n"
+        "1 : \"2\"\n"
+        "2 : \"3\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }

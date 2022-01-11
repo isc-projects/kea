@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,8 +132,8 @@ BackendSelector::stringToBackendType(const std::string& type) {
     if (type == "mysql") {
         return (BackendSelector::Type::MYSQL);
 
-    } else if (type == "pgsql") {
-        return (BackendSelector::Type::PGSQL);
+    } else if (type == "postgresql") {
+        return (BackendSelector::Type::POSTGRESQL);
 
     } else if (type == "cql") {
         return (BackendSelector::Type::CQL);
@@ -148,8 +148,8 @@ BackendSelector::backendTypeToString(const BackendSelector::Type& type) {
     switch (type) {
     case BackendSelector::Type::MYSQL:
         return ("mysql");
-    case BackendSelector::Type::PGSQL:
-        return ("pgsql");
+    case BackendSelector::Type::POSTGRESQL:
+        return ("postgresql");
     case BackendSelector::Type::CQL:
         return ("cql");
     default:

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
 
@@ -38,6 +39,7 @@ namespace db {
 const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
+const char PgSqlConnection::NULL_KEY[] = ERRCODE_NOT_NULL_VIOLATION;
 
 bool PgSqlConnection::warned_about_tls = false;
 
@@ -162,7 +164,9 @@ PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
                             statement.nbparams, statement.types));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
-                  << statement.text << ", reason: " << PQerrorMessage(conn_));
+                  << " name: " << statement.name
+                  << ", reason: " << PQerrorMessage(conn_)
+                  << ", text: " << statement.text);
     }
 }
 
@@ -346,6 +350,18 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
             // processing.
             isc_throw(DbConnectionUnusable,
                       "fatal database error or connectivity lost");
+        }
+
+        // Failure: check for the special case of duplicate entry.
+        if (compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
+            isc_throw(DuplicateEntry, "statement: " << statement.name
+                      << ", reason: " << PQerrorMessage(conn_));
+        }
+
+        // Failure: check for the special case of null key violation.
+        if (compareError(r, PgSqlConnection::NULL_KEY)) {
+            isc_throw(NullKeyError, "statement: " << statement.name
+                      << ", reason: " << PQerrorMessage(conn_));
         }
 
         // Apparently it wasn't fatal, so we throw with a helpful message.
