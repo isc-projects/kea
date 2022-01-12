@@ -1840,7 +1840,7 @@ types are given in :ref:`dhcp-types`.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | netinfo-server-tag                     | 113  | string                    | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | default-url                            | 114  | string                    | false       | false       |
+   | v4-captive-portal                      | 114  | string                    | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | auto-config                            | 116  | uint8                     | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
@@ -1866,14 +1866,20 @@ types are given in :ref:`dhcp-types`.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | v4-portparams                          | 159  | record (uint8, psid)      | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | v4-captive-portal                      | 160  | string                    | false       | false       |
-   +----------------------------------------+------+---------------------------+-------------+-------------+
    | option-6rd                             | 212  | record (uint8, uint8,     | true        | false       |
    |                                        |      | ipv6-address,             |             |             |
    |                                        |      | ipv4-address)             |             |             |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | v4-access-domain                       | 213  | fqdn                      | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
+
+.. note::
+
+  The ``default-url`` option was replaced with ``v4-captive-portal`` in Kea 2.1.2, as introduced by
+  `RFC 8910 <https://tools.ietf.org/html/rfc8910>`_. The new option has exactly the same format as the
+  old one. The general perception is that ``default-url`` was seldom used. If you used it and migrating,
+  please replace ``default-url`` with ``v4-captive-portal`` and your configuration will continue to work
+  as before.
 
 Kea also supports other options than those listed above; the following options
 are returned by the Kea engine itself and in general should not be configured
@@ -6797,6 +6803,10 @@ The following standards are currently supported in Kea:
    handles the Relay Agent Information Source Port sub-option in a received
    message, remembers the UDP port, and sends back a reply to the same relay
    agent using this UDP port.
+
+-  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC 8910
+   <https://tools.ietf.org/html/rfc8910>`__: The Kea server can configure both v4
+   and v6 versions of the captive portal options.
 
 -  *IPv6-Only Preferred Option for DHCPv4*, `RFC 8925
    <https://tools.ietf.org/html/rfc8925>`__: The Kea

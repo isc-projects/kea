@@ -6757,6 +6757,10 @@ The following standards are currently supported in Kea:
    and RFC 7550. All features, with the exception of the RECONFIGURE mechanism and
    the now-deprecated temporary addresses (IA_TA) mechanism, are supported.
 
+-  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC 8910
+   <https://tools.ietf.org/html/rfc8910>`__: The Kea server can configure both v4
+   and v6 versions of the captive portal options.
+
 .. _dhcp6-limit:
 
 DHCPv6 Server Limitations
