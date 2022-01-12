@@ -4076,25 +4076,41 @@ ALTER TABLE dhcp6_options
 UPDATE schema_version
     SET version = '12', minor = '0';
 
--- Create a procedure that separates groups of two hexadecimals
--- with colons.
+-- Create a function that separates a contiguous hexadecimal string
+-- into groups of two hexadecimals separated by colons.
 DROP FUNCTION IF EXISTS colonSeparatedHex;
 DELIMITER $$
 CREATE FUNCTION colonSeparatedHex(hex VARCHAR(64))
 RETURNS VARCHAR(64)
 DETERMINISTIC
 BEGIN
+    -- Declarations
     DECLARE i INT;
     DECLARE length INT;
     DECLARE output VARCHAR(64);
+
+    -- Initializations
     SET i = 3;
     SET length = LENGTH(hex);
+
+    -- Add a leading zero if the first octet has a single hexadecimal character.
+    IF MOD(length, 2) = 1 THEN
+        SET hex = CONCAT('0', hex);
+        SET length = length + 1;
+    END IF;
+
+    -- Start with the first octet.
     SET output = SUBSTR(hex, 1, 2);
+
+    -- Add one octet at a time and a leading colon with each.
     label: WHILE i < length DO
         SET output = CONCAT(output, ':', SUBSTR(hex, i, 2));
         SET i = i + 2;
     END WHILE label;
+
+    -- Memfile uses lowercase hexadecimals.
     SET output = LOWER(output);
+
     RETURN output;
 END $$
 DELIMITER ;
