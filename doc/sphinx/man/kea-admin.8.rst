@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`kea-admin` [command] [backend] [**-h** database_host] [**-P** database_port] [**-u** database_username] [**-p** [database_password]] [**-n** database_name] [**-d** script_directory] [**-v**] [**-4** | **-6**] [**-o** output_file]
+:program:`kea-admin` [command] [backend] [**-h** database_host] [**-P** database_port] [**-u** database_username] [**-p** [database_password]] [**-n** database_name] [**-d** script_directory] [**-v**] [**-4** | **-6**] [**-o** output_file] [**-x** extra_argument [**-x** extra_argument ...]]
 
 Description
 ~~~~~~~~~~~
@@ -104,6 +104,11 @@ Arguments
 ``-6``
    Directs ``kea-admin`` to lease-dump the DHCPv6 leases. Incompatible with
    the -4 option.
+
+``-x|--extra``
+   Specifies an extra argument to pass to the database command tool e.g.
+   to invoke ``mysql`` with the ``--ssl`` argument. This can be repeated
+   to pass more than one argument. 
 
 Documentation
 ~~~~~~~~~~~~~

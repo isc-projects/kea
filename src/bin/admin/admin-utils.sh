@@ -27,6 +27,7 @@ db_host='localhost'
 db_user='keatest'
 db_password='keatest'
 db_name='keatest'
+extra_arguments=
 
 # Runs all the given arguments as a single command. Maintains quoting. Places
 # output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
@@ -70,7 +71,8 @@ mysql_execute() {
 
     mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
-        --password="${db_password}" --execute "${QUERY}" "${@}"
+        --password="${db_password}" ${extra_arguments} \
+        --execute "${QUERY}" "${@}"
 }
 
 # Submits SQL in a given file to MySQL.
@@ -86,7 +88,7 @@ mysql_execute_script() {
 
     mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
-        --password="${db_password}" "${@}" < "${file}"
+        --password="${db_password}" ${extra_arguments} "${@}" < "${file}"
 }
 
 mysql_version() {
@@ -122,7 +124,8 @@ pgsql_execute() {
     export PGPASSWORD
 
     printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
-        ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" "${@}"
+        ${db_port_full_parameter-} -q -U "${db_user}" \
+        -d "${db_name}" ${extra_arguments} "${@}"
 }
 
 # Submits SQL in a given file to PostgreSQL
@@ -142,7 +145,7 @@ pgsql_execute_script() {
 
     psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
         ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" \
-        -f "${file}" "${@}"
+        ${extra_arguments} -f "${file}" "${@}"
 }
 
 pgsql_version() {
@@ -175,7 +178,8 @@ cql_execute() {
             cqlsh "$@" -e "$query"
     else
         run_command \
-            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
+            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" \
+            ${extra_arguments} -e "${query}"
     fi
 
     if [ "${EXIT_CODE}" -ne 0 ]; then
@@ -199,7 +203,8 @@ cql_execute_script() {
             cqlsh "$@" -e "$file"
     else
         run_command \
-            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
+            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" \
+            -f "${file}" ${extra_arguments}
     fi
 
     if [ "${EXIT_CODE}" -ne 0 ]; then

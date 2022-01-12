@@ -80,6 +80,7 @@ PARAMETERS: Parameters are optional in general, but may be required
  -n or --name database - specifies a database name to connect to
  -d or --directory - path to upgrade scripts (default: %s)
  -v or --version - print kea-admin version and quit.
+ -x or --extra - specifies extra argument(s) to pass to the database command
 
  Parameters specific to lease-dump, lease-upload:
      -4 to dump IPv4 leases to file
@@ -251,7 +252,9 @@ mysql_init() {
     mysql_can_create
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
-    mysql -B --host="${db_host}" --user="${db_user}" --password="${db_password}" "${db_name}" < "${scripts_dir}/mysql/dhcpdb_create.mysql"
+    mysql -B --host="${db_host}" --user="${db_user}" \
+    --password="${db_password}" ${extra_arguments} \
+   "${db_name}" < "${scripts_dir}/mysql/dhcpdb_create.mysql"
 
     printf "mysql returned status code %s\n" "${EXIT_CODE}"
 
@@ -584,7 +587,8 @@ pgsql_dump() {
     if ! (
         echo "${dump_qry}" | \
             psql --set ON_ERROR_STOP=1 -t -h "${db_host}" -q --user="${db_user}" \
-            --dbname="${db_name}" -w --no-align --field-separator=',' > "${dump_file}"
+            --dbname="${db_name}" -w --no-align --field-separator=',' \
+            ${extra_arguments} > "${dump_file}"
     ); then
         log_error "lease-dump: psql call failed, exit code: ${?}"
         exit 1
@@ -967,6 +971,15 @@ do
                 log_error "-o or --output requires a parameter"
                 usage
                 exit 1
+            fi
+            ;;
+        # specify extra arguments to pass to the database command
+        -x|--extra)
+            shift
+            if [ -z "${extra_arguments}" ]; then
+                extra_arguments=${1}
+            else
+                extra_arguments="${extra_arguments} ${1}"
             fi
             ;;
         *)
