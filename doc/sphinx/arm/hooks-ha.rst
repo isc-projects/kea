@@ -2038,7 +2038,8 @@ the HA status of two load-balancing servers:
            ],
            "multi-threading-enabled": true,
            "thread-pool-size": 4,
-           "packet-queue-size": 64
+           "packet-queue-size": 64,
+           "packet-queue-statistics": [ 0.2, 0.1, 0.1 ]
        }
    }
 
