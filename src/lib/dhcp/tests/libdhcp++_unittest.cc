@@ -1659,7 +1659,10 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_TAG, begin, end,
                                     typeid(OptionString));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_URL, begin, end,
+    /* Option 114 URL (RFC 3679) was retired and replaced with CAPTIVE_PORTAL (RFC8910)
+       which was previously 160, but was reassigned (compare RFC7710 and RFC8910) */
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_CAPTIVE_PORTAL, begin, end,
                                     typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
@@ -1726,9 +1729,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_V4_PORTPARAMS, begin, begin + 4,
                                     typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_V4_CAPTIVE_PORTAL, begin, end,
-                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_6RD, begin, begin + 22,
                                     typeid(OptionCustom));
