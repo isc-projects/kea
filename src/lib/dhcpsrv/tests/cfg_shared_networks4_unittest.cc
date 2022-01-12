@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -234,7 +234,9 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"option-data\": [ ],\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"subnet4\": [ ],\n"
-        "    \"valid-lifetime\": 100\n"
+        "    \"valid-lifetime\": 100,\n"
+        "    \"min-valid-lifetime\": 100,\n"
+        "    \"max-valid-lifetime\": 100\n"
         "  },\n"
         "  {\n"
         "    \"ddns-send-updates\": false,\n"

@@ -1077,6 +1077,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"valid-lifetime\": 3,\n"
+        "    \"min-valid-lifetime\": 3,\n"
+        "    \"max-valid-lifetime\": 3,\n"
         "    \"client-class\": \"foo\",\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
@@ -1092,6 +1094,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ \"10.0.0.1\" ] },\n"
         "    \"valid-lifetime\": 100,\n"
+        "    \"min-valid-lifetime\": 100,\n"
+        "    \"max-valid-lifetime\": 100,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1170,6 +1174,8 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"valid-lifetime\": 3,\n"
+        "    \"min-valid-lifetime\": 3,\n"
+        "    \"max-valid-lifetime\": 3,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1401,8 +1407,12 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr value = repr->get("valid-lifetime");
         ASSERT_TRUE(value);
         EXPECT_EQ("100", value->str());
-        EXPECT_FALSE(repr->get("min-valid-lifetime"));
-        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("100", max_value->str());
     }
 
     {
@@ -1421,9 +1431,12 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr value = repr->get("valid-lifetime");
         ASSERT_TRUE(value);
         EXPECT_EQ("100", value->str());
-        // Bound only: forgot it was a bound.
-        EXPECT_FALSE(repr->get("min-valid-lifetime"));
-        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("100", max_value->str());
     }
 
     {
@@ -1442,9 +1455,12 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr value = repr->get("valid-lifetime");
         ASSERT_TRUE(value);
         EXPECT_EQ("100", value->str());
-        // Bound only: forgot it was a bound.
-        EXPECT_FALSE(repr->get("min-valid-lifetime"));
-        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("100", max_value->str());
     }
 
     {
@@ -1468,7 +1484,9 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
         ASSERT_TRUE(min_value);
         EXPECT_EQ("100", min_value->str());
-        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("200", max_value->str());
     }
 
     {
@@ -1489,10 +1507,12 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr value = repr->get("valid-lifetime");
         ASSERT_TRUE(value);
         EXPECT_EQ("100", value->str());
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
         data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
         ASSERT_TRUE(max_value);
         EXPECT_EQ("200", max_value->str());
-        EXPECT_FALSE(repr->get("min-valid-lifetime"));
     }
 
     {
@@ -1558,7 +1578,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
     }
 
     {
-        SCOPED_TRACE("equal bounds are ignored");
+        SCOPED_TRACE("equal bounds are no longer ignored");
         data::ElementPtr copied = data::copy(elems);
         copied->set("min-valid-lifetime", data::Element::create(100));
         copied->set("valid-lifetime", data::Element::create(100));
@@ -1575,8 +1595,12 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         data::ConstElementPtr value = repr->get("valid-lifetime");
         ASSERT_TRUE(value);
         EXPECT_EQ("100", value->str());
-        EXPECT_FALSE(repr->get("min-valid-lifetime"));
-        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("100", max_value->str());
     }
 }
 

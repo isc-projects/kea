@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,14 +175,10 @@ Network::toElement() const {
     if (!valid_.unspecified()) {
         map->set("valid-lifetime",
                  Element::create(static_cast<long long>(valid_.get())));
-        if (valid_.getMin() < valid_.get()) {
-            map->set("min-valid-lifetime",
-                     Element::create(static_cast<long long>(valid_.getMin())));
-        }
-        if (valid_.getMax() > valid_.get()) {
-            map->set("max-valid-lifetime",
-                     Element::create(static_cast<long long>(valid_.getMax())));
-        }
+        map->set("min-valid-lifetime",
+                 Element::create(static_cast<long long>(valid_.getMin())));
+        map->set("max-valid-lifetime",
+                 Element::create(static_cast<long long>(valid_.getMax())));
     }
 
     // Set reservations-global
@@ -352,14 +348,10 @@ Network6::toElement() const {
     if (!preferred_.unspecified()) {
         map->set("preferred-lifetime",
                  Element::create(static_cast<long long>(preferred_.get())));
-        if (preferred_.getMin() < preferred_.get()) {
-            map->set("min-preferred-lifetime",
-                     Element::create(static_cast<long long>(preferred_.getMin())));
-        }
-        if (preferred_.getMax() > preferred_.get()) {
-            map->set("max-preferred-lifetime",
-                     Element::create(static_cast<long long>(preferred_.getMax())));
-        }
+        map->set("min-preferred-lifetime",
+                 Element::create(static_cast<long long>(preferred_.getMin())));
+        map->set("max-preferred-lifetime",
+                 Element::create(static_cast<long long>(preferred_.getMax())));
     }
 
     // Set interface-id

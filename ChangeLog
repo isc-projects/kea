@@ -1,3 +1,9 @@
+1983.	[bug]		fdupont
+	Minimum and maximum values of lifetimes are no longer
+	skipped when the configuration is retrieved even when
+	they are the same as the default value.
+	(Gitlab #2222)
+
 1982.	[bug]		andrei
 	The config for an HA peer now accepts an IPv6 address as a valid
 	value for the "url" entry.

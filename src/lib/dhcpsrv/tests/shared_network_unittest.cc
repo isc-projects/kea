@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -668,7 +668,9 @@ TEST(SharedNetwork4Test, unparse) {
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"subnet\": \"10.0.0.0/8\",\n"
-        "        \"valid-lifetime\": 30\n"
+        "        \"valid-lifetime\": 30,\n"
+        "        \"min-valid-lifetime\": 30,\n"
+        "        \"max-valid-lifetime\": 30\n"
         "      },\n"
         "      {\n"
         "        \"4o6-interface\": \"\",\n"
@@ -683,11 +685,15 @@ TEST(SharedNetwork4Test, unparse) {
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"subnet\": \"192.0.2.0/24\",\n"
-        "        \"valid-lifetime\": 30\n"
+        "        \"valid-lifetime\": 30,\n"
+        "        \"min-valid-lifetime\": 30,\n"
+        "        \"max-valid-lifetime\": 30\n"
         "      }\n"
         "    ],\n"
         "    \"user-context\": { \"comment\": \"bar\", \"foo\": 1 },\n"
-        "    \"valid-lifetime\": 200\n"
+        "    \"valid-lifetime\": 200,\n"
+        "    \"min-valid-lifetime\": 200,\n"
+        "    \"max-valid-lifetime\": 200\n"
         "}\n";
 
     test::runToElementTest<SharedNetwork4>(expected, *network);
@@ -1363,6 +1369,8 @@ TEST(SharedNetwork6Test, unparse) {
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"preferred-lifetime\": 200,\n"
+        "    \"min-preferred-lifetime\": 200,\n"
+        "    \"max-preferred-lifetime\": 200,\n"
         "    \"rapid-commit\": true,\n"
         "    \"rebind-timer\": 150,\n"
         "    \"relay\": {\n"
@@ -1380,13 +1388,17 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"pd-pools\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"preferred-lifetime\": 30,\n"
+        "        \"min-preferred-lifetime\": 30,\n"
+        "        \"max-preferred-lifetime\": 30,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
         "           \"ip-addresses\": [ ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"subnet\": \"2001:db8:1::/64\",\n"
-        "        \"valid-lifetime\": 40\n"
+        "        \"valid-lifetime\": 40,\n"
+        "        \"min-valid-lifetime\": 40,\n"
+        "        \"max-valid-lifetime\": 40\n"
         "      },\n"
         "      {\n"
         "        \"id\": 2,\n"
@@ -1395,17 +1407,23 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"pd-pools\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"preferred-lifetime\": 30,\n"
+        "        \"min-preferred-lifetime\": 30,\n"
+        "        \"max-preferred-lifetime\": 30,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
         "           \"ip-addresses\": [ \"2001:db8:1::8\" ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"subnet\": \"3000::/16\",\n"
-        "        \"valid-lifetime\": 40\n"
+        "        \"valid-lifetime\": 40,\n"
+        "        \"min-valid-lifetime\": 40,\n"
+        "        \"max-valid-lifetime\": 40\n"
         "      }\n"
         "    ],\n"
         "    \"user-context\": { \"foo\": \"bar\" },\n"
-        "    \"valid-lifetime\": 300\n"
+        "    \"valid-lifetime\": 300,\n"
+        "    \"min-valid-lifetime\": 300,\n"
+        "    \"max-valid-lifetime\": 300\n"
         "}\n";
 
     test::runToElementTest<SharedNetwork6>(expected, *network);
