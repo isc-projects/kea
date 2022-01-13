@@ -284,10 +284,7 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease4Dump*().
     run_command \
-        mysql_execute "
-            SET @@session.time_zone = '+00:00';
-            INSERT INTO lease4 VALUES(10,20,30,40,'2022-02-02 01:15:30',50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }');
-        "
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }');"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -297,20 +294,14 @@ mysql_upgrade_12_to_13_test() {
     assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' "${OUTPUT}"
 
     run_command \
-        mysql_execute "
-            SET @@session.time_zone = '+00:00';
-            CALL lease4DumpData();
-        "
+        mysql_execute "CALL lease4DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '0.0.0.10,32:30,33:30,40,1643764530,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${output}"
+    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${output}"
 
     # Check lease6Dump*().
     run_command \
-        mysql_execute "
-            SET @@session.time_zone = '+00:00';
-            INSERT INTO lease6 VALUES('::10',20,30,'2022-02-02 01:15:30',40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }');
-        "
+        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }');"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -320,13 +311,10 @@ mysql_upgrade_12_to_13_test() {
     assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' "${OUTPUT}"
 
     run_command \
-        mysql_execute "
-            SET @@session.time_zone = '+00:00';
-            CALL lease6DumpData();
-        "
+        mysql_execute "CALL lease6DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '::10,32:30,30,1643764530,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
+    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
 }
 
 mysql_upgrade_test() {
