@@ -4079,7 +4079,7 @@ RETURNS TABLE (
         colonSeparatedHex(encode(hwaddr, 'hex')),
         colonSeparatedHex(encode(client_id, 'hex')),
         valid_lifetime,
-        extract(epoch from expire),
+        extract(epoch from expire)::bigint,
         subnet_id,
         fqdn_fwd::int,
         fqdn_rev::int,
@@ -4091,7 +4091,7 @@ RETURNS TABLE (
 $$ LANGUAGE SQL;
 
 -- hwtype and hwaddr_source need to be last to match memfile format.
-DROP FUNCTION IF EXISTS lease6DumpHeader;
+DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE OR REPLACE FUNCTION lease6DumpHeader()
 RETURNS TEXT AS $$
     SELECT CAST('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' AS TEXT) AS result;
@@ -4107,7 +4107,7 @@ RETURNS TABLE (
     expire BIGINT,
     subnet_id BIGINT,
     pref_lifetime BIGINT,
-    name VARCHAR,
+    lease_type SMALLINT,
     iaid INT,
     prefix_len SMALLINT,
     fqdn_fwd INT,
@@ -4117,13 +4117,13 @@ RETURNS TABLE (
     state INT8,
     user_context VARCHAR,
     hwtype SMALLINT,
-    hwaddr_source VARCHAR
+    hwaddr_source SMALLINT
 ) AS $$
     SELECT
         address,
         colonSeparatedHex(encode(duid, 'hex')),
         valid_lifetime,
-        extract(epoch from expire),
+        extract(epoch from expire)::bigint,
         subnet_id,
         pref_lifetime,
         lease_type,
