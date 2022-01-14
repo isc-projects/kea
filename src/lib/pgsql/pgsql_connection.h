@@ -323,6 +323,41 @@ public:
     /// @throw DbOperationError If the rollback failed.
     void rollback();
 
+    /// @brief Creates a savepoint within the current transaction
+    ///
+    /// Creates a named savepoint within the current transaction.
+    ///
+    /// @param name name of the savepoint to create. This name
+    /// must be unique within the transaction?
+    ///
+    /// @throw Unexpected if called outside a transaction.
+    /// @throw DbOperationError If the savepoint cannot be created.
+    void createSavepoint(const std::string& name);
+
+    /// @brief Rollbacks to the given savepoint
+    ///
+    /// Rolls back all pending database operations made after the
+    /// named savepoint.
+    ///
+    /// @param name name of the savepoint to which to rollback.
+    ///
+    /// @throw Unexpected if called outside a transaction.
+    /// @throw DbOperationError if the rollback failed.
+    void rollbackToSavepoint(const std::string& name);
+
+    /// @brief Excutes the an SQL statement.
+    ///
+    /// It executes the given SQL text after first checking the
+    /// connectition for usability. After the statement is excuted
+    /// @c checkStatementError() is invoked to ensure we detect
+    /// connectivity issues properly.
+    /// It is intended to be used to execute utility statements such
+    /// as commit, rollback et al, which have no parameters, return no
+    /// results, and are not pre-compiled.
+    ///
+    /// @param sql SQL statment to execute.
+    void executeSQL(const std::string& sql);
+
     /// @brief Checks a result set's SQL state against an error state.
     ///
     /// @param r result set to check

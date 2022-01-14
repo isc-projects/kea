@@ -20,10 +20,6 @@
 /// query may be dhcp4_subnet etc. The second argument in the variadic
 /// macro is a part of the WHERE clause in the PgSQL query. The fixed
 /// part of the WHERE clause is included in the macro.
-
-/// @todo Update queries to also fetch server tags to associate
-/// returned configuration elements with particular servers.
-
 namespace isc {
 namespace dhcp {
 

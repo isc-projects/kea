@@ -66,15 +66,6 @@ public:
 };
 
 /// @brief Test fixture class for @c PgSqlConfigBackendDHCPv4.
-///
-/// @todo The tests we're providing here only test cases when the
-/// server selector is set to 'ALL' (configuration elements belong to
-/// all servers). Currently we have no API to insert servers into
-/// the database, and therefore we can't test the case when
-/// configuration elements are assigned to particular servers by
-/// server tags. We will have to expand existing tests when
-/// the API is extended allowing for inserting servers to the
-/// database.
 class PgSqlConfigBackendDHCPv4Test : public PgSqlGenericBackendTest {
 public:
 
@@ -740,8 +731,11 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, getAndDeleteAllServers) {
     EXPECT_EQ(1, countRows("dhcp4_server"));
 }
 
+/// @brief Test fixture for verifying database connection loss-recovery
+/// behavior.
 class PgSqlConfigBackendDHCPv4DbLostCallbackTest : public ::testing::Test {
 public:
+    /// @brief Constructor
     PgSqlConfigBackendDHCPv4DbLostCallbackTest()
         : db_lost_callback_called_(0), db_recovered_callback_called_(0),
           db_failed_callback_called_(0),
@@ -754,6 +748,7 @@ public:
         isc::dhcp::CfgMgr::instance().clear();
     }
 
+    /// @brief Destructor
     virtual ~PgSqlConfigBackendDHCPv4DbLostCallbackTest() {
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;

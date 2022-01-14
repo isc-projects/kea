@@ -49,7 +49,7 @@ PgSqlConfigBackendImpl::insertQuery(size_t index,
 
 uint64_t
 PgSqlConfigBackendImpl::updateDeleteQuery(size_t index,
-                                    const PsqlBindArray& in_bindings) {
+                                          const PsqlBindArray& in_bindings) {
     return(conn_.updateDeleteQuery(getStatement(index), in_bindings));
 }
 
@@ -538,46 +538,42 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
     in_bindings.addTempString(server->getDescription());
     in_bindings.addTimestamp(server->getModificationTime());
 
-    bool inserted = false;
-    for (auto attempts = 0; !inserted && attempts < 2; ++attempts) {
-        // Start a new transaction.
-        PgSqlTransaction transaction(conn_);
+    // Start a new transaction.
+    PgSqlTransaction transaction(conn_);
 
-        // Create scoped audit revision. As long as this instance exists
-        // no new audit revisions are created in any subsequent calls.
-        ScopedAuditRevision audit_revision(this, create_audit_revision, ServerSelector::ALL(),
-                                           "server set", true);
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision audit_revision(this, create_audit_revision, ServerSelector::ALL(),
+                                       "server set", true);
 
-        // On the first attempt we try to insert.
-        if (attempts == 0) {
-            try {
-                // Attempt to insert the server.
-                insertQuery(create_index, in_bindings);
-                inserted = true;
-            } catch (const DuplicateEntry&) {
-                // Server already exists that means our current transaction has
-                // been aborted by PostgreSQL. We need to start over with a new
-                // transaction, but this time we'll do the update.
-                continue;
-            }
-        } else {
-            // Add another instance of tag to the bindings to be used
-            // as the where clause parameter. PostgreSQL uses
-            // numbered placeholders so we could use $1 again, but
-            // doing it this way leaves the SQL more generic.
-            in_bindings.add(tag);
+    // Create a savepoint in case we are called as part of larger
+    // transaction.
+    conn_.createSavepoint("createUpdateServer");
 
-            // Attempt to update the server.
-            if (!updateDeleteQuery(update_index, in_bindings)) {
-                // Possible only if someone deleted it since we tried to insert it,
-                // the query is broken, or the bindings are nonesense.
-                isc_throw(Unexpected, "Update server failed to find server tag: " << tag);
-            }
+    try {
+        // Attempt to insert the server.
+        insertQuery(create_index, in_bindings);
+    } catch (const DuplicateEntry&) {
+        // Rollback to the savepoint to preserve an outer
+        // transaction work.
+        conn_.rollbackToSavepoint("createUpdateServer");
+
+        // Add another instance of tag to the bindings to be used
+        // as the where clause parameter. PostgreSQL uses
+        // numbered placeholders so we could use $1 again, but
+        // doing it this way leaves the SQL more generic.
+        in_bindings.add(tag);
+
+        // Attempt to update the server.
+        if (!updateDeleteQuery(update_index, in_bindings)) {
+            // Possible only if someone deleted it since we tried to insert it,
+            // the query is broken, or the bindings are nonesense.
+            isc_throw(Unexpected, "Update server failed to find server tag: " << tag);
         }
-
-        // Commit the transaction.
-        transaction.commit();
     }
+
+    // Commit the transaction.
+    transaction.commit();
 }
 
 std::string

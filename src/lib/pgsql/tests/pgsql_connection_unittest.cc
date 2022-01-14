@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 #include <pgsql/testutils/pgsql_schema.h>
@@ -427,5 +428,77 @@ TEST_F(PgSqlConnectionTest, transactions) {
     // Committing or rolling back a not started transaction is a coding error.
     EXPECT_THROW(conn_->commit(), isc::Unexpected);
     EXPECT_THROW(conn_->rollback(), isc::Unexpected);
+}
+
+// Verifies that savepointes operate correctly.
+TEST_F(PgSqlConnectionTest, savepoints) {
+    // We want to trigger DuplicateEntry errors so let's
+    // add a unique constraint to the table.
+    ASSERT_NO_THROW(conn_->executeSQL("ALTER TABLE basics ADD CONSTRAINT"
+                                      " unique_int_col UNIQUE (int_col);"));
+    // Verify we are not in a transaction.
+    ASSERT_FALSE(conn_->isTransactionStarted());
+
+    // Creating or rollback to savepoints outside of transactions
+    // should throw.
+    ASSERT_THROW_MSG(conn_->createSavepoint("rubbish"), Unexpected,
+                     "no transaction, cannot create savepoint: rubbish");
+    ASSERT_THROW_MSG(conn_->rollbackToSavepoint("rubbish"), Unexpected,
+                     "no transaction, cannot rollback to savepoint: rubbish");
+
+    // Test that we can create and rollback to a savepoint, then
+    // committing only the pre savepoint work.
+    TestRowSet first_row = {{1, "one"}};
+    ASSERT_NO_THROW_LOG(conn_->startTransaction());
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert(first_row));
+
+    // Create a savepoint.
+    ASSERT_NO_THROW_LOG(conn_->createSavepoint("sp_one"));
+
+    // Insert a second row, without committing it.
+    TestRowSet second_row = {{2, "two"}};
+    ASSERT_NO_THROW_LOG(testInsert(second_row));
+
+    // Rollback to the savepoint.
+    ASSERT_NO_THROW_LOG(conn_->rollbackToSavepoint("sp_one"));
+
+    // Commit the transcation.
+    conn_->commit();
+
+    // We should not be in a transaction but we should
+    // only have the first row.
+    ASSERT_FALSE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testSelect(first_row, 0, 10));
+
+    // Now we'll test that we can create and rollback to a
+    // savepoint after Postgresql aborts an insert due to
+    // duplicate key error.  We should still be able to
+    // commit the pre-savepoint and post rollback work.
+    ASSERT_NO_THROW_LOG(conn_->startTransaction());
+    ASSERT_TRUE(conn_->isTransactionStarted());
+    ASSERT_NO_THROW_LOG(testInsert(second_row));
+
+    // Create a savepoint.
+    ASSERT_NO_THROW_LOG(conn_->createSavepoint("sp_two"));
+
+    // Attempt to insert a duplicate first row.
+    ASSERT_THROW(testInsert(first_row), DuplicateEntry);
+
+    // Rollback to the savepoint.
+    ASSERT_NO_THROW_LOG(conn_->rollbackToSavepoint("sp_two"));
+
+    // Now insert a third row.
+    TestRowSet third_row = {{3, "three"}};
+    ASSERT_NO_THROW_LOG(testInsert(third_row));
+
+    // Commit the transcation.
+    conn_->commit();
+
+    // We should not be in a transaction and we should
+    // two rows.
+    ASSERT_FALSE(conn_->isTransactionStarted());
+    TestRowSet three_rows{{1, "one"}, {2, "two"}, {3, "three"}};
+    ASSERT_NO_THROW_LOG(testSelect(three_rows, 0, 10));
 }
 }; // namespace

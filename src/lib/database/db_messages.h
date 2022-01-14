@@ -18,9 +18,11 @@ extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR;
 extern const isc::log::MessageID DATABASE_MYSQL_ROLLBACK;
 extern const isc::log::MessageID DATABASE_MYSQL_START_TRANSACTION;
 extern const isc::log::MessageID DATABASE_PGSQL_COMMIT;
+extern const isc::log::MessageID DATABASE_PGSQL_CREATE_SAVEPOINT;
 extern const isc::log::MessageID DATABASE_PGSQL_DEALLOC_ERROR;
 extern const isc::log::MessageID DATABASE_PGSQL_FATAL_ERROR;
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK;
+extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK_SAVEPOINT;
 extern const isc::log::MessageID DATABASE_PGSQL_START_TRANSACTION;
 extern const isc::log::MessageID DATABASE_TO_JSON_ERROR;
 

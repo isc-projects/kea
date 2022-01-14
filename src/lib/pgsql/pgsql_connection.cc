@@ -436,6 +436,37 @@ PgSqlConnection::rollback() {
 }
 
 void
+PgSqlConnection::createSavepoint(const std::string& name) {
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "no transaction, cannot create savepoint: " << name);
+    }
+
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_CREATE_SAVEPOINT).arg(name);
+    std::string sql("SAVEPOINT " + name);
+    executeSQL(sql);
+}
+
+void
+PgSqlConnection::rollbackToSavepoint(const std::string& name) {
+    if (transaction_ref_count_ <= 0) {
+        isc_throw(Unexpected, "no transaction, cannot rollback to savepoint: " << name);
+    }
+
+    std::string sql("ROLLBACK TO SAVEPOINT " + name);
+    executeSQL(sql);
+}
+
+void
+PgSqlConnection::executeSQL(const std::string& sql) {
+    // Use a TaggedStatement so we can call checkStatementError and ensure
+    // we detect connectivity issues properly.
+    PgSqlTaggedStatement statement({0, {OID_NONE}, "run-statement", sql.c_str()});
+    checkUnusable();
+    PgSqlResult r(PQexec(conn_, statement.text));
+    checkStatementError(r, statement);
+}
+
+void
 PgSqlConnection::selectQuery(PgSqlTaggedStatement& statement,
                              const PsqlBindArray& in_bindings,
                              ConsumeResultRowFun process_result_row) {

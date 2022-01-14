@@ -58,6 +58,12 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
 
+% DATABASE_PGSQL_CREATE_SAVEPOINT creating a new PostgreSQL savepoinat: %1
+The code is issuing a call to create a savepoint within the current
+transaction.  Database modications made up to this point will be preserved
+should a subsequent call to rollback to this savepoint occurs prior to the
+transaction being committed.
+
 % DATABASE_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
 This is an error message issued when a DHCP server (either V4 or V6) experienced
 and error freeing database SQL resources as part of closing its connection to
@@ -75,6 +81,11 @@ or the PostgreSQL server has gone down.
 % DATABASE_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
+
+% DATABASE_PGSQL_ROLLBACK_SAVEPOINT rolling back PostgreSQL database to savepoint: $1
+The code is issuing a call to rollback to the given savepoint.  Any database
+modications that were made after the savepoint was created will be rolled back
+and not committed to the database.
 
 % DATABASE_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
 A debug message issued when a new PostgreSQL transaction is being started.

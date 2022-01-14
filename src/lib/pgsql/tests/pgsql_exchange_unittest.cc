@@ -1046,6 +1046,8 @@ TEST(PsqlBindArray, insertString) {
     EXPECT_EQ(expected, b.toText());
 }
 
+/// @brief Verifies the ability to pop bindings off
+/// the end of a bind array.
 TEST(PsqlBindArray, popBackTest) {
     PsqlBindArray b;
 

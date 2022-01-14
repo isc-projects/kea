@@ -54,7 +54,7 @@ PgSqlBasicsTest::~PgSqlBasicsTest () {
     destroySchema();
 }
 
-const std::string& 
+const std::string&
 PgSqlBasicsTest::expectedColumnName(int col) {
     if (col < 0 || col >= NUM_BASIC_COLS) {
         isc_throw(BadValue,
@@ -64,7 +64,7 @@ PgSqlBasicsTest::expectedColumnName(int col) {
     return (expected_col_names_[col]);
 }
 
-void 
+void
 PgSqlBasicsTest::createSchema() {
     // One column for OID type, plus an auto-increment
     const char* sql =
@@ -88,7 +88,7 @@ PgSqlBasicsTest::createSchema() {
               << " create basics table failed: " << PQerrorMessage(*conn_);
 }
 
-void 
+void
 PgSqlBasicsTest::destroySchema() {
     if (conn_) {
         PgSqlResult r(PQexec(*conn_, "DROP TABLE IF EXISTS basics;"));
@@ -97,8 +97,8 @@ PgSqlBasicsTest::destroySchema() {
     }
 }
 
-void 
-PgSqlBasicsTest::runSql(PgSqlResultPtr& r, const std::string& sql, 
+void
+PgSqlBasicsTest::runSql(PgSqlResultPtr& r, const std::string& sql,
                         int exp_outcome, int lineno) {
     r.reset(new PgSqlResult(PQexec(*conn_, sql.c_str())));
     ASSERT_EQ(PQresultStatus(*r), exp_outcome)
@@ -106,10 +106,10 @@ PgSqlBasicsTest::runSql(PgSqlResultPtr& r, const std::string& sql,
               << "]\n reason: " << PQerrorMessage(*conn_);
 }
 
-void 
+void
 PgSqlBasicsTest::runPreparedStatement(PgSqlResultPtr& r,
                                       PgSqlTaggedStatement& statement,
-                                      PsqlBindArrayPtr bind_array, 
+                                      PsqlBindArrayPtr bind_array,
                                       int exp_outcome, int lineno) {
     r.reset(new PgSqlResult(PQexecPrepared(*conn_, statement.name,
                                            statement.nbparams,
@@ -122,7 +122,7 @@ PgSqlBasicsTest::runPreparedStatement(PgSqlResultPtr& r,
               << "]\n reason: " << PQerrorMessage(*conn_);
 }
 
-void 
+void
 PgSqlBasicsTest::fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {
     std::string sql =
         "SELECT"
