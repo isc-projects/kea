@@ -63,7 +63,6 @@ public:
     }
 
     using PgSqlConfigBackendDHCPv4::base_impl_;
-
 };
 
 /// @brief Test fixture class for @c PgSqlConfigBackendDHCPv4.
