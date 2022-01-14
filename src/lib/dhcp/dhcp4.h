@@ -212,7 +212,9 @@ enum DHCPOptionType {
 //  DHO_DATA_SOURCE                  = 157,
 //  DHO_V4_PCP_SERVER                = 158,
     DHO_V4_PORTPARAMS                = 159,
-    // 161-209 are removed/unassigned
+    // 160 used to be assigned in RFC7710, but was removed in RFC8910
+    // The Captive Portal option now uses code 114.
+    // 160-209 are removed/unassigned
 //  DHO_PATH_PREFIX                  = 210, /* RFC5071 */
 //  DHO_REBOOT_TIME                  = 211, /* RFC5071 */
     DHO_6RD                          = 212, /* RFC5969 */
