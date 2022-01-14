@@ -1,3 +1,8 @@
+1981.	[func]		tomek
+	The default-url DHCPv4 option has been replaced with
+	v4-captive-portal, as defined in RFC8910.
+	(Gitlab #1684)
+
 1980.	[func]*		andrei
 	The kea-admin lease-dump command now outputs a CSV file that is
 	compatible with the memfile backend. This is useful when
