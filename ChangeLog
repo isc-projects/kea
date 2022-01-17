@@ -1,3 +1,10 @@
+1986.	[func]		fdupont
+	The kea-admin command now accepts extra arguments which
+	are passed to the database command tool, e.g. '--ssl' to
+	'mysql' with `kea-admin ... -x --ssl'. Quotes are not
+	preserved but multiple arguments can be given.
+	(Gitlab #2225)
+
 1985.	[func]		fdupont
 	Added support for using files to configure basic HTTP
 	credentials. Instead of configuring a value, it is taken from
