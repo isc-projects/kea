@@ -327,10 +327,9 @@ public:
     ///
     /// Creates a named savepoint within the current transaction.
     ///
-    /// @param name name of the savepoint to create. This name
-    /// must be unique within the transaction?
+    /// @param name name of the savepoint to create.
     ///
-    /// @throw Unexpected if called outside a transaction.
+    /// @throw InvalidOperation if called outside a transaction.
     /// @throw DbOperationError If the savepoint cannot be created.
     void createSavepoint(const std::string& name);
 
@@ -341,7 +340,7 @@ public:
     ///
     /// @param name name of the savepoint to which to rollback.
     ///
-    /// @throw Unexpected if called outside a transaction.
+    /// @throw InvalidOperation if called outside a transaction.
     /// @throw DbOperationError if the rollback failed.
     void rollbackToSavepoint(const std::string& name);
 

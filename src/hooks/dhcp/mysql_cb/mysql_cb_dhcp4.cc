@@ -3654,6 +3654,8 @@ MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnect
     // database is read only for the current user.
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.end());
+// @todo As part of enabling read-only CB access, statements need to
+// be limited:
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
     // Create unique timer name per instance.

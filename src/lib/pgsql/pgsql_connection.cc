@@ -438,7 +438,7 @@ PgSqlConnection::rollback() {
 void
 PgSqlConnection::createSavepoint(const std::string& name) {
     if (transaction_ref_count_ <= 0) {
-        isc_throw(Unexpected, "no transaction, cannot create savepoint: " << name);
+        isc_throw(InvalidOperation, "no transaction, cannot create savepoint: " << name);
     }
 
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_CREATE_SAVEPOINT).arg(name);
@@ -449,7 +449,7 @@ PgSqlConnection::createSavepoint(const std::string& name) {
 void
 PgSqlConnection::rollbackToSavepoint(const std::string& name) {
     if (transaction_ref_count_ <= 0) {
-        isc_throw(Unexpected, "no transaction, cannot rollback to savepoint: " << name);
+        isc_throw(InvalidOperation, "no transaction, cannot rollback to savepoint: " << name);
     }
 
     std::string sql("ROLLBACK TO SAVEPOINT " + name);

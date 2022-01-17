@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,15 +67,6 @@ public:
 };
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv4.
-///
-/// @todo The tests we're providing here only test cases when the
-/// server selector is set to 'ALL' (configuration elements belong to
-/// all servers). Currently we have no API to insert servers into
-/// the database, and therefore we can't test the case when
-/// configuration elements are assigned to particular servers by
-/// server tags. We will have to expand existing tests when
-/// the API is extended allowing for inserting servers to the
-/// database.
 class MySqlConfigBackendDHCPv4Test : public MySqlGenericBackendTest {
 public:
 
@@ -4779,6 +4770,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntries) {
     }
 }
 
+/// @brief Test fixture for verifying database connection loss-recovery
+/// behavior.
 class MySqlConfigBackendDHCPv4DbLostCallbackTest : public ::testing::Test {
 public:
     MySqlConfigBackendDHCPv4DbLostCallbackTest()

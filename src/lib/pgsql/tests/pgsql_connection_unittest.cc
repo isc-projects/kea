@@ -441,9 +441,9 @@ TEST_F(PgSqlConnectionTest, savepoints) {
 
     // Creating or rollback to savepoints outside of transactions
     // should throw.
-    ASSERT_THROW_MSG(conn_->createSavepoint("rubbish"), Unexpected,
+    ASSERT_THROW_MSG(conn_->createSavepoint("rubbish"), InvalidOperation,
                      "no transaction, cannot create savepoint: rubbish");
-    ASSERT_THROW_MSG(conn_->rollbackToSavepoint("rubbish"), Unexpected,
+    ASSERT_THROW_MSG(conn_->rollbackToSavepoint("rubbish"), InvalidOperation,
                      "no transaction, cannot rollback to savepoint: rubbish");
 
     // Test that we can create and rollback to a savepoint, then
