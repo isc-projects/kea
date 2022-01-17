@@ -53,26 +53,36 @@ public:
                         const isc::data::ConstElementPtr& user_context);
 
     /// @brief Returns the user id.
+    ///
+    /// @return The user id.
     const std::string& getUser() const {
         return (user_);
     }
 
     /// @brief Returns the user id file.
+    ///
+    /// @return The user id file.
     const std::string& getUserFile() const {
         return (user_file_);
     }
 
     /// @brief Returns the password.
+    ///
+    /// @return The password.
     const std::string& getPassword() const {
         return (password_);
     }
 
     /// @brief Returns the password file.
+    ///
+    /// @return The password file.
     const std::string& getPasswordFile() const {
         return (password_file_);
     }
 
     /// @brief Returns the password file only flag.
+    ///
+    /// @return The password file only flag.
     bool getPasswordFileOnly() const {
         return (password_file_only_);
     }
@@ -111,13 +121,13 @@ public:
 
     /// @brief Add a client configuration.
     ///
-    /// @param user User id
-    /// @param user_file File with the user id
-    /// @param password Password
-    /// @param password_file File with the password
+    /// @param user User id.
+    /// @param user_file File with the user id.
+    /// @param password Password.
+    /// @param password_file File with the password.
     /// @param password_file_only Flag true if the password file includes
     /// the user id too.
-    /// @param user_context Optional user context
+    /// @param user_context Optional user context.
     /// @throw BadValue if the user id contains the ':' character.
     void add(const std::string& user,
              const std::string& user_file,
@@ -127,6 +137,7 @@ public:
              const isc::data::ConstElementPtr& user_context = isc::data::ConstElementPtr());
 
     /// @brief Empty predicate.
+    ///
     /// @return true if the configuration is empty so authentication
     /// is not required.
     virtual bool empty() const;

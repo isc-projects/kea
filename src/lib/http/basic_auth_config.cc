@@ -98,7 +98,7 @@ string
 BasicHttpAuthConfig::getFileContent(const std::string& file_name) const {
     // Build path.
     string path = getDirectory();
-    // Add a trailing '/' if the last character is not alreay a '/'.
+    // Add a trailing '/' if the last character is not already a '/'.
     if (path.empty() || (path[path.size() - 1] != '/')) {
         path += "/";
     }

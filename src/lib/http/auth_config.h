@@ -40,7 +40,7 @@ public:
         return (realm_);
     }
 
-    /// @brief Set the common part for file paths (usually a directory)
+    /// @brief Set the common part for file paths (usually a directory).
     ///
     /// @param directory New directory.
     void setDirectory(const std::string& directory) {
@@ -55,6 +55,7 @@ public:
     }
 
     /// @brief Empty predicate.
+    ///
     /// @return true if the configuration is empty so authentication
     /// is not required.
     virtual bool empty() const = 0;
