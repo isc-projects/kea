@@ -10,8 +10,9 @@
 
 # shellcheck disable=SC2086
 # SC2086: Double quote to prevent globbing and word splitting.
-# Explicitly don't quote db_port_full_parameter so it doesn't expand to empty
-# string if it is not set.
+# Reason for disable: explicitly don't quote db_port_full_parameter so it
+# doesn't expand to empty string if it is not set and explicitly don't quote
+# extra_arguments so it is considered multiple arguments instead of one.
 
 # shellcheck disable=SC2154
 # SC2154: ... is referenced but not assigned.

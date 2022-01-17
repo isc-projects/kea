@@ -22,6 +22,11 @@
 # shellcheck disable=SC2039
 # SC2039: In POSIX sh, 'local' is undefined.
 
+# shellcheck disable=SC2086
+# SC2086: Double quote to prevent globbing and word splitting.
+# Reason for disable: explicitly don't quote extra_arguments so it is
+# considered multiple arguments instead of one.
+
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -976,6 +981,11 @@ do
         # specify extra arguments to pass to the database command
         -x|--extra)
             shift
+            if [ -z "${1-}" ]; then
+                log_error "-x or --extra requires a parameter"
+                usage
+                exit 1
+            fi
             if [ -z "${extra_arguments}" ]; then
                 extra_arguments=${1}
             else
