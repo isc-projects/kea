@@ -6340,10 +6340,10 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
     EXPECT_EQ("foo", net->getName());
 
     // It should have one subnet.
-    const Subnet4SimpleCollection* nsubs = net->getAllSubnets();
-    ASSERT_TRUE(nsubs);
-    EXPECT_EQ(1, nsubs->size());
-    checkSubnet(*nsubs, "192.0.2.0/24", 1000, 2000, 4000);
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
@@ -6410,12 +6410,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
 
     EXPECT_EQ("foo", net->getName());
 
-    const Subnet4SimpleCollection* nsubs = net->getAllSubnets();
-    ASSERT_TRUE(nsubs);
-    EXPECT_EQ(3, nsubs->size());
-    checkSubnet(*nsubs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
-    checkSubnet(*nsubs, "192.0.2.0/24", 2, 22, 222, 111, 333);
-    checkSubnet(*nsubs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(3, subs->size());
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222, 111, 333);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
