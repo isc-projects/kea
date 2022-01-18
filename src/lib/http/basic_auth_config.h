@@ -29,22 +29,22 @@ public:
 
     /// @brief Constructor (legacy).
     ///
-    /// @param user User id
-    /// @param password Password
-    /// @param user_context Optional user context
+    /// @param user User id.
+    /// @param password Password.
+    /// @param user_context Optional user context.
     BasicHttpAuthClient(const std::string& user,
                         const std::string& password,
                         const isc::data::ConstElementPtr& user_context);
 
     /// @brief Constructor.
     ///
-    /// @param user User id
-    /// @param user_file File with the user id
-    /// @param password Password
-    /// @param password_file File with the password
+    /// @param user User id.
+    /// @param user_file File with the user id.
+    /// @param password Password.
+    /// @param password_file File with the password.
     /// @param password_file_only Flag true if the password file includes
     /// the user id too.
-    /// @param user_context Optional user context
+    /// @param user_context Optional user context.
     BasicHttpAuthClient(const std::string& user,
                         const std::string& user_file,
                         const std::string& password,

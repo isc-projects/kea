@@ -102,7 +102,7 @@ BasicHttpAuthConfig::getFileContent(const std::string& file_name) const {
     if (path.empty() || (path[path.size() - 1] != '/')) {
         path += "/";
     }
-    // Note add a second '/'.
+    // Don't add a second '/'.
     if (file_name.empty() || (file_name[0] != '/')) {
         path += file_name;
     } else {
@@ -188,7 +188,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
         setDirectory(directory->stringValue());
     }
 
-    // Get user context
+    // Get user context.
     ConstElementPtr user_context_cfg = config->get("user-context");
     if (user_context_cfg) {
         if (user_context_cfg->getType() != Element::map) {
@@ -215,7 +215,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                       << client->getPosition() << ")");
         }
 
-        // password
+        // password.
         string password;
         ConstElementPtr password_cfg = client->get("password");
         if (password_cfg) {
@@ -244,10 +244,8 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
             password_file = password_file_cfg->stringValue();
         }
 
-        // user file.
         ConstElementPtr user_cfg = client->get("user");
         ConstElementPtr user_file_cfg = client->get("user-file");
-        string user;
         bool password_file_only = false;
         if (!user_cfg && !user_file_cfg) {
             if (password_file_cfg) {
@@ -257,6 +255,9 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                           << "items (" << client->getPosition() << ")");
             }
         }
+
+        // user.
+        string user;
         if (user_cfg) {
             if (user_file_cfg) {
                 isc_throw(DhcpConfigError, "user (" << user_cfg->getPosition()
@@ -317,7 +318,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
             }
         }
 
-        // user context
+        // user context.
         ConstElementPtr user_context = client->get("user-context");
         if (user_context) {
             if (user_context->getType() != Element::map) {

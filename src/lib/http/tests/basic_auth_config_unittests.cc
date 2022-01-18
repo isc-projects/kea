@@ -29,7 +29,10 @@ TEST(BasicHttpAuthClientTest, basic) {
 
     // Check it.
     EXPECT_EQ("foo", client.getUser());
+    EXPECT_EQ("", client.getUserFile());
     EXPECT_EQ("bar", client.getPassword());
+    EXPECT_EQ("", client.getPasswordFile());
+    EXPECT_FALSE(client.getPasswordFileOnly());
     EXPECT_TRUE(ctx->equals(*client.getContext()));
 
     // Check toElement.
