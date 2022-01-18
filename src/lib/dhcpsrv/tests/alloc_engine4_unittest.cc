@@ -4468,7 +4468,7 @@ TEST_F(AllocEngine4Test, bootpDelete) {
     ASSERT_TRUE(from_mgr);
 
     // Now delete it.
-    bool deleted;
+    bool deleted = false;
     ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(lease));
     EXPECT_TRUE(deleted);
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
@@ -4638,7 +4638,7 @@ TEST_F(MySqlAllocEngine4Test, bootpDelete) {
     ASSERT_TRUE(from_mgr);
 
     // Now delete it.
-    bool deleted;
+    bool deleted = false;
     ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(lease));
     EXPECT_TRUE(deleted);
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
@@ -4809,7 +4809,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpDelete) {
     ASSERT_TRUE(from_mgr);
 
     // Now delete it.
-    bool deleted;
+    bool deleted = false;
     ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(lease));
     EXPECT_TRUE(deleted);
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
@@ -4980,7 +4980,7 @@ TEST_F(CqlAllocEngine4Test, bootpDelete) {
     ASSERT_TRUE(from_mgr);
 
     // Now delete it.
-    bool deleted;
+    bool deleted = false;
     ASSERT_NO_THROW(deleted = LeaseMgrFactory::instance().deleteLease(lease));
     EXPECT_TRUE(deleted);
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
