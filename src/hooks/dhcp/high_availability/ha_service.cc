@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1319,7 +1319,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(config->getUrl().getHostname()));
+         HostHttpHeader(config->getUrl().getStrippedHostname()));
     config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(command);
     request->finalize();
@@ -1634,7 +1634,7 @@ HAService::asyncSendHeartbeat() {
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(partner_config->getUrl().getHostname()));
+         HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
     partner_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createHeartbeat(server_type_));
     request->finalize();
@@ -1796,7 +1796,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(remote_config->getUrl().getHostname()));
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
@@ -1875,7 +1875,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(remote_config->getUrl().getHostname()));
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
     request->finalize();
@@ -2013,7 +2013,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(partner_config->getUrl().getHostname()));
+         HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
     partner_config->addBasicAuthHttpHeader(request);
     if (server_type_ == HAServerType::DHCPv4) {
         request->setBodyAsJson(CommandCreator::createLease4GetPage(
@@ -2354,7 +2354,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(config->getUrl().getHostname()));
+         HostHttpHeader(config->getUrl().getStrippedHostname()));
     config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(command);
     request->finalize();
@@ -2454,7 +2454,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(config->getUrl().getHostname()));
+         HostHttpHeader(config->getUrl().getStrippedHostname()));
     config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(command);
     request->finalize();
@@ -2591,7 +2591,7 @@ HAService::processMaintenanceStart() {
     // with the cancel flag set to false.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(remote_config->getUrl().getHostname()));
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(false, server_type_));
     request->finalize();
@@ -2715,7 +2715,7 @@ HAService::processMaintenanceCancel() {
     // with the cancel flag set to true.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(remote_config->getUrl().getHostname()));
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(true, server_type_));
     request->finalize();
@@ -2806,7 +2806,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(remote_config->getUrl().getHostname()));
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(server_type_));

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,15 +58,10 @@ public:
     /// @throw InvalidOperation if URL is invalid.
     Scheme getScheme() const;
 
-    /// @brief Returns hostname.
-    ///
-    /// @throw InvalidOperation if URL is invalid.
-    std::string getHostname() const;
-
     /// @brief Returns hostname stripped from [ ] characters surrounding
     /// IPv6 address.
     ///
-    /// @throw InvalidOperation of URL is invalid.
+    /// @throw InvalidOperation if URL is invalid.
     std::string getStrippedHostname() const;
 
     /// @brief Returns port number.
@@ -94,6 +89,10 @@ public:
     }
 
 private:
+    /// @brief Returns hostname.
+    ///
+    /// @throw InvalidOperation if URL is invalid.
+    std::string getHostname() const;
 
     /// @brief Returns boolean value indicating if the URL is valid.
     void checkValid() const;
