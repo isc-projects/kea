@@ -15,7 +15,11 @@
 Synopsis
 ~~~~~~~~
 
-:program:`kea-admin` [command] [backend] [**-h** database_host] [**-P** database_port] [**-u** database_username] [**-p** [database_password]] [**-n** database_name] [**-d** script_directory] [**-v**] [**-4** | **-6**] [**-o** output_file] [**-x** extra_argument [**-x** extra_argument ...]]
+:program:`kea-admin` [command] [backend] [**-h** database_host]
+[**-P** database_port] [**-u** database_username]
+[**-p** [database_password]] [**-n** database_name] [**-d** script_directory]
+[**-v**] [**-4** | **-6**] [**-o** output_file] [**-x** extra_argument
+[**-x** extra_argument ...]]
 
 Description
 ~~~~~~~~~~~
@@ -28,7 +32,8 @@ Arguments
 ~~~~~~~~~
 
 ``command``
-   Specifies the command to be issued to the servers. It can be one of the following:
+   Specifies the command to be issued to the servers. It can be one of the
+   following:
 
    ``db-init``
       Initializes a new database schema. This is useful during a new Kea
@@ -49,8 +54,8 @@ Arguments
       for the Cassandra backend has been deprecated.)
       The first line of the file contains the column names. This can be used
       as a way to switch from a database backend to a memfile backend.
-      Alternatively, it can be used as a diagnostic tool, so it provides a portable
-      form of the lease data.
+      Alternatively, it can be used as a diagnostic tool, so it provides a
+      portable form of the lease data.
 
    ``lease-upload``
       Uploads leases from a CSV (comma-separated values) text file to a MySQL or
@@ -92,7 +97,8 @@ Arguments
    The default value is ``(prefix)/share/kea/scripts/``.
 
 ``-o|--output output_file``
-   Specifies the file to which the lease data will be dumped. Required for ``lease-dump``.
+   Specifies the file to which the lease data will be dumped. Required for
+   ``lease-dump``.
 
 ``-v|--version``
    Prints the ``kea-admin`` version and quits.
@@ -108,7 +114,8 @@ Arguments
 ``-x|--extra``
    Specifies an extra argument to pass to the database command tool e.g.
    to invoke ``mysql`` with the ``--ssl`` argument. This can be repeated
-   to pass more than one argument. 
+   to pass more than one argument. Quotes are not preserved. Avoid commands
+   containing spaces.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -144,5 +151,6 @@ See Also
 ~~~~~~~~
 
 :manpage:`kea-dhcp4(8)`, :manpage:`kea-dhcp6(8)`,
-:manpage:`kea-dhcp-ddns(8)`, :manpage:`kea-ctrl-agent(8)`, :manpage:`keactrl(8)`,
-:manpage:`perfdhcp(8)`, :manpage:`kea-netconf(8)`, Kea Administrator Reference Manual.
+:manpage:`kea-dhcp-ddns(8)`, :manpage:`kea-ctrl-agent(8)`,
+:manpage:`keactrl(8)`, :manpage:`perfdhcp(8)`, :manpage:`kea-netconf(8)`,
+Kea Administrator Reference Manual.
