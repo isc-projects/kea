@@ -32,7 +32,7 @@ fi
 base=$1
 output=
 
-header="Grammar generated from $(basename "${base}").yy. See Chapter ${md_name} for an explanation."
+header="This grammar is generated from \`\`$(basename "${base}").yy\`\`. See ${md_name} for more details."
 
 if [ -f "${base}.yy" ]; then
     # We want to explicitly set the language to English. Otherwise
@@ -77,7 +77,6 @@ cat -s > $output.2
 
 if [ "$markdown" -eq 1 ]; then
     cat > $output.3 << EOF
-
 $header
 
 .. code-block:: BNF
