@@ -113,6 +113,20 @@ kea_admin_error_reporting_tests() {
   assert_eq 1 "${EXIT_CODE}"
   assert_str_eq 'ERROR/kea-admin: -o or --output requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
   test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_version.mysql.x'
+  run_command \
+    "${kea_admin}" db-version mysql -x
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -x or --extra requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
+
+  test_start 'kea_admin_error_reporting_test.db_version.mysql.extra'
+  run_command \
+    "${kea_admin}" db-version mysql --extra
+  assert_eq 1 "${EXIT_CODE}"
+  assert_str_eq 'ERROR/kea-admin: -x or --extra requires a parameter' "$(printf '%s\n' "${OUTPUT}" | head -n 1)"
+  test_finish ${?}
 }
 
 # Run tests.

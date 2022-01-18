@@ -179,10 +179,20 @@ mysql_db_version_with_extra_test() {
 INSERT INTO schema_version VALUES (1, 7);'
     assert_eq 0 "${EXIT_CODE}" "schema_version table cannot be created. (expected %d, exit code %d)"
 
+    # Single -x.
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -x --protocol=TCP
     version="${OUTPUT}"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin -x failed. (expected %d, exit code %d)"
     assert_str_eq "1.7" "${version}" "Expected kea-admin to return %s, returned value was %s"
+
+    # Multiple -x.
+    run_command \
+        "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+        -x --protocol=TCP -x --hello 2> "@abs_top_srcdir@/src/bin/admin/test-data"
+    assert_eq 2 "${EXIT_CODE}" "kea-admin -x -x succeeded. (expected %d, exit code %d)"
+    assert_str_eq "mysql: unknown option '--hello'" "$(tail -n 1 "@abs_top_srcdir@/src/bin/admin/test-data")"
+    rm -f "@abs_top_srcdir@/src/bin/admin/test-data"
 
     # Let's wipe the whole database
     mysql_wipe
