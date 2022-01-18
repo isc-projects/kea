@@ -270,7 +270,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
             }
             user = user_cfg->stringValue();
             if (user.empty()) {
-                isc_throw(DhcpConfigError, "user must be not be empty ("
+                isc_throw(DhcpConfigError, "user must not be empty ("
                           << user_cfg->getPosition() << ")");
             }
             if (user.find(':') != string::npos) {
@@ -289,7 +289,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
             user_file = user_file_cfg->stringValue();
             user = getFileContent(user_file);
             if (user.empty()) {
-                isc_throw(DhcpConfigError, "user must be not be empty "
+                isc_throw(DhcpConfigError, "user must not be empty "
                           << "from user-file '" << user_file << "' ("
                           << user_file_cfg->getPosition() << ")");
             }

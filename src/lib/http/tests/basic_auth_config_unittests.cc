@@ -347,7 +347,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "user must be not be empty (:0:0)");
+                     "user must not be empty (:0:0)");
 
     // The user parameter must not contain ':'.
     user_cfg = Element::create(string("foo:bar"));
@@ -388,7 +388,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
-                     "user must be not be empty from user-file "
+                     "user must not be empty from user-file "
                      "'empty' (:0:0)");
 
     // The user-file parameter must not contain ':'.

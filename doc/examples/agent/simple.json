@@ -50,16 +50,16 @@
 
                 // This specifies a hiddent client.
                 {
-                    // The user id is the content of the file /tmp/ca/hiddenu.
+                    // The user id is the content of the file /tmp/kea-creds/hiddenu.
                     "user-file": "hiddenu",
 
-                    // The password is the content of the file /tmp/ca/hiddenp.
+                    // The password is the content of the file /tmp/kea-creds/hiddenp.
                     "password-file": "hiddenp"
                 },
 
                 // This specifies a hidden client using a secret in a file.
                 {
-                    // The secret is the content of the file /tmp/ca/hiddens
+                    // The secret is the content of the file /tmp/kea-creds/hiddens
                     // which must be in the <user-id>:<password> format.
                     "password-file": "hiddens"
                 }
