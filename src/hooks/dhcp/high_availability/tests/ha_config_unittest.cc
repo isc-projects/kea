@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1853,5 +1853,36 @@ TEST_F(HAConfigTest, multiThreadingPermutations) {
        }
     }
 }
+
+// Check that an IPv6 address can be used as part of a value for "url".
+TEST_F(HAConfigTest, ipv6Url) {
+    std::string const ha_config(R"(
+        [
+            {
+                "mode": "load-balancing",
+                "peers": [
+                    {
+                        "name": "server1",
+                        "role": "primary",
+                        "url": "http://[2001:db8::1]:8080/"
+                    },
+                    {
+                        "name": "server2",
+                        "role": "secondary",
+                        "url": "http://[2001:db8::2]:8080/"
+                    }
+                ],
+                "this-server-name": "server1"
+            }
+        ]
+    )");
+
+    // Configure HA.
+    HAImplPtr impl(new HAImpl());
+    ASSERT_NO_THROW_LOG(impl->configure(Element::fromJSON(ha_config)));
+
+    // Check the URL.
+    EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
+};
 
 } // end of anonymous namespace
