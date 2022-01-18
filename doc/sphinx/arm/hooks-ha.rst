@@ -769,8 +769,8 @@ list:
    The password is optional; if not specified, an empty password is used.
 
 -  ``basic-auth-password-file`` - is an alternative to ``basic-auth-password``:
-   instead to put the password itself in the configuration file it is
-   in the file specifies by this parameter.
+   instead of presenting the password in the configuration file it is
+   specified in the file indicated by this parameter.
 
 -  ``role`` - denotes the role of the server in the HA setup. The
    following roles are supported in the load-balancing configuration:
