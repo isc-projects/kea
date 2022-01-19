@@ -35,7 +35,7 @@ public:
     /// @param conn PgSql connection to be used for the query.
     /// @param table Table name.
     /// @return Number of rows in the specified table.
-    size_t countRows(db::PgSqlConnection& conn, const std::string& table) const;
+    static size_t countRows(db::PgSqlConnection& conn, const std::string& table);
 };
 
 }

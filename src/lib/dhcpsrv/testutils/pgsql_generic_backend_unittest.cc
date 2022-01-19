@@ -18,7 +18,7 @@ PgSqlGenericBackendTest::PgSqlGenericBackendTest()
 }
 
 size_t
-PgSqlGenericBackendTest::countRows(PgSqlConnection& conn, const std::string& table) const {
+PgSqlGenericBackendTest::countRows(PgSqlConnection& conn, const std::string& table) {
     // Execute a simple select query on all rows.
     std::string query = "SELECT * FROM " + table;
     PGresult * result = PQexec(conn.conn_, query.c_str());
