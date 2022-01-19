@@ -315,6 +315,18 @@ mysql_upgrade_12_to_13_test() {
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
     assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
+
+    # Check lease4Upload().
+    run_command \
+        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'');"
+    assert_eq 0 "${EXIT_CODE}" 'lease4Upload() failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
+
+    # Check lease6Upload().
+    run_command \
+        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16);"
+    assert_eq 0 "${EXIT_CODE}" 'lease6Upload() failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
 }
 
 mysql_upgrade_test() {
@@ -975,20 +987,10 @@ mysql_lease4_dump_test() {
     output_dir="@abs_top_builddir@/src/bin/admin/tests"
 
     output_file="$output_dir/data/mysql.lease4_dump_test.output.csv"
-    tmp_file="$output_file.tmp"
-
     ref_file="$test_dir/data/lease4_dump_test.reference.csv"
 
-    # wipe out any residuals from prior failed runs
-    if [ -e $output_file ]
-    then
-        rm $output_file
-    fi
-
-    if [ -e $tmp_file ]
-    then
-        rm $tmp_file
-    fi
+    # Clean up any test files left from prior failed runs.
+    rm -f "${output_file}"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1034,20 +1036,10 @@ mysql_lease6_dump_test() {
     output_dir="@abs_top_builddir@/src/bin/admin/tests"
 
     output_file="$output_dir/data/mysql.lease6_dump_test.output.csv"
-    tmp_file="$output_file.tmp"
-
     ref_file="$test_dir/data/lease6_dump_test.reference.csv"
 
-    # wipe out any residuals from prior failed runs
-    if [ -e $output_file ]
-    then
-        rm $output_file
-    fi
-
-    if [ -e $tmp_file ]
-    then
-        rm $tmp_file
-    fi
+    # Clean up any test files left from prior failed runs.
+    rm -f "${output_file}"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1081,6 +1073,80 @@ insert into lease6 values('::12',21,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
     rm $output_file
 
     # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease4_upload_test() {
+    test_start "mysql.lease4_upload_test"
+
+    input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
+
+    # Wipe the whole database.
+    mysql_wipe
+
+    # Initialize the database.
+    run_command \
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+    assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
+
+     # Upload leases.
+    run_command \
+        "${kea_admin}" lease-upload mysql -4 -u "${db_user}" \
+            -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
+            -i "${input_file}"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
+
+    # Check leases.
+    expected="$(printf '%s\n%s\n%s' \
+        '10|20|30|40|2022-01-12 17:06:40|50|1|1|one.example.com|0|' \
+        '11||123|40|2022-01-26 17:13:20|50|1|1||1|{}' \
+        '12|22||40|2022-01-26 17:52:25|50|1|1|three,example,com|2|{"a":1,"b":"c"}'
+    )"
+    run_command \
+        mysql_execute 'SELECT * FROM lease4'
+    assert_eq 0 "${EXIT_CODE}" "select from lease4 failed, expected exit code %d, actual %d"
+    assert_str_eq "${expected}" "$(printf '%s' "${OUTPUT}" | tr '\t' '|')"
+
+    # Wipe the whole database.
+    mysql_wipe
+
+    test_finish 0
+}
+
+mysql_lease6_upload_test() {
+    test_start "mysql.lease6_upload_test"
+
+    input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
+
+    # Wipe the whole database.
+    mysql_wipe
+
+    # Initialize the database.
+    run_command \
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+    assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
+
+     # Upload leases.
+    run_command \
+        "${kea_admin}" lease-upload mysql -6 -u "${db_user}" \
+            -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
+            -i "${input_file}"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
+
+    # Check leases.
+    expected="$(printf '%s\n%s\n%s' \
+        '::10|20|30|2022-01-12 17:06:40|40|50|1|60|70|1|1|one.example.com|80|90|16|0|' \
+        '::11||30|2022-01-26 17:13:20|40|50|1|60|70|1|1||80|90|1|1|{}' \
+        '::12|21|30|2022-01-26 17:52:25|40|50|1|60|70|1|1|three,example,com|80|90|4|2|{"a":1,"b":"c"}'
+    )"
+    run_command \
+        mysql_execute 'SELECT * FROM lease6'
+    assert_eq 0 "${EXIT_CODE}" "select from lease6 failed, expected exit code %d, actual %d"
+    assert_str_eq "${expected}" "$(printf '%s' "${OUTPUT}" | tr '\t' '|')"
+
+    # Wipe the whole database.
     mysql_wipe
 
     test_finish 0
@@ -1868,6 +1934,8 @@ mysql_db_version_test
 mysql_upgrade_test
 mysql_lease4_dump_test
 mysql_lease6_dump_test
+mysql_lease4_upload_test
+mysql_lease6_upload_test
 mysql_lease4_stat_test
 mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
