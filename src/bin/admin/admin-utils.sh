@@ -115,7 +115,12 @@ pgsql_execute() {
     QUERY=$1
     shift
 
-    export PGPASSWORD="${db_password}"
+    # Prioritize externally set PGPASSWORD. wipe_data.sh sets it for example.
+    if test -z "${PGPASSWORD-}"; then
+        PGPASSWORD="${db_password}"
+    fi
+    export PGPASSWORD
+
     printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
         ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" "${@}"
 }
@@ -129,7 +134,12 @@ pgsql_execute_script() {
     file=$1
     shift
 
-    export PGPASSWORD=$db_password
+    # Prioritize externally set PGPASSWORD. wipe_data.sh sets it for example.
+    if test -z "${PGPASSWORD-}"; then
+        PGPASSWORD="${db_password}"
+    fi
+    export PGPASSWORD
+
     psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
         ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" \
         -f "${file}" "${@}"
