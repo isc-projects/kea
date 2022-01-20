@@ -21,11 +21,17 @@ Some of those checks and updates can be made before the actual freeze.
    - `KEA_HOOKS_VERSION` is being updated
    - [ ] create an issue for that for developers in Gitlab
    - script: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the version to be released and `q.w.e` is the version previous to that)
+1. [ ] Look at the issue numbers in commit descriptions. Add to ChangeLog a mention about any change with visible impact that had not been mentioned already.
+1. If any changes have been done to database schemas, then:
+   1. [ ] Check that a previously released schema has not been changed.
+   1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-2.1.0
    1. [ ] Finish release notes and conduct its review
 1. [ ] Run [release-pkgs-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-upload-internal/) and [release-pkgs-check-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check-internal/) to test repositories for correctness.
-   1. If a new Cloudsmith repository is used, make sure access tokens have been been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
+   1. If a new Cloudsmith repository is used, then:
+      1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
+      1. [ ] Make sure access tokens have been been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
 1. [ ] Check if ReadTheDocs can build Kea documentation.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
@@ -137,6 +143,10 @@ This is the last moment to freeze code! :snowflake:
 ### On the Day of Public Release
 
  - [ ] ***(Support)*** Wait for clearance from Security Officer to proceed with the public release (if applicable).
+ - [ ] ***(Support)*** Wait for the signing ticket from the release engineer.
+ - [ ] ***(Support)*** Confirm that the tarballs have the checksums mentioned on the signing ticket.
+ - [ ] ***(Support)*** Sign the tarballs.
+ - [ ] ***(Support)*** Upload signature files to repo.isc.org.
  - [ ] ***(Support)*** Place tarballs in public location on FTP site.
  - [ ] ***(Support)*** Publish links to downloads on ISC website.
  - [ ] ***(Support)*** Write release email to *kea-announce*.
