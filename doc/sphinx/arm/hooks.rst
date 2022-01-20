@@ -741,8 +741,9 @@ packet.
 
 The ``timestamp-format`` parameter can be used to change the timestamp logged
 at the beginning of each line. Permissible formatting is the one supported by
-strftime. The default is: "%Y-%m-%d %H:%M:%S %Z". This parameter has no effect
-for the database backends, where the timestamp is defined at the schema level.
+strftime plus the '%Q' extra format which adds the microseconds subunits. The
+default is: "%Y-%m-%d %H:%M:%S %Z". This parameter has no effect for the
+database backends, where the timestamp is defined at the schema level.
 
 Examples:
 
