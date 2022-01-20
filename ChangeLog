@@ -1,3 +1,8 @@
+1982.	[bug]		andrei
+	The config for an HA peer now accepts an IPv6 address as a valid
+	value for the "url" entry.
+	(Gitlab #2264)
+
 1981.	[func]		tomek
 	The default-url DHCPv4 option has been replaced with
 	v4-captive-portal, as defined in RFC8910.
