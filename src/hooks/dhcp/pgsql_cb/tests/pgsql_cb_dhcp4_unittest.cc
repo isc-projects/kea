@@ -64,18 +64,28 @@ public:
     /// @brief Destructor.
     virtual ~PgSqlConfigBackendDHCPv4Test(){};
 
+    /// @brief Creates the PostgreSQL back end schema
     virtual void createSchema() {
         createPgSQLSchema();
     }
 
+    /// @brief Destroys the PostgreSQL back end schema
     virtual void destroySchema() {
         destroyPgSQLSchema();
     }
 
+    /// @brief Returns a valid PostgreSQL back end specific connection
+    /// string
     std::string validConnectionString() {
         return (validPgSQLConnectionString());
     }
 
+    /// @brief Instantiates an instance of a PostgreSQL DHCPv4 configuration
+    /// back end.
+    ///
+    /// @params Connection parameters describing the back end to create.
+    ///
+    /// @return Pointer to the newly created back end instance.
     ConfigBackendDHCPv4Ptr backendFactory(db::DatabaseConnection::ParameterMap&
                                           params) {
 
@@ -107,24 +117,18 @@ public:
     }
 };
 
-// This test verifies that the expected backend type is returned.
 TEST_F(PgSqlConfigBackendDHCPv4Test, getType) {
     getTypeTest("postgresql");
 }
 
-// This test verifies that by default localhost is returned as PgSQL connection
-// host.
 TEST_F(PgSqlConfigBackendDHCPv4Test, getHost) {
     getHostTest();
 }
 
-// This test verifies that by default port of 0 is returned as PgSQL connection
-// port.
 TEST_F(PgSqlConfigBackendDHCPv4Test, getPort) {
     getPortTest();
 }
 
-// This test verifies that the server can be added, updated and deleted.
 TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteServer) {
     createUpdateDeleteServerTest();
 }
@@ -197,26 +201,21 @@ public:
     }
 };
 
-
-/// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);
     testNoCallbackOnOpenFailure();
 }
 
-/// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
     MultiThreadingTest mt(true);
     testNoCallbackOnOpenFailure();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredCallback();
@@ -228,31 +227,26 @@ TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallback) 
     testDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedAfterTimeoutCallback();

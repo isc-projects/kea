@@ -18,7 +18,7 @@ MySqlGenericBackendTest::MySqlGenericBackendTest()
 }
 
 size_t
-MySqlGenericBackendTest::countRows(MySqlConnection& conn, const std::string& table) const {
+MySqlGenericBackendTest::countRows(MySqlConnection& conn, const std::string& table) {
     // Execute a simple select query on all rows.
     std::string query = "SELECT * FROM " + table;
     auto status = mysql_query(conn.mysql_, query.c_str());
