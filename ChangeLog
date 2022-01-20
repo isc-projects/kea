@@ -1,3 +1,9 @@
+1988.	[bug]		tmark
+	Kea core logic now ensures options belonging
+	to client classes are properly created when
+	classes are read from configuration back ends.
+	(Gitlab #2246)
+
 1987.	[bug]		tmark
 	Fixed an issue in PostgreSQL support code that caused
 	asserts when compiled with: -Wp,-D_GLIBCXX_ASSERTIONS.
