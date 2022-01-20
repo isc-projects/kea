@@ -1,3 +1,8 @@
+1955.	[bug]		andrei
+	The config for an HA peer now accepts an IPv6 address as a valid
+	value for the "url" entry.
+	(Gitlab #2302)
+
 Kea 2.0.1 (stable) released on December 15, 2021
 
 1954.	[build]		razvan
