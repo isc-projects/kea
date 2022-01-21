@@ -132,8 +132,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
     // Replace configured hooks libraries.
     new_config.hooks_config_.clear();
     using namespace isc::hooks;
-    for (HookLibsCollection::const_iterator it =
-           hooks_config_.get().begin();
+    for (HookLibsCollection::const_iterator it = hooks_config_.get().begin();
          it != hooks_config_.get().end(); ++it) {
         new_config.hooks_config_.add(it->first, it->second);
     }

@@ -211,6 +211,17 @@ public:
 
         ConstElementPtr config;
         ASSERT_NO_THROW(config = parseDHCP6(config_txt));
+
+        // Parse the logger configuration explicitly into the staging config.
+        // Note this does not alter the current loggers, they remain in
+        // effect until we apply the logging config below.  If no logging
+        // is supplied logging will revert to default logging.
+        server_->configureLogger(config, CfgMgr::instance().getStagingCfg());
+
+        // Let's apply the new logging. We do it early, so we'll be able to print
+        // out what exactly is wrong with the new config in case of problems.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
         ConstElementPtr answer = server_->processConfig(config);
 
         // Commit the configuration so any subsequent reconfigurations
