@@ -1,7 +1,7 @@
 1988.	[bug]		tmark
 	Kea core logic now ensures options belonging
 	to client classes are properly created when
-	classes are read from configuration back ends.
+	classes are read from configuration backends.
 	(Gitlab #2246)
 
 1987.	[bug]		tmark

@@ -744,12 +744,12 @@ TEST(ClientClassDictionary, createOptions) {
 
     // Make some options for the second class.
     cfg_option.reset(new CfgOption());
-    OptionPtr option = Option::create(Option::V4, 67);
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
     OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
 
-    option = Option::create(Option::V4, 66);
+    option = Option::create(Option::V4, DHO_TFTP_SERVER_NAME);
     desc = OptionDescriptor::create(option, true, "bogus-tftp-server");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
@@ -769,11 +769,11 @@ TEST(ClientClassDictionary, createOptions) {
     options = classes[1]->getCfgOption();
     ASSERT_FALSE(options->empty());
 
-    auto option_desc = options->get("dhcp4", 67);
+    auto option_desc = options->get("dhcp4", DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(option_desc.option_);
     ASSERT_TRUE(option_desc.option_->getData().empty());
 
-    option_desc = options->get("dhcp4", 66);
+    option_desc = options->get("dhcp4", DHO_TFTP_SERVER_NAME);
     ASSERT_TRUE(option_desc.option_);
     ASSERT_TRUE(option_desc.option_->getData().empty());
 
@@ -791,13 +791,13 @@ TEST(ClientClassDictionary, createOptions) {
     options = classes[1]->getCfgOption();
     ASSERT_FALSE(options->empty());
 
-    option_desc = options->get("dhcp4", 67);
+    option_desc = options->get("dhcp4", DHO_BOOT_FILE_NAME);
     option = option_desc.option_;
     ASSERT_TRUE(option);
     EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(), option_desc.formatted_value_.end()),
               option->getData());
 
-    option_desc = options->get("dhcp4", 66);
+    option_desc = options->get("dhcp4", DHO_TFTP_SERVER_NAME);
     option = option_desc.option_;
     ASSERT_TRUE(option);
     EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(), option_desc.formatted_value_.end()),
