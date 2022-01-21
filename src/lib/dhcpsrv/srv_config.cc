@@ -597,17 +597,27 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
 
 ElementPtr
 SrvConfig::toElement() const {
-    // Toplevel map
-    ElementPtr result = ConfigBase::toElement();
-
-    // The "server-tag" is added by configured globals
-    result->remove("server-tag");
+    // Top level map
+    ElementPtr result = Element::createMap();
 
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
 
     // DhcpX global map initialized from configured globals
     ElementPtr dhcp = configured_globals_->toElement();
+
+    auto loggers_info = getLoggingInfo();
+    // Was in the Logging global map.
+    if (!loggers_info.empty()) {
+        // Set loggers list
+        ElementPtr loggers = Element::createList();
+        for (LoggingInfoStorage::const_iterator logger =
+                loggers_info.cbegin();
+             logger != loggers_info.cend(); ++logger) {
+            loggers->add(logger->toElement());
+        }
+        dhcp->set("loggers", loggers);
+    }
 
     // Set user-context
     contextToElement(dhcp);
