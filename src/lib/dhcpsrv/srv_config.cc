@@ -598,7 +598,7 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
 ElementPtr
 SrvConfig::toElement() const {
     // Toplevel map
-    ElementPtr result = Element::createMap();
+    ElementPtr result = ConfigBase::toElement();
 
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();

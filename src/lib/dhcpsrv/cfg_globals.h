@@ -71,7 +71,6 @@ public:
         DDNS_UPDATE_ON_RENEW,
         DDNS_USE_CONFLICT_RESOLUTION,
         PARKED_PACKET_LIMIT,
-        LOGGERS,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,

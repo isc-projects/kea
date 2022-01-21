@@ -755,6 +755,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 (config_pair.first == "reservations") ||
                 (config_pair.first == "config-control") ||
                 (config_pair.first == "relay-supplied-options") ||
+                (config_pair.first == "loggers") ||
                 (config_pair.first == "compatibility")) {
                 continue;
             }
@@ -789,7 +790,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "t2-percent") ||
                  (config_pair.first == "cache-threshold") ||
                  (config_pair.first == "cache-max-age") ||
-                 (config_pair.first == "loggers") ||
                  (config_pair.first == "hostname-char-set") ||
                  (config_pair.first == "hostname-char-replacement") ||
                  (config_pair.first == "ddns-send-updates") ||
@@ -890,8 +890,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
-        }
-        catch (const isc::Exception& ex) {
+        } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
 
@@ -915,8 +914,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // If there are config backends, fetch and merge into staging config
             server.getCBControl()->databaseConfigFetch(srv_config,
                                                        CBControlDHCPv6::FetchMode::FETCH_ALL);
-        }
-        catch (const isc::Exception& ex) {
+        } catch (const isc::Exception& ex) {
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(err.str());
