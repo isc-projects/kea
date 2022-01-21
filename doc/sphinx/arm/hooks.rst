@@ -757,7 +757,7 @@ Examples:
                     "parameters": {
                         "path": "/var/lib/kea/log",
                         "base-name": "kea-forensic6",
-                        "timestamp-format": "%l%t%w %F%%"
+                        "timestamp-format": "%H%t%w %F%%"
                     }
                 }
             ]
