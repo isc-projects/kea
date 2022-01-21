@@ -1,6 +1,6 @@
 ---
-name: Release Checklist
-about: Create a new issue using this checklist for each release
+name: a.b.c release checklist
+about: Create a new issue using this checklist for each release.
 ---
 
 # Kea Release Checklist
