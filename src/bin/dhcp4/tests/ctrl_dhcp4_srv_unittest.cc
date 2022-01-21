@@ -168,7 +168,12 @@ public:
         std::string footer =
             "\"    },"
             "    \"lease-database\": {"
-            "       \"type\": \"memfile\", \"persist\": false }"
+            "       \"type\": \"memfile\", \"persist\": false },"
+            "    \"loggers\": [ {"
+            "       \"name\": \"kea-dhcp4\","
+            "       \"severity\": \"INFO\","
+            "       \"debuglevel\": 0"
+            "       } ]"
             "}";
 
         // Fill in the socket-name value with socket_path_  to
@@ -892,6 +897,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
     ASSERT_TRUE(cfg);
     ASSERT_EQ(Element::map, cfg->getType());
     EXPECT_TRUE(cfg->get("Dhcp4"));
+    EXPECT_TRUE(cfg->get("Dhcp4")->get("loggers"));
 }
 
 // Verify that the "config-test" command will do what we expect.
