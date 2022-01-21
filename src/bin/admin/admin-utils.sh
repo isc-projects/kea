@@ -205,7 +205,7 @@ cql_execute_script() {
     else
         run_command \
             cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" \
-            -f "${file}" ${extra_arguments}
+            ${extra_arguments} -f "${file}"
     fi
 
     if [ "${EXIT_CODE}" -ne 0 ]; then

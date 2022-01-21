@@ -258,8 +258,8 @@ mysql_init() {
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
     mysql -B --host="${db_host}" --user="${db_user}" \
-    --password="${db_password}" ${extra_arguments} \
-   "${db_name}" < "${scripts_dir}/mysql/dhcpdb_create.mysql"
+    --password="${db_password}" \
+    "${db_name}" ${extra_arguments} < "${scripts_dir}/mysql/dhcpdb_create.mysql"
 
     printf "mysql returned status code %s\n" "${EXIT_CODE}"
 
@@ -379,7 +379,8 @@ mysql_upgrade() {
     for script in "${scripts_dir}"/mysql/upgrade*.sh
     do
         echo "Processing $script file..."
-        "${script}" --host="${db_host}" --user="${db_user}" --password="${db_password}" "${db_name}"
+        "${script}" --host="${db_host}" --user="${db_user}" \
+        --password="${db_password}" "${db_name} ${extra_arguments}"
     done
 
     printf "Database version reported after upgrade: "
@@ -411,7 +412,8 @@ pgsql_upgrade() {
     for script in "${scripts_dir}"/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        "${script}" -U "${db_user}" -h "${db_host}" -d "${db_name}"
+        "${script}" -U "${db_user}" -h "${db_host}" \
+        -d "${db_name}" ${extra_arguments}
     done
 
     version=$(checked_pgsql_version)
@@ -442,7 +444,8 @@ cql_upgrade() {
         for script in "${scripts_dir}"/cql/upgrade*.sh
         do
             echo "Processing $script file..."
-            "${script}" -u "${db_user}" -p "${db_password}" -k "${db_name}"
+            "${script}" -u "${db_user}" -p "${db_password}" \
+            -k "${db_name}" ${extra_arguments}
         done
     else
         echo "No upgrade script available."
