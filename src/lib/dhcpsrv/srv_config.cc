@@ -600,10 +600,13 @@ SrvConfig::toElement() const {
     // Toplevel map
     ElementPtr result = ConfigBase::toElement();
 
+    // The "server-tag" is added by configured globals
+    result->remove("server-tag");
+
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
 
-    // DhcpX global map initialiazed from configured globals
+    // DhcpX global map initialized from configured globals
     ElementPtr dhcp = configured_globals_->toElement();
 
     // Set user-context
