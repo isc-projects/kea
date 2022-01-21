@@ -1020,8 +1020,8 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # remove the output file
-    rm $output_file
+    # Remove the output file.
+    rm -f "${output_file}"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1062,15 +1062,15 @@ insert into lease6 values('::12',21,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
     # Dump lease4 to output_file
     run_command \
         "${kea_admin}" lease-dump mysql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
-    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, status code %d"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
     run_command \
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # remove the output file
-    rm $output_file
+    # Remove the output file.
+    rm -f "${output_file}"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1082,6 +1082,7 @@ mysql_lease4_upload_test() {
     test_start "mysql.lease4_upload_test"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
+    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1091,23 +1092,27 @@ mysql_lease4_upload_test() {
         "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
-     # Upload leases.
+    # Upload leases.
     run_command \
         "${kea_admin}" lease-upload mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -i "${input_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
-    # Check leases.
-    expected="$(printf '%s\n%s\n%s' \
-        '10|20|30|40|2022-01-12 17:06:40|50|1|1|one.example.com|0|' \
-        '11||123|40|2022-01-26 17:13:20|50|1|1||1|{}' \
-        '12|22||40|2022-01-26 17:52:25|50|1|1|three,example,com|2|{"a":1,"b":"c"}'
-    )"
+    # Dump leases.
     run_command \
-        mysql_execute 'SELECT * FROM lease4'
-    assert_eq 0 "${EXIT_CODE}" "select from lease4 failed, expected exit code %d, actual %d"
-    assert_str_eq "${expected}" "$(printf '%s' "${OUTPUT}" | tr '\t' '|')"
+        "${kea_admin}" lease-dump mysql -4 -u "${db_user}" \
+            -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
+            -o "${output_file}"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
+
+    # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
+    run_command \
+        cmp -s "${input_file}" "${output_file}"
+    assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
+
+    # Remove the output file.
+    rm -f "${output_file}"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1119,6 +1124,7 @@ mysql_lease6_upload_test() {
     test_start "mysql.lease6_upload_test"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
+    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1128,23 +1134,27 @@ mysql_lease6_upload_test() {
         "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
-     # Upload leases.
+    # Upload leases.
     run_command \
         "${kea_admin}" lease-upload mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -i "${input_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
-    # Check leases.
-    expected="$(printf '%s\n%s\n%s' \
-        '::10|20|30|2022-01-12 17:06:40|40|50|1|60|70|1|1|one.example.com|80|90|16|0|' \
-        '::11||30|2022-01-26 17:13:20|40|50|1|60|70|1|1||80|90|1|1|{}' \
-        '::12|21|30|2022-01-26 17:52:25|40|50|1|60|70|1|1|three,example,com|80|90|4|2|{"a":1,"b":"c"}'
-    )"
+    # Dump leases.
     run_command \
-        mysql_execute 'SELECT * FROM lease6'
-    assert_eq 0 "${EXIT_CODE}" "select from lease6 failed, expected exit code %d, actual %d"
-    assert_str_eq "${expected}" "$(printf '%s' "${OUTPUT}" | tr '\t' '|')"
+        "${kea_admin}" lease-dump mysql -6 -u "${db_user}" \
+            -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
+            -o "${output_file}"
+    assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
+
+    # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
+    run_command \
+        cmp -s "${input_file}" "${output_file}"
+    assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
+
+    # Remove the output file.
+    rm -f "${output_file}"
 
     # Wipe the whole database.
     mysql_wipe

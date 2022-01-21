@@ -1052,7 +1052,7 @@ case ${command} in
     lease-upload)
         case ${backend} in
             memfile)
-                log_error 'uploading from memfile to memfile'
+                log_error 'lease-upload is not supported for memfile'
                 exit 1
                 ;;
             mysql)
