@@ -380,7 +380,7 @@ mysql_upgrade() {
     do
         echo "Processing $script file..."
         "${script}" --host="${db_host}" --user="${db_user}" \
-        --password="${db_password}" "${db_name} ${extra_arguments}"
+        --password="${db_password}" "${db_name}" ${extra_arguments}
     done
 
     printf "Database version reported after upgrade: "
