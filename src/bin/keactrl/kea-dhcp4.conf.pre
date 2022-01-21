@@ -433,7 +433,7 @@
 
                 // Shorter log pattern suitable for use with systemd,
                 // avoids redundant information
-                // "pattern": "%-5p %m\n"
+                // "pattern": "%-5p %m\n",
 
                 // This governs whether the log output is flushed to disk after
                 // every write.
