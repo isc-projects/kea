@@ -129,6 +129,12 @@ danger:
     - gem install danger-commit_lint
     - danger --fail-on-errors=true --new-comment
 
+dhcpdb_create-upgrade-consistency:
+  stage: test
+  image: "${CI_REGISTRY_IMAGE}:latest"
+  script:
+    - ./src/share/database/scripts/utils/are-scripts-in-sync.py
+
 duplicate-includes:
   stage: test
   image: "${CI_REGISTRY_IMAGE}:latest"
