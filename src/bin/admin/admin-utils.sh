@@ -70,10 +70,17 @@ mysql_execute() {
 
     mysql_sanity_checks
 
-    mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+    if [ $# -gt 1 ]; then
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
         --password="${db_password}" ${extra_arguments} \
         --execute "${QUERY}" "${@}"
+    else
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+        --database="${db_name}" --user="${db_user}" \
+        --password="${db_password}" ${extra_arguments} \
+        --execute "${QUERY}"
+    fi
 }
 
 # Submits SQL in a given file to MySQL.
@@ -87,9 +94,15 @@ mysql_execute_script() {
 
     mysql_sanity_checks
 
-    mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+    if [ $# -ge 1 ]; then
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
         --password="${db_password}" ${extra_arguments} "${@}" < "${file}"
+    else
+        mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
+        --database="${db_name}" --user="${db_user}" \
+        --password="${db_password}" ${extra_arguments} < "${file}"
+    fi
 }
 
 mysql_version() {
@@ -122,11 +135,16 @@ pgsql_execute() {
     if test -z "${PGPASSWORD-}"; then
         PGPASSWORD="${db_password}"
     fi
-    export PGPASSWORD
-
-    printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
-        ${db_port_full_parameter-} -q -U "${db_user}" \
+    export PGPASSWORD="${db_password}"
+    if [ $# -gt 0 ]; then
+        printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t \
+        -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
         -d "${db_name}" ${extra_arguments} "${@}"
+    else
+        printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t \
+        -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
+        -d "${db_name}" ${extra_arguments}
+    fi
 }
 
 # Submits SQL in a given file to PostgreSQL
@@ -142,11 +160,16 @@ pgsql_execute_script() {
     if test -z "${PGPASSWORD-}"; then
         PGPASSWORD="${db_password}"
     fi
-    export PGPASSWORD
-
-    psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+    export PGPASSWORD=$db_password
+    if [ $# -gt 0 ]; then
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
         ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" \
         ${extra_arguments} -f "${file}" "${@}"
+    else
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
+        ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" \
+        ${extra_arguments} -f "${file}"
+    fi
 }
 
 pgsql_version() {
