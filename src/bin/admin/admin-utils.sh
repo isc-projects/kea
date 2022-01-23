@@ -70,7 +70,7 @@ mysql_execute() {
 
     mysql_sanity_checks
 
-    if [ $# -gt 1 ]; then
+    if [ $# -gt 0 ]; then
         mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
         --password="${db_password}" ${extra_arguments} \
@@ -94,7 +94,7 @@ mysql_execute_script() {
 
     mysql_sanity_checks
 
-    if [ $# -ge 1 ]; then
+    if [ $# -gt 0 ]; then
         mysql -N -B --host="${db_host}" ${db_port_full_parameter-} \
         --database="${db_name}" --user="${db_user}" \
         --password="${db_password}" ${extra_arguments} "${@}" < "${file}"
