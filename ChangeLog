@@ -1,5 +1,5 @@
 1987.	[bug]		tmark
-	Fixed an issue in Postgresql support code that caused
+	Fixed an issue in PostgreSQL support code that caused
 	asserts when compiled with: -Wp,-D_GLIBCXX_ASSERTIONS.
 	(Gitlab #2284)
 
