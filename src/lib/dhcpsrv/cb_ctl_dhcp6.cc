@@ -206,7 +206,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         // We have to ensure to initialize them before they can be used by the server.
         client_classes.initMatchExpr(AF_INET6);
 
-        // Class options also need to be created when returnd from the config backend.
+        // Class options also need to be created when returned from the config backend.
         client_classes.createOptions(external_cfg->getCfgOptionDef());
 
         external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
