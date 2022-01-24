@@ -151,6 +151,8 @@ typedef boost::shared_ptr<PgSqlResult> PgSqlResultPtr;
 typedef boost::shared_ptr<const std::string> ConstStringPtr;
 
 struct PsqlBindArray {
+    PsqlBindArray() : values_(0), lengths_(0), formats_(0) {};
+
     /// @brief Vector of pointers to the data values.
     std::vector<const char *> values_;
     /// @brief Vector of data lengths for each value.

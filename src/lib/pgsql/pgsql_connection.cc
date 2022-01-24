@@ -466,26 +466,49 @@ PgSqlConnection::executeSQL(const std::string& sql) {
     checkStatementError(r, statement);
 }
 
+PgSqlResultPtr
+PgSqlConnection::executePreparedStatement(PgSqlTaggedStatement& statement,
+                             const PsqlBindArray& in_bindings) {
+    checkUnusable();
+
+    if (statement.nbparams != in_bindings.size()) {
+        isc_throw (InvalidOperation, "executePreparedStatement:"
+                   << " expected: " << statement.nbparams
+                   << " parameters, given: " << in_bindings.size()
+                   << ", statement: " << statement.name
+                   << ", SQL: " << statement.text);
+    }
+
+    const char* const* values = 0;
+    const int * lengths = 0;
+    const int * formats = 0;
+    if (statement.nbparams > 0) {
+        values = static_cast<const char* const*>(&in_bindings.values_[0]);
+        lengths = static_cast<const int *>(&in_bindings.lengths_[0]);
+        formats = static_cast<const int *>(&in_bindings.formats_[0]);
+    }
+
+    PgSqlResultPtr result_set;
+    result_set.reset(new PgSqlResult(PQexecPrepared(conn_, statement.name, statement.nbparams,
+                                                    values, lengths, formats, 0)));
+
+    checkStatementError(*result_set, statement);
+    return(result_set);
+}
+
 void
 PgSqlConnection::selectQuery(PgSqlTaggedStatement& statement,
                              const PsqlBindArray& in_bindings,
                              ConsumeResultRowFun process_result_row) {
-    checkUnusable();
-
-    PgSqlResult result_set(PQexecPrepared(conn_, statement.name,
-                                          statement.nbparams,
-                                          &in_bindings.values_[0],
-                                          &in_bindings.lengths_[0],
-                                          &in_bindings.formats_[0], 0));
-
-    checkStatementError(result_set, statement);
+    // Execute the prepared statement.
+    PgSqlResultPtr result_set = executePreparedStatement(statement, in_bindings);
 
     // Iterate over the returned rows and invoke the row consumption
     // function on each one.
-    int rows = result_set.getRows();
+    int rows = result_set->getRows();
     for (int row = 0; row < rows; ++row) {
         try {
-            process_result_row(result_set, row);
+            process_result_row(*result_set, row);
         } catch (const std::exception& ex) {
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
@@ -497,32 +520,17 @@ PgSqlConnection::selectQuery(PgSqlTaggedStatement& statement,
 void
 PgSqlConnection::insertQuery(PgSqlTaggedStatement& statement,
                              const PsqlBindArray& in_bindings) {
-    checkUnusable();
-
-    PgSqlResult result_set(PQexecPrepared(conn_, statement.name,
-                                          statement.nbparams,
-                                          &in_bindings.values_[0],
-                                          &in_bindings.lengths_[0],
-                                          &in_bindings.formats_[0], 0));
-
-    checkStatementError(result_set, statement);
+    // Execute the prepared statement.
+    PgSqlResultPtr result_set = executePreparedStatement(statement, in_bindings);
 }
 
 uint64_t
 PgSqlConnection::updateDeleteQuery(PgSqlTaggedStatement& statement,
                                    const PsqlBindArray& in_bindings) {
-    checkUnusable();
+    // Execute the prepared statement.
+    PgSqlResultPtr result_set = executePreparedStatement(statement, in_bindings);
 
-    PgSqlResult result_set(PQexecPrepared(conn_, statement.name,
-                                          statement.nbparams,
-                                          &in_bindings.values_[0],
-                                          &in_bindings.lengths_[0],
-                                          &in_bindings.formats_[0], 0));
-
-    checkStatementError(result_set, statement);
-
-    // Return the number of affected rows.
-    return (boost::lexical_cast<int>(PQcmdTuples(result_set)));
+    return (boost::lexical_cast<int>(PQcmdTuples(*result_set)));
 }
 
 } // end of isc::db namespace

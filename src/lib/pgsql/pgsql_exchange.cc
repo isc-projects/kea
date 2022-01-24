@@ -260,6 +260,10 @@ std::string
 PsqlBindArray::toText() const {
     std::ostringstream stream;
 
+    if (values_.size() == 0) {
+        return ("bindarray is empty");
+    }
+
     for (int i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
 

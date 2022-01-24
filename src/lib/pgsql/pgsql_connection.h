@@ -406,6 +406,27 @@ public:
         }
     }
 
+    /// @brief Excutes a prepared SQL statement.
+    ///
+    /// It executes the given prepared SQL statement, after checking
+    /// for usability and input parameter sanity.  After the statement
+    /// is excuted @c checkStatementError() is invoked to ensure we detect
+    /// connectivity issues properly. Upon successful execution, the
+    /// the result set is returned.  It may be used for any form of
+    /// prepared SQL statement (e.g query, insert, udpate, delete...),
+    /// with or without input parameters.
+    ///
+    /// @param statement PgSqlTaggedStatement describing the prepared
+    /// statement to execute.
+    /// @param in_bindings array of input parameter bindings. If the SQL
+    /// statement requires no input arguments, this parameter should either
+    /// be omitted or an empty PsqlBindArray should be supplied.
+    /// @throw InvalidOperation if the number of parameters expected
+    /// by the statement does not match the size of the input bind array.
+    PgSqlResultPtr executePreparedStatement(PgSqlTaggedStatement& statement,
+                                            const PsqlBindArray& in_bindings
+                                            = PsqlBindArray());
+
     /// @brief Executes SELECT query using prepared statement.
     ///
     /// The statement parameter refers to an existing prepared statement

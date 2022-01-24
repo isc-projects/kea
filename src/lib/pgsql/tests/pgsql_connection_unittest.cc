@@ -88,6 +88,8 @@ public:
         DELETE_BY_INT_RANGE,
         INSERT_VALUE,
         UPDATE_BY_INT_VALUE,
+        GET_ALL_ROWS,
+        DELETE_ALL_ROWS,
         NUM_STATEMENTS
     };
 
@@ -113,7 +115,13 @@ public:
 
         { 2, { OID_INT4, OID_TEXT }, "UPDATE_BY_INT_VALUE",
           "UPDATE basics SET text_col = $2"
-          " WHERE int_col = $1" }
+          " WHERE int_col = $1" },
+
+        { 0, { OID_NONE }, "GET_ALL_ROWS",
+          "SELECT int_col, text_col FROM basics" },
+
+        { 0, { OID_NONE }, "DELETE_ALL_ROWS",
+          "DELETE FROM basics" }
     }};
 
     /// @brief Structure for holding data values describing a single
@@ -270,6 +278,59 @@ public:
         ASSERT_EQ(delete_count, expected_delete_count);
     }
 };
+
+/// @brief Verifies basics of input parameter sanity checking and statement
+/// execution enforced by executePreparedStatement.  Higher order tests
+/// verify actual data CRUD results.
+TEST_F(PgSqlConnectionTest, executePreparedStatement) {
+
+    // Executing with no paramters when they are required should throw.
+    // First we'll omit the bindings (defaults to empty).
+    PgSqlResultPtr r;
+    ASSERT_THROW_MSG(r = conn_->executePreparedStatement(tagged_statements[INSERT_VALUE]),
+                     InvalidOperation,
+                     "executePreparedStatement: expected: 2 parameters, given: 0,"
+                     " statement: INSERT_INT_TEXT, SQL: INSERT INTO basics "
+                     "(int_col,text_col) VALUES ($1, $2)");
+
+    // Now we'll pass in an empty array.
+    PsqlBindArray in_bindings;
+    ASSERT_THROW_MSG(r = conn_->executePreparedStatement(tagged_statements[INSERT_VALUE],
+                                                         in_bindings),
+                     InvalidOperation,
+                     "executePreparedStatement: expected: 2 parameters, given: 0,"
+                     " statement: INSERT_INT_TEXT, SQL: INSERT INTO basics "
+                     "(int_col,text_col) VALUES ($1, $2)");
+
+    // Executing without parameters when none are expected should be fine.
+    // First we'll simply omit the array.
+    ASSERT_NO_THROW(r = conn_->executePreparedStatement(tagged_statements[GET_ALL_ROWS]));
+
+    // Now with an empty array.
+    ASSERT_NO_THROW(r = conn_->executePreparedStatement(tagged_statements[GET_ALL_ROWS], in_bindings));
+
+    // Executing with parameters when none are required should throw.
+    in_bindings.add(1);
+    in_bindings.add(2);
+    ASSERT_THROW_MSG(r = conn_->executePreparedStatement(tagged_statements[GET_ALL_ROWS],
+                                                         in_bindings),
+                     InvalidOperation,
+                     "executePreparedStatement: expected: 0 parameters, given: 2,"
+                     " statement: GET_ALL_ROWS, SQL: SELECT int_col, text_col FROM basics");
+
+    // Executing with the correct number of parameters should work.
+    ASSERT_NO_THROW(r = conn_->executePreparedStatement(tagged_statements[GET_BY_INT_RANGE],
+                                                         in_bindings));
+
+    // Executing with too many parameters should fail.
+    in_bindings.add(3);
+    ASSERT_THROW_MSG(r = conn_->executePreparedStatement(tagged_statements[GET_BY_INT_RANGE],
+                                                         in_bindings),
+                     InvalidOperation,
+                     "executePreparedStatement: expected: 2 parameters, given: 3,"
+                     " statement: GET_BY_INT_RANGE, SQL: SELECT int_col, text_col"
+                     " FROM basics WHERE int_col >= $1 and int_col <= $2");
+}
 
 /// @brief Verify that we can insert rows with
 /// PgSqlConnection::insertQuery() and fetch

@@ -1,3 +1,8 @@
+1987.	[bug]		tmark
+	Fixed an issue in Postgresql support code that caused
+	asserts when compiled with: -Wp,-D_GLIBCXX_ASSERTIONS.
+	(Gitlab #2284)
+
 1986.	[func]		fdupont
 	The kea-admin command now accepts extra arguments which
 	are passed to the database command tool, e.g. '--ssl' to

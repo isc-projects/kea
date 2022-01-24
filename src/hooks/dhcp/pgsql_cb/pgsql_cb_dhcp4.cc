@@ -2505,12 +2505,9 @@ TaggedStatementArray tagged_statements = { {
     // Delete all global options which are unassigned to any servers.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
-        1,
-        {
-            OID_INT2    // 1 scope_id
-        },
+        0, { OID_NONE },
         "DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED",
-        PGSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND scope_id = $1)
+        PGSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND scope_id = 0)
     },
 
     // Delete single option from a subnet.
