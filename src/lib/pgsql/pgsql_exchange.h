@@ -151,23 +151,28 @@ typedef boost::shared_ptr<PgSqlResult> PgSqlResultPtr;
 typedef boost::shared_ptr<const std::string> ConstStringPtr;
 
 struct PsqlBindArray {
+    /// @brief Constructor.
     PsqlBindArray() : values_(0), lengths_(0), formats_(0) {}
 
     /// @brief Vector of pointers to the data values.
-    std::vector<const char *> values_;
+    std::vector<const char*> values_;
+
     /// @brief Vector of data lengths for each value.
     std::vector<int> lengths_;
+
     /// @brief Vector of "format" for each value. A value of 0 means the
     /// value is text, 1 means the value is binary.
     std::vector<int> formats_;
 
     /// @brief Format value for text data.
     static const int TEXT_FMT;
+
     /// @brief Format value for binary data.
     static const int BINARY_FMT;
 
     /// @brief Constant string passed to DB for boolean true values.
     static const char* TRUE_STR;
+
     /// @brief Constant string passed to DB for boolean false values.
     static const char* FALSE_STR;
 
@@ -181,7 +186,6 @@ struct PsqlBindArray {
     /// @return Returns true if there are no entries in the array, false
     /// otherwise.
     bool empty() const {
-
         return (values_.empty());
     }
 
@@ -476,13 +480,12 @@ struct PsqlBindArray {
             isc_throw(OutOfRange, "Invalid index " << index << ", the formats_ array has "
                                 << formats_.size() << " element(s)");
         }
-        return formats_.at(index);
+        return (formats_.at(index));
     }
 
 private:
     /// @brief vector of strings which supplied the values
     std::vector<ConstStringPtr> bound_strs_;
-
 };
 
 /// @brief Defines a smart pointer to PsqlBindArray
@@ -756,7 +759,7 @@ public:
 protected:
     /// @brief Stores text labels for columns, currently only used for
     /// logging and errors.
-    std::vector<std::string>columns_;
+    std::vector<std::string> columns_;
 };
 
 } // end of isc::db namespace
