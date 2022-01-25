@@ -64,7 +64,9 @@ OpaqueDataTuple::pack(isc::util::OutputBuffer& buf) const {
         buf.writeUint16(getLength());
     }
 
-    buf.writeData(&getData()[0], getLength());
+    if (getLength() > 0) {
+        buf.writeData(&getData()[0], getLength());
+    }
 }
 
 int

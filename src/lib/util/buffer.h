@@ -548,6 +548,10 @@ public:
     /// \param data A pointer to the data to be copied into the buffer.
     /// \param len The length of the data in bytes.
     void writeData(const void *data, size_t len) {
+        if (len == 0) {
+            return;
+        }
+
         ensureAllocated(size_ + len);
         static_cast<void>(std::memmove(buffer_ + size_, data, len));
         size_ += len;
