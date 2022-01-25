@@ -34,6 +34,7 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      not_empty_map ::= STRING ":" value
                   | not_empty_map "," STRING ":" value
+                  | not_empty_map ","
 
      list_generic ::= "[" list_content "]"
 
@@ -42,15 +43,20 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      not_empty_list ::= value
                    | not_empty_list "," value
+                   | not_empty_list ","
 
      unknown_map_entry ::= STRING ":"
 
      agent_syntax_map ::= "{" global_object "}"
 
      global_object ::= "Control-agent" ":" "{" global_params "}"
+                  | global_object_comma
+
+     global_object_comma ::= global_object ","
 
      global_params ::= global_param
                   | global_params "," global_param
+                  | global_params ","
 
      global_param ::= http_host
                  | http_port
@@ -89,11 +95,13 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      not_empty_hooks_libraries_list ::= hooks_library
                                    | not_empty_hooks_libraries_list "," hooks_library
+                                   | not_empty_hooks_libraries_list ","
 
      hooks_library ::= "{" hooks_params "}"
 
      hooks_params ::= hooks_param
                  | hooks_params "," hooks_param
+                 | hooks_params ","
                  | unknown_map_entry
 
      hooks_param ::= library
@@ -107,6 +115,7 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      control_sockets_params ::= control_socket
                            | control_sockets_params "," control_socket
+                           | control_sockets_params ","
 
      control_socket ::= dhcp4_server_socket
                    | dhcp6_server_socket
@@ -121,6 +130,7 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
+                          | control_socket_params ","
 
      control_socket_param ::= socket_name
                          | socket_type
@@ -138,9 +148,11 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      auth_params ::= auth_param
                 | auth_params "," auth_param
+                | auth_params ","
 
      auth_param ::= auth_type
                | realm
+               | directory
                | clients
                | comment
                | user_context
@@ -152,6 +164,8 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      realm ::= "realm" ":" STRING
 
+     directory ::= "directory" ":" STRING
+
      clients ::= "clients" ":" "[" clients_list "]"
 
      clients_list ::= 
@@ -159,31 +173,41 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      not_empty_clients_list ::= basic_auth
                            | not_empty_clients_list "," basic_auth
+                           | not_empty_clients_list ","
 
      basic_auth ::= "{" clients_params "}"
 
      clients_params ::= clients_param
                    | clients_params "," clients_param
+                   | clients_params ","
 
      clients_param ::= user
+                  | user_file
                   | password
+                  | password_file
                   | user_context
                   | comment
                   | unknown_map_entry
 
      user ::= "user" ":" STRING
 
+     user_file ::= "user-file" ":" STRING
+
      password ::= "password" ":" STRING
+
+     password_file ::= "password-file" ":" STRING
 
      loggers ::= "loggers" ":" "[" loggers_entries "]"
 
      loggers_entries ::= logger_entry
                     | loggers_entries "," logger_entry
+                    | loggers_entries ","
 
      logger_entry ::= "{" logger_params "}"
 
      logger_params ::= logger_param
                   | logger_params "," logger_param
+                  | logger_params ","
 
      logger_param ::= name
                  | output_options_list
@@ -203,11 +227,13 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
+                                | output_options_list_content ","
 
      output_entry ::= "{" output_params_list "}"
 
      output_params_list ::= output_params
                        | output_params_list "," output_params
+                       | output_params_list ","
 
      output_params ::= output
                   | flush

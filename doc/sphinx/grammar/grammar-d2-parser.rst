@@ -46,6 +46,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_map ::= STRING ":" value
                   | not_empty_map "," STRING ":" value
+                  | not_empty_map ","
 
      list_generic ::= "[" list_content "]"
 
@@ -54,17 +55,22 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_list ::= value
                    | not_empty_list "," value
+                   | not_empty_list ","
 
      unknown_map_entry ::= STRING ":"
 
      syntax_map ::= "{" global_object "}"
 
      global_object ::= "DhcpDdns" ":" "{" dhcpddns_params "}"
+                  | global_object_comma
+
+     global_object_comma ::= global_object ","
 
      sub_dhcpddns ::= "{" dhcpddns_params "}"
 
      dhcpddns_params ::= dhcpddns_param
                     | dhcpddns_params "," dhcpddns_param
+                    | dhcpddns_params ","
 
      dhcpddns_param ::= ip_address
                    | port
@@ -107,6 +113,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_ddns_mgr_params ::= ddns_mgr_param
                               | ddns_mgr_params "," ddns_mgr_param
+                              | ddns_mgr_params ","
 
      ddns_mgr_param ::= ddns_domains
                    | unknown_map_entry
@@ -120,6 +127,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_ddns_domain_list ::= ddns_domain
                                | not_empty_ddns_domain_list "," ddns_domain
+                               | not_empty_ddns_domain_list ","
 
      ddns_domain ::= "{" ddns_domain_params "}"
 
@@ -127,6 +135,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      ddns_domain_params ::= ddns_domain_param
                        | ddns_domain_params "," ddns_domain_param
+                       | ddns_domain_params ","
 
      ddns_domain_param ::= ddns_domain_name
                       | ddns_key_name
@@ -145,6 +154,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      dns_server_list ::= dns_server
                     | dns_server_list "," dns_server
+                    | dns_server_list ","
 
      dns_server ::= "{" dns_server_params "}"
 
@@ -152,6 +162,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      dns_server_params ::= dns_server_param
                       | dns_server_params "," dns_server_param
+                      | dns_server_params ","
 
      dns_server_param ::= dns_server_hostname
                      | dns_server_ip_address
@@ -176,6 +187,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_tsig_keys_list ::= tsig_key
                              | not_empty_tsig_keys_list "," tsig_key
+                             | not_empty_tsig_keys_list ","
 
      tsig_key ::= "{" tsig_key_params "}"
 
@@ -183,6 +195,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      tsig_key_params ::= tsig_key_param
                     | tsig_key_params "," tsig_key_param
+                    | tsig_key_params ","
 
      tsig_key_param ::= tsig_key_name
                    | tsig_key_algorithm
@@ -204,6 +217,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
+                          | control_socket_params ","
 
      control_socket_param ::= control_socket_type
                          | control_socket_name
@@ -222,6 +236,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      not_empty_hooks_libraries_list ::= hooks_library
                                    | not_empty_hooks_libraries_list "," hooks_library
+                                   | not_empty_hooks_libraries_list ","
 
      hooks_library ::= "{" hooks_params "}"
 
@@ -229,6 +244,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      hooks_params ::= hooks_param
                  | hooks_params "," hooks_param
+                 | hooks_params ","
                  | unknown_map_entry
 
      hooks_param ::= library
@@ -242,11 +258,13 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      loggers_entries ::= logger_entry
                     | loggers_entries "," logger_entry
+                    | loggers_entries ","
 
      logger_entry ::= "{" logger_params "}"
 
      logger_params ::= logger_param
                   | logger_params "," logger_param
+                  | logger_params ","
 
      logger_param ::= name
                  | output_options_list
@@ -266,11 +284,13 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
+                                | output_options_list_content ","
 
      output_entry ::= "{" output_params_list "}"
 
      output_params_list ::= output_params
                        | output_params_list "," output_params
+                       | output_params_list ","
 
      output_params ::= output
                   | flush

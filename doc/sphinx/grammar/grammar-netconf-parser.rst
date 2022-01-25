@@ -34,6 +34,7 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      not_empty_map ::= STRING ":" value
                   | not_empty_map "," STRING ":" value
+                  | not_empty_map ","
 
      list_generic ::= "[" list_content "]"
 
@@ -42,18 +43,23 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      not_empty_list ::= value
                    | not_empty_list "," value
+                   | not_empty_list ","
 
      unknown_map_entry ::= STRING ":"
 
      netconf_syntax_map ::= "{" global_object "}"
 
      global_object ::= "Netconf" ":" "{" global_params "}"
+                  | global_object_comma
+
+     global_object_comma ::= global_object ","
 
      global_params ::= 
                   | not_empty_global_params
 
      not_empty_global_params ::= global_param
                             | not_empty_global_params "," global_param
+                            | not_empty_global_params ","
 
      global_param ::= boot_update
                  | subscribe_changes
@@ -82,11 +88,13 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      not_empty_hooks_libraries_list ::= hooks_library
                                    | not_empty_hooks_libraries_list "," hooks_library
+                                   | not_empty_hooks_libraries_list ","
 
      hooks_library ::= "{" hooks_params "}"
 
      hooks_params ::= hooks_param
                  | hooks_params "," hooks_param
+                 | hooks_params ","
                  | unknown_map_entry
 
      hooks_param ::= library
@@ -103,6 +111,7 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      not_empty_servers_entries ::= server_entry
                               | not_empty_servers_entries "," server_entry
+                              | not_empty_servers_entries ","
 
      server_entry ::= dhcp4_server
                  | dhcp6_server
@@ -120,6 +129,7 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      managed_server_params ::= managed_server_param
                           | managed_server_params "," managed_server_param
+                          | managed_server_params ","
 
      managed_server_param ::= model
                          | boot_update
@@ -136,6 +146,7 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
+                          | control_socket_params ","
 
      control_socket_param ::= socket_type
                          | socket_name
@@ -158,11 +169,13 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      loggers_entries ::= logger_entry
                     | loggers_entries "," logger_entry
+                    | loggers_entries ","
 
      logger_entry ::= "{" logger_params "}"
 
      logger_params ::= logger_param
                   | logger_params "," logger_param
+                  | logger_params ","
 
      logger_param ::= name
                  | output_options_list
@@ -182,11 +195,13 @@ This grammar is generated from ``netconf_parser.yy``. See :ref:`netconf` for mor
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
+                                | output_options_list_content ","
 
      output_entry ::= "{" output_params_list "}"
 
      output_params_list ::= output_params
                        | output_params_list "," output_params
+                       | output_params_list ","
 
      output_params ::= output
                   | flush

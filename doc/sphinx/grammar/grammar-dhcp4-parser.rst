@@ -52,6 +52,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_map ::= STRING ":" value
                   | not_empty_map "," STRING ":" value
+                  | not_empty_map ","
 
      list_generic ::= "[" list_content "]"
 
@@ -60,6 +61,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_list ::= value
                    | not_empty_list "," value
+                   | not_empty_list ","
 
      list_strings ::= "[" list_strings_content "]"
 
@@ -68,17 +70,22 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_list_strings ::= STRING
                            | not_empty_list_strings "," STRING
+                           | not_empty_list_strings ","
 
      unknown_map_entry ::= STRING ":"
 
      syntax_map ::= "{" global_object "}"
 
      global_object ::= "Dhcp4" ":" "{" global_params "}"
+                  | global_object_comma
+
+     global_object_comma ::= global_object ","
 
      sub_dhcp4 ::= "{" global_params "}"
 
      global_params ::= global_param
                   | global_params "," global_param
+                  | global_params ","
 
      global_param ::= valid_lifetime
                  | min_valid_lifetime
@@ -213,6 +220,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      interfaces_config_params ::= interfaces_config_param
                              | interfaces_config_params "," interfaces_config_param
+                             | interfaces_config_params ","
 
      interfaces_config_param ::= interfaces_list
                             | dhcp_socket_type
@@ -244,6 +252,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      sanity_checks_params ::= sanity_checks_param
                          | sanity_checks_params "," sanity_checks_param
+                         | sanity_checks_params ","
 
      sanity_checks_param ::= lease_checks
 
@@ -258,11 +267,13 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_database_list ::= database
                             | not_empty_database_list "," database
+                            | not_empty_database_list ","
 
      database ::= "{" database_map_params "}"
 
      database_map_params ::= database_map_param
                         | database_map_params "," database_map_param
+                        | database_map_params ","
 
      database_map_param ::= database_type
                        | user
@@ -285,6 +296,10 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | consistency
                        | serial_consistency
                        | max_row_errors
+                       | trust_anchor
+                       | cert_file
+                       | key_file
+                       | cipher_list
                        | unknown_map_entry
 
      database_type ::= "type" ":" db_type
@@ -338,10 +353,19 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      max_row_errors ::= "max-row-errors" ":" INTEGER
 
+     trust_anchor ::= "trust-anchor" ":" STRING
+
+     cert_file ::= "cert-file" ":" STRING
+
+     key_file ::= "key-file" ":" STRING
+
+     cipher_list ::= "cipher-list" ":" STRING
+
      host_reservation_identifiers ::= "host-reservation-identifiers" ":" "[" host_reservation_identifiers_list "]"
 
      host_reservation_identifiers_list ::= host_reservation_identifier
                                       | host_reservation_identifiers_list "," host_reservation_identifier
+                                      | host_reservation_identifiers_list ","
 
      host_reservation_identifier ::= duid_id
                                 | hw_address_id
@@ -363,6 +387,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      multi_threading_params ::= multi_threading_param
                            | multi_threading_params "," multi_threading_param
+                           | multi_threading_params ","
 
      multi_threading_param ::= enable_multi_threading
                           | thread_pool_size
@@ -384,6 +409,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_hooks_libraries_list ::= hooks_library
                                    | not_empty_hooks_libraries_list "," hooks_library
+                                   | not_empty_hooks_libraries_list ","
 
      hooks_library ::= "{" hooks_params "}"
 
@@ -391,6 +417,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      hooks_params ::= hooks_param
                  | hooks_params "," hooks_param
+                 | hooks_params ","
                  | unknown_map_entry
 
      hooks_param ::= library
@@ -404,6 +431,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      expired_leases_params ::= expired_leases_param
                           | expired_leases_params "," expired_leases_param
+                          | expired_leases_params ","
 
      expired_leases_param ::= reclaim_timer_wait_time
                          | flush_reclaimed_timer_wait_time
@@ -431,6 +459,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_subnet4_list ::= subnet4
                            | not_empty_subnet4_list "," subnet4
+                           | not_empty_subnet4_list ","
 
      subnet4 ::= "{" subnet4_params "}"
 
@@ -438,6 +467,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      subnet4_params ::= subnet4_param
                    | subnet4_params "," subnet4_param
+                   | subnet4_params ","
 
      subnet4_param ::= valid_lifetime
                   | min_valid_lifetime
@@ -521,11 +551,13 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      shared_networks_list ::= shared_network
                          | shared_networks_list "," shared_network
+                         | shared_networks_list ","
 
      shared_network ::= "{" shared_network_params "}"
 
      shared_network_params ::= shared_network_param
                           | shared_network_params "," shared_network_param
+                          | shared_network_params ","
 
      shared_network_param ::= name
                          | subnet4_list
@@ -577,6 +609,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_option_def_list ::= option_def_entry
                               | not_empty_option_def_list "," option_def_entry
+                              | not_empty_option_def_list ","
 
      option_def_entry ::= "{" option_def_params "}"
 
@@ -587,6 +620,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_option_def_params ::= option_def_param
                                 | not_empty_option_def_params "," option_def_param
+                                | not_empty_option_def_params ","
 
      option_def_param ::= option_def_name
                      | option_def_code
@@ -624,6 +658,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_option_data_list ::= option_data_entry
                                | not_empty_option_data_list "," option_data_entry
+                               | not_empty_option_data_list ","
 
      option_data_entry ::= "{" option_data_params "}"
 
@@ -634,6 +669,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_option_data_params ::= option_data_param
                                  | not_empty_option_data_params "," option_data_param
+                                 | not_empty_option_data_params ","
 
      option_data_param ::= option_data_name
                       | option_data_data
@@ -664,6 +700,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_pools_list ::= pool_list_entry
                          | not_empty_pools_list "," pool_list_entry
+                         | not_empty_pools_list ","
 
      pool_list_entry ::= "{" pool_params "}"
 
@@ -671,6 +708,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      pool_params ::= pool_param
                 | pool_params "," pool_param
+                | pool_params ","
 
      pool_param ::= pool_entry
                | option_data_list
@@ -693,6 +731,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_reservations_list ::= reservation
                                 | not_empty_reservations_list "," reservation
+                                | not_empty_reservations_list ","
 
      reservation ::= "{" reservation_params "}"
 
@@ -703,6 +742,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_reservation_params ::= reservation_param
                                  | not_empty_reservation_params "," reservation_param
+                                 | not_empty_reservation_params ","
 
      reservation_param ::= duid
                       | reservation_client_classes
@@ -753,6 +793,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      client_classes_list ::= client_class_entry
                         | client_classes_list "," client_class_entry
+                        | client_classes_list ","
 
      client_class_entry ::= "{" client_class_params "}"
 
@@ -761,6 +802,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      not_empty_client_class_params ::= client_class_param
                                   | not_empty_client_class_params "," client_class_param
+                                  | not_empty_client_class_params ","
 
      client_class_param ::= client_class_name
                        | client_class_test
@@ -789,6 +831,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
+                          | control_socket_params ","
 
      control_socket_param ::= control_socket_type
                          | control_socket_name
@@ -804,6 +847,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      queue_control_params ::= queue_control_param
                          | queue_control_params "," queue_control_param
+                         | queue_control_params ","
 
      queue_control_param ::= enable_queue
                         | queue_type
@@ -826,6 +870,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      dhcp_ddns_params ::= dhcp_ddns_param
                      | dhcp_ddns_params "," dhcp_ddns_param
+                     | dhcp_ddns_params ","
 
      dhcp_ddns_param ::= enable_updates
                     | server_ip
@@ -885,6 +930,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      config_control_params ::= config_control_param
                           | config_control_params "," config_control_param
+                          | config_control_params ","
 
      config_control_param ::= config_databases
                          | config_fetch_wait_time
@@ -897,11 +943,13 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      loggers_entries ::= logger_entry
                     | loggers_entries "," logger_entry
+                    | loggers_entries ","
 
      logger_entry ::= "{" logger_params "}"
 
      logger_params ::= logger_param
                   | logger_params "," logger_param
+                  | logger_params ","
 
      logger_param ::= name
                  | output_options_list
@@ -919,11 +967,13 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
+                                | output_options_list_content ","
 
      output_entry ::= "{" output_params_list "}"
 
      output_params_list ::= output_params
                        | output_params_list "," output_params
+                       | output_params_list ","
 
      output_params ::= output
                   | flush
@@ -945,6 +995,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      compatibility_params ::= compatibility_param
                          | compatibility_params "," compatibility_param
+                         | compatibility_params ","
 
      compatibility_param ::= lenient_option_parsing
                         | unknown_map_entry
