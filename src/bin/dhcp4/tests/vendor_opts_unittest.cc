@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1465,7 +1465,7 @@ TEST_F(VendorOptsTest, clientOption43RawClass) {
     EXPECT_TRUE(client.getContext().response_);
 }
 
-// Verifies that an a client query with a truncated length in
+// Verifies that a client query with a truncated length in
 // vendor option (125) will still be processed by the server.
 TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     NakedDhcpv4Srv srv(0);

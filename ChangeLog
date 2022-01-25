@@ -92,7 +92,7 @@ Kea 2.1.2 (development) released on Jan 26, 2022
 	were made to the PostgreSQL database schema.  In addition, the
 	upgrade scripts were renamed to ensure proper file name ordering.
 	Note that PostgreSQL CB is not yet functional.
-	(Gitlab #2244)
+	(Gitlab #2183, #2244, #2245)
 
 1974.	[func]		fdupont
 	The global parameter lookup has been refactored to provide better

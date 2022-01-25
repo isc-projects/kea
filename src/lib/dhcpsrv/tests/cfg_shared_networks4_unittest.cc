@@ -356,7 +356,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     // Should still have 3 networks.
 
     // Network1 should have doubled its valid lifetime but still only have
-    // the orignal two subnets.  Merge should discard assocations on CB
+    // the orignal two subnets.  Merge should discard associations on CB
     // subnets and preserve the associations from existing config.
     ASSERT_EQ(3, cfg_to.getAll()->size());
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(200),

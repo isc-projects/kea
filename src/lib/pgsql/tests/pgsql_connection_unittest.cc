@@ -179,7 +179,7 @@ public:
     /// an inclusive range.
     ///
     /// @param expected_rows Collection of rows of data that we expect to be
-    /// fetched. Note the rows should be in the order you expedct them to be
+    /// fetched. Note the rows should be in the order you expect them to be
     /// returned from the database.
     /// @param begin_int beginning of the range to include.
     /// @param end_int end fo the range to include.
@@ -193,7 +193,7 @@ public:
         TestRowSet fetched_rows;
 
         // Run the select.  The row consumption lambda should populate
-        // fethched_rows based on the the result set returned by the select.
+        // fetched_rows based on the the result set returned by the select.
         conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings,
                            [&](PgSqlResult& r, int row) {
             TestRow fetched_row;
@@ -230,7 +230,7 @@ public:
     /// @brief Tests updating data using PgSqlConnection::updateDeleteQuery()
     ///
     /// In this test, the input data is a set of rows that describe
-    /// which rows in the database to udpate and how. For each row
+    /// which rows in the database to update and how. For each row
     /// in the set we find the record in the database with matching
     /// int_col value and replace its text_col value with the the
     /// text value from the input the row.
@@ -284,7 +284,7 @@ public:
 /// verify actual data CRUD results.
 TEST_F(PgSqlConnectionTest, executePreparedStatement) {
 
-    // Executing with no paramters when they are required should throw.
+    // Executing with no parameters when they are required should throw.
     // First we'll omit the bindings (defaults to empty).
     PgSqlResultPtr r;
     ASSERT_THROW_MSG(r = conn_->executePreparedStatement(tagged_statements[INSERT_VALUE]),
@@ -451,7 +451,7 @@ TEST_F(PgSqlConnectionTest, transactions) {
     conn_->commit();
     ASSERT_TRUE(conn_->isTransactionStarted());
 
-    // Rollback should end the transaction without commiting changes.
+    // Rollback should end the transaction without committing changes.
     conn_->rollback();
     ASSERT_FALSE(conn_->isTransactionStarted());
 
@@ -491,7 +491,7 @@ TEST_F(PgSqlConnectionTest, transactions) {
     EXPECT_THROW(conn_->rollback(), isc::Unexpected);
 }
 
-// Verifies that savepointes operate correctly.
+// Verifies that savepoints operate correctly.
 TEST_F(PgSqlConnectionTest, savepoints) {
     // We want to trigger DuplicateEntry errors so let's
     // add a unique constraint to the table.
@@ -524,7 +524,7 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     // Rollback to the savepoint.
     ASSERT_NO_THROW_LOG(conn_->rollbackToSavepoint("sp_one"));
 
-    // Commit the transcation.
+    // Commit the transaction.
     conn_->commit();
 
     // We should not be in a transaction but we should
@@ -553,7 +553,7 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     TestRowSet third_row = {{3, "three"}};
     ASSERT_NO_THROW_LOG(testInsert(third_row));
 
-    // Commit the transcation.
+    // Commit the transaction.
     conn_->commit();
 
     // We should not be in a transaction and we should

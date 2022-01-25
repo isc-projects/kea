@@ -22,9 +22,9 @@ and FreeBSD systems. Kea-|release| builds have been tested on:
 
 * Alpine - 3.12, 3.13
 * CentOS — 7, 8
-* Debian — 9, 10
-* Fedora — 33, 34
-* FreeBSD — 12.1, 13.0
+* Debian — 9, 10, 11
+* Fedora — 34
+* FreeBSD — 12, 13
 * Ubuntu — 18.04, 20.04, 21.04
 
 There are currently no plans to port Kea to Windows systems.
@@ -38,7 +38,7 @@ do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
 * Alpine — 3.11
-* FreeBSD - 11.4
+* FreeBSD - 11
 * macOS — 10.13, 10.14
 
 Community-Maintained

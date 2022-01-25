@@ -2105,7 +2105,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // i.e. DDNS configuration.  If we have a reserved hostname we should
     // use it and send it back.
     if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
-        // Qualify if there is an a suffix configured.
+        // Qualify if there is a suffix configured.
         std::string hostname = d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
                                                   *(ex.getContext()->getDdnsParams()), false);
         // Convert it to lower case.

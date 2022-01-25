@@ -41,7 +41,7 @@ const char* values[] = {
     "DATABASE_MYSQL_ROLLBACK", "rolling back MySQL database",
     "DATABASE_MYSQL_START_TRANSACTION", "starting new MySQL transaction",
     "DATABASE_PGSQL_COMMIT", "committing to PostgreSQL database",
-    "DATABASE_PGSQL_CREATE_SAVEPOINT", "creating a new PostgreSQL savepoinat: %1",
+    "DATABASE_PGSQL_CREATE_SAVEPOINT", "creating a new PostgreSQL savepoint: %1",
     "DATABASE_PGSQL_DEALLOC_ERROR", "An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1",
     "DATABASE_PGSQL_FATAL_ERROR", "Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).",
     "DATABASE_PGSQL_ROLLBACK", "rolling back PostgreSQL database",

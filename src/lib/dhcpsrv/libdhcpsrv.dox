@@ -32,7 +32,7 @@ This library contains several crucial elements for the operation of the DHCP ser
 
 @section cfgglobals Global Parameters
 
-The global paramaters handle direct (vs using a search in a name to
+The global parameters handle direct (vs using a search in a name to
 value table) access to global scalar (i.e. not list or map) parameter values.
 
 This is related to the procedure to add a new global scalar parameter to

@@ -344,17 +344,17 @@ public:
     /// @throw DbOperationError if the rollback failed.
     void rollbackToSavepoint(const std::string& name);
 
-    /// @brief Excutes the an SQL statement.
+    /// @brief Executes the an SQL statement.
     ///
     /// It executes the given SQL text after first checking the
-    /// connectition for usability. After the statement is excuted
+    /// connection for usability. After the statement is executed
     /// @c checkStatementError() is invoked to ensure we detect
     /// connectivity issues properly.
     /// It is intended to be used to execute utility statements such
     /// as commit, rollback et al, which have no parameters, return no
     /// results, and are not pre-compiled.
     ///
-    /// @param sql SQL statment to execute.
+    /// @param sql SQL statement to execute.
     void executeSQL(const std::string& sql);
 
     /// @brief Checks a result set's SQL state against an error state.
@@ -406,14 +406,14 @@ public:
         }
     }
 
-    /// @brief Excutes a prepared SQL statement.
+    /// @brief Executes a prepared SQL statement.
     ///
     /// It executes the given prepared SQL statement, after checking
     /// for usability and input parameter sanity.  After the statement
-    /// is excuted @c checkStatementError() is invoked to ensure we detect
+    /// is executed @c checkStatementError() is invoked to ensure we detect
     /// connectivity issues properly. Upon successful execution, the
     /// the result set is returned.  It may be used for any form of
-    /// prepared SQL statement (e.g query, insert, udpate, delete...),
+    /// prepared SQL statement (e.g query, insert, update, delete...),
     /// with or without input parameters.
     ///
     /// @param statement PgSqlTaggedStatement describing the prepared

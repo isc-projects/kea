@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@ This library contains most of the DNS classes used by the Kea D2 server
 (kea-dhcp-ddns) but is organized as an independent library so that it
 can be reused as needed by other components.
 
-For a more detaliled documentation about the design and class separation
+For a more detailed documentation about the design and class separation
 see @ref src/bin/d2/d2.dox.
 
 @section d2srvMTConsiderations Multi-Threading Consideration for D2 Server Library

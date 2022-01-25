@@ -847,7 +847,7 @@ public:
                            ServerSelector::ALL(), "deleting all servers",
                            false);
 
-        // No argumens, hence empty input bindings.
+        // No arguments, hence empty input bindings.
         PsqlBindArray in_bindings;
 
         // Attempt to delete the servers.

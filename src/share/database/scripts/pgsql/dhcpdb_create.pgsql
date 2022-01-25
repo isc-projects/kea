@@ -3846,6 +3846,8 @@ INSERT INTO dhcp_option_scope (scope_id, scope_name)
 INSERT INTO dhcp_option_scope (scope_id, scope_name)
     VALUES(6, 'pd-pool');
 
+-- Drop the existing function, createOptionAuditDHCP6 so we can replace it
+-- with one that has slightly different arguments.
 DROP FUNCTION IF EXISTS createOptionAuditDHCP6(modification_type VARCHAR(32),
                                                scope_id SMALLINT, option_id INT, subnet_id BIGINT,
                                                host_id INT, network_name VARCHAR(128),

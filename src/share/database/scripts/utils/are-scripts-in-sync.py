@@ -40,7 +40,7 @@ def filter_the_noise(text, is_upgrade_script):
     :param text: the script content to be analyzed
     :type text: str
 
-    :param is_upgrade_script: determines if it is a an upgrade script or a
+    :param is_upgrade_script: determines if it is an upgrade script or a
         dhcpdb_create script. Different delimiters are used for each.
     :type is_upgrade_script: bool
 

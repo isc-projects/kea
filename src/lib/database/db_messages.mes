@@ -58,9 +58,9 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
 
-% DATABASE_PGSQL_CREATE_SAVEPOINT creating a new PostgreSQL savepoinat: %1
+% DATABASE_PGSQL_CREATE_SAVEPOINT creating a new PostgreSQL savepoint: %1
 The code is issuing a call to create a savepoint within the current
-transaction.  Database modications made up to this point will be preserved
+transaction.  Database modifications made up to this point will be preserved
 should a subsequent call to rollback to this savepoint occurs prior to the
 transaction being committed.
 
@@ -84,7 +84,7 @@ be rolled back and not committed to the database.
 
 % DATABASE_PGSQL_ROLLBACK_SAVEPOINT rolling back PostgreSQL database to savepoint: $1
 The code is issuing a call to rollback to the given savepoint.  Any database
-modications that were made after the savepoint was created will be rolled back
+modifications that were made after the savepoint was created will be rolled back
 and not committed to the database.
 
 % DATABASE_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction

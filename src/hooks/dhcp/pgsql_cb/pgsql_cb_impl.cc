@@ -567,7 +567,7 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
         // Attempt to update the server.
         if (!updateDeleteQuery(update_index, in_bindings)) {
             // Possible only if someone deleted it since we tried to insert it,
-            // the query is broken, or the bindings are nonesense.
+            // the query is broken, or the bindings are nonsense.
             isc_throw(Unexpected, "Update server failed to find server tag: " << tag);
         }
     }
@@ -615,7 +615,7 @@ PgSqlConfigBackendImpl::attachElementToServers(const int index,
         std::string server_tag = tag.get();
         server_bindings.add(server_tag);
 
-        // Insert the server assocation.
+        // Insert the server association.
         insertQuery(index, server_bindings);
 
         // Remove the prior server tag.
