@@ -135,7 +135,8 @@ pgsql_execute() {
     if test -z "${PGPASSWORD-}"; then
         PGPASSWORD="${db_password}"
     fi
-    export PGPASSWORD="${db_password}"
+    export PGPASSWORD
+
     if [ $# -gt 0 ]; then
         printf '%s' "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t \
         -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
@@ -160,7 +161,8 @@ pgsql_execute_script() {
     if test -z "${PGPASSWORD-}"; then
         PGPASSWORD="${db_password}"
     fi
-    export PGPASSWORD=$db_password
+    export PGPASSWORD
+
     if [ $# -gt 0 ]; then
         psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" \
         ${db_port_full_parameter-} -q -U "${db_user}" -d "${db_name}" \
