@@ -119,7 +119,7 @@ The allocation engine checks for host reservations after selecting a subnet; thi
 
 .. figure:: uml/currentHost4.*
 
-    The currentHost allocation engine
+    Host reservation evaluation
 
 .. _uml_CfgOptionList:
 
