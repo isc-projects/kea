@@ -191,7 +191,10 @@ INSERT INTO schema_version VALUES (1, 7);'
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" \
         -x --protocol=TCP -x --hello 2> "@abs_top_srcdir@/src/bin/admin/test-data"
     assert_eq 2 "${EXIT_CODE}" "kea-admin -x -x succeeded. (expected %d, exit code %d)"
-    assert_str_eq "mysql: unknown option '--hello'" "$(tail -n 1 "@abs_top_srcdir@/src/bin/admin/test-data")"
+    if ! grep -F "unknown option '--hello'" "@abs_top_srcdir@/src/bin/admin/test-data"; then
+        printf 'second parameter --hello was not passed to mysql with -x\n'
+        test_finish 1
+    fi
     rm -f "@abs_top_srcdir@/src/bin/admin/test-data"
 
     # Let's wipe the whole database
