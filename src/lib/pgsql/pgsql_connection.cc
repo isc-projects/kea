@@ -468,7 +468,7 @@ PgSqlConnection::executeSQL(const std::string& sql) {
 
 PgSqlResultPtr
 PgSqlConnection::executePreparedStatement(PgSqlTaggedStatement& statement,
-                             const PsqlBindArray& in_bindings) {
+                                          const PsqlBindArray& in_bindings) {
     checkUnusable();
 
     if (statement.nbparams != in_bindings.size()) {
@@ -480,8 +480,8 @@ PgSqlConnection::executePreparedStatement(PgSqlTaggedStatement& statement,
     }
 
     const char* const* values = 0;
-    const int * lengths = 0;
-    const int * formats = 0;
+    const int* lengths = 0;
+    const int* formats = 0;
     if (statement.nbparams > 0) {
         values = static_cast<const char* const*>(&in_bindings.values_[0]);
         lengths = static_cast<const int *>(&in_bindings.lengths_[0]);
@@ -493,7 +493,7 @@ PgSqlConnection::executePreparedStatement(PgSqlTaggedStatement& statement,
                                                     values, lengths, formats, 0)));
 
     checkStatementError(*result_set, statement);
-    return(result_set);
+    return (result_set);
 }
 
 void

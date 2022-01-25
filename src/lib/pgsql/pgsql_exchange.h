@@ -151,7 +151,7 @@ typedef boost::shared_ptr<PgSqlResult> PgSqlResultPtr;
 typedef boost::shared_ptr<const std::string> ConstStringPtr;
 
 struct PsqlBindArray {
-    PsqlBindArray() : values_(0), lengths_(0), formats_(0) {};
+    PsqlBindArray() : values_(0), lengths_(0), formats_(0) {}
 
     /// @brief Vector of pointers to the data values.
     std::vector<const char *> values_;
@@ -499,7 +499,7 @@ public:
     PgSqlExchange(const size_t num_columns = 0) : columns_(num_columns) {}
 
     /// @brief Destructor
-    virtual ~PgSqlExchange(){}
+    virtual ~PgSqlExchange() {}
 
     /// @brief Converts time_t value to a text representation in local time.
     ///
@@ -759,7 +759,7 @@ protected:
     std::vector<std::string>columns_;
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+} // end of isc::db namespace
+} // end of isc namespace
 
 #endif // PGSQL_EXCHANGE_H

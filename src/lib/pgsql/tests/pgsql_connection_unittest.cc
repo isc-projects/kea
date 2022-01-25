@@ -320,7 +320,7 @@ TEST_F(PgSqlConnectionTest, executePreparedStatement) {
 
     // Executing with the correct number of parameters should work.
     ASSERT_NO_THROW(r = conn_->executePreparedStatement(tagged_statements[GET_BY_INT_RANGE],
-                                                         in_bindings));
+                                                        in_bindings));
 
     // Executing with too many parameters should fail.
     in_bindings.add(3);

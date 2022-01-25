@@ -432,7 +432,7 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
 
 isc::asiolink::IOAddress
 PgSqlExchange::getInetValue4(const PgSqlResult& r, const int row,
-                            const size_t col) {
+                             const size_t col) {
     const char* data = getRawColumnValue(r, row, col);
     try {
         asiolink::IOAddress addr(data);
@@ -451,7 +451,7 @@ PgSqlExchange::getInetValue4(const PgSqlResult& r, const int row,
 
 isc::asiolink::IOAddress
 PgSqlExchange::getInetValue6(const PgSqlResult& r, const int row,
-                            const size_t col) {
+                             const size_t col) {
     const char* data = getRawColumnValue(r, row, col);
     try {
         asiolink::IOAddress addr(data);
@@ -550,5 +550,5 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     return (stream.str());
 }
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+} // end of isc::db namespace
+} // end of isc namespace
