@@ -27,7 +27,7 @@ public:
     }
 
     /// @brief Destructor.
-    virtual ~GenericConfigBackendDHCPv4Test(){};
+    virtual ~GenericConfigBackendDHCPv4Test() {};
 
     /// @brief Prepares the class for a test.
     ///
@@ -36,7 +36,7 @@ public:
     /// wipe out any prior instance
     virtual void SetUp();
 
-    /// @brief Pre-text exit clean up
+    /// @brief Pre-test exit clean up
     ///
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
@@ -56,7 +56,6 @@ public:
     /// DHCPv4 configuration back end.
     ///
     /// @params Connection parameters describing the back end to create.
-    ///
     /// @return Pointer to the newly created back end instance.
     virtual ConfigBackendDHCPv4Ptr backendFactory(db::DatabaseConnection::ParameterMap&
                                                   params) = 0;
@@ -133,248 +132,248 @@ public:
                            const size_t new_entries_num = 1,
                            const size_t max_tested_entries = 65535);
 
-    /// @brief Verifies that the server can be added, updated and deleted.
+    /// @brief This test verifies that the server can be added, updated and deleted.
     void createUpdateDeleteServerTest();
 
-	/// @brief This test verifies that it is possible to retrieve all servers from the
-	/// database and then delete all of them.
-	void getAndDeleteAllServersTest();
+    /// @brief This test verifies that it is possible to retrieve all servers from the
+    /// database and then delete all of them.
+    void getAndDeleteAllServersTest();
 
-	/// @brief This test verifies that the global parameter can be added, updated and
-	/// deleted.
-	void createUpdateDeleteGlobalParameter4Test();
+    /// @brief This test verifies that the global parameter can be added, updated and
+    /// deleted.
+    void createUpdateDeleteGlobalParameter4Test();
 
-	/// @brief This test verifies that it is possible to differentiate between the
-	/// global parameters by server tag and that the value specified for the
-	/// particular server overrides the value specified for all servers.
-	void globalParameters4WithServerTagsTest();
+    /// @brief This test verifies that it is possible to differentiate between the
+    /// global parameters by server tag and that the value specified for the
+    /// particular server overrides the value specified for all servers.
+    void globalParameters4WithServerTagsTest();
 
-	/// @brief This test verifies that all global parameters can be retrieved and deleted.
-	void getAllGlobalParameters4Test();
+    /// @brief This test verifies that all global parameters can be retrieved and deleted.
+    void getAllGlobalParameters4Test();
 
-	/// @brief This test verifies that modified global parameters can be retrieved.
-	void getModifiedGlobalParameters4Test();
+    /// @brief This test verifies that modified global parameters can be retrieved.
+    void getModifiedGlobalParameters4Test();
 
-	/// @brief Test that the NullKeyError message is correctly updated.
-	void nullKeyErrorTest();
+    /// @brief Test that the NullKeyError message is correctly updated.
+    void nullKeyErrorTest();
 
-	/// @brief Test that ceateUpdateSubnet4 throws appropriate exceptions for various
-	/// server selectors.
-	void createUpdateSubnet4SelectorsTest();
+    /// @brief Test that createUpdateSubnet4 throws appropriate exceptions for various
+    /// server selectors.
+    void createUpdateSubnet4SelectorsTest();
 
-	/// @brief Test that subnet can be inserted, fetched, updated and then fetched again.
-	void getSubnet4Test();
+    /// @brief Test that subnet can be inserted, fetched, updated and then fetched again.
+    void getSubnet4Test();
 
-	/// @brief Test that getSubnet4 by ID throws appropriate exceptions for various server
-	/// selectors.
-	void getSubnet4byIdSelectorsTest();
+    /// @brief Test that getSubnet4 by ID throws appropriate exceptions for various server
+    /// selectors.
+    void getSubnet4byIdSelectorsTest();
 
-	/// @brief Test that the information about unspecified optional parameters gets
-	/// propagated to the database.
-	void getSubnet4WithOptionalUnspecifiedTest();
+    /// @brief Test that the information about unspecified optional parameters gets
+    /// propagated to the database.
+    void getSubnet4WithOptionalUnspecifiedTest();
 
-	/// @brief Test that subnet can be associated with a shared network.
-	void getSubnet4SharedNetworkTest();
+    /// @brief Test that subnet can be associated with a shared network.
+    void getSubnet4SharedNetworkTest();
 
-	/// @brief Test that subnet can be fetched by prefix.
-	void getSubnet4ByPrefixTest();
+    /// @brief Test that subnet can be fetched by prefix.
+    void getSubnet4ByPrefixTest();
 
-	/// @brief Test that getSubnet4 by prefix throws appropriate exceptions for various server
-	/// selectors.
-	void getSubnet4byPrefixSelectorsTest();
+    /// @brief Test that getSubnet4 by prefix throws appropriate exceptions for various server
+    /// selectors.
+    void getSubnet4byPrefixSelectorsTest();
 
-	/// @brief Test that all subnets can be fetched and then deleted.
-	void getAllSubnets4Test();
+    /// @brief Test that all subnets can be fetched and then deleted.
+    void getAllSubnets4Test();
 
-	/// @brief Test that getAllSubnets4 throws appropriate exceptions for various
-	/// server selectors.
-	void getAllSubnets4SelectorsTest();
+    /// @brief Test that getAllSubnets4 throws appropriate exceptions for various
+    /// server selectors.
+    void getAllSubnets4SelectorsTest();
 
-	/// @brief Test that subnets with different server associations are returned.
-	void getAllSubnets4WithServerTagsTest();
+    /// @brief Test that subnets with different server associations are returned.
+    void getAllSubnets4WithServerTagsTest();
 
-	/// @brief Test that getModifiedSubnets4 throws appropriate exceptions for various
-	/// server selectors.
-	void getModifiedSubnets4SelectorsTest();
+    /// @brief Test that getModifiedSubnets4 throws appropriate exceptions for various
+    /// server selectors.
+    void getModifiedSubnets4SelectorsTest();
 
-	/// @brief Test that selected subnet can be deleted.
-	void deleteSubnet4Test();
+    /// @brief Test that selected subnet can be deleted.
+    void deleteSubnet4Test();
 
-	/// @brief Test that deleteSubnet4 by ID throws appropriate exceptions for various
-	/// server selectors.
-	void deleteSubnet4ByIdSelectorsTest();
+    /// @brief Test that deleteSubnet4 by ID throws appropriate exceptions for various
+    /// server selectors.
+    void deleteSubnet4ByIdSelectorsTest();
 
-	/// @brief Test that deleteSubnet4 by prefix throws appropriate exceptions for various
-	/// server selectors.
-	void deleteSubnet4ByPrefixSelectorsTest();
+    /// @brief Test that deleteSubnet4 by prefix throws appropriate exceptions for various
+    /// server selectors.
+    void deleteSubnet4ByPrefixSelectorsTest();
 
-	/// @brief Test that deleteAllSubnets4 throws appropriate exceptions for various
-	/// server selectors.
-	void deleteAllSubnets4SelectorsTest();
+    /// @brief Test that deleteAllSubnets4 throws appropriate exceptions for various
+    /// server selectors.
+    void deleteAllSubnets4SelectorsTest();
 
-	/// @brief Test that it is possible to retrieve and delete orphaned subnet.
-	void unassignedSubnet4Test();
+    /// @brief Test that it is possible to retrieve and delete orphaned subnet.
+    void unassignedSubnet4Test();
 
-	/// @brief Test that subnets modified after given time can be fetched.
-	void getModifiedSubnets4Test();
+    /// @brief Test that subnets modified after given time can be fetched.
+    void getModifiedSubnets4Test();
 
-	/// @brief Test that lifetimes in subnets are handled as expected.
-	void subnetLifetimeTest();
+    /// @brief Test that lifetimes in subnets are handled as expected.
+    void subnetLifetimeTest();
 
-	/// @brief Test that subnets belonging to a shared network can be retrieved.
-	void getSharedNetworkSubnets4Test();
+    /// @brief Test that subnets belonging to a shared network can be retrieved.
+    void getSharedNetworkSubnets4Test();
 
-	/// @brief Test that pools are properly updated as a result a subnet update.
-	void subnetUpdatePoolsTest();
+    /// @brief Test that pools are properly updated as a result a subnet update.
+    void subnetUpdatePoolsTest();
 
-	/// @brief Test that deleting a subnet triggers deletion of the options associated
-	/// with the subnet and pools.
-	void subnetOptionsTest();
+    /// @brief Test that deleting a subnet triggers deletion of the options associated
+    /// with the subnet and pools.
+    void subnetOptionsTest();
 
-	/// @brief Test that shared network can be inserted, fetched, updated and then
-	/// fetched again.
-	void getSharedNetwork4Test();
+    /// @brief Test that shared network can be inserted, fetched, updated and then
+    /// fetched again.
+    void getSharedNetwork4Test();
 
-	/// @brief Test that getSharedNetwork4 throws appropriate exceptions for various
-	/// server selectors.
-	void getSharedNetwork4SelectorsTest();
+    /// @brief Test that getSharedNetwork4 throws appropriate exceptions for various
+    /// server selectors.
+    void getSharedNetwork4SelectorsTest();
 
-	/// @brief Test that shared network may be created and updated and the server tags
-	/// are properly assigned to it.
-	void createUpdateSharedNetwork4Test();
+    /// @brief Test that shared network may be created and updated and the server tags
+    /// are properly assigned to it.
+    void createUpdateSharedNetwork4Test();
 
-	/// @brief Test that createUpdateSharedNetwork4 throws appropriate exceptions for various
-	/// server selectors.
-	void createUpdateSharedNetwork4SelectorsTest();
+    /// @brief Test that createUpdateSharedNetwork4 throws appropriate exceptions for various
+    /// server selectors.
+    void createUpdateSharedNetwork4SelectorsTest();
 
-	/// @brief Test that the information about unspecified optional parameters gets
-	/// propagated to the database.
-	void getSharedNetwork4WithOptionalUnspecifiedTest();
+    /// @brief Test that the information about unspecified optional parameters gets
+    /// propagated to the database.
+    void getSharedNetwork4WithOptionalUnspecifiedTest();
 
-	/// @brief Test that deleteSharedNetworkSubnets4 with not ANY selector throw.
-	void deleteSharedNetworkSubnets4Test();
+    /// @brief Test that deleteSharedNetworkSubnets4 with not ANY selector throw.
+    void deleteSharedNetworkSubnets4Test();
 
-	/// @brief Test that all shared networks can be fetched.
-	void getAllSharedNetworks4Test();
+    /// @brief Test that all shared networks can be fetched.
+    void getAllSharedNetworks4Test();
 
-	/// @brief Test that getAllSharedNetworks4 throws appropriate exceptions for various
-	/// server selectors.
-	void getAllSharedNetworks4SelectorsTest();
+    /// @brief Test that getAllSharedNetworks4 throws appropriate exceptions for various
+    /// server selectors.
+    void getAllSharedNetworks4SelectorsTest();
 
-	/// @brief Test that shared networks with different server associations are returned.
-	void getAllSharedNetworks4WithServerTagsTest();
+    /// @brief Test that shared networks with different server associations are returned.
+    void getAllSharedNetworks4WithServerTagsTest();
 
-	/// @brief Test that shared networks modified after given time can be fetched.
-	void getModifiedSharedNetworks4Test();
+    /// @brief Test that shared networks modified after given time can be fetched.
+    void getModifiedSharedNetworks4Test();
 
-	/// @brief Test that getModifiedSharedNetworks4 throws appropriate exceptions for various
-	/// server selectors.
-	void getModifiedSharedNetworks4SelectorsTest();
+    /// @brief Test that getModifiedSharedNetworks4 throws appropriate exceptions for various
+    /// server selectors.
+    void getModifiedSharedNetworks4SelectorsTest();
 
-	/// @brief Test that selected shared network can be deleted.
-	void deleteSharedNetwork4Test();
+    /// @brief Test that selected shared network can be deleted.
+    void deleteSharedNetwork4Test();
 
-	/// @brief Test that deleteSharedNetwork4 throws appropriate exceptions for various
-	/// server selectors.
-	void deleteSharedNetwork4SelectorsTest();
+    /// @brief Test that deleteSharedNetwork4 throws appropriate exceptions for various
+    /// server selectors.
+    void deleteSharedNetwork4SelectorsTest();
 
-	/// @brief Test that deleteAllSharedNetworks4 throws appropriate exceptions for various
-	/// server selectors.
-	void deleteAllSharedNetworks4SelectorsTest();
+    /// @brief Test that deleteAllSharedNetworks4 throws appropriate exceptions for various
+    /// server selectors.
+    void deleteAllSharedNetworks4SelectorsTest();
 
-	/// @brief Test that it is possible to retrieve and delete orphaned shared network.
-	void unassignedSharedNetworkTest();
+    /// @brief Test that it is possible to retrieve and delete orphaned shared network.
+    void unassignedSharedNetworkTest();
 
-	/// @brief Test that lifetimes in shared networks are handled as expected.
-	void sharedNetworkLifetimeTest();
+    /// @brief Test that lifetimes in shared networks are handled as expected.
+    void sharedNetworkLifetimeTest();
 
-	/// @brief Test that deleting a shared network triggers deletion of the options
-	/// associated with the shared network.
-	void sharedNetworkOptionsTest();
+    /// @brief Test that deleting a shared network triggers deletion of the options
+    /// associated with the shared network.
+    void sharedNetworkOptionsTest();
 
-	/// @brief Test that option definition can be inserted, fetched, updated and then
-	/// fetched again.
-	void getOptionDef4Test();
+    /// @brief Test that option definition can be inserted, fetched, updated and then
+    /// fetched again.
+    void getOptionDef4Test();
 
-	/// @brief This test verifies that it is possible to differentiate between the
-	/// option definitions by server tag and that the option definition
-	/// specified for the particular server overrides the definition for
-	/// all servers.
-	void optionDefs4WithServerTagsTest();
+    /// @brief This test verifies that it is possible to differentiate between the
+    /// option definitions by server tag and that the option definition
+    /// specified for the particular server overrides the definition for
+    /// all servers.
+    void optionDefs4WithServerTagsTest();
 
-	/// @brief Test that all option definitions can be fetched.
-	void getAllOptionDefs4Test();
+    /// @brief Test that all option definitions can be fetched.
+    void getAllOptionDefs4Test();
 
-	/// @brief Test that option definitions modified after given time can be fetched.
-	void getModifiedOptionDefs4Test();
+    /// @brief Test that option definitions modified after given time can be fetched.
+    void getModifiedOptionDefs4Test();
 
-	/// @brief This test verifies that global option can be added, updated and deleted.
-	void createUpdateDeleteOption4Test();
+    /// @brief This test verifies that global option can be added, updated and deleted.
+    void createUpdateDeleteOption4Test();
 
-	/// @brief This test verifies that it is possible to differentiate between the
-	/// global options by server tag and that the option specified for the
-	/// particular server overrides the value specified for all servers.
-	void globalOptions4WithServerTagsTest();
+    /// @brief This test verifies that it is possible to differentiate between the
+    /// global options by server tag and that the option specified for the
+    /// particular server overrides the value specified for all servers.
+    void globalOptions4WithServerTagsTest();
 
-	/// @brief This test verifies that all global options can be retrieved.
-	void getAllOptions4Test();
+    /// @brief This test verifies that all global options can be retrieved.
+    void getAllOptions4Test();
 
-	/// @brief This test verifies that modified global options can be retrieved.
-	void getModifiedOptions4Test();
+    /// @brief This test verifies that modified global options can be retrieved.
+    void getModifiedOptions4Test();
 
-	/// @brief This test verifies that subnet level option can be added, updated and
-	/// deleted.
-	void createUpdateDeleteSubnetOption4Test();
+    /// @brief This test verifies that subnet level option can be added, updated and
+    /// deleted.
+    void createUpdateDeleteSubnetOption4Test();
 
-	/// @brief This test verifies that option can be inserted, updated and deleted
-	/// from the pool.
-	void createUpdateDeletePoolOption4Test();
+    /// @brief This test verifies that option can be inserted, updated and deleted
+    /// from the pool.
+    void createUpdateDeletePoolOption4Test();
 
-	/// @brief This test verifies that shared network level option can be added,
-	/// updated and deleted.
-	void createUpdateDeleteSharedNetworkOption4Test();
+    /// @brief This test verifies that shared network level option can be added,
+    /// updated and deleted.
+    void createUpdateDeleteSharedNetworkOption4Test();
 
-	/// @brief This test verifies that option id values in one subnet do
-	/// not impact options returned in subsequent subnets when
-	/// fetching subnets from the backend.
-	void subnetOptionIdOrderTest();
+    /// @brief This test verifies that option id values in one subnet do
+    /// not impact options returned in subsequent subnets when
+    /// fetching subnets from the backend.
+    void subnetOptionIdOrderTest();
 
-	/// @brief This test verifies that option id values in one shared network do
-	/// not impact options returned in subsequent shared networks when
-	/// fetching shared networks from the backend.
-	void sharedNetworkOptionIdOrderTest();
+    /// @brief This test verifies that option id values in one shared network do
+    /// not impact options returned in subsequent shared networks when
+    /// fetching shared networks from the backend.
+    void sharedNetworkOptionIdOrderTest();
 
-	/// @brief This test verifies that it is possible to create client classes, update them
-	/// and retrieve all classes for a given server.
-	void setAndGetAllClientClasses4Test();
+    /// @brief This test verifies that it is possible to create client classes, update them
+    /// and retrieve all classes for a given server.
+    void setAndGetAllClientClasses4Test();
 
-	/// @brief This test verifies that a single class can be retrieved from the database.
-	void getClientClass4Test();
+    /// @brief This test verifies that a single class can be retrieved from the database.
+    void getClientClass4Test();
 
-	/// @brief This test verifies that client class specific DHCP options can be
-	/// modified during the class update.
-	void createUpdateClientClass4OptionsTest();
+    /// @brief This test verifies that client class specific DHCP options can be
+    /// modified during the class update.
+    void createUpdateClientClass4OptionsTest();
 
-	/// @brief This test verifies that modified client classes can be retrieved from the database.
-	void getModifiedClientClasses4Test();
+    /// @brief This test verifies that modified client classes can be retrieved from the database.
+    void getModifiedClientClasses4Test();
 
-	/// @brief This test verifies that a specified client class can be deleted.
-	void deleteClientClass4Test();
+    /// @brief This test verifies that a specified client class can be deleted.
+    void deleteClientClass4Test();
 
-	/// @brief This test verifies that all client classes can be deleted using
-	/// a specified server selector.
-	void deleteAllClientClasses4Test();
+    /// @brief This test verifies that all client classes can be deleted using
+    /// a specified server selector.
+    void deleteAllClientClasses4Test();
 
-	/// @brief This test verifies that client class dependencies are tracked when the
-	/// classes are added to the database. It verifies that an attempt to update
-	/// a class violating the dependencies results in an error.
-	void clientClassDependencies4Test();
+    /// @brief This test verifies that client class dependencies are tracked when the
+    /// classes are added to the database. It verifies that an attempt to update
+    /// a class violating the dependencies results in an error.
+    void clientClassDependencies4Test();
 
-	/// @brief This test verifies that audit entries can be retrieved from a given
-	/// timestamp and id including when two entries can get the same timestamp.
-	/// (either it is a common even and this should catch it, or it is a rare
-	/// event and it does not matter).
-	void multipleAuditEntriesTest();
+    /// @brief This test verifies that audit entries can be retrieved from a given
+    /// timestamp and id including when two entries can get the same timestamp.
+    /// (either it is a common even and this should catch it, or it is a rare
+    /// event and it does not matter).
+    void multipleAuditEntriesTest();
 
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;

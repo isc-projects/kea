@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,8 +21,8 @@ size_t
 PgSqlGenericBackendTest::countRows(PgSqlConnection& conn, const std::string& table) {
     // Execute a simple select query on all rows.
     std::string query = "SELECT * FROM " + table;
-    PGresult * result = PQexec(conn.conn_, query.c_str());
-    if (! result) {
+    PGresult* result = PQexec(conn.conn_, query.c_str());
+    if (!result) {
         ADD_FAILURE() << "Query failed and no status returned";
         return (0);
     }
@@ -32,8 +32,8 @@ PgSqlGenericBackendTest::countRows(PgSqlConnection& conn, const std::string& tab
         ADD_FAILURE() << "The query returned status " << status;
     }
 
-    // Get the number of rows returned. We don't care about the content, just the number
-    // of rows.
+    // Get the number of rows returned.
+    // We don't care about the content, just the number of rows.
     unsigned numrows = PQntuples(result);
 
     // Free the result allocated.

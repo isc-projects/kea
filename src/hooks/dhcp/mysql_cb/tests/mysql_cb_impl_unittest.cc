@@ -57,5 +57,4 @@ TEST(MySqlConfigBackendImplTest, createTripletFromBinding) {
                  isc::Unexpected);
 }
 
-
 }

@@ -32,11 +32,11 @@ public:
     /// @brief Abstract method for creating the back end specific schema
     virtual void createSchema() = 0;
 
-    /// @brief Abstract method which returns a valid, back end specific connection
+    /// @brief Abstract method which returns a valid back end specific connection
     /// string
     virtual std::string validConnectionString() = 0;
 
-    /// @brief Abstract method which returns an invalid,back end specific connection
+    /// @brief Abstract method which returns an invalid back end specific connection
     /// string
     virtual std::string invalidConnectionString() = 0;
 

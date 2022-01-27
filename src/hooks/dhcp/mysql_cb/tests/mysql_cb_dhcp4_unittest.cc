@@ -54,18 +54,17 @@ public:
     }
 
     using MySqlConfigBackendDHCPv4::base_impl_;
-
 };
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv4.
 class MySqlConfigBackendDHCPv4Test : public GenericConfigBackendDHCPv4Test {
 public:
-
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4Test() {}
 
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv4Test() {}
+
     /// @brief Creates the MySQL back end schema
     virtual void createSchema() {
         createMySQLSchema();
@@ -415,13 +414,13 @@ public:
         destroyMySQLSchema();
     }
 
-    /// @brief Method which returns a valid, back end specific connection
+    /// @brief Method which returns a valid back end specific connection
     /// string
     virtual std::string validConnectionString() {
         return (validMySQLConnectionString());
     }
 
-    /// @brief Method which returns an invalid,back end specific connection
+    /// @brief Method which returns an invalid back end specific connection
     /// string.
     virtual std::string invalidConnectionString() {
         return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
@@ -487,7 +486,6 @@ TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallback) 
     testDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
 TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedCallback();

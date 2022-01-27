@@ -38,32 +38,32 @@ GenericConfigBackendDbLostCallbackTest::~GenericConfigBackendDbLostCallbackTest(
 
 void
 GenericConfigBackendDbLostCallbackTest::SetUp() {
-        DatabaseConnection::db_lost_callback_ = 0;
-        DatabaseConnection::db_recovered_callback_ = 0;
-        DatabaseConnection::db_failed_callback_ = 0;
-        setConfigBackendImplIOService(io_service_);
-        isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
-        isc::dhcp::CfgMgr::instance().clear();
+    DatabaseConnection::db_lost_callback_ = 0;
+    DatabaseConnection::db_recovered_callback_ = 0;
+    DatabaseConnection::db_failed_callback_ = 0;
+    setConfigBackendImplIOService(io_service_);
+    isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
+    isc::dhcp::CfgMgr::instance().clear();
 
-        // Ensure we have the proper schema with no transient data.
-        createSchema();
-        isc::dhcp::CfgMgr::instance().clear();
-        registerBackendType();
+    // Ensure we have the proper schema with no transient data.
+    createSchema();
+    isc::dhcp::CfgMgr::instance().clear();
+    registerBackendType();
 }
 
 void
 GenericConfigBackendDbLostCallbackTest::TearDown() {
-        // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroySchema();
-        isc::dhcp::CfgMgr::instance().clear();
+    // If data wipe enabled, delete transient data otherwise destroy the schema
+    destroySchema();
+    isc::dhcp::CfgMgr::instance().clear();
 
-        unregisterBackendType();
-        DatabaseConnection::db_lost_callback_ = 0;
-        DatabaseConnection::db_recovered_callback_ = 0;
-        DatabaseConnection::db_failed_callback_ = 0;
-        setConfigBackendImplIOService(IOServicePtr());
-        isc::dhcp::TimerMgr::instance()->unregisterTimers();
-        isc::dhcp::CfgMgr::instance().clear();
+    unregisterBackendType();
+    DatabaseConnection::db_lost_callback_ = 0;
+    DatabaseConnection::db_recovered_callback_ = 0;
+    DatabaseConnection::db_failed_callback_ = 0;
+    setConfigBackendImplIOService(IOServicePtr());
+    isc::dhcp::TimerMgr::instance()->unregisterTimers();
+    isc::dhcp::CfgMgr::instance().clear();
 }
 
 void

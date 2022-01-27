@@ -21,9 +21,9 @@ using namespace isc::util;
 
 namespace {
 
-class PgsqlConfigBackendTest : public PgSqlGenericBackendTest {
+class PgSqlConfigBackendTest : public PgSqlGenericBackendTest {
 public:
-    PgsqlConfigBackendTest() : PgSqlGenericBackendTest() {
+    PgSqlConfigBackendTest() : PgSqlGenericBackendTest() {
         createFullSchema();
     }
 
@@ -45,7 +45,7 @@ public:
         ASSERT_NO_THROW_LOG(cbptr_.reset());
     }
 
-    ~PgsqlConfigBackendTest() {
+    ~PgSqlConfigBackendTest() {
         destroyFullSchema();
     }
 
@@ -72,7 +72,7 @@ public:
 // Let's start with absolute basics.  This should construct a backend instance
 // connected to the unit test schema.  The backend instance is created in
 // Setup() and which will ASSERT on failures.
-TEST_F(PgsqlConfigBackendTest, constructor) {
+TEST_F(PgSqlConfigBackendTest, constructor) {
     //  Is this the right config backend type?
     EXPECT_EQ("postgresql", cbptr_->getType());
 }

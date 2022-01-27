@@ -752,7 +752,6 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
                           3, 1);
     }
 
-
     EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server2"),
                                                          global_parameter2));
     {
@@ -1089,7 +1088,6 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
                           "subnet set");
     }
 
-
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2));
     {
         SCOPED_TRACE("CREATE audit entry for the subnet");
@@ -1304,7 +1302,6 @@ GenericConfigBackendDHCPv4Test::getSubnet4WithOptionalUnspecifiedTest() {
     // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
-
 
 void
 GenericConfigBackendDHCPv4Test::getSubnet4SharedNetworkTest() {
@@ -4066,7 +4063,6 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
     EXPECT_EQ("bar", (*(classes_list->begin() + 1))->getName());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
-
 
     // Move the third class between the first and second class.
     ASSERT_NO_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ONE("server1"), class3, "foo"));

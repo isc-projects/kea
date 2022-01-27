@@ -9,9 +9,9 @@
 #include <database/server.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
-#include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
 #include <dhcpsrv/testutils/generic_cb_dhcp4_unittest.h>
 #include <dhcpsrv/testutils/generic_cb_recovery_unittest.h>
+#include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <pgsql_cb_dhcp4.h>
 #include <pgsql/testutils/pgsql_schema.h>
@@ -59,10 +59,10 @@ public:
 class PgSqlConfigBackendDHCPv4Test : public GenericConfigBackendDHCPv4Test {
 public:
     /// @brief Constructor.
-    PgSqlConfigBackendDHCPv4Test(){};
+    PgSqlConfigBackendDHCPv4Test() {};
 
     /// @brief Destructor.
-    virtual ~PgSqlConfigBackendDHCPv4Test(){};
+    virtual ~PgSqlConfigBackendDHCPv4Test() {};
 
     /// @brief Creates the PostgreSQL back end schema
     virtual void createSchema() {
@@ -154,13 +154,13 @@ public:
         destroyPgSQLSchema();
     }
 
-    /// @brief Method which returns a valid, back end specific connection
+    /// @brief Method which returns a valid back end specific connection
     /// string
     virtual std::string validConnectionString() {
         return (validPgSQLConnectionString());
     }
 
-    /// @brief Method which returns an invalid,back end specific connection
+    /// @brief Method which returns an invalid back end specific connection
     /// string.
     virtual std::string invalidConnectionString() {
         return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
@@ -221,7 +221,6 @@ TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndRecoveredCallbac
     testDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PgSQL is handled correctly.
 TEST_F(PgSqlConfigBackendDHCPv4DbLostCallbackTest, testDbLostAndFailedCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedCallback();
