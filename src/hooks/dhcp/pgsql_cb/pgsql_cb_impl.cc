@@ -172,33 +172,28 @@ PgSqlConfigBackendImpl::getRecentAuditEntries(const int index,
         selectQuery(index, in_bindings,
                     [&audit_entries] (PgSqlResult& r, int row) {
             // Extract the column values for r[row].
+            // Create a worker for the row.
+            PgSqlResultRowWorker worker(r, row);
 
             // Get the object type. Column 0 is the entry ID which
             // we don't need here.
-            std::string object_type;
-            PgSqlExchange::getColumnValue(r, row, 1, object_type);
+            std::string object_type = worker.getString(1);
 
             // Get the object ID.
-            uint64_t object_id;
-            PgSqlExchange::getColumnValue(r, row, 2, object_id);
+            uint64_t object_id = worker.getBigInt(2);
 
             // Get the modification type.
-            uint8_t mod_typ_int;
-            PgSqlExchange::getColumnValue(r, row, 3, mod_typ_int);
             AuditEntry::ModificationType mod_type =
-                static_cast<AuditEntry::ModificationType>(mod_typ_int);
+                static_cast<AuditEntry::ModificationType>(worker.getSmallInt(3));
 
             // Get the modification time.
-            boost::posix_time::ptime mod_time;
-            PgSqlExchange::getColumnValue(r, row, 4, mod_time);
+            boost::posix_time::ptime mod_time = worker.getTimestamp(4);
 
             // Get the revision ID.
-            uint64_t revision_id;
-            PgSqlExchange::getColumnValue(r, row, 5, revision_id);
+            uint64_t revision_id = worker.getBigInt(5);;
 
             // Get the revision log message.
-            std::string log_message;
-            PgSqlExchange::getColumnValue(r, row, 6, log_message);
+            std::string log_message = worker.getString(6);
 
             // Create new audit entry and add it to the collection of received
             // entries.
@@ -256,10 +251,86 @@ PgSqlConfigBackendImpl::getLastInsertId(const int index, const std::string& tabl
 }
 
 void
-PgSqlConfigBackendImpl::getGlobalParameters(const int /* index */,
-                                            const PsqlBindArray& /* in_bindings */,
-                                            StampedValueCollection& /* parameters */) {
-    isc_throw(NotImplemented, NOT_IMPL_STR);
+PgSqlConfigBackendImpl::getGlobalParameters(const int index,
+                                            const PsqlBindArray& in_bindings,
+                                            StampedValueCollection& parameters) {
+    // The following parameters from the dhcp[46]_global_parameter table are
+    // returned per row:
+    // - id
+    // - parameter name
+    // - parameter value
+    // - parameter type
+    // - modification timestamp
+
+    StampedValuePtr last_param;
+    StampedValueCollection local_parameters;
+    selectQuery(index, in_bindings,
+                [&local_parameters, &last_param](PgSqlResult& r, int row) {
+        // Extract the column values for r[row].
+        // Create a worker for the row.
+        PgSqlResultRowWorker worker(r, row);
+
+        // Get parameter ID.
+        uint64_t id = worker.getBigInt(0);
+
+        // If we're starting or if this is new parameter being processed...
+        if (!last_param || (last_param->getId() != id)) {
+            // Create the parameter instance.
+
+            // Get parameter name.
+            std::string name = worker.getString(1);
+            if (!name.empty()) {
+                // Fetch the value.
+                std::string value = worker.getString(2);
+
+                // Fetch the type.
+                Element::types ptype = static_cast<Element::types>(worker.getSmallInt(3));
+
+                // Create the parameter.
+                last_param = StampedValue::create(name, value, ptype);
+
+                // Set the id.
+                last_param->setId(id);
+
+                // Get and set the modification time.
+                boost::posix_time::ptime mod_time = worker.getTimestamp(4);
+                last_param->setModificationTime(mod_time);
+
+                // server_tag
+                std::string server_tag_str = worker.getString(5);
+                last_param->setServerTag(server_tag_str);
+
+                // If we're fetching parameters for a given server (explicit server
+                // tag is provided), it takes precedence over the same parameter
+                // specified for all servers. Therefore, we check if the given
+                // parameter already exists and belongs to 'all'.
+                ServerTag last_param_server_tag(server_tag_str);
+                auto& index = local_parameters.get<StampedValueNameIndexTag>();
+                auto existing = index.find(name);
+                if (existing != index.end()) {
+                    // This parameter was already fetched. Let's check if we should
+                    // replace it or not.
+                    if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
+                        // Replace parameter specified for 'all' with the one associated
+                        // with the particular server tag.
+                        local_parameters.replace(existing, last_param);
+                        return;
+                    }
+                }
+
+                // If there is no such parameter yet or the existing parameter
+                // belongs to a different server and the inserted parameter is
+                // not for all servers.
+                if ((existing == index.end()) ||
+                    (!(*existing)->hasServerTag(last_param_server_tag) &&
+                     !last_param_server_tag.amAll())) {
+                    local_parameters.insert(last_param);
+                }
+            }
+        }
+    });
+
+    parameters.insert(local_parameters.begin(), local_parameters.end());
 }
 
 OptionDefinitionPtr
@@ -485,22 +556,20 @@ PgSqlConfigBackendImpl::getServers(const int index,
     selectQuery(index, in_bindings,
                 [&servers, &last_server](PgSqlResult& r, int row) {
         // Extract the column values for r[row].
+        // Create a worker for the row.
+        PgSqlResultRowWorker worker(r, row);
 
         // Get the server ID.
-        uint64_t id;
-        PgSqlExchange::getColumnValue(r, row, 0, id);
+        uint64_t id = worker.getBigInt(0);
 
         // Get the server tag.
-        std::string tag;
-        PgSqlExchange::getColumnValue(r, row, 1, tag);
+        std::string tag = worker.getString(1);
 
         // Get the description.
-        std::string description;
-        PgSqlExchange::getColumnValue(r, row, 2, description);
+        std::string description = worker.getString(2);
 
         // Get the modification time.
-        boost::posix_time::ptime mod_time;
-        PgSqlExchange::getColumnValue(r, row, 3, mod_time);
+        boost::posix_time::ptime mod_time = worker.getTimestamp(3);
 
         if (!last_server || (last_server->getId() != id)) {
             // Create the server instance.

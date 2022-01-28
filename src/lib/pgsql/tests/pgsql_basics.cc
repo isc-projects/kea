@@ -42,9 +42,12 @@ PgSqlBasicsTest::PgSqlBasicsTest() : expected_col_names_(NUM_BASIC_COLS) {
     expected_col_names_[TEXT_COL] = "text_col";
     expected_col_names_[TIMESTAMP_COL] = "timestamp_col";
     expected_col_names_[VARCHAR_COL] = "varchar_col";
-    expected_col_names_[INET_COL] = "inet_col";
+    expected_col_names_[INET4_COL] = "inet4_col";
     expected_col_names_[FLOAT_COL] = "float_col";
     expected_col_names_[JSON_COL] = "json_col";
+    expected_col_names_[MIN_INT_COL] = "min_int_col";
+    expected_col_names_[MAX_INT_COL] = "max_int_col";
+    expected_col_names_[INET6_COL] = "inet6_col";
 
     destroySchema();
     createSchema();
@@ -78,9 +81,12 @@ PgSqlBasicsTest::createSchema() {
         "    text_col TEXT, "
         "    timestamp_col TIMESTAMP WITH TIME ZONE, "
         "    varchar_col VARCHAR(255), "
-        "    inet_col INET, "
+        "    inet4_col INET, "
         "    float_col FLOAT, "
-        "    json_col JSON "
+        "    json_col JSON,"
+        "    min_int_col INT, "
+        "    max_int_col INT, "
+        "    inet6_col INET "
         "); ";
 
     PgSqlResult r(PQexec(*conn_, sql));
@@ -129,7 +135,8 @@ PgSqlBasicsTest::fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {
         "   id, bool_col, bytea_col, bigint_col, smallint_col, "
         "   int_col, text_col,"
         "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
-        "   varchar_col, inet_col, float_col, json_col"
+        "   varchar_col, inet4_col, float_col, json_col,"
+        "   min_int_col, max_int_col, inet6_col"
         " FROM basics";
 
     runSql(r, sql, PGRES_TUPLES_OK, line);

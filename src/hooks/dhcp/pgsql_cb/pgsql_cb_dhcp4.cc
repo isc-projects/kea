@@ -196,19 +196,76 @@ public:
     ///
     /// @return Pointer to the retrieved value or null if such parameter
     /// doesn't exist.
-    StampedValuePtr getGlobalParameter4(const ServerSelector& /* server_selector */,
-                                        const std::string& /* name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
+                                        const std::string& name) {
+        StampedValueCollection parameters;
+
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            PsqlBindArray in_bindings;
+            in_bindings.addTempString(tag.get());
+            in_bindings.add(name);
+
+            getGlobalParameters(GET_GLOBAL_PARAMETER4, in_bindings, parameters);
+        }
+
+        return (parameters.empty() ? StampedValuePtr() : *parameters.begin());
     }
 
     /// @brief Sends query to insert or update global parameter.
     ///
     /// @param server_selector Server selector.
     /// @param value StampedValue describing the parameter to create/update.
-    void createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
-                                      const StampedValuePtr& /* value */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
-    }
+    void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
+                                      const StampedValuePtr& value) {
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        auto tag = getServerTag(server_selector, "creating or updating global parameter");
+
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(value->getName());
+        in_bindings.addTempString(value->getValue());
+        in_bindings.add(value->getType()),
+        in_bindings.addTimestamp(value->getModificationTime()),
+        in_bindings.addTempString(tag);
+        in_bindings.addTempString(value->getName());
+
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           PgSqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                                           server_selector, "global parameter set",
+                                           false);
+
+        // Try to update the existing row.
+        if (updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
+                              in_bindings) == 0) {
+
+            // No such parameter found, so let's insert it. We have to adjust the
+            // bindings collection to match the prepared statement for insert.
+            in_bindings.popBack();
+            in_bindings.popBack();
+
+            insertQuery(PgSqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
+                        in_bindings);
+
+            // Successfully inserted global parameter. Now, we have to associate it
+            // with the server tag.
+            PsqlBindArray attach_bindings;
+            uint64_t pid = getLastInsertId4("dhcp4_global_parameter", "id");
+            attach_bindings.add(pid);   // id of newly inserted global.
+            attach_bindings.add(value->getModificationTime());
+            attachElementToServers(PgSqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
+                                   server_selector, attach_bindings);
+        }
+
+        transaction.commit();
+     }
 
     /// @brief Sends query to the database to retrieve multiple subnets.
     ///

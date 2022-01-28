@@ -756,6 +756,59 @@ public:
                                  const size_t buffer_size,
                                  size_t &bytes_converted);
 
+    /// @brief Converts a column in a row in a result set to a binary bytes
+    ///
+    /// Method is used to convert columns stored as BYTEA into a vectory of
+    /// binary bytes, (uint8_t).  It uses PQunescapeBytea to do the conversion.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value vector to receive the converted bytes
+    /// value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+   /// invalid.
+    static void convertFromBytea(const PgSqlResult& r, const int row,
+                                 const size_t col, std::vector<uint8_t>& value);
+
+    /// @brief Fetches a uint32_t value into a Triplet using a single
+    /// column value
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row If the column
+    /// is null, the Triplet is returned as unspecified.
+    /// @param[out] value Triplet to receive the column value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static isc::util::Triplet<uint32_t> getTripletValue(const PgSqlResult& r,
+                                                        const int row,
+                                                        const size_t col);
+
+    /// @brief Fetches a uint32_t value into a Triplet using a three
+    /// column values: default, minimum, and maximum
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param def_col the column number within the row that contains the
+    /// default value.  If this column is null, the Triplet is returned
+    /// as unspecified.
+    /// @param min_col the column number within the row that contains the
+    /// minium value.
+    /// @param max_col the column number within the row that contains the
+    /// maximum value.
+    /// @param[out] value Triplet to receive the column value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static isc::util::Triplet<uint32_t> getTripletValue(const PgSqlResult& r,
+                                                        const int row,
+                                                        const size_t def_col,
+                                                        const size_t min_col,
+                                                        const size_t max_col);
+
     /// @brief Diagnostic tool which dumps the Result row contents as a string
     ///
     /// @param r the result set containing the query results
@@ -769,6 +822,164 @@ protected:
     /// logging and errors.
     std::vector<std::string> columns_;
 };
+
+/// @brief Convenience class which facilitates fetching column values
+/// from a result set row.
+class PgSqlResultRowWorker {
+public:
+    /// @brief Constructor
+    ///
+    /// @param r result set containing the fetched rows of data.
+    /// @param row zero-based index of the desired row, (e.g.
+    /// 0 .. n - 1 where n = number of rows in r)
+    /// @throw DbOperationError if row value is invalid.
+    PgSqlResultRowWorker(const PgSqlResult& r, const int row);
+
+    /// @brief Indicates whether or not the given column value is null.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return true if the value is null, false otherwise.
+    bool isColumnNull(const size_t col);
+
+    /// @brief Fetches the column value as a string.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return std::string containing the column value.
+    std::string getString(const size_t col);
+
+    /// @brief Fetches the boolean value at the given column.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return bool containing the column value.
+    bool getBool(const size_t col);
+
+    /// @brief Fetches the floating point value at the given column.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return double containing the column value.
+    double getDouble(const size_t col);
+
+    /// @brief Gets a pointer to the raw column value in a result set row
+    ///
+    /// Given a column return a const char* pointer to the data value in
+    /// the result set row.  The pointer is valid as long as the underlying
+    /// result set has not been freed.  It may point to text or binary
+    /// data depending on how query was structured.  You should not attempt
+    /// to free this pointer.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return a const char* pointer to the column's raw data
+    const char* getRawColumnValue(const size_t col);
+
+    /// @brief Fetches the uint64_t value at the given column.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return uint64_t containing the column value
+    uint64_t getBigInt(const size_t col);
+
+    /// @brief Fetches the uint32_t value at the given column.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return uint32_t containing the column value
+    uint32_t getInt(const size_t col);
+
+    /// @brief Fetches the uint16_t value at the given column.
+    ///
+    /// @param col the column number within the row
+    ///
+    /// @return uint16_t containing the column value
+    uint16_t getSmallInt(const size_t col);
+
+    /// @brief Fetches binary data at the given column into a vector.
+    ///
+    /// @param col the column number within the row
+    /// @param[out] value vector to receive the fetched data.
+    void getBytes(const size_t col, std::vector<uint8_t>& value);
+
+    /// @brief Fetches the v4 IP address at the given column.
+    ///
+    /// This is used to fetch values from inet type columns.
+    /// @param col the column number within the row
+    ///
+    /// @return isc::asiolink::IOAddress containing the IPv4 address.
+    isc::asiolink::IOAddress getInet4(const size_t col);
+
+    /// @brief Fetches the v6 IP address at the given column.
+    ///
+    /// This is used to fetch values from inet type columns.
+    /// @param col the column number within the row
+    ///
+    /// @return isc::asiolink::IOAddress containing the IPv6 address.
+    isc::asiolink::IOAddress getInet6(const size_t col);
+
+    /// @brief Fetches a text column as the given value type
+    ///
+    /// Uses boost::lexicalcast to convert the text column value into
+    /// a value of type T.
+    ///
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    template<typename T>
+    void getColumnValue(const size_t col, T& value) {
+        PgSqlExchange::getColumnValue(r_, row_, col, value);
+    }
+
+    /// @brief Fetches a timestamp column as a ptime.
+    ///
+    /// @param col the column number within the row
+    /// @param[out] value ptime parameter to receive the converted timestamp
+    boost::posix_time::ptime getTimestamp(const size_t col);
+
+    /// @brief Fetches a JSON column as an ElementPtr.
+    ///
+    /// @param col the column number within the row
+    /// @param[out] value ElementPtr parameter to receive the column value
+    data::ElementPtr getJSON(const size_t col);
+
+    /// @brief Fetches a uint32_t value into a Triplet using a single
+    /// column value
+    ///
+    /// @param col the column number within the row If the column
+    /// is null, the Triplet is returned as unspecified.
+    /// @param[out] value Triplet to receive the column value
+    isc::util::Triplet<uint32_t> getTriplet(const size_t col);
+
+    /// @brief Fetches a uint32_t value into a Triplet using a three
+    /// column values: default, minimum, and maximum
+    ///
+    /// @param def_col the column number within the row that contains the
+    /// default value.  If this column is null, the Triplet is returned
+    /// as unspecified.
+    /// @param min_col the column number within the row that contains the
+    /// minium value.
+    /// @param max_col the column number within the row that contains the
+    /// maximum value.
+    /// @param[out] value Triplet to receive the column value
+    isc::util::Triplet<uint32_t> getTriplet(const size_t def_col,
+                                            const size_t min_col,
+                                            const size_t max_col);
+
+    /// @brief Diagnostic tool which dumps the Result row contents as a string
+    ///
+    /// @return A string depiction of the row contents.
+    std::string dumpRow();
+
+private:
+    /// @brief Result set containing the row.
+    const PgSqlResult& r_;
+    /// @brief Index of the desired row.
+    size_t row_;
+};
+
+/// @brief Pointer to a result row worker.
+typedef boost::shared_ptr<PgSqlResultRowWorker> PgSqlResultRowWorkerPtr;
 
 } // end of isc::db namespace
 } // end of isc namespace

@@ -133,6 +133,29 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteServer) {
     createUpdateDeleteServerTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, getAndDeleteAllServersTest) {
+    getAndDeleteAllServersTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4Test) {
+    createUpdateDeleteGlobalParameter4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, globalParameters4WithServerTagsTest) {
+    globalParameters4WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, getAllGlobalParameters4Test) {
+    getAllGlobalParameters4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4Test) {
+    getModifiedGlobalParameters4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, nullKeyErrorTest) {
+    nullKeyErrorTest();
+}
 
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.

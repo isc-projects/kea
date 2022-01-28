@@ -521,6 +521,70 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
     PQfreemem(bytes);
 }
 
+void
+PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row, const size_t col,
+                                std::vector<uint8_t>& value) {
+    // Returns converted bytes in a dynamically allocated buffer, and
+    // sets bytes_converted.
+    size_t bytes_converted = 0;
+    unsigned char* bytes = PQunescapeBytea((const unsigned char*)
+                                           (getRawColumnValue(r, row, col)),
+                                           &bytes_converted);
+
+    // Unlikely it couldn't allocate it but you never know.
+    if (!bytes) {
+        isc_throw (DbOperationError, "PQunescapeBytea failed for:"
+                   << getColumnLabel(r, col) << " row:" << row);
+    }
+
+    // Copy from the allocated buffer to caller's buffer the free up
+    // the allocated buffer.
+    if (bytes_converted) {
+        value.assign(bytes, bytes + bytes_converted);
+    } else {
+        value.clear();
+    }
+
+    // Free the PostgreSQL buffer.
+    PQfreemem(bytes);
+}
+
+Triplet<uint32_t>
+PgSqlExchange::getTripletValue(const PgSqlResult& r, const int row,
+                              const size_t col) {
+    uint32_t col_value;
+    if (isColumnNull(r, row, col)) {
+        return (Triplet<uint32_t>());
+    }
+
+    getColumnValue(r, row, col, col_value);
+    return (Triplet<uint32_t>(col_value));
+}
+
+Triplet<uint32_t>
+PgSqlExchange::getTripletValue(const PgSqlResult& r, const int row,
+                               const size_t def_col, const size_t min_col,
+                               const size_t max_col) {
+    if (isColumnNull(r, row, def_col)) {
+        return (Triplet<uint32_t>());
+    }
+
+    uint32_t value;
+    getColumnValue(r, row, def_col, value);
+
+    uint32_t min_value = value;
+    if (!isColumnNull(r, row, min_col)) {
+        getColumnValue(r, row, min_col, min_value);
+    }
+
+    uint32_t max_value = value;
+   if (!isColumnNull(r, row, max_col)) {
+        getColumnValue(r, row, max_col, max_value);
+    }
+
+    return (Triplet<uint32_t>(min_value, value, max_value));
+}
+
 std::string
 PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
     return (r.getColumnLabel(column));
@@ -557,6 +621,109 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     }
 
     return (stream.str());
+}
+
+PgSqlResultRowWorker::PgSqlResultRowWorker(const PgSqlResult& r, const int row)
+    : r_(r), row_(row) {
+    // Validate the desired row.
+    r.rowCheck(row);
+}
+
+bool
+PgSqlResultRowWorker::isColumnNull(const size_t col) {
+    return (PgSqlExchange::isColumnNull(r_, row_, col));
+}
+
+std::string
+PgSqlResultRowWorker::getString(const size_t col) {
+    std::string tmp;
+    PgSqlExchange::getColumnValue(r_, row_, col, tmp);
+    return (tmp);
+}
+
+bool
+PgSqlResultRowWorker::getBool(const size_t col) {
+    bool tmp;
+    PgSqlExchange::getColumnValue(r_, row_, col, tmp);
+    return (tmp);
+}
+
+double
+PgSqlResultRowWorker::getDouble(const size_t col) {
+    double tmp;
+    PgSqlExchange::getColumnValue(r_, row_, col, tmp);
+    return (tmp);
+}
+
+const char*
+PgSqlResultRowWorker::getRawColumnValue(const size_t col) {
+    return(PgSqlExchange::getRawColumnValue(r_, row_, col));
+}
+
+uint64_t
+PgSqlResultRowWorker::getBigInt(const size_t col) {
+    uint64_t value;
+    PgSqlExchange::getColumnValue(r_, row_, col, value);
+    return (value);
+}
+
+uint32_t
+PgSqlResultRowWorker::getInt(const size_t col) {
+    uint32_t value;
+    PgSqlExchange::getColumnValue(r_, row_, col, value);
+    return (value);
+}
+
+uint16_t
+PgSqlResultRowWorker::getSmallInt(const size_t col) {
+    uint16_t value;
+    PgSqlExchange::getColumnValue(r_, row_, col, value);
+    return (value);
+}
+
+void
+PgSqlResultRowWorker::getBytes(const size_t col, std::vector<uint8_t>& value) {
+    PgSqlExchange::convertFromBytea(r_, row_, col, value);
+}
+
+isc::asiolink::IOAddress
+PgSqlResultRowWorker::getInet4(const size_t col) {
+    return(PgSqlExchange::getInetValue4(r_, row_, col));
+}
+
+isc::asiolink::IOAddress
+PgSqlResultRowWorker::getInet6(const size_t col) {
+    return(PgSqlExchange::getInetValue6(r_, row_, col));
+}
+
+boost::posix_time::ptime
+PgSqlResultRowWorker::getTimestamp(const size_t col) {
+    boost::posix_time::ptime value;
+    getColumnValue(col, value);
+    return (value);
+};
+
+data::ElementPtr
+PgSqlResultRowWorker::getJSON(const size_t col) {
+    data::ElementPtr value;
+    getColumnValue(col, value);
+    return(value);
+}
+
+isc::util::Triplet<uint32_t>
+PgSqlResultRowWorker::getTriplet(const size_t col) {
+    return(PgSqlExchange::getTripletValue(r_, row_, col));
+}
+
+isc::util::Triplet<uint32_t>
+PgSqlResultRowWorker::getTriplet(const size_t def_col, const size_t min_col,
+                                 const size_t max_col) {
+    return(PgSqlExchange::getTripletValue(r_, row_, def_col, min_col, max_col));
+}
+
+std::string
+PgSqlResultRowWorker::dumpRow() {
+    return(PgSqlExchange::dumpRow(r_, row_));
 }
 
 } // end of isc::db namespace

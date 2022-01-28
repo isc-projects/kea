@@ -1014,18 +1014,8 @@ GenericConfigBackendDHCPv4Test::nullKeyErrorTest() {
     // Create a global parameter (it should work with any object type).
     StampedValuePtr global_parameter = StampedValue::create("global", "value");
 
-    // Try to insert it and associate with non-existing server.
-    std::string msg;
-    try {
-        cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
-                                             global_parameter);
-        msg = "got no exception";
-    } catch (const NullKeyError& ex) {
-        msg = ex.what();
-    } catch (const std::exception&) {
-        msg = "got another exception";
-    }
-    EXPECT_EQ("server 'server1' does not exist", msg);
+    ASSERT_THROW (cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
+                                                       global_parameter), NullKeyError);
 }
 
 void

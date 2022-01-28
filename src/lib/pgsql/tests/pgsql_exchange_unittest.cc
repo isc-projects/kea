@@ -1093,12 +1093,12 @@ TEST(PsqlBindArray, popBackTest) {
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest4) {
     // Create a prepared statement for inserting a SMALLINT
-    const char* st_name = "inet_insert";
+    const char* st_name = "inet4_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
-          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" },
+          "INSERT INTO BASICS (inet4_col) values (cast($1 as inet))" },
         { 1, { OID_TEXT }, "check_where",
-          "select * from BASICS where inet_col = cast($1 as inet)" }
+          "select * from BASICS where inet4_col = cast($1 as inet)" }
     };
 
     ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
@@ -1127,10 +1127,10 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     asiolink::IOAddress fetched_inet("0.0.0.0");
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
-        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET_COL));
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET4_COL));
 
         // Fetch and verify the column value
-        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, row, INET_COL));
+        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, row, INET4_COL));
         EXPECT_EQ(fetched_inet, inets[row]);
     }
 
@@ -1140,7 +1140,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     bind_array->addInet4(inets[1]);
     RUN_PREP(r, statement[1], bind_array, PGRES_TUPLES_OK);
     ASSERT_EQ(r->getRows(),1);
-    ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, 0, INET_COL));
+    ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, 0, INET4_COL));
     EXPECT_EQ(fetched_inet, inets[1]);
 
     // Clean out the table
@@ -1155,17 +1155,17 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     FETCH_ROWS(r, 1);
 
     // Verify the column is null.
-    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET_COL));
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET4_COL));
 }
 
 /// @brief Verify that we can read and write IPv6 addresses
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest6) {
     // Create a prepared statement for inserting a SMALLINT
-    const char* st_name = "inet_insert";
+    const char* st_name = "inet6_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
-          "INSERT INTO BASICS (inet_col) values (cast($1 as inet))" }
+          "INSERT INTO BASICS (inet6_col) values (cast($1 as inet))" }
     };
 
     ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
@@ -1191,11 +1191,11 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     int row = 0;
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
-        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET_COL));
+        ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET6_COL));
 
         // Fetch and verify the column value
         asiolink::IOAddress fetched_inet("::");
-        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, row, INET_COL));
+        ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, row, INET6_COL));
         EXPECT_EQ(fetched_inet, inets[row]);
     }
 
@@ -1211,7 +1211,7 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     FETCH_ROWS(r, 1);
 
     // Verify the column is null.
-    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET_COL));
+    ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, INET6_COL));
 }
 
 /// @brief Verify that we can read and write floats
@@ -1323,5 +1323,208 @@ TEST_F(PgSqlBasicsTest, jsonTest) {
     // Verify the column is null.
     ASSERT_TRUE(PgSqlExchange::isColumnNull(*r, 0, JSON_COL));
 }
+
+/// @brief Verify that we can read and write integer Triplets.
+TEST_F(PgSqlBasicsTest, tripleTest) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "triplets_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 3, { OID_INT4, OID_INT4, OID_INT4 }, st_name,
+          "INSERT INTO BASICS (int_col, min_int_col, max_int_col) values ($1, $2, $3)" }
+    };
+
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[0]));
+
+    // Build our reference list of reference values
+    std::vector<Triplet<uint32_t>> triplets;
+    triplets.push_back(Triplet<uint32_t>());          // def column is null
+    triplets.push_back(Triplet<uint32_t>(10));        // only default column
+    triplets.push_back(Triplet<uint32_t>(5,10,15));   // all three columns
+    triplets.push_back(Triplet<uint32_t>(10,10,15));  // min column is null
+    triplets.push_back(Triplet<uint32_t>(5,10,10));   // max column is null
+
+    // Insert a row for each reference value
+    PsqlBindArrayPtr bind_array;
+    PgSqlResultPtr r;
+    for (auto triplet : triplets) {
+        bind_array.reset(new PsqlBindArray());
+        bind_array->add(triplet);
+        bind_array->addMin(triplet);
+        bind_array->addMax(triplet);
+        RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
+    }
+
+    // Fetch the newly inserted rows.
+    FETCH_ROWS(r, triplets.size());
+
+    // Iterate over the rows, verifying each value against its reference
+    int row = 0;
+    for (auto expected : triplets) {
+        Triplet<uint32_t> fetched;
+        // First we test making a triplet only with default value column.
+        ASSERT_NO_THROW_LOG(fetched = PgSqlExchange::getTripletValue(*r, row, INT_COL));
+        if (expected.unspecified()) {
+            EXPECT_TRUE(fetched.unspecified());
+        } else {
+            EXPECT_FALSE(fetched.unspecified());
+            EXPECT_EQ(fetched.get(), expected.get());
+        }
+
+        // Now test making a triplet with all three columns.
+        ASSERT_NO_THROW_LOG(
+            fetched = PgSqlExchange::getTripletValue(*r, row,
+                                                    INT_COL, MIN_INT_COL, MAX_INT_COL));
+        if (expected.unspecified()) {
+            EXPECT_TRUE(fetched.unspecified());
+        } else {
+            EXPECT_FALSE(fetched.unspecified());
+            EXPECT_EQ(fetched.get(), expected.get());
+            EXPECT_EQ(fetched.getMin(), expected.getMin());
+            EXPECT_EQ(fetched.getMax(), expected.getMax());
+        }
+
+        ++row;
+    }
+
+    // Clean out the table
+    WIPE_ROWS(r);
+}
+
+/// @brief Verify PgResultRowWorker operations.
+TEST_F(PgSqlBasicsTest, resultRowWorker) {
+    // Create a prepared statement for inserting a SMALLINT
+    const char* st_name = "row_insert";
+    PgSqlTaggedStatement statement[] = {
+        { 14,
+          {
+            OID_BOOL,
+            OID_BYTEA,
+            OID_INT8,
+            OID_INT2,
+            OID_INT4,
+            OID_TEXT,
+            OID_TIMESTAMP,
+            OID_TEXT,
+            OID_TEXT,
+            OID_TEXT,
+            OID_TEXT,
+            OID_INT4,
+            OID_INT4,
+          }, st_name,
+          "INSERT INTO BASICS ("
+          " bool_col, "
+          " bytea_col, "
+          " bigint_col, "
+          " smallint_col, "
+          " int_col, "
+          " text_col, "
+          " timestamp_col, "
+          " varchar_col, "
+          " inet4_col, "
+          " float_col, "
+          " json_col, "
+          " min_int_col, "
+          " max_int_col, "
+          " inet6_col) "
+          " VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, cast($9 as inet), "
+          "         cast($10 as float), cast($11 as json), $12, $13, $14)"
+        }
+    };
+
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[0]));
+
+    // Create a bind array of input values.
+    PsqlBindArrayPtr b(new PsqlBindArray());
+
+    bool exp_bool(true);
+    b->add(exp_bool);
+
+    std::vector<uint8_t> exp_bytes({ 0x01, 0x02, 0x03, 0x04});
+    b->add(exp_bytes);
+
+    uint64_t exp_bigint = 9876;
+    b->add(exp_bigint);
+
+    uint16_t exp_smallint = 12;
+    b->add(exp_smallint);
+
+    uint32_t exp_int = 345;
+    b->add(exp_int);
+
+    std::string exp_text = "just some string";
+    b->add(exp_text);
+
+    time_duration duration = hours(7) + minutes(45) + seconds(9);
+    ptime exp_timestamp(date(2021, Jul, 18), duration);
+    b->addTimestamp(exp_timestamp);
+
+    std::string exp_varchar = "really just a string";
+    b->add(exp_varchar);
+
+    asiolink::IOAddress exp_inet4("192.168.1.35");
+    b->addInet4(exp_inet4);
+
+    double exp_double(2.5);
+    b->add(exp_double);
+
+    ElementPtr exp_elems = Element::fromJSON("{ \"foo\": \"bar\" }");
+    b->add(exp_elems);
+
+    uint32_t exp_min = 100;
+    b->add(exp_min);
+
+    uint32_t exp_max = 500;
+    b->add(exp_max);
+
+    asiolink::IOAddress exp_inet6("3001::77");
+    b->addInet6(exp_inet6);
+
+    PgSqlResultPtr r;
+    RUN_PREP(r, statement[0], b, PGRES_COMMAND_OK);
+
+    // Fetch the newly inserted row.
+    FETCH_ROWS(r, 1);
+
+    // Create a row worker.
+   PgSqlResultRowWorkerPtr worker;
+
+    // Creating the row worker for the first (and only) row should succeed.
+    ASSERT_NO_THROW_LOG(worker.reset(new PgSqlResultRowWorker(*r, 0)));
+
+    // Now let's test all the getters.
+    EXPECT_EQ(exp_bool, worker->getBool(BOOL_COL));
+
+    std::vector<uint8_t> fetched_bytes;
+    ASSERT_NO_THROW_LOG(worker->getBytes(BYTEA_COL, fetched_bytes));
+    EXPECT_EQ(exp_bytes, fetched_bytes);
+
+    EXPECT_EQ(exp_bigint, worker->getBigInt(BIGINT_COL));
+    EXPECT_EQ(exp_smallint, worker->getSmallInt(SMALLINT_COL));
+    EXPECT_EQ(exp_int, worker->getInt(INT_COL));
+    EXPECT_EQ(exp_text, worker->getString(TEXT_COL));
+    EXPECT_EQ(exp_timestamp, worker->getTimestamp(TIMESTAMP_COL));
+    EXPECT_EQ(exp_varchar, worker->getString(VARCHAR_COL));
+    EXPECT_EQ(exp_inet4, worker->getInet4(INET4_COL));
+    EXPECT_EQ(exp_double, worker->getDouble(FLOAT_COL));
+    EXPECT_EQ(*exp_elems, *(worker->getJSON(JSON_COL)));
+    EXPECT_EQ(exp_min, worker->getInt(MIN_INT_COL));
+    EXPECT_EQ(exp_max, worker->getInt(MAX_INT_COL));
+    EXPECT_EQ(exp_inet6, worker->getInet6(INET6_COL));
+
+    // Get a triplet using int_col as the sole value.
+    Triplet<uint32_t>fetched_triplet = worker->getTriplet(5);
+    EXPECT_EQ(exp_int, fetched_triplet.get());
+
+    // Get a triplet using int_col, min_col, and max_col values.
+    fetched_triplet = worker->getTriplet(INT_COL, MIN_INT_COL, MAX_INT_COL);
+    EXPECT_EQ(exp_int, fetched_triplet.get());
+    EXPECT_EQ(exp_min, fetched_triplet.getMin());
+    EXPECT_EQ(exp_max, fetched_triplet.getMax());
+
+    // Attempting to access an invalid row should throw.
+    ASSERT_THROW_MSG(worker.reset(new PgSqlResultRowWorker(*r, 1)),
+                     DbOperationError, "row: 1, out of range: 0..1");
+}
+
 
 }; // namespace

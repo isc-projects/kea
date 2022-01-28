@@ -51,9 +51,12 @@ public:
         TEXT_COL,
         TIMESTAMP_COL,
         VARCHAR_COL,
-        INET_COL,
+        INET4_COL,
         FLOAT_COL,
         JSON_COL,
+        MIN_INT_COL,
+        MAX_INT_COL,
+        INET6_COL,
         NUM_BASIC_COLS
     };
 
