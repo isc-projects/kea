@@ -90,9 +90,7 @@ TEST_F(LoggingInfoTest, defaults) {
     std::string begin =
         "\"name\": \"kea\",\n"
         "\"output_options\": [ {\n"
-        " \"output\": \"stdout\",\n \"maxsize\": 10240000,\n"
-        " \"pattern\": \"\","
-        " \"maxver\": 1,\n \"flush\": true } ],\n"
+        " \"output\": \"stdout\" } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";
     std::string trailer = "\n}\n";
@@ -205,7 +203,6 @@ TEST_F(LoggingInfoTest, equalityOperators) {
     // The should now be unequal.
     EXPECT_FALSE(info1 == info2);
     EXPECT_TRUE(info1 != info2);
-
 }
 
 } // end of anonymous namespace

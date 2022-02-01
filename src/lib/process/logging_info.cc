@@ -15,6 +15,11 @@ using namespace isc::data;
 namespace isc {
 namespace process {
 
+static const std::string STDOUT = "stdout";
+static const std::string STDERR = "stderr";
+static const std::string SYSLOG = "syslog";
+static const std::string SYSLOG_COLON = "syslog:";
+
 bool
 LoggingDestination::equals(const LoggingDestination& other) const {
     return (output_ == other.output_ &&
@@ -30,16 +35,19 @@ LoggingDestination::toElement() const {
 
     // Set output
     result->set("output", Element::create(output_));
-    // Set maxver
-    result->set("maxver", Element::create(maxver_));
-    // Set maxsize
-    result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
-    // Set flush
-    result->set("flush", Element::create(flush_));
-    // Set pattern
-    result->set("pattern", Element::create(pattern_));
+    if ((output_ != STDOUT) && (output_ != STDERR) && (output_ == SYSLOG) &&
+        (output_.find(SYSLOG_COLON) != 0)) {
+        // Set maxver
+        result->set("maxver", Element::create(maxver_));
+        // Set maxsize
+        result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
+        // Set flush
+        result->set("flush", Element::create(flush_));
+        // Set pattern
+        result->set("pattern", Element::create(pattern_));
+    }
 
-    return(result);
+    return (result);
 }
 
 LoggingInfo::LoggingInfo()
@@ -74,16 +82,10 @@ LoggingInfo::equals(const LoggingInfo& other) const {
     // If there is the same number of logging destinations verify that the
     // destinations are equal. The order doesn't matter to we don't expect
     // that they are at the same index of the vectors.
-    for (std::vector<LoggingDestination>::const_iterator
-             it_this = destinations_.begin();
-         it_this != destinations_.end();
-         ++it_this) {
+    for (auto const& dest : destinations_) {
         bool match = false;
-        for (std::vector<LoggingDestination>::const_iterator
-                 it_other = other.destinations_.begin();
-             it_other != other.destinations_.end();
-             ++it_other) {
-            if (it_this->equals(*it_other)) {
+        for (auto const &dest_other : other.destinations_) {
+            if (dest.equals(dest_other)) {
                 match = true;
                 break;
             }
@@ -102,58 +104,51 @@ LoggingInfo::equals(const LoggingInfo& other) const {
 
 LoggerSpecification
 LoggingInfo::toSpec() const {
-    static const std::string STDOUT = "stdout";
-    static const std::string STDERR = "stderr";
-    static const std::string SYSLOG = "syslog";
-    static const std::string SYSLOG_COLON = "syslog:";
-
     LoggerSpecification spec(name_, severity_, debuglevel_);
 
     // Go over logger destinations and create output options accordingly.
-    for (std::vector<LoggingDestination>::const_iterator dest =
-             destinations_.begin(); dest != destinations_.end(); ++dest) {
-
+    for (auto const& dest : destinations_) {
         OutputOption option;
         // Set up output option according to destination specification
-        if (dest->output_ == STDOUT) {
+        if (dest.output_ == STDOUT) {
             option.destination = OutputOption::DEST_CONSOLE;
             option.stream = OutputOption::STR_STDOUT;
 
-        } else if (dest->output_ == STDERR) {
+        } else if (dest.output_ == STDERR) {
             option.destination = OutputOption::DEST_CONSOLE;
             option.stream = OutputOption::STR_STDERR;
 
-        } else if (dest->output_ == SYSLOG) {
+        } else if (dest.output_ == SYSLOG) {
             option.destination = OutputOption::DEST_SYSLOG;
             // Use default specified in OutputOption constructor for the
             // syslog destination
 
-        } else if (dest->output_.find(SYSLOG_COLON) == 0) {
+        } else if (dest.output_.find(SYSLOG_COLON) == 0) {
             option.destination = OutputOption::DEST_SYSLOG;
             // Must take account of the string actually being "syslog:"
-            if (dest->output_ == SYSLOG_COLON) {
+            if (dest.output_ == SYSLOG_COLON) {
                 // The expected syntax is syslog:facility. User skipped
                 // the logging name, so we'll just use the default ("kea")
                 option.facility = isc::log::getDefaultRootLoggerName();
 
             } else {
                 // Everything else in the string is the facility name
-                option.facility = dest->output_.substr(SYSLOG_COLON.size());
+                option.facility = dest.output_.substr(SYSLOG_COLON.size());
             }
 
         } else {
             // Not a recognized destination, assume a file.
             option.destination = OutputOption::DEST_FILE;
-            option.filename = dest->output_;
-            option.maxsize = dest->maxsize_;
-            option.maxver = dest->maxver_;
+            option.filename = dest.output_;
+            option.maxsize = dest.maxsize_;
+            option.maxver = dest.maxver_;
         }
 
         // Copy the immediate flush flag
-        option.flush = dest->flush_;
+        option.flush = dest.flush_;
 
         // Copy the pattern
-        option.pattern = dest->pattern_;
+        option.pattern = dest.pattern_;
 
         // ... and set the destination
         spec.addOutputOption(option);
@@ -172,10 +167,8 @@ LoggingInfo::toElement() const {
     // Set output_options if not empty
     if (!destinations_.empty()) {
         ElementPtr options = Element::createList();
-        for (std::vector<LoggingDestination>::const_iterator dest =
-                 destinations_.cbegin();
-             dest != destinations_.cend(); ++dest) {
-            options->add(dest->toElement());
+        for (auto const& dest : destinations_) {
+            options->add(dest.toElement());
         }
         result->set("output_options", options);
     }
@@ -207,6 +200,7 @@ LoggingInfo::toElement() const {
     result->set("severity", Element::create(severity));
     // Set debug level
     result->set("debuglevel", Element::create(debuglevel_));
+
     return (result);
 }
 
