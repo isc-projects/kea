@@ -85,6 +85,8 @@ SYSTEMS = {
         '3.11',
         '3.12',
         '3.13',
+        '3.14',
+        '3.15',
     ],
     'arch': []
 }
@@ -149,6 +151,8 @@ IMAGE_TEMPLATES = {
     'alpine-3.11-lxc':         {'bare': 'isc/lxc-alpine-3.11',         'kea': 'isc/kea-alpine-3.11'},
     'alpine-3.12-lxc':         {'bare': 'isc/lxc-alpine-3.12',         'kea': 'isc/kea-alpine-3.12'},
     'alpine-3.13-lxc':         {'bare': 'isc/lxc-alpine-3.13',         'kea': 'isc/kea-alpine-3.13'},
+    'alpine-3.14-lxc':         {'bare': 'isc/lxc-alpine-3.14',         'kea': 'isc/kea-alpine-3.14'},
+    'alpine-3.15-lxc':         {'bare': 'isc/lxc-alpine-3.15',         'kea': 'isc/kea-alpine-3.15'},
 }
 
 # NOTES
