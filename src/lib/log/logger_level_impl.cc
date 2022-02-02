@@ -130,8 +130,7 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
         // String can't possibly start DEBUG so we don't know what it is.
         // As per documentation, return NOT_SET level.
         return (NOT_SET_LOG_LEVEL);
-    }
-    else {
+    } else {
         if (strncasecmp(name.c_str(), "DEBUG", 5) == 0) {
 
             // String starts "DEBUG" (or "debug" or any case mixture).  The
@@ -140,8 +139,7 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
 
                 // It is plain "DEBUG".  Take this as level 0.
                 return (DEBUG_LOG_LEVEL);
-            }
-            else {
+            } else {
 
                 // Try converting the remainder to an integer.  The "5" is
                 // the length of the string "DEBUG".  Note that if the number

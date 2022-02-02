@@ -267,8 +267,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     bool added;
     if (mode == ADD) {
         added = dictionary_->add(ident, message_line.substr(first_text));
-    }
-    else {
+    } else {
         added = dictionary_->replace(ident, message_line.substr(first_text));
     }
     if (!added) {

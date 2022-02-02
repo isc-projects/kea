@@ -101,8 +101,7 @@ MessageDictionary::getText(const std::string& ident) const {
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
         return (empty_);
-    }
-    else {
+    } else {
         return (i->second);
     }
 }
