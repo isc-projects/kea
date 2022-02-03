@@ -532,6 +532,10 @@ IAID and validity lifetime.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
+% DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.

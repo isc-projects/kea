@@ -46,9 +46,8 @@ SrvConfig::SrvConfig()
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(new CfgGlobals()),
-      cfg_consist_(new CfgConsistency()),
-      lenient_option_parsing_(false) {
+      configured_globals_(new CfgGlobals()), cfg_consist_(new CfgConsistency()),
+      lenient_option_parsing_(false), reservations_lookup_first_(false) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -65,9 +64,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(new CfgGlobals()),
-      cfg_consist_(new CfgConsistency()),
-      lenient_option_parsing_(false) {
+      configured_globals_(new CfgGlobals()), cfg_consist_(new CfgConsistency()),
+      lenient_option_parsing_(false), reservations_lookup_first_(false) {
 }
 
 std::string
@@ -266,6 +264,8 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
                 setServerTag(element->stringValue());
             } else if (name == "ip-reservations-unique") {
                 setIPReservationsUnique(element->boolValue());
+            } else if (name == "reservations-lookup-first") {
+                setReservationsLookupFirst(element->boolValue());
             }
         } catch(const std::exception& ex) {
             isc_throw (BadValue, "Invalid value:" << element->str()

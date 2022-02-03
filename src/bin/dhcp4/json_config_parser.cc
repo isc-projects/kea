@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
@@ -34,23 +35,23 @@
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <process/config_ctl_parser.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
-#include <config/command_mgr.h>
+#include <process/config_ctl_parser.h>
 #include <util/encode/hex.h>
+#include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <iomanip>
 #include <iostream>
 #include <limits>
-#include <iomanip>
+#include <map>
 #include <netinet/in.h>
 #include <vector>
-#include <map>
 
 using namespace std;
 using namespace isc;
@@ -60,6 +61,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::config;
+using namespace isc::util;
 
 namespace {
 
@@ -359,10 +361,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // Global parameter name in case of an error.
     string parameter_name;
     ElementPtr mutable_cfg;
-    SrvConfigPtr srv_cfg;
+    SrvConfigPtr srv_config;
     try {
         // Get the staging configuration.
-        srv_cfg = CfgMgr::instance().getStagingCfg();
+        srv_config = CfgMgr::instance().getStagingCfg();
 
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
@@ -373,7 +375,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // Rule is that a global value overrides the dhcp-ddns value, so
         // we need to do this before we apply global defaults.
         // Note this is done for backward compatibility.
-        srv_cfg->moveDdnsParams(mutable_cfg);
+        srv_config->moveDdnsParams(mutable_cfg);
 
         // Move from reservation mode to new reservations flags.
         // @todo add warning
@@ -395,14 +397,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         Dhcp4ConfigParser global_parser;
 
         // Apply global options in the staging config, e.g. ip-reservations-unique
-        global_parser.parseEarly(srv_cfg, mutable_cfg);
+        global_parser.parseEarly(srv_config, mutable_cfg);
 
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
             parameter_name = "option-def";
             OptionDefListParser parser(AF_INET);
-            CfgOptionDefPtr cfg_option_def = srv_cfg->getCfgOptionDef();
+            CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }
 
@@ -410,7 +412,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (option_datas) {
             parameter_name = "option-data";
             OptionDataListParser parser(AF_INET);
-            CfgOptionPtr cfg_option = srv_cfg->getCfgOption();
+            CfgOptionPtr cfg_option = srv_config->getCfgOption();
             parser.parse(cfg_option, option_datas);
         }
 
@@ -418,21 +420,32 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (control_socket) {
             parameter_name = "control-socket";
             ControlSocketParser parser;
-            parser.parse(*srv_cfg, control_socket);
+            parser.parse(*srv_config, control_socket);
         }
 
         ConstElementPtr multi_threading = mutable_cfg->get("multi-threading");
         if (multi_threading) {
             parameter_name = "multi-threading";
             MultiThreadingConfigParser parser;
-            parser.parse(*srv_cfg, multi_threading);
+            parser.parse(*srv_config, multi_threading);
         }
 
+        /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr queue_control = mutable_cfg->get("dhcp-queue-control");
         if (queue_control) {
             parameter_name = "dhcp-queue-control";
             DHCPQueueControlParser parser;
-            srv_cfg->setDHCPQueueControl(parser.parse(queue_control));
+            srv_config->setDHCPQueueControl(parser.parse(queue_control));
+        }
+
+        /// depends on "multi-threading" being enabled, so it must come after.
+        ConstElementPtr reservations_lookup_first = mutable_cfg->get("reservations-lookup-first");
+        if (reservations_lookup_first) {
+            parameter_name = "reservations-lookup-first";
+            if (MultiThreadingMgr::instance().getMode()) {
+                LOG_WARN(dhcp4_logger, DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED);
+            }
+            srv_config->setReservationsLookupFirst(reservations_lookup_first->boolValue());
         }
 
         ConstElementPtr hr_identifiers =
@@ -447,7 +460,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (ifaces_config) {
             parameter_name = "interfaces-config";
             IfacesConfigParser parser(AF_INET, check_only);
-            CfgIfacePtr cfg_iface = srv_cfg->getCfgIface();
+            CfgIfacePtr cfg_iface = srv_config->getCfgIface();
             parser.parse(cfg_iface, ifaces_config);
         }
 
@@ -455,7 +468,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (sanity_checks) {
             parameter_name = "sanity-checks";
             SanityChecksParser parser;
-            parser.parse(*srv_cfg, sanity_checks);
+            parser.parse(*srv_config, sanity_checks);
         }
 
         ConstElementPtr expiration_cfg =
@@ -473,7 +486,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (hooks_libraries) {
             parameter_name = "hooks-libraries";
             HooksLibrariesParser hooks_parser;
-            HooksConfig& libraries = srv_cfg->getHooksConfig();
+            HooksConfig& libraries = srv_config->getHooksConfig();
             hooks_parser.parse(libraries, hooks_libraries);
             libraries.verifyLibraries(hooks_libraries->getPosition());
         }
@@ -497,7 +510,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             ClientClassDefListParser parser;
             ClientClassDictionaryPtr dictionary =
                 parser.parse(client_classes, AF_INET);
-            srv_cfg->setClientClassDictionary(dictionary);
+            srv_config->setClientClassDictionary(dictionary);
         }
 
         // Please move at the end when migration will be finished.
@@ -507,7 +520,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             db::DbAccessParser parser;
             std::string access_string;
             parser.parse(access_string, lease_database);
-            CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
             cfg_db_access->setLeaseDbAccessString(access_string);
         }
 
@@ -517,14 +530,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             db::DbAccessParser parser;
             std::string access_string;
             parser.parse(access_string, hosts_database);
-            CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
             cfg_db_access->setHostDbAccessString(access_string);
         }
 
         ConstElementPtr hosts_databases = mutable_cfg->get("hosts-databases");
         if (hosts_databases) {
             parameter_name = "hosts-databases";
-            CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+            CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
             db::DbAccessParser parser;
             for (auto it : hosts_databases->listValue()) {
                 std::string access_string;
@@ -543,12 +556,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             /// add subnets from the CfgSharedNetworks4 into CfgSubnets4
             /// as well.
             SharedNetworks4ListParser parser;
-            CfgSharedNetworks4Ptr cfg = srv_cfg->getCfgSharedNetworks4();
+            CfgSharedNetworks4Ptr cfg = srv_config->getCfgSharedNetworks4();
             parser.parse(cfg, shared_networks);
 
             // We also need to put the subnets it contains into normal
             // subnets list.
-            global_parser.copySubnets4(srv_cfg->getCfgSubnets4(), cfg);
+            global_parser.copySubnets4(srv_config->getCfgSubnets4(), cfg);
         }
 
         ConstElementPtr subnet4 = mutable_cfg->get("subnet4");
@@ -556,7 +569,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             parameter_name = "subnet4";
             Subnets4ListConfigParser subnets_parser;
             // parse() returns number of subnets parsed. We may log it one day.
-            subnets_parser.parse(srv_cfg, subnet4);
+            subnets_parser.parse(srv_config, subnet4);
         }
 
         ConstElementPtr reservations = mutable_cfg->get("reservations");
@@ -566,7 +579,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             HostReservationsListParser<HostReservationParser4> parser;
             parser.parse(SUBNET_ID_GLOBAL, reservations, hosts);
             for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                srv_cfg->getCfgHosts()->add(*h);
+                srv_config->getCfgHosts()->add(*h);
             }
         }
 
@@ -669,6 +682,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "statistic-default-sample-count") ||
                  (config_pair.first == "statistic-default-sample-age") ||
                  (config_pair.first == "ip-reservations-unique") ||
+                 (config_pair.first == "reservations-lookup-first") ||
                  (config_pair.first == "parked-packet-limit")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
@@ -690,19 +704,19 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         parameter_name = "<post parsing>";
 
         // Apply global options in the staging config.
-        global_parser.parse(srv_cfg, mutable_cfg);
+        global_parser.parse(srv_config, mutable_cfg);
 
         // This method conducts final sanity checks and tweaks. In particular,
         // it checks that there is no conflict between plain subnets and those
         // defined as part of shared networks.
-        global_parser.sanityChecks(srv_cfg, mutable_cfg);
+        global_parser.sanityChecks(srv_config, mutable_cfg);
 
         // Validate D2 client configuration.
         if (!d2_client_cfg) {
             d2_client_cfg.reset(new D2ClientConfig());
         }
         d2_client_cfg->validateContents();
-        srv_cfg->setD2ClientConfig(d2_client_cfg);
+        srv_config->setD2ClientConfig(d2_client_cfg);
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(parameter_name).arg(ex.what());
@@ -777,7 +791,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         try {
 
             // If there are config backends, fetch and merge into staging config
-            server.getCBControl()->databaseConfigFetch(srv_cfg,
+            server.getCBControl()->databaseConfigFetch(srv_config,
                                                        CBControlDHCPv4::FetchMode::FETCH_ALL);
         } catch (const isc::Exception& ex) {
             std::ostringstream err;

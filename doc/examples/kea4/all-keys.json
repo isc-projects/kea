@@ -471,6 +471,13 @@
         // PostgreSQL backends do support this mode.
         "ip-reservations-unique": true,
 
+        /// Boolean parameter which controls whether host reservations lookup
+        /// should be performed before lease lookup. This parameter has effect
+        /// only when multi-threading is disabled. When multi-threading is
+        /// enabled, host reservations lookup is always performed first to avoid
+        /// lease lookup resource locking.
+        "reservations-lookup-first": true,
+
         // Specifies credentials to access lease database.
         "lease-database": {
             // memfile backend specific parameter specifying the interval

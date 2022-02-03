@@ -3609,8 +3609,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         lease->setContext(orig_context);
         if (!orig_context) {
             ASSERT_FALSE(lease->getContext());
-        }
-        else {
+        } else {
             ASSERT_TRUE(lease->getContext());
             ASSERT_TRUE(orig_context->equals(*(lease->getContext())));
         }
@@ -3636,8 +3635,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         // Verify the lease has the expected user context content.
         if (!exp_context) {
             ASSERT_FALSE(lease->getContext());
-        }
-        else {
+        } else {
             ASSERT_TRUE(lease->getContext());
             ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
                 << "expected: " << *(exp_context) << std::endl
@@ -3747,8 +3745,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
         // Verify the lease has the expected user context content.
         if (!exp_context) {
             ASSERT_FALSE(lease->getContext());
-        }
-        else {
+        } else {
             ASSERT_TRUE(lease->getContext());
             ASSERT_TRUE(exp_context->equals(*(lease->getContext())))
                 << "expected: " << *(exp_context) << std::endl

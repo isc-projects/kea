@@ -795,7 +795,7 @@ public:
 
     /// @brief Sets DHCP4o6 IPC port
     ///
-    /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
+    /// DHCPv4-over-DHCPv6 uses a UDP socket for inter-server communication,
     /// this socket is bound and connected to this port and port + 1
     ///
     /// @param port port and port + 1 to use
@@ -945,6 +945,24 @@ public:
     /// @param unique Boolean value indicating if it is allowed (when false)
     /// or disallowed to specify multiple hosts with the same IP reservation.
     void setIPReservationsUnique(const bool unique);
+
+    /// @brief Sets whether the server does host reservations lookup before lease
+    /// lookup.
+    ///
+    /// @param first Boolean value indicating if host reservations lookup should
+    /// be performed before lease lookup.
+    void setReservationsLookupFirst(const bool first) {
+        reservations_lookup_first_ = first;
+    }
+
+    /// @brief Returns whether the server does host reservations lookup before
+    /// lease lookup.
+    ///
+    /// @return Boolean value indicating if host reservations lookup should be
+    /// performed before lease lookup.
+    bool getReservationsLookupFirst() const {
+        return (reservations_lookup_first_);
+    }
 
     /// @brief Unparse a configuration object
     ///
@@ -1131,6 +1149,13 @@ private:
     /// @{
     bool lenient_option_parsing_;
     /// @}
+
+    /// @brief Flag which indicates if the server should do host reservations
+    /// lookup before lease lookup. This parameter has effect only when
+    /// multi-threading is disabled. If multi-threading is enabled, host
+    /// reservations lookup is always performed first.
+    /// It default to false then multi-threading is disabled.
+    bool reservations_lookup_first_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

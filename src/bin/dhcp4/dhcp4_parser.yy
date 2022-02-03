@@ -240,6 +240,7 @@ using namespace std;
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
   IP_RESERVATIONS_UNIQUE "ip-reservations-unique"
+  RESERVATIONS_LOOKUP_FIRST "reservations-lookup-first"
 
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -541,6 +542,7 @@ global_param: valid_lifetime
             | statistic_default_sample_age
             | dhcp_multi_threading
             | ip_reservations_unique
+            | reservations_lookup_first
             | compatibility
             | parked_packet_limit
             | unknown_map_entry
@@ -760,6 +762,12 @@ ip_reservations_unique: IP_RESERVATIONS_UNIQUE COLON BOOLEAN {
     ctx.unique("ip-reservations-unique", ctx.loc2pos(@1));
     ElementPtr unique(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ip-reservations-unique", unique);
+};
+
+reservations_lookup_first: RESERVATIONS_LOOKUP_FIRST COLON BOOLEAN {
+    ctx.unique("reservations-lookup-first", ctx.loc2pos(@1));
+    ElementPtr first(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reservations-lookup-first", first);
 };
 
 interfaces_config: INTERFACES_CONFIG {

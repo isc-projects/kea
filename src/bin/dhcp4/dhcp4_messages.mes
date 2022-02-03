@@ -485,6 +485,10 @@ lifetime.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
+% DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
+
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
 This debug message is issued when the server is starting to send
 name change requests to the D2 module to update records for the client

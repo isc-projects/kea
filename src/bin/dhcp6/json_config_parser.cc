@@ -11,19 +11,15 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <database/dbaccess_parser.h>
-#include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
-#include <dhcpsrv/pool.h>
-#include <dhcpsrv/subnet.h>
-#include <dhcpsrv/timer_mgr.h>
-#include <util/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
@@ -38,13 +34,17 @@
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
 #include <process/config_ctl_parser.h>
-
 #include <util/encode/hex.h>
+#include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
+#include <util/triplet.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -68,6 +68,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::config;
+using namespace isc::util;
 
 namespace {
 
@@ -176,7 +177,7 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(const SrvConfigPtr& srv_config, const ConstElementPtr& global) {
+    void parse(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
         // Set the data directory for server id file.
         if (global->contains("data-directory")) {
@@ -187,21 +188,21 @@ public:
         // Set the probation period for decline handling.
         uint32_t probation_period =
             getUint32(global, "decline-probation-period");
-        srv_config->setDeclinePeriod(probation_period);
+        cfg->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
-        srv_config->setDhcp4o6Port(dhcp4o6_port);
+        cfg->setDhcp4o6Port(dhcp4o6_port);
 
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
-            srv_config->setContext(user_context);
+            cfg->setContext(user_context);
         }
 
         // Set the server's logical name
         std::string server_tag = getString(global, "server-tag");
-        srv_config->setServerTag(server_tag);
+        cfg->setServerTag(server_tag);
     }
 
     /// @brief Sets global parameters before other parameters are parsed.
@@ -547,11 +548,22 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             parser.parse(*srv_config, multi_threading);
         }
 
+        /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr queue_control = mutable_cfg->get("dhcp-queue-control");
         if (queue_control) {
             parameter_name = "dhcp-queue-control";
             DHCPQueueControlParser parser;
             srv_config->setDHCPQueueControl(parser.parse(queue_control));
+        }
+
+        /// depends on "multi-threading" being enabled, so it must come after.
+        ConstElementPtr reservations_lookup_first = mutable_cfg->get("reservations-lookup-first");
+        if (reservations_lookup_first) {
+            parameter_name = "reservations-lookup-first";
+            if (MultiThreadingMgr::instance().getMode()) {
+                LOG_WARN(dhcp6_logger, DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED);
+            }
+            srv_config->setReservationsLookupFirst(reservations_lookup_first->boolValue());
         }
 
         ConstElementPtr hr_identifiers =
@@ -804,6 +816,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "statistic-default-sample-count") ||
                  (config_pair.first == "statistic-default-sample-age") ||
                  (config_pair.first == "ip-reservations-unique") ||
+                 (config_pair.first == "reservations-lookup-first") ||
                  (config_pair.first == "parked-packet-limit")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);

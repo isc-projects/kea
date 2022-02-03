@@ -4646,7 +4646,7 @@ for the same IPv6 address and/or delegated prefix in a given subnet. This
 is supported since Kea release 1.9.1 as an optional mode of operation
 enabled with the ``ip-reservations-unique`` global parameter.
 
-``ip-reservations-unique`` is a boolean parameter that defaults to
+The ``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
 for the same lease in a given subnet. Setting this parameter to ``false``
 allows such reservations to be created both in the Kea configuration
@@ -4721,6 +4721,13 @@ for the same IP address or delegated prefix.
    lease allocations. The administrator must ensure that there is at
    most one reservation for each IP address and/or delegated prefix
    within each subnet, prior to the configuration update.
+
+The ``reservations-lookup-first`` is a boolean parameter which controls whether
+host reservations lookup should be performed before lease lookup. This parameter
+has effect only when multi-threading is disabled. When multi-threading is
+enabled, host reservations lookup is always performed first to avoid lease
+lookup resource locking. The ``reservations-lookup-first`` defaults to ``false``
+when multi-threading is disabled.
 
 .. _shared-network6:
 

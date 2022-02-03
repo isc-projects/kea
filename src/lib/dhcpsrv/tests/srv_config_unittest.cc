@@ -309,6 +309,26 @@ TEST_F(SrvConfigTest, echoClientId) {
     EXPECT_TRUE(conf1.getEchoClientId());
 }
 
+// This test verifies that host reservations lookup first flag can be configured.
+TEST_F(SrvConfigTest, reservationsLookupFirst) {
+    SrvConfig conf;
+
+    // Check that the default is false
+    EXPECT_FALSE(conf.getReservationsLookupFirst());
+
+    // Check that it can be modified to true
+    conf.setReservationsLookupFirst(true);
+    EXPECT_TRUE(conf.getReservationsLookupFirst());
+
+    // Check that the default value can be restored
+    conf.setReservationsLookupFirst(false);
+    EXPECT_FALSE(conf.getReservationsLookupFirst());
+
+    // Check the other constructor has the same default
+    SrvConfig conf1(1);
+    EXPECT_FALSE(conf1.getReservationsLookupFirst());
+}
+
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
 TEST_F(SrvConfigTest, copy) {
@@ -1029,6 +1049,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.setEchoClientId(true);
     cfg_from.setDhcp4o6Port(888);
     cfg_from.setServerTag("nor_this_server");
+    cfg_from.setReservationsLookupFirst(true);
 
     // Add a configured global ip-reservations-unique. It should be populated
     // to the CfgDbAccess and CfgHosts.
@@ -1037,6 +1058,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // Add some configured globals:
     cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1055,6 +1077,9 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     //  server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
+    //  reservations-lookup-first should be the "from" configured value.
+    EXPECT_TRUE(cfg_to.getReservationsLookupFirst());
+
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
@@ -1066,7 +1091,8 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
         "   \"decline-probation-period\": 300,  \n"
         "   \"dhcp4o6-port\": 999,  \n"
         "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\"  \n"
+        "   \"server-tag\": \"use_this_server\",  \n"
+        "   \"reservations-lookup-first\": true"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1105,6 +1131,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.setEchoClientId(true);
     cfg_from.setDhcp4o6Port(888);
     cfg_from.setServerTag("nor_this_server");
+    cfg_from.setReservationsLookupFirst(true);
 
     // Add a configured global ip-reservations-unique. It should be populated
     // to the CfgDbAccess and CfgHosts.
@@ -1113,6 +1140,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // Add some configured globals:
     cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1128,6 +1156,9 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     //  server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
+    //  reservations-lookup-first should be the "from" configured value.
+    EXPECT_TRUE(cfg_to.getReservationsLookupFirst());
+
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
@@ -1139,7 +1170,8 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
         "   \"decline-probation-period\": 300,  \n"
         "   \"dhcp4o6-port\": 999,  \n"
         "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\"  \n"
+        "   \"server-tag\": \"use_this_server\",  \n"
+        "   \"reservations-lookup-first\": true"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1148,7 +1180,6 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     EXPECT_TRUE(isEquivalent(expected_globals,
                              cfg_to.getConfiguredGlobals()->toElement()));
-
 }
 
 // This test verifies that new list of client classes replaces and old list

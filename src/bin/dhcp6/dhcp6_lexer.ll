@@ -2092,6 +2092,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"reservations-lookup-first\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS_LOOKUP_FIRST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservations-lookup-first", driver.loc_);
+    }
+}
+
 \"compatibility\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

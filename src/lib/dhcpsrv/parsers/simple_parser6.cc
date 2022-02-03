@@ -94,6 +94,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ip-reservations-unique",         Element::boolean },
+    { "reservations-lookup-first",      Element::boolean },
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "compatibility",                  Element::map },
@@ -129,6 +130,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "statistic-default-sample-count", Element::integer, "20" },
     { "statistic-default-sample-age",   Element::integer, "0" },
     { "ip-reservations-unique",         Element::boolean, "true" },
+    { "reservations-lookup-first",      Element::boolean, "false" },
     { "ddns-update-on-renew",           Element::boolean, "false" },
     { "ddns-use-conflict-resolution",   Element::boolean, "true" },
     { "parked-packet-limit",            Element::integer, "256" }

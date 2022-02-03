@@ -1021,6 +1021,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // the reservation. The default is to begin by the lease
     // if the multi-threading is disabled.
     bool check_reservation_first = MultiThreadingMgr::instance().getMode();
+    // If multi-threading is disabled, honor the configured order for host
+    // reservations lookup.
+    if (!check_reservation_first) {
+        check_reservation_first = CfgMgr::instance().getCurrentCfg()->getReservationsLookupFirst();
+    }
 
     uint64_t total_attempts = 0;
 
