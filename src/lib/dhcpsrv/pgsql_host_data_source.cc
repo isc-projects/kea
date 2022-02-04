@@ -2676,7 +2676,7 @@ PgSqlHostDataSource::del(const SubnetID& subnet_id,
     }
 
     // v6
-    bind_array->add(addr.toText());
+    bind_array->addTempString(addr.toText());
 
     return (impl_->delStatement(ctx, PgSqlHostDataSourceImpl::DEL_HOST_ADDR6,
                                 bind_array));

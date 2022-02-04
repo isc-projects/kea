@@ -1074,14 +1074,12 @@ public:
             PsqlBindArray parms;
 
             // Add first_subnet_id used by both single and range.
-            std::string subnet_id_str = boost::lexical_cast<std::string>(getFirstSubnetID());
-            parms.add(subnet_id_str);
+            parms.addTempString(boost::lexical_cast<std::string>(getFirstSubnetID()));
 
             // Add last_subnet_id for range.
             if (getSelectMode() == SUBNET_RANGE) {
                 // Add last_subnet_id used by range.
-                std::string subnet_id_str = boost::lexical_cast<std::string>(getLastSubnetID());
-                parms.add(subnet_id_str);
+                parms.addTempString(boost::lexical_cast<std::string>(getLastSubnetID()));
             }
 
             // Run the query with where clause parameters.
