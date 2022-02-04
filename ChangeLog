@@ -1,3 +1,13 @@
+1990.	[func]		razvan
+	Adden the ``reservations-lookup-first`` configuration parameter
+	which controls whether host reservations lookup should be performed
+	before lease lookup. This parameter has effect only when
+	multi-threading is disabled. When multi-threading is enabled, host
+	reservations lookup is always performed first. The
+	``reservations-lookup-first`` parameter defaults to ``false`` when
+	multi-threading is disabled.
+	(Gitlab #2036)
+
 Kea 2.1.2 (development) released on Jan 26, 2022
 
 1989.	[build]		razvan
