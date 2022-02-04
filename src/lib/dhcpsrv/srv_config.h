@@ -1154,7 +1154,7 @@ private:
     /// lookup before lease lookup. This parameter has effect only when
     /// multi-threading is disabled. If multi-threading is enabled, host
     /// reservations lookup is always performed first.
-    /// It default to false then multi-threading is disabled.
+    /// It default to false when multi-threading is disabled.
     bool reservations_lookup_first_;
 };
 
