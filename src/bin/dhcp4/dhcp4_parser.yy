@@ -239,6 +239,7 @@ using namespace std;
   WHEN_NOT_PRESENT "when-not-present"
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
+  EARLY_GLOBAL_RESERVATIONS_LOOKUP "early-global-reservations-lookup"
   IP_RESERVATIONS_UNIQUE "ip-reservations-unique"
   RESERVATIONS_LOOKUP_FIRST "reservations-lookup-first"
 
@@ -541,6 +542,7 @@ global_param: valid_lifetime
             | statistic_default_sample_count
             | statistic_default_sample_age
             | dhcp_multi_threading
+            | early_global_reservations_lookup
             | ip_reservations_unique
             | reservations_lookup_first
             | compatibility
@@ -756,6 +758,12 @@ statistic_default_sample_age: STATISTIC_DEFAULT_SAMPLE_AGE COLON INTEGER {
     ctx.unique("statistic-default-sample-age", ctx.loc2pos(@1));
     ElementPtr age(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("statistic-default-sample-age", age);
+};
+
+early_global_reservations_lookup: EARLY_GLOBAL_RESERVATIONS_LOOKUP COLON BOOLEAN {
+    ctx.unique("early-global-reservations-lookup", ctx.loc2pos(@1));
+    ElementPtr early(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("early-global-reservations-lookup", early);
 };
 
 ip_reservations_unique: IP_RESERVATIONS_UNIQUE COLON BOOLEAN {

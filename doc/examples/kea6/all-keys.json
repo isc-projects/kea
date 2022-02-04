@@ -398,6 +398,13 @@
             "re-detect": true
         },
 
+        // Boolean parameter which controls  whether an early global host
+        // reservations lookup should be performed. This lookup takes place
+        // before first classification step so before subnet selection.
+        // It can be used too to drop queries using host reservations as
+        // a decision table indexed by reservation identifiers.
+        "early-global-reservations-lookup": true,
+
         // Boolean parameter which controls DHCP server's behavior with respect
         // to creating host reservations for the same IP address or delegated
         // prefix. By default this flag is set to true in which case the server

@@ -681,6 +681,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
                  (config_pair.first == "statistic-default-sample-age") ||
+                 (config_pair.first == "early-global-reservations-lookup") ||
                  (config_pair.first == "ip-reservations-unique") ||
                  (config_pair.first == "reservations-lookup-first") ||
                  (config_pair.first == "parked-packet-limit")) {

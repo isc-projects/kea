@@ -2083,6 +2083,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"early-global-reservations-lookup\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_EARLY_GLOBAL_RESERVATIONS_LOOKUP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("early-global-reservations-lookup", driver.loc_);
+    }
+}
+
 \"ip-reservations-unique\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

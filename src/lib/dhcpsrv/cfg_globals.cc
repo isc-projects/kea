@@ -44,6 +44,7 @@ CfgGlobals::nameToIndex = {
     { "statistic-default-sample-age", STATISTIC_DEFAULT_SAMPLE_AGE },
     { "cache-threshold", CACHE_THRESHOLD },
     { "cache-max-age", CACHE_MAX_AGE },
+    { "early-global-reservations-lookup", EARLY_GLOBAL_RESERVATIONS_LOOKUP },
     { "ip-reservations-unique", IP_RESERVATIONS_UNIQUE },
     { "reservations-lookup-first", RESERVATIONS_LOOKUP_FIRST },
     { "ddns-update-on-renew", DDNS_UPDATE_ON_RENEW },
