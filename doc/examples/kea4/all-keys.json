@@ -457,7 +457,8 @@
 
         // Boolean parameter which controls  whether an early global host
         // reservations lookup should be performed. This lookup takes place
-        // before first classification step so before subnet selection.
+        // before subnet selection and when a global reservation is found
+        // with some client classes triggers a second phase classification.
         // It can be used too to drop queries using host reservations as
         // a decision table indexed by reservation identifiers.
         "early-global-reservations-lookup": true,

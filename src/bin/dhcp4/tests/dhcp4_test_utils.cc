@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -919,7 +919,10 @@ Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
     bool drop = false;
     Subnet4Ptr subnet = srv_.selectSubnet(query, drop);
     EXPECT_FALSE(drop);
-    Dhcpv4Exchange ex(srv_.alloc_engine_, query, subnet, drop);
+    AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+    EXPECT_TRUE(srv_.earlyGHRLookup(query, context));
+    Dhcpv4Exchange ex(srv_.alloc_engine_, query, context, subnet, drop);
+    EXPECT_FALSE(context);
     EXPECT_FALSE(drop);
     return (ex);
 }

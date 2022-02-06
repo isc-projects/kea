@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -454,7 +454,7 @@ public:
         }
 
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !srv_->earlyGHRLookup(query, ctx);
         srv_->initContext(query, ctx, drop);
 
         Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
@@ -515,7 +515,8 @@ public:
         // functions to generate response.
         Pkt6Ptr reply;
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !srv_->earlyGHRLookup(req, ctx);
+        ASSERT_FALSE(drop);
         srv_->initContext(req, ctx, drop);
 
         ASSERT_FALSE(drop);

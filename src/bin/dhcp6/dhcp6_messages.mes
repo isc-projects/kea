@@ -563,6 +563,11 @@ after a specified amount of time since receiving "dhcp-disable" command.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
+% DHCP6_PACKET_DROP_DROP_CLASS_EARLY dropped as member of the special class 'DROP' after early global host reservations lookup: %1
+This debug message is emitted when an incoming packet was classified
+after early global host reservations lookup into the special class 'DROP'
+and dropped. The packet details are displayed.
+
 % DHCP6_PACKET_DROP_DROP_CLASS2 dropped as member of the special class 'DROP' after host reservation lookup: %1
 This debug message is emitted when an incoming packet was classified
 after host reservation lookup into the special class 'DROP' and dropped.

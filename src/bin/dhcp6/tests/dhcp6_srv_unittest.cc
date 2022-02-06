@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,7 +162,8 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -388,7 +389,8 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_.processSolicit(ctx);
@@ -416,6 +418,8 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Need to process SOLICIT again after requesting new option.
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
     adv = srv_.processSolicit(ctx2);
@@ -481,7 +485,8 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -530,7 +535,8 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -572,7 +578,8 @@ TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -619,7 +626,8 @@ TEST_F(Dhcpv6SrvTest, hintZeroLifetimeSolicit) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -668,7 +676,8 @@ TEST_F(Dhcpv6SrvTest, hintLifetimeSolicit) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -715,7 +724,8 @@ TEST_F(Dhcpv6SrvTest, minLifetimeSolicit) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -764,7 +774,8 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -823,7 +834,8 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -881,7 +893,8 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -946,15 +959,20 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(sol1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(sol2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(sol2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(sol3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(sol3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply3 = srv.processSolicit(ctx3);
@@ -1043,7 +1061,8 @@ TEST_F(Dhcpv6SrvTest, SolicitCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -1114,7 +1133,8 @@ TEST_F(Dhcpv6SrvTest, pdSolicitCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
@@ -1409,7 +1429,8 @@ TEST_F(Dhcpv6SrvTest, RequestCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(req, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
@@ -1480,7 +1501,8 @@ TEST_F(Dhcpv6SrvTest, pdRequestCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(req, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
@@ -1693,7 +1715,8 @@ TEST_F(Dhcpv6SrvTest, RenewCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(req, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
@@ -1764,7 +1787,8 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(req, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
@@ -2613,7 +2637,8 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
 
     // Let the server process it and generate a response.
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv_.processSolicit(ctx);
@@ -2633,6 +2658,8 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     // Let the server process it again. This time the name-servers
     // option should be present.
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx2);
@@ -2653,6 +2680,8 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
 
     // Let the server process it again.
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx3, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx3);
@@ -3430,7 +3459,8 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             subnet_->setT1Percent((*test).t1_percent_);
             subnet_->setT2Percent((*test).t2_percent_);
             AllocEngine::ClientContext6 ctx;
-            bool drop = false;
+            bool drop = !srv.earlyGHRLookup(sol, ctx);
+            ASSERT_FALSE(drop);
             srv.initContext(sol, ctx, drop);
             ASSERT_FALSE(drop);
             Pkt6Ptr reply = srv.processSolicit(ctx);

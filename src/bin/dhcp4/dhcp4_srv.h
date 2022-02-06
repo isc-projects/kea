@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,9 +72,11 @@ public:
     /// @param alloc_engine Pointer to the instance of the Allocation Engine
     /// used by the server.
     /// @param query Pointer to the client message.
+    /// @param context Pointer to the client context.
     /// @param subnet Pointer to the subnet to which the client belongs.
     /// @param drop if it is true the packet will be dropped.
     Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query,
+                   AllocEngine::ClientContext4Ptr& context,
                    const Subnet4Ptr& subnet, bool& drop);
 
     /// @brief Initializes the instance of the response message.
@@ -126,6 +128,24 @@ public:
     /// server's response.
     void setReservedMessageFields();
 
+    /// @brief Set host identifiers within a context.
+    ///
+    /// This method sets an ordered list of host identifier types and
+    /// values which the server should use to find host reservations.
+    /// The order of the set is determined by the configuration parameter,
+    /// host-reservation-identifiers
+    ///
+    /// @param context pointer to the context.
+    static void setHostIdentifiers(AllocEngine::ClientContext4Ptr context);
+
+    /// @brief Removed evaluated client classes.
+    ///
+    /// @todo: keep the list of dependent evaluated classes so
+    /// removed only them.
+    ///
+    /// @param query the query message.
+    static void removeDependentEvaluatedClasses(const Pkt4Ptr& query);
+
     /// @brief Assigns classes retrieved from host reservation database.
     ///
     /// @param context pointer to the context.
@@ -152,16 +172,6 @@ public:
     /// @param pkt packet to be classified
     static void classifyPacket(const Pkt4Ptr& pkt);
 
-private:
-
-    /// @public
-    /// @brief Assign class using vendor-class-identifier option
-    ///
-    /// @note This is the first part of @ref classifyPacket
-    ///
-    /// @param pkt packet to be classified
-    static void classifyByVendor(const Pkt4Ptr& pkt);
-
     /// @brief Evaluate classes.
     ///
     /// @note Second part of the classification.
@@ -173,6 +183,16 @@ private:
     /// @param depend_on_known if false classes depending on the KNOWN or
     /// UNKNOWN classes are skipped, if true only these classes are evaluated.
     static void evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known);
+
+private:
+
+    /// @public
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    static void classifyByVendor(const Pkt4Ptr& pkt);
 
     /// @brief Copies default parameters from client's to server's message
     ///
@@ -195,14 +215,6 @@ private:
     /// calling method is responsible for making sure that @c resp_ is
     /// not NULL.
     void copyDefaultOptions();
-
-    /// @brief Set host identifiers within a context.
-    ///
-    /// This method sets an ordered list of host identifier types and
-    /// values which the server should use to find host reservations.
-    /// The order of the set is determined by the configuration parameter,
-    /// host-reservation-identifiers
-    void setHostIdentifiers();
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
@@ -453,6 +465,16 @@ public:
         return (test_send_responses_to_source_);
     }
 
+    /// @brief Initialize client context and perform early global
+    /// reservations lookup.
+    ///
+    /// @param query The query message.
+    /// @param ctx Pointer to client context.
+    /// @return true if processing can continue, false if the query must be
+    /// dropped.
+    bool earlyGHRLookup(const Pkt4Ptr& query,
+                        AllocEngine::ClientContext4Ptr ctx);
+
 protected:
 
     /// @name Functions filtering and sanity-checking received messages.
@@ -566,9 +588,10 @@ protected:
     /// as an offer to a client if it should be served.
     ///
     /// @param discover DISCOVER message received from client
+    /// @param context pointer to the client context
     ///
     /// @return OFFER message or NULL
-    Pkt4Ptr processDiscover(Pkt4Ptr& discover);
+    Pkt4Ptr processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
     ///
@@ -580,8 +603,8 @@ protected:
     /// Returns ACK message, NAK message, or NULL
     ///
     /// @param request a message received from client
-    /// @param [out] context pointer to the client context where allocated
-    /// and deleted leases are stored.
+    /// @param context pointer to the client context  where allocated and
+    /// deleted leases are stored.
     ///
     /// @return ACK or NAK message
     Pkt4Ptr processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context);
@@ -592,8 +615,8 @@ protected:
     /// this function does not return anything.
     ///
     /// @param release message received from client
-    /// @param [out] context pointer to the client context where released
-    /// lease is stored.
+    /// @param context pointer to the client context where released lease is
+    /// stored.
     void processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Process incoming DHCPDECLINE messages.
@@ -603,16 +626,17 @@ protected:
     /// the client and if it does, calls @ref declineLease.
     ///
     /// @param decline message received from client
-    /// @param [out] context pointer to the client context where declined
-    /// lease is stored.
+    /// @param context pointer to the client context where declined lease is
+    /// stored.
     void processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming DHCPINFORM messages.
     ///
     /// @param inform message received from client
+    /// @param context pointer to the client context
     ///
     /// @return DHCPACK to be sent to the client.
-    Pkt4Ptr processInform(Pkt4Ptr& inform);
+    Pkt4Ptr processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Build the configured option list
     ///

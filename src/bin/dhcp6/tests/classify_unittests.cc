@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,7 +85,7 @@ namespace {
 /// - Configuration 5:
 ///   - Used for the DROP class and reservation class
 ///   - 1 subnet: 2001:db8:1::/48
-///   - 2 pool: 2001:db8:1:1::/64
+///   - 1 pool: 2001:db8:1:1::/64
 ///   - the following class defined:
 ///     - allowed
 ///     - member('KNOWN') or member('UNKNOWN'), t
@@ -93,6 +93,19 @@ namespace {
 ///     The function of the always true 't' class is to move the DROP
 ///     evaluation to the classification point after the host reservation
 ///     lookup, i.e. indirect KNOWN / UNKNOWN dependency
+///
+/// - Configuration 6:
+///   - Used for the early global reservations lookup / select subnet.
+///   - 2 subnets: 2001:db8:1::/48 (guarded) and 2001:db8:2::/48
+///   - 2 pools: 2001:db8:1:1::/64 and 2001:db8:2:1::/64
+///   - 1 global reservation setting the first class
+///   - the following class defined: first
+///
+/// - Configuration 7:
+///   - Used for the early global reservations lookup / drop.
+///   - 1 subnet: 2001:db8:1::/48
+///   - 1 pool: 2001:db8:1:1::/64
+///   - 1 global reservation setting the DROP class
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -364,7 +377,67 @@ const char* CONFIGS[] = {
         "        \"client-classes\": [ \"allowed\" ]"
         "    } ]"
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 6
+    "{ \"interfaces-config\": {"
+    "  \"interfaces\": [ \"*\" ]"
+    "},"
+    "\"early-global-reservations-lookup\": true, "
+    "\"preferred-lifetime\": 3000, "
+    "\"rebind-timer\": 2000, "
+    "\"renew-timer\": 1000, "
+    "\"client-classes\": ["
+    "{"
+    "   \"name\": \"first\""
+    "}"
+    "],"
+    "\"subnet6\": [ "
+    "{"
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "    \"subnet\": \"2001:db8:1::/48\", "
+    "    \"interface\": \"eth1\","
+    "    \"id\": 1,"
+    "    \"client-class\": \"first\""
+    "},"
+    "{"
+    "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ], "
+    "    \"subnet\": \"2001:db8:2::/48\", "
+    "    \"interface\": \"eth1\","
+    "    \"id\": 2"
+    "}"
+    "],"
+    "\"reservations\": ["
+    "{"
+    "    \"duid\": \"01:02:03:04\","
+    "    \"client-classes\": [ \"first\" ]"
+    "}"
+    "],"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 7
+    "{ \"interfaces-config\": {"
+    "  \"interfaces\": [ \"*\" ]"
+    "},"
+    "\"early-global-reservations-lookup\": true, "
+    "\"preferred-lifetime\": 3000, "
+    "\"rebind-timer\": 2000, "
+    "\"renew-timer\": 1000, "
+    "\"subnet6\": [ "
+    "{"
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "    \"subnet\": \"2001:db8:1::/48\", "
+    "    \"interface\": \"eth1\","
+    "    \"id\": 1"
+    "}"
+    "],"
+    "\"reservations\": ["
+    "{"
+    "    \"duid\": \"01:02:03:04\","
+    "    \"client-classes\": [ \"DROP\" ]"
+    "}"
+    "],"
+    "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing client classification by the
@@ -545,15 +618,20 @@ TEST_F(ClassifyTest, matchClassification) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(query3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
@@ -651,15 +729,20 @@ TEST_F(ClassifyTest, required) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(query3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
@@ -754,15 +837,20 @@ TEST_F(ClassifyTest, requiredClassification) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(query3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
@@ -840,7 +928,8 @@ TEST_F(ClassifyTest, subnetClassPriority) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
@@ -905,7 +994,8 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
@@ -979,7 +1069,8 @@ TEST_F(ClassifyTest, classGlobalPriority) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
@@ -1046,7 +1137,8 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
@@ -1167,7 +1259,8 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // be serviced
     srv.classifyPacket(query1);
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
@@ -1182,6 +1275,8 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // Still not supported, because it belongs to wrong class.
     srv.classifyPacket(query2);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
@@ -1196,6 +1291,8 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // This time it should work
     srv.classifyPacket(query3);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(query3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(query3, ctx3,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
@@ -1251,7 +1348,8 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     // First pool requires reservation so the second will be used
     srv.classifyPacket(query1);
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
@@ -1280,6 +1378,8 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     // Now the first pool will be used
     srv.classifyPacket(query2);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
@@ -1576,15 +1676,20 @@ TEST_F(ClassifyTest, member) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = false;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv.earlyGHRLookup(query2, ctx2);
+    ASSERT_FALSE(drop);
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
+    drop = !srv.earlyGHRLookup(query3, ctx3);
+    ASSERT_FALSE(drop);
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
@@ -2278,6 +2383,90 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     // This statistic must be present and must be set to 1.
     ASSERT_TRUE(drop_stat);
     EXPECT_EQ(1, drop_stat->getInteger().first);
+}
+
+// This test checks the early global reservations lookup for selecting
+// a guarded subnet.
+TEST_F(ClassifyTest, earlySubnet) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+    client.setInterface("eth1");
+    client.requestAddress();
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(CONFIGS[6], *client.getServer()));
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // Check response.
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na);
+    EXPECT_FALSE(ia_na->getOption(D6O_STATUS_CODE));
+    OptionPtr iaaddr = ia_na->getOption(D6O_IAADDR);
+    ASSERT_TRUE(iaaddr);
+    boost::shared_ptr<Option6IAAddr> addr =
+        boost::dynamic_pointer_cast<Option6IAAddr>(iaaddr);
+    ASSERT_TRUE(addr);
+    EXPECT_EQ("2001:db8:1::", addr->getAddress().toText());
+
+    // Retry with another DUID.
+    Dhcp6Client client2;
+    client2.setDUID("01:02:03:05");
+    client2.setInterface("eth1");
+    client2.requestAddress();
+
+    ASSERT_NO_THROW(client2.doSolicit(true));
+
+    // Check response.
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ia_na = resp->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na);
+    EXPECT_FALSE(ia_na->getOption(D6O_STATUS_CODE));
+    iaaddr = ia_na->getOption(D6O_IAADDR);
+    ASSERT_TRUE(iaaddr);
+    addr = boost::dynamic_pointer_cast<Option6IAAddr>(iaaddr);
+    ASSERT_TRUE(addr);
+    EXPECT_EQ("2001:db8:2::", addr->getAddress().toText());
+}
+
+// This test checks the early global reservations lookup for dropping.
+TEST_F(ClassifyTest, earlyDrop) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+    client.setInterface("eth1");
+    client.requestAddress();
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(CONFIGS[7], *client.getServer()));
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // Match the reservation so dropped.
+    EXPECT_FALSE(client.getContext().response_);
+
+    // There should also be pkt6-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
+
+    // Retry with another DUID.
+    Dhcp6Client client2;
+    client2.setDUID("01:02:03:05");
+    client2.setInterface("eth1");
+    client2.requestAddress();
+
+    ASSERT_NO_THROW(client2.doSolicit(true));
+
+    // Not matchine so not dropped.
+    EXPECT_TRUE(client2.getContext().response_);
 }
 
 } // end of anonymous namespace

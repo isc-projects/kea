@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,6 +106,21 @@ namespace {
 ///     The function of the always true 't' class is to move the DROP
 ///     evaluation to the classification point after the host reservation
 ///     lookup, i.e. indirect KNOWN / UNKNOWN dependency.
+///
+/// - Configuration 8:
+///   - Used for the early global reservations lookup / select subnet.
+///   - 2 subnets: 10.0.0.0/24 guarded by first and 10.0.1.0/24
+///   - 2 pools: 10.0.0.10-10.0.0.100 and 10.0.1.10-10.0.1.100
+///   - 1 global reservation for HW address 'aa:bb:cc:dd:ee:ff'
+///     setting the first class
+///   - the following class defined: first
+///
+/// - Configuration 9:
+///   - Used for the early global reservations lookup / drop.
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
+///     setting the DROP class
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -369,7 +384,53 @@ const char* CONFIGS[] = {
         "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
         "        \"client-classes\": [ \"allowed\" ] } ]"
         " } ]"
-    "}"
+    "}",
+
+    // Configuration 8
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"early-global-reservations-lookup\": true,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"first\""
+        "}],"
+        "\"subnet4\": ["
+        "{"
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"id\": 1,"
+        "    \"interface\": \"eth0\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"client-class\": \"first\""
+        "},"
+        "{"
+        "    \"subnet\": \"10.0.1.0/24\","
+        "    \"interface\": \"eth0\","
+        "    \"id\": 2,"
+        "    \"pools\": [ { \"pool\": \"10.0.1.10-10.0.1.100\" } ]"
+        "}],"
+        "\"reservations\": [ {"
+        "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "    \"client-classes\": [ \"first\" ] } ]"
+    "}",
+
+    // Configuration 9
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"early-global-reservations-lookup\": true,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"interface\": \"eth0\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ] } ],"
+        "\"reservations\": [ {"
+        "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "    \"client-classes\": [ \"DROP\" ] } ]"
+    "}",
+
 };
 
 /// @brief Test fixture class for testing classification.
@@ -1306,6 +1367,77 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     // This statistic must be present and must be set to 1.
     ASSERT_TRUE(drop_stat);
     EXPECT_EQ(1, drop_stat->getInteger().first);
+}
+
+// This test checks the early global reservations lookup for selecting
+// a guarded subnet.
+TEST_F(ClassifyTest, earlySubnet) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[8], *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Try with a different HW address.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+
+    // Set the HW address to another value.
+    client2.setHWAddress("aa:bb:cc:01:ee:ff");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Check response.
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.1.10", resp->getYiaddr().toText());
+}
+
+// This test checks the early global reservations lookup for dropping.
+TEST_F(ClassifyTest, earlyDrop) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[9], *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Match the reservation so dropped.
+    EXPECT_FALSE(client.getContext().response_);
+
+    // There should also be pkt4-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt4-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
+
+    // Try with a different HW address.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+
+    // Set the HW address to another value.
+    client2.setHWAddress("aa:bb:cc:01:ee:ff");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Not matchine so not dropped.
+    EXPECT_TRUE(client2.getContext().response_);
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1696,7 +1696,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
@@ -1781,7 +1782,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
@@ -4982,7 +4984,8 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
@@ -5064,7 +5067,8 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier_hwaddr) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -211,12 +211,23 @@ public:
     virtual ~NakedDhcpv4Srv() {
     }
 
+    /// @brief Runs processing DHCPDISCOVER.
+    ///
+    /// @param discover a message received from client
+    /// @return DHCPOFFER message or null
+    Pkt4Ptr processDiscover(Pkt4Ptr& discover) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        earlyGHRLookup(discover, context);
+        return (processDiscover(discover, context));
+    }
+
     /// @brief Runs processing DHCPREQUEST.
     ///
     /// @param request a message received from client
     /// @return DHCPACK or DHCPNAK message
     Pkt4Ptr processRequest(Pkt4Ptr& request) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        earlyGHRLookup(request, context);
         return (processRequest(request, context));
     }
 
@@ -225,6 +236,7 @@ public:
     /// @param release message received from client
     void processRelease(Pkt4Ptr& release) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        earlyGHRLookup(release, context);
         processRelease(release, context);
     }
 
@@ -233,7 +245,18 @@ public:
     /// @param decline message received from client
     void processDecline(Pkt4Ptr& decline) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        earlyGHRLookup(decline, context);
         processDecline(decline, context);
+    }
+
+    /// @brief Runs processing DHCPINFORM.
+    ///
+    /// @param inform a message received from client
+    /// @return DHCPACK message
+    Pkt4Ptr processInform(Pkt4Ptr& inform) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        earlyGHRLookup(inform, context);
+        return (processInform(inform, context));
     }
 
     /// @brief Dummy server identifier option used by various tests.

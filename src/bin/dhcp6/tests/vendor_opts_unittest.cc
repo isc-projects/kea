@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,7 +114,8 @@ public:
 
         // Pass it to the server and get an advertise.
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !srv_.earlyGHRLookup(sol, ctx);
+        ASSERT_FALSE(drop);
         srv_.initContext(sol, ctx, drop);
         ASSERT_FALSE(drop);
         Pkt6Ptr adv = srv_.processSolicit(ctx);
@@ -137,6 +138,8 @@ public:
 
         // Need to process SOLICIT again after requesting new option.
         AllocEngine::ClientContext6 ctx2;
+        drop = !srv_.earlyGHRLookup(sol, ctx2);
+        ASSERT_FALSE(drop);
         srv_.initContext(sol, ctx2, drop);
         ASSERT_FALSE(drop);
         adv = srv_.processSolicit(ctx2);
@@ -415,7 +418,8 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_.processSolicit(ctx);
@@ -451,6 +455,8 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
 
     // Need to process SOLICIT again after requesting new option.
     AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    ASSERT_FALSE(drop);
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
     adv = srv_.processSolicit(ctx2);

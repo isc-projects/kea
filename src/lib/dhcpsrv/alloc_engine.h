@@ -473,6 +473,11 @@ public:
         /// update existing lease.
         bool fake_allocation_;
 
+	/// @brief Indicates if early global reservation is looked for.
+	///
+	/// This caches the early-global-reservations-lookup value.
+	bool early_global_reservations_lookup_;
+
         /// @brief Subnet selected for the client by the server.
         Subnet6Ptr subnet_;
 
@@ -1373,6 +1378,11 @@ public:
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext4 : public boost::noncopyable {
+	/// @brief Indicates if early global reservation is looked for.
+	///
+	/// This caches the early-global-reservations-lookup value.
+	bool early_global_reservations_lookup_;
+
         /// @brief Subnet selected for the client by the server.
         Subnet4Ptr subnet_;
 

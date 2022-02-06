@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -230,7 +230,7 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !earlyGHRLookup(request, ctx);
         initContext(request, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
@@ -244,7 +244,7 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !earlyGHRLookup(renew, ctx);
         initContext(renew, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
@@ -258,7 +258,7 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !earlyGHRLookup(rebind, ctx);
         initContext(rebind, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
@@ -272,7 +272,7 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRelease(const Pkt6Ptr& release) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !earlyGHRLookup(release, ctx);
         initContext(release, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
@@ -286,7 +286,7 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = false;
+        bool drop = !earlyGHRLookup(decline, ctx);
         initContext(decline, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
@@ -312,6 +312,7 @@ public:
     using Dhcpv6Srv::shutdown_;
     using Dhcpv6Srv::name_change_reqs_;
     using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
+    using Dhcpv6Srv::earlyGHRLookup;
     using Dhcpv6Srv::initContext;
     using Dhcpv6Srv::server_port_;
     using Dhcpv6Srv::client_port_;

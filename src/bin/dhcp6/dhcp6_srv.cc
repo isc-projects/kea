@@ -359,17 +359,146 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
 }
 
 void
+Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
+    const ConstCfgHostOperationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
+    BOOST_FOREACH(const Host::IdentifierType& id_type,
+                  cfg->getIdentifierTypes()) {
+        switch (id_type) {
+        case Host::IDENT_DUID:
+            if (ctx.duid_) {
+                ctx.addHostIdentifier(id_type, ctx.duid_->getDuid());
+            }
+            break;
+
+        case Host::IDENT_HWADDR:
+            if (ctx.hwaddr_) {
+                ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
+            }
+            break;
+        case Host::IDENT_FLEX:
+            // At this point the information in the packet has been unpacked into
+            // the various packet fields and option objects has been created.
+            // Execute callouts registered for host6_identifier.
+            if (HooksManager::calloutsPresent(Hooks.hook_index_host6_identifier_)) {
+                CalloutHandlePtr callout_handle = getCalloutHandle(ctx.query_);
+
+                Host::IdentifierType type = Host::IDENT_FLEX;
+                std::vector<uint8_t> id;
+
+                // Use the RAII wrapper to make sure that the callout handle state is
+                // reset when this object goes out of scope. All hook points must do
+                // it to prevent possible circular dependency between the callout
+                // handle and its arguments.
+                ScopedCalloutHandleState callout_handle_state(callout_handle);
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("query6", ctx.query_);
+                callout_handle->setArgument("id_type", type);
+                callout_handle->setArgument("id_value", id);
+
+                // Call callouts
+                HooksManager::callCallouts(Hooks.hook_index_host6_identifier_,
+                                           *callout_handle);
+
+                callout_handle->getArgument("id_type", type);
+                callout_handle->getArgument("id_value", id);
+
+                if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                    !id.empty()) {
+
+                    LOG_DEBUG(packet6_logger, DBGLVL_TRACE_BASIC, DHCP6_FLEX_ID)
+                        .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+
+                    ctx.addHostIdentifier(type, id);
+                }
+            }
+            break;
+        default:
+            ;
+        }
+    }
+}
+
+bool
+Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
+                          AllocEngine::ClientContext6& ctx) {
+    // Pointer to client's query.
+    ctx.query_ = query;
+
+    // DUID.
+    ctx.duid_ = query->getClientId();
+
+    // Hardware address.
+    ctx.hwaddr_ = getMAC(query);
+
+    // Get the early-global-reservations-lookup flag value.
+    data::ConstElementPtr egrl = CfgMgr::instance().getCurrentCfg()->
+         getConfiguredGlobal(CfgGlobals::EARLY_GLOBAL_RESERVATIONS_LOOKUP);
+    if (egrl) {
+        ctx.early_global_reservations_lookup_ = egrl->boolValue();
+    }
+
+    // Perform early global reservations lookup when wanted.
+    if (ctx.early_global_reservations_lookup_) {
+        // Get the host identifiers.
+        setHostIdentifiers(ctx);
+
+        // Check for global host reservations.
+        ConstHostPtr global_host = alloc_engine_->findGlobalReservation(ctx);
+
+        if (global_host && !global_host->getClientClasses6().empty()) {
+            // Remove dependent evaluated classes.
+            removeDependentEvaluatedClasses(query);
+
+            // Add classes from the global reservations.
+            const ClientClasses& classes = global_host->getClientClasses6();
+             for (ClientClasses::const_iterator cclass = classes.cbegin();
+                  cclass != classes.cend(); ++cclass) {
+                 query->addClass(*cclass);
+             }
+
+             // Evaluate classes before KNOWN.
+             evaluateClasses(query, false);
+        }
+
+        if (global_host) {
+            // Add the KNOWN class;
+            query->addClass("KNOWN");
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+                .arg(query->getLabel())
+                .arg("KNOWN");
+
+            // Evaluate classes after KNOWN.
+            evaluateClasses(query, true);
+
+            // Check the DROP special class.
+            if (query->inClass("DROP")) {
+                LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING,
+                          DHCP6_PACKET_DROP_DROP_CLASS_EARLY)
+                    .arg(query->toText());
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
+                return (false);
+            }
+
+            // Store the reservation.
+            ctx.hosts_[SUBNET_ID_GLOBAL] = global_host;
+        }
+    }
+
+    return (true);
+}
+
+void
 Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
                        AllocEngine::ClientContext6& ctx,
                        bool& drop) {
     ctx.subnet_ = selectSubnet(pkt, drop);
-    ctx.duid_ = pkt->getClientId(),
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
     ctx.hostname_ = "";
-    ctx.query_ = pkt;
     ctx.callout_handle_ = getCalloutHandle(pkt);
-    ctx.hwaddr_ = getMAC(pkt);
 
     if (drop) {
         // Caller will immediately drop the packet so simply return now.
@@ -381,63 +510,10 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // order to search for host reservations.
     SharedNetwork6Ptr sn;
     if (ctx.subnet_) {
-        const ConstCfgHostOperationsPtr cfg =
-            CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
-        BOOST_FOREACH(const Host::IdentifierType& id_type,
-                      cfg->getIdentifierTypes()) {
-            switch (id_type) {
-            case Host::IDENT_DUID:
-                if (ctx.duid_) {
-                    ctx.addHostIdentifier(id_type, ctx.duid_->getDuid());
-                }
-                break;
-
-            case Host::IDENT_HWADDR:
-                if (ctx.hwaddr_) {
-                    ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
-                }
-                break;
-            case Host::IDENT_FLEX:
-                // At this point the information in the packet has been unpacked into
-                // the various packet fields and option objects has been created.
-                // Execute callouts registered for host6_identifier.
-                if (HooksManager::calloutsPresent(Hooks.hook_index_host6_identifier_)) {
-                    CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
-
-                    Host::IdentifierType type = Host::IDENT_FLEX;
-                    std::vector<uint8_t> id;
-
-                    // Use the RAII wrapper to make sure that the callout handle state is
-                    // reset when this object goes out of scope. All hook points must do
-                    // it to prevent possible circular dependency between the callout
-                    // handle and its arguments.
-                    ScopedCalloutHandleState callout_handle_state(callout_handle);
-
-                    // Pass incoming packet as argument
-                    callout_handle->setArgument("query6", pkt);
-                    callout_handle->setArgument("id_type", type);
-                    callout_handle->setArgument("id_value", id);
-
-                    // Call callouts
-                    HooksManager::callCallouts(Hooks.hook_index_host6_identifier_,
-                                               *callout_handle);
-
-                    callout_handle->getArgument("id_type", type);
-                    callout_handle->getArgument("id_value", id);
-
-                    if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
-                        !id.empty()) {
-
-                        LOG_DEBUG(packet6_logger, DBGLVL_TRACE_BASIC, DHCP6_FLEX_ID)
-                            .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
-
-                        ctx.addHostIdentifier(type, id);
-                    }
-                }
-                break;
-            default:
-                ;
-            }
+        // Before we can check for static reservations, we need to prepare
+        // a set of identifiers to be used for this.
+        if (!ctx.early_global_reservations_lookup_) {
+            setHostIdentifiers(ctx);
         }
 
         // Find host reservations using specified identifiers.
@@ -455,7 +531,8 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // affect selection of a pool within the selected subnet.
     auto global_host = ctx.globalHost();
     auto current_host = ctx.currentHost();
-    if ((global_host && !global_host->getClientClasses6().empty()) ||
+    if ((!ctx.early_global_reservations_lookup_ &&
+         global_host && !global_host->getClientClasses6().empty()) ||
         (!sn && current_host && !current_host->getClientClasses6().empty())) {
         // We have already evaluated client classes and some of them may
         // be in conflict with the reserved classes. Suppose there are
@@ -471,17 +548,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
         // a result, the first_class set via the host reservation will
         // replace the second_class because the second_class will this
         // time evaluate to false as desired.
-        const ClientClassDictionaryPtr& dict =
-            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-        const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-        for (auto def : *defs_ptr) {
-            // Only remove evaluated classes. Other classes can be
-            // assigned via hooks libraries and we should not remove
-            // them because there is no way they can be added back.
-            if (def->getMatchExpr()) {
-                ctx.query_->classes_.erase(def->getName());
-            }
-        }
+        removeDependentEvaluatedClasses(pkt);
         setReservedClientClasses(pkt, ctx);
         evaluateClasses(pkt,  false);
     }
@@ -823,13 +890,6 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
-    if (query->getType() == DHCPV6_DHCPV4_QUERY) {
-        // This call never throws. Should this change, this section must be
-        // enclosed in try-catch.
-        processDhcp4Query(query);
-        return;
-    }
-
     processDhcp6Query(query, rsp);
 }
 
@@ -874,6 +934,18 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
+    if (!earlyGHRLookup(query, ctx)) {
+        return;
+    }
+
+    if (query->getType() == DHCPV6_DHCPV4_QUERY) {
+        // This call never throws. Should this change, this section must be
+        // enclosed in try-catch.
+        processDhcp4Query(query);
+        return;
+    }
+
+    // Complete the client context initialization.
     bool drop = false;
     initContext(query, ctx, drop);
 
@@ -1034,8 +1106,8 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         // Get the parking limit. Parsing should ensure the value is present.
         uint32_t parked_packet_limit = 0;
-        data::ConstElementPtr ppl = CfgMgr::instance().
-            getCurrentCfg()->getConfiguredGlobal("parked-packet-limit");
+        data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
+            getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT);
         if (ppl) {
             parked_packet_limit = ppl->intValue();
         }
@@ -3799,6 +3871,21 @@ void Dhcpv6Srv::evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
                 .arg((*it)->getName())
                 .arg("get exception?");
+        }
+    }
+}
+
+void
+Dhcpv6Srv::removeDependentEvaluatedClasses(const Pkt6Ptr& pkt) {
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (auto def : *defs_ptr) {
+        // Only remove evaluated classes. Other classes can be
+        // assigned via hooks libraries and we should not remove
+        // them because there is no way they can be added back.
+        if (def->getMatchExpr()) {
+            pkt->classes_.erase(def->getName());
         }
     }
 }

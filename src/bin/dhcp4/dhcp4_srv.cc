@@ -151,10 +151,11 @@ namespace dhcp {
 
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query,
+                               AllocEngine::ClientContext4Ptr& context,
                                const Subnet4Ptr& subnet,
                                bool& drop)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
-      context_(new AllocEngine::ClientContext4()) {
+      context_(context) {
 
     if (!alloc_engine_) {
         isc_throw(BadValue, "alloc_engine value must not be NULL"
@@ -165,31 +166,35 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         isc_throw(BadValue, "query value must not be NULL when"
                   " creating an instance of the Dhcpv4Exchange");
     }
+
+    // Reset the given context argument.
+    context.reset();
+
     // Create response message.
     initResponse();
     // Select subnet for the query message.
     context_->subnet_ = subnet;
-    // Hardware address.
-    context_->hwaddr_ = query->getHWAddr();
-    // Pointer to client's query.
-    context_->query_ = query;
 
     // If subnet found, retrieve client identifier which will be needed
     // for allocations and search for reservations associated with a
     // subnet/shared network.
     SharedNetwork4Ptr sn;
-    if (subnet) {
+    if (subnet && !context_->early_global_reservations_lookup_) {
         OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
         if (opt_clientid) {
             context_->clientid_.reset(new ClientId(opt_clientid->getData()));
         }
+    }
 
+    if (subnet) {
         // Find static reservations if not disabled for our subnet.
         if (subnet->getReservationsInSubnet() ||
             subnet->getReservationsGlobal()) {
             // Before we can check for static reservations, we need to prepare a set
             // of identifiers to be used for this.
-            setHostIdentifiers();
+            if (!context_->early_global_reservations_lookup_) {
+                setHostIdentifiers(context_);
+            }
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
@@ -207,7 +212,8 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // affect selection of a pool within the selected subnet.
     auto global_host = context_->globalHost();
     auto current_host = context_->currentHost();
-    if ((global_host && !global_host->getClientClasses4().empty()) ||
+    if ((!context_->early_global_reservations_lookup_ &&
+         global_host && !global_host->getClientClasses4().empty()) ||
         (!sn && current_host && !current_host->getClientClasses4().empty())) {
         // We have already evaluated client classes and some of them may
         // be in conflict with the reserved classes. Suppose there are
@@ -223,19 +229,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         // a result, the first_class set via the host reservation will
         // replace the second_class because the second_class will this
         // time evaluate to false as desired.
-        const ClientClassDictionaryPtr& dict =
-            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-        const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-        for (auto def : *defs_ptr) {
-            // Only remove evaluated classes. Other classes can be
-            // assigned via hooks libraries and we should not remove
-            // them because there is no way they can be added back.
-            if (def->getMatchExpr()) {
-                context_->query_->classes_.erase(def->getName());
-            }
-        }
+        removeDependentEvaluatedClasses(query);
         setReservedClientClasses(context_);
-        evaluateClasses(context_->query_, false);
+        evaluateClasses(query, false);
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
@@ -392,7 +388,7 @@ Dhcpv4Exchange::copyDefaultOptions() {
 }
 
 void
-Dhcpv4Exchange::setHostIdentifiers() {
+Dhcpv4Exchange::setHostIdentifiers(AllocEngine::ClientContext4Ptr context) {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
 
@@ -402,23 +398,23 @@ Dhcpv4Exchange::setHostIdentifiers() {
                   cfg->getIdentifierTypes()) {
         switch (id_type) {
         case Host::IDENT_HWADDR:
-            if (context_->hwaddr_ && !context_->hwaddr_->hwaddr_.empty()) {
-                context_->addHostIdentifier(id_type, context_->hwaddr_->hwaddr_);
+            if (context->hwaddr_ && !context->hwaddr_->hwaddr_.empty()) {
+                context->addHostIdentifier(id_type, context->hwaddr_->hwaddr_);
             }
             break;
 
         case Host::IDENT_DUID:
-            if (context_->clientid_) {
-                const std::vector<uint8_t>& vec = context_->clientid_->getDuid();
+            if (context->clientid_) {
+                const std::vector<uint8_t>& vec = context->clientid_->getDuid();
                 if (!vec.empty()) {
                     // Client identifier type = DUID? Client identifier holding a DUID
                     // comprises Type (1 byte), IAID (4 bytes), followed by the actual
                     // DUID. Thus, the minimal length is 6.
                     if ((vec[0] == CLIENT_ID_OPTION_TYPE_DUID) && (vec.size() > 5)) {
                         // Extract DUID, skip IAID.
-                        context_->addHostIdentifier(id_type,
-                                                    std::vector<uint8_t>(vec.begin() + 5,
-                                                                         vec.end()));
+                        context->addHostIdentifier(id_type,
+                                                   std::vector<uint8_t>(vec.begin() + 5,
+                                                                        vec.end()));
                     }
                 }
             }
@@ -426,13 +422,13 @@ Dhcpv4Exchange::setHostIdentifiers() {
 
         case Host::IDENT_CIRCUIT_ID:
             {
-                OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+                OptionPtr rai = context->query_->getOption(DHO_DHCP_AGENT_OPTIONS);
                 if (rai) {
                     OptionPtr circuit_id_opt = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
                     if (circuit_id_opt) {
                         const OptionBuffer& circuit_id_vec = circuit_id_opt->getData();
                         if (!circuit_id_vec.empty()) {
-                            context_->addHostIdentifier(id_type, circuit_id_vec);
+                            context->addHostIdentifier(id_type, circuit_id_vec);
                         }
                     }
                 }
@@ -440,10 +436,10 @@ Dhcpv4Exchange::setHostIdentifiers() {
             break;
 
         case Host::IDENT_CLIENT_ID:
-            if (context_->clientid_) {
-                const std::vector<uint8_t>& vec = context_->clientid_->getDuid();
+            if (context->clientid_) {
+                const std::vector<uint8_t>& vec = context->clientid_->getDuid();
                 if (!vec.empty()) {
-                    context_->addHostIdentifier(id_type, vec);
+                    context->addHostIdentifier(id_type, vec);
                 }
             }
             break;
@@ -453,7 +449,7 @@ Dhcpv4Exchange::setHostIdentifiers() {
                     break;
                 }
 
-                CalloutHandlePtr callout_handle = getCalloutHandle(context_->query_);
+                CalloutHandlePtr callout_handle = getCalloutHandle(context->query_);
 
                 Host::IdentifierType type = Host::IDENT_FLEX;
                 std::vector<uint8_t> id;
@@ -465,7 +461,7 @@ Dhcpv4Exchange::setHostIdentifiers() {
                 ScopedCalloutHandleState callout_handle_state(callout_handle);
 
                 // Pass incoming packet as argument
-                callout_handle->setArgument("query4", context_->query_);
+                callout_handle->setArgument("query4", context->query_);
                 callout_handle->setArgument("id_type", type);
                 callout_handle->setArgument("id_value", id);
 
@@ -482,12 +478,27 @@ Dhcpv4Exchange::setHostIdentifiers() {
                     LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
                         .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
 
-                    context_->addHostIdentifier(type, id);
+                    context->addHostIdentifier(type, id);
                 }
                 break;
             }
         default:
             ;
+        }
+    }
+}
+
+void
+Dhcpv4Exchange::removeDependentEvaluatedClasses(const Pkt4Ptr& query) {
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (auto def : *defs_ptr) {
+        // Only remove evaluated classes. Other classes can be
+        // assigned via hooks libraries and we should not remove
+        // them because there is no way they can be added back.
+        if (def->getMatchExpr()) {
+            query->classes_.erase(def->getName());
         }
     }
 }
@@ -934,6 +945,79 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
     IfaceMgr::instance().send(packet);
 }
 
+bool
+Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
+                          AllocEngine::ClientContext4Ptr ctx) {
+    // Pointer to client's query.
+    ctx->query_ = query;
+
+    // Hardware address.
+    ctx->hwaddr_ = query->getHWAddr();
+
+    // Get the early-global-reservations-lookup flag value.
+    data::ConstElementPtr egrl = CfgMgr::instance().getCurrentCfg()->
+        getConfiguredGlobal(CfgGlobals::EARLY_GLOBAL_RESERVATIONS_LOOKUP);
+    if (egrl) {
+        ctx->early_global_reservations_lookup_ = egrl->boolValue();
+    }
+
+    // Perform early global reservations lookup when wanted.
+    if (ctx->early_global_reservations_lookup_) {
+        // Retrieve retrieve client identifier.
+        OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        if (opt_clientid) {
+            ctx->clientid_.reset(new ClientId(opt_clientid->getData()));
+        }
+
+        // Get the host identifiers.
+        Dhcpv4Exchange::setHostIdentifiers(ctx);
+
+        // Check for global host reservations.
+        ConstHostPtr global_host = alloc_engine_->findGlobalReservation(*ctx);
+
+        if (global_host && !global_host->getClientClasses4().empty()) {
+            // Remove dependent evaluated classes.
+            Dhcpv4Exchange::removeDependentEvaluatedClasses(query);
+
+            // Add classes from the global reservations.
+            const ClientClasses& classes = global_host->getClientClasses4();
+            for (ClientClasses::const_iterator cclass = classes.cbegin();
+                 cclass != classes.cend(); ++cclass) {
+                query->addClass(*cclass);
+            }
+
+            // Evaluate classes before KNOWN.
+            Dhcpv4Exchange::evaluateClasses(query, false);
+        }
+
+        if (global_host) {
+            // Add the KNOWN class;
+            query->addClass("KNOWN");
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+                .arg(query->getLabel())
+                .arg("KNOWN");
+
+            // Evaluate classes after KNOWN.
+            Dhcpv4Exchange::evaluateClasses(query, true);
+
+            // Check the DROP special class.
+            if (query->inClass("DROP")) {
+                LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
+                          DHCP4_PACKET_DROP_0014)
+                    .arg(query->toText());
+                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                          static_cast<int64_t>(1));
+                return (false);
+            }
+
+            // Store the reservation.
+            ctx->hosts_[SUBNET_ID_GLOBAL] = global_host;
+        }
+    }
+
+    return (true);
+}
+
 int
 Dhcpv4Srv::run() {
 #ifdef ENABLE_AFL
@@ -1281,12 +1365,15 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         }
     }
 
-    AllocEngine::ClientContext4Ptr ctx;
+    AllocEngine::ClientContext4Ptr ctx(new AllocEngine::ClientContext4());
+    if (!earlyGHRLookup(query, ctx)) {
+        return;
+    }
 
     try {
         switch (query->getType()) {
         case DHCPDISCOVER:
-            rsp = processDiscover(query);
+            rsp = processDiscover(query, ctx);
             break;
 
         case DHCPREQUEST:
@@ -1305,7 +1392,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
             break;
 
         case DHCPINFORM:
-            rsp = processInform(query);
+            rsp = processInform(query, ctx);
             break;
 
         default:
@@ -1363,8 +1450,8 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         if (allow_packet_park) {
             // Get the parking limit. Parsing should ensure the value is present.
             uint32_t parked_packet_limit = 0;
-            data::ConstElementPtr ppl = CfgMgr::instance().
-                getCurrentCfg()->getConfiguredGlobal("parked-packet-limit");
+            data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
+                getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT);
             if (ppl) {
                 parked_packet_limit = ppl->intValue();
             }
@@ -3047,7 +3134,7 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& context) {
     // server-id is forbidden.
     sanityCheck(discover, FORBIDDEN);
 
@@ -3059,7 +3146,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         return (Pkt4Ptr());
     }
 
-    Dhcpv4Exchange ex(alloc_engine_, discover, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, discover, context, subnet, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
@@ -3130,7 +3217,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         return (Pkt4Ptr());
     }
 
-    Dhcpv4Exchange ex(alloc_engine_, request, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, request, context, subnet, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
@@ -3472,7 +3559,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
+Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context) {
     // server-id is supposed to be forbidden (as is requested address)
     // but ISC DHCP does not enforce either. So neither will we.
     sanityCheck(inform, OPTIONAL);
@@ -3485,7 +3572,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
         return (Pkt4Ptr());
     }
 
-    Dhcpv4Exchange ex(alloc_engine_, inform, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, inform, context, subnet, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,6 +254,26 @@ public:
     /// Clears the packet parking lots of all packets.
     /// Called during reconfigure and shutdown.
     void discardPackets();
+
+    /// @brief Initialize client context and perform early global
+    /// reservations lookup.
+    ///
+    /// @param query The query message.
+    /// @param ctx Reference to client context.
+    /// @return true if processing can continue, false if the query must be
+    /// dropped.
+    bool earlyGHRLookup(const Pkt6Ptr& query,
+                        AllocEngine::ClientContext6& ctx);
+
+    /// @brief Set host identifiers within a context.
+    ///
+    /// This method sets an ordered list of host identifier types and
+    /// values which the server should use to find host reservations.
+    /// The order of the set is determined by the configuration parameter,
+    /// host-reservation-identifiers
+    ///
+    /// @param ctx reference to the context.
+    static void setHostIdentifiers(AllocEngine::ClientContext6& ctx);
 
 protected:
 
@@ -821,6 +841,14 @@ protected:
     /// @param depend_on_known if false classes depending on the KNOWN or
     /// UNKNOWN classes are skipped, if true only these classes are evaluated.
     void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
+
+    /// @brief Removed evaluated client classes.
+    ///
+    /// @todo: keep the list of dependent evaluated classes so
+    /// removed only them.
+    ///
+    /// @param pkt the packet.
+    static void removeDependentEvaluatedClasses(const Pkt6Ptr& pkt);
 
     /// @brief Assigns classes retrieved from host reservation database.
     ///

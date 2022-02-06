@@ -456,10 +456,11 @@ namespace isc {
 namespace dhcp {
 
 AllocEngine::ClientContext6::ClientContext6()
-    : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
-      hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
-      rev_dns_update_(false), hostname_(), callout_handle_(), ias_(),
-      ddns_params_() {
+    : query_(), fake_allocation_(false),
+      early_global_reservations_lookup_(false), subnet_(), host_subnet_(),
+      duid_(), hwaddr_(), host_identifiers_(), hosts_(),
+      fwd_dns_update_(false), rev_dns_update_(false), hostname_(),
+      callout_handle_(), ias_(), ddns_params_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
@@ -470,7 +471,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
                                             const bool fake_allocation,
                                             const Pkt6Ptr& query,
                                             const CalloutHandlePtr& callout_handle)
-    : query_(query), fake_allocation_(fake_allocation), subnet_(subnet),
+    : query_(query), fake_allocation_(fake_allocation),
+      early_global_reservations_lookup_(false), subnet_(subnet),
       duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), hostname_(hostname),
       callout_handle_(callout_handle), allocated_resources_(), new_leases_(),
@@ -598,8 +600,6 @@ AllocEngine::ClientContext6::getDdnsParams() {
 
 void
 AllocEngine::findReservation(ClientContext6& ctx) {
-    ctx.hosts_.clear();
-
     // If there is no subnet, there is nothing to do.
     if (!ctx.subnet_) {
         return;
@@ -607,12 +607,15 @@ AllocEngine::findReservation(ClientContext6& ctx) {
 
     auto subnet = ctx.subnet_;
 
-    std::map<SubnetID, ConstHostPtr> host_map;
-    SharedNetwork6Ptr network;
-    subnet->getSharedNetwork(network);
+    // If already done just return.
+    if (ctx.early_global_reservations_lookup_ &&
+        !subnet->getReservationsInSubnet()) {
+        return;
+    }
 
     // @todo: This code can be trivially optimized.
-    if (subnet->getReservationsGlobal()) {
+    if (!ctx.early_global_reservations_lookup_ &&
+        subnet->getReservationsGlobal()) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
@@ -623,6 +626,10 @@ AllocEngine::findReservation(ClientContext6& ctx) {
             }
         }
     }
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork6Ptr network;
+    subnet->getSharedNetwork(network);
 
     // If the subnet belongs to a shared network it is usually going to be
     // more efficient to make a query for all reservations for a particular
@@ -3414,7 +3421,8 @@ namespace isc {
 namespace dhcp {
 
 AllocEngine::ClientContext4::ClientContext4()
-    : subnet_(), clientid_(), hwaddr_(),
+    : early_global_reservations_lookup_(false),
+      subnet_(), clientid_(), hwaddr_(),
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
@@ -3431,7 +3439,8 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
                                             const bool rev_dns_update,
                                             const std::string& hostname,
                                             const bool fake_allocation)
-    : subnet_(subnet), clientid_(clientid), hwaddr_(hwaddr),
+    : early_global_reservations_lookup_(false),
+      subnet_(subnet), clientid_(clientid), hwaddr_(hwaddr),
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
@@ -3533,8 +3542,6 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    ctx.hosts_.clear();
-
     // If there is no subnet, there is nothing to do.
     if (!ctx.subnet_) {
         return;
@@ -3542,12 +3549,15 @@ AllocEngine::findReservation(ClientContext4& ctx) {
 
     auto subnet = ctx.subnet_;
 
-    std::map<SubnetID, ConstHostPtr> host_map;
-    SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(network);
+    // If already done just return.
+    if (ctx.early_global_reservations_lookup_ &&
+        !subnet->getReservationsInSubnet()) {
+        return;
+    }
 
     // @todo: This code can be trivially optimized.
-    if (subnet->getReservationsGlobal()) {
+    if (!ctx.early_global_reservations_lookup_ &&
+        subnet->getReservationsGlobal()) {
         ConstHostPtr ghost = findGlobalReservation(ctx);
         if (ghost) {
             ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
@@ -3558,6 +3568,10 @@ AllocEngine::findReservation(ClientContext4& ctx) {
             }
         }
     }
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
 
     // If the subnet belongs to a shared network it is usually going to be
     // more efficient to make a query for all reservations for a particular
