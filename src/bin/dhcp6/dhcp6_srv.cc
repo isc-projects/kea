@@ -455,11 +455,11 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
             const ClientClasses& classes = global_host->getClientClasses6();
             for (ClientClasses::const_iterator cclass = classes.cbegin();
                  cclass != classes.cend(); ++cclass) {
-                 query->addClass(*cclass);
-             }
+                query->addClass(*cclass);
+            }
 
-             // Evaluate classes before KNOWN.
-             evaluateClasses(query, false);
+            // Evaluate classes before KNOWN.
+            evaluateClasses(query, false);
         }
 
         if (global_host) {
