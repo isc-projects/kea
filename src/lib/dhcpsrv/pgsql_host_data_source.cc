@@ -220,16 +220,14 @@ public:
             // dhcp4_subnet_id : INT NULL
             if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED) {
                 bind_array->addNull();
-            }
-            else {
+            } else {
                 bind_array->add(host->getIPv4SubnetID());
             }
 
             // dhcp6_subnet_id : INT NULL
             if (host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
                 bind_array->addNull();
-            }
-            else {
+            } else {
                 bind_array->add(host->getIPv6SubnetID());
             }
 
@@ -269,7 +267,7 @@ public:
             if (key.empty()) {
                 bind_array->addNull();
             } else {
-                bind_array->add(key);
+                bind_array->addTempString(key);
             }
 
             // When checking whether the IP is unique we need to bind the IPv4 address

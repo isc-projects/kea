@@ -26,8 +26,6 @@
 namespace isc {
 namespace db {
 
-/// @}
-
 /// @brief RAII wrapper for PostgreSQL Result sets
 ///
 /// When a Postgresql statement is executed, the results are returned
@@ -331,7 +329,7 @@ struct PsqlBindArray {
     /// Stores the current value of a triplet to the bind array.
     /// If it is unspecified it stores a NULL.
     ///
-    /// @param triple Triplet instance from which to get the value.
+    /// @param triplet Triplet instance from which to get the value.
     void add(const isc::util::Triplet<uint32_t>& triplet);
 
     /// @brief Adds an integer Triplet's minimum value to the bind array
@@ -339,7 +337,7 @@ struct PsqlBindArray {
     /// Stores the minimum value of a triplet to the bind array.
     /// If it is unspecified it stores a NULL.
     ///
-    /// @param triple Triplet instance from which to get the value.
+    /// @param triplet Triplet instance from which to get the value.
     void addMin(const isc::util::Triplet<uint32_t>& triplet);
 
     /// @brief Adds an integer Triplet's maximum value to the bind array
@@ -347,7 +345,7 @@ struct PsqlBindArray {
     /// Stores the maximum value of a triplet to the bind array.
     /// If it is unspecified it stores a NULL.
     ///
-    /// @param triple Triplet instance from which to get the value.
+    /// @param triplet Triplet instance from which to get the value.
     void addMax(const isc::util::Triplet<uint32_t>& triplet);
 
     /// @brief Adds an @c Optional string to the bind array.
@@ -721,6 +719,7 @@ public:
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
     /// @param col the column number within the row
+    /// @param[out] value ElementPtr to receive the column data
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
