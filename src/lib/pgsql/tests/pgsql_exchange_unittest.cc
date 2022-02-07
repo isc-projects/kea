@@ -98,6 +98,10 @@ TEST(PsqlBindArray, addDataTest) {
         // Add a JSON.
         ElementPtr elems = Element::fromJSON("{ \"foo\": \"bar\" }");
         b.add(elems);
+
+        // Add a Temporary blob
+        std::vector<uint8_t> blob({0x0a,0x0b,0x0,0xc,0xd});
+        b.addTempBinary(blob);
     }
 
     // We've left bind scope, everything should be intact.
@@ -117,7 +121,8 @@ TEST(PsqlBindArray, addDataTest) {
         "12 : \"192.168.1.1\"\n"
         "13 : \"3001::1\"\n"
         "14 : \"2\"\n"
-        "15 : \"{ \"foo\": \"bar\" }\"\n";
+        "15 : \"{ \"foo\": \"bar\" }\"\n"
+        "16 : 0x0a0b000c0d\n";
 
     EXPECT_EQ(expected, b.toText());
 }

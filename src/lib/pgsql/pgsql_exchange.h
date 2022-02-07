@@ -255,6 +255,15 @@ struct PsqlBindArray {
     /// @param data vector of binary bytes.
     void add(const std::vector<uint8_t>& data);
 
+    /// @brief Adds a vector of binary data to the bind array.
+    ///
+    /// Adds a BINARY_FMT value to the end of the bind array using the
+    /// given vector as the data source. This creates an internally scoped
+    /// copy of the vector.
+    ///
+    /// @param data vector of binary bytes.
+    void addTempBinary(const std::vector<uint8_t>& data);
+
     /// @brief Adds a buffer of binary data to the bind array.
     ///
     /// Adds a BINARY_FMT value to the end of the bind array using the
