@@ -2845,6 +2845,17 @@ member of the class.
 
 .. note::
 
+   The new ``early-global-reservations-lookup`` global parameter flag
+   enables a lookup for global reservations before the subnet selection
+   phase. This lookup is similar to the general lookup described above
+   with two differences:
+
+   - the lookup is limited to global host reservations
+
+   - the ``UNKNOWN`` class is never set
+
+.. note::
+
    Care should be taken with client classification, as it is easy for
    clients that do not meet class criteria to be denied all service.
 

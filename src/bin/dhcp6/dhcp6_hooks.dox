@@ -163,6 +163,9 @@ to the end of this list.
    point sets the next step status to value other than NEXT_STEP_CONTINUE, the
    identifier will not be used.
 
+When the "early-global-reservations-lookup" flag is true this callout is
+called before "subnet6_select".
+
 @subsection dhcpv6HooksLease6Select lease6_select
 
  - @b Arguments:

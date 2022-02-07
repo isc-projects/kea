@@ -34,13 +34,13 @@ ways:
 
 -  Using a hook.
 
-Client classification can be used to change the
-behavior of almost any part of the DHCP message processing. There are
-currently five mechanisms that take advantage of client classification:
-subnet selection, pool selection, definition of DHCPv4 private (codes
-224-254) and code 43 options, assignment of different options, and, for
-DHCPv4 cable modems, the setting of specific options for use with the
-TFTP server address and the boot file field.
+Client classification can be used to change the behavior of almost any
+part of the DHCP message processing. There are currently six
+mechanisms that take advantage of client classification: dropping
+queries, subnet selection, pool selection, definition of DHCPv4
+private (codes 224-254) and code 43 options, assignment of different
+options, and, for DHCPv4 cable modems, the setting of specific options
+for use with the TFTP server address and the boot file field.
 
 The classification process is conducted in several steps:
 
@@ -63,7 +63,13 @@ The classification process is conducted in several steps:
     dropped and an informational message is logged with the packet
     information.
 
-6.  A subnet is chosen, possibly based on the class information when
+6.  When the ``early-global-reservations-lookup`` global parameter is
+    configured to true global reservations are looked for and the 8, 9
+    and 10 steps are partially performed: the lookup is limited to
+    global reservations, if one is found the ``KNOWN`` class is set
+    but if none is found the ``UNKNOWN`` class is **not** set.
+
+7.  A subnet is chosen, possibly based on the class information when
     some subnets are reserved. More precisely: when choosing a subnet,
     the server iterates over all of the subnets that are feasible given
     the information found in the packet (client address, relay address,
@@ -71,36 +77,38 @@ The classification process is conducted in several steps:
     class associated with it, or has a class which matches one of the
     packet's classes.
 
-7.  The server looks for host reservations. If an identifier from the
+8.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
     network, the packet is associated with the ``KNOWN`` class and all
     classes of the host reservation. If a reservation is not found, the
     packet is assigned to the ``UNKNOWN`` class.
 
-8.  Classes with matching expressions - directly, or indirectly using the
+9.  Classes with matching expressions - directly, or indirectly using the
     ``KNOWN``/``UNKNOWN`` built-in classes and not marked for later evaluation ("on
     request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
     returns ``true`` (a match), the incoming packet is associated with the
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
-    possible to use ``KNOWN``/``UNKNOWN`` classes to select a shared network or
-    a subnet.
+    possible to use the ``UNKNOWN`` class to select a shared network or
+    a subnet, and for using the ``KNOWN`` class only global reservations
+    can be used and the ``early-global-reservations-lookup`` parameter
+    must be configured to true
 
-9.  When the incoming packet belongs to the special class ``DROP``, it is
+10. When the incoming packet belongs to the special class ``DROP``, it is
     dropped and an informational message is logged with the packet
     information. Since Kea version 1.9.8, it is permissible to make the ``DROP``
     class dependent on the ``KNOWN``/``UNKNOWN`` classes.
 
-10. If needed, addresses and prefixes from pools are assigned, possibly
+11. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
     class members.
 
-11. Classes marked as "required" are evaluated in the order in which
+12. Classes marked as "required" are evaluated in the order in which
     they are listed: first the shared network, then the subnet, and
     finally the pools that assigned resources belong to.
 
-12. Options are assigned, again possibly based on the class information
+13. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
     For DHCPv4 private and code 43 options, this includes option
     definitions specified within classes.
@@ -710,6 +718,13 @@ Using Static Host Reservations in Classification
 Classes can be statically assigned to the clients using techniques
 described in :ref:`reservation4-client-classes` and
 :ref:`reservation6-client-classes`.
+
+Subnet host reservations are searched after subnet selection.
+Global host reservations are searched at the same time by default but
+the ``early-global-reservations-lookup`` allows to change this behavior
+into searching them before the subnet selection.
+
+Pool selection is performed after all host reservations lookups.
 
 .. _classification-subnets:
 

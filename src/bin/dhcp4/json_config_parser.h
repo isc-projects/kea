@@ -52,6 +52,7 @@ class Dhcpv4Srv;
 /// 2 - commit failed (parsing was successful, but failed to store the
 /// values in to server's configuration)
 ///
+/// @param server the server object
 /// @param config_set a new configuration (JSON) for DHCPv4 server
 /// @param check_only whether this configuration is for testing only
 /// @return answer that contains result of reconfiguration
