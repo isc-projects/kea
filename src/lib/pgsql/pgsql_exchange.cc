@@ -61,7 +61,8 @@ void PsqlBindArray::insert(const std::string& value, size_t index) {
                   << ", is larger than the array size: " << values_.size());
     }
 
-    values_.insert(values_.begin() + index, value.c_str());
+    bound_strs_.push_back(ConstStringPtr(new std::string(value)));
+    values_.insert(values_.begin() + index, bound_strs_.back()->c_str());
     lengths_.insert(lengths_.begin() + index, value.size());
     formats_.insert(formats_.begin() + index, TEXT_FMT);
 }

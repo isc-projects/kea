@@ -227,10 +227,7 @@ struct PsqlBindArray {
     ///
     /// Inserts a TEXT_FMT value into the bind array before the element
     /// position given by index, using the given given string as the data
-    /// source.
-    ///
-    /// The caller is responsible for ensuring that string parameter remains in
-    /// scope until the bind array has been discarded.
+    /// source. This creates an internally scoped copy of the string.
     ///
     /// @param value char array containing the null-terminated text to add.
     /// @param index element position before which the string should be
