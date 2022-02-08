@@ -278,7 +278,6 @@ public:
                 bind_array->add(host->getIPv4SubnetID()); // subnet_id
             }
 
-
         } catch (const std::exception& ex) {
             host_.reset();
             isc_throw(DbOperationError,
@@ -3175,7 +3174,6 @@ PgSqlHostDataSource::getAll6(const SubnetID& subnet_id,
                              bind_array, ctx->host_ipv6_exchange_, collection, false);
     return (collection);
 }
-
 
 // Miscellaneous database methods.
 

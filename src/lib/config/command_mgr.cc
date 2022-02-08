@@ -295,8 +295,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
             std::stringstream os;
             if (feed_.getProcessedText().empty()) {
                os << "no input data to discard";
-            }
-            else {
+            } else {
                os << "discarding partial command of "
                   << feed_.getProcessedText().size() << " bytes";
             }

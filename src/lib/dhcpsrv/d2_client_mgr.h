@@ -513,8 +513,7 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
             fqdn_resp.setDomainName(qualifyName(client_name, ddns_params, true), T::FULL);
-        }
-        else  {
+        } else  {
             fqdn_resp.setDomainName(client_name, T::FULL);
         }
     }

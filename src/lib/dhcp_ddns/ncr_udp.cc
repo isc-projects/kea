@@ -333,8 +333,7 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     Result result;
     if (successful) {
         result = SUCCESS;
-    }
-    else {
+    } else {
         // On a failure, log the error and set the result to ERROR.
         boost::system::error_code error_code = send_callback->getErrorCode();
         if (error_code.value() == boost::asio::error::operation_aborted) {

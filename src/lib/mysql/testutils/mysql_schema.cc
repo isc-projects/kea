@@ -93,14 +93,16 @@ string getMySQLTlsEnv() {
     return (val ? string(val) : "");
 }
 
-string getMySQLTlsServer() {
-    DatabaseConnection::ParameterMap parameters =
-        DatabaseConnection::parse(validMySQLConnectionString());
-    MySqlConnection conn(parameters);
+string getMySQLTlsServerVariable(string variable) {
     MYSQL_RES* result(0);
     try {
+        DatabaseConnection::ParameterMap parameters =
+            DatabaseConnection::parse(validMySQLConnectionString());
+        MySqlConnection conn(parameters);
         conn.openDatabase();
-        string sql("SHOW GLOBAL VARIABLES LIKE 'have_ssl'");
+        string sql("SHOW GLOBAL VARIABLES LIKE '");
+        sql += variable;
+        sql += "'";
         if (mysql_query(conn.mysql_, sql.c_str())) {
             isc_throw(DbOperationError,
                       sql << ": " << mysql_error(conn.mysql_));
@@ -117,14 +119,12 @@ string getMySQLTlsServer() {
         }
         // first column is 'have_ssl', second is the status.
         string name(row[0]);
-        if (name != "have_ssl") {
+        if (name != variable) {
             isc_throw(DbOperationError,
                       sql << " returned a wrong name '" << name
-                      << "', expected 'have_ssl'");
+                      << "', expected " << variable);
         }
         string value(row[1]);
-        const string env("KEA_MYSQL_HAVE_SSL");
-        static_cast<void>(setenv(env.c_str(), value.c_str(), 1));
         mysql_free_result(result);
         return (value);
     } catch (...) {
@@ -133,6 +133,29 @@ string getMySQLTlsServer() {
         }
         throw;
     }
+}
+
+bool isMySQLTlsConfigured() {
+    if (getMySQLTlsServerVariable("ssl_ca").find("kea-ca.crt") == string::npos) {
+        return (false);
+    }
+    if (getMySQLTlsServerVariable("ssl_cert").find("kea-server.crt") == string::npos) {
+        return (false);
+    }
+    if (getMySQLTlsServerVariable("ssl_key").find("kea-server.key") == string::npos) {
+        return (false);
+    }
+    return (true);
+}
+
+string getMySQLTlsServer() {
+    string value = getMySQLTlsServerVariable("have_ssl");
+    if (value == "YES" && !isMySQLTlsConfigured()) {
+        value = "UNCONFIGURED";
+    }
+    const string env("KEA_MYSQL_HAVE_SSL");
+    static_cast<void>(setenv(env.c_str(), value.c_str(), 1));
+    return (value);
 }
 
 }  // namespace test

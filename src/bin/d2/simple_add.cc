@@ -157,8 +157,7 @@ SimpleAddTransaction::selectingFwdServerHandler() {
     if (selectNextServer()) {
         // We have a server to try.
         transition(REPLACING_FWD_ADDRS_ST, SERVER_SELECTED_EVT);
-    }
-    else {
+    } else {
         // Server list is exhausted, so fail the transaction.
         transition(PROCESS_TRANS_FAILED_ST, NO_MORE_SERVERS_EVT);
     }
@@ -292,8 +291,7 @@ SimpleAddTransaction::selectingRevServerHandler() {
     if (selectNextServer()) {
         // We have a server to try.
         transition(REPLACING_REV_PTRS_ST, SERVER_SELECTED_EVT);
-    }
-    else {
+    } else {
         // Server list is exhausted, so fail the transaction.
         transition(PROCESS_TRANS_FAILED_ST, NO_MORE_SERVERS_EVT);
     }

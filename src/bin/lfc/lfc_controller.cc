@@ -139,7 +139,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     try {
         pid_file.deleteFile();
     } catch (const PIDFileError& pid_ex) {
-          LOG_FATAL(lfc_logger, LFC_FAIL_PID_DEL).arg(pid_ex.what());
+        LOG_FATAL(lfc_logger, LFC_FAIL_PID_DEL).arg(pid_ex.what());
     }
 
     LOG_INFO(lfc_logger, LFC_TERMINATE);
@@ -414,8 +414,7 @@ LFCController::startLogger(const bool test_mode) const {
     // else use our defaults
     if (test_mode) {
         initLogger();
-    }
-    else {
+    } else {
         OutputOption option;
         LoggerManager manager;
 

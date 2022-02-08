@@ -107,6 +107,15 @@ std::string getMySQLTlsEnv();
 /// @note the returned value is set in the environment
 std::string getMySQLTlsServer();
 
+/// @brief Return true if the server has been configured with proper SSL/TLS
+/// credentials, false otherwise
+bool isMySQLTlsConfigured();
+
+/// @brief Get the server global variable value
+///
+/// @param variable The server global variable name
+std::string getMySQLTlsServerVariable(std::string variable);
+
 }
 }
 }
