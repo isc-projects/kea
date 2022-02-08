@@ -51,8 +51,9 @@ public:
             ADD_FAILURE() << "expected ConfigError exception, thrown no exception";
 
         } catch (const ConfigError& ex) {
-            EXPECT_EQ(expected_error, std::string(ex.what()));
-
+            // Expect the error to be contained in the exception message.
+            std::string const exception(ex.what());
+            EXPECT_NE(exception.find(expected_error), std::string::npos);
         } catch (...) {
             ADD_FAILURE() << "expected ConfigError exception, thrown different"
                 " exception type";

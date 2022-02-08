@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -480,8 +480,9 @@ TEST(TLSTest, loadNoCAFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addThrow("No such file or directory");
+    exps.addThrow("No such file or directory (system library, fopen)");
     exps.runCanThrow([] {
         string ca("/no-such-file");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -528,8 +529,9 @@ TEST(TLSTest, loadKeyCA) {
     exps.addThrow("Flatfile_Certificate_Store::Flatfile_Certificate_Store cert file is empty");
     // LibreSSL or old OpenSSL does not check.
     exps.addNoError();
-    // Recent OpenSSL error.
+    // Recent OpenSSL errors.
     exps.addThrow("no certificate or crl found");
+    exps.addThrow("no certificate or crl found (x509 certificate routines, X509_load_cert_crl_file)");
     exps.runCanThrow([] {
         string ca(string(TEST_CA_DIR) + "/kea-ca.key");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -552,8 +554,9 @@ TEST(TLSTest, loadNoCertFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addThrow("No such file or directory");
+    exps.addThrow("No such file or directory (system library, fopen)");
     exps.runCanThrow([] {
         string cert("/no-such-file");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -569,8 +572,9 @@ TEST(TLSTest, loadCsrCertFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("Expected a certificate, got 'CERTIFICATE REQUEST'");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addThrow("no start line");
+    exps.addThrow("no start line (PEM routines, get_name)");
     exps.runCanThrow([] {
         string cert(string(TEST_CA_DIR) + "/kea-client.csr");
         TestTlsContext ctx(TlsRole::CLIENT);
@@ -593,8 +597,9 @@ TEST(TLSTest, loadNoKeyFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addThrow("No such file or directory");
+    exps.addThrow("No such file or directory (system library, fopen)");
     // Another possible error.
     exps.addThrow("PEM lib");
     exps.runCanThrow([] {
@@ -614,8 +619,9 @@ TEST(TLSTest, loadCertKeyFile) {
     string botan_error = "PKCS #8 private key decoding failed with PKCS #8: ";
     botan_error += "Unknown PEM label CERTIFICATE";
     exps.addThrow(botan_error);
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addThrow("no start line");
+    exps.addThrow("no start line (PEM routines, get_name)");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
@@ -685,9 +691,10 @@ TEST(TLSTest, configureError) {
     // Botan error.
     string botan_error = "I/O error: DataSource: Failure opening file /no-such-file";
     exps.addThrow(common_error + botan_error);
-    // OpenSSL error.
+    // OpenSSL errors.
     string openssl_error = "No such file or directory";
     exps.addThrow(common_error + openssl_error);
+    exps.addThrow(common_error + "No such file or directory (system library, fopen)");
     exps.runCanThrow([] {
         TlsContextPtr ctx1;
         string ca(string(TEST_CA_DIR) + "/kea-ca.crt");
@@ -776,8 +783,9 @@ TEST(TLSTest, noHandshake) {
     Expecteds exps;
     // Botan error.
     exps.addError("InvalidObjectState");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines, ssl_write_internal)");
     exps.checkAsync("send", send_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "send: " << exps.getErrMsg() << "\n";
@@ -800,8 +808,9 @@ TEST(TLSTest, noHandshake) {
     exps.clear();
     // On Botan and some OpenSSL the receive party hangs.
     exps.addTimeout();
-    // OpenSSL error,
+    // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines, ssl_read_internal)");
     exps.checkAsync("receive", receive_cb);
     if (Expecteds::displayErrMsg()) {
         if (timeout) {
@@ -880,8 +889,9 @@ TEST(TLSTest, serverNotConfigured) {
     exps.addError("handshake_failure");
     // LibreSSL error.
     exps.addError("no shared cipher");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("no shared cipher (SSL routines, tls_post_process_client_hello)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -890,8 +900,9 @@ TEST(TLSTest, serverNotConfigured) {
     exps.clear();
     // On Botan and some OpenSSL the client hangs.
     exps.addTimeout();
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
         if (timeout) {
@@ -968,8 +979,9 @@ TEST(TLSTest, clientNotConfigured) {
     Expecteds exps;
     // On Botan and some OpenSSL the server hangs.
     exps.addTimeout();
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("tlsv1 alert unknown ca");
+    exps.addError("tlsv1 alert unknown ca (SSL routines, ssl3_read_bytes)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         if (timeout) {
@@ -984,8 +996,9 @@ TEST(TLSTest, clientNotConfigured) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_server_certificate)");
     // The client should not hang.
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
@@ -1065,8 +1078,9 @@ TEST(TLSTest, clientHTTPnoS) {
     exps.addError("protocol_version");
     // LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
-    // OpenSSL error (OpenSSL recognizes HTTP).
+    // OpenSSL errors (OpenSSL recognizes HTTP).
     exps.addError("http request");
+    exps.addError("http request (SSL routines, ssl3_get_record)");
     // Another OpenSSL error (not all OpenSSL recognizes HTTP).
     exps.addError("wrong version number");
     exps.checkAsync("server", server_cb);
@@ -1156,8 +1170,9 @@ TEST(TLSTest, unknownClient) {
     exps.addError("tlsv1 alert protocol version");
     // Old OpenSSL error.
     exps.addError("unknown protocol");
-    // Recent OpenSSL error.
+    // Recent OpenSSL errors.
     exps.addError("wrong version number");
+    exps.addError("wrong version number (SSL routines, ssl3_get_record)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1236,10 +1251,11 @@ TEST(TLSTest, anotherClient) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     // Full error is:
     // error 20 at 0 depth lookup:unable to get local issuer certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1330,10 +1346,11 @@ TEST(TLSTest, selfSigned) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     // Full error is:
     // error 18 at 0 depth lookup:self signed certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1369,7 +1386,7 @@ TEST(TLSTest, selfSigned) {
 // the other peer timeout?
 
 // Test what happens when handshake is forgotten.
-TEST(TLSTest, noHandshakeCloseOnError) {
+TEST(TLSTest, noHandshakeCloseonError) {
     IOService service;
 
     // Server part.
@@ -1429,8 +1446,9 @@ TEST(TLSTest, noHandshakeCloseOnError) {
     Expecteds exps;
     // Botan error.
     exps.addError("InvalidObjectState");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines, ssl_write_internal)");
     exps.checkAsync("send", send_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "send: " << exps.getErrMsg() << "\n";
@@ -1453,8 +1471,9 @@ TEST(TLSTest, noHandshakeCloseOnError) {
     exps.clear();
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
-    // OpenSSL error,
+    // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines, ssl_read_internal)");
     exps.checkAsync("receive", receive_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "receive: " << exps.getErrMsg() << "\n";
@@ -1529,8 +1548,9 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("handshake_failure");
     // LibreSSL error.
     exps.addError("no shared cipher");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("no shared cipher (SSL routines, tls_post_process_client_hello)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1541,8 +1561,9 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("stream truncated");
     // Alias on old OpenSSL.
     exps.addError("short read");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "client: " << exps.getErrMsg() << "\n";
@@ -1617,8 +1638,9 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     exps.addError("stream truncated");
     // Alias on old OpenSSL.
     exps.addError("short read");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("tlsv1 alert unknown ca");
+    exps.addError("tlsv1 alert unknown ca (SSL routines, ssl3_read_bytes)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1629,8 +1651,9 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_server_certificate)");
     // The client should not hang.
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
@@ -1710,8 +1733,9 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     exps.addError("protocol_version");
     // LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
-    // OpenSSL error (OpenSSL recognizes HTTP).
+    // OpenSSL errors when OpenSSL recognizes HTTP.
     exps.addError("http request");
+    exps.addError("http request (SSL routines, ssl3_get_record)");
     // Another OpenSSL error (not all OpenSSL recognizes HTTP).
     exps.addError("wrong version number");
     exps.checkAsync("server", server_cb);
@@ -1796,10 +1820,11 @@ TEST(TLSTest, anotherClientCloseonError) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     // Full error is:
     // error 20 at 0 depth lookup:unable to get local issuer certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
@@ -1888,10 +1913,11 @@ TEST(TLSTest, selfSignedCloseonError) {
     exps.addError("bad_certificate");
     // LibreSSL error.
     exps.addError("tlsv1 alert unknown ca");
-    // OpenSSL error.
+    // OpenSSL errors.
     // Full error is:
     // error 18 at 0 depth lookup:self signed certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     exps.checkAsync("server", server_cb);
     if (Expecteds::displayErrMsg()) {
         std::cout << "server: " << exps.getErrMsg() << "\n";
