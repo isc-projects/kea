@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -198,8 +198,7 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(boost::asio::ip::udp::v4());
-        }
-        else {
+        } else {
             socket_.open(boost::asio::ip::udp::v6());
         }
         isopen_ = true;

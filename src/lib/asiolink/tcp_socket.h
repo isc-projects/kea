@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -289,8 +289,7 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     if (!socket_.is_open()) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(boost::asio::ip::tcp::v4());
-        }
-        else {
+        } else {
             socket_.open(boost::asio::ip::tcp::v6());
         }
 

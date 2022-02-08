@@ -1719,7 +1719,6 @@ TEST_F(HAConfigTest, pausingToString) {
               HAConfig::StateConfig::pausingToString(STATE_PAUSE_NEVER));
     EXPECT_EQ("once",
               HAConfig::StateConfig::pausingToString(STATE_PAUSE_ONCE));
-
 }
 
 // Verifies permutations of HA+MT configuration.
@@ -1885,6 +1884,6 @@ TEST_F(HAConfigTest, ipv6Url) {
 
     // Check the URL.
     EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
-};
+}
 
 } // end of anonymous namespace
