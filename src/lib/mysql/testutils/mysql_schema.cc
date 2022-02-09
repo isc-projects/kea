@@ -122,7 +122,7 @@ string getMySQLTlsServerVariable(string variable) {
         if (name != variable) {
             isc_throw(DbOperationError,
                       sql << " returned a wrong name '" << name
-                      << "', expected " << variable);
+                      << "', expected '" << variable << "'");
         }
         string value(row[1]);
         mysql_free_result(result);
