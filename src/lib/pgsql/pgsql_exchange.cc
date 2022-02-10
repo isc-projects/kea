@@ -516,7 +516,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
                    << getColumnLabel(r, col) << " row:" << row);
     }
 
-    // Copy from the allocated buffer to caller's buffer then free up
+    // Copy from the allocated buffer to caller's buffer then free
     // the allocated buffer.
     memcpy(buffer, bytes, bytes_converted);
     PQfreemem(bytes);
