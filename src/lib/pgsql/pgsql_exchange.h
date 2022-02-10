@@ -273,6 +273,20 @@ struct PsqlBindArray {
     /// @throw DbOperationError if data is NULL.
     void add(const uint8_t* data, const size_t len);
 
+    /// @brief Adds a temporary buffer of binary data to the bind array.
+    ///
+    /// Adds a BINARY_FMT value to the end of the bind array using the
+    /// given vector as the data source.
+    /// Prior to adding the buffer, it is duplicated as a ConstStringPtr
+    /// and saved internally.  This guarantees the buffer remains in scope
+    /// until the PsqlBindArray is destroyed, without the caller maintaining
+    /// the buffer values.
+    ///
+    /// @param data buffer of binary data.
+    /// @param len  number of bytes of data in buffer
+    /// @throw DbOperationError if data is NULL.
+    void addTempBuffer(const uint8_t* data, const size_t len);
+
     /// @brief Adds a boolean value to the bind array.
     ///
     /// Converts the given boolean value to its corresponding to PostgreSQL

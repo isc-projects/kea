@@ -3718,7 +3718,6 @@ CREATE TRIGGER dhcp6_server_ADEL
     AFTER DELETE ON dhcp6_server
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_server_ADEL();
 
-
 -- Trigger function for dhcp4_shared_network_BDEL called BEFORE DELETE on dhcp4_shared_network
 CREATE OR REPLACE FUNCTION func_dhcp4_shared_network_BDEL() RETURNS TRIGGER AS $dhcp4_shared_network_BDEL$
 BEGIN
@@ -4264,6 +4263,235 @@ UPDATE schema_version
     SET version = '8', minor = '0';
 
 -- Schema 8.0 specification ends here.
+
+-- This starts schema update to 9.0.
+
+-- Add missing cascade to constraint on dhcp4/6_subnet_server tables.
+ALTER TABLE dhcp4_subnet_server
+    DROP CONSTRAINT fk_dhcp4_subnet_server_server_id,
+    ADD CONSTRAINT fk_dhcp4_subnet_server_server_id
+        FOREIGN KEY (server_id) REFERENCES dhcp4_server (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    DROP CONSTRAINT fk_dhcp4_subnet_server_subnet_id,
+    ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id
+        FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_subnet_server
+    DROP CONSTRAINT fk_dhcp6_subnet_server_server_id,
+    ADD CONSTRAINT fk_dhcp6_subnet_server_server_id
+        FOREIGN KEY (server_id) REFERENCES dhcp6_server (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    DROP CONSTRAINT fk_dhcp6_subnet_server_subnet_id,
+    ADD CONSTRAINT fk_dhcp6_subnet_server_subnet_id
+        FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Fix constraint typo on dhcp4_option_def_server
+ALTER TABLE dhcp4_option_def_server
+    DROP CONSTRAINT dhcp4_option_def_server_option_def_id_fkey,
+    ADD CONSTRAINT  dhcp4_option_def_server_option_def_id_fkey
+        FOREIGN KEY (option_def_id) REFERENCES dhcp4_option_def(id) ON DELETE CASCADE;
+
+-- DROP shared-network ADEL triggers that should not exist.
+DROP TRIGGER IF EXISTS dhcp4_shared_network_ADEL on dhcp4_shared_network CASCADE;
+DROP TRIGGER IF EXISTS dhcp6_shared_network_ADEL on dhcp6_shared_network CASCADE;
+
+-- Replace createOptionAuditDHCP4() with a version that has local variable
+-- snid correctly declared as a BIGINT.
+--
+-- -----------------------------------------------------
+--
+-- Stored procedure which updates modification timestamp of
+-- a parent object when an option is modified.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: 'create', 'update' or 'delete'
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - p_subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- - p_modification_ts: modification timestamp of the
+--   option.
+--   Some arguments are prefixed with "p_" to avoid ambiguity
+--   with column names in SQL statements. PostgreSQL does not
+--   allow table aliases to be used with column names in update
+--   set expressions.
+-- -----------------------------------------------------
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP4(modification_type VARCHAR,
+                                                  scope_id SMALLINT,
+                                                  option_id INT,
+                                                  p_subnet_id BIGINT,
+                                                  host_id INT,
+                                                  network_name VARCHAR,
+                                                  pool_id BIGINT,
+                                                  p_modification_ts TIMESTAMP WITH TIME ZONE)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    -- These variables will hold shared network id and subnet id that
+    -- we will select.
+    snid BIGINT;
+    sid BIGINT;
+    cascade_transaction BOOLEAN := true;
+    ct TEXT;
+BEGIN
+    -- Cascade transaction flag is set to true to prevent creation of
+    -- the audit entries for the options when the options are
+    -- created as part of the parent object creation or update.
+    -- For example: when the option is added as part of the subnet
+    -- addition, the cascade transaction flag is equal to true. If
+    -- the option is added into the existing subnet the cascade
+    -- transaction is equal to false. Note that depending on the option
+    -- scope the audit entry will contain the object_type value
+    -- of the parent object to cause the server to replace the
+    -- entire subnet. The only case when the object_type will be
+    -- set to 'dhcp4_options' is when a global option is added.
+    -- Global options do not have the owner.
+
+    cascade_transaction := get_session_boolean('kea.cascade_transaction');
+    IF cascade_transaction = false THEN
+        -- todo: host manager hasn't been updated to use audit
+        -- mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            -- If a global option is added or modified, create audit
+            -- entry for the 'dhcp4_options' table.
+            PERFORM createAuditEntryDHCP4('dhcp4_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            -- If subnet specific option is added or modified, update
+            -- the modification timestamp of this subnet to allow the
+            -- servers to refresh the subnet information. This will
+            -- also result in creating an audit entry for this subnet.
+            UPDATE dhcp4_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = p_subnet_id;
+        ELSEIF scope_id = 4 THEN
+            -- If shared network specific option is added or modified,
+            -- update the modification timestamp of this shared network
+            -- to allow the servers to refresh the shared network
+            -- information. This will also result in creating an
+            -- audit entry for this shared network.
+           SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
+           UPDATE dhcp4_shared_network SET modification_ts = p_modification_ts
+                WHERE id = snid;
+        ELSEIF scope_id = 5 THEN
+            -- If pool specific option is added or modified, update
+            -- the modification timestamp of the owning subnet.
+            SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
+            UPDATE dhcp4_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = sid;
+        END IF;
+    END IF;
+    RETURN;
+END;$$;
+
+-- Replace createOptionAuditDHCP6() with a version that has local variable
+-- snid correctly declared as a BIGINT.
+--
+-- -----------------------------------------------------
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- - pd_pool_id: identifier of the pool if the option
+--   belongs to the pd pool.
+-- - modification_ts: modification timestamp of the
+--   option.
+--   Some arguments are prefixed with "p_" to avoid ambiguity
+--   with column names in SQL statements. PostgreSQL does not
+--   allow table aliases to be used with column names in update
+--   set expressions.
+-- -----------------------------------------------------
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
+                                                  scope_id SMALLINT,
+                                                  option_id INT,
+                                                  p_subnet_id BIGINT,
+                                                  host_id INT,
+                                                  network_name VARCHAR(128),
+                                                  pool_id BIGINT,
+                                                  pd_pool_id BIGINT,
+                                                  p_modification_ts TIMESTAMP WITH TIME ZONE)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    -- These variables will hold shared network id and subnet id that
+    -- we will select.
+    snid BIGINT;
+    sid BIGINT;
+    cascade_transaction BOOLEAN := false;
+
+BEGIN
+    -- Cascade transaction flag is set to true to prevent creation of
+    -- the audit entries for the options when the options are
+    -- created as part of the parent object creation or update.
+    -- For example: when the option is added as part of the subnet
+    -- addition, the cascade transaction flag is equal to true. If
+    -- the option is added into the existing subnet the cascade
+    -- transaction is equal to false. Note that depending on the option
+    -- scope the audit entry will contain the object_type value
+    -- of the parent object to cause the server to replace the
+    -- entire subnet. The only case when the object_type will be
+    -- set to 'dhcp6_options' is when a global option is added.
+    -- Global options do not have the owner.
+    cascade_transaction := get_session_boolean('kea.cascade_transaction');
+    IF cascade_transaction = false THEN
+        -- todo: host manager hasn't been updated to use audit
+        -- mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            -- If a global option is added or modified, create audit
+            -- entry for the 'dhcp6_options' table.
+            PERFORM createAuditEntryDHCP6('dhcp6_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            -- If subnet specific option is added or modified, update
+            -- the modification timestamp of this subnet to allow the
+            -- servers to refresh the subnet information. This will
+            -- also result in creating an audit entry for this subnet.
+            UPDATE dhcp6_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = p_subnet_id;
+        ELSEIF scope_id = 4 THEN
+            -- If shared network specific option is added or modified,
+            -- update the modification timestamp of this shared network
+            -- to allow the servers to refresh the shared network
+            -- information. This will also result in creating an
+            -- audit entry for this shared network.
+           SELECT id INTO snid FROM dhcp6_shared_network WHERE name = network_name LIMIT 1;
+           UPDATE dhcp6_shared_network SET modification_ts = p_modification_ts
+                WHERE id = snid;
+        ELSEIF scope_id = 5 THEN
+            -- If pool specific option is added or modified, update
+            -- the modification timestamp of the owning subnet.
+            SELECT dhcp6_pool.subnet_id INTO sid FROM dhcp6_pool WHERE id = pool_id;
+            UPDATE dhcp6_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = sid;
+        ELSEIF scope_id = 6 THEN
+            -- If pd pool specific option is added or modified, create
+            -- audit entry for the subnet which this pool belongs to.
+            SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool WHERE id = pool_id;
+            UPDATE dhcp6_subnet SET modification_ts = p_modification_ts
+                WHERE subnet_id = sid;
+        END IF;
+    END IF;
+    RETURN;
+END;$$;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '9', minor = '0';
 
 -- Commit the script transaction.
 COMMIT;

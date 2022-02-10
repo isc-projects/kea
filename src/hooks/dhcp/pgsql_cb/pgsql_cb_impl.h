@@ -108,8 +108,11 @@ public:
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
     /// @param db_reconnect_callback The connection recovery callback.
+    /// @param last_insert_id_index statement index of the SQL statement to
+    /// use when fetching the last insert id for a given table.
     explicit PgSqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
-                                    const db::DbCallback db_reconnect_callback);
+                                    const db::DbCallback db_reconnect_callback,
+                                    const size_t last_insert_id_index_);
 
     /// @brief Destructor.
     virtual ~PgSqlConfigBackendImpl();
@@ -273,8 +276,7 @@ public:
     /// @param column name of the sequence column
     /// @return returns the most recently modified value for the given
     /// sequence
-    uint64_t getLastInsertId(const int index, const std::string& table,
-                             const std::string& column);
+    uint64_t getLastInsertId(const std::string& table, const std::string& column);
 
     /// @brief Sends query to retrieve multiple global parameters.
     ///
@@ -355,6 +357,9 @@ public:
     /// @param create_audit_revision Statement creating audit revision.
     /// @param insert_option_def_server Statement associating option
     /// definition with a server.
+    /// @param client_class_name Optional client class name to which
+    /// the option definition belongs. If this value is not specified,
+    /// it is a global option definition.
     /// @throw NotImplemented if server selector is "unassigned".
     void createUpdateOptionDef(const db::ServerSelector& server_selector,
                                const OptionDefinitionPtr& option_def,
@@ -363,7 +368,8 @@ public:
                                const int& insert_option_def,
                                const int& update_option_def,
                                const int& create_audit_revision,
-                               const int& insert_option_def_server);
+                               const int& insert_option_def_server,
+                               const std::string& client_class_name = "");
 
     /// @brief Sends query to retrieve single global option by code and
     /// option space.
@@ -481,7 +487,56 @@ public:
                     const Option::Universe& universe,
                     OptionContainer& options);
 
-    /// @todo implement OptionDescriptorPtr processOptionRow(const Option::Universe& universe, ...)
+    /// @brief Returns DHCP option instance from a set of columns within a
+    /// result set row.
+    ///
+    /// The following is the expected order of columns specified in the SELECT
+    /// query:
+    /// - option_id,
+    /// - code,
+    /// - value,
+    /// - formatted_value,
+    /// - space,
+    /// - persistent,
+    /// - dhcp4_subnet_id/dhcp6_subnet_id,
+    /// - scope_id,
+    /// - user_context,
+    /// - shared_network_name,
+    /// - pool_id,
+    /// - [pd_pool_id,]
+    /// - modification_ts
+    ///
+    /// @note The universe is reused to switch between DHCPv4 and DHCPv6
+    /// option layouts.
+    /// @param universe V4 or V6.
+    /// @param worker result set row worker containing the row data
+    /// @param first_col column index of the first column (i.e. option_id)
+    /// in the row.
+    OptionDescriptorPtr processOptionRow(const Option::Universe& universe,
+                                         db::PgSqlResultRowWorker& worker,
+                                         const size_t first_col);
+
+    /// @brief Returns DHCP option definition instance from output bindings.
+    ///
+    /// The following is the expected order of columns specified in the SELECT
+    /// query:
+    /// - id,
+    /// - code,
+    /// - name,
+    /// - space,
+    /// - type,
+    /// - modification_ts,
+    /// - is_array,
+    /// - encapsulate,
+    /// - record_types,
+    /// - user_context
+    ///
+    /// @param worker result set row worker containing the row data
+    /// @param first_col column index of the first column (i.e. definition id)
+    /// in the row.
+    /// @return Pointer to the option definition.
+    OptionDefinitionPtr processOptionDefRow(db::PgSqlResultRowWorker& worker,
+                                            const size_t first_col);
 
     /// @brief Associates a configuration element with multiple servers.
     ///
@@ -504,6 +559,19 @@ public:
     /// @param network Pointer to a shared network or subnet for which binding
     /// should be created.
     void addRelayBinding(db::PsqlBindArray& bindings, const NetworkPtr& network);
+
+    /// @brief Iterates over the relay addresses in a JSON list element at a
+    /// given column, adding each to the given Network's relay list.
+    ///
+    /// Has no effect if the column is null or is an empty list.
+    ///
+    /// @param worker result set row worker containing the row data
+    /// @param col column index of JSON element column
+    /// @param network network to update.
+    ///
+    /// @throw BadValue if the Element is not a list or if any of the
+    /// list's elements are not valid IP addresses in string form.
+    void setRelays(db::PgSqlResultRowWorker& r, size_t col, Network& network);
 
     /// @brief Adds 'require_client_classes' parameter to a bind array.
     ///
@@ -529,6 +597,20 @@ public:
 
         bindings.add(required_classes_element);
     }
+
+    /// @brief Iterates over the class names in a JSON list element at a
+    /// given column, invoking a setter function each one.
+    ///
+    /// Has no effect if the column is null or is an empty list.
+    ///
+    /// @param worker result set row worker containing the row data
+    /// @param col column index of JSON element column
+    /// @param setter function to invoke for each class name in the list
+    ///
+    /// @throw BadValue if the Element is not a list or if any of the
+    /// list's elements are not strings.
+    void setRequiredClasses(db::PgSqlResultRowWorker& worker, size_t col,
+                            std::function<void(const std::string&)> setter);
 
     /// @brief Adds an option value to a bind array.
     ///
@@ -787,15 +869,18 @@ protected:
     std::string timer_name_;
 
 private:
-    /// @brief Boolean flag indicating if audit revision has been created
-    /// using @c ScopedAuditRevision object.
-    bool audit_revision_created_;
+    /// @brief Reference counter for @ScopedAuditRevision instances.
+    int audit_revision_ref_count_;
 
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;
 
-    /// The IOService object, used for all ASIO operations.
+    /// @brief The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Statement index of the SQL statement to use for fetching
+    /// last inserted id in a given table.
+    size_t last_insert_id_index_;
 };
 
 }  // namespace dhcp

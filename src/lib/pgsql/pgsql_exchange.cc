@@ -102,6 +102,19 @@ void PsqlBindArray::add(const uint8_t* data, const size_t len) {
     formats_.push_back(BINARY_FMT);
 }
 
+void PsqlBindArray::addTempBuffer(const uint8_t* data, const size_t len) {
+    if (!data) {
+        isc_throw(BadValue, "PsqlBindArray::addTempBuffer - uint8_t data cannot be NULL");
+    }
+
+    bound_strs_.push_back(ConstStringPtr(new std::string(
+                                         reinterpret_cast<const char*>(data),len)));
+    values_.push_back(bound_strs_.back()->data());
+    lengths_.push_back(len);
+    formats_.push_back(BINARY_FMT);
+}
+
+
 void PsqlBindArray::add(const bool& value)  {
     add(value ? TRUE_STR : FALSE_STR);
 }

@@ -461,7 +461,6 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::string& exp_object_
                                                   const ServerSelector& server_selector,
                                                   const size_t new_entries_num,
                                                   const size_t max_tested_entries) {
-
     // Get the server tag for which the entries are fetched.
     std::string tag;
     if (server_selector.getType() == ServerSelector::Type::ALL) {
@@ -503,6 +502,59 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::string& exp_object_
                   << logExistingAuditEntries(tag);
         EXPECT_EQ(exp_log_message, audit_entry->getLogMessage())
                   << logExistingAuditEntries(tag);
+    }
+}
+
+
+void
+GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
+                                                  const ServerSelector& server_selector) {
+    // Get the server tag for which the entries are fetched.
+    std::string tag;
+    if (server_selector.getType() == ServerSelector::Type::ALL) {
+        // Server tag is 'all'.
+        tag = "all";
+    } else {
+        auto tags = server_selector.getTags();
+        // This test is not meant to handle multiple server tags all at once.
+        if (tags.size() > 1) {
+            ADD_FAILURE() << "Test error: do not use multiple server tags";
+        } else if (tags.size() == 1) {
+            // Get the server tag for which we run the current test.
+            tag = tags.begin()->get();
+        }
+    }
+
+    size_t new_entries_num = exp_entries.size();
+
+    auto audit_entries_size_save = audit_entries_[tag].size();
+
+    // Audit entries for different server tags are stored in separate
+    // containers.
+    ASSERT_NO_THROW_LOG(audit_entries_[tag]
+                        = cbptr_->getRecentAuditEntries(server_selector,
+                                                        timestamps_["two days ago"], 0));
+    ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_[tag].size())
+              << logExistingAuditEntries(tag);
+
+    auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeIdTag>();
+
+    // Iterate over specified number of entries starting from the most recent
+    // one and check they have correct values.
+    auto exp_entry = exp_entries.rbegin();
+    for (auto audit_entry_it = mod_time_idx.rbegin();
+         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num));
+         ++audit_entry_it) {
+
+        auto audit_entry = *audit_entry_it;
+        EXPECT_EQ((*exp_entry).object_type, audit_entry->getObjectType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ((*exp_entry).modification_type, audit_entry->getModificationType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ((*exp_entry).log_message, audit_entry->getLogMessage())
+                  << logExistingAuditEntries(tag);
+
+        ++exp_entry;
     }
 }
 
@@ -1072,7 +1124,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     // Insert two subnets, one for all servers and one for server2.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("A. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::CREATE,
                           "subnet set");
@@ -1080,7 +1132,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("B. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::CREATE,
                           "subnet set", ServerSelector::ONE("subnet2"),
@@ -1110,7 +1162,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
         ASSERT_EQ(1, returned_subnet->getServerTags().size());
         EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
 
-        EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+        ASSERT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 
         // Test fetching subnet by prefix.
         ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(server_selector,
@@ -1141,7 +1193,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     subnet = test_subnets_[1];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("C. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
@@ -1204,8 +1256,8 @@ GenericConfigBackendDHCPv4Test::getSubnet4WithOptionalUnspecifiedTest() {
 
     // Need to add the shared network to the database because otherwise
     // the subnet foreign key would fail.
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network);
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
@@ -1302,11 +1354,11 @@ GenericConfigBackendDHCPv4Test::getSubnet4SharedNetworkTest() {
     shared_network->add(subnet);
 
     // Store shared network in the database.
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
-                                       shared_network);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
+                                       shared_network));
 
     // Store subnet associated with the shared network in the database.
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
@@ -1326,7 +1378,7 @@ void
 GenericConfigBackendDHCPv4Test::getSubnet4ByPrefixTest() {
     // Insert subnet to the database.
     Subnet4Ptr subnet = test_subnets_[0];
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
 
     // Fetch the subnet by prefix.
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
@@ -2397,6 +2449,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     // And after the shared network itself.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
+
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
 
@@ -2414,10 +2467,28 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
 
     {
         SCOPED_TRACE("DELETE audit entry for the remaining two shared networks");
-        // The last parameter indicates that we expect two new audit entries.
-        testNewAuditEntry("dhcp4_shared_network",
-                          AuditEntry::ModificationType::DELETE,
-                          "deleted all shared networks", ServerSelector::ALL(), 2);
+        // The last parameter indicates that we expect four new audit entries.
+        // two for deleted shared networks and two for updated subnets
+        std::vector<ExpAuditEntry> exp_entries({
+            {
+                "dhcp4_shared_network",
+                AuditEntry::ModificationType::DELETE, "deleted all shared networks"
+            },
+            {
+                "dhcp4_shared_network",
+                AuditEntry::ModificationType::DELETE, "deleted all shared networks"
+            },
+            {
+                "dhcp4_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
+                "dhcp4_subnet",
+                 AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            }
+        });
+
+        testNewAuditEntry(exp_entries, ServerSelector::ALL());
     }
 
     // Check that subnets are still there but detached.

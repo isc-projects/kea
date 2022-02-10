@@ -15,6 +15,12 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+struct ExpAuditEntry {
+    std::string object_type;
+    db::AuditEntry::ModificationType modification_type;
+    std::string log_message;
+};
+
 /// @brief Generic test fixture class for testing DHCPv4
 /// config backend operations.
 class GenericConfigBackendDHCPv4Test : public GenericBackendTest {
@@ -131,6 +137,18 @@ public:
                            const db::ServerSelector& server_selector = db::ServerSelector::ALL(),
                            const size_t new_entries_num = 1,
                            const size_t max_tested_entries = 65535);
+
+    /// @brief Checks the new audit entries against a list of
+    /// expected entries.
+    ///
+    /// This method retrieves a collection of the existing audit entries and
+    /// checks that number and content of the expected new entries have been
+    /// added to the end of this collection.
+    ///
+    /// @param exp_entries a  list of the new audit entries expected.
+    /// @param server_selector Server selector to be used for next query.
+    void testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
+                           const db::ServerSelector& server_selector);
 
     /// @brief This test verifies that the server can be added, updated and deleted.
     void createUpdateDeleteServerTest();
