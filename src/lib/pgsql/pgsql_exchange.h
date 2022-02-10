@@ -765,7 +765,7 @@ public:
     /// value
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
-   /// invalid.
+    /// invalid.
     static void convertFromBytea(const PgSqlResult& r, const int row,
                                  const size_t col, std::vector<uint8_t>& value);
 
@@ -774,9 +774,9 @@ public:
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
-    /// @param col the column number within the row If the column
+    /// @param col the column number within the row.  If the column
     /// is null, the Triplet is returned as unspecified.
-    /// @param[out] value Triplet to receive the column value
+    /// @return Triplet to receive the column value
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
@@ -796,7 +796,7 @@ public:
     /// minium value.
     /// @param max_col the column number within the row that contains the
     /// maximum value.
-    /// @param[out] value Triplet to receive the column value
+    /// @return Triplet to receive the column value
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
@@ -931,13 +931,13 @@ public:
     /// @brief Fetches a timestamp column as a ptime.
     ///
     /// @param col the column number within the row
-    /// @param[out] value ptime parameter to receive the converted timestamp
+    /// @return ptime parameter to receive the converted timestamp
     boost::posix_time::ptime getTimestamp(const size_t col);
 
     /// @brief Fetches a JSON column as an ElementPtr.
     ///
     /// @param col the column number within the row
-    /// @param[out] value ElementPtr parameter to receive the column value
+    /// @return ElementPtr parameter to receive the column value
     data::ElementPtr getJSON(const size_t col);
 
     /// @brief Fetches a uint32_t value into a Triplet using a single
@@ -945,7 +945,7 @@ public:
     ///
     /// @param col the column number within the row If the column
     /// is null, the Triplet is returned as unspecified.
-    /// @param[out] value Triplet to receive the column value
+    /// @return Triplet to receive the column value
     isc::util::Triplet<uint32_t> getTriplet(const size_t col);
 
     /// @brief Fetches a uint32_t value into a Triplet using a three
@@ -958,19 +958,20 @@ public:
     /// minium value.
     /// @param max_col the column number within the row that contains the
     /// maximum value.
-    /// @param[out] value Triplet to receive the column value
+    /// @return Triplet to receive the column value
     isc::util::Triplet<uint32_t> getTriplet(const size_t def_col,
                                             const size_t min_col,
                                             const size_t max_col);
 
     /// @brief Diagnostic tool which dumps the Result row contents as a string
     ///
-    /// @return A string depiction of the row contents.
+    /// @return A string representation of the row contents.
     std::string dumpRow();
 
 private:
     /// @brief Result set containing the row.
     const PgSqlResult& r_;
+
     /// @brief Index of the desired row.
     size_t row_;
 };

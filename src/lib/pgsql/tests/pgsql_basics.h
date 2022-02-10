@@ -153,8 +153,8 @@ public:
 #define FETCH_ROWS(a,b) (fetchRows(a,b,__LINE__))
 #define WIPE_ROWS(a) (RUN_SQL(a, "DELETE FROM BASICS", PGRES_COMMAND_OK))
 
-};
-};
-};
+}
+}
+}
 
 #endif

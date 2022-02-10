@@ -49,7 +49,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-/// @brief Implementation of the PgSQL Configuration Backend.
+/// @brief Implementation of the PostgreSQL Configuration Backend.
 class PgSqlConfigBackendDHCPv4Impl : public PgSqlConfigBackendImpl {
 public:
 
@@ -265,7 +265,7 @@ public:
         }
 
         transaction.commit();
-     }
+    }
 
     /// @brief Sends query to the database to retrieve multiple subnets.
     ///
@@ -884,6 +884,7 @@ public:
         }
 
         transaction.commit();
+
         return (count);
     }
 
@@ -919,6 +920,7 @@ public:
 
         // Commit the transaction.
         transaction.commit();
+
         return (count);
     }
 
@@ -1029,6 +1031,7 @@ public:
 
         return (true);
     }
+
 };
 
 namespace {
@@ -1167,7 +1170,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all subnets.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_SUBNETS4",
         PGSQL_GET_SUBNET4_NO_TAG()
     },
@@ -1175,7 +1181,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all unassigned subnets.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_SUBNETS4_UNASSIGNED",
         PGSQL_GET_SUBNET4_UNASSIGNED()
     },
@@ -1277,7 +1286,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all shared networks.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_SHARED_NETWORKS4",
         PGSQL_GET_SHARED_NETWORK4_NO_TAG()
     },
@@ -1285,7 +1297,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all unassigned shared networks.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_SHARED_NETWORKS4_UNASSIGNED",
         PGSQL_GET_SHARED_NETWORK4_UNASSIGNED()
     },
@@ -1339,7 +1354,6 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves modified option definitions.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-        // server tag is $1
         2,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -1365,7 +1379,6 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves all global options.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-        // server tag is $1
         1,
         {
             OID_VARCHAR // 1 server_tag
@@ -1377,7 +1390,6 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves modified options.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-        // server tag is $1
         2,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -1390,7 +1402,6 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves an option for a given subnet, option code and space.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_SUBNET_ID_CODE_SPACE,
-        // server tag is $1
         4,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -1405,7 +1416,6 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves an option for a given pool, option code and space.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_POOL_ID_CODE_SPACE,
-        // server tag is $1
         4,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -1445,7 +1455,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all client classes.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_CLIENT_CLASSES4",
         PGSQL_GET_CLIENT_CLASS4_WITH_TAG()
     },
@@ -1453,7 +1466,10 @@ TaggedStatementArray tagged_statements = { {
     // Select all unassigned client classes.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_CLIENT_CLASSES4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_CLIENT_CLASSES4_UNASSIGNED",
         PGSQL_GET_CLIENT_CLASS4_UNASSIGNED()
     },
@@ -1479,6 +1495,7 @@ TaggedStatementArray tagged_statements = { {
         "GET_MODIFIED_CLIENT_CLASSES4_UNASSIGNED",
         PGSQL_GET_CLIENT_CLASS4_UNASSIGNED(AND c.modification_ts >= $1)
     },
+
     // Retrieves the most recent audit entries.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
@@ -1506,7 +1523,10 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves all servers.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_ALL_SERVERS4,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "GET_ALL_SERVERS4",
         PGSQL_GET_ALL_SERVERS(dhcp4)
     },
@@ -1553,7 +1573,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    //  8 interface
             OID_BOOL,       //  9 match_client_id
             OID_TIMESTAMP,  // 10 modification_ts
-            OID_TEXT,       // 11 next_server   ---  cast as INET
+            OID_TEXT,       // 11 next_server - cast as inet
             OID_INT8,       // 12 rebind_timer
             OID_TEXT,       // 13 relay
             OID_INT8,       // 14 renew_timer
@@ -1566,8 +1586,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 21 min_valid_lifetime
             OID_INT8,       // 22 max_valid_lifetime
             OID_BOOL,       // 23 calculate_tee_times
-            OID_TEXT,       // 24 t1_percent --- cast as FLOAT
-            OID_TEXT,       // 25 t2_percent --- cast as FLOAT
+            OID_TEXT,       // 24 t1_percent - cast as float
+            OID_TEXT,       // 25 t2_percent - cast as float
             OID_BOOL,       // 26 authoritative
             OID_BOOL,       // 27 ddns_send_updates
             OID_BOOL,       // 28 ddns_override_no_update
@@ -1577,7 +1597,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 32 ddns_qualifying_suffix
             OID_BOOL,       // 33 reservations_in_subnet
             OID_BOOL,       // 34 reservations_out_of_pool
-            OID_TEXT,       // 35 cache_threshold -- cast as FLOAT
+            OID_TEXT,       // 35 cache_threshold - cast as float
             OID_INT8        // 36 cache_max_age"
         },
         "INSERT_SUBNET4",
@@ -1680,7 +1700,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 17 t2_percent - cast as float
             OID_BOOL,       // 18 authoritative,
             OID_VARCHAR,    // 19 boot_file_name,
-            OID_TEXT,       // 20 next_server - cast as inet
+            OID_TEXT,       // 20 next_server - cast as inaet
             OID_VARCHAR,    // 21 server_hostname,
             OID_BOOL,       // 22 ddns_send_updates,
             OID_BOOL,       // 23 ddns_override_no_update,
@@ -1761,7 +1781,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    //  7 encapsulate
             OID_VARCHAR,    //  8 record_types
             OID_VARCHAR,    //  9 user_context
-            OID_INT8        // 10 class_id"  -- column is missing from dhcpX_option_def tables
+            OID_INT8        // 10 class_id" - column is missing from dhcpX_option_def tables
         },
         "INSERT_OPTION_DEF4",
         PGSQL_INSERT_OPTION_DEF(dhcp4)
@@ -1941,7 +1961,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    //  8 interface
             OID_BOOL,       //  9 match_client_id
             OID_TIMESTAMP,  // 10 modification_ts
-            OID_TEXT,       // 11 next_server   - cast as INET
+            OID_TEXT,       // 11 next_server - cast as inet
             OID_INT8,       // 12 rebind_timer
             OID_TEXT,       // 13 relay
             OID_INT8,       // 14 renew_timer
@@ -1954,8 +1974,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 21 min_valid_lifetime
             OID_INT8,       // 22 max_valid_lifetime
             OID_BOOL,       // 23 calculate_tee_times
-            OID_TEXT,       // 24 t1_percent - cast as FLOAT
-            OID_TEXT,       // 25 t2_percent - cast as FLOAT
+            OID_TEXT,       // 24 t1_percent - cast as float
+            OID_TEXT,       // 25 t2_percent - cast as float
             OID_BOOL,       // 26 authoritative
             OID_BOOL,       // 27 ddns_send_updates
             OID_BOOL,       // 28 ddns_override_no_update
@@ -1965,7 +1985,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 32 ddns_qualifying_suffix
             OID_BOOL,       // 33 reservations_in_subnet
             OID_BOOL,       // 34 reservations_out_of_pool
-            OID_TEXT,       // 35 cache_threshold - cast as FLOAT
+            OID_TEXT,       // 35 cache_threshold - cast as float
             OID_INT8,       // 36 cache_max_age"
             OID_INT8,       // 37 subnet_id (of subnet to update)
             OID_VARCHAR     // 38 subnet_prefix (of subnet to update)
@@ -2342,7 +2362,10 @@ TaggedStatementArray tagged_statements = { {
     // Delete all global parameters which are unassigned to any servers.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED",
         PGSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(dhcp4)
     },
@@ -2526,11 +2549,13 @@ TaggedStatementArray tagged_statements = { {
         PGSQL_DELETE_OPTION_DEF(dhcp4)
     },
 
-
     // Delete all option definitions which are assigned to no servers.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_OPTION_DEFS4_UNASSIGNED",
         PGSQL_DELETE_OPTION_DEF_UNASSIGNED(dhcp4)
     },
@@ -2562,9 +2587,12 @@ TaggedStatementArray tagged_statements = { {
     // Delete all global options which are unassigned to any servers.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED",
-        PGSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND scope_id = 0)
+        PGSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND o.scope_id = 0)
     },
 
     // Delete single option from a subnet.
@@ -2679,7 +2707,10 @@ TaggedStatementArray tagged_statements = { {
     // Delete all unassigned client classes.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_CLIENT_CLASSES4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_CLIENT_CLASSES4_UNASSIGNED",
         PGSQL_DELETE_CLIENT_CLASS_UNASSIGNED(dhcp4)
     },
@@ -2748,7 +2779,7 @@ PgSqlConfigBackendDHCPv4Impl::PgSqlConfigBackendDHCPv4Impl(const DatabaseConnect
                             tagged_statements.end());
 // @todo As part of enabling read-only CB access, statements need to
 // be limited:
-//                          tagged_statements.begin() + WRITE_STMTS_BEGIN);
+//                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlConfigBackend4[";

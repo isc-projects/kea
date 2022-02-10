@@ -1092,7 +1092,7 @@ TEST(PsqlBindArray, popBackTest) {
 /// @brief Verify that we can read and write IPv4 addresses
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest4) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting an IPv4 address
     const char* st_name = "inet4_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
@@ -1101,7 +1101,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
           "select * from BASICS where inet4_col = cast($1 as inet)" }
     };
 
-    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[0]));
     ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[1]));
 
     // Build our reference list of reference values
@@ -1161,14 +1161,17 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
 /// @brief Verify that we can read and write IPv6 addresses
 /// using INET columns.
 TEST_F(PgSqlBasicsTest, inetTest6) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting an IPv6 address
     const char* st_name = "inet6_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
-          "INSERT INTO BASICS (inet6_col) values (cast($1 as inet))" }
+          "INSERT INTO BASICS (inet6_col) values (cast($1 as inet))" },
+        { 1, { OID_TEXT }, "check_where",
+          "select * from BASICS where inet6_col = cast($1 as inet)" }
     };
 
-    ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[0]));
+    ASSERT_NO_THROW_LOG(conn_->prepareStatement(statement[1]));
 
     // Build our reference list of reference values
     std::vector<asiolink::IOAddress>inets;
@@ -1189,15 +1192,24 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
 
     // Iterate over the rows, verifying each value against its reference
     int row = 0;
+    asiolink::IOAddress fetched_inet("::");
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INET6_COL));
 
         // Fetch and verify the column value
-        asiolink::IOAddress fetched_inet("::");
         ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, row, INET6_COL));
         EXPECT_EQ(fetched_inet, inets[row]);
     }
+
+    // Verify that casting from string to inet works in where clauses.
+    r.reset();
+    bind_array.reset(new PsqlBindArray());
+    bind_array->addInet6(inets[1]);
+    RUN_PREP(r, statement[1], bind_array, PGRES_TUPLES_OK);
+    ASSERT_EQ(r->getRows(),1);
+    ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, 0, INET6_COL));
+    EXPECT_EQ(fetched_inet, inets[1]);
 
     // Clean out the table
     WIPE_ROWS(r);
@@ -1216,7 +1228,7 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
 
 /// @brief Verify that we can read and write floats
 TEST_F(PgSqlBasicsTest, floatTest) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting a FLOAT
     const char* st_name = "float_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
@@ -1271,7 +1283,7 @@ TEST_F(PgSqlBasicsTest, floatTest) {
 
 /// @brief Verify that we can read and write JSON columns.
 TEST_F(PgSqlBasicsTest, jsonTest) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting a JSON
     const char* st_name = "json_insert";
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TEXT }, st_name,
@@ -1326,7 +1338,7 @@ TEST_F(PgSqlBasicsTest, jsonTest) {
 
 /// @brief Verify that we can read and write integer Triplets.
 TEST_F(PgSqlBasicsTest, tripleTest) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting a Triplet
     const char* st_name = "triplets_insert";
     PgSqlTaggedStatement statement[] = {
         { 3, { OID_INT4, OID_INT4, OID_INT4 }, st_name,
@@ -1373,7 +1385,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
         // Now test making a triplet with all three columns.
         ASSERT_NO_THROW_LOG(
             fetched = PgSqlExchange::getTripletValue(*r, row,
-                                                    INT_COL, MIN_INT_COL, MAX_INT_COL));
+                                                     INT_COL, MIN_INT_COL, MAX_INT_COL));
         if (expected.unspecified()) {
             EXPECT_TRUE(fetched.unspecified());
         } else {
@@ -1392,7 +1404,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
 
 /// @brief Verify PgResultRowWorker operations.
 TEST_F(PgSqlBasicsTest, resultRowWorker) {
-    // Create a prepared statement for inserting a SMALLINT
+    // Create a prepared statement for inserting multiple types
     const char* st_name = "row_insert";
     PgSqlTaggedStatement statement[] = {
         { 14,
@@ -1426,7 +1438,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
           " min_int_col, "
           " max_int_col, "
           " inet6_col) "
-          " VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, cast($9 as inet), "
+          " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, cast($9 as inet), "
           "         cast($10 as float), cast($11 as json), $12, $13, $14)"
         }
     };
@@ -1439,7 +1451,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
     bool exp_bool(true);
     b->add(exp_bool);
 
-    std::vector<uint8_t> exp_bytes({ 0x01, 0x02, 0x03, 0x04});
+    std::vector<uint8_t> exp_bytes({0x01, 0x02, 0x03, 0x04});
     b->add(exp_bytes);
 
     uint64_t exp_bigint = 9876;
@@ -1458,7 +1470,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
     ptime exp_timestamp(date(2021, Jul, 18), duration);
     b->addTimestamp(exp_timestamp);
 
-    std::string exp_varchar = "really just a string";
+    const char* exp_varchar = "really just a string";
     b->add(exp_varchar);
 
     asiolink::IOAddress exp_inet4("192.168.1.35");
@@ -1486,7 +1498,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
     FETCH_ROWS(r, 1);
 
     // Create a row worker.
-   PgSqlResultRowWorkerPtr worker;
+    PgSqlResultRowWorkerPtr worker;
 
     // Creating the row worker for the first (and only) row should succeed.
     ASSERT_NO_THROW_LOG(worker.reset(new PgSqlResultRowWorker(*r, 0)));
@@ -1512,7 +1524,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
     EXPECT_EQ(exp_inet6, worker->getInet6(INET6_COL));
 
     // Get a triplet using int_col as the sole value.
-    Triplet<uint32_t>fetched_triplet = worker->getTriplet(5);
+    Triplet<uint32_t>fetched_triplet = worker->getTriplet(INT_COL);
     EXPECT_EQ(exp_int, fetched_triplet.get());
 
     // Get a triplet using int_col, min_col, and max_col values.
@@ -1526,5 +1538,4 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
                      DbOperationError, "row: 1, out of range: 0..1");
 }
 
-
-}; // namespace
+} // namespace

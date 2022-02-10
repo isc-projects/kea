@@ -11,6 +11,7 @@
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
 #include <util/buffer.h>
+
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <cstdint>
@@ -255,7 +256,7 @@ MySqlConfigBackendImpl::deleteFromTable(const int index,
     // When deleting multiple objects we must not use ANY server.
     if (server_selector.amAny()) {
         isc_throw(InvalidOperation, "deleting multiple objects for ANY server is not"
-                  " supported");
+                                    " supported");
     }
 
     MySqlBindingCollection in_bindings;
@@ -497,7 +498,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "creating or updating option definition");
@@ -566,7 +567,7 @@ MySqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching global option");
@@ -631,7 +632,7 @@ MySqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching subnet level option");
@@ -662,7 +663,7 @@ MySqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     std::string msg = "fetching ";
@@ -701,7 +702,7 @@ MySqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching shared network level option");

@@ -1014,8 +1014,8 @@ GenericConfigBackendDHCPv4Test::nullKeyErrorTest() {
     // Create a global parameter (it should work with any object type).
     StampedValuePtr global_parameter = StampedValue::create("global", "value");
 
-    ASSERT_THROW (cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
-                                                       global_parameter), NullKeyError);
+    ASSERT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
+                                                      global_parameter), NullKeyError);
 }
 
 void
@@ -1066,7 +1066,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     // The subnet shouldn't have been added, even though one of the servers exists.
     Subnet4Ptr returned_subnet;
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"),
-                                                                             subnet2->getID()));
+                                                             subnet2->getID()));
     EXPECT_FALSE(returned_subnet);
 
     // Insert two subnets, one for all servers and one for server2.
@@ -1163,7 +1163,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
 
     // Update the subnet in the database (both use the same prefix).
     subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
-    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2));
 
     // Fetch again and verify.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"), subnet2->toText());
@@ -1174,7 +1174,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     // with different subnets. This should throw.
     // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
     subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2),
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2),
                  DuplicateEntry);
 }
 
@@ -1399,7 +1399,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
                   (*subnet_it)->toElement()->str());
     }
 
-    // Attempt to remove the non existing subnet should  return 0.
+    // Attempt to remove the non existing subnet should return 0.
     EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(), 22));
     EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(),
                                        "155.0.3.0/24"));
@@ -1740,7 +1740,7 @@ GenericConfigBackendDHCPv4Test::unassignedSubnet4Test() {
     // Trying to fetch the subnet by server tag should return no result.
     Subnet4Ptr returned_subnet;
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
-                                                         subnet->getID()));
+                                                             subnet->getID()));
     EXPECT_FALSE(returned_subnet);
 
     // The same if we use other calls.
@@ -2534,7 +2534,7 @@ GenericConfigBackendDHCPv4Test::getModifiedSharedNetworks4Test() {
     }
 
     // Fetch shared networks with timestamp later than today. Only one
-    // shared network  should be returned.
+    // shared network should be returned.
     SharedNetwork4Collection
         networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                       timestamps_["after today"]);
@@ -2670,7 +2670,7 @@ GenericConfigBackendDHCPv4Test::deleteSharedNetwork4SelectorsTest() {
 
     // Not supported selectors.
     EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                           "level1"),
+                                              "level1"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
@@ -2734,7 +2734,7 @@ GenericConfigBackendDHCPv4Test::unassignedSharedNetworkTest() {
 
     // We should get the shared network if we ask for unassigned.
     ASSERT_NO_THROW_LOG(returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
-                                                                 "level1"));
+                                                                     "level1"));
     ASSERT_TRUE(returned_network);
 
     // Also if we ask for all unassigned networks it should be returned.
@@ -2828,7 +2828,7 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOptionsTest() {
     // Remove the shared network. This should not affect options assigned to the
     // other shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
-                                                 test_networks_[1]->getName()));
+                                                     test_networks_[1]->getName()));
     EXPECT_EQ(1, countRows("dhcp4_shared_network"));
     EXPECT_EQ(1, countRows("dhcp4_options"));
 
@@ -2840,7 +2840,7 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOptionsTest() {
     // Delete this shared network. This should not affect the option associated
     // with the remaining shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
-                                                 test_networks_[0]->getName()));
+                                                     test_networks_[0]->getName()));
     EXPECT_EQ(1, countRows("dhcp4_shared_network"));
     EXPECT_EQ(1, countRows("dhcp4_options"));
 }
@@ -3822,7 +3822,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
                                 opt_boot_file_name);
 
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
-                                                shared_network->getName());
+                                                 shared_network->getName());
     ASSERT_TRUE(returned_network);
 
     OptionDescriptor returned_opt_boot_file_name =

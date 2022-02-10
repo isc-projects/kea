@@ -61,7 +61,8 @@ PgSqlConfigBackendImpl::ScopedAuditRevision::ScopedAuditRevision(
     bool cascade_transaction)
     : impl_(impl) {
     impl_->createAuditRevision(index, server_selector,
-                               boost::posix_time::microsec_clock::local_time(), log_message,
+                               boost::posix_time::microsec_clock::local_time(),
+                               log_message,
                                cascade_transaction);
 }
 
@@ -316,6 +317,7 @@ PgSqlConfigBackendImpl::getGlobalParameters(const int index,
                         local_parameters.replace(existing, last_param);
                         return;
                     }
+
                 }
 
                 // If there is no such parameter yet or the existing parameter
@@ -416,6 +418,7 @@ PgSqlConfigBackendImpl::getAllOptions(const int /* index */,
                                       const Option::Universe& /* universe */,
                                       const ServerSelector& server_selector) {
     OptionContainer options;
+
     auto tags = server_selector.getTags();
 
     isc_throw(NotImplemented, NOT_IMPL_STR);
@@ -463,7 +466,8 @@ PgSqlConfigBackendImpl::getOption(const int index,
     isc_throw(NotImplemented, NOT_IMPL_STR);
 
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -494,7 +498,8 @@ PgSqlConfigBackendImpl::getOption(const int index,
     isc_throw(NotImplemented, NOT_IMPL_STR);
 
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -516,7 +521,8 @@ PgSqlConfigBackendImpl::getOption(const int index,
     PsqlBindArray in_bindings;
     isc_throw(NotImplemented, NOT_IMPL_STR);
     getOptions(index, in_bindings, universe, options);
-    return (options.empty() ? OptionDescriptorPtr() : OptionDescriptor::create(*options.begin()));
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptor::create(*options.begin()));
 }
 
 void
@@ -721,7 +727,6 @@ PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
         bindings.addNull();
     }
 }
-
 
 }  // namespace dhcp
 }  // end of namespace isc

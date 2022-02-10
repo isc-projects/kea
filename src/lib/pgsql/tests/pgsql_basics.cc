@@ -143,5 +143,4 @@ PgSqlBasicsTest::fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {
     ASSERT_EQ(r->getRows(), exp_rows) << "fetch at line: " << line
               << " wrong row count, expected: " << exp_rows
               << " , have: " << r->getRows();
-
 }

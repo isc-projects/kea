@@ -3294,6 +3294,7 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4_SERVER,
       MYSQL_INSERT_OPTION_SERVER(dhcp4)
     },
+
     // Insert client class.
     { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4,
       "INSERT INTO dhcp4_client_class("
@@ -3311,14 +3312,17 @@ TaggedStatementArray tagged_statements = { {
       "  modification_ts"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
+
     // Insert association of a client class with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_SERVER,
       MYSQL_INSERT_CLIENT_CLASS_SERVER(dhcp4)
     },
+
     // Insert client class dependency.
     { MySqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4_DEPENDENCY,
       MYSQL_INSERT_CLIENT_CLASS_DEPENDENCY(dhcp4)
     },
+
     // Insert server with server tag and description.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
       MYSQL_INSERT_SERVER(dhcp4)

@@ -38,7 +38,7 @@ namespace ph = std::placeholders;
 
 namespace {
 
-/// @brief Test implementation of the PgSQL configuration backend.
+/// @brief Test implementation of the PostgreSQL configuration backend.
 ///
 /// It exposes protected members of the @c PgSqlConfigBackendDHCPv4.
 class TestPgSqlConfigBackendDHCPv4 : public PgSqlConfigBackendDHCPv4 {
@@ -59,10 +59,10 @@ public:
 class PgSqlConfigBackendDHCPv4Test : public GenericConfigBackendDHCPv4Test {
 public:
     /// @brief Constructor.
-    PgSqlConfigBackendDHCPv4Test() {};
+    PgSqlConfigBackendDHCPv4Test() {}
 
     /// @brief Destructor.
-    virtual ~PgSqlConfigBackendDHCPv4Test() {};
+    virtual ~PgSqlConfigBackendDHCPv4Test() {}
 
     /// @brief Creates the PostgreSQL back end schema
     virtual void createSchema() {
@@ -92,7 +92,7 @@ public:
         return (ConfigBackendDHCPv4Ptr(new TestPgSqlConfigBackendDHCPv4(params)));
     }
 
-    /// @brief Counts rows in a selected table in PgSQL database.
+    /// @brief Counts rows in a selected table in PostgreSQL database.
     ///
     /// This method can be used to verify that some configuration elements were
     /// deleted from a selected table as a result of cascade delete or a trigger.
@@ -129,7 +129,7 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, getPort) {
     getPortTest();
 }
 
-TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteServer) {
+TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteServerTest) {
     createUpdateDeleteServerTest();
 }
 

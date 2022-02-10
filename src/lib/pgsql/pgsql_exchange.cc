@@ -450,7 +450,7 @@ PgSqlExchange::getInetValue4(const PgSqlResult& r, const int row,
             isc_throw(BadValue, "not a v4 address");
         }
 
-        return(addr);
+        return (addr);
     } catch (const std::exception& ex) {
         isc_throw(DbOperationError, "Cannot convert data: " << data
                   << " for: " << getColumnLabel(r, col) << " row:" << row
@@ -469,7 +469,7 @@ PgSqlExchange::getInetValue6(const PgSqlResult& r, const int row,
             isc_throw(BadValue, "not a v6 address");
         }
 
-        return(addr);
+        return (addr);
     } catch (const std::exception& ex) {
         isc_throw(DbOperationError, "Cannot convert data: " << data
                   << " for: " << getColumnLabel(r, col) << " row:" << row
@@ -516,7 +516,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
                    << getColumnLabel(r, col) << " row:" << row);
     }
 
-    // Copy from the allocated buffer to caller's buffer the free up
+    // Copy from the allocated buffer to caller's buffer then free up
     // the allocated buffer.
     memcpy(buffer, bytes, bytes_converted);
     PQfreemem(bytes);
@@ -579,7 +579,7 @@ PgSqlExchange::getTripletValue(const PgSqlResult& r, const int row,
     }
 
     uint32_t max_value = value;
-   if (!isColumnNull(r, row, max_col)) {
+    if (!isColumnNull(r, row, max_col)) {
         getColumnValue(r, row, max_col, max_value);
     }
 
@@ -658,7 +658,7 @@ PgSqlResultRowWorker::getDouble(const size_t col) {
 
 const char*
 PgSqlResultRowWorker::getRawColumnValue(const size_t col) {
-    return(PgSqlExchange::getRawColumnValue(r_, row_, col));
+    return (PgSqlExchange::getRawColumnValue(r_, row_, col));
 }
 
 uint64_t
@@ -689,12 +689,12 @@ PgSqlResultRowWorker::getBytes(const size_t col, std::vector<uint8_t>& value) {
 
 isc::asiolink::IOAddress
 PgSqlResultRowWorker::getInet4(const size_t col) {
-    return(PgSqlExchange::getInetValue4(r_, row_, col));
+    return (PgSqlExchange::getInetValue4(r_, row_, col));
 }
 
 isc::asiolink::IOAddress
 PgSqlResultRowWorker::getInet6(const size_t col) {
-    return(PgSqlExchange::getInetValue6(r_, row_, col));
+    return (PgSqlExchange::getInetValue6(r_, row_, col));
 }
 
 boost::posix_time::ptime
@@ -708,23 +708,23 @@ data::ElementPtr
 PgSqlResultRowWorker::getJSON(const size_t col) {
     data::ElementPtr value;
     getColumnValue(col, value);
-    return(value);
+    return (value);
 }
 
 isc::util::Triplet<uint32_t>
 PgSqlResultRowWorker::getTriplet(const size_t col) {
-    return(PgSqlExchange::getTripletValue(r_, row_, col));
+    return (PgSqlExchange::getTripletValue(r_, row_, col));
 }
 
 isc::util::Triplet<uint32_t>
 PgSqlResultRowWorker::getTriplet(const size_t def_col, const size_t min_col,
                                  const size_t max_col) {
-    return(PgSqlExchange::getTripletValue(r_, row_, def_col, min_col, max_col));
+    return (PgSqlExchange::getTripletValue(r_, row_, def_col, min_col, max_col));
 }
 
 std::string
 PgSqlResultRowWorker::dumpRow() {
-    return(PgSqlExchange::dumpRow(r_, row_));
+    return (PgSqlExchange::dumpRow(r_, row_));
 }
 
 } // end of isc::db namespace
