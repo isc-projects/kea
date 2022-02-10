@@ -199,9 +199,8 @@ public:
     StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
                                         const std::string& name) {
         StampedValueCollection parameters;
-
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        auto const& tags = server_selector.getTags();
+        for (auto const& tag : tags) {
             PsqlBindArray in_bindings;
             in_bindings.addTempString(tag.get());
             in_bindings.add(name);
@@ -816,8 +815,8 @@ public:
                 in_bindings.addInet4(pool_end_address);
                 getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
         } else {
-            auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            auto const& tags = server_selector.getTags();
+            for (auto const& tag : tags) {
                 PsqlBindArray in_bindings;
                 in_bindings.add(tag.get());
                 in_bindings.addInet4(pool_start_address);
@@ -4311,8 +4310,8 @@ StampedValueCollection
 PgSqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS4);
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         impl_->getGlobalParameters(PgSqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
@@ -4329,8 +4328,8 @@ PgSqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4)
         .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         in_bindings.addTimestamp(modification_time);

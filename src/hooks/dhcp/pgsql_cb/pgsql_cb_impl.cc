@@ -138,7 +138,7 @@ PgSqlConfigBackendImpl::createAuditRevision(const int index,
     /// audit entry is when there is a single server tag, i.e. "all" or explicit
     /// server name. In fact, these are the most common two cases.
     std::string tag = ServerTag::ALL;
-    auto tags = server_selector.getTags();
+    const auto& tags = server_selector.getTags();
     if (tags.size() == 1) {
         tag = tags.begin()->get();
     }
@@ -167,8 +167,8 @@ PgSqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                               const boost::posix_time::ptime& modification_time,
                                               const uint64_t& modification_id,
                                               AuditEntryCollection& audit_entries) {
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         // Create the input parameters.
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
@@ -366,8 +366,8 @@ void
 PgSqlConfigBackendImpl::getAllOptionDefs(const int index,
                                          const ServerSelector& server_selector,
                                          OptionDefContainer& option_defs) {
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         getOptionDefs(index, in_bindings, option_defs);
@@ -379,8 +379,8 @@ PgSqlConfigBackendImpl::getModifiedOptionDefs(const int index,
                                               const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time,
                                               OptionDefContainer& option_defs) {
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         in_bindings.addTimestamp(modification_time);
@@ -585,8 +585,8 @@ PgSqlConfigBackendImpl::getAllOptions(const int index,
                                       const ServerSelector& server_selector) {
     OptionContainer options;
 
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         getOptions(index, in_bindings, universe, options);
@@ -603,9 +603,9 @@ PgSqlConfigBackendImpl::getModifiedOptions(const int index,
 
     OptionContainer options;
 
-    auto tags = server_selector.getTags();
     PsqlBindArray in_bindings;
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         in_bindings.addTempString(tag.get());
         in_bindings.addTimestamp(modification_time);
         getOptions(index, in_bindings, universe, options);
