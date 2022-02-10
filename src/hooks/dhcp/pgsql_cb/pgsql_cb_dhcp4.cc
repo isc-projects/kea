@@ -1700,7 +1700,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 17 t2_percent - cast as float
             OID_BOOL,       // 18 authoritative,
             OID_VARCHAR,    // 19 boot_file_name,
-            OID_TEXT,       // 20 next_server - cast as inaet
+            OID_TEXT,       // 20 next_server - cast as inet
             OID_VARCHAR,    // 21 server_hostname,
             OID_BOOL,       // 22 ddns_send_updates,
             OID_BOOL,       // 23 ddns_override_no_update,
