@@ -294,8 +294,11 @@ run_conditional() {
     else
         is_all=1
     fi
-
+    # Return for for netconf when not available.
     if [ "${server}" = "netconf" ]; then
+        if ! ${have_netconf}; then
+            return
+        fi
         # reload is not supported for netconf.
         if [ "${command}" = "reload" ]; then
             if [ "${is_all}" -eq 1 ]; then
@@ -385,7 +388,11 @@ do
             # Validate that the specified server names are correct.
             for s in ${servers}
             do
-                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent netconf"
+                server_list="all dhcp4 dhcp6 dhcp_ddns ctrl_agent"
+                if ${have_netconf}; then
+                    server_list="${server_list} netconf"
+                fi
+                is_in_list "${s}" "${server_list}"
                 if [ "${_inlist}" -eq 0 ]; then
                     log_error "invalid server name: ${s}"
                     exit 1
