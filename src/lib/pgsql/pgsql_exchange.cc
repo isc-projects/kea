@@ -538,7 +538,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row, const size_
                    << getColumnLabel(r, col) << " row:" << row);
     }
 
-    // Copy from the allocated buffer to caller's buffer the free up
+    // Copy from the allocated buffer to caller's buffer then free
     // the allocated buffer.
     if (bytes_converted) {
         value.assign(bytes, bytes + bytes_converted);
