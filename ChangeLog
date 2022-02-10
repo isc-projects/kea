@@ -1,3 +1,7 @@
+1991.	[bug]		jinmei, razvan
+	Fixed keactrl exit code when netconf is not build.
+	(Gitlab #2262)
+
 1990.	[func]		razvan
 	Adden the ``reservations-lookup-first`` configuration parameter
 	which controls whether host reservations lookup should be

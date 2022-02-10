@@ -113,6 +113,7 @@ We have received the following contributions:
  - Jinmei Tatuya
    2015-10: Pkt4o6 class improvements
    2015-11: split Dhcpv4Srv::run() into run() and processPacket()
+   2021-02: Fix keactrl exit code when netconf is not build
 
  - Sebastien Couture, Ubity Inc
    2015-12: Fixes to MySQL schema creation
