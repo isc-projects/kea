@@ -643,7 +643,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
         "pkt4-ack-sent",
         "pkt4-nak-sent",
         "pkt4-parse-failed",
-        "pkt4-receive-drop"
+        "pkt4-receive-drop",
+        "v4-allocation-fail",
+        "v4-allocation-fail-shared-network",
+        "v4-allocation-fail-subnet",
+        "v4-allocation-fail-no-pools",
+        "v4-allocation-fail-classes"
     };
 
     // preparing the schema which check if all statistics are set to zero

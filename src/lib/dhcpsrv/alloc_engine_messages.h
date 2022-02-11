@@ -44,6 +44,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_V4_REQUEST_USE_HR;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_ERROR;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL;
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET;

@@ -1632,7 +1632,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20"),
                                    LeaseOnServer::MUST_NOT_EXIST));
 
-    // Similarly, we should be offerred an address from another subnet within
+    // Similarly, we should be offered an address from another subnet within
     // the same shared network when we ask for it.
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:2::20")));
@@ -1962,7 +1962,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     // Request Name Servers option.
     ASSERT_NO_THROW(client.requestOption(D6O_NAME_SERVERS));
 
-    // Send solicit without a hint. The client should be offerred an address from the
+    // Send solicit without a hint. The client should be offered an address from the
     // shared network. Depending on the subnet from which the address has been allocated
     // a specific value of the Name Servers option should be returned.
     testAssigned([&client] {
@@ -2143,7 +2143,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     // respectively.
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[11], *client1.getServer()));
 
-    // The client 1 should be offerred an address from the second subnet.
+    // The client 1 should be offered an address from the second subnet.
     testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSolicit(true));
     });
@@ -2159,7 +2159,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     option1234.reset(new OptionUint16(Option::V6, 1234, 0x0001));
     client2.addExtraOption(option1234);
 
-    // Client 2 should be offerred an address from the first subnet.
+    // Client 2 should be offered an address from the first subnet.
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSolicit(true));
     });

@@ -43,6 +43,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_V4_REQUEST_USE_HR = "ALLOC_ENGINE_
 extern const isc::log::MessageID ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA = "ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_ERROR = "ALLOC_ENGINE_V6_ALLOC_ERROR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL = "ALLOC_ENGINE_V6_ALLOC_FAIL";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES = "ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS = "ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK = "ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET = "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET";
@@ -123,6 +124,7 @@ const char* values[] = {
     "ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
     "ALLOC_ENGINE_V6_ALLOC_ERROR", "%1: error during attempt to allocate an IPv6 address: %2",
     "ALLOC_ENGINE_V6_ALLOC_FAIL", "%1: failed to allocate an IPv6 lease after %2 attempt(s)",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES", "%1: Failed to allocate an IPv6 address for client with classes: %2",
     "ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS", "%1: no pools were available for the lease allocation",
     "ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK", "%1: failed to allocate a lease in the shared network %2: %3 subnets have no available leases, %4 subnets have no matching pools",
     "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv6 lease in the subnet with id %2",

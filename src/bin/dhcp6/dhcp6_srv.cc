@@ -196,7 +196,12 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-reply-sent",
     "pkt6-dhcpv4-response-sent",
     "pkt6-parse-failed",
-    "pkt6-receive-drop"
+    "pkt6-receive-drop",
+    "v6-allocation-fail",
+    "v6-allocation-fail-shared-network",
+    "v6-allocation-fail-subnet",
+    "v6-allocation-fail-no-pools",
+    "v6-allocation-fail-classes"
 };
 
 }  // namespace

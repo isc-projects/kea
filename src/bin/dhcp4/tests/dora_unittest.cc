@@ -2573,7 +2573,7 @@ DORATest::changingCircuitId() {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPOFFER
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
-    // Make sure that the client has been offerred a different address
+    // Make sure that the client has been offered a different address
     // given that circuit-id is not used.
     EXPECT_NE("10.0.0.9", resp->getYiaddr().toText());
 
@@ -2587,14 +2587,14 @@ DORATest::changingCircuitId() {
     resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPOFFER
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
-    // Make sure that the client has been offerred reserved address given that
+    // Make sure that the client has been offered reserved address given that
     // matching circuit-id has been specified.
     EXPECT_EQ("10.0.0.9", resp->getYiaddr().toText());
 
     // Let's now change the circuit-id.
     client.setCircuitId("gdansk");
 
-    // The client requests offerred address but should be refused this address
+    // The client requests offered address but should be refused this address
     // given that the circuit-id is not matching.
     ASSERT_NO_THROW(client.doRequest());
     // Make sure that the server responded.
