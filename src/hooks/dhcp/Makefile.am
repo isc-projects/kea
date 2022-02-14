@@ -1,4 +1,4 @@
-SUBDIRS = bootp flex_option high_availability lease_cmds
+SUBDIRS = bootp ddns_tuning flex_option high_availability lease_cmds
 
 if HAVE_MYSQL
 SUBDIRS += mysql_cb
