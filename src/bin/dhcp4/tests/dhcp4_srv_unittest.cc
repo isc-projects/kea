@@ -2448,7 +2448,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // used by the server. The accepted server ids are the IPv4 addresses
     // configured on the interfaces. The 10.1.2.3 is not configured on
     // any interfaces.
-    OptionCustomPtr other_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr other_serverid(new OptionCustom(def, Option::V4));
     other_serverid->writeAddress(IOAddress("10.1.2.3"));
     pkt->addOption(other_serverid);
     EXPECT_FALSE(srv.acceptServerId(pkt));
@@ -2458,7 +2458,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on eth1 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V4));
     eth1_serverid->writeAddress(IOAddress("192.0.2.3"));
     ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
@@ -2468,7 +2468,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on eth0 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V4));
     eth0_serverid->writeAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
@@ -2478,7 +2478,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on subnet3.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionCustomPtr subnet_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr subnet_serverid(new OptionCustom(def, Option::V4));
     subnet_serverid->writeAddress(IOAddress("192.0.3.254"));
     ASSERT_NO_THROW(pkt->addOption(subnet_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
@@ -2488,7 +2488,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on shared network1.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionCustomPtr network_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr network_serverid(new OptionCustom(def, Option::V4));
     network_serverid->writeAddress(IOAddress("192.0.4.254"));
     ASSERT_NO_THROW(pkt->addOption(network_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
@@ -2499,7 +2499,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // Add a server id being an IPv4 address configured on client class.
     // A DHCPv4 message holding this server identifier should be accepted.
     Pkt4Ptr pkt_with_classes(new Pkt4(DHCPREQUEST, 1234));
-    OptionCustomPtr class_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr class_serverid(new OptionCustom(def, Option::V4));
     class_serverid->writeAddress(IOAddress("192.0.5.254"));
     ASSERT_NO_THROW(pkt_with_classes->addOption(class_serverid));
     pkt_with_classes->addClass("foo");
@@ -2512,7 +2512,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // The configured class does not define the server id option.
     // A DHCPv4 message holding this server identifier should be accepted.
     Pkt4Ptr pkt_with_classes_option_not_defined(new Pkt4(DHCPREQUEST, 1234));
-    OptionCustomPtr global_serverid(new OptionCustom(def, Option::V6));
+    OptionCustomPtr global_serverid(new OptionCustom(def, Option::V4));
     global_serverid->writeAddress(IOAddress("10.0.0.254"));
     ASSERT_NO_THROW(pkt_with_classes_option_not_defined->addOption(global_serverid));
     pkt_with_classes_option_not_defined->addClass("bar");
@@ -2539,6 +2539,32 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+
+    OptionBuffer override_server_id_buf(IOAddress("10.0.0.128").toBytes());
+
+    // Create RAI option.
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionPtr rai_override_server_id(new Option(Option::V4,
+                                                RAI_OPTION_SERVER_ID_OVERRIDE,
+                                                override_server_id_buf));
+    rai->addOption(rai_override_server_id);
+
+    // Add a server id being an IPv4 address matching RAI sub-option 11
+    // (RAI_OPTION_SERVER_ID_OVERRIDE).
+    // A DHCPv4 message holding this server identifier should be accepted.
+    Pkt4Ptr pkt_with_override_server_id(new Pkt4(DHCPREQUEST, 1234));
+    OptionCustomPtr override_serverid(new OptionCustom(def, Option::V4));
+    override_serverid->writeAddress(IOAddress("10.0.0.128"));
+
+    ASSERT_NO_THROW(pkt_with_override_server_id->addOption(override_serverid));
+    ASSERT_NO_THROW(pkt_with_override_server_id->addOption(rai));
+    EXPECT_TRUE(srv.acceptServerId(pkt_with_override_server_id));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt_with_override_server_id->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 }
 
 // @todo: Implement tests for rejecting renewals

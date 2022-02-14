@@ -2035,6 +2035,8 @@ to be configured with those options.
    +--------------------+------+----------------------------------------------------------------------+
    | subscriber-id      | 6    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
+   | server-id-override | 11   | If sent by the relay, Kea accepts it as the `server-id`.             |
+   +--------------------+------+----------------------------------------------------------------------+
    | relay-source-port  | 19   | If sent by the relay, Kea sends back its responses to this port.     |
    +--------------------+------+----------------------------------------------------------------------+
 
@@ -6699,28 +6701,27 @@ Supported DHCP Standards
 
 The following standards are currently supported in Kea:
 
--  *BOOTP Vendor Information Extensions*, `RFC
-   1497 <https://tools.ietf.org/html/rfc1497>`__: This requires the open
-   source BOOTP hook to be loaded. See :ref:`hooks-bootp` for details.
+-  *BOOTP Vendor Information Extensions*, `RFC 1497
+   <https://tools.ietf.org/html/rfc1497>`__: This requires the open source
+   BOOTP hook to be loaded. See :ref:`hooks-bootp` for details.
 
--  *Dynamic Host Configuration Protocol*, `RFC
-   2131 <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
+-  *Dynamic Host Configuration Protocol*, `RFC 2131
+   <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
    DHCPDISCOVER (1), DHCPOFFER (2), DHCPREQUEST (3), DHCPRELEASE (7),
    DHCPINFORM (8), DHCPACK (5), and DHCPNAK(6).
 
--  *DHCP Options and BOOTP Vendor Extensions*, `RFC
-   2132 <https://tools.ietf.org/html/rfc2132>`__: Supported options are
-   PAD (0), END(255), Message Type(53), DHCP Server Identifier (54),
-   Domain Name (15), DNS Servers (6), IP Address Lease Time (51), Subnet
-   Mask (1), and Routers (3).
+-  *DHCP Options and BOOTP Vendor Extensions*, `RFC 2132
+   <https://tools.ietf.org/html/rfc2132>`__: Supported options are PAD (0),
+   END(255), Message Type(53), DHCP Server Identifier (54), Domain Name (15),
+   DNS Servers (6), IP Address Lease Time (51), Subnet Mask (1), and Routers (3).
 
--  *The IPv4 Subnet Selection Option for DHCP*, `RFC
-   3011 <https://tools.ietf.org/html/rfc3011>`__: The subnet-selection option
-   is supported; if received in a packet, it is used in the subnet-selection
+-  *The IPv4 Subnet Selection Option for DHCP*, `RFC 3011
+   <https://tools.ietf.org/html/rfc3011>`__: The subnet-selection option is
+   supported; if received in a packet, it is used in the subnet-selection
    process.
 
--  *DHCP Relay Agent Information Option*, `RFC
-   3046 <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information,
+-  *DHCP Relay Agent Information Option*, `RFC 3046
+   <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information,
    Circuit ID, and Remote ID options are supported.
 
 -  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
@@ -6728,45 +6729,47 @@ The following standards are currently supported in Kea:
    is supported.
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
-   Protocol version 4*, `RFC
-   3925 <https://tools.ietf.org/html/rfc3925>`__: The Vendor-Identifying
-   Vendor Class and Vendor-Identifying Vendor-Specific Information
-   options are supported.
+   Protocol version 4*, `RFC 3925
+   <https://tools.ietf.org/html/rfc3925>`__: The Vendor-Identifying Vendor Class
+   and Vendor-Identifying Vendor-Specific Information options are supported.
 
--  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC
-   3993 <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID
-   option is supported.
+-  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC 3993
+   <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID option is
+   supported.
 
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
-   <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to
-   handle the Client FQDN option. Also, it is able to use the
-   ``kea-dhcp-ddns`` component to initiate appropriate DNS Update
-   operations.
+   <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to handle
+   the Client FQDN option. Also, it is able to use the ``kea-dhcp-ddns``
+   component to initiate appropriate DNS Update operations.
 
--  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
-   Configuration Protocol (DHCP) Clients*, `RFC 4703
+-  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic
+   Host Configuration Protocol (DHCP) Clients*, `RFC 4703
    <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses a DHCP-DDNS
    server to resolve conflicts.
 
--  *Client Identifier Option in DHCP Server Replies*, `RFC
-   6842 <https://tools.ietf.org/html/rfc6842>`__: The server by default sends
-   back the ``client-id`` option. That capability can be disabled. See :ref:`dhcp4-echo-client-id` for details.
+-  *Client Identifier Option in DHCP Server Replies*, `RFC 6842
+   <https://tools.ietf.org/html/rfc6842>`__: The server by default sends back
+   the ``client-id`` option. That capability can be disabled. See
+   :ref:`dhcp4-echo-client-id` for details.
 
--  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
-   <https://tools.ietf.org/html/rfc8357>`__: The Kea server
-   handles the Relay Agent Information Source Port sub-option in a received
-   message, remembers the UDP port, and sends back a reply to the same relay
-   agent using this UDP port.
+-  *Generalized UDP Source Port for the DHCP Relay Agent Option*, `RFC 8357
+   <https://tools.ietf.org/html/rfc8357>`__: The Kea server handles the Relay
+   Agent Information Source Port sub-option in a received message, remembers the
+   UDP port, and sends back a reply to the same relay agent using this UDP port.
 
--  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC 8910
-   <https://tools.ietf.org/html/rfc8910>`__: The Kea server can configure both v4
-   and v6 versions of the captive portal options.
+-  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC
+   8910 <https://tools.ietf.org/html/rfc8910>`__: The Kea server can configure
+   both v4 and v6 versions of the captive portal options.
 
 -  *IPv6-Only Preferred Option for DHCPv4*, `RFC 8925
-   <https://tools.ietf.org/html/rfc8925>`__: The Kea
-   server is able to designate its pools and subnets as IPv6-Only Preferred and send
-   back the ``v6-only-preferred`` option to clients that requested it.
+   <https://tools.ietf.org/html/rfc8925>`__: The Kea server is able to designate
+   its pools and subnets as IPv6-Only Preferred and send back the
+   ``v6-only-preferred`` option to clients that requested it.
+
+-  *Server Identifier Override sub-option for the Relay Agent Option*, `RFC 5107
+   <https://tools.ietf.org/html/rfc5107>`__: The server identifier override
+   sub-option is supported.
 
 Known RFC Violations
 --------------------

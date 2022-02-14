@@ -3695,6 +3695,14 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
         return (false);
     }
 
+    OptionPtr rai_option = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai_option) {
+        OptionPtr rai_suboption = rai_option->getOption(RAI_OPTION_SERVER_ID_OVERRIDE);
+        if (rai_suboption && (server_id.toBytes() == rai_suboption->toBinary())) {
+            return (true);
+        }
+    }
+
     // This function iterates over all interfaces on which the
     // server is listening to find the one which has a socket bound
     // to the address carried in the server identifier option.
