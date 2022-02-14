@@ -94,6 +94,7 @@ struct Dhcp4Hooks {
     int hook_index_buffer4_send_;      ///< index for "buffer4_send" hook point
     int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
     int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
+    int hook_index_ddns_update_;       ///< index for "ddns_update" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
@@ -106,6 +107,7 @@ struct Dhcp4Hooks {
         hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
         hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
+        hook_index_ddns_update_       = HooksManager::registerHook("ddns_update");
     }
 };
 
@@ -2093,6 +2095,43 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                     fqdn_fwd = true;
                     fqdn_rev = true;
                 }
+            }
+        }
+
+        // Optionally, call a hook that may possibly override the decisions made
+        // earlier.
+        if (HooksManager::calloutsPresent(Hooks.hook_index_ddns_update_)) {
+            Pkt4Ptr query = ex.getQuery();
+
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query4", query);
+            callout_handle->setArgument("response4", resp);
+            callout_handle->setArgument("hostname", hostname);
+            callout_handle->setArgument("fwd-update", fqdn_fwd);
+            callout_handle->setArgument("rev-update", fqdn_rev);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_ddns_update_, *callout_handle);
+
+            // Let's get the parameters returned by hook.
+            string hook_hostname;
+            bool hook_fqdn_fwd = false;
+            bool hook_fqdn_rev = false;
+            callout_handle->getArgument("hostname", hook_hostname);
+            callout_handle->getArgument("fwd-update", hook_fqdn_fwd);
+            callout_handle->getArgument("rev-update", hook_fqdn_rev);
+
+            // If there's anything changed by the hook, log it and then update the parameters
+            if ( (hostname != hook_hostname) || (fqdn_fwd != hook_fqdn_fwd) ||
+                 (fqdn_rev != hook_fqdn_rev)) {
+                LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_DDNS_UPDATE)
+                    .arg(hostname).arg(hook_hostname).arg(fqdn_fwd).arg(hook_fqdn_fwd)
+                    .arg(fqdn_rev).arg(hook_fqdn_rev);
+                hostname = hook_hostname;
+                fqdn_fwd = hook_fqdn_fwd;
+                fqdn_rev = hook_fqdn_rev;
             }
         }
 
