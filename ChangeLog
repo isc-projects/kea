@@ -13,7 +13,9 @@
 	``subnet[X].v6-allocation-fail-shared-network``,
 	``subnet[X].v6-allocation-fail-subnet``,
 	``subnet[X].v6-allocation-fail-no-pools``,
-	``subnet[X].v6-allocation-fail-classes``
+	``subnet[X].v6-allocation-fail-classes``.
+	There is a warning log message emitted in the logs each time one
+	of the allocation failure counters is incremented.
 	(Gitlab #2054)
 
 1992.	[bug]		razvan
