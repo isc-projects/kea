@@ -1,3 +1,21 @@
+1993.	[func]		razvan
+	Added global and per subnet counters for allocation failures:
+	``v4-allocation-fail``, ``v4-allocation-fail-shared-network``,
+	``v4-allocation-fail-subnet``, ``v4-allocation-fail-no-pools``,
+	``v4-allocation-fail-classes``, ``subnet[X].v4-allocation-fail``,
+	``subnet[X].v4-allocation-fail-shared-network``,
+	``subnet[X].v4-allocation-fail-subnet``,
+	``subnet[X].v4-allocation-fail-no-pools``,
+	``subnet[X].v4-allocation-fail-classes``,
+	``v6-allocation-fail``, ``v6-allocation-fail-shared-network``,
+	``v6-allocation-fail-subnet``, ``v6-allocation-fail-no-pools``,
+	``v6-allocation-fail-classes``, ``subnet[X].v6-allocation-fail``,
+	``subnet[X].v6-allocation-fail-shared-network``,
+	``subnet[X].v6-allocation-fail-subnet``,
+	``subnet[X].v6-allocation-fail-no-pools``,
+	``subnet[X].v6-allocation-fail-classes``
+	(Gitlab #2054)
+
 1992.	[bug]		razvan
 	The ``maxver`` and ``maxsize`` logger parameters are excluded
 	from ``config-get`` command response if the logger output is
