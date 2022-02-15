@@ -15,6 +15,7 @@
 #include <ddns_tuning.h>
 #include <hooks/hooks_manager.h>
 
+#include <cc/data.h>
 #include <gtest/gtest.h>
 #include <errno.h>
 
@@ -64,9 +65,8 @@ public:
 TEST_F(LibLoadTest, validLoad) {
 
     // Prepare parameters for the callout parameters library.
-    // ElementPtr params = Element::createMap();
-    // ElementPtr options = Element::createList();
-    // params->set("hostname-expr", options);
+     ElementPtr params = Element::createList();
+    params->set("hostname-expr", Element::create("special-snowflake"));
 
     addLib(DDNS_TUNING_LIB_SO, params);
 
