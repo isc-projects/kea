@@ -270,6 +270,12 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+
     // Allocations without DUID are not allowed either
     AllocEngine::ClientContext6 ctx2(subnet_, DuidPtr(), false, false, "", false,
                                      Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
@@ -282,6 +288,12 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
 }
 
 // This test verifies that the allocator picks addresses that belong to the
@@ -908,6 +920,12 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 2));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 2));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", 2));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 2));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 2));
 }
 
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
@@ -2162,6 +2180,12 @@ TEST_F(AllocEngine6Test, reservedAddress) {
             EXPECT_EQ(failure, getStatistics("v6-allocation-fail-subnet"));
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+            EXPECT_EQ(failure, getStatistics("v6-allocation-fail", 1));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+            EXPECT_EQ(failure, getStatistics("v6-allocation-fail-subnet", 1));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
         } else {
             success++;
             std::cout << "Alloc for client " << (int)i << " succeeded:"
@@ -2212,6 +2236,12 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+
     // Let's fix this and break it in a different way.
     ctx.subnet_ = subnet_;
     ctx.duid_.reset();
@@ -2225,6 +2255,12 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
 }
 
 // Checks whether an address can be renewed (simple case, no reservation tricks)
@@ -2695,6 +2731,12 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
     EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
 
     // This time, lets allow more attempts, and expect that the allocation will
     // be successful.
@@ -3431,6 +3473,12 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 3));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-shared-network", 3));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 3));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 3));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 3));
 }
 
 // Verifies that client with a hostname reservation can
@@ -4014,7 +4062,7 @@ public:
         relay1_.peeraddr_ = IOAddress("2001:db8::2");
         relay1_.relay_msg_len_ = 0;
 
-        uint8_t relay_opt_data[] = { 1, 2, 3, 4, 5, 6, 7, 8};
+        uint8_t relay_opt_data[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
         vector<uint8_t> relay_data(relay_opt_data,
                                    relay_opt_data + sizeof(relay_opt_data));
         OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
@@ -4033,9 +4081,6 @@ public:
         // Create the allocation engine, context and lease.
         NakedAllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, true);
     }
-
-    /// @brief Destructor
-    virtual ~AllocEngine6ExtendedInfoTest(){};
 
     /// Configuration elements. These are initialized in the constructor
     /// and are used throughout the tests.

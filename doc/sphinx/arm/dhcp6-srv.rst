@@ -5905,418 +5905,487 @@ The DHCPv6 server supports the following statistics:
    :widths: 20 10 70
 
 
-   +-------------------------------------------+----------------+------------------------------------+
-   | Statistic                                 | Data Type      | Description                        |
-   +===========================================+================+====================================+
-   | pkt6-received                             | integer        | Number of DHCPv6 packets received. |
-   |                                           |                | This includes all packets: valid,  |
-   |                                           |                | bogus, corrupted, rejected, etc.   |
-   |                                           |                | This statistic is expected to grow |
-   |                                           |                | rapidly.                           |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-receive-drop                         | integer        | Number of incoming packets that    |
-   |                                           |                | were dropped. The exact reason for |
-   |                                           |                | dropping packets is logged, but    |
-   |                                           |                | the most common reasons may be: an |
-   |                                           |                | unacceptable or not supported      |
-   |                                           |                | packet type is received, direct    |
-   |                                           |                | responses are forbidden, the       |
-   |                                           |                | server-id sent by the client does  |
-   |                                           |                | not match  the server's server-id, |
-   |                                           |                | or the packet is malformed.        |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-parse-failed                         | integer        | Number of incoming packets that    |
-   |                                           |                | could not be parsed. A non-zero    |
-   |                                           |                | value of this statistic indicates  |
-   |                                           |                | that the server received a         |
-   |                                           |                | malformed or truncated packet.     |
-   |                                           |                | This may indicate problems in the  |
-   |                                           |                | network, faulty clients, faulty    |
-   |                                           |                | relay agents, or a bug in the      |
-   |                                           |                | server.                            |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-solicit-received                     | integer        | Number of SOLICIT packets          |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to grow; its increase     |
-   |                                           |                | means that clients that just       |
-   |                                           |                | booted started their configuration |
-   |                                           |                | process and their initial packets  |
-   |                                           |                | reached the Kea server.            |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-advertise-received                   | integer        | Number of ADVERTISE packets        |
-   |                                           |                | received. ADVERTISE packets are    |
-   |                                           |                | sent by the server and the server  |
-   |                                           |                | is never expected to receive them. |
-   |                                           |                | A non-zero value of this statistic |
-   |                                           |                | indicates an error occurring in    |
-   |                                           |                | the network. One likely cause      |
-   |                                           |                | would be a misbehaving relay       |
-   |                                           |                | agent that incorrectly forwards    |
-   |                                           |                | ADVERTISE messages towards the     |
-   |                                           |                | server, rather than back to the    |
-   |                                           |                | clients.                           |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-request-received                     | integer        | Number of DHCPREQUEST packets      |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to grow. Its increase     |
-   |                                           |                | means that  clients that just      |
-   |                                           |                | booted received the server's       |
-   |                                           |                | response (DHCPADVERTISE) and       |
-   |                                           |                | accepted it, and are now           |
-   |                                           |                | requesting an address              |
-   |                                           |                | (DHCPREQUEST).                     |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-reply-received                       | integer        | Number of REPLY packets received.  |
-   |                                           |                | This statistic is expected to      |
-   |                                           |                | remain zero at all times, as REPLY |
-   |                                           |                | packets are sent by the server and |
-   |                                           |                | the server is never expected to    |
-   |                                           |                | receive them. A non-zero value     |
-   |                                           |                | indicates an error. One likely     |
-   |                                           |                | cause would be a misbehaving relay |
-   |                                           |                | agent that incorrectly forwards    |
-   |                                           |                | REPLY messages towards the server, |
-   |                                           |                | rather than back to the clients.   |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-renew-received                       | integer        | Number of RENEW packets received.  |
-   |                                           |                | This statistic is expected to      |
-   |                                           |                | grow; its increase means that      |
-   |                                           |                | clients received their addresses   |
-   |                                           |                | and prefixes and are trying to     |
-   |                                           |                | renew them.                        |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-rebind-received                      | integer        | Number of REBIND packets received. |
-   |                                           |                | A non-zero value indicates that    |
-   |                                           |                | clients did not receive responses  |
-   |                                           |                | to their RENEW messages (through   |
-   |                                           |                | the regular lease-renewal          |
-   |                                           |                | mechanism) and are attempting to   |
-   |                                           |                | find any server that is able to    |
-   |                                           |                | take over their leases. It may     |
-   |                                           |                | mean that some servers' REPLY      |
-   |                                           |                | messages never reached the         |
-   |                                           |                | clients.                           |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-release-received                     | integer        | Number of RELEASE packets          |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to grow when a device is  |
-   |                                           |                | being shut down in the network; it |
-   |                                           |                | indicates that the address or      |
-   |                                           |                | prefix assigned is reported as no  |
-   |                                           |                | longer needed. Note that many      |
-   |                                           |                | devices, especially wireless, do   |
-   |                                           |                | not send RELEASE packets either    |
-   |                                           |                | because of design choice or due to |
-   |                                           |                | the client moving out of range.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-decline-received                     | integer        | Number of DECLINE packets          |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to remain close to zero.  |
-   |                                           |                | Its increase means that a client   |
-   |                                           |                | leased an address, but discovered  |
-   |                                           |                | that the address is currently used |
-   |                                           |                | by an unknown device in the        |
-   |                                           |                | network. If this statistic is      |
-   |                                           |                | growing, it may indicate a         |
-   |                                           |                | misconfigured server or devices    |
-   |                                           |                | that have statically assigned      |
-   |                                           |                | conflicting addresses.             |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-infrequest-received                  | integer        | Number of INFORMATION-REQUEST      |
-   |                                           |                | packets received. This statistic   |
-   |                                           |                | is expected to grow if there are   |
-   |                                           |                | devices that are using stateless   |
-   |                                           |                | DHCPv6. INFORMATION-REQUEST        |
-   |                                           |                | messages are used by clients that  |
-   |                                           |                | request stateless configuration,   |
-   |                                           |                | i.e. options and parameters other  |
-   |                                           |                | than addresses or prefixes.        |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-dhcpv4-query-received                | integer        | Number of DHCPv4-QUERY packets     |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to grow if there are      |
-   |                                           |                | devices that are using             |
-   |                                           |                | DHCPv4-over-DHCPv6. DHCPv4-QUERY   |
-   |                                           |                | messages are used by DHCPv4        |
-   |                                           |                | clients on an IPv6-only line which |
-   |                                           |                | encapsulates the requests over     |
-   |                                           |                | DHCPv6.                            |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-dhcpv4-response-received             | integer        | Number of DHCPv4-RESPONSE packets  |
-   |                                           |                | received. This statistic is        |
-   |                                           |                | expected to remain zero at all     |
-   |                                           |                | times, as DHCPv4-RESPONSE packets  |
-   |                                           |                | are sent by the server and the     |
-   |                                           |                | server is never expected to        |
-   |                                           |                | receive them. A non-zero value     |
-   |                                           |                | indicates an error. One likely     |
-   |                                           |                | cause would be a misbehaving relay |
-   |                                           |                | agent that incorrectly forwards    |
-   |                                           |                | DHCPv4-RESPONSE message towards    |
-   |                                           |                | the server rather than back to the |
-   |                                           |                | clients.                           |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-unknown-received                     | integer        | Number of packets received of an   |
-   |                                           |                | unknown type. A non-zero value of  |
-   |                                           |                | this statistic indicates that the  |
-   |                                           |                | server received a packet that it   |
-   |                                           |                | was unable to recognize; either it |
-   |                                           |                | had an unsupported type or was     |
-   |                                           |                | possibly malformed.                |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-sent                                 | integer        | Number of DHCPv6 packets sent.     |
-   |                                           |                | This statistic is expected to grow |
-   |                                           |                | every time the server transmits a  |
-   |                                           |                | packet. In general, it should      |
-   |                                           |                | roughly match pkt6-received, as    |
-   |                                           |                | most incoming packets cause the    |
-   |                                           |                | server to respond. There are       |
-   |                                           |                | exceptions (e.g. server receiving  |
-   |                                           |                | a REQUEST with server-id matching  |
-   |                                           |                | another server), so do not worry   |
-   |                                           |                | if it is less than pkt6-received.  |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-advertise-sent                       | integer        | Number of ADVERTISE packets sent.  |
-   |                                           |                | This statistic is expected to grow |
-   |                                           |                | in most cases after a SOLICIT is   |
-   |                                           |                | processed. There are certain       |
-   |                                           |                | uncommon, but valid, cases where   |
-   |                                           |                | incoming SOLICIT packets are       |
-   |                                           |                | dropped, but in general this       |
-   |                                           |                | statistic is expected to be close  |
-   |                                           |                | to pkt6-solicit-received.          |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-reply-sent                           | integer        | Number of REPLY packets sent. This |
-   |                                           |                | statistic is expected to grow in   |
-   |                                           |                | most cases after a SOLICIT (with   |
-   |                                           |                | rapid-commit), REQUEST, RENEW,     |
-   |                                           |                | REBIND, RELEASE, DECLINE, or       |
-   |                                           |                | INFORMATION-REQUEST is processed.  |
-   |                                           |                | There are certain cases where      |
-   |                                           |                | there is no response.              |
-   +-------------------------------------------+----------------+------------------------------------+
-   | pkt6-dhcpv4-response-sent                 | integer        | Number of DHCPv4-RESPONSE packets  |
-   |                                           |                | sent. This statistic is expected   |
-   |                                           |                | to grow in most cases after a      |
-   |                                           |                | DHCPv4-QUERY is processed. There   |
-   |                                           |                | are certain cases where there is   |
-   |                                           |                | no response.                       |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].total-nas                      | integer        | Total number of NA addresses       |
-   |                                           |                | available for DHCPv6 management    |
-   |                                           |                | for a given subnet; in other       |
-   |                                           |                | words, this is the sum of all      |
-   |                                           |                | addresses in all configured pools. |
-   |                                           |                | This statistic changes only during |
-   |                                           |                | configuration changes. Note that   |
-   |                                           |                | it does not take into account any  |
-   |                                           |                | addresses that may be reserved due |
-   |                                           |                | to host reservation. The *id* is   |
-   |                                           |                | the subnet-id of a given subnet.   |
-   |                                           |                | This statistic is exposed for each |
-   |                                           |                | subnet separately, and is reset    |
-   |                                           |                | during a reconfiguration event.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | cumulative-assigned-nas                   | integer        | Cumulative number of NA addresses  |
-   |                                           |                | that have been assigned since      |
-   |                                           |                | server startup. It is incremented  |
-   |                                           |                | each time a NA address is assigned |
-   |                                           |                | and is not reset when the server   |
-   |                                           |                | is reconfigured.                   |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].cumulative-assigned-nas        | integer        | Cumulative number of NA addresses  |
-   |                                           |                | in a given subnet that were        |
-   |                                           |                | assigned. It increases every time  |
-   |                                           |                | a new lease is allocated (as a     |
-   |                                           |                | result of receiving a REQUEST      |
-   |                                           |                | message) and is never decreased.   |
-   |                                           |                | The *id* is the subnet-id of a     |
-   |                                           |                | given subnet. This statistic is    |
-   |                                           |                | exposed for each subnet            |
-   |                                           |                | separately, and is reset during a  |
-   |                                           |                | reconfiguration event.             |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].assigned-nas                   | integer        | Number of NA addresses in a given  |
-   |                                           |                | subnet that are assigned. It       |
-   |                                           |                | increases every time a new lease   |
-   |                                           |                | is allocated (as a result of       |
-   |                                           |                | receiving a REQUEST message) and   |
-   |                                           |                | is decreased every time a lease is |
-   |                                           |                | released (a RELEASE message is     |
-   |                                           |                | received) or expires. The *id* is  |
-   |                                           |                | the subnet-id of a given subnet.   |
-   |                                           |                | This statistic is exposed for each |
-   |                                           |                | subnet separately, and is reset    |
-   |                                           |                | during a reconfiguration event.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].total-pds                      | integer        | Total number of PD prefixes        |
-   |                                           |                | available for DHCPv6 management    |
-   |                                           |                | for a given subnet; in other       |
-   |                                           |                | words, this is the sum of all      |
-   |                                           |                | prefixes in all configured pools.  |
-   |                                           |                | This statistic changes only during |
-   |                                           |                | configuration changes. Note it     |
-   |                                           |                | does not take into account any     |
-   |                                           |                | prefixes that may be reserved due  |
-   |                                           |                | to host reservation. The *id* is   |
-   |                                           |                | the subnet-id of a given subnet.   |
-   |                                           |                | This statistic is exposed for each |
-   |                                           |                | subnet separately, and is reset    |
-   |                                           |                | during a reconfiguration event.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | cumulative-assigned-pds                   | integer        | Cumulative number of PD prefixes   |
-   |                                           |                | that have been assigned since      |
-   |                                           |                | server startup. It is incremented  |
-   |                                           |                | each time a PD prefix is assigned  |
-   |                                           |                | and is not reset when the server   |
-   |                                           |                | is reconfigured.                   |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].cumulative-assigned-pds        | integer        | Cumulative number of PD prefixes   |
-   |                                           |                | in a given subnet that were        |
-   |                                           |                | assigned. It increases every time  |
-   |                                           |                | a new lease is allocated (as a     |
-   |                                           |                | result of receiving a REQUEST      |
-   |                                           |                | message) and is never decreased.   |
-   |                                           |                | The *id* is the subnet-id of a     |
-   |                                           |                | given subnet. This statistic is    |
-   |                                           |                | exposed for each subnet            |
-   |                                           |                | separately, and is reset during a  |
-   |                                           |                | reconfiguration event.             |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].assigned-pds                   | integer        | Number of PD prefixes in a given   |
-   |                                           |                | subnet that are assigned. It       |
-   |                                           |                | increases every time a new lease   |
-   |                                           |                | is allocated (as a result of       |
-   |                                           |                | receiving a REQUEST message) and   |
-   |                                           |                | is decreased every time a lease is |
-   |                                           |                | released (a RELEASE message is     |
-   |                                           |                | received) or expires. The *id* is  |
-   |                                           |                | the subnet-id of a given subnet.   |
-   |                                           |                | This statistic is exposed for each |
-   |                                           |                | subnet separately, and is reset    |
-   |                                           |                | during a reconfiguration event.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | reclaimed-leases                          | integer        | Number of expired leases that have |
-   |                                           |                | been reclaimed since server        |
-   |                                           |                | startup. It is incremented each    |
-   |                                           |                | time an expired lease is reclaimed |
-   |                                           |                | (counting both NA and PD           |
-   |                                           |                | reclamations). This statistic      |
-   |                                           |                | never decreases. It can be used as |
-   |                                           |                | a long-term indicator of how many  |
-   |                                           |                | actual leases have been reclaimed. |
-   |                                           |                | This is a global statistic that    |
-   |                                           |                | covers all subnets.                |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].reclaimed-leases               | integer        | Number of expired leases           |
-   |                                           |                | associated with a given subnet     |
-   |                                           |                | that have been reclaimed since     |
-   |                                           |                | server startup. It is incremented  |
-   |                                           |                | each time an expired lease is      |
-   |                                           |                | reclaimed (counting both NA and PD |
-   |                                           |                | reclamations). The *id* is the     |
-   |                                           |                | subnet-id of a given subnet. This  |
-   |                                           |                | statistic is exposed for each      |
-   |                                           |                | subnet separately.                 |
-   +-------------------------------------------+----------------+------------------------------------+
-   | declined-addresses                        | integer        | Number of IPv6 addresses that are  |
-   |                                           |                | currently declined; a count of the |
-   |                                           |                | number of leases currently         |
-   |                                           |                | unavailable. Once a lease is       |
-   |                                           |                | recovered, this statistic will be  |
-   |                                           |                | decreased; ideally, this statistic |
-   |                                           |                | should be zero. If this statistic  |
-   |                                           |                | is non-zero or increasing, a       |
-   |                                           |                | network administrator should       |
-   |                                           |                | investigate whether there is a     |
-   |                                           |                | misbehaving device in the network. |
-   |                                           |                | This is a global statistic that    |
-   |                                           |                | covers all subnets.                |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].declined-addresses             | integer        | Number of IPv6 addresses that are  |
-   |                                           |                | currently declined in a given      |
-   |                                           |                | subnet; a count of the number of   |
-   |                                           |                | leases currently unavailable. Once |
-   |                                           |                | a lease is recovered, this         |
-   |                                           |                | statistic will be decreased;       |
-   |                                           |                | ideally, this statistic should be  |
-   |                                           |                | zero. If this statistic is         |
-   |                                           |                | non-zero or increasing, a network  |
-   |                                           |                | administrator should investigate   |
-   |                                           |                | whether there is a misbehaving     |
-   |                                           |                | device in the network. The *id* is |
-   |                                           |                | the subnet-id of a given subnet.   |
-   |                                           |                | This statistic is exposed for each |
-   |                                           |                | subnet separately.                 |
-   +-------------------------------------------+----------------+------------------------------------+
-   | reclaimed-declined-addresses              | integer        | Number of IPv6 addresses that were |
-   |                                           |                | declined, but have now been        |
-   |                                           |                | recovered. Unlike                  |
-   |                                           |                | declined-addresses, this statistic |
-   |                                           |                | never decreases. It can be used as |
-   |                                           |                | a long-term indicator of how many  |
-   |                                           |                | actual valid declines were         |
-   |                                           |                | processed and  recovered from.     |
-   |                                           |                | This is a global statistic that    |
-   |                                           |                | covers all subnets.                |
-   +-------------------------------------------+----------------+------------------------------------+
-   | subnet[id].reclaimed-declined-addresses   | integer        | Number of IPv6 addresses that were |
-   |                                           |                | declined, but have now been        |
-   |                                           |                | recovered. Unlike                  |
-   |                                           |                | declined-addresses, this statistic |
-   |                                           |                | never decreases. It can be used as |
-   |                                           |                | a long-term indicator of how many  |
-   |                                           |                | actual valid Declines were         |
-   |                                           |                | processed and recovered from. The  |
-   |                                           |                | *id* is the subnet-id of a given   |
-   |                                           |                | subnet. This statistic is exposed  |
-   |                                           |                | for each subnet separately.        |
-   +-------------------------------------------+----------------+------------------------------------+
-   | v6-allocation-fail                        | integer        | Number of total address allocation |
-   |                                           |                | failures for a particular client.  |
-   |                                           |                | This consists in the number of     |
-   |                                           |                | lease allocation attempts that the |
-   |                                           |                | server made before giving up and   |
-   |                                           |                | was unable to use any of the       |
-   |                                           |                | address pools.                     |
-   +-------------------------------------------+----------------+------------------------------------+
-   | v6-allocation-fail-shared-network         | integer        | Number of address allocation       |
-   |                                           |                | failures for a paticular client    |
-   |                                           |                | connected to a shared network.     |
-   +-------------------------------------------+----------------+------------------------------------+
-   | v6-allocation-fail-subnet                 | integer        | Number of address allocation       |
-   |                                           |                | failures for a particular client   |
-   |                                           |                | connected to a subnet that does    |
-   |                                           |                | not belong to a shared network.    |
-   +-------------------------------------------+----------------+------------------------------------+
-   | v6-allocation-fail-no-pools               | integer        | Number of address allocation       |
-   |                                           |                | failures because the server could  |
-   |                                           |                | not use any configured pools for   |
-   |                                           |                | a particular client. It is also    |
-   |                                           |                | possible that all of the subnets   |
-   |                                           |                | from which the server attempted to |
-   |                                           |                | assign an address lack address     |
-   |                                           |                | pools. In this case, it should be  |
-   |                                           |                | considered misconfiguration if an  |
-   |                                           |                | operator expects that some clients |
-   |                                           |                | should be assigned dynamic         |
-   |                                           |                | addresses.                         |
-   +-------------------------------------------+----------------+------------------------------------+
-   | v6-allocation-fail-classes                | integer        | Number of address allocation       |
-   |                                           |                | failures when the client's packet  |
-   |                                           |                | belongs to one or more classes.    |
-   |                                           |                | There may be several reasons why a |
-   |                                           |                | lease was not assigned. One of     |
-   |                                           |                | them may be a case when all pools  |
-   |                                           |                | require packet to belong to        |
-   |                                           |                | certain classes and the incoming   |
-   |                                           |                | packet didn't belong to any of     |
-   |                                           |                | them. Another case where this      |
-   |                                           |                | information may be useful is to    |
-   |                                           |                | point out that the pool reserved   |
-   |                                           |                | to a given class has ran out of    |
-   |                                           |                | addresses.                         |
-   +-------------------------------------------+----------------+------------------------------------+
+   +----------------------------------------------+----------------+------------------------------------+
+   | Statistic                                    | Data Type      | Description                        |
+   +==============================================+================+====================================+
+   | pkt6-received                                | integer        | Number of DHCPv6 packets received. |
+   |                                              |                | This includes all packets: valid,  |
+   |                                              |                | bogus, corrupted, rejected, etc.   |
+   |                                              |                | This statistic is expected to grow |
+   |                                              |                | rapidly.                           |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-receive-drop                            | integer        | Number of incoming packets that    |
+   |                                              |                | were dropped. The exact reason for |
+   |                                              |                | dropping packets is logged, but    |
+   |                                              |                | the most common reasons may be: an |
+   |                                              |                | unacceptable or not supported      |
+   |                                              |                | packet type is received, direct    |
+   |                                              |                | responses are forbidden, the       |
+   |                                              |                | server-id sent by the client does  |
+   |                                              |                | not match the server's server-id,  |
+   |                                              |                | or the packet is malformed.        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-parse-failed                            | integer        | Number of incoming packets that    |
+   |                                              |                | could not be parsed. A non-zero    |
+   |                                              |                | value of this statistic indicates  |
+   |                                              |                | that the server received a         |
+   |                                              |                | malformed or truncated packet.     |
+   |                                              |                | This may indicate problems in the  |
+   |                                              |                | network, faulty clients, faulty    |
+   |                                              |                | relay agents, or a bug in the      |
+   |                                              |                | server.                            |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-solicit-received                        | integer        | Number of SOLICIT packets          |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to grow; its increase     |
+   |                                              |                | means that clients that just       |
+   |                                              |                | booted started their configuration |
+   |                                              |                | process and their initial packets  |
+   |                                              |                | reached the Kea server.            |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-advertise-received                      | integer        | Number of ADVERTISE packets        |
+   |                                              |                | received. ADVERTISE packets are    |
+   |                                              |                | sent by the server and the server  |
+   |                                              |                | is never expected to receive them. |
+   |                                              |                | A non-zero value of this statistic |
+   |                                              |                | indicates an error occurring in    |
+   |                                              |                | the network. One likely cause      |
+   |                                              |                | would be a misbehaving relay       |
+   |                                              |                | agent that incorrectly forwards    |
+   |                                              |                | ADVERTISE messages towards the     |
+   |                                              |                | server, rather than back to the    |
+   |                                              |                | clients.                           |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-request-received                        | integer        | Number of DHCPREQUEST packets      |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to grow. Its increase     |
+   |                                              |                | means that clients that just       |
+   |                                              |                | booted received the server's       |
+   |                                              |                | response (DHCPADVERTISE) and       |
+   |                                              |                | accepted it, and are now           |
+   |                                              |                | requesting an address              |
+   |                                              |                | (DHCPREQUEST).                     |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-reply-received                          | integer        | Number of REPLY packets received.  |
+   |                                              |                | This statistic is expected to      |
+   |                                              |                | remain zero at all times, as REPLY |
+   |                                              |                | packets are sent by the server and |
+   |                                              |                | the server is never expected to    |
+   |                                              |                | receive them. A non-zero value     |
+   |                                              |                | indicates an error. One likely     |
+   |                                              |                | cause would be a misbehaving relay |
+   |                                              |                | agent that incorrectly forwards    |
+   |                                              |                | REPLY messages towards the server, |
+   |                                              |                | rather than back to the clients.   |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-renew-received                          | integer        | Number of RENEW packets received.  |
+   |                                              |                | This statistic is expected to      |
+   |                                              |                | grow; its increase means that      |
+   |                                              |                | clients received their addresses   |
+   |                                              |                | and prefixes and are trying to     |
+   |                                              |                | renew them.                        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-rebind-received                         | integer        | Number of REBIND packets received. |
+   |                                              |                | A non-zero value indicates that    |
+   |                                              |                | clients did not receive responses  |
+   |                                              |                | to their RENEW messages (through   |
+   |                                              |                | the regular lease-renewal          |
+   |                                              |                | mechanism) and are attempting to   |
+   |                                              |                | find any server that is able to    |
+   |                                              |                | take over their leases. It may     |
+   |                                              |                | mean that some servers' REPLY      |
+   |                                              |                | messages never reached the         |
+   |                                              |                | clients.                           |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-release-received                        | integer        | Number of RELEASE packets          |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to grow when a device is  |
+   |                                              |                | being shut down in the network; it |
+   |                                              |                | indicates that the address or      |
+   |                                              |                | prefix assigned is reported as no  |
+   |                                              |                | longer needed. Note that many      |
+   |                                              |                | devices, especially wireless, do   |
+   |                                              |                | not send RELEASE packets either    |
+   |                                              |                | because of design choice or due to |
+   |                                              |                | the client moving out of range.    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-decline-received                        | integer        | Number of DECLINE packets          |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to remain close to zero.  |
+   |                                              |                | Its increase means that a client   |
+   |                                              |                | leased an address, but discovered  |
+   |                                              |                | that the address is currently used |
+   |                                              |                | by an unknown device in the        |
+   |                                              |                | network. If this statistic is      |
+   |                                              |                | growing, it may indicate a         |
+   |                                              |                | misconfigured server or devices    |
+   |                                              |                | that have statically assigned      |
+   |                                              |                | conflicting addresses.             |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-infrequest-received                     | integer        | Number of INFORMATION-REQUEST      |
+   |                                              |                | packets received. This statistic   |
+   |                                              |                | is expected to grow if there are   |
+   |                                              |                | devices that are using stateless   |
+   |                                              |                | DHCPv6. INFORMATION-REQUEST        |
+   |                                              |                | messages are used by clients that  |
+   |                                              |                | request stateless configuration,   |
+   |                                              |                | i.e. options and parameters other  |
+   |                                              |                | than addresses or prefixes.        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-dhcpv4-query-received                   | integer        | Number of DHCPv4-QUERY packets     |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to grow if there are      |
+   |                                              |                | devices that are using             |
+   |                                              |                | DHCPv4-over-DHCPv6. DHCPv4-QUERY   |
+   |                                              |                | messages are used by DHCPv4        |
+   |                                              |                | clients on an IPv6-only line which |
+   |                                              |                | encapsulates the requests over     |
+   |                                              |                | DHCPv6.                            |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-dhcpv4-response-received                | integer        | Number of DHCPv4-RESPONSE packets  |
+   |                                              |                | received. This statistic is        |
+   |                                              |                | expected to remain zero at all     |
+   |                                              |                | times, as DHCPv4-RESPONSE packets  |
+   |                                              |                | are sent by the server and the     |
+   |                                              |                | server is never expected to        |
+   |                                              |                | receive them. A non-zero value     |
+   |                                              |                | indicates an error. One likely     |
+   |                                              |                | cause would be a misbehaving relay |
+   |                                              |                | agent that incorrectly forwards    |
+   |                                              |                | DHCPv4-RESPONSE message towards    |
+   |                                              |                | the server rather than back to the |
+   |                                              |                | clients.                           |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-unknown-received                        | integer        | Number of packets received of an   |
+   |                                              |                | unknown type. A non-zero value of  |
+   |                                              |                | this statistic indicates that the  |
+   |                                              |                | server received a packet that it   |
+   |                                              |                | was unable to recognize; either it |
+   |                                              |                | had an unsupported type or was     |
+   |                                              |                | possibly malformed.                |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-sent                                    | integer        | Number of DHCPv6 packets sent.     |
+   |                                              |                | This statistic is expected to grow |
+   |                                              |                | every time the server transmits a  |
+   |                                              |                | packet. In general, it should      |
+   |                                              |                | roughly match pkt6-received, as    |
+   |                                              |                | most incoming packets cause the    |
+   |                                              |                | server to respond. There are       |
+   |                                              |                | exceptions (e.g. server receiving  |
+   |                                              |                | a REQUEST with server-id matching  |
+   |                                              |                | another server), so do not worry   |
+   |                                              |                | if it is less than pkt6-received.  |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-advertise-sent                          | integer        | Number of ADVERTISE packets sent.  |
+   |                                              |                | This statistic is expected to grow |
+   |                                              |                | in most cases after a SOLICIT is   |
+   |                                              |                | processed. There are certain       |
+   |                                              |                | uncommon, but valid, cases where   |
+   |                                              |                | incoming SOLICIT packets are       |
+   |                                              |                | dropped, but in general this       |
+   |                                              |                | statistic is expected to be close  |
+   |                                              |                | to pkt6-solicit-received.          |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-reply-sent                              | integer        | Number of REPLY packets sent. This |
+   |                                              |                | statistic is expected to grow in   |
+   |                                              |                | most cases after a SOLICIT (with   |
+   |                                              |                | rapid-commit), REQUEST, RENEW,     |
+   |                                              |                | REBIND, RELEASE, DECLINE, or       |
+   |                                              |                | INFORMATION-REQUEST is processed.  |
+   |                                              |                | There are certain cases where      |
+   |                                              |                | there is no response.              |
+   +----------------------------------------------+----------------+------------------------------------+
+   | pkt6-dhcpv4-response-sent                    | integer        | Number of DHCPv4-RESPONSE packets  |
+   |                                              |                | sent. This statistic is expected   |
+   |                                              |                | to grow in most cases after a      |
+   |                                              |                | DHCPv4-QUERY is processed. There   |
+   |                                              |                | are certain cases where there is   |
+   |                                              |                | no response.                       |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].total-nas                         | integer        | Total number of NA addresses       |
+   |                                              |                | available for DHCPv6 management    |
+   |                                              |                | for a given subnet; in other       |
+   |                                              |                | words, this is the sum of all      |
+   |                                              |                | addresses in all configured pools. |
+   |                                              |                | This statistic changes only during |
+   |                                              |                | configuration changes. Note that   |
+   |                                              |                | it does not take into account any  |
+   |                                              |                | addresses that may be reserved due |
+   |                                              |                | to host reservation. The *id* is   |
+   |                                              |                | the subnet-id of a given subnet.   |
+   |                                              |                | This statistic is exposed for each |
+   |                                              |                | subnet separately, and is reset    |
+   |                                              |                | during a reconfiguration event.    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | cumulative-assigned-nas                      | integer        | Cumulative number of NA addresses  |
+   |                                              |                | that have been assigned since      |
+   |                                              |                | server startup. It is incremented  |
+   |                                              |                | each time a NA address is assigned |
+   |                                              |                | and is not reset when the server   |
+   |                                              |                | is reconfigured.                   |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].cumulative-assigned-nas           | integer        | Cumulative number of NA addresses  |
+   |                                              |                | in a given subnet that were        |
+   |                                              |                | assigned. It increases every time  |
+   |                                              |                | a new lease is allocated (as a     |
+   |                                              |                | result of receiving a REQUEST      |
+   |                                              |                | message) and is never decreased.   |
+   |                                              |                | The *id* is the subnet-id of a     |
+   |                                              |                | given subnet. This statistic is    |
+   |                                              |                | exposed for each subnet            |
+   |                                              |                | separately, and is reset during a  |
+   |                                              |                | reconfiguration event.             |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].assigned-nas                      | integer        | Number of NA addresses in a given  |
+   |                                              |                | subnet that are assigned. It       |
+   |                                              |                | increases every time a new lease   |
+   |                                              |                | is allocated (as a result of       |
+   |                                              |                | receiving a REQUEST message) and   |
+   |                                              |                | is decreased every time a lease is |
+   |                                              |                | released (a RELEASE message is     |
+   |                                              |                | received) or expires. The *id* is  |
+   |                                              |                | the subnet-id of a given subnet.   |
+   |                                              |                | This statistic is exposed for each |
+   |                                              |                | subnet separately, and is reset    |
+   |                                              |                | during a reconfiguration event.    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].total-pds                         | integer        | Total number of PD prefixes        |
+   |                                              |                | available for DHCPv6 management    |
+   |                                              |                | for a given subnet; in other       |
+   |                                              |                | words, this is the sum of all      |
+   |                                              |                | prefixes in all configured pools.  |
+   |                                              |                | This statistic changes only during |
+   |                                              |                | configuration changes. Note it     |
+   |                                              |                | does not take into account any     |
+   |                                              |                | prefixes that may be reserved due  |
+   |                                              |                | to host reservation. The *id* is   |
+   |                                              |                | the subnet-id of a given subnet.   |
+   |                                              |                | This statistic is exposed for each |
+   |                                              |                | subnet separately, and is reset    |
+   |                                              |                | during a reconfiguration event.    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | cumulative-assigned-pds                      | integer        | Cumulative number of PD prefixes   |
+   |                                              |                | that have been assigned since      |
+   |                                              |                | server startup. It is incremented  |
+   |                                              |                | each time a PD prefix is assigned  |
+   |                                              |                | and is not reset when the server   |
+   |                                              |                | is reconfigured.                   |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].cumulative-assigned-pds           | integer        | Cumulative number of PD prefixes   |
+   |                                              |                | in a given subnet that were        |
+   |                                              |                | assigned. It increases every time  |
+   |                                              |                | a new lease is allocated (as a     |
+   |                                              |                | result of receiving a REQUEST      |
+   |                                              |                | message) and is never decreased.   |
+   |                                              |                | The *id* is the subnet-id of a     |
+   |                                              |                | given subnet. This statistic is    |
+   |                                              |                | exposed for each subnet            |
+   |                                              |                | separately, and is reset during a  |
+   |                                              |                | reconfiguration event.             |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].assigned-pds                      | integer        | Number of PD prefixes in a given   |
+   |                                              |                | subnet that are assigned. It       |
+   |                                              |                | increases every time a new lease   |
+   |                                              |                | is allocated (as a result of       |
+   |                                              |                | receiving a REQUEST message) and   |
+   |                                              |                | is decreased every time a lease is |
+   |                                              |                | released (a RELEASE message is     |
+   |                                              |                | received) or expires. The *id* is  |
+   |                                              |                | the subnet-id of a given subnet.   |
+   |                                              |                | This statistic is exposed for each |
+   |                                              |                | subnet separately, and is reset    |
+   |                                              |                | during a reconfiguration event.    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | reclaimed-leases                             | integer        | Number of expired leases that have |
+   |                                              |                | been reclaimed since server        |
+   |                                              |                | startup. It is incremented each    |
+   |                                              |                | time an expired lease is reclaimed |
+   |                                              |                | (counting both NA and PD           |
+   |                                              |                | reclamations). This statistic      |
+   |                                              |                | never decreases. It can be used as |
+   |                                              |                | a long-term indicator of how many  |
+   |                                              |                | actual leases have been reclaimed. |
+   |                                              |                | This is a global statistic that    |
+   |                                              |                | covers all subnets.                |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].reclaimed-leases                  | integer        | Number of expired leases           |
+   |                                              |                | associated with a given subnet     |
+   |                                              |                | that have been reclaimed since     |
+   |                                              |                | server startup. It is incremented  |
+   |                                              |                | each time an expired lease is      |
+   |                                              |                | reclaimed (counting both NA and PD |
+   |                                              |                | reclamations). The *id* is the     |
+   |                                              |                | subnet-id of a given subnet. This  |
+   |                                              |                | statistic is exposed for each      |
+   |                                              |                | subnet separately.                 |
+   +----------------------------------------------+----------------+------------------------------------+
+   | declined-addresses                           | integer        | Number of IPv6 addresses that are  |
+   |                                              |                | currently declined; a count of the |
+   |                                              |                | number of leases currently         |
+   |                                              |                | unavailable. Once a lease is       |
+   |                                              |                | recovered, this statistic will be  |
+   |                                              |                | decreased; ideally, this statistic |
+   |                                              |                | should be zero. If this statistic  |
+   |                                              |                | is non-zero or increasing, a       |
+   |                                              |                | network administrator should       |
+   |                                              |                | investigate whether there is a     |
+   |                                              |                | misbehaving device in the network. |
+   |                                              |                | This is a global statistic that    |
+   |                                              |                | covers all subnets.                |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].declined-addresses                | integer        | Number of IPv6 addresses that are  |
+   |                                              |                | currently declined in a given      |
+   |                                              |                | subnet; a count of the number of   |
+   |                                              |                | leases currently unavailable. Once |
+   |                                              |                | a lease is recovered, this         |
+   |                                              |                | statistic will be decreased;       |
+   |                                              |                | ideally, this statistic should be  |
+   |                                              |                | zero. If this statistic is         |
+   |                                              |                | non-zero or increasing, a network  |
+   |                                              |                | administrator should investigate   |
+   |                                              |                | whether there is a misbehaving     |
+   |                                              |                | device in the network. The *id* is |
+   |                                              |                | the subnet-id of a given subnet.   |
+   |                                              |                | This statistic is exposed for each |
+   |                                              |                | subnet separately.                 |
+   +----------------------------------------------+----------------+------------------------------------+
+   | reclaimed-declined-addresses                 | integer        | Number of IPv6 addresses that were |
+   |                                              |                | declined, but have now been        |
+   |                                              |                | recovered. Unlike                  |
+   |                                              |                | declined-addresses, this statistic |
+   |                                              |                | never decreases. It can be used as |
+   |                                              |                | a long-term indicator of how many  |
+   |                                              |                | actual valid declines were         |
+   |                                              |                | processed and recovered from. This |
+   |                                              |                | is a global statistic that covers  |
+   |                                              |                | all subnets.                       |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].reclaimed-declined-addresses      | integer        | Number of IPv6 addresses that were |
+   |                                              |                | declined, but have now been        |
+   |                                              |                | recovered. Unlike                  |
+   |                                              |                | declined-addresses, this statistic |
+   |                                              |                | never decreases. It can be used as |
+   |                                              |                | a long-term indicator of how many  |
+   |                                              |                | actual valid declines were         |
+   |                                              |                | processed and recovered from. The  |
+   |                                              |                | *id* is the subnet-id of a given   |
+   |                                              |                | subnet. This statistic is exposed  |
+   |                                              |                | for each subnet separately.        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-allocation-fail                           | integer        | Number of total address allocation |
+   |                                              |                | failures for a particular client.  |
+   |                                              |                | This consists in the number of     |
+   |                                              |                | lease allocation attempts that the |
+   |                                              |                | server made before giving up and   |
+   |                                              |                | was unable to use any of the       |
+   |                                              |                | address pools. This is a global    |
+   |                                              |                | statistic that covers all subnets. |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-allocation-fail                | integer        | Number of total address allocation |
+   |                                              |                | failures for a particular client.  |
+   |                                              |                | This consists in the number of     |
+   |                                              |                | lease allocation attempts that the |
+   |                                              |                | server made before giving up and   |
+   |                                              |                | was unable to use any of the       |
+   |                                              |                | address pools. The *id* is the     |
+   |                                              |                | subnet-id of a given subnet. This  |
+   |                                              |                | statistic is exposed for each      |
+   |                                              |                | subnet separately.                 |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-allocation-fail-shared-network            | integer        | Number of address allocation       |
+   |                                              |                | failures for a paticular client    |
+   |                                              |                | connected to a shared network.     |
+   |                                              |                | This is a global statistic that    |
+   |                                              |                | covers all subnets.                |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-allocation-fail-shared-network | integer        | Number of address allocation       |
+   |                                              |                | failures for a paticular client    |
+   |                                              |                | connected to a shared network.     |
+   |                                              |                | The *id* is the subnet-id of a     |
+   |                                              |                | given subnet. This statistic is    |
+   |                                              |                | exposed for each subnet            |
+   |                                              |                | separately.                        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-allocation-fail-subnet                    | integer        | Number of address allocation       |
+   |                                              |                | failures for a particular client   |
+   |                                              |                | connected to a subnet that does    |
+   |                                              |                | not belong to a shared network.    |
+   |                                              |                | This is a global statistic that    |
+   |                                              |                | covers all subnets.                |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-allocation-fail-subnet         | integer        | Number of address allocation       |
+   |                                              |                | failures for a particular client   |
+   |                                              |                | connected to a subnet that does    |
+   |                                              |                | not belong to a shared network.    |
+   |                                              |                | The *id* is the subnet-id of a     |
+   |                                              |                | given subnet. This statistic is    |
+   |                                              |                | exposed for each subnet            |
+   |                                              |                | separately.                        |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-allocation-fail-no-pools                  | integer        | Number of address allocation       |
+   |                                              |                | failures because the server could  |
+   |                                              |                | not use any configured pools for   |
+   |                                              |                | a particular client. It is also    |
+   |                                              |                | possible that all of the subnets   |
+   |                                              |                | from which the server attempted to |
+   |                                              |                | assign an address lack address     |
+   |                                              |                | pools. In this case, it should be  |
+   |                                              |                | considered misconfiguration if an  |
+   |                                              |                | operator expects that some clients |
+   |                                              |                | should be assigned dynamic         |
+   |                                              |                | addresses. This is a global        |
+   |                                              |                | statistic that covers all subnets. |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-allocation-fail-no-pools       | integer        | Number of address allocation       |
+   |                                              |                | failures because the server could  |
+   |                                              |                | not use any configured pools for   |
+   |                                              |                | a particular client. It is also    |
+   |                                              |                | possible that all of the subnets   |
+   |                                              |                | from which the server attempted to |
+   |                                              |                | assign an address lack address     |
+   |                                              |                | pools. In this case, it should be  |
+   |                                              |                | considered misconfiguration if an  |
+   |                                              |                | operator expects that some clients |
+   |                                              |                | should be assigned dynamic         |
+   |                                              |                | addresses. The *id* is the         |
+   |                                              |                | subnet-id of a given subnet. This  |
+   |                                              |                | statistic is exposed for each      |
+   |                                              |                | subnet separately.                 |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-allocation-fail-classes                   | integer        | Number of address allocation       |
+   |                                              |                | failures when the client's packet  |
+   |                                              |                | belongs to one or more classes.    |
+   |                                              |                | There may be several reasons why a |
+   |                                              |                | lease was not assigned. One of     |
+   |                                              |                | them may be a case when all pools  |
+   |                                              |                | require packet to belong to        |
+   |                                              |                | certain classes and the incoming   |
+   |                                              |                | packet didn't belong to any of     |
+   |                                              |                | them. Another case where this      |
+   |                                              |                | information may be useful is to    |
+   |                                              |                | point out that the pool reserved   |
+   |                                              |                | to a given class has ran out of    |
+   |                                              |                | addresses. This is a global        |
+   |                                              |                | statistic that covers all subnets. |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-allocation-fail-classes        | integer        | Number of address allocation       |
+   |                                              |                | failures when the client's packet  |
+   |                                              |                | belongs to one or more classes.    |
+   |                                              |                | There may be several reasons why a |
+   |                                              |                | lease was not assigned. One of     |
+   |                                              |                | them may be a case when all pools  |
+   |                                              |                | require packet to belong to        |
+   |                                              |                | certain classes and the incoming   |
+   |                                              |                | packet didn't belong to any of     |
+   |                                              |                | them. Another case where this      |
+   |                                              |                | information may be useful is to    |
+   |                                              |                | point out that the pool reserved   |
+   |                                              |                | to a given class has ran out of    |
+   |                                              |                | addresses. The *id* is the         |
+   |                                              |                | subnet-id of a given subnet. This  |
+   |                                              |                | statistic is exposed for each      |
+   |                                              |                | subnet separately.                 |
+   +----------------------------------------------+----------------+------------------------------------+
 
 .. note::
 

@@ -1214,6 +1214,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(subnets_with_unavail_pools);
         StatsMgr::instance().addValue("v6-allocation-fail-shared-network",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v6-allocation-fail-shared-network"),
+                                   static_cast<int64_t>(1));
     } else {
         // The client is not connected to a shared network. It is connected
         // to a subnet. Let's log the ID of that subnet.
@@ -1222,6 +1226,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(ctx.subnet_->getID());
         StatsMgr::instance().addValue("v6-allocation-fail-subnet",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v6-allocation-fail-subnet"),
+                                   static_cast<int64_t>(1));
     }
     if (total_attempts == 0) {
         // In this case, it seems that none of the pools in the subnets could
@@ -1232,6 +1240,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(ctx.query_->getLabel());
         StatsMgr::instance().addValue("v6-allocation-fail-no-pools",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v6-allocation-fail-no-pools"),
+                                   static_cast<int64_t>(1));
     } else {
         // This is an old log message which provides a number of attempts
         // made by the allocation engine to allocate a lease. The only case
@@ -1242,6 +1254,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(total_attempts);
         StatsMgr::instance().addValue("v6-allocation-fail",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v6-allocation-fail"),
+                                   static_cast<int64_t>(1));
     }
 
     const ClientClasses& classes = ctx.query_->getClasses();
@@ -1251,6 +1267,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(classes.toText());
         StatsMgr::instance().addValue("v6-allocation-fail-classes",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v6-allocation-fail-classes"),
+                                   static_cast<int64_t>(1));
     }
 
     // We failed to allocate anything. Let's return empty collection.
@@ -4465,6 +4485,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(subnets_with_unavail_pools);
         StatsMgr::instance().addValue("v4-allocation-fail-shared-network",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v4-allocation-fail-shared-network"),
+                                   static_cast<int64_t>(1));
     } else {
         // The client is not connected to a shared network. It is connected
         // to a subnet. Let's log some details about the subnet.
@@ -4475,6 +4499,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(ctx.subnet_->getSharedNetworkName());
         StatsMgr::instance().addValue("v4-allocation-fail-subnet",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v4-allocation-fail-subnet"),
+                                   static_cast<int64_t>(1));
     }
     if (total_attempts == 0) {
         // In this case, it seems that none of the pools in the subnets could
@@ -4485,6 +4513,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(ctx.query_->getLabel());
         StatsMgr::instance().addValue("v4-allocation-fail-no-pools",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v4-allocation-fail-no-pools"),
+                                   static_cast<int64_t>(1));
     } else {
         // This is an old log message which provides a number of attempts
         // made by the allocation engine to allocate a lease. The only case
@@ -4495,6 +4527,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(total_attempts);
         StatsMgr::instance().addValue("v4-allocation-fail",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v4-allocation-fail"),
+                                   static_cast<int64_t>(1));
     }
 
     const ClientClasses& classes = ctx.query_->getClasses();
@@ -4504,6 +4540,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(classes.toText());
         StatsMgr::instance().addValue("v4-allocation-fail-classes",
                                       static_cast<int64_t>(1));
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   "v4-allocation-fail-classes"),
+                                   static_cast<int64_t>(1));
     }
 
     return (new_lease);

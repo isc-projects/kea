@@ -119,7 +119,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 
     // Second allocation starts here.
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr2, IOAddress("0.0.0.0"),
                                      false, true, "anotherhost.example.com.",
@@ -434,7 +434,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
@@ -526,6 +526,12 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // Allocations without HW address are not allowed
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, HWAddrPtr(),
                                      IOAddress("0.0.0.0"), false, false,
@@ -540,6 +546,12 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 
     // Allocations without client-id are allowed
     clientid_.reset();
@@ -996,7 +1008,7 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
@@ -1022,6 +1034,12 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     EXPECT_EQ(1, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 2));
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail-subnet", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 2));
 }
 
 /// @brief This test class is dedicated to testing shared networks
@@ -1053,7 +1071,7 @@ public:
         network_->add(subnet1_);
         network_->add(subnet2_);
 
-        std::vector<uint8_t> hwaddr_vec = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+        std::vector<uint8_t> hwaddr_vec = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
         hwaddr2_.reset(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     }
 
@@ -1400,6 +1418,12 @@ TEST_F(SharedNetworkAlloc4Test, runningOut) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 }
 
 // This test verifies that the server can offer an address from a
@@ -1695,7 +1719,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
@@ -1762,7 +1786,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 
     // Just a different hw/client-id for the second client
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
@@ -2079,6 +2103,12 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // Now simulate the DHCPDISCOVER case when the provided address is
     // treated as a hint. The engine should return a lease for a
     // different address than requested.
@@ -2207,6 +2237,12 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 
     // Now, request a correct address. The client should obtain it.
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
@@ -2359,6 +2395,12 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // Make sure that the allocation engine didn't modify the lease of the
     // client A.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
@@ -2381,6 +2423,12 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 
     from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
     ASSERT_TRUE(from_mgr);
@@ -2486,6 +2534,12 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // Repeat the test, but this time ask for the address that the client
     // has allocated.
     AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
@@ -2509,6 +2563,12 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 }
 
 // This test checks that the behavior of the allocation engine in the following
@@ -2733,6 +2793,12 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // Client A tries to renew the lease. The renewal should fail because
     // server detects that Client A doesn't have reservation for this
     // address.
@@ -2749,6 +2815,12 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
 
     // Client A returns to DHCPDISCOVER and should be offered a lease.
     // The offered lease address must be different than the one the
@@ -2859,6 +2931,12 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
 
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-subnet", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 1));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 1));
+
     // The same client should get a different lease than requested if
     // if is sending a DHCPDISCOVER (fake allocation is true).
     AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr_,
@@ -2904,6 +2982,12 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     EXPECT_EQ(1, getStatistics("v4-allocation-fail-subnet"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes"));
+
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-shared-network", 2));
+    EXPECT_EQ(1, getStatistics("v4-allocation-fail-subnet", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-no-pools", 2));
+    EXPECT_EQ(0, getStatistics("v4-allocation-fail-classes", 2));
 
     // Now, let's remove the reservation.
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
@@ -3729,10 +3813,10 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
         std::string exp_address_;        // expected lease address
     };
 
-    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01};
+    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01 };
     std::string mac1_addr = "192.0.2.100";
 
-    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
+    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02 };
     std::string mac2_addr = "192.0.2.101";
 
     // Test scenarios.
@@ -3838,10 +3922,10 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
         std::string exp_address_;       // expected lease address
     };
 
-    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01};
+    std::vector<uint8_t> mac1 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x01 };
     std::string mac1_addr = "192.0.2.100";
 
-    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02};
+    std::vector<uint8_t> mac2 = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0x02 };
     std::string mac2_addr = "192.0.2.101";
 
     // Test scenarios.

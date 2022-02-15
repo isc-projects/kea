@@ -139,6 +139,7 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 }
 
 AllocEngine6Test::AllocEngine6Test() {
+    Subnet::resetSubnetID();
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
@@ -608,7 +609,7 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
-
+    Subnet::resetSubnetID();
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
