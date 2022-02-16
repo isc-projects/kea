@@ -699,7 +699,7 @@ public:
         }
 
         PsqlBindArray in_bindings;
-        in_bindings.add(modification_ts);
+        in_bindings.addTimestamp(modification_ts);
 
         auto index = (server_selector.amUnassigned() ? GET_MODIFIED_SUBNETS4_UNASSIGNED :
                       GET_MODIFIED_SUBNETS4);
