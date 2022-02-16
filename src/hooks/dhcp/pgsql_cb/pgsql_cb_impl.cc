@@ -138,7 +138,7 @@ PgSqlConfigBackendImpl::createAuditRevision(const int index,
     /// audit entry is when there is a single server tag, i.e. "all" or explicit
     /// server name. In fact, these are the most common two cases.
     std::string tag = ServerTag::ALL;
-    const auto& tags = server_selector.getTags();
+    auto const& tags = server_selector.getTags();
     if (tags.size() == 1) {
         tag = tags.begin()->get();
     }
@@ -157,7 +157,6 @@ PgSqlConfigBackendImpl::clearAuditRevision() {
     if (audit_revision_ref_count_ <= 0) {
         isc_throw(Unexpected, "attempted to clear audit revision that does not exist - coding error");
     }
-
     --audit_revision_ref_count_;
 }
 
@@ -345,6 +344,7 @@ PgSqlConfigBackendImpl::getOptionDef(const int index,
                                      const ServerSelector& server_selector,
                                      const uint16_t code,
                                      const std::string& space) {
+
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
                   " (unassigned) is unsupported at the moment");
@@ -391,8 +391,9 @@ PgSqlConfigBackendImpl::getModifiedOptionDefs(const int index,
 void
 PgSqlConfigBackendImpl::getOptionDefs(const int index,
                                       const PsqlBindArray& in_bindings,
-                                      OptionDefContainer& option_defs ) {
+                                      OptionDefContainer& option_defs) {
     uint64_t last_def_id = 0;
+
     OptionDefContainer local_option_defs;
 
     // Run select query.
@@ -401,7 +402,6 @@ PgSqlConfigBackendImpl::getOptionDefs(const int index,
         // Extract the column values for r[row].
         // Create a worker for the row.
         PgSqlResultRowWorker worker(r, row);
-
 
         // Get pointer to last fetched option definition.
         OptionDefinitionPtr last_def;
@@ -473,9 +473,10 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
                                               const int& create_audit_revision,
                                               const int& insert_option_def_server,
                                               const std::string& client_class_name) {
+
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "creating or updating option definition");
@@ -563,7 +564,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
+                                  " (unassigned) is unsupported at the moment");
     }
 
     auto tag = getServerTag(server_selector, "fetching global option");
@@ -600,7 +601,6 @@ PgSqlConfigBackendImpl::getModifiedOptions(const int index,
                                            const Option::Universe& universe,
                                            const ServerSelector& server_selector,
                                            const boost::posix_time::ptime& modification_time) {
-
     OptionContainer options;
 
     PsqlBindArray in_bindings;
@@ -1011,7 +1011,7 @@ PgSqlConfigBackendImpl::attachElementToServers(const int index,
                                                const PsqlBindArray& in_bindings) {
     // Copy the bindings because we're going to modify them.
     PsqlBindArray server_bindings = in_bindings;
-    for (auto tag : server_selector.getTags()) {
+    for (auto const& tag : server_selector.getTags()) {
         // Add the server tag to end of the bindings.
         std::string server_tag = tag.get();
         server_bindings.add(server_tag);
@@ -1056,7 +1056,7 @@ PgSqlConfigBackendImpl::setRelays(PgSqlResultRowWorker& worker, size_t col, Netw
                                 "be valid strings");
         }
 
-        network.addRelayAddress(IOAddress(relay_element->get(i)->stringValue()));
+        network.addRelayAddress(IOAddress(relay_address_element->stringValue()));
     }
 }
 

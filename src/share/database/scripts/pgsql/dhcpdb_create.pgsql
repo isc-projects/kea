@@ -4286,7 +4286,7 @@ ALTER TABLE dhcp6_subnet_server
 -- Fix constraint typo on dhcp4_option_def_server
 ALTER TABLE dhcp4_option_def_server
     DROP CONSTRAINT dhcp4_option_def_server_option_def_id_fkey,
-    ADD CONSTRAINT  dhcp4_option_def_server_option_def_id_fkey
+    ADD CONSTRAINT dhcp4_option_def_server_option_def_id_fkey
         FOREIGN KEY (option_def_id) REFERENCES dhcp4_option_def(id) ON DELETE CASCADE;
 
 -- DROP shared-network ADEL triggers that should not exist.
@@ -4302,9 +4302,10 @@ DROP TRIGGER IF EXISTS dhcp6_shared_network_ADEL on dhcp6_shared_network CASCADE
 -- a parent object when an option is modified.
 --
 -- The following parameters are passed to the procedure:
--- - modification_type: 'create', 'update' or 'delete'
+-- - modification_type: "create", "update" or "delete"
 -- - scope_id: identifier of the option scope, e.g.
---   global, subnet specific etc.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
 -- - option_id: identifier of the option.
 -- - p_subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
@@ -4338,7 +4339,6 @@ DECLARE
     snid BIGINT;
     sid BIGINT;
     cascade_transaction BOOLEAN := true;
-    ct TEXT;
 BEGIN
     -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
@@ -4393,13 +4393,16 @@ END;$$;
 --
 -- -----------------------------------------------------
 --
+-- Stored procedure which updates modification timestamp of
+-- a parent object when an option is modified.
+--
 -- The following parameters are passed to the procedure:
 -- - modification_type: "create", "update" or "delete"
 -- - scope_id: identifier of the option scope, e.g.
 --   global, subnet specific etc. See dhcp_option_scope
 --   for specific values.
 -- - option_id: identifier of the option.
--- - subnet_id: identifier of the subnet if the option
+-- - p_subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
 -- - host_id: identifier of the host if the option
 -- - belongs to the host.
@@ -4409,7 +4412,7 @@ END;$$;
 --   belongs to the pool.
 -- - pd_pool_id: identifier of the pool if the option
 --   belongs to the pd pool.
--- - modification_ts: modification timestamp of the
+-- - p_modification_ts: modification timestamp of the
 --   option.
 --   Some arguments are prefixed with "p_" to avoid ambiguity
 --   with column names in SQL statements. PostgreSQL does not
@@ -4434,7 +4437,6 @@ DECLARE
     snid BIGINT;
     sid BIGINT;
     cascade_transaction BOOLEAN := false;
-
 BEGIN
     -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
@@ -4448,6 +4450,7 @@ BEGIN
     -- entire subnet. The only case when the object_type will be
     -- set to 'dhcp6_options' is when a global option is added.
     -- Global options do not have the owner.
+
     cascade_transaction := get_session_boolean('kea.cascade_transaction');
     IF cascade_transaction = false THEN
         -- todo: host manager hasn't been updated to use audit

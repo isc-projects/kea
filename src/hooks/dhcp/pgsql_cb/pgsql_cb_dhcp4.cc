@@ -199,6 +199,7 @@ public:
     StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
                                         const std::string& name) {
         StampedValueCollection parameters;
+
         auto const& tags = server_selector.getTags();
         for (auto const& tag : tags) {
             PsqlBindArray in_bindings;
@@ -217,6 +218,7 @@ public:
     /// @param value StampedValue describing the parameter to create/update.
     void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
+
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -258,7 +260,7 @@ public:
             PsqlBindArray attach_bindings;
             uint64_t pid = getLastInsertId("dhcp4_global_parameter", "id");
             attach_bindings.add(pid);   // id of newly inserted global.
-            attach_bindings.add(value->getModificationTime());
+            attach_bindings.addTimestamp(value->getModificationTime());
             attachElementToServers(PgSqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
                                    server_selector, attach_bindings);
         }
@@ -301,7 +303,7 @@ public:
                 last_subnet = *subnets.rbegin();
             }
             // Subnet_id is column 0.
-            SubnetID subnet_id = worker.getBigInt(0) ;
+            SubnetID subnet_id = worker.getInt(0) ;
 
             // Subnet has been returned. Assuming that subnets are ordered by
             // subnet identifier, if the subnet identifier of the current row
@@ -347,9 +349,9 @@ public:
 
                 // 4o6_interface_id at 3.
                 if (!worker.isColumnNull(3)) {
-                    std::string interface_id_str = worker.getString(3);
-                    OptionBuffer dhcp4o6_interface_id_buf(interface_id_str.begin(),
-                                                          interface_id_str.end());
+                    std::string dhcp4o6_interface_id = worker.getString(3);
+                    OptionBuffer dhcp4o6_interface_id_buf(dhcp4o6_interface_id.begin(),
+                                                          dhcp4o6_interface_id.end());
                     OptionPtr option_dhcp4o6_interface_id =
                         Option::create(Option::V6, D6O_INTERFACE_ID, dhcp4o6_interface_id_buf);
                     last_subnet->get4o6().setInterfaceId(option_dhcp4o6_interface_id);
@@ -357,9 +359,8 @@ public:
 
                 // 4o6_subnet at 4.
                 if (!worker.isColumnNull(4)) {
-                    std::string dhcp4o6_prefix_str = worker.getString(4);
                     std::pair<IOAddress, uint8_t> dhcp4o6_subnet_prefix_pair =
-                        Subnet6::parsePrefix(dhcp4o6_prefix_str);
+                        Subnet6::parsePrefix(worker.getString(4));
                     last_subnet->get4o6().setSubnet4o6(dhcp4o6_subnet_prefix_pair.first,
                                                        dhcp4o6_subnet_prefix_pair.second);
                 }
@@ -599,7 +600,6 @@ public:
         tossNonMatchingElements(server_selector, subnet_index);
     }
 
-
     /// @brief Sends query to retrieve single subnet by id.
     ///
     /// @param server_selector Server selector.
@@ -609,6 +609,7 @@ public:
     /// doesn't exist.
     Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
                           const SubnetID& subnet_id) {
+
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a subnet. Got: "
@@ -703,7 +704,6 @@ public:
         auto index = (server_selector.amUnassigned() ? GET_MODIFIED_SUBNETS4_UNASSIGNED :
                       GET_MODIFIED_SUBNETS4);
         getSubnets4(index, server_selector, in_bindings, subnets);
-
     }
 
     /// @brief Sends query to retrieve all subnets belonging to a shared network.
@@ -754,6 +754,7 @@ public:
                 // pool start_address (1)
                 // pool end_address (2)
                 last_pool_id = id;
+
                 last_pool = Pool4::create(worker.getInet4(1), worker.getInet4(2));
 
                 // pool subnet_id (3) (ignored)
@@ -818,7 +819,7 @@ public:
             auto const& tags = server_selector.getTags();
             for (auto const& tag : tags) {
                 PsqlBindArray in_bindings;
-                in_bindings.add(tag.get());
+                in_bindings.addTempString(tag.get());
                 in_bindings.addInet4(pool_start_address);
                 in_bindings.addInet4(pool_end_address);
 
@@ -835,6 +836,7 @@ public:
         }
 
         pool_id = 0;
+
         return (Pool4Ptr());
     }
 
@@ -844,6 +846,7 @@ public:
     /// @param subnet Pointer to the subnet to be inserted or updated.
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
+
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a subnet for ANY"
                       " server is not supported");
@@ -864,6 +867,7 @@ public:
         if (dhcp4o6_interface_id) {
             in_bindings.addTempString(std::string(dhcp4o6_interface_id->getData().begin(),
                                                   dhcp4o6_interface_id->getData().end()));
+
         } else {
             in_bindings.addNull();
         }
@@ -986,13 +990,14 @@ public:
         // Insert associations with the servers.
         PsqlBindArray attach_bindings;
         attach_bindings.add(subnet->getID());
-        attach_bindings.add(subnet->getModificationTime());
+        attach_bindings.addTimestamp(subnet->getModificationTime());
         attachElementToServers(PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
                                server_selector, attach_bindings);
 
         // (Re)create pools.
         for (auto pool : subnet->getPools(Lease::TYPE_V4)) {
-             createPool4(server_selector, boost::dynamic_pointer_cast<Pool4>(pool), subnet);
+            createPool4(server_selector, boost::dynamic_pointer_cast<Pool4>(pool),
+                        subnet);
         }
 
         // (Re)create options.
@@ -1002,7 +1007,8 @@ public:
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
-                createUpdateOption4(server_selector, subnet->getID(), desc_copy, true);
+                createUpdateOption4(server_selector, subnet->getID(), desc_copy,
+                                    true);
             }
         }
 
@@ -1188,7 +1194,7 @@ public:
                     last_network->allowClientClass(worker.getString(2));
                 }
 
-                // Interface at 3.
+                // interface at 3.
                 if (!worker.isColumnNull(3)) {
                     last_network->setIface(worker.getString(3));
                 }
@@ -1381,6 +1387,7 @@ public:
     /// network doesn't exist.
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
+
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a shared network. Got: "
@@ -1410,7 +1417,7 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks4(const ServerSelector& server_selector,
                                SharedNetwork4Collection& shared_networks) {
-       if (server_selector.amAny()) {
+        if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "fetching all shared networks for ANY "
                       "server is not supported");
         }
@@ -1443,7 +1450,6 @@ public:
         auto index = (server_selector.amUnassigned() ?
                       PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4_UNASSIGNED :
                       PgSqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4);
-
         getSharedNetworks4(index, server_selector, in_bindings, shared_networks);
     }
 
@@ -1453,6 +1459,7 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
+
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a shared network for ANY"
                       " server is not supported");
@@ -1542,7 +1549,7 @@ public:
         // Associate the shared network with the servers.
         PsqlBindArray attach_bindings;
         attach_bindings.addTempString(shared_network->getName());
-        attach_bindings.add(shared_network->getModificationTime());
+        attach_bindings.addTimestamp(shared_network->getModificationTime());
         attachElementToServers(PgSqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
                                server_selector, attach_bindings);
 
@@ -1582,7 +1589,7 @@ public:
 
         PsqlBindArray attach_bindings;
         attach_bindings.add(option_id);   // id of newly inserted global.
-        attach_bindings.add(modification_ts);
+        attach_bindings.addTimestamp(modification_ts);
 
         // Associate the option with the servers.
         attachElementToServers(PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION4_SERVER,
@@ -1595,6 +1602,7 @@ public:
     /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
+
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1663,6 +1671,7 @@ public:
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
+
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1752,6 +1761,7 @@ public:
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
+
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1819,6 +1829,7 @@ public:
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
+
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1891,6 +1902,7 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
+
         createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
@@ -2094,7 +2106,6 @@ public:
                                     "deleting options for a shared network",
                                     "shared network specific options deleted",
                                     true, in_bindings));
-
     }
 
     /// @brief Deletes options belonging to a client class from the database.

@@ -62,6 +62,7 @@ void PsqlBindArray::insert(const std::string& value, size_t index) {
     }
 
     bound_strs_.push_back(ConstStringPtr(new std::string(value)));
+
     values_.insert(values_.begin() + index, bound_strs_.back()->c_str());
     lengths_.insert(lengths_.begin() + index, value.size());
     formats_.insert(formats_.begin() + index, TEXT_FMT);
@@ -85,7 +86,7 @@ void PsqlBindArray::add(const std::vector<uint8_t>& data) {
 
 void PsqlBindArray::addTempBinary(const std::vector<uint8_t>& data) {
     bound_strs_.push_back(ConstStringPtr(new std::string(
-        (reinterpret_cast<const char*>(data.data())), data.size())));
+        reinterpret_cast<const char*>(data.data()), data.size())));
 
     values_.push_back(reinterpret_cast<const char*>(bound_strs_.back()->data()));
     lengths_.push_back(data.size());
@@ -108,14 +109,14 @@ void PsqlBindArray::addTempBuffer(const uint8_t* data, const size_t len) {
     }
 
     bound_strs_.push_back(ConstStringPtr(new std::string(
-                                         reinterpret_cast<const char*>(data),len)));
+        reinterpret_cast<const char*>(data), len)));
+
     values_.push_back(bound_strs_.back()->data());
     lengths_.push_back(len);
     formats_.push_back(BINARY_FMT);
 }
 
-
-void PsqlBindArray::add(const bool& value)  {
+void PsqlBindArray::add(const bool& value) {
     add(value ? TRUE_STR : FALSE_STR);
 }
 
@@ -175,6 +176,7 @@ PsqlBindArray::addMax(const Triplet<uint32_t>& triplet) {
 /// mean duplicating strings where it isn't strictly necessary.
 void PsqlBindArray::addTempString(const std::string& str) {
     bound_strs_.push_back(ConstStringPtr(new std::string(str)));
+
     PsqlBindArray::add((bound_strs_.back())->c_str());
 }
 
@@ -236,7 +238,7 @@ PsqlBindArray::addTimestamp(const boost::posix_time::ptime& timestamp) {
     //
     // Sadly boost::posix_time::to_time_t() was not added until 1.58,
     // so do it ourselves.
-    ptime epoch(boost::gregorian::date(1970,1,1));
+    ptime epoch(boost::gregorian::date(1970, 1, 1));
     time_duration::sec_type since_epoch = (timestamp - epoch).total_seconds();
     time_t input_time(since_epoch);
 
@@ -325,7 +327,6 @@ PsqlBindArray::amNull(size_t index) const {
     return ( (values_.at(index) == NULL) && (lengths_.at(index) == 0) );
 }
 
-
 std::string
 PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
     struct tm tinfo;
@@ -361,7 +362,7 @@ time_t
 PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
     // Convert string time value to time_t
     time_t new_time;
-    try  {
+    try {
         new_time = (boost::lexical_cast<time_t>(db_time_val));
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "Database time value is invalid: " << db_time_val);
@@ -470,7 +471,6 @@ PgSqlExchange::getInetValue4(const PgSqlResult& r, const int row,
                   << " : " << ex.what());
     }
 }
-
 
 isc::asiolink::IOAddress
 PgSqlExchange::getInetValue6(const PgSqlResult& r, const int row,

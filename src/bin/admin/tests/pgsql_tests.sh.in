@@ -468,7 +468,7 @@ pgsql_upgrade_test() {
     # Check 7.0 to 8.0 upgrade
     pgsql_upgrade_7_0_to_8_0
 
-    # Check 7.0 to 8.0 upgrade
+    # Check 8.0 to 9.0 upgrade
     pgsql_upgrade_8_0_to_9_0
 
     # Let's wipe the whole database

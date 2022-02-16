@@ -196,7 +196,7 @@ public:
     /// is more than one server tag associated with the selector.
     std::string getServerTag(const db::ServerSelector& server_selector,
                              const std::string& operation) const {
-        auto tags = server_selector.getTags();
+        auto const& tags = server_selector.getTags();
         if (tags.size() != 1) {
             isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
                       " while " << operation << ". Got: "
@@ -212,8 +212,8 @@ public:
     /// This method is useful for logging purposes.
     std::string getServerTagsAsText(const db::ServerSelector& server_selector) const {
         std::ostringstream s;
-        auto server_tags = server_selector.getTags();
-        for (auto tag : server_tags) {
+        auto const& server_tags = server_selector.getTags();
+        for (auto const& tag : server_tags) {
             if (s.tellp() != 0) {
                 s << ", ";
             }
@@ -447,10 +447,11 @@ public:
     ///
     /// @return Pointer to the returned option or NULL if such option
     /// doesn't exist.
-    OptionDescriptorPtr
-    getOption(const int index, const Option::Universe& universe,
-              const db::ServerSelector& server_selector, const uint16_t code,
-              const std::string& space);
+    OptionDescriptorPtr getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector,
+                                  const uint16_t code,
+                                  const std::string& space);
 
     /// @brief Sends query to retrieve all global options.
     ///
@@ -458,9 +459,9 @@ public:
     /// @param universe Option universe, i.e. V4 or V6.
     /// @param server_selector Server selector.
     /// @return Container holding returned options.
-    OptionContainer
-    getAllOptions(const int index, const Option::Universe& universe,
-                  const db::ServerSelector& server_selector);
+    OptionContainer getAllOptions(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector);
 
     /// @brief Sends query to retrieve global options with modification
     /// time later than specified timestamp.
@@ -469,10 +470,10 @@ public:
     /// @param universe Option universe, i.e. V4 or V6.
     /// @param server_selector Server selector.
     /// @return Container holding returned options.
-    OptionContainer
-    getModifiedOptions(const int index, const Option::Universe& universe,
-                       const db::ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time);
+    OptionContainer getModifiedOptions(const int index,
+                                       const Option::Universe& universe,
+                                       const db::ServerSelector& server_selector,
+                                       const boost::posix_time::ptime& modification_time);
 
     /// @brief Sends query to retrieve single option by code and option space
     /// for a given subnet id.
@@ -574,9 +575,8 @@ public:
     /// @param universe V4 or V6.
     /// @param first_binding Iterator of the output binding containing
     /// option_id.
-    OptionDescriptorPtr
-    processOptionRow(const Option::Universe& universe,
-                     db::MySqlBindingCollection::iterator first_binding);
+    OptionDescriptorPtr processOptionRow(const Option::Universe& universe,
+                                         db::MySqlBindingCollection::iterator first_binding);
 
     /// @brief Returns DHCP option definition instance from output bindings.
     ///
@@ -610,7 +610,7 @@ public:
     void attachElementToServers(const int index,
                                 const db::ServerSelector& server_selector,
                                 const db::MySqlBindingPtr& first_binding,
-                                const db::MySqlBindingPtr& in_bindings...);
+                                const db::MySqlBindingPtr& in_bindings);
 
     /// @brief Creates input binding for relay addresses.
     ///
@@ -759,7 +759,7 @@ public:
         }
 
         // Go over the collection of elements.
-        for (auto elem = index.begin(); elem != index.end(); ) {
+        for (auto elem = index.begin(); elem != index.end();) {
 
             // If we're asking for shared networks matching all servers,
             // we have to make sure that the fetched element has "all"
@@ -783,9 +783,9 @@ public:
                 // Server selector contains explicit server tags, so
                 // let's see if the returned elements includes any of
                 // them.
-                auto tags = server_selector.getTags();
+                auto const& tags = server_selector.getTags();
                 bool tag_found = false;
-                for (auto tag : tags) {
+                for (auto const& tag : tags) {
                     if ((*elem)->hasServerTag(tag) ||
                         (*elem)->hasAllServerTag()) {
                         tag_found = true;
@@ -836,7 +836,7 @@ public:
         return (parameters_);
     }
 
-    /// @brief Sets IO service to be used by the MySql config backend.
+    /// @brief Sets IO service to be used by the MySQL config backend.
     ///
     /// @param IOService object, used for all ASIO operations.
     static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
@@ -864,7 +864,7 @@ private:
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;
 
-    /// The IOService object, used for all ASIO operations.
+    /// @brief The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
 };
 

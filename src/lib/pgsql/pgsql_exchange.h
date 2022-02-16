@@ -283,7 +283,7 @@ struct PsqlBindArray {
     /// the buffer values.
     ///
     /// @param data buffer of binary data.
-    /// @param len  number of bytes of data in buffer
+    /// @param len number of bytes of data in buffer
     /// @throw DbOperationError if data is NULL.
     void addTempBuffer(const uint8_t* data, const size_t len);
 

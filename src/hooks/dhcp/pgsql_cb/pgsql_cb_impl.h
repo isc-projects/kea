@@ -37,12 +37,13 @@ namespace dhcp {
 /// @brief Base class for PostgreSQL Config Backend implementations.
 ///
 /// This class contains common methods for manipulating data in the
-/// Postgres database, used by all servers.
+/// PostgreSQL database, used by all servers.
 ///
 /// All POSIX times specified in the methods belonging to this
 /// class must be local times.
 class PgSqlConfigBackendImpl {
 protected:
+
     /// @brief RAII object used to protect against creating multiple
     /// audit revisions during cascade configuration updates.
     ///
@@ -68,13 +69,14 @@ protected:
     /// transaction with the database.
     class ScopedAuditRevision {
     public:
+
         /// @brief Constructor.
         ///
         /// Creates new audit revision and sets the flag in the
-        /// Postgres CB implementation object which prevents new audit
+        /// PostgreSQL CB implementation object which prevents new audit
         /// revisions to be created while this instance exists.
         ///
-        /// @param impl pointer to the Postgres CB implementation.
+        /// @param impl pointer to the PostgreSQL CB implementation.
         /// @param index index of the query to set session variables
         /// used for creation of the audit revision and the audit
         /// entries.
@@ -98,11 +100,13 @@ protected:
         ~ScopedAuditRevision();
 
     private:
-        /// @brief Pointer to the Postgres CB implementation.
+
+        /// @brief Pointer to the PostgreSQL CB implementation.
         PgSqlConfigBackendImpl* impl_;
     };
 
 public:
+
     /// @brief Constructor.
     ///
     /// @param parameters A data structure relating keywords and values
@@ -112,7 +116,7 @@ public:
     /// use when fetching the last insert id for a given table.
     explicit PgSqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
                                     const db::DbCallback db_reconnect_callback,
-                                    const size_t last_insert_id_index_);
+                                    const size_t last_insert_id_index);
 
     /// @brief Destructor.
     virtual ~PgSqlConfigBackendImpl();
@@ -130,14 +134,13 @@ public:
     /// @return Server tag.
     /// @throw InvalidOperation if the server selector is unassigned or if there
     /// is more than one server tag associated with the selector.
-    std::string
-    getServerTag(const db::ServerSelector& server_selector, const std::string& operation) const {
-        auto tags = server_selector.getTags();
+    std::string getServerTag(const db::ServerSelector& server_selector,
+                             const std::string& operation) const {
+        auto const& tags = server_selector.getTags();
         if (tags.size() != 1) {
             isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
-                                        " while "
-                                            << operation
-                                            << ". Got: " << getServerTagsAsText(server_selector));
+                      " while " << operation << ". Got: "
+                      << getServerTagsAsText(server_selector));
         }
 
         return (tags.begin()->get());
@@ -149,8 +152,8 @@ public:
     /// This method is useful for logging purposes.
     std::string getServerTagsAsText(const db::ServerSelector& server_selector) const {
         std::ostringstream s;
-        auto server_tags = server_selector.getTags();
-        for (auto tag : server_tags) {
+        auto const& server_tags = server_selector.getTags();
+        for (auto const& tag : server_tags) {
             if (s.tellp() != 0) {
                 s << ", ";
             }
@@ -599,7 +602,7 @@ public:
     }
 
     /// @brief Iterates over the class names in a JSON list element at a
-    /// given column, invoking a setter function each one.
+    /// given column, invoking a setter function for each one.
     ///
     /// Has no effect if the column is null or is an empty list.
     ///
@@ -642,8 +645,9 @@ public:
     /// @param bindings Reference to the PgSQL input bindings.
     /// @param [out] servers Reference to the container where fetched servers
     /// will be inserted.
-    void
-    getServers(const int index, const db::PsqlBindArray& bindings, db::ServerCollection& servers);
+    void getServers(const int index,
+                    const db::PsqlBindArray& bindings,
+                    db::ServerCollection& servers);
 
     /// @brief Creates or updates a server.
     ///
@@ -703,9 +707,9 @@ public:
     /// @param server_selector Server selector.
     /// @param index Reference to the index holding the returned configuration
     /// elements to be processed.
-    template <typename CollectionIndex>
-    void
-    tossNonMatchingElements(const db::ServerSelector& server_selector, CollectionIndex& index) {
+    template<typename CollectionIndex>
+    void tossNonMatchingElements(const db::ServerSelector& server_selector,
+                                 CollectionIndex& index) {
         // Don't filter the matching server tags if the server selector is
         // set to ANY.
         if (server_selector.amAny()) {
@@ -737,10 +741,11 @@ public:
                 // Server selector contains explicit server tags, so
                 // let's see if the returned elements includes any of
                 // them.
-                auto tags = server_selector.getTags();
+                auto const& tags = server_selector.getTags();
                 bool tag_found = false;
-                for (auto tag : tags) {
-                    if ((*elem)->hasServerTag(tag) || (*elem)->hasAllServerTag()) {
+                for (auto const& tag : tags) {
+                    if ((*elem)->hasServerTag(tag) ||
+                        (*elem)->hasAllServerTag()) {
                         tag_found = true;
                         break;
                     }
@@ -761,7 +766,7 @@ public:
 
     /// @brief Returns backend type in the textual format.
     ///
-    /// @return "pgsql".
+    /// @return "postgresql".
     std::string getType() const;
 
     /// @brief Returns backend host.
@@ -789,7 +794,7 @@ public:
         return (parameters_);
     }
 
-    /// @brief Sets IO service to be used by the Postgres config backend.
+    /// @brief Sets IO service to be used by the PostgreSQL config backend.
     ///
     /// @param IOService object, used for all ASIO operations.
     static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
@@ -861,14 +866,16 @@ public:
     /// @return Number of affected rows.
     uint64_t updateDeleteQuery(size_t index, const db::PsqlBindArray& in_bindings);
 
-    /// @brief Represents connection to the Postgres database.
+    /// @brief Represents connection to the PostgreSQL database.
     db::PgSqlConnection conn_;
 
 protected:
+
     /// @brief Timer name used to register database reconnect timer.
     std::string timer_name_;
 
 private:
+
     /// @brief Reference counter for @ScopedAuditRevision instances.
     int audit_revision_ref_count_;
 

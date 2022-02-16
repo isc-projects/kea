@@ -75,7 +75,7 @@ public:
         destroyMySQLSchema();
     }
 
-    /// @brief Returns a valid PostgreSQL back end specific connection
+    /// @brief Returns a valid MySQL back end specific connection
     /// string
     std::string validConnectionString() {
         return (validMySQLConnectionString());

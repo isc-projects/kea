@@ -193,8 +193,8 @@ public:
                                         const std::string& name) {
         StampedValueCollection parameters;
 
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        auto const& tags = server_selector.getTags();
+        for (auto const& tag : tags) {
             MySqlBindingCollection in_bindings = {
                 MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(name)
@@ -679,7 +679,7 @@ public:
                 last_subnet->addPool(last_pool);
             }
 
-            // Parse pool specific option from 25 to 36.
+            // Parse pool-specific option from 25 to 36.
             if (last_pool && !out_bindings[25]->amNull() &&
                 (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[25]->getInteger<uint64_t>();
@@ -690,7 +690,7 @@ public:
                 }
             }
 
-            // Parse subnet specific option from 37 to 48.
+            // Parse subnet-specific option from 37 to 48.
             if (!out_bindings[37]->amNull() &&
                 (last_option_id < out_bindings[37]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[37]->getInteger<uint64_t>();
@@ -729,10 +729,8 @@ public:
         MySqlBindingCollection in_bindings = { MySqlBinding::createInteger<uint32_t>(subnet_id) };
 
         auto index = GET_SUBNET4_ID_NO_TAG;
-
         if (server_selector.amUnassigned()) {
             index = GET_SUBNET4_ID_UNASSIGNED;
-
         } else if (server_selector.amAny()) {
             index = GET_SUBNET4_ID_ANY;
         }
@@ -763,10 +761,8 @@ public:
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(subnet_prefix) };
 
         auto index = GET_SUBNET4_PREFIX_NO_TAG;
-
         if (server_selector.amUnassigned()) {
             index = GET_SUBNET4_PREFIX_UNASSIGNED;
-
         } else if (server_selector.amAny()) {
             index = GET_SUBNET4_PREFIX_ANY;
         }
@@ -958,10 +954,9 @@ public:
                     MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
                 };
                 getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
-
         } else {
-            auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            auto const& tags = server_selector.getTags();
+            for (auto const& tag : tags) {
                 MySqlBindingCollection in_bindings = {
                     MySqlBinding::createString(tag.get()),
                     MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
@@ -1622,10 +1617,8 @@ public:
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(name) };
 
         auto index = GET_SHARED_NETWORK4_NAME_NO_TAG;
-
         if (server_selector.amUnassigned()) {
             index = GET_SHARED_NETWORK4_NAME_UNASSIGNED;
-
         } else if (server_selector.amAny()) {
             index = GET_SHARED_NETWORK4_NAME_ANY;
         }
@@ -3846,8 +3839,8 @@ StampedValueCollection
 MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4);
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag.get()) };
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
                                    in_bindings, parameters);
@@ -3863,8 +3856,8 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4)
         .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)

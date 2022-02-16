@@ -145,7 +145,7 @@ public:
     /// checks that number and content of the expected new entries have been
     /// added to the end of this collection.
     ///
-    /// @param exp_entries a  list of the new audit entries expected.
+    /// @param exp_entries a list of the expected new audit entries.
     /// @param server_selector Server selector to be used for next query.
     void testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
                            const db::ServerSelector& server_selector);

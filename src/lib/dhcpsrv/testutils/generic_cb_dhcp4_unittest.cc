@@ -467,7 +467,7 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::string& exp_object_
         // Server tag is 'all'.
         tag = "all";
     } else {
-        auto tags = server_selector.getTags();
+        const auto& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() > 1) {
             ADD_FAILURE() << "Test error: do not use multiple server tags";
@@ -515,7 +515,7 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::vector<ExpAuditEntr
         // Server tag is 'all'.
         tag = "all";
     } else {
-        auto tags = server_selector.getTags();
+        const auto& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() > 1) {
             ADD_FAILURE() << "Test error: do not use multiple server tags";
@@ -1355,7 +1355,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4SharedNetworkTest() {
 
     // Store shared network in the database.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
-                                       shared_network));
+                                                           shared_network));
 
     // Store subnet associated with the shared network in the database.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
@@ -2484,7 +2484,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
             },
             {
                 "dhcp4_subnet",
-                 AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
             }
         });
 
