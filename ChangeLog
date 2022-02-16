@@ -1,3 +1,9 @@
+1992.	[bug]		razvan
+	The ``maxver`` and ``maxsize`` logger parameters are excluded
+	from ``config-get`` command response if the logger output is
+	``stdout``, ``stderr`` or ``syslog``.
+	(Gitlab #2288)
+
 1991.	[bug]		jinmei, razvan
 	Fixed keactrl exit code when netconf is not build.
 	(Gitlab #2262)
