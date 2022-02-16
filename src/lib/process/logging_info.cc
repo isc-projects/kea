@@ -35,16 +35,20 @@ LoggingDestination::toElement() const {
 
     // Set output
     result->set("output", Element::create(output_));
-    if ((output_ != STDOUT) && (output_ != STDERR) && (output_ == SYSLOG) &&
-        (output_.find(SYSLOG_COLON) != 0)) {
+
+    // Set flush
+    result->set("flush", Element::create(flush_));
+
+    // Set pattern
+    result->set("pattern", Element::create(pattern_));
+
+    if ((output_ != STDOUT) && (output_ != STDERR) && (output_ != SYSLOG) &&
+        (output_.find(SYSLOG_COLON) == std::string::npos)) {
         // Set maxver
         result->set("maxver", Element::create(maxver_));
+
         // Set maxsize
         result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
-        // Set flush
-        result->set("flush", Element::create(flush_));
-        // Set pattern
-        result->set("pattern", Element::create(pattern_));
     }
 
     return (result);

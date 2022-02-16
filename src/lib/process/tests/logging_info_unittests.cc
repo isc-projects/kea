@@ -90,7 +90,7 @@ TEST_F(LoggingInfoTest, defaults) {
     std::string begin =
         "\"name\": \"kea\",\n"
         "\"output_options\": [ {\n"
-        " \"output\": \"stdout\" } ],\n"
+        " \"output\": \"stdout\", \"flush\": true, \"pattern\": \"\" } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";
     std::string trailer = "\n}\n";

@@ -48,7 +48,9 @@
                 "name": "kea-dhcp-ddns",
                 "output_options": [
                     {
-                        "output": "stdout"
+                        "flush": true,
+                        "output": "stdout",
+                        "pattern": "%d [%c/%i] %m\n"
                     }
                 ],
                 "severity": "INFO"
