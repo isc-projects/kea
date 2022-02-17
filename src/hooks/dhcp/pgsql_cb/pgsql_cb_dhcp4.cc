@@ -824,9 +824,7 @@ public:
                 in_bindings.addInet4(pool_end_address);
 
                 getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
-                if (!pools.empty()) {
-                    break;
-                }
+                // Break if something is found?
             }
         }
 
@@ -932,7 +930,14 @@ public:
         in_bindings.addOptional(subnet->getDdnsSendUpdates(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsOverrideNoUpdate(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsOverrideClientUpdate(Network::Inheritance::NONE));
-        in_bindings.addOptional(subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE));
+
+        auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+        if (!ddns_rcn_mode.unspecified()) {
+            in_bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
+        } else {
+            in_bindings.addNull();
+        }
+
         in_bindings.addOptional(subnet->getDdnsGeneratedPrefix(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getReservationsInSubnet(Network::Inheritance::NONE));
@@ -1494,7 +1499,14 @@ public:
         in_bindings.addOptional(shared_network->getDdnsSendUpdates(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsOverrideNoUpdate(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsOverrideClientUpdate(Network::Inheritance::NONE));
-        in_bindings.addOptional(shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE));
+
+        auto ddns_rcn_mode = shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+        if (!ddns_rcn_mode.unspecified()) {
+            in_bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
+        } else {
+            in_bindings.addNull();
+        }
+
         in_bindings.addOptional(shared_network->getDdnsGeneratedPrefix(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getReservationsInSubnet(Network::Inheritance::NONE));

@@ -4338,7 +4338,7 @@ DECLARE
     -- we will select.
     snid BIGINT;
     sid BIGINT;
-    cascade_transaction BOOLEAN := true;
+    cascade_transaction BOOLEAN;
 BEGIN
     -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
@@ -4419,12 +4419,12 @@ END;$$;
 --   allow table aliases to be used with column names in update
 --   set expressions.
 -- -----------------------------------------------------
-CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR(32),
+CREATE OR REPLACE FUNCTION createOptionAuditDHCP6(modification_type VARCHAR,
                                                   scope_id SMALLINT,
                                                   option_id INT,
                                                   p_subnet_id BIGINT,
                                                   host_id INT,
-                                                  network_name VARCHAR(128),
+                                                  network_name VARCHAR,
                                                   pool_id BIGINT,
                                                   pd_pool_id BIGINT,
                                                   p_modification_ts TIMESTAMP WITH TIME ZONE)
@@ -4436,7 +4436,7 @@ DECLARE
     -- we will select.
     snid BIGINT;
     sid BIGINT;
-    cascade_transaction BOOLEAN := false;
+    cascade_transaction BOOLEAN;
 BEGIN
     -- Cascade transaction flag is set to true to prevent creation of
     -- the audit entries for the options when the options are
