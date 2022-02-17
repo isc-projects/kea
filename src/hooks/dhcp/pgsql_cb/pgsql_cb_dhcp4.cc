@@ -2165,7 +2165,9 @@ public:
     /// where retrieved classes will be stored.
     void getAllClientClasses4(const ServerSelector& /* server_selector */,
                               ClientClassDictionary& /* client_classes */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+        /// @todo Rather than throw, we do nothing. This allows CB to be used for
+        /// everything except classes.
+        /// isc_throw(NotImplemented, NOT_IMPL_STR);
     }
 
     /// @brief Sends query to retrieve modified client classes.
@@ -2177,7 +2179,9 @@ public:
     void getModifiedClientClasses4(const ServerSelector& /* server_selector */,
                                    const boost::posix_time::ptime& /* modification_ts */,
                                    ClientClassDictionary& /* client_classes */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+        /// @todo Rather than throw, we do nothing. This allows CB to be used for
+        /// everything except classes.
+        /// isc_throw(NotImplemented, NOT_IMPL_STR);
     }
 
 

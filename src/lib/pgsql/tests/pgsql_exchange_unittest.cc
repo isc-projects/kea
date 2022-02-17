@@ -979,9 +979,9 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
 
     // Make sure we catch values that are too big.
     time_duration duration = hours(10) + minutes(14) + seconds(15);
-    ptime day_too_far(date(3021, Jan, 21), duration);
+    ptime day_too_far(date(2038, Jan, 21), duration);
     ASSERT_THROW_MSG(bind_array->addTimestamp(day_too_far), BadValue,
-                     "Time value is too large: 33168132855");
+                     "Time value is too large: 2147681655");
 
     // Now add reasonable day, US National Ice Cream day.
     ptime nice_day(date(2021, Jul, 18), duration);
