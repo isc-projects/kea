@@ -1,3 +1,10 @@
+1994.	[func]		razvan
+	Added support for Server Identifier Override RAI sub-option
+	(RFC 5107). The implementation is not complete according to the
+	RFC, because the server does not store the RAI, but the
+	functionality handles expected use cases.
+	(Gitlab #1695)
+
 1993.	[func]		razvan
 	Added global and per subnet counters for allocation failures:
 	``v4-allocation-fail``, ``v4-allocation-fail-shared-network``,
