@@ -518,9 +518,9 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::vector<ExpAuditEntr
         const auto& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() != 1) {
-            ADD_FAILURE() << "Test error: tags.size(): " << tags.size() 
+            ADD_FAILURE() << "Test error: tags.size(): " << tags.size()
                           << ", you must specify one and only one server tag";
-        } 
+        }
 
         // Get the server tag for which we run the current test.
         tag = tags.begin()->get();

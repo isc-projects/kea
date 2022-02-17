@@ -19,8 +19,10 @@ namespace test {
 struct ExpAuditEntry {
     /// @brief Type of object changed.
     std::string object_type;
+
     /// @brief Timestamp the change occurred.
     db::AuditEntry::ModificationType modification_type;
+
     /// @brief Log message describing the change.
     std::string log_message;
 };

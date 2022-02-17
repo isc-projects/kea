@@ -654,16 +654,12 @@ PgSqlConfigBackendImpl::getOption(const int index,
                                   " (unassigned) is unsupported at the moment");
     }
 
-    Option::Universe universe;
     std::string msg = "fetching ";
     if (pool_type == Lease::TYPE_PD) {
-        universe = Option::V6;
         msg += "prefix delegation";
     } else {
-        universe = Option::V4;
         msg += "address";
     }
-
     msg += " pool level option";
     auto tag = getServerTag(server_selector, msg);
 
@@ -672,8 +668,11 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.add(pool_id);
     in_bindings.add(code);   // Postgresql code is same size regardless of universe
     in_bindings.add(space);
-
+    Option::Universe universe = Option::V4;
     OptionContainer options;
+    if (pool_type != Lease::TYPE_V4) {
+        universe = Option::V6;
+    }
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));

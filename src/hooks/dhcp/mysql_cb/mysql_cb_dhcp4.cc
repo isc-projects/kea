@@ -1945,7 +1945,6 @@ public:
         createUpdateOption4(server_selector, pool_id, option, false);
     }
 
-
     /// @brief Sends query to insert or update DHCP option in a pool.
     ///
     /// @param selector Server selector.
