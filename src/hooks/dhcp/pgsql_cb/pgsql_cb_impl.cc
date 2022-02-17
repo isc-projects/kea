@@ -618,9 +618,9 @@ OptionDescriptorPtr
 PgSqlConfigBackendImpl::getOption(const int index,
                                   const Option::Universe& universe,
                                   const ServerSelector& server_selector,
-                                  const SubnetID& /* subnet_id */,
-                                  const uint16_t /* code */,
-                                  const std::string& /* space */) {
+                                  const SubnetID& subnet_id,
+                                  const uint16_t code,
+                                  const std::string& space) {
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -629,10 +629,13 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     auto tag = getServerTag(server_selector, "fetching subnet level option");
 
-    OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, NOT_IMPL_STR);
+    in_bindings.add(tag);
+    in_bindings.add(subnet_id);
+    in_bindings.add(code);   // Postgresql code is same size regardless of universe
+    in_bindings.add(space);
 
+    OptionContainer options;
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
@@ -642,29 +645,35 @@ OptionDescriptorPtr
 PgSqlConfigBackendImpl::getOption(const int index,
                                   const ServerSelector& server_selector,
                                   const Lease::Type& pool_type,
-                                  const uint64_t /* pool_id */,
-                                  const uint16_t /* code */,
-                                  const std::string& /* space */) {
+                                  const uint64_t pool_id,
+                                  const uint16_t code,
+                                  const std::string& space) {
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
                                   " (unassigned) is unsupported at the moment");
     }
 
+    Option::Universe universe;
     std::string msg = "fetching ";
     if (pool_type == Lease::TYPE_PD) {
+        universe = Option::V6;
         msg += "prefix delegation";
     } else {
+        universe = Option::V4;
         msg += "address";
     }
+
     msg += " pool level option";
     auto tag = getServerTag(server_selector, msg);
 
-    Option::Universe universe = Option::V4;
-    OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, NOT_IMPL_STR);
+    in_bindings.add(tag);
+    in_bindings.add(pool_id);
+    in_bindings.add(code);   // Postgresql code is same size regardless of universe
+    in_bindings.add(space);
 
+    OptionContainer options;
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
@@ -674,9 +683,9 @@ OptionDescriptorPtr
 PgSqlConfigBackendImpl::getOption(const int index,
                                   const Option::Universe& universe,
                                   const ServerSelector& server_selector,
-                                  const std::string& /* shared_network_name */,
-                                  const uint16_t /* code */,
-                                  const std::string& /* space */) {
+                                  const std::string& shared_network_name,
+                                  const uint16_t code,
+                                  const std::string& space) {
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -685,9 +694,13 @@ PgSqlConfigBackendImpl::getOption(const int index,
 
     auto tag = getServerTag(server_selector, "fetching shared network level option");
 
-    OptionContainer options;
     PsqlBindArray in_bindings;
-    isc_throw(NotImplemented, NOT_IMPL_STR);
+    in_bindings.add(tag);
+    in_bindings.add(shared_network_name);
+    in_bindings.add(code);   // Postgresql code is same size regardless of universe
+    in_bindings.add(space);
+
+    OptionContainer options;
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
