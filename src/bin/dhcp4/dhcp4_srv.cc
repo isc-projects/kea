@@ -3695,6 +3695,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
         return (false);
     }
 
+    // According to RFC5107, the RAI_OPTION_SERVER_ID_OVERRIDE option if
+    // present, should match DHO_DHCP_SERVER_IDENTIFIER option.
     OptionPtr rai_option = query->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai_option) {
         OptionPtr rai_suboption = rai_option->getOption(RAI_OPTION_SERVER_ID_OVERRIDE);

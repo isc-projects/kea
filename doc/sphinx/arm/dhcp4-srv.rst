@@ -6769,7 +6769,9 @@ The following standards are currently supported in Kea:
 
 -  *Server Identifier Override sub-option for the Relay Agent Option*, `RFC 5107
    <https://tools.ietf.org/html/rfc5107>`__: The server identifier override
-   sub-option is supported.
+   sub-option is supported. The implementation is not complete according to the
+   RFC, because the server does not store the RAI, but the functionality handles
+   expected use cases.
 
 Known RFC Violations
 --------------------
