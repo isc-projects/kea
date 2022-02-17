@@ -48,6 +48,7 @@ PgSqlBasicsTest::PgSqlBasicsTest() : expected_col_names_(NUM_BASIC_COLS) {
     expected_col_names_[MIN_INT_COL] = "min_int_col";
     expected_col_names_[MAX_INT_COL] = "max_int_col";
     expected_col_names_[INET6_COL] = "inet6_col";
+    expected_col_names_[LOCALTIME_COL] = "localtime_col";
 
     destroySchema();
     createSchema();
@@ -86,7 +87,8 @@ PgSqlBasicsTest::createSchema() {
         "    json_col JSON,"
         "    min_int_col INT, "
         "    max_int_col INT, "
-        "    inet6_col INET "
+        "    inet6_col INET, "
+        "    localtime_col TIMESTAMP WITH TIME ZONE "
         "); ";
 
     PgSqlResult r(PQexec(*conn_, sql));
@@ -136,7 +138,8 @@ PgSqlBasicsTest::fetchRows(PgSqlResultPtr& r, int exp_rows, int line) {
         "   int_col, text_col,"
         "   extract(epoch from timestamp_col)::bigint as timestamp_col,"
         "   varchar_col, inet4_col, float_col, json_col,"
-        "   min_int_col, max_int_col, inet6_col"
+        "   min_int_col, max_int_col, inet6_col,"
+        "   (extract(epoch from localtime_col) + extract(timezone from localtime_col))::bigint as localtime_col"
         " FROM basics";
 
     runSql(r, sql, PGRES_TUPLES_OK, line);

@@ -969,7 +969,7 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Create a prepared statement for inserting a TIMESTAMP
     PgSqlTaggedStatement statement[] = {
         { 1, { OID_TIMESTAMP }, "timestamp_insert",
-          "INSERT INTO BASICS (timestamp_col) values ($1)" }
+          "INSERT INTO BASICS (localtime_col) values ($1)" }
     };
 
     ASSERT_NO_THROW(conn_->prepareStatement(statement[0]));
@@ -986,7 +986,6 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Now add reasonable day, US National Ice Cream day.
     ptime nice_day(date(2021, Jul, 18), duration);
     bind_array->addTimestamp(nice_day);
-    std::cout << "bind array: " << bind_array->toText() << std::endl;
 
     PgSqlResultPtr r;
     RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -995,11 +994,11 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     FETCH_ROWS(r, 1);
 
     // Timestamp column should not be null.
-    ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, TIMESTAMP_COL));
+    ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, 0, LOCALTIME_COL));
 
     // Convert fetched value into a ptime.
     ptime fetched_time;
-    ASSERT_NO_THROW_LOG(PgSqlExchange::getColumnValue(*r, 0, TIMESTAMP_COL,
+    ASSERT_NO_THROW_LOG(PgSqlExchange::getColumnValue(*r, 0, LOCALTIME_COL,
                         fetched_time));
 
     ASSERT_EQ(fetched_time, nice_day);
@@ -1430,7 +1429,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
           " smallint_col, "
           " int_col, "
           " text_col, "
-          " timestamp_col, "
+          " localtime_col, "
           " varchar_col, "
           " inet4_col, "
           " float_col, "
@@ -1514,7 +1513,7 @@ TEST_F(PgSqlBasicsTest, resultRowWorker) {
     EXPECT_EQ(exp_smallint, worker->getSmallInt(SMALLINT_COL));
     EXPECT_EQ(exp_int, worker->getInt(INT_COL));
     EXPECT_EQ(exp_text, worker->getString(TEXT_COL));
-    EXPECT_EQ(exp_timestamp, worker->getTimestamp(TIMESTAMP_COL));
+    EXPECT_EQ(exp_timestamp, worker->getTimestamp(LOCALTIME_COL));
     EXPECT_EQ(exp_varchar, worker->getString(VARCHAR_COL));
     EXPECT_EQ(exp_inet4, worker->getInet4(INET4_COL));
     EXPECT_EQ(exp_double, worker->getDouble(FLOAT_COL));

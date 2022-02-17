@@ -175,3 +175,5 @@ DROP FUNCTION IF EXISTS set_session_value(name text, value BOOLEAN);
 
 DROP FUNCTION IF EXISTS lease4Upload();
 DROP FUNCTION IF EXISTS lease6Upload();
+
+DROP FUNCTION IF EXISTS gmt_epoch(input_time TIMESTAMP WITH TIME ZONE);

@@ -32,7 +32,7 @@ namespace {
     "  g.name," \
     "  g.value," \
     "  g.parameter_type," \
-    "  extract(epoch from g.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(g.modification_ts) as modification_ts, " \
     "  s.tag " \
     "FROM " #table_prefix "_global_parameter AS g " \
     "INNER JOIN " #table_prefix "_global_parameter_server AS a " \
@@ -56,7 +56,7 @@ namespace {
     "  s.client_class," \
     "  s.interface," \
     "  s.match_client_id," \
-    "  extract(epoch from s.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(s.modification_ts) as modification_ts, " \
     "  s.next_server," \
     "  s.rebind_timer," \
     "  s.relay," \
@@ -71,7 +71,7 @@ namespace {
     "  p.start_address," \
     "  p.end_address," \
     "  p.subnet_id," \
-    "  extract(epoch from p.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  x.option_id," \
     "  x.code," \
     "  x.value," \
@@ -83,7 +83,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  o.option_id," \
     "  o.code," \
     "  o.value," \
@@ -95,7 +95,7 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  extract(epoch from o.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(o.modification_ts) as modification_ts, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
     "  s.t2_percent," \
@@ -157,7 +157,7 @@ namespace {
     "  s.subnet_prefix," \
     "  s.client_class," \
     "  s.interface," \
-    "  extract(epoch from s.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(s.modification_ts) as modification_ts, " \
     "  s.preferred_lifetime," \
     "  s.rapid_commit," \
     "  s.rebind_timer," \
@@ -172,13 +172,13 @@ namespace {
     "  p.start_address," \
     "  p.end_address," \
     "  p.subnet_id," \
-    "  extract(epoch from p.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  d.id," \
     "  d.prefix," \
     "  d.prefix_length," \
     "  d.delegated_prefix_length," \
     "  d.subnet_id," \
-    "  extract(epoch from d.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(d.modification_ts) as modification_ts, " \
     "  x.option_id," \
     "  x.code," \
     "  x.value," \
@@ -190,7 +190,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  x.pd_pool_id," \
     "  y.option_id," \
     "  y.code," \
@@ -203,7 +203,7 @@ namespace {
     "  y.user_context," \
     "  y.shared_network_name," \
     "  y.pool_id," \
-    "  extract(epoch from y.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(y.modification_ts) as modification_ts, " \
     "  y.pd_pool_id," \
     "  o.option_id," \
     "  o.code," \
@@ -216,7 +216,7 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  extract(epoch from o.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(o.modification_ts) as modification_ts, " \
     "  o.pd_pool_id, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
@@ -291,7 +291,7 @@ namespace {
       "  p.client_class," \
       "  p.require_client_classes," \
       "  p.user_context," \
-      "  extract(epoch from p.modification_ts)::bigint as modification_ts, " \
+      "  gmt_epoch(p.modification_ts) as modification_ts, " \
       "  x.option_id," \
       "  x.code," \
       "  x.value," \
@@ -303,7 +303,7 @@ namespace {
       "  x.user_context," \
       "  x.shared_network_name," \
       "  x.pool_id," \
-      "  extract(epoch from x.modification_ts)::bigint as modification_ts " \
+      "  gmt_epoch(x.modification_ts) as modification_ts " \
       "FROM dhcp4_pool AS p " \
       server_join \
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
@@ -331,7 +331,7 @@ namespace {
     "  p.client_class," \
     "  p.require_client_classes," \
     "  p.user_context," \
-    "  extract(epoch from p.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  x.option_id," \
     "  x.code," \
     "  x.value," \
@@ -343,7 +343,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  x.pd_pool_id " \
     "FROM dhcp6_pool AS p " \
     server_join \
@@ -375,7 +375,7 @@ namespace {
     "  p.client_class," \
     "  p.require_client_classes," \
     "  p.user_context," \
-    "  extract(epoch from p.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  x.option_id," \
     "  x.code," \
     "  x.value," \
@@ -387,7 +387,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  x.pd_pool_id " \
     "FROM dhcp6_pd_pool AS p " \
     server_join \
@@ -414,7 +414,7 @@ namespace {
     "  n.client_class," \
     "  n.interface," \
     "  n.match_client_id," \
-    "  extract(epoch from n.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(n.modification_ts) as modification_ts, " \
     "  n.rebind_timer," \
     "  n.relay," \
     "  n.renew_timer," \
@@ -433,7 +433,7 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  extract(epoch from o.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(o.modification_ts) as modification_ts, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
     "  n.t2_percent," \
@@ -493,7 +493,7 @@ namespace {
     "  n.name," \
     "  n.client_class," \
     "  n.interface," \
-    "  extract(epoch from n.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(n.modification_ts) as modification_ts, " \
     "  n.preferred_lifetime," \
     "  n.rapid_commit," \
     "  n.rebind_timer," \
@@ -514,7 +514,7 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  extract(epoch from o.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(o.modification_ts) as modification_ts, " \
     "  o.pd_pool_id, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
@@ -575,7 +575,7 @@ namespace {
     "  d.name," \
     "  d.space," \
     "  d.type," \
-    "  extract(epoch from d.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(d.modification_ts) as modification_ts, " \
     "  d.is_array," \
     "  d.encapsulate," \
     "  d.record_types," \
@@ -604,7 +604,7 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  extract(epoch from o.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(o.modification_ts) as modification_ts, " \
     "  s.tag " \
     pd_pool_id \
     "FROM " #table_prefix "_options AS o " \
@@ -628,7 +628,7 @@ namespace {
     "  a.object_type," \
     "  a.object_id," \
     "  a.modification_type," \
-    "  extract(epoch from r.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(r.modification_ts) as modification_ts, " \
     "  r.id, " \
     "  r.log_message " \
     "FROM " #table_prefix "_audit AS a " \
@@ -646,7 +646,7 @@ namespace {
     "  s.id," \
     "  s.tag," \
     "  s.description," \
-    "  extract(epoch from s.modification_ts)::bigint as modification_ts " \
+    "  gmt_epoch(s.modification_ts) as modification_ts " \
     "FROM " #table_prefix "_server AS s " \
     "WHERE s.id > 1 " \
     __VA_ARGS__ \
@@ -672,13 +672,13 @@ namespace {
     "  c.max_valid_lifetime," \
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
-    "  extract(epoch from c.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(c.modification_ts) as modification_ts, " \
     "  d.id," \
     "  d.code," \
     "  d.name," \
     "  d.space," \
     "  d.type," \
-    "  extract(epoch from d.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(d.modification_ts) as modification_ts, " \
     "  d.is_array," \
     "  d.encapsulate," \
     "  d.record_types," \
@@ -694,7 +694,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  s.tag " \
     "FROM dhcp4_client_class AS c " \
     "INNER JOIN dhcp4_client_class_order AS o " \
@@ -735,13 +735,13 @@ namespace {
     "  c.max_valid_lifetime," \
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
-    "  extract(epoch from c.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(c.modification_ts) as modification_ts, " \
     "  d.id," \
     "  d.code," \
     "  d.name," \
     "  d.space," \
     "  d.type," \
-    "  extract(epoch from d.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(d.modification_ts) as modification_ts, " \
     "  d.is_array," \
     "  d.encapsulate," \
     "  d.record_types," \
@@ -757,7 +757,7 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  extract(epoch from x.modification_ts)::bigint as modification_ts, " \
+    "  gmt_epoch(x.modification_ts) as modification_ts, " \
     "  s.tag, " \
     "  c.preferred_lifetime," \
     "  c.min_preferred_lifetime, " \

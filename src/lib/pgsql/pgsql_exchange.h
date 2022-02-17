@@ -522,11 +522,17 @@ public:
     /// @brief Destructor
     virtual ~PgSqlExchange() {}
 
-    /// @brief Converts time_t value to a text representation in local time.
+    /// @brief Converts UTC time_t value to a text representation in local time.
     ///
     /// @param input_time A time_t value representing time.
     /// @return std::string containing stringified time.
     static std::string convertToDatabaseTime(const time_t input_time);
+
+    /// @brief Converts local time_t value to a text representation in local time.
+    ///
+    /// @param input_time A time_t value representing time.
+    /// @return std::string containing stringified time.
+    static std::string convertLocalToDatabaseTime(const time_t input_time);
 
     /// @brief Converts lease expiration time to a text representation in
     /// local time.

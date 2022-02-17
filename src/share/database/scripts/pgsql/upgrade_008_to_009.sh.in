@@ -264,6 +264,24 @@ BEGIN
     RETURN;
 END;\$\$;
 
+-- Returns the epoch GMT time in second from a timestamp with time zone
+--
+-- param input_ts timestamp value to convert
+-- return a BIGINT containing the number of seconds since the epoch in GMT.
+CREATE OR REPLACE FUNCTION gmt_epoch(input_ts TIMESTAMP WITH TIME ZONE)
+RETURNS BIGINT
+AS \$\$
+DECLARE
+    gmt_epoch BIGINT;
+BEGIN
+    select extract(epoch from input_ts) + extract(timezone from input_ts) into gmt_epoch;
+    RETURN gmt_epoch;
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'gmt_epoch(%) : failed, sqlstate: %', input_ts, sqlstate;
+END;\$\$
+LANGUAGE plpgsql;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '0';

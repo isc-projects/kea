@@ -49,7 +49,7 @@ public:
         SMALLINT_COL,
         INT_COL,
         TEXT_COL,
-        TIMESTAMP_COL,
+        TIMESTAMP_COL,  // Used when epoch coming back is GMT (e.g. lease mgr)
         VARCHAR_COL,
         INET4_COL,
         FLOAT_COL,
@@ -57,6 +57,7 @@ public:
         MIN_INT_COL,
         MAX_INT_COL,
         INET6_COL,
+        LOCALTIME_COL,  // Used when epoch coming back is LOCAL (e.g. CB)
         NUM_BASIC_COLS
     };
 

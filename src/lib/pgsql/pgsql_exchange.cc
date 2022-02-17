@@ -247,14 +247,14 @@ PsqlBindArray::addTimestamp(const boost::posix_time::ptime& timestamp) {
     }
 
     // Converts to timestamp to local date/time string.
-    addTempString(PgSqlExchange::convertToDatabaseTime(input_time));
+    addTempString(PgSqlExchange::convertLocalToDatabaseTime(input_time));
 }
 
 void
 PsqlBindArray::addTimestamp() {
     time_t now;
     time(&now);
-    addTempString(PgSqlExchange::convertToDatabaseTime(now));
+    addTempString(PgSqlExchange::convertLocalToDatabaseTime(now));
 }
 
 void
@@ -331,12 +331,29 @@ std::string
 PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
     struct tm tinfo;
     char buffer[20];
+
     localtime_r(&input_time, &tinfo);
+
     // PostgreSQL will assume the value is already in local time since we
     // do not specify timezone in the string.
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
     return (std::string(buffer));
 }
+
+std::string
+PgSqlExchange::convertLocalToDatabaseTime(const time_t input_time) {
+    struct tm tinfo;
+    char buffer[20];
+
+    // We use gmtime_r to avoid adjustment as time_t is already local.
+    gmtime_r(&input_time, &tinfo);
+
+    // PostgreSQL will assume the value is already in local time since we
+    // do not specify timezone in the string.
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
+    return (std::string(buffer));
+}
+
 
 std::string
 PgSqlExchange::convertToDatabaseTime(const time_t cltt,

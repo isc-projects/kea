@@ -83,11 +83,15 @@ DELETE FROM dhcp4_option_def_server;
 DELETE FROM dhcp4_options;
 DELETE FROM dhcp4_options_server;
 DELETE FROM dhcp4_pool;
-DELETE FROM dhcp4_server WHERE tag != 'all'; -- preserve the special tag
 DELETE FROM dhcp4_shared_network;
-DELETE FROM dhcp4_shared_network_server;
 DELETE FROM dhcp4_subnet;
 DELETE FROM dhcp4_subnet_server;
+DELETE FROM dhcp4_shared_network_server;
+DELETE FROM dhcp4_client_class_order;
+DELETE FROM dhcp4_client_class_dependency;
+DELETE FROM dhcp4_client_class_server;
+DELETE FROM dhcp4_client_class;
+DELETE FROM dhcp4_server WHERE tag != 'all'; -- preserve the special tag
 
 DELETE FROM dhcp6_audit;
 DELETE FROM dhcp6_audit_revision;
@@ -99,9 +103,13 @@ DELETE FROM dhcp6_options;
 DELETE FROM dhcp6_options_server;
 DELETE FROM dhcp6_pool;
 DELETE FROM dhcp6_pd_pool;
-DELETE FROM dhcp6_server WHERE tag != 'all'; -- preserve the special tag
 DELETE FROM dhcp6_shared_network;
 DELETE FROM dhcp6_subnet;
+DELETE FROM dhcp6_client_class_order;
+DELETE FROM dhcp6_client_class_dependency;
+DELETE FROM dhcp6_client_class_server;
+DELETE FROM dhcp6_client_class;
+DELETE FROM dhcp6_server WHERE tag != 'all'; -- preserve the special tag
 
 COMMIT;
 EOF
