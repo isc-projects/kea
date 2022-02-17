@@ -1,3 +1,8 @@
+1996.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.3 development
+	version.
+	(Gitlab #2317)
+
 1995.	[func]		tmark
 	kea-dhcp4 now supports using PostgreSQL for config
 	back end for everything except client classes. The
