@@ -1,3 +1,10 @@
+1995.	[func]		tmark
+	kea-dhcp4 now supports using PostgreSQL for config
+	back end for everything except client classes. The
+	new hook library is libdhcp_pgsql_cb.so. This should
+	be considered an experimental feature.
+	(Gitlab #95)
+
 1994.	[func]		razvan
 	Added support for Server Identifier Override RAI sub-option
 	(RFC 5107). The implementation is not complete according to the
