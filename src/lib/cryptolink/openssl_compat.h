@@ -4,52 +4,58 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <openssl/opensslv.h>
-
-#if (defined(LIBRESSL_VERSION_NUMBER) && \
-     (LIBRESSL_VERSION_NUMBER < 0x3050200fL)) || \
-    (OPENSSL_VERSION_NUMBER < 0x10100000L)
-
 // This file is included by hash and hmac codes so KEA_H* macros
 // avoid to define unused inlines.
 
 #ifdef KEA_HASH
 
-// EVP_MD_CTX_new() is EVP_MD_CTX_create() in OpenSSL < 1.1
+#ifndef HAVE_EVP_MD_CTX_NEW
+#ifdef HAVE_EVP_MD_CTX_CREATE
+
+// EVP_MD_CTX_new() is EVP_MD_CTX_create() in old OpenSSL
 
 inline EVP_MD_CTX* EVP_MD_CTX_new() {
     return (EVP_MD_CTX_create());
 }
 
-// EVP_MD_CTX_free(ctx) is EVP_MD_CTX_destroy(ctx) in OpenSSL < 1.1
+#else
+#error have no EVP_MD_CTX_new() nor EVP_MD_CTX_create()
+#endif
+#endif
+
+#ifndef HAVE_EVP_MD_CTX_FREE
+#ifdef HAVE_EVP_MD_CTX_DESTROY
+
+// EVP_MD_CTX_free(ctx) is EVP_MD_CTX_destroy(ctx) in old OpenSSL
 
 inline void EVP_MD_CTX_free(EVP_MD_CTX* ctx) {
     EVP_MD_CTX_destroy(ctx);
 }
 
+#else
+#error have no EVP_MD_CTX_free() nor EVP_MD_CTX_destroy()
+#endif
+#endif
+
 #endif
 
 #ifdef KEA_HMAC
 
-// HMAC_CTX_new() implementation for OpenSSL < 1.1
+#ifndef HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
+#ifdef HAVE_EVP_PKEY_NEW_MAC_KEY
 
-inline HMAC_CTX* HMAC_CTX_new() {
-    HMAC_CTX* ctx = static_cast<HMAC_CTX*>(OPENSSL_malloc(sizeof(HMAC_CTX)));
-    if (ctx != 0) {
-        HMAC_CTX_init(ctx);
-    }
-    return (ctx);
+// EVP_PKEY_new_raw_private_key(type, e, key, keylen) is
+// EVP_PKEY_new_mac_key(type, e, key, (int)keylen) in old OpenSSL
+
+inline EVP_PKEY* EVP_PKEY_new_raw_private_key(int type, ENGINE* e,
+                                              const unsigned char *key,
+                                              size_t keylen) {
+    return (EVP_PKEY_new_mac_key(type, e, key, static_cast<int>(keylen)));
 }
 
-// HMAC_CTX_free() implementation for OpenSSL < 1.1
-
-inline void HMAC_CTX_free(HMAC_CTX* ctx) {
-    if (ctx != 0) {
-        HMAC_CTX_cleanup(ctx);
-        OPENSSL_free(ctx);
-    }
-}
-
+#else
+#error have no EVP_PKEY_new_raw_private_key() nor EVP_PKEY_new_mac_key()
+#endif
 #endif
 
 #endif

@@ -346,36 +346,27 @@ EOF
     #CRYPTO_LDFLAGS="-ldl"
     CRYPTO_LDFLAGS=""
     CRYPTO_RPATH=""
-    dnl Check availability of SHA-2
     AC_MSG_CHECKING([support of SHA-2])
     LIBS_SAVED=${LIBS}
     LIBS="$LIBS $CRYPTO_LIBS"
     CPPFLAGS_SAVED=${CPPFLAGS}
     CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
-    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <openssl/evp.h>],
-                         [const EVP_MD* h224 = EVP_sha224();
-                          const EVP_MD* h256 = EVP_sha256();
-                          const EVP_MD* h384 = EVP_sha384();
-                          const EVP_MD* h512 = EVP_sha512();
-                          ])],
-        [AC_MSG_RESULT([yes])],
-        [AC_MSG_ERROR([missing EVP entry for SHA-2])])
-    dnl Check HMAC API
-    AC_MSG_CHECKING([HMAC functions returning ints])
-    AC_LINK_IFELSE(
-         [AC_LANG_PROGRAM([#include <openssl/opensslv.h>
-                           #include <openssl/hmac.h>],
-                          [#if OPENSSL_VERSION_NUMBER < 0x10100000L
-                           HMAC_CTX ctx, tmp;
-                           int n = HMAC_Init(&ctx, NULL, 0, NULL);
-                           n += HMAC_Update(&ctx, NULL, 0);
-                           n += HMAC_CTX_copy(&tmp, &ctx);
-                           n += HMAC_Final(&tmp, NULL, NULL);
-                           #endif
-                           ])],
-         [AC_MSG_RESULT([yes])],
-         [AC_MSG_ERROR([HMAC functions return void: please use OpenSSL version 1.0.1 or later])])
+    dnl Check availability of legacy hash
+    AC_CHECK_FUNC([EVP_md5],,[missing EVP entry for MD5])
+    AC_CHECK_FUNC([EVP_sha1],,[missing EVP entry for SHA1])
+    dnl Check availability of SHA-2
+    AC_CHECK_FUNC([EVP_sha224],,[missing EVP entry for SHA224])
+    AC_CHECK_FUNC([EVP_sha256],,[missing EVP entry for SHA256])
+    AC_CHECK_FUNC([EVP_sha384],,[missing EVP entry for SHA384])
+    AC_CHECK_FUNC([EVP_sha512],,[missing EVP entry for SHA512])
+    dnl Two generations of EVP_MD_CTX functions
+    AC_CHECK_FUNCS([EVP_MD_CTX_new EVP_MD_CTX_free],,
+        [AC_CHECK_FUNCS([EVP_MD_CTX_create EVP_MD_CTX_destroy],,
+        [AC_MSG_ERROR([missing EVP MD CTX functions])])])
+    dnl Same for EVP and HMAC
+    AC_CHECK_FUNCS([EVP_PKEY_new_raw_private_key],,
+        [AC_CHECK_FUNCS([EVP_PKEY_new_mac_key],,
+        [AC_MSG_ERROR([missing EVP PKEY new key function])])])
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi

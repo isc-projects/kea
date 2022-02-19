@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,10 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <openssl/hmac.h>
+#include <openssl/evp.h>
 
 #include <cryptolink/openssl_common.h>
+#define KEA_HASH
 #define KEA_HMAC
 #include <cryptolink/openssl_compat.h>
 
@@ -35,7 +36,7 @@ public:
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
                       const HashAlgorithm hash_algorithm)
-    : hash_algorithm_(hash_algorithm), md_() {
+      : hash_algorithm_(hash_algorithm), md_() {
         const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(UnsupportedAlgorithm,
@@ -46,22 +47,33 @@ public:
             isc_throw(BadKey, "Bad HMAC secret length: 0");
         }
 
-        md_ = HMAC_CTX_new();
+        md_ = EVP_MD_CTX_new();
         if (md_ == 0) {
-            isc_throw(LibraryError, "OpenSSL HMAC_CTX_new() failed");
+            isc_throw(LibraryError, "OpenSSL EVP_MD_CTX_new() failed");
         }
 
-        if (!HMAC_Init_ex(md_, secret,
-                          static_cast<int>(secret_len),
-                          algo, NULL)) {
-            isc_throw(LibraryError, "OpenSSL HMAC_Init_ex() failed");
+        EVP_PKEY* pkey =
+            EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+                                         reinterpret_cast<const unsigned char*>(secret),
+                                         secret_len);
+
+        if (pkey == 0) {
+            isc_throw(LibraryError,
+                      "OpenSSL EVP_PKEY_new_raw_private_key() failed");
         }
+
+        if (!EVP_DigestSignInit(md_, NULL, algo, NULL, pkey)) {
+            EVP_PKEY_free(pkey);
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignInit() failed");
+        }
+
+        EVP_PKEY_free(pkey);
     }
 
     /// @brief Destructor
     ~HMACImpl() {
         if (md_) {
-            HMAC_CTX_free(md_);
+            EVP_MD_CTX_free(md_);
         }
         md_ = 0;
     }
@@ -75,21 +87,19 @@ public:
     ///
     /// @return output size of the digest
     size_t getOutputLength() const {
-        int size = HMAC_size(md_);
-        if (size < 0) {
-            isc_throw(LibraryError, "OpenSSL HMAC_size() failed");
-        }
-        return (static_cast<size_t>(size));
+        return (EVP_MD_CTX_size(md_));
     }
 
     /// @brief Add data to digest
     ///
     /// See @ref isc::cryptolink::HMAC::update() for details.
     void update(const void* data, const size_t len) {
-        if (!HMAC_Update(md_,
-                         static_cast<const unsigned char*>(data),
-                         len)) {
-            isc_throw(LibraryError, "OpenSSLHMAC_Update() failed");
+        if (len == 0) {
+            return;
+        }
+
+        if (!EVP_DigestSignUpdate(md_, data, len)) {
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignUpdate() failed");
         }
     }
 
@@ -99,8 +109,12 @@ public:
     void sign(isc::util::OutputBuffer& result, size_t len) {
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
-        if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
+        size_t digest_len = size;
+        if (!EVP_DigestSignFinal(md_, &digest[0], &digest_len)) {
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
+        }
+        if (digest_len != size) {
+            isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
         }
         if (len > size) {
             len = size;
@@ -114,8 +128,12 @@ public:
     void sign(void* result, size_t len) {
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
-        if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
+        size_t digest_len = size;
+        if (!EVP_DigestSignFinal(md_, &digest[0], &digest_len)) {
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
+        }
+        if (digest_len != size) {
+            isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
         }
         if (len > size) {
             len = size;
@@ -129,8 +147,12 @@ public:
     std::vector<uint8_t> sign(size_t len) {
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
-        if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
+        size_t digest_len = size;
+        if (!EVP_DigestSignFinal(md_, &digest[0], &digest_len)) {
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
+        }
+        if (digest_len != size) {
+            isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
         }
         if (len < size) {
             digest.resize(len);
@@ -148,20 +170,25 @@ public:
             return (false);
         }
         // Get the digest from a copy of the context
-        HMAC_CTX* tmp = HMAC_CTX_new();
+        EVP_MD_CTX* tmp = EVP_MD_CTX_new();
         if (tmp == 0) {
-            isc_throw(LibraryError, "OpenSSL HMAC_CTX_new() failed");
+            isc_throw(LibraryError, "OpenSSL EVP_MD_CTX_new() failed");
         }
-        if (!HMAC_CTX_copy(tmp, md_)) {
-            HMAC_CTX_free(tmp);
-            isc_throw(LibraryError, "OpenSSL HMAC_CTX_copy() failed");
+        if (!EVP_MD_CTX_copy(tmp, md_)) {
+            EVP_MD_CTX_free(tmp);
+            isc_throw(LibraryError, "OpenSSL EVP_MD_CTX_copy() failed");
         }
         ossl::SecBuf<unsigned char> digest(size);
-        if (!HMAC_Final(tmp, &digest[0], NULL)) {
-            HMAC_CTX_free(tmp);
-            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
+        size_t digest_len = size;
+        if (!EVP_DigestSignFinal(tmp, &digest[0], &digest_len)) {
+            EVP_MD_CTX_free(tmp);
+            isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
         }
-        HMAC_CTX_free(tmp);
+        if (digest_len != size) {
+            EVP_MD_CTX_free(tmp);
+            isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
+        }
+        EVP_MD_CTX_free(tmp);
         if (len > size) {
             len = size;
         }
@@ -172,8 +199,8 @@ private:
     /// @brief The hash algorithm
     HashAlgorithm hash_algorithm_;
 
-    /// @brief The protected pointer to the OpenSSL HMAC_CTX structure
-    HMAC_CTX* md_;
+    /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
+    EVP_MD_CTX* md_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
