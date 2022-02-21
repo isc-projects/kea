@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -206,6 +206,10 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         // Match expressions are not initialized for classes returned from the config backend.
         // We have to ensure to initialize them before they can be used by the server.
         client_classes.initMatchExpr(AF_INET);
+
+        // Class options also need to be created when returned from the config backend.
+        client_classes.createOptions(external_cfg->getCfgOptionDef());
+
         external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
     }
 

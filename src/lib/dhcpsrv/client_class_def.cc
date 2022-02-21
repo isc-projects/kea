@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -403,6 +403,46 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
     for (auto c : *list_) {
         c->setMatchExpr(expressions.front());
         expressions.pop();
+    }
+}
+
+void
+ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
+    for (auto c : *list_) {
+        // If the class has no options, skip it.
+        CfgOptionPtr class_options = c->getCfgOption();
+        if (!class_options || class_options->empty()) {
+            continue;
+        }
+
+        // If the class has no option definitions, use the set
+        // of definitions we were given as is to create its
+        // options.
+        if (!c->getCfgOptionDef()) {
+            class_options->createOptions(external_defs);
+        } else {
+            // Class has its own option definitions, we need a
+            // composite set of definitions to recreate its options.
+            // We make copies of both sets of definitions, then merge
+            // the external defs copy into the class defs copy.
+            // We do this because  merging actually effects both sets
+            // of definitions and we cannot alter either set.
+            // Seed the composite set with the class's definitions.
+            CfgOptionDefPtr composite_defs(new CfgOptionDef());
+            c->getCfgOptionDef()->copyTo(*composite_defs);
+
+            // Make a copy of the external definitions and
+            // merge those into the composite set. This should give
+            // us a set of options with class definitions taking
+            // precedence.
+            CfgOptionDefPtr external_defs_copy(new CfgOptionDef());
+            external_defs->copyTo(*external_defs_copy);
+            composite_defs->merge(*external_defs_copy);
+
+            // Now create the class options using the composite
+            // set of definitions.
+            class_options->createOptions(composite_defs);
+        }
     }
 }
 

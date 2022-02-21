@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -402,6 +402,12 @@ public:
     ///
     /// @param family Class universe, e.g. AF_INET or AF_INET6.
     void initMatchExpr(uint16_t family);
+
+    /// @brief Iterates over the classes in the dictionary and recreates
+    /// the options.
+    ///
+    /// @param cfg_option_def set of option definitions to use.
+    void createOptions(const CfgOptionDefPtr& cfg_option_def);
 
     /// @brief Equality operator.
     ///

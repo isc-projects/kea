@@ -1,3 +1,9 @@
+1956.	[bug]		tmark
+	Kea core logic now ensures options belonging
+	to client classes are properly created when
+	classes are read from configuration backends.
+	(Gitlab #2301)
+
 1955.	[bug]		andrei
 	The config for an HA peer now accepts an IPv6 address as a valid
 	value for the "url" entry.

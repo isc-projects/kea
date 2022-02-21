@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -729,6 +729,79 @@ TEST(ClientClassDictionary, unparseDict) {
         add_defaults("three") + "]\n";
 
     runToElementTest<ClientClassDictionary>(expected, *dictionary);
+}
+
+// Tests that options have been created for all client classes in the
+// dictionary.
+TEST(ClientClassDictionary, createOptions) {
+    ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // First class has no options.
+    ASSERT_NO_THROW(dictionary->addClass("foo", expr, "", false,
+                                         false, cfg_option));
+
+    // Make some options for the second class.
+    cfg_option.reset(new CfgOption());
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
+    desc->space_name_ = DHCP4_OPTION_SPACE;
+    cfg_option->add(*desc, desc->space_name_);
+
+    option = Option::create(Option::V4, DHO_TFTP_SERVER_NAME);
+    desc = OptionDescriptor::create(option, true, "bogus-tftp-server");
+    desc->space_name_ = DHCP4_OPTION_SPACE;
+    cfg_option->add(*desc, desc->space_name_);
+
+    // Add the second class with options.
+    ASSERT_NO_THROW(dictionary->addClass("bar", expr, "", false,
+                                         false, cfg_option));
+
+    // Make sure first class has no options.
+    ASSERT_TRUE(dictionary->getClasses());
+    auto classes = *(dictionary->getClasses());
+    auto options = classes[0]->getCfgOption();
+    ASSERT_TRUE(options->empty());
+
+    // Make sure second class has both options but their
+    // data buffers are empty.
+    options = classes[1]->getCfgOption();
+    ASSERT_FALSE(options->empty());
+
+    auto option_desc = options->get("dhcp4", DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(option_desc.option_);
+    ASSERT_TRUE(option_desc.option_->getData().empty());
+
+    option_desc = options->get("dhcp4", DHO_TFTP_SERVER_NAME);
+    ASSERT_TRUE(option_desc.option_);
+    ASSERT_TRUE(option_desc.option_->getData().empty());
+
+    // Now create match expressions for all of them.
+    auto cfg_def = CfgMgr::instance().getCurrentCfg()->getCfgOptionDef();
+    ASSERT_NO_THROW(dictionary->createOptions(cfg_def));
+
+    // Make sure first class still has no options.
+    classes = *(dictionary->getClasses());
+    options = classes[0]->getCfgOption();
+    ASSERT_TRUE(options->empty());
+
+    // Make sure second class has both options and that their
+    // data buffers are now correctly populated.
+    options = classes[1]->getCfgOption();
+    ASSERT_FALSE(options->empty());
+
+    option_desc = options->get("dhcp4", DHO_BOOT_FILE_NAME);
+    option = option_desc.option_;
+    ASSERT_TRUE(option);
+    EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(), option_desc.formatted_value_.end()),
+              option->getData());
+
+    option_desc = options->get("dhcp4", DHO_TFTP_SERVER_NAME);
+    option = option_desc.option_;
+    ASSERT_TRUE(option);
+    EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(), option_desc.formatted_value_.end()),
+              option->getData());
 }
 
 } // end of anonymous namespace

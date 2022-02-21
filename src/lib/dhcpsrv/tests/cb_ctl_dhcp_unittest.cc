@@ -21,6 +21,7 @@
 #include <hooks/server_hooks.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
+#include <testutils/gtest_utils.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
@@ -385,6 +386,29 @@ public:
         client_class->setTest("substring(option[1].hex, 0, 8) == 'my-value'");
         client_class->setId(1);
         client_class->setModificationTime(getTimestamp("dhcp4_client_class"));
+
+        // Add a standard option to the class.
+        OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+        OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
+        desc->space_name_ = DHCP4_OPTION_SPACE;
+        desc->setModificationTime(getTimestamp("dhcp4_client_class"));
+        client_class->getCfgOption()->add(*desc, desc->space_name_);
+
+        // Add a custom option definition to the class.
+        CfgOptionDefPtr cc_cfg_option_def(new CfgOptionDef());
+        def.reset(new OptionDefinition("v4str", 201, "isc", "string"));
+        def->setId(201);
+        def->setModificationTime(getTimestamp("dhcp4_client_class"));
+        cc_cfg_option_def->add(def);
+        client_class->setCfgOptionDef(cc_cfg_option_def);
+
+        // Add a custom option to the class.
+        option = Option::create(Option::V4, 201);
+        desc = OptionDescriptor::create(option, true, "custom-stuff");
+        desc->space_name_ = "isc";
+        desc->setModificationTime(getTimestamp("dhcp4_client_class"));
+        client_class->getCfgOption()->add(*desc, desc->space_name_);
+
         mgr.getPool()->createUpdateClientClass4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                                 client_class, "");
 
@@ -515,8 +539,8 @@ public:
         ASSERT_FALSE(audit_entries_.empty())
             << "Require at least one audit entry. The test is broken!";
 
-        ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                 lb_modification_time, audit_entries_);
+        ASSERT_NO_THROW_LOG(ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                            lb_modification_time, audit_entries_));
 
         // The updates should have been merged into current configuration.
         auto srv_cfg = CfgMgr::instance().getCurrentCfg();
@@ -597,6 +621,23 @@ public:
             EXPECT_GT(found_class->getMatchExpr()->size(), 0);
             EXPECT_EQ("first-class", found_class->getName());
 
+            // Check for the standard class option, make sure it has been "created".
+            auto cfg_option_desc = found_class->getCfgOption();
+            ASSERT_TRUE(cfg_option_desc);
+            auto option_desc = cfg_option_desc->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+            auto option = option_desc.option_;
+            ASSERT_TRUE(option);
+            EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(),
+                                   option_desc.formatted_value_.end()),
+                      option->getData());
+
+            // Check for the custom class option, make sure it has been "created".
+            option_desc = cfg_option_desc->get("isc", 201);
+            option = option_desc.option_;
+            ASSERT_TRUE(option);
+            EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(),
+                                   option_desc.formatted_value_.end()),
+                      option->getData());
         } else {
             EXPECT_FALSE(found_class);
         }
@@ -1181,6 +1222,14 @@ public:
         client_class->setTest("substring(option[1].hex, 0, 8) == 'my-value'");
         client_class->setId(1);
         client_class->setModificationTime(getTimestamp("dhcp6_client_class"));
+
+        // Add an option to the class.
+        OptionPtr option = Option::create(Option::V6, D6O_BOOTFILE_URL);
+        OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "client.boot.url");
+        desc->space_name_ = DHCP6_OPTION_SPACE;
+        desc->setModificationTime(getTimestamp("dhcp6_client_class"));
+        client_class->getCfgOption()->add(*desc, desc->space_name_);
+
         mgr.getPool()->createUpdateClientClass6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                                 client_class, "");
 
@@ -1393,6 +1442,15 @@ public:
             EXPECT_GT(found_class->getMatchExpr()->size(), 0);
             EXPECT_EQ("first-class", found_class->getName());
 
+            // Check for class option, make sure it has been "created".
+            auto cfg_option_desc = found_class->getCfgOption();
+            ASSERT_TRUE(cfg_option_desc);
+            auto option_desc = cfg_option_desc->get(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
+            auto option = option_desc.option_;
+            ASSERT_TRUE(option);
+            EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(),
+                                   option_desc.formatted_value_.end()),
+                      option->getData());
         } else {
             EXPECT_FALSE(found_class);
         }
