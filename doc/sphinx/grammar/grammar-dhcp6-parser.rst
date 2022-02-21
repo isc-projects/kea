@@ -149,6 +149,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | statistic_default_sample_age
                  | dhcp_multi_threading
                  | ip_reservations_unique
+                 | reservations_lookup_first
                  | compatibility
                  | parked_packet_limit
                  | unknown_map_entry
@@ -220,6 +221,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
 
      ip_reservations_unique ::= "ip-reservations-unique" ":" BOOLEAN
+
+     reservations_lookup_first ::= "reservations-lookup-first" ":" BOOLEAN
 
      interfaces_config ::= "interfaces-config" ":" "{" interfaces_config_params "}"
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -485,10 +485,6 @@ lifetime.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
-% DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
-This is a message informing that host reservations lookup is performed before
-lease lookup when multi-threading is enabled overwriting configured value.
-
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
 This debug message is issued when the server is starting to send
 name change requests to the D2 module to update records for the client
@@ -802,6 +798,10 @@ the 'client identifier' or 'chaddr' doesn't match between the client
 and the lease. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the leased address.
+
+% DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
 
 % DHCP4_RESERVED_HOSTNAME_ASSIGNED %1: server assigned reserved hostname %2
 This debug message is issued when the server found a hostname reservation

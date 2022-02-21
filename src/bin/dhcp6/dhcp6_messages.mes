@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -532,10 +532,6 @@ IAID and validity lifetime.
 This is a message listing some information about the multi-threading parameters
 with which the server is running.
 
-% DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
-This is a message informing that host reservations lookup is performed before
-lease lookup when multi-threading is enabled overwriting configured value.
-
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
@@ -849,6 +845,10 @@ to a number of reasons, e.g. the mandatory client-id option is missing,
 the server-id forbidden in that particular type of message is present,
 there is more than one instance of client-id or server-id present,
 etc. The exact reason for rejecting the packet is included in the message.
+
+% DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
 
 % DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
 A debug message listing the data returned to the client.
