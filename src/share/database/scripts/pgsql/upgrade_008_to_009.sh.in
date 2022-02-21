@@ -274,7 +274,7 @@ AS \$\$
 DECLARE
     gmt_epoch BIGINT;
 BEGIN
-    select extract(epoch from input_ts) + extract(timezone from input_ts) into gmt_epoch;
+    SELECT (extract(epoch from input_ts) + extract(timezone from input_ts))::BIGINT INTO gmt_epoch;
     RETURN gmt_epoch;
     EXCEPTION
     WHEN OTHERS THEN
