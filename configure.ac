@@ -1844,6 +1844,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_007_to_008.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_007_to_008.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_008_to_009.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_008_to_009.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_009_to_010.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_009_to_010.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])

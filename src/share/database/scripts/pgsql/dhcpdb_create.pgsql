@@ -4510,9 +4510,299 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
+-- Schema 9.0 specification ends here.
+
+-- This starts schema update to 10.0.
+-- It adds corrections for client classes for CB
+
+-- Replace setClientClass4Order():
+-- 1. l_depend_on_known_indirectly needs to be BOOL
+-- 2. follow_class_index needs to be BIGINT
+
+-- -----------------------------------------------------------------------
+-- Stored procedure positioning an inserted or updated client class
+-- within the class hierarchy, depending on the value of the
+-- follow_class_name parameter.
+--
+-- Parameters:
+-- - id id of the positioned class,
+-- - follow_class_name name of the class after which this class should be
+--   positioned within the class hierarchy.
+-- - old_follow_class_name previous name of the class after which this
+--   class was positioned within the class hierarchy.
+-- -----------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION setClientClass4Order(id BIGINT,
+                                                new_follow_class_name VARCHAR(128),
+                                                old_follow_class_name VARCHAR(128))
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    -- Used to fetch class's current value for depend_on_known_indirectly
+    l_depend_on_known_indirectly BOOL := false;
+
+    -- Optionally set if the follow_class_name column value is specified.
+    follow_class_index BIGINT;
+BEGIN
+    -- Fetch the class's current value of depend_on_known_indirectly.
+    SELECT depend_on_known_indirectly INTO l_depend_on_known_indirectly
+        FROM dhcp4_client_class_order WHERE id = class_id;
+
+    -- Save it to the current session for use elsewhere during this transaction.
+    -- Note this does not work prior to Postgres 9.2 unless the variables are
+    -- defined in postgresql.conf. I think for now we put up with CB not supported
+    -- prior to 9.2 or we tell people how to edit the conf file.
+    PERFORM set_session_value('kea.depend_on_known_indirectly', l_depend_on_known_indirectly);
+
+    -- Bail if the class is updated without re-positioning.
+    IF(
+       l_depend_on_known_indirectly IS NOT NULL AND
+       ((new_follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+        (new_follow_class_name = old_follow_class_name))
+    ) THEN
+        -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+        -- whenever the dhcp4_client_class record is updated. Such update may include
+        -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+        -- This value will be later adjusted when dependencies are inserted.
+        -- TKM should we update the session value also or is it moot?
+        UPDATE dhcp4_client_class_order SET depend_on_known_indirectly = false
+            WHERE class_id = id;
+        RETURN;
+    END IF;
+
+    IF new_follow_class_name IS NOT NULL THEN
+        -- Get the position of the class after which the new class should be added.
+        SELECT o.order_index INTO follow_class_index
+            FROM dhcp4_client_class AS c
+            INNER JOIN dhcp4_client_class_order AS o
+                ON c.id = o.class_id
+            WHERE c.name = new_follow_class_name;
+
+        IF follow_class_index IS NULL THEN
+            -- The class with a name specified with new_follow_class_name does
+            -- not exist.
+            RAISE EXCEPTION 'Class %s does not exist.', new_follow_class_name
+                USING ERRCODE = 'sql_routine_exception';
+        END IF;
+
+        -- We need to place the new class at the position of follow_class_index + 1.
+        -- There may be a class at this position already.
+        IF EXISTS(SELECT * FROM dhcp4_client_class_order WHERE order_index = follow_class_index + 1) THEN
+            -- There is a class at this position already. Let's move all classes
+            -- starting from this position by one to create a spot for the new
+            -- class.
+            UPDATE dhcp4_client_class_order
+                SET order_index = order_index + 1
+            WHERE order_index >= follow_class_index + 1;
+            -- TKM postgresql doesn't like order by here, does it matter?
+            -- ORDER BY order_index DESC;
+        END IF;
+
+    ELSE
+        -- A caller did not specify the new_follow_class_name value. Let's append the
+        -- new class at the end of the hierarchy.
+        SELECT MAX(order_index) INTO follow_class_index FROM dhcp4_client_class_order;
+        IF follow_class_index IS NULL THEN
+            -- Apparently, there are no classes. Let's start from 0.
+            follow_class_index = 0;
+        END IF;
+    END IF;
+
+    -- Check if moving the class doesn't break dependent classes.
+    IF EXISTS(
+        SELECT 1 FROM dhcp4_client_class_dependency AS d
+            INNER JOIN dhcp4_client_class_order AS o
+                ON d.class_id = o.class_id
+            WHERE d.dependency_id = id AND o.order_index < follow_class_index + 1
+        LIMIT 1
+    ) THEN
+        RAISE EXCEPTION 'Unable to move class with id %s because it would break its dependencies', id
+            USING ERRCODE = 'sql_routine_exception';
+    END IF;
+
+    -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+    -- whenever the dhcp4_client_class record is updated. Such update may include
+    -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+    -- This value will be later adjusted when dependencies are inserted.
+    -- ON CONFLICT required 9.5 or later
+    UPDATE dhcp4_client_class_order
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = l_depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
+    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
+        VALUES (id, follow_class_index + 1, false);
+    RETURN;
+END;$$;
+
+-- Replace setClientClass4Order():
+-- 1. l_depend_on_known_indirectly needs to be BOOL
+
+-- -----------------------------------------------------------------------
+-- Stored procedure positioning an inserted or updated client class
+-- within the class hierarchy, depending on the value of the
+-- new_follow_class_name parameter.
+--
+-- Parameters:
+-- - id id of the positioned class,
+-- - new_follow_class_name name of the class after which this class should be
+--   positioned within the class hierarchy.
+-- - old_follow_class_name previous name of the class after which this
+--   class was positioned within the class hierarchy.
+-- -----------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION setClientClass6Order(id BIGINT,
+                                                new_follow_class_name VARCHAR(128),
+                                                old_follow_class_name VARCHAR(128))
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    -- Used to fetch class's current value for depend_on_known_indirectly
+    l_depend_on_known_indirectly BOOL := false;
+
+    -- Optionally set if the follow_class_name column value is specified.
+    follow_class_index BIGINT;
+BEGIN
+    -- Fetch the class's current value of depend_on_known_indirectly.
+    SELECT depend_on_known_indirectly INTO l_depend_on_known_indirectly
+        FROM dhcp6_client_class_order WHERE id = class_id;
+
+    -- Save it to the current session for use elsewhere during this transaction.
+    -- Note this does not work prior to Postgres 9.2 unless the variables are
+    -- defined in postgresql.conf. I think for now we put up with CB not supported
+    -- prior to 9.2 or we tell people how to edit the conf file.
+    PERFORM set_session_value('kea.depend_on_known_indirectly', l_depend_on_known_indirectly);
+
+    -- Bail if the class is updated without re-positioning.
+    IF(
+       l_depend_on_known_indirectly IS NOT NULL AND
+       ((new_follow_class_name IS NULL AND old_follow_class_name IS NULL) OR
+        (new_follow_class_name = old_follow_class_name))
+    ) THEN
+        -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+        -- whenever the dhcp6_client_class record is updated. Such update may include
+        -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+        -- This value will be later adjusted when dependencies are inserted.
+        -- TKM should we update the session value also or is it moot?
+        UPDATE dhcp6_client_class_order SET depend_on_known_indirectly = false
+            WHERE class_id = id;
+        RETURN;
+    END IF;
+
+    IF new_follow_class_name IS NOT NULL THEN
+        -- Get the position of the class after which the new class should be added.
+        SELECT o.order_index INTO follow_class_index
+            FROM dhcp6_client_class AS c
+            INNER JOIN dhcp6_client_class_order AS o
+                ON c.id = o.class_id
+            WHERE c.name = new_follow_class_name;
+
+        IF follow_class_index IS NULL THEN
+            -- The class with a name specified with new_follow_class_name does
+            -- not exist.
+            RAISE EXCEPTION 'Class %s does not exist.', new_follow_class_name
+                USING ERRCODE = 'sql_routine_exception';
+        END IF;
+
+        -- We need to place the new class at the position of follow_class_index + 1.
+        -- There may be a class at this position already.
+        IF EXISTS(SELECT * FROM dhcp6_client_class_order WHERE order_index = follow_class_index + 1) THEN
+            -- There is a class at this position already. Let's move all classes
+            -- starting from this position by one to create a spot for the new
+            -- class.
+            UPDATE dhcp6_client_class_order
+                SET order_index = order_index + 1
+            WHERE order_index >= follow_class_index + 1;
+            -- TKM postgresql doesn't like order by here, does it matter?
+            -- ORDER BY order_index DESC;
+        END IF;
+
+    ELSE
+        -- A caller did not specify the new_follow_class_name value. Let's append the
+        -- new class at the end of the hierarchy.
+        SELECT MAX(order_index) INTO follow_class_index FROM dhcp6_client_class_order;
+        IF follow_class_index IS NULL THEN
+            -- Apparently, there are no classes. Let's start from 0.
+            follow_class_index = 0;
+        END IF;
+    END IF;
+
+    -- Check if moving the class doesn't break dependent classes.
+    IF EXISTS(
+        SELECT 1 FROM dhcp6_client_class_dependency AS d
+            INNER JOIN dhcp6_client_class_order AS o
+                ON d.class_id = o.class_id
+            WHERE d.dependency_id = id AND o.order_index < follow_class_index + 1
+        LIMIT 1
+    ) THEN
+        RAISE EXCEPTION 'Unable to move class with id %s because it would break its dependencies', id
+            USING ERRCODE = 'sql_routine_exception';
+    END IF;
+
+    -- The depend_on_known_indirectly is set to 0 because this procedure is invoked
+    -- whenever the dhcp6_client_class record is updated. Such update may include
+    -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
+    -- This value will be later adjusted when dependencies are inserted.
+    -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
+    UPDATE dhcp6_client_class_order
+        SET order_index = follow_class_index + 1,
+            depend_on_known_indirectly = l_depend_on_known_indirectly
+        WHERE class_id = id;
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
+    INSERT INTO  dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
+        VALUES (id, follow_class_index + 1, false);
+    RETURN;
+END;$$;
+
+-- Change primary key to composite, dependency table can have multiple rows
+-- per class id.
+ALTER TABLE dhcp4_client_class_dependency DROP CONSTRAINT dhcp4_client_class_dependency_pkey;
+ALTER TABLE dhcp4_client_class_dependency ADD PRIMARY KEY(class_id, dependency_id);
+
+ALTER TABLE dhcp6_client_class_dependency DROP CONSTRAINT dhcp6_client_class_dependency_pkey;
+ALTER TABLE dhcp6_client_class_dependency ADD PRIMARY KEY(class_id, dependency_id);
+
+-- Replace triggers that verify class dependency.
+-- Because they are BEFORE INSERT triggers they need to return NEW not NULL.
+-- -----------------------------------------------------------------------
+-- Trigger verifying if class dependency is met. It includes checking
+-- if referenced classes exist, are associated with the same server
+-- or all servers, and are defined before the class specified with
+-- class_id.
+-- -----------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION func_dhcp4_client_class_check_dependency_BINS()
+    RETURNS trigger AS $dhcp4_client_class_check_dependency_BINS$
+BEGIN
+    PERFORM checkDHCPv4ClientClassDependency(NEW.class_id, NEW.dependency_id);
+    RETURN NEW;
+END;
+$dhcp4_client_class_check_dependency_BINS$
+LANGUAGE plpgsql;
+
+-- -----------------------------------------------------------------------
+-- Trigger verifying if class dependency is met. It includes checking
+-- if referenced classes exist, are associated with the same server
+-- or all servers, and are defined before the class specified with
+-- class_id.
+-- -----------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION func_dhcp6_client_class_check_dependency_BINS()
+    RETURNS trigger AS $dhcp6_client_class_check_dependency_BINS$
+BEGIN
+    PERFORM checkDHCPv6ClientClassDependency(NEW.class_id, NEW.dependency_id);
+    RETURN NEW;
+END;
+$dhcp6_client_class_check_dependency_BINS$
+LANGUAGE plpgsql;
+
 -- Update the schema version number.
 UPDATE schema_version
-    SET version = '9', minor = '0';
+    SET version = '10', minor = '0';
 
 -- Commit the script transaction.
 COMMIT;

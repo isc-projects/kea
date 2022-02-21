@@ -1009,12 +1009,14 @@ namespace {
     "  is_array = $6," \
     "  encapsulate = $7," \
     "  record_types = $8," \
-    "  user_context =  cast($9 as json)" \
+    "  user_context =  cast($9 as json) " \
     "FROM " #table_prefix "_option_def_server as a, " \
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND " \
-    "      a.server_id = s.id AND " \
-    "      d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10)"
+    "  a.server_id = s.id AND " \
+    "  d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10) " \
+    "  AND s.tag = $11 AND d.code = $12 AND d.space = $13"
+
 #endif
 
 
@@ -1089,8 +1091,8 @@ namespace {
     "  max_valid_lifetime = $9," \
     "  depend_on_known_directly = $10," \
     follow_class_name_set \
-    "  modification_ts = $11 " \
-    "WHERE name = $12"
+    "  modification_ts = $12 " \
+    "WHERE name = $13"
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS6

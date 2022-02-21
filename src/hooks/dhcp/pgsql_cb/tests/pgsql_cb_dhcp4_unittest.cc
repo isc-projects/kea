@@ -361,6 +361,38 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, sharedNetworkOptionIdOrderTest) {
     sharedNetworkOptionIdOrderTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, setAndGetAllClientClasses4Test) {
+    setAndGetAllClientClasses4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, getClientClass4Test) {
+    getClientClass4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateClientClass4OptionsTest) {
+    createUpdateClientClass4OptionsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, getModifiedClientClasses4Test) {
+    getModifiedClientClasses4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, deleteClientClass4Test) {
+    deleteClientClass4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, deleteAllClientClasses4Test) {
+    deleteAllClientClasses4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, clientClassDependencies4Test) {
+    clientClassDependencies4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
+    multipleAuditEntriesTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv4DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {
