@@ -63,6 +63,7 @@ def filter_the_noise(text, is_upgrade_script):
             result.append(i)
     return result
 
+
 def diff(dhcpdb_create_script, upgrade_script):
     ''' Compares the common parts of two files. Prints the difference.
 
@@ -74,10 +75,10 @@ def diff(dhcpdb_create_script, upgrade_script):
     :return: True if there is a difference, False otherwise
     :type: bool
     '''
-    with open(dhcpdb_create_script) as create_file:
+    with open(dhcpdb_create_script, encoding='utf-8') as create_file:
         create_text = create_file.readlines()
 
-    with open(upgrade_script) as upgrade_file:
+    with open(upgrade_script, encoding='utf-8') as upgrade_file:
         upgrade_text = upgrade_file.readlines()
 
     # PostgreSQL upgrade scripts need the $ delimiters escaped as opposed to
@@ -85,15 +86,21 @@ def diff(dhcpdb_create_script, upgrade_script):
     # this diff so that they don't come up in the diff (or so that they do
     # come up if they are not correctly escaped in the upgrade script).
     if dhcpdb_create_script.endswith('.pgsql'):
-        create_text = [i.replace('$', '\$') for i in create_text]
+        create_text = [i.replace('$', r'\$') for i in create_text]
 
     # Removes portions of the script which are always different: the beginning
     # and the end.
     create_text = filter_the_noise(create_text, False)
     upgrade_text = filter_the_noise(upgrade_text, True)
 
+    latest_upgrade_script = find_files_in_same_directory_starting_with(upgrade_script, 'upgrade_')[-1]
+    if upgrade_script == latest_upgrade_script:
+        # Truncate the create script to the length of the upgrade script to
+        # exclude chances of wrong matching.
+        create_text = create_text[len(create_text) - len(upgrade_text) :]
+
     # Use difflib to create the diff.
-    diff = ''.join(difflib.context_diff(create_text, upgrade_text, n=0)).splitlines()
+    raw_diff = ''.join(difflib.context_diff(create_text, upgrade_text, n=0)).splitlines()
 
     # Determine groups of a heuristical number of consecutive lines that differ.
     # These are considered to be outside the upgrade script's scope and are
@@ -101,8 +108,8 @@ def diff(dhcpdb_create_script, upgrade_script):
     consecutive_lines_to_exclude = 16
     first_exclamation_mark = None
     to_be_removed = []
-    for i in range(len(diff)):
-        if diff[i].startswith('!'):
+    for i, line in enumerate(raw_diff):
+        if line.startswith('!'):
             if first_exclamation_mark is None:
                 first_exclamation_mark = i
         else:
@@ -112,14 +119,14 @@ def diff(dhcpdb_create_script, upgrade_script):
 
     # Exclude the groups determined above.
     sanitized_diff = []
-    for i in range(len(diff)):
-        if len(to_be_removed) > 0 and to_be_removed[0][0] <= i and i <= to_be_removed[0][1]:
+    for i, line in enumerate(raw_diff):
+        if len(to_be_removed) > 0 and to_be_removed[0][0] <= i <= to_be_removed[0][1]:
             pass
         elif len(to_be_removed) > 0 and to_be_removed[0][1] < i:
             while len(to_be_removed) > 0 and to_be_removed[0][1] < i:
                 to_be_removed.pop(0)
         else:
-            sanitized_diff.append(diff[i])
+            sanitized_diff.append(line)
 
     # Print only the lines that start with an exclamation mark. This is how
     # difflib's context diff is provided.
@@ -132,9 +139,15 @@ def diff(dhcpdb_create_script, upgrade_script):
 
     # Only print if we have something to print to avoid a newline.
     if len(output) > 0:
+        if upgrade_script != latest_upgrade_script:
+            print('WARNING: There is a small chance of false errors on this pair of scripts.\n')
         print(output)
 
-    return len(output) > 0
+    # Only report errors on the latest upgrade script. For all other upgrade
+    # scripts, there is a chance of false errors caused by incorrect matching of
+    # lines. Assume no diff so that CI doesn't complain.
+    return len(output) > 0 and upgrade_script == latest_upgrade_script
+
 
 def execute(command):
     ''' Executes a shell command and returns its output.
@@ -147,12 +160,12 @@ def execute(command):
     '''
     if 'DEBUG' in os.environ:
         print(f'> {command}')
-    p = subprocess.Popen(command, encoding='utf-8', shell=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = p.communicate()
+    with subprocess.Popen(command, encoding='utf-8', shell=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
+        output, error = p.communicate()
     if error:
         print('ERROR:', error, file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     return output.strip()
 
 def find_files_in_same_directory_starting_with(file, startswith):
@@ -173,6 +186,7 @@ def find_files_in_same_directory_starting_with(file, startswith):
             files.append(matches.group())
     return sorted(files)
 
+
 def get_files_changed_in_gitref_range(gitref_range):
     # Change to toplevel for easier management of file names.
     toplevel = execute('git rev-parse --show-toplevel')
@@ -186,7 +200,7 @@ def main(parameters):
     # Print help if requested.
     if '-h'in parameters or '--help' in parameters:
         usage()
-        exit(0)
+        sys.exit(0)
 
     # Parse parameters.
     p1 = None
@@ -199,11 +213,11 @@ def main(parameters):
         else:
             print('ERROR: Too many arguments.', file=sys.stderr)
             usage()
-            exit(1)
+            sys.exit(1)
 
     # Determine the files that we need to check.
     if p1 is None and p2 is None:
-        files = get_files_changed_in_gitref_range(f'$(git merge-base origin/master HEAD)')
+        files = get_files_changed_in_gitref_range('$(git merge-base origin/master HEAD)')
     elif p1 is not None:
         if os.path.isfile(p1):
             files = [p1]
@@ -226,8 +240,10 @@ def main(parameters):
             # Do the diff.
             diff_found |= diff(dhcpdb_create, i)
 
-    # For any diff, return 1 so that CI complains. # For no diff, return 0 to appease CI.
+    # For any diff, return 1 so that CI complains.
+    # For no diff, return 0 to appease CI.
     return int(diff_found)
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
