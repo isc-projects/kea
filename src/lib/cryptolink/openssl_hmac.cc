@@ -36,7 +36,7 @@ public:
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
                       const HashAlgorithm hash_algorithm)
-      : hash_algorithm_(hash_algorithm), md_() {
+        : hash_algorithm_(hash_algorithm), md_(), digest_() {
         const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(UnsupportedAlgorithm,
@@ -169,30 +169,20 @@ public:
         if (len < 10 || len < size / 2) {
             return (false);
         }
-        // Get the digest from a copy of the context
-        EVP_MD_CTX* tmp = EVP_MD_CTX_new();
-        if (tmp == 0) {
-            isc_throw(LibraryError, "OpenSSL EVP_MD_CTX_new() failed");
+        if (digest_.size() == 0) {
+            digest_.resize(size);
+            size_t digest_len = size;
+            if (!EVP_DigestSignFinal(md_, &digest_[0], &digest_len)) {
+                isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
+            }
+            if (digest_len != size) {
+                isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
+            }
         }
-        if (!EVP_MD_CTX_copy(tmp, md_)) {
-            EVP_MD_CTX_free(tmp);
-            isc_throw(LibraryError, "OpenSSL EVP_MD_CTX_copy() failed");
-        }
-        ossl::SecBuf<unsigned char> digest(size);
-        size_t digest_len = size;
-        if (!EVP_DigestSignFinal(tmp, &digest[0], &digest_len)) {
-            EVP_MD_CTX_free(tmp);
-            isc_throw(LibraryError, "OpenSSL EVP_DigestSignFinal() failed");
-        }
-        if (digest_len != size) {
-            EVP_MD_CTX_free(tmp);
-            isc_throw(LibraryError, "OpenSSL partial EVP_DigestSignFinal()");
-        }
-        EVP_MD_CTX_free(tmp);
         if (len > size) {
             len = size;
         }
-        return (digest.same(sig, len));
+        return (digest_.same(sig, len));
     }
 
 private:
@@ -201,6 +191,9 @@ private:
 
     /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
     EVP_MD_CTX* md_;
+
+    /// @brief The digest cache for multiple verify
+    ossl::SecBuf<unsigned char> digest_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
