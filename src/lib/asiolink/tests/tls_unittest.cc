@@ -628,6 +628,7 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow("no start line");
     exps.addThrow("no start line (PEM routines, get_name)");
     exps.addThrow("no start line (PEM routines, CRYPTO_internal)");
+    exps.addThrow("PEM lib");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
