@@ -8,10 +8,63 @@ servers' configurations in the Configuration Backends. This library must
 be used in conjunction with the available CB hooks libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
-the ``mysql_cb`` hooks library implements this API for MySQL. In order to
-manage the configuration information in the MySQL database, both the
+the ``mysql_cb`` hooks library implements this API for MySQL while the
+``pgsql_cg`` hooks library implements this API for PostgreSQL. In order to
+manage the configuration information in a MySQL database, both the
 ``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server
-used for the configuration management.
+used for the configuration management.  To manage configuration information
+in a PostgreSQL database, both the ``pgsql_cb`` and ``cb_cmds`` libraries
+must be loaded by the server used for the configuration management.
+
+The ``cb_cmds`` library is only available to ISC customers with a paid
+support contract.
+
+.. note::
+
+   This library may only be loaded by the ``kea-dhcp4`` or
+   ``kea-dhcp6`` process.
+
+.. note::
+
+   Please read about :ref:`cb-limitations` before using the commands
+   described in this section.
+
+Commands Structure
+~~~~~~~~~~~~~~~~~~
+
+There are 5 types of commands supported by this library:
+
+-  ``del`` - delete the selected object from the database, e.g.
+   ``remote-global-parameter4-del``.
+
+-  ``get`` - fetch the selected object from the database, e.g.
+   ``remote-subnet4-get``.
+
+-  ``get-all`` - fetch all objects of the particular type from the
+   database, e.g. ``remote-option-def4-get-all``.
+
+-  ``list`` - list all objects of the particular type in the database,
+   e.g. ``remote-network4-list``; this class of commands returns brief
+   information about each object compared to the output of ``get-all``.
+
+-  ``set`` - creates or replaces an object of the given type in the
+   database, e.g. ``remote-option4-global-set``.
+
+All types of commands accept an optional ``remote`` map which selects the
+database instance to which the command refers. For example:
+
+.. code-block:: json
+
+   {
+       "command": "remote-subnet4-list",
+       "arguments": {
+           "remote": {
+               "type": "mysql",
+               "host": "192.0.2.33",
+               "port": 3302
+           }
+       }
+   }
 
 The ``cb_cmds`` library is only available to ISC customers with a paid
 support contract.
@@ -75,10 +128,12 @@ the configuration of the server receiving the command.
 
    In the present Kea release, it is possible to configure the Kea server
    to use only one configuration backend. Strictly speaking, it is
-   possible to point the Kea server to at most one MySQL database using the
-   ``config-control`` parameter. That's why the ``remote`` parameter may
-   be omitted in the commands and the cb_cmds hooks library will use the
-   sole backend by default.
+   possible to point the Kea server to at most one database (either MySQL or
+   PostgreSQL) using the ``config-control`` parameter. That's why the ``remote`` 
+   parameter may be omitted in the commands and the cb_cmds hooks library will use the
+   sole backend by default.  The example command below most often show a value of
+   "mysql" for the ``type`` parameter.  It should be assumed that a value 
+   would be "postgresql" for installations using a PostgreSQL database.
 
 .. _cb-cmds-dhcp:
 
@@ -170,7 +225,7 @@ insensitive server tag.  For example:
                 }
             ],
             "remote": {
-                "type": "mysql"
+                "type": "postgresql"
             }
         }
     }

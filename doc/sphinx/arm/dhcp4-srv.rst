@@ -6976,7 +6976,8 @@ at which it is currently supported.
 Enabling the Configuration Backend
 ----------------------------------
 
-Consider the following configuration snippet:
+Consider the following configuration snippet, which uses a MySQL configuration
+database:
 
 ::
 
@@ -7010,6 +7011,30 @@ only one database connection can be specified on the
 during startup or reconfiguration, and fetches the configuration
 available for this server from the database. This configuration is
 merged into the configuration read from the configuration file.
+
+The following snippet illustrates the use of a PostgreSQL database:
+
+::
+
+   "Dhcp4": {
+       "server-tag": "my DHCPv4 server",
+       "config-control": {
+           "config-databases": [{
+               "type": "postgresql",
+               "name": "kea",
+               "user": "kea",
+               "password": "kea",
+               "host": "192.0.2.1",
+               "port": 5432 
+           }],
+           "config-fetch-wait-time": 20
+       },
+       "hooks-libraries": [{
+           "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql_cb.so"
+       }, {
+           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+       }],
+   }
 
 .. note::
 
@@ -7047,12 +7072,13 @@ The ``config-backend-pull`` command can be used to force the server to
 immediately poll any configuration changes from the database and avoid
 waiting for the next fetch cycle.
 
-Finally, in the configuration example above, two hook libraries are
-loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of
-the Configuration Backend for MySQL. It must be always present when the
-server uses MySQL as the configuration repository. Failing to load this
-library will result in an error during the server configuration if the
-"mysql" database is selected with the ``config-control`` parameter.
+In the configuration examples above, two hook libraries are loaded. The first 
+is a library which implements the Configuration Backend for a specific database
+type: ``libdhcp_mysql_cb.so`` provides support for MySQL and ``libdhcp_pgsql_cb.so``
+provides support for PostgreSQL.  The library loaded must match the database
+``type`` specified within the ``config-control`` parameter or an will error be 
+logged when the server attempts to load its configuration and the load will
+fail.
 
 The second hook library, ``libdhcp_cb_cmds.so``, is optional. It should
 be loaded when the Kea server instance is to be used to manage the

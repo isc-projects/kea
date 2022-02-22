@@ -12,17 +12,22 @@ Kea Configuration Backend (CB or config backend) gives Kea servers the ability
 to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
-configuration information from the particular database type. For
+configuration information from the particular database type.  For
 example, MySQL Configuration Backend is the logic implemented within the
 ``mysql_cb`` hook library, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
+The PostgreSQL Configuration Backend is the logic implemented within the
+``pgsql_cb`` hook library, which provides a complete set of functions to
+manage and fetch the configuration information from the PostgreSQL database.
+From herein, the term "database" is used to refer to either a MySQL or
+PostgreSQL database.
 
 In small deployments, e.g. those comprising a single DHCP server
 instance with limited and infrequently changing number of subnets, it
 may be impractical to use the CB as a configuration repository because
 it requires additional third-party software to be installed and
-configured - in particular the MySQL server and MySQL client. Once the
-number of DHCP servers and/or the number of managed subnets in the
+configured - in particular the database server, client and libraries.
+Once the number of DHCP servers and/or the number of managed subnets in the
 network grows, the usefulness of the CB becomes obvious.
 
 One use case for the CB is a pair of Kea DHCP servers that are configured
@@ -67,18 +72,18 @@ CB Capabilities and Limitations
 
 Currently, the Kea CB has the following limitations:
 
-- It is only supported for the MySQL database.
+- It is only supported for MySQL and PostgreSQL databases.
 
-- It is only supported for the DHCPv4 and DHCPv6 daemons; the Control Agent, D2 daemon, and
-  the NETCONF daemon cannot be configured from the database,
+- It is only supported for the DHCPv4 and DHCPv6 daemons; the Control Agent,
+  D2 daemon, and the NETCONF daemon cannot be configured from the database,
 
 - Only certain DHCP configuration parameters can be set in the
   database: global parameters, option definitions, global options, client
   classes, shared networks, and subnets. Other configuration parameters
   must be sourced from a JSON configuration file.
 
-Kea CB stores data in a MySQL schema that is public. It is possible to
-insert configuration data into the MySQL tables manually or automatically
+Kea CB stores data in a schema that is public. It is possible to
+insert configuration data into the tables manually or automatically
 using SQL scripts, but this requires SQL and schema knowledge.
 The supported method for managing the data is through the ``cb-cmds`` hook library,
 which provides management commands for config backends. It simplifies many
@@ -95,7 +100,10 @@ Appendix A of this manual for a complete list.
    at https://www.isc.org/contact.
 
 
-The schema creation script can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__;
+The schema creation scripts can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
+;
+`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__ and
+;
 other related design documents are stored in our GitLab: `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__ and
 `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
 
@@ -154,25 +162,30 @@ in two independent configuration sources.
 CB Components
 -------------
 
-The ``mysql_cb`` open source hook library implementing the configuration
-backend for MySQL must be compiled and loaded by the DHCP servers. This
-hook library is compiled when the ``--with-mysql`` configuration switch
-is used during the Kea build. The MySQL C client libraries must be
-installed, as explained in :ref:`dhcp-install-configure`.
+To use a MySQL configuration backend you must compile the ``mysql_cb`` open
+source hook library and configre the DHCP servers to load it.  It is compiled when
+the ``--with-mysql`` configuration switch is used during the Kea build. The MySQL C
+client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+
+To use a PostgreSQL configuration backend you must compile the ``pgsql_cb`` open
+source hook library and configre the DHCP servers to load it.  It is compiled when
+the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
+C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
 .. note::
 
-   Any existing MySQL schema must be upgraded to the latest schema
+   An existing database schema must be upgraded to the latest schema
    required by the particular Kea version using the ``kea-admin`` tool,
    as described in :ref:`kea-admin`.
 
 The ``cb_cmds`` premium hook library, which is available to ISC's paid support
 customers, provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
-be attached to both DHCPv4 and DHCPv6 server instances. It is
+Be attached to both DHCPv4 and DHCPv6 server instances. While it is
 possible to manage the configuration information without the ``cb_cmds``
 hook library with commonly available tools, such as MySQL Workbench or
-the command-line MySQL client, by directly working with the database.
+the command-line MySQL client, or by directly working with the database;
+these avenues are neither recommended nor supported.
 
 Refer to :ref:`cb-cmds-library` for the details regarding the
 ``cb_cmds`` hook library.
