@@ -20,6 +20,7 @@ libdhcpsrvtest_la_SOURCES += test_utils.cc test_utils.h
 libdhcpsrvtest_la_SOURCES += generic_backend_unittest.cc generic_backend_unittest.h
 libdhcpsrvtest_la_SOURCES += generic_host_data_source_unittest.cc generic_host_data_source_unittest.h
 libdhcpsrvtest_la_SOURCES += generic_cb_dhcp4_unittest.h generic_cb_dhcp4_unittest.cc
+libdhcpsrvtest_la_SOURCES += generic_cb_dhcp6_unittest.h generic_cb_dhcp6_unittest.cc
 libdhcpsrvtest_la_SOURCES += generic_cb_recovery_unittest.h generic_cb_recovery_unittest.cc
 libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h
 libdhcpsrvtest_la_SOURCES += test_config_backend.h
