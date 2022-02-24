@@ -47,13 +47,16 @@ def filter_the_noise(text, is_upgrade_script):
     :return: the trimmed down portion of text
     :type: str
     '''
-    append=False
-    result=[]
+    append = False
+    result = []
     for i in text:
-        if re.search('<<EOF$' if is_upgrade_script else 'CREATE TABLE.*lease4', i):
-            append=True
+        if re.search('<<EOF$' if is_upgrade_script else 'This.*starts', i):
+            append = True
+            if not is_upgrade_script:
+                # 'This.*starts' is not noise.
+                result.append(i)
         elif re.search('^EOF$' if is_upgrade_script else 'Notes:', i):
-            append=False
+            append = False
         elif re.search('^START TRANSACTION;$', i) or \
                 re.search('^COMMIT;$', i) or \
                 re.search('^$', i):
@@ -88,16 +91,16 @@ def diff(dhcpdb_create_script, upgrade_script):
     if dhcpdb_create_script.endswith('.pgsql'):
         create_text = [i.replace('$', r'\$') for i in create_text]
 
-    # Removes portions of the script which are always different: the beginning
-    # and the end.
-    create_text = filter_the_noise(create_text, False)
-    upgrade_text = filter_the_noise(upgrade_text, True)
-
     latest_upgrade_script = find_files_in_same_directory_starting_with(upgrade_script, 'upgrade_')[-1]
     if upgrade_script == latest_upgrade_script:
         # Truncate the create script to the length of the upgrade script to
         # exclude chances of wrong matching.
-        create_text = create_text[len(create_text) - len(upgrade_text) :]
+        create_text = create_text[len(create_text)-len(upgrade_text):]
+
+    # Removes portions of the script which are always different: the beginning
+    # and the end.
+    create_text = filter_the_noise(create_text, False)
+    upgrade_text = filter_the_noise(upgrade_text, True)
 
     # Use difflib to create the diff.
     raw_diff = ''.join(difflib.context_diff(create_text, upgrade_text, n=0)).splitlines()
@@ -117,7 +120,7 @@ def diff(dhcpdb_create_script, upgrade_script):
                 to_be_removed.append([first_exclamation_mark, i - 1])
             first_exclamation_mark = None
 
-    # Exclude the groups determined above.
+    # Exclude the groups determined above and add new lines.
     sanitized_diff = []
     for i, line in enumerate(raw_diff):
         if len(to_be_removed) > 0 and to_be_removed[0][0] <= i <= to_be_removed[0][1]:
@@ -126,21 +129,19 @@ def diff(dhcpdb_create_script, upgrade_script):
             while len(to_be_removed) > 0 and to_be_removed[0][1] < i:
                 to_be_removed.pop(0)
         else:
-            sanitized_diff.append(line)
+            sanitized_diff.append(line + '\n')
 
     # Print only the lines that start with an exclamation mark. This is how
     # difflib's context diff is provided.
     output = ''
-    for i in sanitized_diff:
-        if i.startswith('!'):
-            if len(output) == 0:
-                print (f'=== {dhcpdb_create_script} vs {upgrade_script} ===')
-            output += i + '\n'
+    if len(sanitized_diff) > 0:
+        output = f'==== {dhcpdb_create_script} vs {upgrade_script} ====\n'
+        if upgrade_script != latest_upgrade_script:
+            output = output + 'WARNING: There is a small chance of false errors on this pair of scripts.\n'
+        output = output + ''.join(sanitized_diff)
 
     # Only print if we have something to print to avoid a newline.
     if len(output) > 0:
-        if upgrade_script != latest_upgrade_script:
-            print('WARNING: There is a small chance of false errors on this pair of scripts.\n')
         print(output)
 
     # Only report errors on the latest upgrade script. For all other upgrade
@@ -167,6 +168,7 @@ def execute(command):
         print('ERROR:', error, file=sys.stderr)
         sys.exit(1)
     return output.strip()
+
 
 def find_files_in_same_directory_starting_with(file, startswith):
     ''' Returns the files that start with given criteria.
@@ -198,7 +200,7 @@ def get_files_changed_in_gitref_range(gitref_range):
 
 def main(parameters):
     # Print help if requested.
-    if '-h'in parameters or '--help' in parameters:
+    if '-h' in parameters or '--help' in parameters:
         usage()
         sys.exit(0)
 
@@ -226,19 +228,24 @@ def main(parameters):
     else:
         files = get_files_changed_in_gitref_range(f'{p1}..{p2}')
 
-    diff_found = False
+    # Determine the list of distinct files to diff.
+    pairs = set()
     for i in files:
         basename = os.path.basename(i)
         if basename.startswith('dhcpdb_create'):
             # Get the latest upgrade script.
             latest_upgrade_script = find_files_in_same_directory_starting_with(i, 'upgrade_')[-1]
-            # Do the diff.
-            diff_found |= diff(i, latest_upgrade_script)
+            pairs.add((i, latest_upgrade_script))
         elif basename.startswith('upgrade_'):
             # Get the dhcpdb_create script.
             dhcpdb_create = find_files_in_same_directory_starting_with(i, 'dhcpdb_create')[-1]
-            # Do the diff.
-            diff_found |= diff(dhcpdb_create, i)
+            pairs.add((dhcpdb_create, i))
+    pairs = sorted(pairs)
+
+    # Do the diff.
+    diff_found = False
+    for create, update in pairs:
+        diff_found |= diff(create, update)
 
     # For any diff, return 1 so that CI complains.
     # For no diff, return 0 to appease CI.
