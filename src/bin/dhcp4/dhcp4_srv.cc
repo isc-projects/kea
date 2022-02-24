@@ -2564,8 +2564,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Create NameChangeRequests if this is a real allocation.
         if (!fake_allocation) {
             try {
-                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
-                    .arg(query->getLabel());
                 createNameChangeRequests(lease, ctx->old_lease_,
                                          *ex.getContext()->getDdnsParams());
             } catch (const Exception& ex) {

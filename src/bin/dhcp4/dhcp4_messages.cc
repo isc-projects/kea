@@ -89,7 +89,6 @@ extern const isc::log::MessageID DHCP4_LEASE_ADVERT = "DHCP4_LEASE_ADVERT";
 extern const isc::log::MessageID DHCP4_LEASE_ALLOC = "DHCP4_LEASE_ALLOC";
 extern const isc::log::MessageID DHCP4_LEASE_REUSE = "DHCP4_LEASE_REUSE";
 extern const isc::log::MessageID DHCP4_MULTI_THREADING_INFO = "DHCP4_MULTI_THREADING_INFO";
-extern const isc::log::MessageID DHCP4_NCR_CREATE = "DHCP4_NCR_CREATE";
 extern const isc::log::MessageID DHCP4_NCR_CREATION_FAILED = "DHCP4_NCR_CREATION_FAILED";
 extern const isc::log::MessageID DHCP4_NOT_RUNNING = "DHCP4_NOT_RUNNING";
 extern const isc::log::MessageID DHCP4_NO_LEASE_INIT_REBOOT = "DHCP4_NO_LEASE_INIT_REBOOT";
@@ -248,7 +247,6 @@ const char* values[] = {
     "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated for %3 seconds",
     "DHCP4_LEASE_REUSE", "%1: lease %2 has been reused for %3 seconds",
     "DHCP4_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size: %3",
-    "DHCP4_NCR_CREATE", "%1: DDNS updates enabled, therefore sending name change requests",
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",
     "DHCP4_NOT_RUNNING", "DHCPv4 server is not running",
     "DHCP4_NO_LEASE_INIT_REBOOT", "%1: no lease for address %2 requested by INIT-REBOOT client",
