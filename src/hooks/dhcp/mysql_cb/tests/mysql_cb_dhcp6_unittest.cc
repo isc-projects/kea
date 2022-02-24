@@ -119,6 +119,26 @@ public:
     }
 };
 
+TEST_F(MySqlConfigBackendDHCPv6Test, getType) {
+    getTypeTest("mysql");
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, getHost) {
+    getHostTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, getPort) {
+    getPortTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteServerTest) {
+    createUpdateDeleteServerTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, getAndDeleteAllServersTest) {
+    getAndDeleteAllServersTest();
+}
+
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6Test) {
     createUpdateDeleteGlobalParameter6Test();
 }
