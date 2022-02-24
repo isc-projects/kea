@@ -381,4 +381,72 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     EXPECT_EQ(0x8817, udp_checksum);
 }
 
+TEST(ScopedEnableOptionsCopy, enableOptionsCopy) {
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+    pkt->addOption(option);
+    ASSERT_FALSE(pkt->isCopyRetrievedOptions());
+    ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    {
+        ScopedEnableOptionsCopy<Pkt4> oc(pkt);
+        ASSERT_TRUE(pkt->isCopyRetrievedOptions());
+        OptionPtr option_copy = pkt->getOption(DHO_BOOT_FILE_NAME);
+        ASSERT_NE(option, option_copy);
+        option = option_copy;
+    }
+    ASSERT_FALSE(pkt->isCopyRetrievedOptions());
+    ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    {
+        try {
+            ScopedEnableOptionsCopy<Pkt4> oc(pkt);
+            ASSERT_TRUE(pkt->isCopyRetrievedOptions());
+            OptionPtr option_copy = pkt->getOption(DHO_BOOT_FILE_NAME);
+            ASSERT_NE(option, option_copy);
+            option = option_copy;
+            throw 0;
+        } catch (...) {
+            ASSERT_FALSE(pkt->isCopyRetrievedOptions());
+            ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+        }
+        ASSERT_FALSE(pkt->isCopyRetrievedOptions());
+        ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    }
+}
+
+TEST(ScopedOptionsCopy, optionsCopy) {
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+    OptionCollectionPtr options = pkt->options_;
+    pkt->addOption(option);
+    size_t count = pkt->options_->size();
+    ASSERT_NE(0, count);
+    ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    {
+        ScopedOptionsCopy<Pkt4> oc(pkt);
+        ASSERT_NE(pkt->options_, options);
+        ASSERT_EQ(*pkt->options_, *options);
+        pkt->delOption(DHO_BOOT_FILE_NAME);
+        ASSERT_EQ(pkt->options_->size(), count - 1);
+        ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
+    }
+    ASSERT_EQ(pkt->options_, options);
+    ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+    {
+        try {
+            ScopedOptionsCopy<Pkt4> oc(pkt);
+            ASSERT_NE(pkt->options_, options);
+            ASSERT_EQ(*pkt->options_, *options);
+            pkt->delOption(DHO_BOOT_FILE_NAME);
+            ASSERT_EQ(pkt->options_->size(), count - 1);
+            ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
+            throw 0;
+        } catch (...) {
+            ASSERT_EQ(pkt->options_, options);
+            ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+        }
+        ASSERT_EQ(pkt->options_, options);
+        ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+    }
+}
+
 } // anonymous namespace
