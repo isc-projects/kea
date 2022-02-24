@@ -722,7 +722,7 @@ TestControl::printRate() const {
 
     std::cout <<"***Malformed Packets***" << std::endl
               << "Malformed packets: " << ExchangeStats::malformed_pkts_
-	      << std::endl;
+              << std::endl;
 }
 
 void
@@ -861,24 +861,23 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
         std::set<std::string> current;
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        for (OptionCollection::iterator opt = pkt6->options_.begin();
-             opt != pkt6->options_.end(); ++opt) {
-            switch (opt->second->getType()) {
+        for (const auto& opt : *pkt6->options_) {
+            switch (opt.second->getType()) {
             case D6O_IA_PD: {
                 // add address and check if it has not been already assigned
                 // addresses should be unique cross options of the packet
                 auto ret = current.emplace(boost::dynamic_pointer_cast<
-                    Option6IAPrefix>(opt->second->getOption(D6O_IAPREFIX))->getAddress().toText());
+                    Option6IAPrefix>(opt.second->getOption(D6O_IAPREFIX))->getAddress().toText());
                 if (!ret.second) {
                     stats_mgr_.updateNonUniqueAddrNum(xchg_type);
                 }
                 break;
-	    }
-	    case D6O_IA_NA: {
+            }
+            case D6O_IA_NA: {
                 // add address and check if it has not been already assigned
                 // addresses should be unique cross options of the packet
                 auto ret = current.emplace(boost::dynamic_pointer_cast<
-                    Option6IAAddr>(opt->second->getOption(D6O_IAADDR))->getAddress().toText());
+                    Option6IAAddr>(opt.second->getOption(D6O_IAADDR))->getAddress().toText());
                 if (!ret.second) {
                     stats_mgr_.updateNonUniqueAddrNum(xchg_type);
                 }

@@ -1080,7 +1080,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                                        *callout_handle);
         } catch (...) {
             // Make sure we don't orphan a parked packet.
-            HooksManager::drop("leases4_committed", query);
+            HooksManager::drop("leases6_committed", query);
             throw;
         }
 
@@ -1764,13 +1764,12 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // responses in answer message (ADVERTISE or REPLY).
     //
     // @todo: IA_TA once we implement support for temporary addresses.
-    for (OptionCollection::iterator opt = question->options_.begin();
-         opt != question->options_.end(); ++opt) {
-        switch (opt->second->getType()) {
+    for (const auto& opt : (*question->options_)) {
+        switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = assignIA_NA(question, ctx,
                                                boost::dynamic_pointer_cast<
-                                               Option6IA>(opt->second));
+                                               Option6IA>(opt.second));
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
@@ -1779,7 +1778,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
         case D6O_IA_PD: {
             OptionPtr answer_opt = assignIA_PD(question, ctx,
                                                boost::dynamic_pointer_cast<
-                                               Option6IA>(opt->second));
+                                               Option6IA>(opt.second));
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
@@ -2657,13 +2656,12 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Save the originally selected subnet.
     Subnet6Ptr orig_subnet = ctx.subnet_;
 
-    for (OptionCollection::iterator opt = query->options_.begin();
-         opt != query->options_.end(); ++opt) {
-        switch (opt->second->getType()) {
+    for (const auto& opt : (*query->options_)) {
+        switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = extendIA_NA(query, ctx,
                                                boost::dynamic_pointer_cast<
-                                                   Option6IA>(opt->second));
+                                                   Option6IA>(opt.second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2673,7 +2671,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
         case D6O_IA_PD: {
             OptionPtr answer_opt = extendIA_PD(query, ctx,
                                                boost::dynamic_pointer_cast<
-                                                   Option6IA>(opt->second));
+                                                   Option6IA>(opt.second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2710,13 +2708,12 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
-    for (OptionCollection::iterator opt = release->options_.begin();
-         opt != release->options_.end(); ++opt) {
+    for (const auto& opt : (*release->options_)) {
         Lease6Ptr old_lease;
-        switch (opt->second->getType()) {
+        switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = releaseIA_NA(ctx.duid_, release, general_status,
-                                                boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                                boost::dynamic_pointer_cast<Option6IA>(opt.second),
                                                 old_lease);
             if (answer_opt) {
                 reply->addOption(answer_opt);
@@ -2725,7 +2722,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
         }
         case D6O_IA_PD: {
             OptionPtr answer_opt = releaseIA_PD(ctx.duid_, release, general_status,
-                                                boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                                boost::dynamic_pointer_cast<Option6IA>(opt.second),
                                                 old_lease);
             if (answer_opt) {
                 reply->addOption(answer_opt);
@@ -3409,12 +3406,11 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 
-    for (OptionCollection::iterator opt = decline->options_.begin();
-         opt != decline->options_.end(); ++opt) {
-        switch (opt->second->getType()) {
+    for (const auto& opt : (*decline->options_)) {
+        switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
-                                             boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                             boost::dynamic_pointer_cast<Option6IA>(opt.second),
                                              ctx.new_leases_);
             if (answer_opt) {
 

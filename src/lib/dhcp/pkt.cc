@@ -17,32 +17,17 @@ namespace dhcp {
 Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    :transid_(transid),
-     iface_(""),
-     ifindex_(-1),
-     local_addr_(local_addr),
-     remote_addr_(remote_addr),
-     local_port_(local_port),
-     remote_port_(remote_port),
-     buffer_out_(0),
-     copy_retrieved_options_(false)
-{
+    : options_(new OptionCollection()), transid_(transid), iface_(""), ifindex_(-1),
+      local_addr_(local_addr), remote_addr_(remote_addr), local_port_(local_port),
+      remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
 }
 
 Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    :transid_(0),
-     iface_(""),
-     ifindex_(-1),
-     local_addr_(local_addr),
-     remote_addr_(remote_addr),
-     local_port_(local_port),
-     remote_port_(remote_port),
-     buffer_out_(0),
-     copy_retrieved_options_(false)
-{
-
+    : options_(new OptionCollection()), transid_(0), iface_(""), ifindex_(-1),
+      local_addr_(local_addr), remote_addr_(remote_addr), local_port_(local_port),
+      remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
     if (len != 0) {
         if (buf == NULL) {
             isc_throw(InvalidParameter, "data buffer passed to Pkt is NULL");
@@ -54,13 +39,13 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
 
 void
 Pkt::addOption(const OptionPtr& opt) {
-    options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
+    options_->insert(std::pair<int, OptionPtr>(opt->getType(), opt));
 }
 
 OptionPtr
 Pkt::getNonCopiedOption(const uint16_t type) const {
-    OptionCollection::const_iterator x = options_.find(type);
-    if (x != options_.end()) {
+    const auto& x = options_->find(type);
+    if (x != options_->end()) {
         return (x->second);
     }
     return (OptionPtr());
@@ -68,8 +53,8 @@ Pkt::getNonCopiedOption(const uint16_t type) const {
 
 OptionPtr
 Pkt::getOption(const uint16_t type) {
-    OptionCollection::iterator x = options_.find(type);
-    if (x != options_.end()) {
+    const auto& x = options_->find(type);
+    if (x != options_->end()) {
         if (copy_retrieved_options_) {
             OptionPtr option_copy = x->second->clone();
             x->second = option_copy;
@@ -81,10 +66,9 @@ Pkt::getOption(const uint16_t type) {
 
 bool
 Pkt::delOption(uint16_t type) {
-
-    isc::dhcp::OptionCollection::iterator x = options_.find(type);
-    if (x!=options_.end()) {
-        options_.erase(x);
+    const auto& x = options_->find(type);
+    if (x != options_->end()) {
+        options_->erase(x);
         return (true); // delete successful
     } else {
         return (false); // can't find option to be deleted
@@ -138,7 +122,6 @@ void
 Pkt::setHWAddrMember(const uint8_t htype, const uint8_t,
                       const std::vector<uint8_t>& hw_addr,
                       HWAddrPtr& storage) {
-
     storage.reset(new HWAddr(hw_addr, htype));
 }
 
@@ -282,5 +265,5 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
     return (mac);
 }
 
-};
-};
+} // end of namespace isc::dhcp
+} // end of namespace isc

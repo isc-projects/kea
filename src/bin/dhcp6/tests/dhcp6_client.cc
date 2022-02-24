@@ -139,26 +139,22 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
 
 void
 Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
-    typedef OptionCollection Opts;
-    // Get all options in the reply message and pick IA_NA, IA_PD and
-    // Status code.
-    Opts opts = reply->options_;
-
     // Let's try to get a MAC
     HWAddrPtr hwaddr = reply->getMAC(HWAddr::HWADDR_SOURCE_ANY);
 
-    for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
-        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
+    // Get all options in the reply message and pick IA_NA, IA_PD and
+    // Status code.
+    for (const auto& opt : *reply->options_) {
+        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt.second);
         if (!ia) {
             // This is not IA, so let's just store it.
-            config_.options_.insert(*opt);
+            config_.options_.insert(opt);
             continue;
         }
 
-        const Opts& ia_opts = ia->getOptions();
-        for (Opts::const_iterator iter_ia_opt = ia_opts.begin();
-             iter_ia_opt != ia_opts.end(); ++iter_ia_opt) {
-            OptionPtr ia_opt = iter_ia_opt->second;
+        const auto& ia_opts = ia->getOptions();
+        for (const auto& iter_ia_opt : ia_opts) {
+            OptionPtr ia_opt = iter_ia_opt.second;
             Lease6 lease;
             lease.type_ = (ia->getType() == D6O_IA_NA ? Lease::TYPE_NA : Lease::TYPE_PD);
             lease.iaid_ = ia->getIAID();
@@ -877,10 +873,8 @@ Dhcp6Client::getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const 
     }
 
     // Get all options in the response message and pick IA_NA, IA_PD.
-    OptionCollection opts = context_.response_->options_;
-
-    for (auto opt = opts.begin(); opt != opts.end(); ++opt) {
-        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
+    for (const auto& opt : *context_.response_->options_) {
+        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt.second);
         if (!ia) {
             // This is not IA, so let's just skip it.
             continue;

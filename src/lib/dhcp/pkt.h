@@ -611,7 +611,7 @@ public:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::OptionCollection options_;
+    isc::dhcp::OptionCollectionPtr options_;
 
 protected:
 
@@ -796,7 +796,7 @@ private:
 /// @brief A pointer to either Pkt4 or Pkt6 packet
 typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
-}; // namespace isc::dhcp
-}; // namespace isc
+} // namespace isc::dhcp
+} // namespace isc
 
 #endif

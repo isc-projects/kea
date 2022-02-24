@@ -38,6 +38,7 @@ typedef boost::shared_ptr<Option> OptionPtr;
 
 /// A collection of DHCP (v4 or v6) options
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
+
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 

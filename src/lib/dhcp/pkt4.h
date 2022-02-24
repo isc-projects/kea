@@ -544,7 +544,6 @@ protected:
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
 
 } // isc::dhcp namespace
-
 } // isc namespace
 
 #endif

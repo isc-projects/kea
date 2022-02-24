@@ -30,18 +30,10 @@ namespace isc {
 namespace dhcp {
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :Pkt(transid, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
-          DHCP4_CLIENT_PORT),
-      op_(DHCPTypeToBootpType(msg_type)),
-      hwaddr_(new HWAddr()),
-      hops_(0),
-      secs_(0),
-      flags_(0),
-      ciaddr_(DEFAULT_ADDRESS),
-      yiaddr_(DEFAULT_ADDRESS),
-      siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS)
-{
+    : Pkt(transid, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT, DHCP4_CLIENT_PORT),
+      op_(DHCPTypeToBootpType(msg_type)), hwaddr_(new HWAddr()), hops_(0), secs_(0), flags_(0),
+      ciaddr_(DEFAULT_ADDRESS), yiaddr_(DEFAULT_ADDRESS), siaddr_(DEFAULT_ADDRESS),
+      giaddr_(DEFAULT_ADDRESS) {
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
 
@@ -49,18 +41,10 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :Pkt(data, len, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT,
-          DHCP4_CLIENT_PORT),
-      op_(BOOTREQUEST),
-      hwaddr_(new HWAddr()),
-      hops_(0),
-      secs_(0),
-      flags_(0),
-      ciaddr_(DEFAULT_ADDRESS),
-      yiaddr_(DEFAULT_ADDRESS),
-      siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS)
-{
+    : Pkt(data, len, DEFAULT_ADDRESS, DEFAULT_ADDRESS, DHCP4_SERVER_PORT, DHCP4_CLIENT_PORT),
+      op_(BOOTREQUEST), hwaddr_(new HWAddr()), hops_(0), secs_(0), flags_(0),
+      ciaddr_(DEFAULT_ADDRESS), yiaddr_(DEFAULT_ADDRESS), siaddr_(DEFAULT_ADDRESS),
+      giaddr_(DEFAULT_ADDRESS) {
 
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
@@ -76,10 +60,8 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (const auto& it : *options_) {
+        length += it.second->len();
     }
 
     return (length);
@@ -137,7 +119,7 @@ Pkt4::pack() {
 
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.
-        LibDHCP::packOptions4(buffer_out_, options_, true);
+        LibDHCP::packOptions4(buffer_out_, *options_, true);
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)
@@ -205,7 +187,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
 
-    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_, false);
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, *options_, deferred_options_, false);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input
@@ -431,12 +413,11 @@ Pkt4::toText() const {
 
     output << ", transid=0x" << hex << transid_ << dec;
 
-    if (!options_.empty()) {
+    if (!options_->empty()) {
         output << "," << std::endl << "options:";
-        for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
-             opt != options_.end(); ++opt) {
+        for (const auto& opt : *options_) {
             try {
-                output << std::endl << opt->second->toText(2);
+                output << std::endl << opt.second->toText(2);
             } catch (...) {
                 output << "(unknown)" << std::endl;
             }
@@ -597,5 +578,4 @@ Pkt4::isRelayed() const {
 }
 
 } // end of namespace isc::dhcp
-
 } // end of namespace isc
