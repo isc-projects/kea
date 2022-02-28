@@ -218,7 +218,6 @@ public:
     /// @param value StampedValue describing the parameter to create/update.
     void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -246,7 +245,6 @@ public:
         // Try to update the existing row.
         if (updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
                               in_bindings) == 0) {
-
             // No such parameter found, so let's insert it. We have to adjust the
             // bindings collection to match the prepared statement for insert.
             in_bindings.popBack();
@@ -310,7 +308,6 @@ public:
             // is different than the subnet identifier of the previously returned
             // row, it means that we have to construct new subnet object.
             if (!last_subnet || (last_subnet->getID() != subnet_id)) {
-
                 // Reset per subnet component tracking and server tag because
                 // we're now starting to process a new subnet.
                 last_pool_id = 0;
@@ -543,7 +540,6 @@ public:
                 (worker.getInet4(21) != 0) &&
                 (worker.getInet4(22) != 0) &&
                 (worker.getBigInt(20) > last_pool_id)) {
-
                 last_pool_id = worker.getBigInt(20);
                 last_pool = Pool4::create(IOAddress(worker.getInet4(21)),
                                           IOAddress(worker.getInet4(22)));
@@ -609,7 +605,6 @@ public:
     /// doesn't exist.
     Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
                           const SubnetID& subnet_id) {
-
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a subnet. Got: "
@@ -677,10 +672,9 @@ public:
                       "server is not supported");
         }
 
-        PsqlBindArray in_bindings;
-
         auto index = (server_selector.amUnassigned() ? GET_ALL_SUBNETS4_UNASSIGNED :
                       GET_ALL_SUBNETS4);
+        PsqlBindArray in_bindings;
         getSubnets4(index, server_selector, in_bindings, subnets);
     }
 
@@ -783,7 +777,7 @@ public:
                 pool_ids.push_back(last_pool_id);
             }
 
-            // Parse pool specific option (from 8).
+            // Parse pool specific option (8).
             if (last_pool && !worker.isColumnNull(8) &&
                 (last_pool_option_id < worker.getBigInt(8))) {
                 last_pool_option_id = worker.getBigInt(8);
@@ -828,6 +822,7 @@ public:
             }
         }
 
+        // Return upon the first pool found.
         if (!pools.empty()) {
             pool_id = pool_ids[0];
             return (boost::dynamic_pointer_cast<Pool4>(*pools.begin()));
@@ -844,7 +839,6 @@ public:
     /// @param subnet Pointer to the subnet to be inserted or updated.
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
-
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a subnet for ANY"
                       " server is not supported");
@@ -897,10 +891,11 @@ public:
         in_bindings.addOptional(subnet->getSname(Network::Inheritance::NONE));
 
         // Add shared network.
-        // If the subnet is associated with a shared network instance.
-        // If it is, create the binding using the name of the shared network.
         SharedNetwork4Ptr shared_network;
         subnet->getSharedNetwork(shared_network);
+
+        // Check if the subnet is associated with a shared network instance.
+        // If it is, create the binding using the name of the shared network.
         if (shared_network) {
             in_bindings.addTempString(shared_network->getName());
 
@@ -959,7 +954,9 @@ public:
         conn_.createSavepoint("createUpdateSubnet4");
 
         try {
+
             insertQuery(PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4, in_bindings);
+
         } catch (const DuplicateEntry&) {
             // It already exists, rollback to the savepoint to preserve
             // any prior work.
@@ -1081,7 +1078,6 @@ public:
                                  const std::string& log_message,
                                  const bool cascade_delete,
                                  Args&&... keys) {
-
         PgSqlTransaction transaction(conn_);
 
         // Create scoped audit revision. As long as this instance exists
@@ -1185,7 +1181,7 @@ public:
             if (last_network_id != network_id) {
                 last_network_id = network_id;
 
-                // Reset per shared network subnet component tracking and server tag because
+                // Reset per shared network component tracking and server tag because
                 // we're now starting to process a new shared network.
                 last_option_id = 0;
                 last_tag.clear();
@@ -1392,7 +1388,6 @@ public:
     /// network doesn't exist.
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
-
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a shared network. Got: "
@@ -1464,7 +1459,6 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
-
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a shared network for ANY"
                       " server is not supported");
@@ -1614,7 +1608,6 @@ public:
     /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1637,10 +1630,10 @@ public:
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
 
-        // Remember the size before we added where clause arguments.
+        // Remember the size before we add where clause arguments.
         size_t pre_where_size = in_bindings.size();
 
-        // Now the add the update where clause parameters
+        // Now we add the update where clause parameters
         in_bindings.add(tag);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -1683,7 +1676,6 @@ public:
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1704,10 +1696,10 @@ public:
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
 
-        // Remember the size before we added where clause arguments.
+        // Remember the size before we add where clause arguments.
         size_t pre_where_size = in_bindings.size();
 
-        // Now the add the update where clause parameters
+        // Now we add the update where clause parameters
         in_bindings.add(subnet_id);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -1773,7 +1765,6 @@ public:
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1793,10 +1784,11 @@ public:
         in_bindings.addNull();
         in_bindings.add(pool_id);
         in_bindings.addTimestamp(option->getModificationTime());
-        // Remember how many parameters we have before where clause.
+
+        // Remember the size before we add where clause arguments.
         int pre_where_size = in_bindings.size();
 
-        // Now add where clause parameters for update.
+        // Now we add the update where clause parameters
         in_bindings.add(pool_id);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -1841,7 +1833,6 @@ public:
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1862,10 +1853,10 @@ public:
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
 
-        // Remember how many parameters we have before where clause.
+        // Remember the size before we add where clause arguments.
         int pre_where_size = in_bindings.size();
 
-        // Now add where clause parameters for update.
+        // Now we add the update where clause parameters
         in_bindings.add(shared_network_name);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -1905,7 +1896,6 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const ClientClassDefPtr& client_class,
                              const OptionDescriptorPtr& option) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1926,8 +1916,10 @@ public:
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
 
-        // Remember the size before we added where clause arguments.
+        // Remember the size before we add where clause arguments.
         size_t pre_where_size = in_bindings.size();
+
+        // Now we add the update where clause parameters
         in_bindings.add(class_name);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -1958,7 +1950,6 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
-
         createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
@@ -1983,7 +1974,7 @@ public:
                               PgSqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
                               client_class_name);
-     }
+    }
 
     /// @brief Sends query to delete option definition by code and
     /// option space name.
@@ -1995,7 +1986,6 @@ public:
     uint64_t deleteOptionDef4(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
-
         PsqlBindArray in_bindings;
         in_bindings.add(code);
         in_bindings.add(space);
@@ -2388,7 +2378,7 @@ public:
         // also check if the client class depends on KNOWN/UNKNOWN built-in
         // classes.
         std::list<std::string> dependencies;
-        bool depend_on_known = false;
+        auto depend_on_known = false;
         if (!client_class->getTest().empty()) {
             ExpressionPtr expression;
             ExpressionParser parser;
@@ -2448,6 +2438,7 @@ public:
         auto update = false;
         try {
             insertQuery(PgSqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4, in_bindings);
+
         } catch (const DuplicateEntry&) {
             // It already exists, rollback to the savepoint to preserve
             // any prior work.

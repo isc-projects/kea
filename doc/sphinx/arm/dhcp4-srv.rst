@@ -7025,7 +7025,7 @@ The following snippet illustrates the use of a PostgreSQL database:
                "user": "kea",
                "password": "kea",
                "host": "192.0.2.1",
-               "port": 5432 
+               "port": 5432
            }],
            "config-fetch-wait-time": 20
        },
@@ -7072,11 +7072,11 @@ The ``config-backend-pull`` command can be used to force the server to
 immediately poll any configuration changes from the database and avoid
 waiting for the next fetch cycle.
 
-In the configuration examples above, two hook libraries are loaded. The first 
+In the configuration examples above, two hook libraries are loaded. The first
 is a library which implements the Configuration Backend for a specific database
 type: ``libdhcp_mysql_cb.so`` provides support for MySQL and ``libdhcp_pgsql_cb.so``
 provides support for PostgreSQL.  The library loaded must match the database
-``type`` specified within the ``config-control`` parameter or an will error be 
+``type`` specified within the ``config-control`` parameter or an will error be
 logged when the server attempts to load its configuration and the load will
 fail.
 

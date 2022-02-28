@@ -41,7 +41,6 @@ namespace {
     "  ON (a.server_id = s.id) " \
     "WHERE (s.tag = $1 OR s.id = 1) " #__VA_ARGS__ \
     " ORDER BY g.id, s.id"
-
 #endif
 
 #ifndef PGSQL_GET_SUBNET4
@@ -147,7 +146,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS srv " \
     "  ON a.server_id = srv.id ", \
     WHERE a.subnet_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_GET_SUBNET6
@@ -278,7 +276,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS srv " \
     "  ON a.server_id = srv.id ", \
     WHERE a.subnet_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_GET_POOL4_COMMON
@@ -483,7 +480,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.shared_network_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_GET_SHARED_NETWORK6
@@ -564,7 +560,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.shared_network_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_GET_OPTION_DEF
@@ -617,6 +612,7 @@ namespace {
 
 #define PGSQL_GET_OPTION4(...) \
     PGSQL_GET_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+
 #define PGSQL_GET_OPTION6(...) \
     PGSQL_GET_OPTION_COMMON(dhcp6, ", o.pd_pool_id ", __VA_ARGS__)
 #endif
@@ -651,8 +647,10 @@ namespace {
     "WHERE s.id > 1 " \
     __VA_ARGS__ \
     "ORDER BY s.id"
+
 #define PGSQL_GET_ALL_SERVERS(table_prefix) \
     PGSQL_GET_SERVERS_COMMON(table_prefix, "")
+
 #define PGSQL_GET_SERVER(table_prefix) \
     PGSQL_GET_SERVERS_COMMON(table_prefix, "AND s.tag = $1")
 #endif
@@ -720,7 +718,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.class_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_GET_CLIENT_CLASS6_COMMON
@@ -786,7 +783,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.class_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef PGSQL_INSERT_GLOBAL_PARAMETER
@@ -920,6 +916,7 @@ namespace {
 
 #define PGSQL_INSERT_OPTION4() \
     PGSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
+
 #define PGSQL_INSERT_OPTION6() \
     PGSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", $13")
 #endif
@@ -971,8 +968,8 @@ namespace {
     "    modification_ts = $4 " \
     "FROM " #table_prefix "_global_parameter_server as a, " \
     "     " #table_prefix "_server as s " \
-    "WHERE g.id = a.parameter_id and  " \
-    "      a.server_id = s.id and  " \
+    "WHERE g.id = a.parameter_id AND " \
+    "      a.server_id = s.id AND " \
     "      s.tag = $5 AND g.name = $6"
 #endif
 
@@ -994,7 +991,7 @@ namespace {
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND" \
     "      a.server_id = s.id AND " \
-    "      s.tag = $11 AND d.code = $12 AND d.space = $13 "
+    "      s.tag = $11 AND d.code = $12 AND d.space = $13"
 #endif
 
 #ifndef PGSQL_UPDATE_OPTION_DEF_CLIENT_CLASS
@@ -1013,12 +1010,10 @@ namespace {
     "FROM " #table_prefix "_option_def_server as a, " \
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND " \
-    "  a.server_id = s.id AND " \
-    "  d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10) " \
-    "  AND s.tag = $11 AND d.code = $12 AND d.space = $13"
-
+    "      a.server_id = s.id AND " \
+    "      d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10) " \
+    "      AND s.tag = $11 AND d.code = $12 AND d.space = $13"
 #endif
-
 
 #ifndef PGSQL_UPDATE_OPTION_NO_TAG
 #define PGSQL_UPDATE_OPTION_NO_TAG(table_prefix, pd_pool_id, ...) \
@@ -1038,13 +1033,13 @@ namespace {
     "  modification_ts = $12 " \
     pd_pool_id \
     "WHERE " #__VA_ARGS__
-#endif
 
 #define PGSQL_UPDATE_OPTION4_NO_TAG(...) \
     PGSQL_UPDATE_OPTION_NO_TAG(dhcp4, "",  __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_NO_TAG(...) \
     PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $13 ", __VA_ARGS__)
+#endif
 
 #ifndef PGSQL_UPDATE_OPTION_WITH_TAG
 #define PGSQL_UPDATE_OPTION_WITH_TAG(table_prefix, pd_pool_id, ...) \
@@ -1068,7 +1063,6 @@ namespace {
     "WHERE  o.option_id = a.option_id AND " \
     "       a.server_id = s.id " \
     #__VA_ARGS__
-#endif
 
 #define PGSQL_UPDATE_OPTION4_WITH_TAG(...) \
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $13 __VA_ARGS__)
@@ -1076,6 +1070,7 @@ namespace {
 #define PGSQL_UPDATE_OPTION6_WITH_TAG(...) \
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, \
     ", pd_pool_id = $13 ", AND s.tag = $14 __VA_ARGS__)
+#endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS4
 #define PGSQL_UPDATE_CLIENT_CLASS4(follow_class_name_set) \
@@ -1154,7 +1149,6 @@ namespace {
     "   s.subnet_id = a.subnet_id AND " \
     "   a.server_id = srv.id " \
     #__VA_ARGS__
-#endif
 
 #define PGSQL_DELETE_SUBNET_WITH_TAG(table_prefix, ...) \
     PGSQL_DELETE_SUBNET_COMMON(table_prefix, AND srv.tag = $1 __VA_ARGS__)
@@ -1169,6 +1163,7 @@ namespace {
     "   SELECT s.subnet_id FROM " #table_prefix "_subnet AS s " \
     "   LEFT JOIN " #table_prefix "_subnet_server AS a ON s.subnet_id = a.subnet_id " \
     "   WHERE a.subnet_id IS NULL) " #__VA_ARGS__
+#endif
 
 #ifndef PGSQL_DELETE_SUBNET_SERVER
 #define PGSQL_DELETE_SUBNET_SERVER(table_prefix) \
@@ -1202,7 +1197,6 @@ namespace {
     "   n.id = a.shared_network_id AND " \
     "   a.server_id = s.id " \
     #__VA_ARGS__
-#endif
 
 #define PGSQL_DELETE_SHARED_NETWORK_WITH_TAG(table_prefix, ...) \
     PGSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, AND s.tag = $1 __VA_ARGS__)
@@ -1218,6 +1212,7 @@ namespace {
     "   LEFT JOIN " #table_prefix "_shared_network_server AS a ON n.id = a.shared_network_id " \
     "   WHERE a.shared_network_id IS NULL) " \
     #__VA_ARGS__
+#endif
 
 #ifndef PGSQL_DELETE_SHARED_NETWORK_SERVER
 #define PGSQL_DELETE_SHARED_NETWORK_SERVER(table_prefix) \
@@ -1321,7 +1316,7 @@ namespace {
     "(SELECT id FROM " #table_prefix "_client_class WHERE name = $1)"
 #endif
 
-#ifndef PGSQL_DELETE_CLIENT_CLASS
+#ifndef PGSQL_DELETE_CLIENT_CLASS_COMMON
 #define PGSQL_DELETE_CLIENT_CLASS_COMMON(table_prefix, ...) \
     "DELETE FROM " #table_prefix "_client_class AS c " \
     "USING " \
@@ -1344,8 +1339,7 @@ namespace {
     "   SELECT c.id FROM " #table_prefix "_client_class AS c " \
     "   LEFT JOIN " #table_prefix "_client_class_server AS a ON c.id = a.class_id " \
     "   WHERE a.class_id IS NULL) " #__VA_ARGS__
-
-#endif // PGSQL_DELETE_CLIENT_CLASS
+#endif
 
 #ifndef PGSQL_DELETE_SERVER
 #define PGSQL_DELETE_SERVER(table_prefix) \

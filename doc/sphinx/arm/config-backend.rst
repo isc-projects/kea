@@ -13,7 +13,7 @@ to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
 configuration information from the particular database type.  For
-example, MySQL Configuration Backend is the logic implemented within the
+example, the MySQL Configuration Backend is the logic implemented within the
 ``mysql_cb`` hook library, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
 The PostgreSQL Configuration Backend is the logic implemented within the
@@ -163,12 +163,12 @@ CB Components
 -------------
 
 To use a MySQL configuration backend you must compile the ``mysql_cb`` open
-source hook library and configre the DHCP servers to load it.  It is compiled when
-the ``--with-mysql`` configuration switch is used during the Kea build. The MySQL C
-client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+source hook library and configure the DHCP servers to load it.  It is compiled when
+the ``--with-mysql`` configuration switch is used during the Kea build. The MySQL
+C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
 To use a PostgreSQL configuration backend you must compile the ``pgsql_cb`` open
-source hook library and configre the DHCP servers to load it.  It is compiled when
+source hook library and configure the DHCP servers to load it.  It is compiled when
 the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
 C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
@@ -181,7 +181,7 @@ C client libraries must be installed, as explained in :ref:`dhcp-install-configu
 The ``cb_cmds`` premium hook library, which is available to ISC's paid support
 customers, provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
-Be attached to both DHCPv4 and DHCPv6 server instances. While it is
+be attached to both DHCPv4 and DHCPv6 server instances. While it is
 possible to manage the configuration information without the ``cb_cmds``
 hook library with commonly available tools, such as MySQL Workbench or
 the command-line MySQL client, or by directly working with the database;

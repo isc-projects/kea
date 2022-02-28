@@ -439,7 +439,7 @@ pgsql_upgrade_9_0_to_10_0() {
     run_command \
          pgsql_execute "select proname,prosrc from pg_proc where proname='func_dhcp6_client_class_check_dependency_bins'"
 
-    assert_eq 0 "${EXIT_CODE}" "$cmd, expected exit code %d, actual %d"
+    assert_eq 0 "${EXIT_CODE}" "function func_dhcp6_client_class_check_dependency_BINS() broken or missing. (expected status code %d, returned %d)"
 
     count=$(echo "${OUTPUT}" | grep -Eci 'RETURN NEW') || true
     assert_eq 1 "${count}" "func_dhcp6_client_class_check_dependency_BINS is missing RETURN NEW. (expected count %d, returned %d)"

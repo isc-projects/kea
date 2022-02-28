@@ -46,11 +46,11 @@ START TRANSACTION;
 -- -----------------------------------------------------------------------
 -- Stored procedure positioning an inserted or updated client class
 -- within the class hierarchy, depending on the value of the
--- follow_class_name parameter.
+-- new_follow_class_name parameter.
 --
 -- Parameters:
 -- - id id of the positioned class,
--- - follow_class_name name of the class after which this class should be
+-- - new_follow_class_name name of the class after which this class should be
 --   positioned within the class hierarchy.
 -- - old_follow_class_name previous name of the class after which this
 --   class was positioned within the class hierarchy.
@@ -148,7 +148,7 @@ BEGIN
     -- whenever the dhcp4_client_class record is updated. Such update may include
     -- test expression changes impacting the dependency on KNOWN/UNKNOWN classes.
     -- This value will be later adjusted when dependencies are inserted.
-    -- ON CONFLICT required 9.5 or later
+    -- TKM - note that ON CONFLICT requires PostgreSQL 9.5 or later.
     UPDATE dhcp4_client_class_order
         SET order_index = follow_class_index + 1,
             depend_on_known_indirectly = l_depend_on_known_indirectly
@@ -162,8 +162,9 @@ BEGIN
     RETURN;
 END;\$\$;
 
--- Replace setClientClass4Order():
+-- Replace setClientClass6Order():
 -- 1. l_depend_on_known_indirectly needs to be BOOL
+-- 2. follow_class_index needs to be BIGINT
 
 -- -----------------------------------------------------------------------
 -- Stored procedure positioning an inserted or updated client class

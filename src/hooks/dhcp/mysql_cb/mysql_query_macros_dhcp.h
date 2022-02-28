@@ -45,7 +45,6 @@ namespace {
     "  ON (a.server_id = s.id) " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
     " ORDER BY g.id, s.id"
-
 #endif
 
 #ifndef MYSQL_GET_SUBNET4
@@ -151,7 +150,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS srv " \
     "  ON a.server_id = srv.id ", \
     WHERE a.subnet_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_GET_SUBNET6
@@ -282,7 +280,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS srv " \
     "  ON a.server_id = srv.id ", \
     WHERE a.subnet_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_GET_POOL4_COMMON
@@ -487,7 +484,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.shared_network_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_GET_SHARED_NETWORK6
@@ -568,7 +564,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.shared_network_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_GET_OPTION_DEF
@@ -621,6 +616,7 @@ namespace {
 
 #define MYSQL_GET_OPTION4(...) \
     MYSQL_GET_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+
 #define MYSQL_GET_OPTION6(...) \
     MYSQL_GET_OPTION_COMMON(dhcp6, ", o.pd_pool_id ", __VA_ARGS__)
 #endif
@@ -655,8 +651,10 @@ namespace {
     "WHERE s.id > 1 " \
     __VA_ARGS__ \
     "ORDER BY s.id"
+
 #define MYSQL_GET_ALL_SERVERS(table_prefix) \
     MYSQL_GET_SERVERS_COMMON(table_prefix, "")
+
 #define MYSQL_GET_SERVER(table_prefix) \
     MYSQL_GET_SERVERS_COMMON(table_prefix, "AND s.tag = ? ")
 #endif
@@ -724,7 +722,6 @@ namespace {
     "LEFT JOIN dhcp4_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.class_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_GET_CLIENT_CLASS6_COMMON
@@ -790,7 +787,6 @@ namespace {
     "LEFT JOIN dhcp6_server AS s " \
     "  ON a.server_id = s.id ", \
     WHERE a.class_id IS NULL __VA_ARGS__)
-
 #endif
 
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER
@@ -923,6 +919,7 @@ namespace {
 
 #define MYSQL_INSERT_OPTION4() \
     MYSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
+
 #define MYSQL_INSERT_OPTION6() \
     MYSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", ?")
 #endif
@@ -1147,7 +1144,6 @@ namespace {
     "LEFT JOIN " #table_prefix "_subnet_server AS a" \
     "  ON s.subnet_id = a.subnet_id " \
     "WHERE a.subnet_id IS NULL " #__VA_ARGS__
-
 #endif
 
 #ifndef MYSQL_DELETE_SUBNET_SERVER
@@ -1193,7 +1189,6 @@ namespace {
     "LEFT JOIN " #table_prefix "_shared_network_server AS a" \
     "  ON n.id = a.shared_network_id " \
     "WHERE a.shared_network_id IS NULL " #__VA_ARGS__
-
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK_SERVER
@@ -1310,7 +1305,6 @@ namespace {
     "LEFT JOIN " #table_prefix "_client_class_server AS a" \
     "  ON c.id = a.class_id " \
     "WHERE a.class_id IS NULL " #__VA_ARGS__
-
 #endif
 
 #ifndef MYSQL_DELETE_SERVER

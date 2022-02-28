@@ -9,12 +9,13 @@ be used in conjunction with the available CB hooks libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
 the ``mysql_cb`` hooks library implements this API for MySQL while the
-``pgsql_cg`` hooks library implements this API for PostgreSQL. In order to
-manage the configuration information in a MySQL database, both the
-``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server
-used for the configuration management.  To manage configuration information
-in a PostgreSQL database, both the ``pgsql_cb`` and ``cb_cmds`` libraries
-must be loaded by the server used for the configuration management.
+``pgsql_cg`` hooks library implements this API for PostgreSQL.
+To manage the configuration information in a MySQL database, both the
+``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
+configuration management.
+To manage the configuration information in a PostgreSQL database, both the
+``pgsql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
+configuration management.
 
 The ``cb_cmds`` library is only available to ISC customers with a paid
 support contract.
@@ -129,11 +130,11 @@ the configuration of the server receiving the command.
    In the present Kea release, it is possible to configure the Kea server
    to use only one configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one database (either MySQL or
-   PostgreSQL) using the ``config-control`` parameter. That's why the ``remote`` 
-   parameter may be omitted in the commands and the cb_cmds hooks library will use the
-   sole backend by default.  The example command below most often show a value of
-   "mysql" for the ``type`` parameter.  It should be assumed that a value 
-   would be "postgresql" for installations using a PostgreSQL database.
+   PostgreSQL) using the ``config-control`` parameter. That's why the ``remote``
+   parameter may be omitted in the commands and the cb_cmds hooks library will
+   use the sole backend by default.  The example command below most often show a
+   value of "mysql" for the ``type`` parameter.  It should be assumed that a
+   value would be "postgresql" for installations using a PostgreSQL database.
 
 .. _cb-cmds-dhcp:
 

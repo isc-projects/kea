@@ -213,7 +213,6 @@ public:
     /// @param value Value of the global parameter.
     void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -241,7 +240,6 @@ public:
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
                                     in_bindings) == 0) {
-
             // No such parameter found, so let's insert it. We have to adjust the
             // bindings collection to match the prepared statement for insert.
             in_bindings.pop_back();
@@ -378,7 +376,6 @@ public:
             // is different than the subnet identifier of the previously returned
             // row, it means that we have to construct new subnet object.
             if (!last_subnet || (last_subnet->getID() != out_bindings[0]->getInteger<uint32_t>())) {
-
                 // Reset per subnet component tracking and server tag because
                 // we're now starting to process a new subnet.
                 last_pool_id = 0;
@@ -719,7 +716,6 @@ public:
     /// doesn't exist.
     Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
                           const SubnetID& subnet_id) {
-
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a subnet. Got: "
@@ -784,6 +780,7 @@ public:
             isc_throw(InvalidOperation, "fetching all subnets for ANY "
                       "server is not supported");
         }
+
         auto index = (server_selector.amUnassigned() ? GET_ALL_SUBNETS4_UNASSIGNED :
                       GET_ALL_SUBNETS4);
         MySqlBindingCollection in_bindings;
@@ -876,7 +873,6 @@ public:
                            &pools, &pool_ids]
                           (MySqlBindingCollection& out_bindings) {
             if (out_bindings[0]->getInteger<uint64_t>() > last_pool_id) {
-
                 // pool id (0)
                 // pool start_address (1)
                 // pool end_address (2)
@@ -921,7 +917,7 @@ public:
                 pool_ids.push_back(last_pool_id);
             }
 
-            // Parse pool specific option (from 8).
+            // Parse pool specific option (8).
             if (last_pool && !out_bindings[8]->amNull() &&
                 (last_pool_option_id < out_bindings[8]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[8]->getInteger<uint64_t>();
@@ -968,6 +964,7 @@ public:
             }
         }
 
+        // Return upon the first pool found.
         if (!pools.empty()) {
             pool_id = pool_ids[0];
             return (boost::dynamic_pointer_cast<Pool4>(*pools.begin()));
@@ -984,7 +981,6 @@ public:
     /// @param subnet Pointer to the subnet to be inserted or updated.
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
-
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a subnet for ANY"
                       " server is not supported");
@@ -1136,7 +1132,6 @@ public:
                                     in_server_bindings);
         }
 
-
         // Insert associations with the servers.
         attachElementToServers(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
                                server_selector,
@@ -1221,7 +1216,6 @@ public:
                                  const std::string& log_message,
                                  const bool cascade_delete,
                                  Args&&... keys) {
-
         MySqlTransaction transaction(conn_);
 
         // Create scoped audit revision. As long as this instance exists
@@ -1370,14 +1364,12 @@ public:
             // row points to the next shared network we use the data in the
             // row to create the new shared network instance.
             if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
-
-                // Reset per shared network subnet component tracking and server tag because
+                // Reset per shared network component tracking and server tag because
                 // we're now starting to process a new shared network.
                 last_option_id = 0;
                 last_tag.clear();
 
                 // id at 0.
-
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
 
                 // name at 1.
@@ -1607,7 +1599,6 @@ public:
     /// network doesn't exist.
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
-
         if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a shared network. Got: "
@@ -1676,7 +1667,6 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
-
         if (server_selector.amAny()) {
             isc_throw(InvalidOperation, "creating or updating a shared network for ANY"
                       " server is not supported");
@@ -1815,7 +1805,6 @@ public:
     /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1871,7 +1860,6 @@ public:
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -1956,7 +1944,6 @@ public:
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -2012,7 +1999,6 @@ public:
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option,
                              const bool cascade_update) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -2073,7 +2059,6 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const ClientClassDefPtr& client_class,
                              const OptionDescriptorPtr& option) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -2120,7 +2105,6 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
-
         createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
                               MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
@@ -2157,7 +2141,6 @@ public:
     uint64_t deleteOptionDef4(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(code),
             MySqlBinding::createString(space)
@@ -2200,7 +2183,6 @@ public:
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
                            const std::string& space) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
@@ -2226,7 +2208,6 @@ public:
                            const SubnetID& subnet_id,
                            const uint16_t code,
                            const std::string& space) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(code),
@@ -2254,7 +2235,6 @@ public:
                            const IOAddress& pool_end_address,
                            const uint16_t code,
                            const std::string& space) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space),
@@ -2282,7 +2262,6 @@ public:
                            const std::string& shared_network_name,
                            const uint16_t code,
                            const std::string& space) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(code),
@@ -2305,7 +2284,6 @@ public:
     /// @return Number of deleted options.
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const Subnet4Ptr& subnet) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID()),
             MySqlBinding::createString(subnet->toText())
@@ -2327,7 +2305,6 @@ public:
     /// @return Number of deleted options.
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const SharedNetwork4Ptr& shared_network) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName())
         };
@@ -2348,7 +2325,6 @@ public:
     /// @return Number of deleted options.
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const ClientClassDefPtr& client_class) {
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(client_class->getName())
         };
@@ -2429,7 +2405,6 @@ public:
             }
 
             if (!last_client_class || (last_client_class->getId() != out_bindings[0]->getInteger<uint64_t>())) {
-
                 last_option_id = 0;
                 last_option_def_id = 0;
                 last_tag.clear();
@@ -2579,7 +2554,6 @@ public:
                           client_classes);
     }
 
-
     /// @brief Upserts client class.
     ///
     /// @param server_selector Server selector.
@@ -2620,7 +2594,6 @@ public:
                 return (true);
             });
         }
-
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(client_class->getName()),
@@ -2745,7 +2718,7 @@ public:
     /// @return Number of deleted client classes.
     uint64_t deleteClientClass4(const ServerSelector& server_selector,
                                 const std::string& name) {
-        int index = server_selector.amAny() ? 
+        int index = server_selector.amAny() ?
             MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_ANY :
             MySqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4;
 
@@ -2953,10 +2926,12 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
       "CALL createAuditRevisionDHCP4(?, ?, ?, ?)"
     },
+
     // Verify that dependency on KNOWN/UNKNOWN class has not changed.
     { MySqlConfigBackendDHCPv4Impl::CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
       "CALL checkDHCPv4ClientClassKnownDependencyChange()"
     },
+
     // Select global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::GET_GLOBAL_PARAMETER4,
       MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
@@ -3033,7 +3008,7 @@ TaggedStatementArray tagged_statements = { {
                                      AND p.end_address = ?)
     },
 
-    // Select pool by address range for any server
+    // Select pool by address range for any server.
     { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE_ANY,
       MYSQL_GET_POOL4_RANGE_NO_TAG(WHERE p.start_address = ? AND p.end_address = ?)
     },
