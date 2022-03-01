@@ -636,7 +636,7 @@ namespace {
     "  ON a.revision_id = r.id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON r.server_id = s.id " \
-    "WHERE (s.tag = ? OR s.id = 1) AND ((r.modification_ts, r.id)  > (?, ?))" \
+    "WHERE (s.tag = ? OR s.id = 1) AND ((r.modification_ts, r.id) > (?, ?))" \
     " ORDER BY r.modification_ts, r.id"
 #endif
 

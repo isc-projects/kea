@@ -632,7 +632,7 @@ namespace {
     "  ON a.revision_id = r.id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON r.server_id = s.id " \
-    "WHERE (s.tag = $1 OR s.id = 1) AND ((r.modification_ts, r.id)  > (cast($2 as timestamp), $3))" \
+    "WHERE (s.tag = $1 OR s.id = 1) AND ((r.modification_ts, r.id) > (cast($2 as timestamp), $3))" \
     " ORDER BY r.modification_ts, r.id, a.id"
 #endif
 
@@ -1006,7 +1006,7 @@ namespace {
     "  is_array = $6," \
     "  encapsulate = $7," \
     "  record_types = $8," \
-    "  user_context =  cast($9 as json) " \
+    "  user_context = cast($9 as json) " \
     "FROM " #table_prefix "_option_def_server as a, " \
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND " \
@@ -1035,7 +1035,7 @@ namespace {
     "WHERE " #__VA_ARGS__
 
 #define PGSQL_UPDATE_OPTION4_NO_TAG(...) \
-    PGSQL_UPDATE_OPTION_NO_TAG(dhcp4, "",  __VA_ARGS__)
+    PGSQL_UPDATE_OPTION_NO_TAG(dhcp4, "", __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_NO_TAG(...) \
     PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $13 ", __VA_ARGS__)
@@ -1060,8 +1060,8 @@ namespace {
     pd_pool_id \
     "FROM " #table_prefix "_options_server as a, " \
     "     " #table_prefix "_server as s " \
-    "WHERE  o.option_id = a.option_id AND " \
-    "       a.server_id = s.id " \
+    "WHERE o.option_id = a.option_id AND " \
+    "      a.server_id = s.id " \
     #__VA_ARGS__
 
 #define PGSQL_UPDATE_OPTION4_WITH_TAG(...) \
@@ -1136,7 +1136,7 @@ namespace {
     "WHERE g.id in ( " \
     "   SELECT g.id FROM " #table_prefix "_global_parameter AS g " \
     "   LEFT JOIN " #table_prefix "_global_parameter_server AS a ON g.id = a.parameter_id " \
-    "   WHERE a.parameter_id IS NULL)  " #__VA_ARGS__
+    "   WHERE a.parameter_id IS NULL) " #__VA_ARGS__
 #endif
 
 #ifndef PGSQL_DELETE_SUBNET_COMMON
@@ -1239,7 +1239,7 @@ namespace {
     "WHERE d.id in ( " \
     "   SELECT d.id FROM " #table_prefix "_option_def AS d " \
     "   LEFT JOIN " #table_prefix "_option_def_server AS a ON d.id = a.option_def_id " \
-    "   WHERE a.option_def_id IS NULL)  " #__VA_ARGS__
+    "   WHERE a.option_def_id IS NULL) " #__VA_ARGS__
 #endif
 
 #ifndef PGSQL_DELETE_OPTION_DEFS_CLIENT_CLASS
@@ -1282,7 +1282,7 @@ namespace {
     "WHERE o.option_id in ( " \
     "   SELECT o.option_id FROM " #table_prefix "_options AS o " \
     "   LEFT JOIN " #table_prefix "_options_server AS a ON o.option_id = a.option_id " \
-    "   WHERE a.option_id IS NULL)  " #__VA_ARGS__
+    "   WHERE a.option_id IS NULL) " #__VA_ARGS__
 #endif
 
 #ifndef PGSQL_DELETE_OPTION_POOL_RANGE
