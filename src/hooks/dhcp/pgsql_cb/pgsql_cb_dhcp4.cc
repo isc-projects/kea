@@ -2449,18 +2449,17 @@ public:
             deleteOptions4(ServerSelector::ANY(), client_class);
             deleteOptionDefs4(ServerSelector::ANY(), client_class);
 
-            if (follow_class_name.empty()) {
-                // leave follow name on there, SQL ignores it
-                // in_bindings.popBack();
+            // Note follow_class_name is left in the bindings even though it is
+            // needed in both cases. This allows us to use one base query.
+            // Add the class name for the where clause.
+            in_bindings.add(class_name);
 
-                // Add the class name for the where clause.
-                in_bindings.add(class_name);
+            if (follow_class_name.empty()) {
+                // If position is not specified, leave the class at the same position.
                 updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4_SAME_POSITION,
                                   in_bindings);
             } else {
                 // Update with follow_class_name specifying the position.
-                // Add the class name for the where clause.
-                in_bindings.add(class_name);
                 updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
                                   in_bindings);
             }
