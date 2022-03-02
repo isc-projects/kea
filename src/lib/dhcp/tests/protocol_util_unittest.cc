@@ -413,40 +413,4 @@ TEST(ScopedEnableOptionsCopy, enableOptionsCopy) {
     }
 }
 
-TEST(ScopedOptionsCopy, optionsCopy) {
-    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
-    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
-    OptionCollectionPtr options = pkt->options_;
-    pkt->addOption(option);
-    size_t count = pkt->options_->size();
-    ASSERT_NE(0, count);
-    ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
-    {
-        ScopedOptionsCopy<Pkt4> oc(pkt);
-        ASSERT_NE(pkt->options_, options);
-        ASSERT_EQ(*pkt->options_, *options);
-        pkt->delOption(DHO_BOOT_FILE_NAME);
-        ASSERT_EQ(pkt->options_->size(), count - 1);
-        ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
-    }
-    ASSERT_EQ(pkt->options_, options);
-    ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
-    {
-        try {
-            ScopedOptionsCopy<Pkt4> oc(pkt);
-            ASSERT_NE(pkt->options_, options);
-            ASSERT_EQ(*pkt->options_, *options);
-            pkt->delOption(DHO_BOOT_FILE_NAME);
-            ASSERT_EQ(pkt->options_->size(), count - 1);
-            ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
-            throw 0;
-        } catch (...) {
-            ASSERT_EQ(pkt->options_, options);
-            ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
-        }
-        ASSERT_EQ(pkt->options_, options);
-        ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
-    }
-}
-
 } // anonymous namespace

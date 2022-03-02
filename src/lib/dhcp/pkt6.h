@@ -585,7 +585,6 @@ protected:
 }; // Pkt6 class
 
 } // isc::dhcp namespace
-
 } // isc namespace
 
 #endif

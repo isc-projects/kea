@@ -144,7 +144,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
 
     // Get all options in the reply message and pick IA_NA, IA_PD and
     // Status code.
-    for (const auto& opt : *reply->options_) {
+    for (const auto& opt : reply->options_) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt.second);
         if (!ia) {
             // This is not IA, so let's just store it.
@@ -873,7 +873,7 @@ Dhcp6Client::getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const 
     }
 
     // Get all options in the response message and pick IA_NA, IA_PD.
-    for (const auto& opt : *context_.response_->options_) {
+    for (const auto& opt : context_.response_->options_) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt.second);
         if (!ia) {
             // This is not IA, so let's just skip it.

@@ -1764,7 +1764,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // responses in answer message (ADVERTISE or REPLY).
     //
     // @todo: IA_TA once we implement support for temporary addresses.
-    for (const auto& opt : (*question->options_)) {
+    for (const auto& opt : question->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = assignIA_NA(question, ctx,
@@ -2656,7 +2656,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Save the originally selected subnet.
     Subnet6Ptr orig_subnet = ctx.subnet_;
 
-    for (const auto& opt : (*query->options_)) {
+    for (const auto& opt : query->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = extendIA_NA(query, ctx,
@@ -2708,7 +2708,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
-    for (const auto& opt : (*release->options_)) {
+    for (const auto& opt : release->options_) {
         Lease6Ptr old_lease;
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
@@ -3406,7 +3406,7 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 
-    for (const auto& opt : (*decline->options_)) {
+    for (const auto& opt : decline->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,

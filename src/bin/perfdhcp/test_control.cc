@@ -861,7 +861,7 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
         std::set<std::string> current;
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        for (const auto& opt : *pkt6->options_) {
+        for (const auto& opt : pkt6->options_) {
             switch (opt.second->getType()) {
             case D6O_IA_PD: {
                 // add address and check if it has not been already assigned

@@ -1194,7 +1194,7 @@ protected:
 /// option[149].exists - check if option 149 exists
 /// option[149].option[1].exists - check if suboption 1 exists in the option 149
 /// option[149].option[1].hex - return content of suboption 1 for option 149
-class TokenSubOption : public TokenOption {
+class TokenSubOption : public virtual TokenOption {
 public:
 
     /// @note Does not define its own representation type:

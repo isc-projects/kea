@@ -35,7 +35,7 @@ bool
 PerfPkt6::rawPack() {
     return (PktTransform::pack(dhcp::Option::V6,
                                data_,
-                               *options_,
+                               options_,
                                getTransidOffset(),
                                getTransid(),
                                buffer_out_));
@@ -46,7 +46,7 @@ PerfPkt6::rawUnpack() {
     uint32_t transid = getTransid();
     bool res =  PktTransform::unpack(dhcp::Option::V6,
                                      data_,
-                                     *options_,
+                                     options_,
                                      getTransidOffset(),
                                      transid);
     if (res) {

@@ -253,7 +253,7 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (const auto& it : *options_) {
+    for (const auto& it : options_) {
         length += it.second->len();
     }
 
@@ -330,7 +330,7 @@ Pkt6::packUDP() {
         buffer_out_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions6(buffer_out_, *options_);
+        LibDHCP::packOptions6(buffer_out_, options_);
     }
     catch (const Exception& e) {
        // An exception is thrown and message will be written to Logger
@@ -412,7 +412,7 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
 
     // If custom option parsing function has been set, use this function
     // to parse options. Otherwise, use standard function from libdhcp.
-    size_t offset = LibDHCP::unpackOptions6(opt_buffer, DHCP6_OPTION_SPACE, *options_);
+    size_t offset = LibDHCP::unpackOptions6(opt_buffer, DHCP6_OPTION_SPACE, options_);
 
     // If offset is not equal to the size, then something is wrong here. We
     // either parsed past input buffer (bug in our code) or we haven't parsed
@@ -627,7 +627,7 @@ Pkt6::toText() const {
         hex << transid_ << dec << endl;
 
     // Then print the options
-    for (const auto& opt : *options_) {
+    for (const auto& opt : options_) {
         tmp << opt.second->toText() << std::endl;
     }
 
@@ -664,7 +664,7 @@ Pkt6::getClientId() const {
 isc::dhcp::OptionCollection
 Pkt6::getNonCopiedOptions(const uint16_t opt_type) const {
     std::pair<OptionCollection::const_iterator,
-              OptionCollection::const_iterator> range = options_->equal_range(opt_type);
+              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
     return (OptionCollection(range.first, range.second));
 }
 
@@ -673,7 +673,7 @@ Pkt6::getOptions(const uint16_t opt_type) {
     OptionCollection options_copy;
 
     std::pair<OptionCollection::iterator,
-              OptionCollection::iterator> range = options_->equal_range(opt_type);
+              OptionCollection::iterator> range = options_.equal_range(opt_type);
     // If options should be copied on retrieval, we should now iterate over
     // matching options, copy them and replace the original ones with new
     // instances.
@@ -932,5 +932,5 @@ Pkt6::getMACFromRemoteIdRelayOption() {
     return (mac);
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+} // end of namespace isc::dhcp
+} // end of namespace isc

@@ -60,7 +60,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (const auto& it : *options_) {
+    for (const auto& it : options_) {
         length += it.second->len();
     }
 
@@ -119,7 +119,7 @@ Pkt4::pack() {
 
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.
-        LibDHCP::packOptions4(buffer_out_, *options_, true);
+        LibDHCP::packOptions4(buffer_out_, options_, true);
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)
@@ -187,7 +187,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
 
-    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, *options_, deferred_options_, false);
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_, false);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input
@@ -413,9 +413,9 @@ Pkt4::toText() const {
 
     output << ", transid=0x" << hex << transid_ << dec;
 
-    if (!options_->empty()) {
+    if (!options_.empty()) {
         output << "," << std::endl << "options:";
-        for (const auto& opt : *options_) {
+        for (const auto& opt : options_) {
             try {
                 output << std::endl << opt.second->toText(2);
             } catch (...) {

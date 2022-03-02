@@ -78,56 +78,6 @@ private:
     std::pair<PktTypePtr, PktTypePtr> pkts_;
 };
 
-/// @brief RAII object enabling duplication of the stored options and restoring
-/// the original options on destructor.
-///
-/// This object enables duplication of the stored options and restoring the
-/// original options on destructor. When the object goes out of scope, the
-/// initial options are restored. This is applicable in cases when the server is
-/// going to invoke a callout (hook library) where the list of options in the
-/// packet will be modified. The use of RAII object eliminates the need for
-/// explicitly copying and restoring the list of options and is safer in case of
-/// exceptions thrown by callouts and a presence of multiple exit points.
-///
-/// @tparam PktType Type of the packet, e.g. Pkt4, Pkt6, Pkt4o6.
-template<typename PktType>
-class ScopedOptionsCopy {
-public:
-
-    /// @brief Pointer to an encapsulated packet.
-    typedef boost::shared_ptr<PktType> PktTypePtr;
-
-    /// @brief Constructor.
-    ///
-    /// Creates a copy of the initial options on a packet(s).
-    ///
-    /// @param pkt Pointer to the packet.
-    ScopedOptionsCopy(const PktTypePtr& pkt)
-        : pkt_(pkt) {
-        if (pkt) {
-            options_ = pkt->options_;
-            pkt->options_ = OptionCollectionPtr(new OptionCollection(*options_));
-        }
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Restores the initial options on a packet.
-    ~ScopedOptionsCopy() {
-        if (pkt_) {
-            pkt_->options_ = options_;
-        }
-    }
-
-private:
-
-    /// @brief Holds a pointer to the packet.
-    PktTypePtr pkt_;
-
-    /// @brief Holds a pointer to the initial packet options.
-    OptionCollectionPtr options_;
-};
-
 /// @brief Base class for classes representing DHCP messages.
 ///
 /// This is a base class that holds common information (e.g. source
@@ -661,7 +611,7 @@ public:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::OptionCollectionPtr options_;
+    isc::dhcp::OptionCollection options_;
 
 protected:
 
@@ -846,7 +796,7 @@ private:
 /// @brief A pointer to either Pkt4 or Pkt6 packet
 typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
-} // namespace isc::dhcp
-} // namespace isc
+} // end of namespace isc::dhcp
+} // end of namespace isc
 
 #endif
