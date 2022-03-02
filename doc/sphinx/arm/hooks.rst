@@ -1306,6 +1306,39 @@ Examples:
 Some data might be available in the request or in the response only, and some
 data might differ in the incoming packet from the one in the response packet.
 
+Notes:
+
+In the case of IPv6, the packets can contain multiple IA_NA (3) or IA_PD (25)
+options, each containing multiple options, including OPTION_IAADDR (5) or
+OPTION_IAPREFIX (25) suboptions.
+To be able to print the current lease associated with the log entry, the
+forensic log hook library internally isolates the corresponding IA_NA or IA_PD
+option and respective suboptions matching the current lease.
+The hook library will iterate over all new allocated addresses and all deleted
+addresses, making each address available for logging as the current lease for
+the respective logged entry.
+
+They are accessible using the following parser expressions:
+
+Current lease associated with OPTION_IAADDR:
+
+::
+
+    addrtotext(substring(option[3].option[5].hex, 0, 16))
+
+Current lease associated with OPTION_IAPREFIX:
+
+::
+
+    addrtotext(substring(option[25].option[26].hex, 9, 16))
+
+All other parameters of the options are available at their respective offsets
+in the option. Please read corresponding RFC for more details:
+
+IA_NA and OPTION_IAADDR are available in RFC3315.
+
+IA_PD and OPTION_IAPREFIX are available in RFC3633.
+
 Examples:
 
 .. code-block:: json
