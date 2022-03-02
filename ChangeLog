@@ -1,3 +1,9 @@
+1958.	[build]		andrei
+	Froze sphinx dependency versions used to build documentation.
+	Added the update-python-dependencies Makefile rule to bump the
+	versions.
+	(Gitlab #2161, #2340)
+
 Kea 2.0.2 (stable) released on March 2, 2022
 
 1957.	[build]		razvan
