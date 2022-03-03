@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <asiolink/addr_utilities.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/server.h>
@@ -91,7 +92,8 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     ElementPtr user_context = Element::createMap();
     user_context->set("foo", Element::create("bar"));
 
-    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 30, 40, 60, 1024));
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24,
+                                  30, 40, 60, 1024));
     subnet->get4o6().setIface4o6("eth0");
     subnet->get4o6().setInterfaceId(OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID,
                                                          interface_id)));
@@ -118,10 +120,12 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setT2Percent(0.444);
     subnet->setDdnsSendUpdates(false);
 
-    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
+                             IOAddress("192.0.2.20")));
     subnet->addPool(pool1);
 
-    Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.50"), IOAddress("192.0.2.60")));
+    Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.50"),
+                             IOAddress("192.0.2.60")));
     subnet->addPool(pool2);
 
     // Add several options to the subnet.
@@ -142,9 +146,11 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     // Adding another subnet with the same subnet id to test
     // cases that this second instance can override existing
     // subnet instance.
-    subnet.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 20, 30, 40, 1024));
+    subnet.reset(new Subnet4(IOAddress("10.0.0.0"),
+                             8, 20, 30, 40, 1024));
 
-    pool1.reset(new Pool4(IOAddress("10.0.0.10"), IOAddress("10.0.0.20")));
+    pool1.reset(new Pool4(IOAddress("10.0.0.10"),
+                          IOAddress("10.0.0.20")));
     subnet->addPool(pool1);
 
     pool1->getCfgOption()->add(test_options_[3]->option_,
@@ -155,7 +161,8 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
                                test_options_[4]->persistent_,
                                test_options_[4]->space_name_);
 
-    pool2.reset(new Pool4(IOAddress("10.0.0.50"), IOAddress("10.0.0.60")));
+    pool2.reset(new Pool4(IOAddress("10.0.0.50"),
+                          IOAddress("10.0.0.60")));
 
     pool2->allowClientClass("work");
     pool2->requireClientClass("required-class3");
@@ -187,8 +194,9 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     test_subnets_.push_back(subnet);
 
     // Add a subnet with all defaults.
-    subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 24, Triplet<uint32_t>(),
-                             Triplet<uint32_t>(), Triplet<uint32_t>(), 4096));
+    subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 24,
+                             Triplet<uint32_t>(), Triplet<uint32_t>(),
+                             Triplet<uint32_t>(), 4096));
     test_subnets_.push_back(subnet);
 }
 
@@ -222,16 +230,16 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,
-                                            test_options_[2]->persistent_,
-                                            test_options_[2]->space_name_);
+                                        test_options_[2]->persistent_,
+                                        test_options_[2]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[3]->option_,
-                                            test_options_[3]->persistent_,
-                                            test_options_[3]->space_name_);
+                                        test_options_[3]->persistent_,
+                                        test_options_[3]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[4]->option_,
-                                            test_options_[4]->persistent_,
-                                            test_options_[4]->space_name_);
+                                        test_options_[4]->persistent_,
+                                        test_options_[4]->space_name_);
 
     test_networks_.push_back(shared_network);
 
@@ -324,8 +332,10 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
     desc.space_name_ = "isc";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option4AddrLst>(2, false, true, "10.0.0.5",
-                                               "10.0.0.3", "10.0.3.4");
+    desc = createAddressOption<Option4AddrLst>(2, false, true,
+                                               "10.0.0.5",
+                                               "10.0.0.3",
+                                               "10.0.3.4");
     desc.space_name_ = "isc";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
@@ -352,7 +362,8 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
                                                           DHCP4_OPTION_SPACE,
                                                           "ipv4-address", true)));
     defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "isc", "empty")));
-    defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "isc", "ipv4-address", true)));
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "isc",
+                                                          "ipv4-address", true)));
 
     // Register option definitions.
     LibDHCP::setRuntimeOptionDefs(defs);
@@ -505,7 +516,6 @@ GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::string& exp_object_
     }
 }
 
-
 void
 GenericConfigBackendDHCPv4Test::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
                                                   const ServerSelector& server_selector) {
@@ -591,7 +601,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteServerTest() {
     // Try to fetch the server which we expect to exist.
     ASSERT_NO_THROW_LOG(returned_server = cbptr_->getServer4(ServerTag("server1")));
     ASSERT_TRUE(returned_server);
-    EXPECT_EQ("server1", returned_server->getServerTag().get());
+    EXPECT_EQ("server1", returned_server->getServerTagAsText());
     EXPECT_EQ("this is server 1", returned_server->getDescription());
     EXPECT_EQ(timestamps_["yesterday"], returned_server->getModificationTime());
 
@@ -1067,8 +1077,18 @@ GenericConfigBackendDHCPv4Test::nullKeyErrorTest() {
     // Create a global parameter (it should work with any object type).
     StampedValuePtr global_parameter = StampedValue::create("global", "value");
 
-    ASSERT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
-                                                      global_parameter), NullKeyError);
+    // Try to insert it and associate with non-existing server.
+    std::string msg;
+    try {
+        cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
+                                             global_parameter);
+        msg = "got no exception";
+    } catch (const NullKeyError& ex) {
+        msg = ex.what();
+    } catch (const std::exception&) {
+        msg = "got another exception";
+    }
+    EXPECT_EQ("server 'server1' does not exist", msg);
 }
 
 void
@@ -1215,7 +1235,8 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     EXPECT_FALSE(cbptr_->getSubnet4(ServerSelector::ONE("server1"), subnet2->toText()));
 
     // Update the subnet in the database (both use the same prefix).
-    subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
+    subnet2.reset(new Subnet4(IOAddress("192.0.3.0"),
+                              24, 30, 40, 60, 8192));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2));
 
     // Fetch again and verify.
@@ -1226,7 +1247,8 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     // Update the subnet when it conflicts same id and same prefix both
     // with different subnets. This should throw.
     // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
-    subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
+    subnet2.reset(new Subnet4(IOAddress("10.0.0.0"),
+                              8, 30, 40, 60, 8192));
     EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2),
                  DuplicateEntry);
 }
@@ -1365,6 +1387,8 @@ GenericConfigBackendDHCPv4Test::getSubnet4SharedNetworkTest() {
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getServerTags().size());
+    EXPECT_EQ("all", returned_subnet->getServerTags().begin()->get());
 
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
@@ -2068,8 +2092,8 @@ GenericConfigBackendDHCPv4Test::subnetOptionsTest() {
     // Add the first subnet again. We should now have 4 options: 3 options from the
     // newly added subnet and one option from the existing subnet.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
-    EXPECT_EQ(4, countRows("dhcp4_options"));
     EXPECT_EQ(2, countRows("dhcp4_pool"));
+    EXPECT_EQ(4, countRows("dhcp4_options"));
 
     // Delete the subnet including 3 options. The option from the other subnet should not
     // be affected.
@@ -2224,7 +2248,7 @@ GenericConfigBackendDHCPv4Test::createUpdateSharedNetwork4Test() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                                            shared_network));
     {
-        SCOPED_TRACE("CREATE audit entry for shared network and MULTIPLE servers");
+        SCOPED_TRACE("UPDATE audit entry for shared network and MULTIPLE servers");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::UPDATE,
                           "shared network set");
@@ -3244,7 +3268,8 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
         // The last parameter indicates that we expect two new audit entries.
         testNewAuditEntry("dhcp4_option_def",
                           AuditEntry::ModificationType::DELETE,
-                          "deleted all option definitions", ServerSelector::ALL(), 2);
+                          "deleted all option definitions",
+                          ServerSelector::ALL(), 2);
     }
 }
 
@@ -3302,7 +3327,8 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteOption4Test() {
 
     {
         SCOPED_TRACE("verify created option");
-        testOptionsEquivalent(*test_options_[0], *returned_opt_boot_file_name);
+        testOptionsEquivalent(*opt_boot_file_name,
+                              *returned_opt_boot_file_name);
     }
 
     {
@@ -3327,7 +3353,8 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteOption4Test() {
 
     {
         SCOPED_TRACE("verify updated option");
-        testOptionsEquivalent(*opt_boot_file_name, *returned_opt_boot_file_name);
+        testOptionsEquivalent(*opt_boot_file_name,
+                              *returned_opt_boot_file_name);
     }
 
     {
@@ -3755,7 +3782,8 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
     ASSERT_EQ(2, countRows("dhcp4_options"));
 
     // Add an option into the pool.
-    const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
+    const PoolPtr pool = subnet->getPool(Lease::TYPE_V4,
+                                         IOAddress("192.0.2.10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ANY(),

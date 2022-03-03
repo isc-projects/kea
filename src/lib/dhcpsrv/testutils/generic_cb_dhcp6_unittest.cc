@@ -90,12 +90,12 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     std::string interface_id_text = "whale";
     OptionBuffer interface_id(interface_id_text.begin(), interface_id_text.end());
     OptionPtr opt_interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
-                                              interface_id));
+                                          interface_id));
     ElementPtr user_context = Element::createMap();
     user_context->set("foo", Element::create("bar"));
 
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"),
-                                      64, 30, 40, 50, 60, 1024));
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
+                                  30, 40, 50, 60, 1024));
     subnet->allowClientClass("home");
     subnet->setIface("eth1");
     subnet->setInterfaceId(opt_interface_id);
@@ -159,8 +159,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pool1);
 
     pool1->getCfgOption()->add(test_options_[3]->option_,
-                              test_options_[3]->persistent_,
-                              test_options_[3]->space_name_);
+                               test_options_[3]->persistent_,
+                               test_options_[3]->space_name_);
 
     pool1->getCfgOption()->add(test_options_[4]->option_,
                                test_options_[4]->persistent_,
@@ -300,7 +300,6 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->getCfgOption()->add(test_options_[0]->option_,
                                         test_options_[0]->persistent_,
                                         test_options_[0]->space_name_);
-
     test_networks_.push_back(shared_network);
 
     shared_network.reset(new SharedNetwork6("level3"));
@@ -313,9 +312,9 @@ GenericConfigBackendDHCPv6Test::initTestOptionDefs() {
     user_context->set("foo", Element::create("bar"));
 
     OptionDefinitionPtr option_def(new OptionDefinition("foo", 1234,
-                                                         DHCP6_OPTION_SPACE,
-                                                         "string",
-                                                         "espace"));
+                                                        DHCP6_OPTION_SPACE,
+                                                        "string",
+                                                        "espace"));
     test_option_defs_.push_back(option_def);
 
     option_def.reset(new OptionDefinition("bar", 1234, DHCP6_OPTION_SPACE,
@@ -343,13 +342,15 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
 
     OptionDefSpaceContainer defs;
 
-    OptionDescriptor desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
-                                                       true, false, "my-timezone");
+    OptionDescriptor desc =
+        createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
+                                   true, false, "my-timezone");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createOption<OptionUint8>(Option::V6, D6O_PREFERENCE, false, true, 64);
+    desc = createOption<OptionUint8>(Option::V6, D6O_PREFERENCE,
+                                     false, true, 64);
     desc.space_name_ = DHCP6_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
@@ -357,7 +358,8 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
     desc.space_name_ = "vendor-encapsulated-options";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option6AddrLst>(1254, true, true, "2001:db8::3");
+    desc = createAddressOption<Option6AddrLst>(1254, true, true,
+                                               "2001:db8::3");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
@@ -374,14 +376,12 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
 
     desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
                                       true, false, "my-timezone-2");
-
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
                                       true, false, "my-timezone-3");
-
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
@@ -393,11 +393,9 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
     defs.addItem(OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1", 1,
                                                           "vendor-encapsulated-options",
                                                           "uint32")));
-
     defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1254", 1254,
                                                           DHCP6_OPTION_SPACE,
                                                           "ipv6-address", true)));
-
     defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "isc", "empty")));
     defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "isc",
                                                           "ipv6-address", true)));
@@ -431,19 +429,14 @@ GenericConfigBackendDHCPv6Test::initTimestamps() {
                            - boost::posix_time::hours(1);
     // One second after today.
     timestamps_["after today"] = timestamps_["today"] + boost::posix_time::seconds(1);
-
     // Yesterday.
     timestamps_["yesterday"] = timestamps_["today"] - boost::posix_time::hours(24);
-
     // One second after yesterday.
     timestamps_["after yesterday"] = timestamps_["yesterday"] + boost::posix_time::seconds(1);
-
     // Two days ago.
     timestamps_["two days ago"] = timestamps_["today"] - boost::posix_time::hours(48);
-
     // Tomorrow.
     timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
-
     // One second after tomorrow.
     timestamps_["after tomorrow"] = timestamps_["tomorrow"] + boost::posix_time::seconds(1);
 }
@@ -511,14 +504,13 @@ GenericConfigBackendDHCPv6Test::testNewAuditEntry(const std::string& exp_object_
                                                   const ServerSelector& server_selector,
                                                   const size_t new_entries_num,
                                                   const size_t max_tested_entries) {
-
     // Get the server tag for which the entries are fetched.
     std::string tag;
     if (server_selector.getType() == ServerSelector::Type::ALL) {
         // Server tag is 'all'.
         tag = "all";
     } else {
-        auto tags = server_selector.getTags();
+        const auto& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() > 1) {
             ADD_FAILURE() << "Test error: do not use multiple server tags";
@@ -609,7 +601,6 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteServerTest() {
     EXPECT_EQ("this is server 1 bis", returned_server->getDescription());
     EXPECT_EQ(timestamps_["today"], returned_server->getModificationTime());
 
-
     uint64_t servers_deleted = 0;
 
     // Try to delete non-existing server.
@@ -673,6 +664,8 @@ GenericConfigBackendDHCPv6Test::getAndDeleteAllServersTest() {
     // The number of deleted server should be equal to the number of
     // inserted servers. The logical 'all' server should be excluded.
     EXPECT_EQ(test_servers_.size() - 1, deleted_servers);
+
+    EXPECT_EQ(1, countRows("dhcp6_server"));
 }
 
 void
@@ -726,6 +719,8 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteGlobalParameter6Test() {
     EXPECT_EQ("fish", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
+    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    EXPECT_EQ("all", returned_global_parameter->getServerTags().begin()->get());
 
     {
         SCOPED_TRACE("UPDATE audit entry for the global parameter");
@@ -786,7 +781,7 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
     // This time inserting the global parameters for the server1 and server2 should
     // be successful.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
-                                                         global_parameter1));
+                                                             global_parameter1));
     {
         SCOPED_TRACE("Global parameter for server1 is set");
         // The value of 3 means there should be 3 audit entries available for the
@@ -799,9 +794,8 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
                           3, 1);
     }
 
-
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server2"),
-                                                         global_parameter2));
+                                                             global_parameter2));
     {
         SCOPED_TRACE("Global parameter for server2 is set");
         // Same as in case of the server2, there should be 3 audit entries of
@@ -815,7 +809,7 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
 
     // The last parameter is associated with all servers.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateGlobalParameter6(ServerSelector::ALL(),
-                                                         global_parameter3));
+                                                             global_parameter3));
     {
         SCOPED_TRACE("Global parameter for all servers is set");
         // There should be one new audit entry for all servers. It indicates
@@ -927,19 +921,19 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
     // Attempt to delete global parameter for server1.
     uint64_t deleted_num = 0;
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteGlobalParameter6(ServerSelector::ONE("server1"),
-                                                                 "global"));
+                                                                     "global"));
     // No parameters should be deleted. In particular, the parameter for the logical
     // server 'all' should not be deleted.
     EXPECT_EQ(0, deleted_num);
 
     // Deleting the existing value for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteGlobalParameter6(ServerSelector::ONE("server2"),
-                                                                 "global"));
+                                                                     "global"));
     EXPECT_EQ(1, deleted_num);
 
     // Create it again to test that deletion of all server removes this too.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server2"),
-                                                         global_parameter2));
+                                                             global_parameter2));
 
     // Delete all servers, except 'all'.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteAllServers6());
@@ -988,18 +982,18 @@ GenericConfigBackendDHCPv6Test::getAllGlobalParameters6Test() {
 
     const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
-    for (auto param = parameters_index.begin(); param != parameters_index.end();
-         ++param) {
-        ASSERT_EQ(1, (*param)->getServerTags().size());
-        EXPECT_EQ("all", (*param)->getServerTags().begin()->get());
-    }
-
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
     EXPECT_EQ(65, (*parameters_index.find("name2"))->getIntegerValue());
     EXPECT_EQ("value3", (*parameters_index.find("name3"))->getValue());
     EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
+
+    for (auto param = parameters_index.begin(); param != parameters_index.end();
+         ++param) {
+        ASSERT_EQ(1, (*param)->getServerTags().size());
+        EXPECT_EQ("all", (*param)->getServerTags().begin()->get());
+    }
 
     // Should be able to fetch these parameters when explicitly providing
     // the server tag.
@@ -1078,19 +1072,19 @@ GenericConfigBackendDHCPv6Test::nullKeyErrorTest() {
 
 void
 GenericConfigBackendDHCPv6Test::createUpdateSubnet6SelectorsTest() {
-    ASSERT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
-    ASSERT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[0]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[2]));
 
     // Supported selectors.
     Subnet6Ptr subnet = test_subnets_[0];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(),
-                                                subnet));
+                                                    subnet));
     subnet = test_subnets_[2];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server1"),
-                                                subnet));
+                                                    subnet));
     subnet = test_subnets_[3];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                subnet));
+                                                    subnet));
 
     // Not supported server selectors.
     EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ANY(), subnet),
@@ -1123,23 +1117,22 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
 
     // The subnet shouldn't have been added, even though one of the servers exists.
     Subnet6Ptr returned_subnet;
-    ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server2"),
-                                                                             subnet2->getID()));
+    ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server2"),
+                                                             subnet2->getID()));
     EXPECT_FALSE(returned_subnet);
 
     // Insert two subnets, one for all servers and one for server2.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("A. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp6_subnet",
                           AuditEntry::ModificationType::CREATE,
                           "subnet set");
     }
 
-
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"), subnet2));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("B. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp6_subnet",
                           AuditEntry::ModificationType::CREATE,
                           "subnet set", ServerSelector::ONE("subnet2"),
@@ -1163,17 +1156,17 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
 
         // Test fetching subnet by id.
         Subnet6Ptr returned_subnet;
-        ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet6(server_selector, subnet->getID()));
+        ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(server_selector, subnet->getID()));
         ASSERT_TRUE(returned_subnet);
 
         ASSERT_EQ(1, returned_subnet->getServerTags().size());
         EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
 
-        EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+        ASSERT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 
         // Test fetching subnet by prefix.
-        ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet6(server_selector,
-                                                             subnet->toText()));
+        ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(server_selector,
+                                                                 subnet->toText()));
         ASSERT_TRUE(returned_subnet);
 
         ASSERT_EQ(1, returned_subnet->getServerTags().size());
@@ -1200,7 +1193,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     subnet = test_subnets_[1];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
     {
-        SCOPED_TRACE("CREATE audit entry for the subnet");
+        SCOPED_TRACE("C. CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp6_subnet",
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
@@ -1223,7 +1216,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     // Update the subnet in the database (both use the same prefix).
     subnet2.reset(new Subnet6(IOAddress("2001:db8:3::"),
                               64, 30, 40, 50, 80, 8192));
-    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"),  subnet2));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"), subnet2));
 
     // Fetch again and verify.
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server2"), subnet2->toText());
@@ -1235,7 +1228,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     // Subnets are 2001:db8:1::/48 id 1024 and 2001:db8:3::/64 id 8192
     subnet2.reset(new Subnet6(IOAddress("2001:db8:1::"),
                               48, 30, 40, 50, 80, 8192));
-    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"),  subnet2),
+    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"), subnet2),
                  DuplicateEntry);
 }
 
@@ -1265,8 +1258,8 @@ GenericConfigBackendDHCPv6Test::getSubnet6WithOptionalUnspecifiedTest() {
 
     // Need to add the shared network to the database because otherwise
     // the subnet foreign key would fail.
-    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network);
-    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -1334,7 +1327,6 @@ GenericConfigBackendDHCPv6Test::getSubnet6WithOptionalUnspecifiedTest() {
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
-
 }
 
 void
@@ -1346,11 +1338,11 @@ GenericConfigBackendDHCPv6Test::getSubnet6SharedNetworkTest() {
     shared_network->add(subnet);
 
     // Store shared network in the database.
-    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                       shared_network);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
+                                                           shared_network));
 
     // Store subnet associated with the shared network in the database.
-    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -1372,7 +1364,7 @@ void
 GenericConfigBackendDHCPv6Test::getSubnet6ByPrefixTest() {
     // Insert subnet to the database.
     Subnet6Ptr subnet = test_subnets_[0];
-    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     // Fetch the subnet by prefix.
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -1439,13 +1431,13 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6Test() {
     // See if the subnets are returned ok.
     auto subnet_it = subnets.begin();
     for (auto i = 0; i < subnets.size(); ++i, ++subnet_it) {
-        EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
-                  (*subnet_it)->toElement()->str());
         ASSERT_EQ(1, (*subnet_it)->getServerTags().size());
         EXPECT_EQ("all", (*subnet_it)->getServerTags().begin()->get());
+        EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
+                  (*subnet_it)->toElement()->str());
     }
 
-    // Attempt to remove the non existing subnet should  return 0.
+    // Attempt to remove the non existing subnet should return 0.
     EXPECT_EQ(0, cbptr_->deleteSubnet6(ServerSelector::ALL(), 22));
     EXPECT_EQ(0, cbptr_->deleteSubnet6(ServerSelector::ALL(),
                                        "2001:db8:555::/64"));
@@ -1526,11 +1518,11 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[2]));
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(),
-                                                subnet1));
+                                                    subnet1));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server1"),
-                                                subnet2));
+                                                    subnet2));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                subnet3));
+                                                    subnet3));
 
     Subnet6Collection subnets;
 
@@ -1586,6 +1578,24 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6WithServerTagsTest() {
     EXPECT_TRUE(returned_subnet->hasAllServerTag());
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
+}
+
+void
+GenericConfigBackendDHCPv6Test::getModifiedSubnets6SelectorsTest() {
+    // Supported selectors.
+    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::UNASSIGNED(),
+                                                    timestamps_["yesterday"]));
+    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::ALL(),
+                                                    timestamps_["yesterday"]));
+    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::ONE("server1"),
+                                                    timestamps_["yesterday"]));
+    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                    timestamps_["yesterday"]));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getModifiedSubnets6(ServerSelector::ANY(),
+                                             timestamps_["yesterday"]),
+                 isc::InvalidOperation);
 }
 
 void
@@ -1768,12 +1778,12 @@ GenericConfigBackendDHCPv6Test::unassignedSubnet6Test() {
     // Trying to fetch the subnet by server tag should return no result.
     Subnet6Ptr returned_subnet;
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server1"),
-                                                         subnet->getID()));
+                                                             subnet->getID()));
     EXPECT_FALSE(returned_subnet);
 
     // The same if we use other calls.
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server1"),
-                                                         subnet->toText()));
+                                                             subnet->toText()));
     EXPECT_FALSE(returned_subnet);
 
     Subnet6Collection returned_subnets;
@@ -1788,11 +1798,11 @@ GenericConfigBackendDHCPv6Test::unassignedSubnet6Test() {
 
     // We should get the subnet if we ask for unassigned.
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::UNASSIGNED(),
-                                                         subnet->getID()));
+                                                             subnet->getID()));
     ASSERT_TRUE(returned_subnet);
 
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::UNASSIGNED(),
-                                                         subnet->toText()));
+                                                             subnet->toText()));
     ASSERT_TRUE(returned_subnet);
 
     // Also if we ask for all unassigned subnets it should be returned.
@@ -1808,11 +1818,11 @@ GenericConfigBackendDHCPv6Test::unassignedSubnet6Test() {
 
     // If we ask for any subnet by subnet id, it should be returned too.
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ANY(),
-                                                         subnet->getID()));
+                                                             subnet->getID()));
     ASSERT_TRUE(returned_subnet);
 
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ANY(),
-                                                         subnet->toText()));
+                                                             subnet->toText()));
     ASSERT_TRUE(returned_subnet);
 
     // Deleting the subnet with the mismatched server tag should not affect our
@@ -1884,24 +1894,6 @@ GenericConfigBackendDHCPv6Test::getModifiedSubnets6Test() {
 }
 
 void
-GenericConfigBackendDHCPv6Test::getModifiedSubnets6SelectorsTest() {
-    // Supported selectors.
-    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::UNASSIGNED(),
-                                                timestamps_["yesterday"]));
-    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::ALL(),
-                                                timestamps_["yesterday"]));
-    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::ONE("server1"),
-                                                timestamps_["yesterday"]));
-    ASSERT_NO_THROW_LOG(cbptr_->getModifiedSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                timestamps_["yesterday"]));
-
-    // Not supported selectors.
-    EXPECT_THROW(cbptr_->getModifiedSubnets6(ServerSelector::ANY(),
-                                             timestamps_["yesterday"]),
-                 isc::InvalidOperation);
-}
-
-void
 GenericConfigBackendDHCPv6Test::subnetLifetimeTest() {
     // Insert new subnet with unspecified valid lifetime
     Triplet<uint32_t> unspecified;
@@ -1963,6 +1955,10 @@ GenericConfigBackendDHCPv6Test::getSharedNetworkSubnets6Test() {
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
                              (*subnets.begin())->toElement()));
 
+    // Check server tag
+    ASSERT_EQ(1, (*subnets.begin())->getServerTags().size());
+    EXPECT_EQ("all", (*subnets.begin())->getServerTags().begin()->get());
+
     // Fetch all subnets belonging to shared network level2.
     subnets = cbptr_->getSharedNetworkSubnets6(ServerSelector::ALL(), "level2");
     ASSERT_EQ(2, subnets.size());
@@ -1998,7 +1994,7 @@ GenericConfigBackendDHCPv6Test::subnetUpdatePoolsTest() {
         // Add the subnet with two address pools and two prefix delegation
         // pools.
         ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(),
-                                                    test_subnets_[0]));
+                                                        test_subnets_[0]));
         // Make sure that the pools have been added to the database.
         EXPECT_EQ(2, countRows("dhcp6_pool"));
         EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
@@ -2094,9 +2090,9 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6Test() {
 
     // Insert two shared networks, one for all servers, and one for server2.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       shared_network));
+                                                           shared_network));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server2"),
-                                                       shared_network2));
+                                                           shared_network2));
 
     // We are not going to support selection of a single entry for multiple servers.
     EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
@@ -2109,8 +2105,8 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6Test() {
                                                      const std::string& expected_tag = ServerTag::ALL) {
         SCOPED_TRACE(test_case_name);
         SharedNetwork6Ptr network;
-        ASSERT_NO_THROW(network = cbptr_->getSharedNetwork6(server_selector,
-                                                            shared_network->getName()));
+        ASSERT_NO_THROW_LOG(network = cbptr_->getSharedNetwork6(server_selector,
+                                                                shared_network->getName()));
         ASSERT_TRUE(network);
 
         EXPECT_GT(network->getId(), 0);
@@ -2139,7 +2135,7 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6Test() {
     // Update shared network in the database.
     shared_network = test_networks_[1];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       shared_network));
+                                                           shared_network));
 
     {
         SCOPED_TRACE("testing various server selectors after update");
@@ -2212,7 +2208,7 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6Test() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       shared_network));
+                                                           shared_network));
     {
         SCOPED_TRACE("CREATE audit entry for shared network and ALL servers");
         testNewAuditEntry("dhcp6_shared_network",
@@ -2221,7 +2217,7 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6Test() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                       shared_network));
+                                                           shared_network));
     {
         SCOPED_TRACE("UPDATE audit entry for shared network and MULTIPLE servers");
         testNewAuditEntry("dhcp6_shared_network",
@@ -2230,8 +2226,8 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6Test() {
     }
 
     SharedNetwork6Ptr network;
-    ASSERT_NO_THROW(network = cbptr_->getSharedNetwork6(ServerSelector::ANY(),
-                                                        shared_network->getName()));
+    ASSERT_NO_THROW_LOG(network = cbptr_->getSharedNetwork6(ServerSelector::ANY(),
+                                                            shared_network->getName()));
     ASSERT_TRUE(network);
     EXPECT_TRUE(network->hasServerTag(ServerTag("server1")));
     EXPECT_TRUE(network->hasServerTag(ServerTag("server2")));
@@ -2240,19 +2236,19 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6Test() {
 
 void
 GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6SelectorsTest() {
-    ASSERT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
-    ASSERT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[0]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[2]));
 
     // Supported selectors.
     SharedNetwork6Ptr shared_network(new SharedNetwork6("all"));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       shared_network));
+                                                           shared_network));
     shared_network.reset(new SharedNetwork6("one"));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
-                                                       shared_network));
+                                                           shared_network));
     shared_network.reset(new SharedNetwork6("multiple"));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                       shared_network));
+                                                           shared_network));
 
     // Not supported server selectors.
     EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ANY(), shared_network),
@@ -2449,6 +2445,7 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
     // And after the shared network itself.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
+
     networks = cbptr_->getAllSharedNetworks6(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
 
@@ -2507,11 +2504,11 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[2]));
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       shared_network1));
+                                                           shared_network1));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
-                                                       shared_network2));
+                                                           shared_network2));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                       shared_network3));
+                                                           shared_network3));
 
     SharedNetwork6Collection networks;
 
@@ -2587,7 +2584,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6Test() {
     }
 
     // Fetch shared networks with timestamp later than today. Only one
-    // shared network  should be returned.
+    // shared network should be returned.
     SharedNetwork6Collection
         networks = cbptr_->getModifiedSharedNetworks6(ServerSelector::ALL(),
                                                       timestamps_["after today"]);
@@ -2596,7 +2593,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6Test() {
     // Fetch shared networks with timestamp later than yesterday. We
     // should get two shared networks.
     networks = cbptr_->getModifiedSharedNetworks6(ServerSelector::ALL(),
-                                                 timestamps_["after yesterday"]);
+                                                  timestamps_["after yesterday"]);
     ASSERT_EQ(2, networks.size());
 
     // Fetch shared networks with timestamp later than tomorrow. Nothing
@@ -2610,13 +2607,13 @@ void
 GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6SelectorsTest() {
     // Supported selectors.
     ASSERT_NO_THROW_LOG(cbptr_->getModifiedSharedNetworks6(ServerSelector::UNASSIGNED(),
-                                                       timestamps_["yesterday"]));
+                                                           timestamps_["yesterday"]));
     ASSERT_NO_THROW_LOG(cbptr_->getModifiedSharedNetworks6(ServerSelector::ALL(),
-                                                       timestamps_["yesterday"]));
+                                                           timestamps_["yesterday"]));
     ASSERT_NO_THROW_LOG(cbptr_->getModifiedSharedNetworks6(ServerSelector::ONE("server1"),
-                                                       timestamps_["yesterday"]));
+                                                           timestamps_["yesterday"]));
     ASSERT_NO_THROW_LOG(cbptr_->getModifiedSharedNetworks6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                       timestamps_["yesterday"]));
+                                                           timestamps_["yesterday"]));
 
     // Not supported selectors.
     EXPECT_THROW(cbptr_->getModifiedSharedNetworks6(ServerSelector::ANY(),
@@ -2647,7 +2644,8 @@ GenericConfigBackendDHCPv6Test::deleteSharedNetwork6Test() {
     auto shared_network2 = test_networks_[2];
     auto shared_network3 = test_networks_[3];
 
-    // Insert two shared networks, one for all servers, and one for server2.
+    // Insert three shared networks, one for all servers, one for server2 and
+    // one for two servers: server1 and server2.
     ASSERT_NO_THROW_LOG(
         cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network1)
     );
@@ -2722,7 +2720,7 @@ GenericConfigBackendDHCPv6Test::deleteSharedNetwork6SelectorsTest() {
 
     // Not supported selectors.
     EXPECT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                           "level1"),
+                                              "level1"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
@@ -2768,7 +2766,7 @@ GenericConfigBackendDHCPv6Test::unassignedSharedNetworkTest() {
     // Trying to fetch this shared network by server tag should return no result.
     SharedNetwork6Ptr returned_network;
     ASSERT_NO_THROW_LOG(returned_network = cbptr_->getSharedNetwork6(ServerSelector::ONE("server1"),
-                                                                 "level1"));
+                                                                     "level1"));
     EXPECT_FALSE(returned_network);
 
     // The same if we use other calls.
@@ -2786,7 +2784,7 @@ GenericConfigBackendDHCPv6Test::unassignedSharedNetworkTest() {
 
     // We should get the shared network if we ask for unassigned.
     ASSERT_NO_THROW_LOG(returned_network = cbptr_->getSharedNetwork6(ServerSelector::UNASSIGNED(),
-                                                                 "level1"));
+                                                                     "level1"));
     ASSERT_TRUE(returned_network);
 
     // Also if we ask for all unassigned networks it should be returned.
@@ -2802,7 +2800,7 @@ GenericConfigBackendDHCPv6Test::unassignedSharedNetworkTest() {
 
     // If we ask for any network by name, it should be returned too.
     ASSERT_NO_THROW_LOG(returned_network = cbptr_->getSharedNetwork6(ServerSelector::ANY(),
-                                                                 "level1"));
+                                                                     "level1"));
     ASSERT_TRUE(returned_network);
 
     // Deleting a shared network with the mismatched server tag should not affect
@@ -2825,7 +2823,7 @@ GenericConfigBackendDHCPv6Test::unassignedSharedNetworkTest() {
     );
     EXPECT_EQ(1, deleted_count);
 
-    // We can delete all second networks using UNASSIGNED selector.
+    // We can delete all networks using UNASSIGNED selector.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteAllSharedNetworks6(ServerSelector::UNASSIGNED());
     );
@@ -2882,7 +2880,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionsTest() {
     // Remove the shared network. This should not affect options assigned to the
     // other shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
-                                                 test_networks_[1]->getName()));
+                                                     test_networks_[1]->getName()));
     EXPECT_EQ(1, countRows("dhcp6_shared_network"));
     EXPECT_EQ(1, countRows("dhcp6_options"));
 
@@ -2894,7 +2892,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionsTest() {
     // Delete this shared network. This should not affect the option associated
     // with the remaining shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
-                                                 test_networks_[0]->getName()));
+                                                     test_networks_[0]->getName()));
     EXPECT_EQ(1, countRows("dhcp6_shared_network"));
     EXPECT_EQ(1, countRows("dhcp6_options"));
 }
@@ -2980,7 +2978,7 @@ GenericConfigBackendDHCPv6Test::optionDefs6WithServerTagsTest() {
 
     // This time creation of the option definition for the server1 should pass.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server1"),
-                                                   option1));
+                                                       option1));
     {
         SCOPED_TRACE("option definition for server1 is set");
         // The value of 3 means there should be 3 audit entries available for the
@@ -2995,7 +2993,7 @@ GenericConfigBackendDHCPv6Test::optionDefs6WithServerTagsTest() {
 
     // Creation of the option definition for the server2 should also pass.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server2"),
-                                                   option2));
+                                                       option2));
     {
         SCOPED_TRACE("option definition for server2 is set");
         // Same as in case of the server1, there should be 3 audit entries and
@@ -3010,7 +3008,7 @@ GenericConfigBackendDHCPv6Test::optionDefs6WithServerTagsTest() {
     // Finally, creation of the option definition for all servers should
     // also pass.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef6(ServerSelector::ALL(),
-                                                   option3));
+                                                       option3));
     {
         SCOPED_TRACE("option definition for server2 is set");
         // There should be one new audit entry for all servers. It logs
@@ -3102,20 +3100,20 @@ GenericConfigBackendDHCPv6Test::optionDefs6WithServerTagsTest() {
     // Attempt to delete option definition for server1.
     uint64_t deleted_num = 0;
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ONE("server1"),
-                                                           option1->getCode(),
-                                                           option1->getOptionSpaceName()));
+                                                               option1->getCode(),
+                                                               option1->getOptionSpaceName()));
     EXPECT_EQ(0, deleted_num);
 
     // Deleting the existing option definition for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ONE("server2"),
-                                                           option2->getCode(),
-                                                           option2->getOptionSpaceName()));
+                                                               option2->getCode(),
+                                                               option2->getOptionSpaceName()));
     EXPECT_EQ(1, deleted_num);
 
     // Create this option definition again to test that deletion of all servers
     // removes it too.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server2"),
-                                                   option2));
+                                                       option2));
 
     // Delete all servers, except 'all'.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteAllServers6());
@@ -3147,17 +3145,16 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
 
         // That option definition overrides the first one so the audit entry should
         // indicate an update.
-        if (option_def->getName() == "bar") {
-            SCOPED_TRACE("UPDATE audit entry for the option definition " +
-                         option_def->getName());
+        auto name = option_def->getName();
+        if (name.find("bar") != std::string::npos) {
+            SCOPED_TRACE("UPDATE audit entry for the option definition " + name);
             testNewAuditEntry("dhcp6_option_def",
                               AuditEntry::ModificationType::UPDATE,
                               "option definition set");
             ++updates_num;
 
         } else {
-            SCOPED_TRACE("CREATE audit entry for the option definition " +
-                         option_def->getName());
+            SCOPED_TRACE("CREATE audit entry for the option definition " + name);
             testNewAuditEntry("dhcp6_option_def",
                               AuditEntry::ModificationType::CREATE,
                               "option definition set");
@@ -3373,7 +3370,7 @@ GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
-                                                opt_timezone1));
+                                                    opt_timezone1));
     {
         SCOPED_TRACE("global option for server1 is set");
         // The value of 3 means there should be 3 audit entries available for the
@@ -3388,7 +3385,7 @@ GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ONE("server2"),
-                                                opt_timezone2));
+                                                    opt_timezone2));
     {
         SCOPED_TRACE("global option for server2 is set");
         // Same as in case of the server1, there should be 3 audit entries and
@@ -3402,7 +3399,7 @@ GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ALL(),
-                                                opt_timezone3));
+                                                    opt_timezone3));
     {
         SCOPED_TRACE("global option for all servers is set");
         // There should be one new audit entry for all servers. It logs
@@ -3493,19 +3490,19 @@ GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
     // Attempt to delete global option for server1.
     uint64_t deleted_num = 0;
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOption6(ServerSelector::ONE("server1"),
-                                                        opt_timezone1->option_->getType(),
-                                                        opt_timezone1->space_name_));
+                                                            opt_timezone1->option_->getType(),
+                                                            opt_timezone1->space_name_));
     EXPECT_EQ(0, deleted_num);
 
     // Deleting the existing option for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOption6(ServerSelector::ONE("server2"),
-                                                        opt_timezone2->option_->getType(),
-                                                        opt_timezone2->space_name_));
+                                                            opt_timezone2->option_->getType(),
+                                                            opt_timezone2->space_name_));
     EXPECT_EQ(1, deleted_num);
 
     // Create this option again to test that deletion of all servers removes it too.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ONE("server2"),
-                                                opt_timezone2));
+                                                    opt_timezone2));
 
     // Delete all servers, except 'all'.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteAllServers6());
@@ -3886,14 +3883,13 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
     ASSERT_TRUE(returned_subnet);
 
     // The returned subnet should include our pool.
-    const PoolPtr returned_pd_pool =
-        returned_subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:a:10::"));
+    const PoolPtr returned_pd_pool = returned_subnet->getPool(Lease::TYPE_PD,
+                                                              IOAddress("2001:db8:a:10::"));
     ASSERT_TRUE(returned_pd_pool);
 
     // The pd pool should contain option we added earlier.
     OptionDescriptor returned_opt_posix_timezone =
-        returned_pd_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
-                                              D6O_NEW_POSIX_TIMEZONE);
+        returned_pd_pool->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
 
     {
@@ -3924,14 +3920,13 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
-    const PoolPtr returned_pd_pool1 =
-        returned_subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:a:10::"));
+    const PoolPtr returned_pd_pool1 = returned_subnet->getPool(Lease::TYPE_PD,
+                                                               IOAddress("2001:db8:a:10::"));
     ASSERT_TRUE(returned_pd_pool1);
 
     // Test that the option has been correctly updated in the database.
     returned_opt_posix_timezone =
-        returned_pd_pool1->getCfgOption()->get(DHCP6_OPTION_SPACE,
-                                               D6O_NEW_POSIX_TIMEZONE);
+        returned_pd_pool1->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
 
     {
@@ -3963,8 +3958,8 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
-    const PoolPtr returned_pd_pool2 =
-        returned_subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:a:10::"));
+    const PoolPtr returned_pd_pool2 = returned_subnet->getPool(Lease::TYPE_PD,
+                                                               IOAddress("2001:db8:a:10::"));
     ASSERT_TRUE(returned_pd_pool2);
 
     // Option should be gone.
@@ -4013,7 +4008,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteSharedNetworkOption6Test() {
                                 opt_posix_timezone);
 
     returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(),
-                                                shared_network->getName());
+                                                 shared_network->getName());
     ASSERT_TRUE(returned_network);
 
     OptionDescriptor returned_opt_posix_timezone =
@@ -4092,12 +4087,12 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteSharedNetworkOption6Test() {
 void
 GenericConfigBackendDHCPv6Test::subnetOptionIdOrderTest() {
 
-    // Add a network with two pools with two options each.
+    // Add a subnet with two pools with two options each.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[1]));
     EXPECT_EQ(2, countRows("dhcp6_pool"));
     EXPECT_EQ(4, countRows("dhcp6_options"));
 
-    // Add second subnet with a single option. The number of options in the database
+    // Add a second subnet with a single option. The number of options in the database
     // should now be 3.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[2]));
     EXPECT_EQ(2, countRows("dhcp6_pool"));
@@ -4138,10 +4133,10 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     // Insert two shared networks. We insert level1 without options first,
     // then level2.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       level1_no_options));
+                                                           level1_no_options));
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       level2));
+                                                           level2));
     // Fetch all shared networks.
     SharedNetwork6Collection networks =
         cbptr_->getAllSharedNetworks6(ServerSelector::ALL());
@@ -4162,7 +4157,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     }
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
-                                                       level1_options));
+                                                           level1_options));
 
     // Fetch all shared networks.
     networks = cbptr_->getAllSharedNetworks6(ServerSelector::ALL());
@@ -4246,7 +4241,7 @@ GenericConfigBackendDHCPv6Test::setAndGetAllClientClasses6Test() {
     EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
 
     // Move the third class between the first and second class.
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, "foo"));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, "foo"));
 
     // Ensure that the classes order has changed.
     client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
@@ -4258,7 +4253,7 @@ GenericConfigBackendDHCPv6Test::setAndGetAllClientClasses6Test() {
 
     // Update the foobar class without specifying its position. It should not
     // be moved.
-    ASSERT_NO_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, ""));
 
     client_classes = cbptr_->getAllClientClasses6(ServerSelector::ONE("server1"));
     classes_list = client_classes.getClasses();
@@ -4276,12 +4271,11 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     // Add classes.
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
-                                                test_options_[0]->persistent_,
-                                                test_options_[0]->space_name_));
+                                                    test_options_[0]->persistent_,
+                                                    test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
-                                                test_options_[1]->persistent_,
-                                                test_options_[1]->space_name_));
-
+                                                    test_options_[1]->persistent_,
+                                                    test_options_[1]->space_name_));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
 
     auto class2 = test_client_classes_[1];
@@ -4309,34 +4303,34 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
 
     // Fetch the same class using different server selectors.
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ANY(),
-                                                           class1->getName()));
+                                                               class1->getName()));
     EXPECT_TRUE(client_class);
 
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ONE("server1"),
-                                                           class1->getName()));
+                                                               class1->getName()));
     EXPECT_TRUE(client_class);
 
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::UNASSIGNED(),
-                                                           class1->getName()));
+                                                               class1->getName()));
     EXPECT_FALSE(client_class);
 
     // Fetch the second client class using different selectors. This time the
     // class should not be returned for the ALL server selector because it is
     // associated with the server1.
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(),
-                                                           class2->getName()));
+                                                               class2->getName()));
     EXPECT_FALSE(client_class);
 
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ANY(),
-                                                           class2->getName()));
+                                                               class2->getName()));
     EXPECT_TRUE(client_class);
 
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ONE("server1"),
-                                                           class2->getName()));
+                                                               class2->getName()));
     EXPECT_TRUE(client_class);
 
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::UNASSIGNED(),
-                                                           class2->getName()));
+                                                               class2->getName()));
     EXPECT_FALSE(client_class);
 }
 
@@ -4345,11 +4339,11 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     // Add class with two options and two option definitions.
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
-                                                test_options_[0]->persistent_,
-                                                test_options_[0]->space_name_));
+                                                    test_options_[0]->persistent_,
+                                                    test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
-                                                test_options_[1]->persistent_,
-                                                test_options_[1]->space_name_));
+                                                    test_options_[1]->persistent_,
+                                                    test_options_[1]->space_name_));
     auto cfg_option_def = boost::make_shared<CfgOptionDef>();
     class1->setCfgOptionDef(cfg_option_def);
     ASSERT_NO_THROW_LOG(class1->getCfgOptionDef()->add(test_option_defs_[0]));
@@ -4375,7 +4369,6 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     ASSERT_TRUE(client_class->getCfgOptionDef());
     auto returned_def_foo = client_class->getCfgOptionDef()->get(test_option_defs_[0]->getOptionSpaceName(),
                                                                  test_option_defs_[0]->getCode());
-
     ASSERT_TRUE(returned_def_foo);
     EXPECT_EQ(1234, returned_def_foo->getCode());
     EXPECT_EQ("foo", returned_def_foo->getName());
@@ -4555,7 +4548,7 @@ GenericConfigBackendDHCPv6Test::deleteClientClass6Test() {
 
     uint64_t result;
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass6(ServerSelector::ONE("server1"),
-                                                        class2->getName()));
+                                                            class2->getName()));
     EXPECT_EQ(1, result);
     {
         SCOPED_TRACE("client class bar is deleted");
@@ -4566,7 +4559,7 @@ GenericConfigBackendDHCPv6Test::deleteClientClass6Test() {
     }
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass6(ServerSelector::ONE("server2"),
-                                                        class3->getName()));
+                                                            class3->getName()));
     EXPECT_EQ(1, result);
     {
         SCOPED_TRACE("client class foobar is deleted");
@@ -4577,7 +4570,7 @@ GenericConfigBackendDHCPv6Test::deleteClientClass6Test() {
     }
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass6(ServerSelector::ANY(),
-                                                        class1->getName()));
+                                                            class1->getName()));
     EXPECT_EQ(1, result);
     {
         SCOPED_TRACE("client class foo is deleted and no longer available for the server1");

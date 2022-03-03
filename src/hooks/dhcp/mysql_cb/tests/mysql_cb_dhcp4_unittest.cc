@@ -7,6 +7,7 @@
 #include <config.h>
 #include <database/db_exceptions.h>
 #include <database/server.h>
+#include <database/testutils/schema.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/testutils/generic_cb_dhcp4_unittest.h>
@@ -26,7 +27,6 @@
 #include <sstream>
 
 using namespace isc;
-using namespace isc::util;
 using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::db::test;
@@ -35,6 +35,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace isc::test;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace {

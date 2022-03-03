@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <database/db_exceptions.h>
+#include <database/server.h>
 #include <database/testutils/schema.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp6_mgr.h>
@@ -18,6 +19,7 @@
 #include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <mysql.h>
@@ -53,15 +55,13 @@ public:
     }
 
     using MySqlConfigBackendDHCPv6::base_impl_;
-
 };
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv6.
 class MySqlConfigBackendDHCPv6Test : public GenericConfigBackendDHCPv6Test {
 public:
-
     /// @brief Constructor.
-    MySqlConfigBackendDHCPv6Test() {} 
+    MySqlConfigBackendDHCPv6Test() {}
 
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv6Test() {}
@@ -199,6 +199,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSubnets6WithServerTagsTest) {
     getAllSubnets6WithServerTagsTest();
 }
 
+TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSubnets6SelectorsTest) {
+    getModifiedSubnets6SelectorsTest();
+}
+
 TEST_F(MySqlConfigBackendDHCPv6Test, deleteSubnet6Test) {
     deleteSubnet6Test();
 }
@@ -221,10 +225,6 @@ TEST_F(MySqlConfigBackendDHCPv6Test, unassignedSubnet6Test) {
 
 TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSubnets6Test) {
     getModifiedSubnets6Test();
-}
-
-TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSubnets6SelectorsTest) {
-    getModifiedSubnets6SelectorsTest();
 }
 
 TEST_F(MySqlConfigBackendDHCPv6Test, subnetLifetimeTest) {

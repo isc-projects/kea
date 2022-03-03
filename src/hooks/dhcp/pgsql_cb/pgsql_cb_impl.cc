@@ -105,10 +105,10 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::Paramet
     std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR, PGSQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = PgSqlConnection::getVersion(parameters);
     if (code_version != db_version) {
-        isc_throw(DbOpenError, "Postgres schema version mismatch: need version: "
-                                   << code_version.first << "." << code_version.second
-                                   << " found version: " << db_version.first << "."
-                                   << db_version.second);
+        isc_throw(DbOpenError, "PostgreSQL schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version: " << db_version.first << "."
+                  << db_version.second);
     }
 
     // Open the database.
@@ -268,7 +268,9 @@ PgSqlConfigBackendImpl::getGlobalParameters(const int index,
     // - modification timestamp
 
     StampedValuePtr last_param;
+
     StampedValueCollection local_parameters;
+
     selectQuery(index, in_bindings,
                 [&local_parameters, &last_param](PgSqlResult& r, int row) {
         // Extract the column values for r[row].
@@ -871,6 +873,30 @@ PgSqlConfigBackendImpl::processOptionDefRow(PgSqlResultRowWorker& worker,
     return (def);
 }
 
+void
+PgSqlConfigBackendImpl::attachElementToServers(const int index,
+                                               const ServerSelector& server_selector,
+                                               const PsqlBindArray& in_bindings) {
+    // Copy the bindings because we're going to modify them.
+    PsqlBindArray server_bindings = in_bindings;
+    for (auto const& tag : server_selector.getTags()) {
+        // Add the server tag to end of the bindings.
+        std::string server_tag = tag.get();
+        server_bindings.add(server_tag);
+
+        // Insert the server association.
+        // Handles the case where the server does not exists.
+        try {
+            insertQuery(index, server_bindings);
+        } catch (const NullKeyError&) {
+            // The message should give the tag value.
+            isc_throw(NullKeyError,
+                      "server '" << tag.get() << "' does not exist");
+        }
+        // Remove the prior server tag.
+        server_bindings.popBack();
+    }
+}
 ServerPtr
 PgSqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
     ServerCollection servers;
@@ -1015,25 +1041,6 @@ PgSqlConfigBackendImpl::getPort() const {
         // No port parameter or parameter invalid.
     }
     return (0);
-}
-
-void
-PgSqlConfigBackendImpl::attachElementToServers(const int index,
-                                               const ServerSelector& server_selector,
-                                               const PsqlBindArray& in_bindings) {
-    // Copy the bindings because we're going to modify them.
-    PsqlBindArray server_bindings = in_bindings;
-    for (auto const& tag : server_selector.getTags()) {
-        // Add the server tag to end of the bindings.
-        std::string server_tag = tag.get();
-        server_bindings.add(server_tag);
-
-        // Insert the server association.
-        insertQuery(index, server_bindings);
-
-        // Remove the prior server tag.
-        server_bindings.popBack();
-    }
 }
 
 void
