@@ -1190,6 +1190,11 @@ protected:
 /// This class is derived from TokenOption and leverages its ability
 /// to operate on sub-options. It also adds additional capabilities.
 ///
+/// Note: @c TokenSubOption virtually derives @c TokenOption because both
+/// classes are inherided together in more complex classes in other parts of
+/// the code. This makes the base class @c TokenOption exist only once in such
+/// complex classes.
+///
 /// It can represent the following expressions:
 /// option[149].exists - check if option 149 exists
 /// option[149].option[1].exists - check if suboption 1 exists in the option 149

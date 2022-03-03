@@ -1333,11 +1333,7 @@ Current lease associated with OPTION_IAPREFIX:
     addrtotext(substring(option[25].option[26].hex, 9, 16))
 
 All other parameters of the options are available at their respective offsets
-in the option. Please read corresponding RFC for more details:
-
-IA_NA and OPTION_IAADDR are available in RFC3315.
-
-IA_PD and OPTION_IAPREFIX are available in RFC3633.
+in the option. Please read RFC8415 for more details.
 
 Examples:
 
