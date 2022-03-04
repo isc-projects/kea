@@ -1192,8 +1192,8 @@ protected:
 ///
 /// Note: @c TokenSubOption virtually derives @c TokenOption because both
 /// classes are inherided together in more complex classes in other parts of
-/// the code. This makes the base class @c TokenOption exist only once in such
-/// complex classes.
+/// the code. This makes the base class @c TokenOption to exist only once in
+/// such complex classes.
 ///
 /// It can represent the following expressions:
 /// option[149].exists - check if option 149 exists

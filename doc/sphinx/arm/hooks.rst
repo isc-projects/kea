@@ -1313,7 +1313,7 @@ options, each containing multiple options, including OPTION_IAADDR (5) or
 OPTION_IAPREFIX (25) suboptions.
 To be able to print the current lease associated with the log entry, the
 forensic log hook library internally isolates the corresponding IA_NA or IA_PD
-option and respective suboptions matching the current lease.
+option and respective suboption matching the current lease.
 The hook library will iterate over all new allocated addresses and all deleted
 addresses, making each address available for logging as the current lease for
 the respective logged entry.
