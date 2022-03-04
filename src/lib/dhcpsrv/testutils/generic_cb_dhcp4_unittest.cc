@@ -77,8 +77,8 @@ GenericConfigBackendDHCPv4Test::TearDown() {
 
 db::AuditEntryCollection
 GenericConfigBackendDHCPv4Test::getRecentAuditEntries(const db::ServerSelector& server_selector,
-                                                 const boost::posix_time::ptime& modification_time,
-                                                 const uint64_t& modification_id) const {
+                                                      const boost::posix_time::ptime& modification_time,
+                                                      const uint64_t& modification_id) const {
     return (cbptr_->getRecentAuditEntries(server_selector, modification_time, modification_id));
 }
 
@@ -2352,7 +2352,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
 
     {
         SCOPED_TRACE("DELETE audit entry for the remaining two shared networks");
-        // The last parameter indicates that we expect four new audit entries.
+        // The last parameter indicates that we expect four new audit entries,
         // two for deleted shared networks and two for updated subnets
         std::vector<ExpAuditEntry> exp_entries({
             {

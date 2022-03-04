@@ -181,7 +181,7 @@ GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
 
 void
 GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
-                                                  const ServerSelector& server_selector) {
+                                      const ServerSelector& server_selector) {
     // Get the server tag for which the entries are fetched.
     std::string tag;
     if (server_selector.getType() == ServerSelector::Type::ALL) {

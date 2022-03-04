@@ -77,8 +77,8 @@ GenericConfigBackendDHCPv6Test::TearDown() {
 
 db::AuditEntryCollection
 GenericConfigBackendDHCPv6Test::getRecentAuditEntries(const db::ServerSelector& server_selector,
-                                             const boost::posix_time::ptime& modification_time,
-                                             const uint64_t& modification_id) const {
+                                                      const boost::posix_time::ptime& modification_time,
+                                                      const uint64_t& modification_id) const {
     return (cbptr_->getRecentAuditEntries(server_selector, modification_time, modification_id));
 }
 
@@ -2376,11 +2376,28 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
 
     {
         SCOPED_TRACE("DELETE audit entry for the remaining two shared networks");
-        // The last parameter indicates that we expect two new audit entries.
-        testNewAuditEntry("dhcp6_shared_network",
-                          AuditEntry::ModificationType::DELETE,
-                          "deleted all shared networks",
-                          ServerSelector::ALL(), 2);
+        // The last parameter indicates that we expect four new audit entries,
+        // two for deleted shared networks and two for updated subnets
+        std::vector<ExpAuditEntry> exp_entries({
+            {
+                "dhcp6_shared_network",
+                AuditEntry::ModificationType::DELETE, "deleted all shared networks"
+            },
+            {
+                "dhcp6_shared_network",
+                AuditEntry::ModificationType::DELETE, "deleted all shared networks"
+            },
+            {
+                "dhcp6_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
+                "dhcp6_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            }
+        });
+
+        testNewAuditEntry(exp_entries, ServerSelector::ALL());
     }
 
     // Check that subnets are still there but detached.
