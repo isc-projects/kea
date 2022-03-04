@@ -9,6 +9,8 @@
 
 #include <asiolink/io_address.h>
 #include <cc/stamped_value.h>
+#include <database/audit_entry.h>
+#include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/srv_config.h>
@@ -21,6 +23,18 @@
 namespace isc {
 namespace dhcp {
 namespace test {
+
+/// @brief Describes an expected audit table entry.
+struct ExpAuditEntry {
+    /// @brief Type of object changed.
+    std::string object_type;
+
+    /// @brief Timestamp the change occurred.
+    db::AuditEntry::ModificationType modification_type;
+
+    /// @brief Log message describing the change.
+    std::string log_message;
+};
 
 /// @brief Generic test fixture class with utility functions for
 /// testing database backends.
@@ -264,6 +278,70 @@ public:
     void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                data::StampedValuePtr& exp_global);
 
+    /// @brief Tests that the new audit entry is added.
+    ///
+    /// This method retrieves a collection of the existing audit entries and
+    /// checks that the new one has been added at the end of this collection.
+    /// It then verifies the values of the audit entry against the values
+    /// specified by the caller.
+    ///
+    /// @param exp_object_type Expected object type.
+    /// @param exp_modification_type Expected modification type.
+    /// @param exp_log_message Expected log message.
+    /// @param server_selector Server selector to be used for next query.
+    /// @param new_entries_num Number of the new entries expected to be inserted.
+    /// @param max_tested_entries Maximum number of entries tested.
+    void testNewAuditEntry(const std::string& exp_object_type,
+                           const db::AuditEntry::ModificationType& exp_modification_type,
+                           const std::string& exp_log_message,
+                           const db::ServerSelector& server_selector = db::ServerSelector::ALL(),
+                           const size_t new_entries_num = 1,
+                           const size_t max_tested_entries = 65535);
+
+    /// @brief Checks the new audit entries against a list of
+    /// expected entries.
+    ///
+    /// This method retrieves a collection of the existing audit entries and
+    /// checks that number and content of the expected new entries have been
+    /// added to the end of this collection.
+    ///
+    /// @param exp_entries a list of the expected new audit entries.
+    /// @param server_selector Server selector to be used for next query.
+    void testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
+                           const db::ServerSelector& server_selector);
+
+    /// @brief Logs audit entries in the @c audit_entries_ member.
+    ///
+    /// This function is called in case of an error.
+    ///
+    /// @param server_tag Server tag for which the audit entries should be logged.
+    std::string logExistingAuditEntries(const std::string& server_tag);
+
+    /// @brief Retrieves the most recent audit entries.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
+    /// @param server_selector Server selector.
+    /// @param modification_time Timestamp being a lower limit for the returned
+    /// result set, i.e. entries later than specified time are returned.
+    /// @param modification_id Identifier being a lower limit for the returned
+    /// result set, used when two (or more) entries have the same
+    /// modification_time.
+    /// @return Collection of audit entries.
+    virtual db::AuditEntryCollection
+    getRecentAuditEntries(const db::ServerSelector& server_selector,
+                          const boost::posix_time::ptime& modification_time,
+                          const uint64_t& modification_id) const ;
+
+    /// @brief Initialize posix time values used in tests.
+    void initTimestamps();
+
+    /// @brief Holds timestamp values used in tests.
+    std::map<std::string, boost::posix_time::ptime> timestamps_;
+
+    /// @brief Holds the most recent audit entries.
+    std::map<std::string, db::AuditEntryCollection> audit_entries_;
 };
 
 } // end of namespace isc::dhcp::test

@@ -11,15 +11,19 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <util/buffer.h>
 #include <typeinfo>
+#include <testutils/gtest_utils.h>
 
 using namespace isc::data;
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
-GenericBackendTest::GenericBackendTest() {
+GenericBackendTest::GenericBackendTest()
+    : timestamps_(), audit_entries_() {
     LibDHCP::clearRuntimeOptionDefs();
+    initTimestamps();
 }
 
 GenericBackendTest::~GenericBackendTest() {
@@ -121,6 +125,158 @@ void
 GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           StampedValuePtr& exp_global) {
     checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
+}
+
+
+void
+GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
+                                      const AuditEntry::ModificationType& exp_modification_type,
+                                      const std::string& exp_log_message,
+                                      const ServerSelector& server_selector,
+                                      const size_t new_entries_num,
+                                      const size_t max_tested_entries) {
+    // Get the server tag for which the entries are fetched.
+    std::string tag;
+    if (server_selector.getType() == ServerSelector::Type::ALL) {
+        // Server tag is 'all'.
+        tag = "all";
+    } else {
+        const auto& tags = server_selector.getTags();
+        // This test is not meant to handle multiple server tags all at once.
+        if (tags.size() > 1) {
+            ADD_FAILURE() << "Test error: do not use multiple server tags";
+        } else if (tags.size() == 1) {
+            // Get the server tag for which we run the current test.
+            tag = tags.begin()->get();
+        }
+    }
+
+    auto audit_entries_size_save = audit_entries_[tag].size();
+
+    // Audit entries for different server tags are stored in separate
+    // containers.
+    ASSERT_NO_THROW_LOG(audit_entries_[tag]
+                        = getRecentAuditEntries(server_selector, timestamps_["two days ago"], 0));
+
+    ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_[tag].size())
+              << logExistingAuditEntries(tag);
+
+    auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeIdTag>();
+
+    // Iterate over specified number of entries starting from the most recent
+    // one and check they have correct values.
+    for (auto audit_entry_it = mod_time_idx.rbegin();
+         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num) &&
+         (std::distance(mod_time_idx.rbegin(), audit_entry_it) < max_tested_entries));
+         ++audit_entry_it) {
+        auto audit_entry = *audit_entry_it;
+        EXPECT_EQ(exp_object_type, audit_entry->getObjectType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ(exp_modification_type, audit_entry->getModificationType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ(exp_log_message, audit_entry->getLogMessage())
+                  << logExistingAuditEntries(tag);
+    }
+}
+
+void
+GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
+                                                  const ServerSelector& server_selector) {
+    // Get the server tag for which the entries are fetched.
+    std::string tag;
+    if (server_selector.getType() == ServerSelector::Type::ALL) {
+        // Server tag is 'all'.
+        tag = "all";
+    } else {
+        const auto& tags = server_selector.getTags();
+        // This test is not meant to handle multiple server tags all at once.
+        if (tags.size() != 1) {
+            ADD_FAILURE() << "Test error: tags.size(): " << tags.size()
+                          << ", you must specify one and only one server tag";
+        }
+
+        // Get the server tag for which we run the current test.
+        tag = tags.begin()->get();
+    }
+
+    size_t new_entries_num = exp_entries.size();
+
+    auto audit_entries_size_save = audit_entries_[tag].size();
+
+    // Audit entries for different server tags are stored in separate
+    // containers.
+    ASSERT_NO_THROW_LOG(audit_entries_[tag]
+                        = getRecentAuditEntries(server_selector, timestamps_["two days ago"], 0));
+
+    ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_[tag].size())
+              << logExistingAuditEntries(tag);
+
+    auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeIdTag>();
+
+    // Iterate over specified number of entries starting from the most recent
+    // one and check they have correct values.
+    auto exp_entry = exp_entries.rbegin();
+    for (auto audit_entry_it = mod_time_idx.rbegin();
+         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num));
+         ++audit_entry_it) {
+
+        auto audit_entry = *audit_entry_it;
+        EXPECT_EQ((*exp_entry).object_type, audit_entry->getObjectType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ((*exp_entry).modification_type, audit_entry->getModificationType())
+                  << logExistingAuditEntries(tag);
+        EXPECT_EQ((*exp_entry).log_message, audit_entry->getLogMessage())
+                  << logExistingAuditEntries(tag);
+
+        ++exp_entry;
+    }
+}
+
+void
+GenericBackendTest::initTimestamps() {
+    // Current time minus 1 hour to make sure it is in the past.
+    timestamps_["today"] = boost::posix_time::second_clock::local_time()
+                           - boost::posix_time::hours(1);
+    // One second after today.
+    timestamps_["after today"] = timestamps_["today"] + boost::posix_time::seconds(1);
+    // Yesterday.
+    timestamps_["yesterday"] = timestamps_["today"] - boost::posix_time::hours(24);
+    // One second after yesterday.
+    timestamps_["after yesterday"] = timestamps_["yesterday"] + boost::posix_time::seconds(1);
+    // Two days ago.
+    timestamps_["two days ago"] = timestamps_["today"] - boost::posix_time::hours(48);
+    // Tomorrow.
+    timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
+    // One second after tomorrow.
+    timestamps_["after tomorrow"] = timestamps_["tomorrow"] + boost::posix_time::seconds(1);
+}
+
+std::string
+GenericBackendTest::logExistingAuditEntries(const std::string& server_tag) {
+    std::ostringstream s;
+
+    auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeIdTag>();
+
+    for (auto audit_entry_it = mod_time_idx.begin();
+         audit_entry_it != mod_time_idx.end();
+         ++audit_entry_it) {
+        auto audit_entry = *audit_entry_it;
+        s << audit_entry->getObjectType() << ", "
+          << audit_entry->getObjectId() << ", "
+          << static_cast<int>(audit_entry->getModificationType()) << ", "
+          << audit_entry->getModificationTime() << ", "
+          << audit_entry->getRevisionId() << ", "
+          << audit_entry->getLogMessage()
+          << std::endl;
+    }
+
+    return (s.str());
+}
+
+AuditEntryCollection
+GenericBackendTest::getRecentAuditEntries(const ServerSelector&, const boost::posix_time::ptime&,
+                                          const uint64_t&) const {
+    return (AuditEntryCollection());
 }
 
 } // end of namespace isc::dhcp::test

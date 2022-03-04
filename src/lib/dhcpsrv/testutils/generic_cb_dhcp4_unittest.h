@@ -15,18 +15,6 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @brief Describes an expected audit table entry.
-struct ExpAuditEntry {
-    /// @brief Type of object changed.
-    std::string object_type;
-
-    /// @brief Timestamp the change occurred.
-    db::AuditEntry::ModificationType modification_type;
-
-    /// @brief Log message describing the change.
-    std::string log_message;
-};
-
 /// @brief Generic test fixture class for testing DHCPv4
 /// config backend operations.
 class GenericConfigBackendDHCPv4Test : public GenericBackendTest {
@@ -34,8 +22,7 @@ public:
     /// @brief Constructor.
     GenericConfigBackendDHCPv4Test()
         : test_subnets_(), test_networks_(), test_option_defs_(),
-          test_options_(), test_client_classes_(), test_servers_(), timestamps_(),
-          cbptr_(), audit_entries_() {
+          test_options_(), test_client_classes_(), test_servers_(), cbptr_() {
     }
 
     /// @brief Destructor.
@@ -102,16 +89,6 @@ public:
     /// @brief Creates several client classes used in tests.
     void initTestClientClasses();
 
-    /// @brief Initialize posix time values used in tests.
-    void initTimestamps();
-
-    /// @brief Logs audit entries in the @c audit_entries_ member.
-    ///
-    /// This function is called in case of an error.
-    ///
-    /// @param server_tag Server tag for which the audit entries should be logged.
-    std::string logExistingAuditEntries(const std::string& server_tag);
-
     /// @brief Tests that a backend of the given type can be instantiated.
     ///
     /// @param  expected_type type of the back end created (i.e. "mysql",
@@ -124,37 +101,22 @@ public:
     /// @brief Verifies that a backend on the localhost port 0 can be instantiated.
     void getPortTest();
 
-    /// @brief Tests that the new audit entry is added.
+    /// @brief Retrieves the most recent audit entries.
     ///
-    /// This method retrieves a collection of the existing audit entries and
-    /// checks that the new one has been added at the end of this collection.
-    /// It then verifies the values of the audit entry against the values
-    /// specified by the caller.
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
-    /// @param exp_object_type Expected object type.
-    /// @param exp_modification_type Expected modification type.
-    /// @param exp_log_message Expected log message.
-    /// @param server_selector Server selector to be used for next query.
-    /// @param new_entries_num Number of the new entries expected to be inserted.
-    /// @param max_tested_entries Maximum number of entries tested.
-    void testNewAuditEntry(const std::string& exp_object_type,
-                           const db::AuditEntry::ModificationType& exp_modification_type,
-                           const std::string& exp_log_message,
-                           const db::ServerSelector& server_selector = db::ServerSelector::ALL(),
-                           const size_t new_entries_num = 1,
-                           const size_t max_tested_entries = 65535);
-
-    /// @brief Checks the new audit entries against a list of
-    /// expected entries.
-    ///
-    /// This method retrieves a collection of the existing audit entries and
-    /// checks that number and content of the expected new entries have been
-    /// added to the end of this collection.
-    ///
-    /// @param exp_entries a list of the expected new audit entries.
-    /// @param server_selector Server selector to be used for next query.
-    void testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entries,
-                           const db::ServerSelector& server_selector);
+    /// @param server_selector Server selector.
+    /// @param modification_time Timestamp being a lower limit for the returned
+    /// result set, i.e. entries later than specified time are returned.
+    /// @param modification_id Identifier being a lower limit for the returned
+    /// result set, used when two (or more) entries have the same
+    /// modification_time.
+    /// @return Collection of audit entries.
+    virtual db::AuditEntryCollection
+    getRecentAuditEntries(const db::ServerSelector& server_selector,
+                          const boost::posix_time::ptime& modification_time,
+                          const uint64_t& modification_id) const;
 
     /// @brief This test verifies that the server can be added, updated and deleted.
     void createUpdateDeleteServerTest();
@@ -417,14 +379,8 @@ public:
     /// @brief Holds pointers to the servers used in tests.
     std::vector<db::ServerPtr> test_servers_;
 
-    /// @brief Holds timestamp values used in tests.
-    std::map<std::string, boost::posix_time::ptime> timestamps_;
-
     /// @brief Holds pointer to the backend.
     boost::shared_ptr<ConfigBackendDHCPv4> cbptr_;
-
-    /// @brief Holds the most recent audit entries.
-    std::map<std::string, db::AuditEntryCollection> audit_entries_;
 };
 
 }  // namespace test
