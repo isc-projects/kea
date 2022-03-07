@@ -646,13 +646,13 @@ namespace {
     "FROM " #table_prefix "_server AS s " \
     "WHERE s.id > 1 " \
     __VA_ARGS__ \
-    "ORDER BY s.id"
+    " ORDER BY s.id"
 
 #define PGSQL_GET_ALL_SERVERS(table_prefix) \
     PGSQL_GET_SERVERS_COMMON(table_prefix, "")
 
 #define PGSQL_GET_SERVER(table_prefix) \
-    PGSQL_GET_SERVERS_COMMON(table_prefix, "AND s.tag = $1")
+    PGSQL_GET_SERVERS_COMMON(table_prefix, " AND s.tag = $1")
 #endif
 
 #ifndef PGSQL_GET_CLIENT_CLASS4_COMMON
@@ -1068,7 +1068,7 @@ namespace {
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $13 __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_WITH_TAG(...) \
-    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, \
+    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp6, \
     ", pd_pool_id = $13 ", AND s.tag = $14 __VA_ARGS__)
 #endif
 
@@ -1296,7 +1296,7 @@ namespace {
 
 #ifndef PGSQL_DELETE_OPTION_PD_POOL
 #define PGSQL_DELETE_OPTION_PD_POOL(...) \
-    "DELETE o FROM dhcp6_options AS o " \
+    "DELETE FROM dhcp6_options AS o " \
     "WHERE " #__VA_ARGS__ \
     "  AND o.pd_pool_id = " \
     "  (SELECT id FROM dhcp6_pd_pool" \

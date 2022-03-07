@@ -3485,7 +3485,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    //  7 encapsulate
             OID_VARCHAR,    //  8 record_types
             OID_VARCHAR,    //  9 user_context
-            OID_INT8        // 10 class_id" - column is missing from dhcpX_option_def tables
+            OID_INT8        // 10 class_id
         },
         "INSERT_OPTION_DEF4",
         PGSQL_INSERT_OPTION_DEF(dhcp4)
