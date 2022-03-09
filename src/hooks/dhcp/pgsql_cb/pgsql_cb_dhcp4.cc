@@ -3832,7 +3832,7 @@ TaggedStatementArray tagged_statements = { {
         PGSQL_UPDATE_OPTION_DEF(dhcp4)
     },
 
-    // Update existing option definition.
+    // Update existing client class option definition.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4_CLIENT_CLASS,
         13,

@@ -3382,7 +3382,7 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_UPDATE_OPTION_DEF(dhcp4)
     },
 
-    // Update existing option definition.
+    // Update existing client class option definition.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4_CLIENT_CLASS,
       MYSQL_UPDATE_OPTION_DEF_CLIENT_CLASS(dhcp4)
     },

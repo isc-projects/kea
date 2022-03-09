@@ -82,7 +82,7 @@ public:
         return (validMySQLConnectionString());
     }
 
-    /// @brief Instantiates an instance of a MySQL DHCPv4 configuration
+    /// @brief Instantiates an instance of a MySQL DHCPv6 configuration
     /// back end.
     ///
     /// @params Connection parameters describing the back end to create.

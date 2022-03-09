@@ -45,7 +45,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-/// @brief Implementation of the MySQL Configuration Backend.
+/// @brief Implementation of the PostgreSQL Configuration Backend.
 class PgSqlConfigBackendDHCPv6Impl : public PgSqlConfigBackendImpl {
 public:
 
@@ -1050,7 +1050,7 @@ namespace {
 typedef std::array<PgSqlTaggedStatement, PgSqlConfigBackendDHCPv6Impl::NUM_STATEMENTS>
 TaggedStatementArray;
 
-/// @brief Prepared MySQL statements used by the backend to insert and
+/// @brief Prepared PostgreSQL statements used by the backend to insert and
 /// retrieve data from the database.
 TaggedStatementArray tagged_statements = { {
     {
@@ -1920,6 +1920,7 @@ TaggedStatementArray tagged_statements = { {
         "INSERT_OPTION6_SERVER",
         PGSQL_INSERT_OPTION_SERVER(dhcp6)
     },
+
     // Insert client class.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6,
@@ -2014,7 +2015,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SUBNET6,
-       35,
+        35,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -2908,7 +2909,7 @@ PgSqlConfigBackendDHCPv6Impl::PgSqlConfigBackendDHCPv6Impl(const DatabaseConnect
                             tagged_statements.end());
 // @todo As part of enabling read-only CB access, statements need to
 // be limited:
-//                          tagged_statements.begin() + WRITE_STMTS_BEGIN);
+//                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlConfigBackend6[";
