@@ -805,10 +805,10 @@ public:
         std::vector<uint64_t> pool_ids;
 
         if (server_selector.amAny()) {
-                PsqlBindArray in_bindings;
-                in_bindings.addInet4(pool_start_address);
-                in_bindings.addInet4(pool_end_address);
-                getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
+            PsqlBindArray in_bindings;
+            in_bindings.addInet4(pool_start_address);
+            in_bindings.addInet4(pool_end_address);
+            getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
         } else {
             auto const& tags = server_selector.getTags();
             for (auto const& tag : tags) {
@@ -1464,8 +1464,8 @@ public:
                       " server is not supported");
 
         } else if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "creating or updating a shared network without"
-                      " assigning it to a server or all servers is not supported");
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
         }
 
         PsqlBindArray in_bindings;
@@ -2765,7 +2765,10 @@ TaggedStatementArray tagged_statements = { {
     // Verify that dependency on KNOWN/UNKNOWN class has not changed.
     {
         // PgSqlConfigBackendDHCPv4Impl::CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE",
         "select checkDHCPv4ClientClassKnownDependencyChange()"
     },
@@ -2824,7 +2827,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8    // 1 subnet_id
         },
         "GET_SUBNET4_ID_ANY",
-         PGSQL_GET_SUBNET4_ANY(WHERE s.subnet_id = $1)
+        PGSQL_GET_SUBNET4_ANY(WHERE s.subnet_id = $1)
     },
 
     // Select unassigned subnet by id.
@@ -2851,7 +2854,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select subnet by prefix without specifying server tags.
     {
-        //PgSqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX_ANY,
+        // PgSqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX_ANY,
         1,
         {
             OID_VARCHAR // 1 subnet_prefix
@@ -2941,7 +2944,7 @@ TaggedStatementArray tagged_statements = { {
                                        AND (p.end_address = cast($3 as inet)))
     },
 
-    // Select pool by address range for any server
+    // Select pool by address range for any server.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE_ANY,
         2,
@@ -2956,7 +2959,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select shared network by name.
     {
-        //PgSqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_NO_TAG,
+        // PgSqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_NO_TAG,
         1,
         {
             OID_VARCHAR // name of network
@@ -2978,7 +2981,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select unassigned shared network by name.
     {
-        //PgSqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_UNASSIGNED,
+        // PgSqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_UNASSIGNED,
         1,
         {
             OID_VARCHAR // name of network
@@ -4043,7 +4046,6 @@ TaggedStatementArray tagged_statements = { {
     // Delete global parameter by name.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-        // args: server_tag, name
         2,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -4078,7 +4080,6 @@ TaggedStatementArray tagged_statements = { {
     // Delete subnet by id with specifying server tag.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_WITH_TAG,
-        // args: server_tag, subnet_id
         2,
         {
             OID_VARCHAR,    // 1 server_tag
@@ -4136,7 +4137,10 @@ TaggedStatementArray tagged_statements = { {
     // Delete all unassigned subnets.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_SUBNETS4_UNASSIGNED",
         PGSQL_DELETE_SUBNET_UNASSIGNED(dhcp4)
     },
@@ -4166,7 +4170,6 @@ TaggedStatementArray tagged_statements = { {
     // Delete pools for a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_POOLS4,
-        // args: subnet_id, subnet_prefix
         2,
         {
             OID_INT8,   // 1 subnet_id
@@ -4213,7 +4216,10 @@ TaggedStatementArray tagged_statements = { {
     // Delete all unassigned shared networks.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED",
         PGSQL_DELETE_SHARED_NETWORK_UNASSIGNED(dhcp4)
     },
@@ -4245,7 +4251,6 @@ TaggedStatementArray tagged_statements = { {
     // Delete all option definitions.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-        // args: server_tag
         1,
         {
             OID_VARCHAR // 1 server_tag
@@ -4286,7 +4291,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR     // 3 space
         },
         "DELETE_OPTION4",
-        PGSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0  AND o.code = $2 AND o.space = $3)
+        PGSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0 AND o.code = $2 AND o.space = $3)
     },
 
     // Delete all global options which are unassigned to any servers.
@@ -4457,7 +4462,10 @@ TaggedStatementArray tagged_statements = { {
     // Deletes all servers except logical server 'all'.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4,
-        0, { OID_NONE },
+        0,
+        {
+            OID_NONE
+        },
         "DELETE_ALL_SERVERS4",
         PGSQL_DELETE_ALL_SERVERS(dhcp4)
     },
@@ -4466,7 +4474,11 @@ TaggedStatementArray tagged_statements = { {
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_LAST_INSERT_ID4,
         // args are: table name, sequence column name
-        2, { OID_VARCHAR, OID_VARCHAR },
+        2,
+        {
+            OID_VARCHAR,
+            OID_VARCHAR
+        },
         "GET_LAST_INSERT_ID4",
         "SELECT CURRVAL(PG_GET_SERIAL_SEQUENCE($1, $2))"
     }
@@ -4496,6 +4508,9 @@ PgSqlConfigBackendDHCPv4Impl::PgSqlConfigBackendDHCPv4Impl(const DatabaseConnect
     conn_.makeReconnectCtl(timer_name_);
 }
 
+PgSqlConfigBackendDHCPv4Impl::~PgSqlConfigBackendDHCPv4Impl() {
+}
+
 PgSqlTaggedStatement&
 PgSqlConfigBackendDHCPv4Impl::getStatement(size_t index) const {
     if (index >= tagged_statements.size()) {
@@ -4504,9 +4519,6 @@ PgSqlConfigBackendDHCPv4Impl::getStatement(size_t index) const {
     }
 
     return(tagged_statements[index]);
-}
-
-PgSqlConfigBackendDHCPv4Impl::~PgSqlConfigBackendDHCPv4Impl() {
 }
 
 PgSqlConfigBackendDHCPv4::PgSqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)

@@ -202,8 +202,8 @@ public:
                                         const std::string& name) {
         StampedValueCollection parameters;
 
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        auto const& tags = server_selector.getTags();
+        for (auto const& tag : tags) {
             MySqlBindingCollection in_bindings = {
                 MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(name)
@@ -1174,8 +1174,8 @@ public:
             };
             getPools(GET_POOL6_RANGE_ANY, in_bindings, pools, pool_ids);
         } else {
-            auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            auto const& tags = server_selector.getTags();
+            for (auto const& tag : tags) {
                 MySqlBindingCollection in_bindings = {
                     MySqlBinding::createString(tag.get()),
                     MySqlBinding::createString(pool_start_address.toText()),
@@ -1218,8 +1218,8 @@ public:
             getPdPools(GET_PD_POOL_ANY, in_bindings, pd_pools, pd_pool_ids);
 
         } else {
-            auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            auto const& tags = server_selector.getTags();
+            for (auto const& tag : tags) {
                 MySqlBindingCollection in_bindings = {
                     MySqlBinding::createString(tag.get()),
                     MySqlBinding::createString(pd_pool_prefix.toText()),
@@ -2090,6 +2090,7 @@ public:
                                     in_server_bindings);
         }
 
+        // Associate the shared network with the servers.
         attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
                                server_selector,
                                MySqlBinding::createString(shared_network->getName()),
@@ -4084,6 +4085,8 @@ MySqlConfigBackendDHCPv6Impl::MySqlConfigBackendDHCPv6Impl(const DatabaseConnect
     // database is read only for the current user.
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.end());
+// @todo As part of enabling read-only CB access, statements need to
+// be limited:
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
     // Create unique timer name per instance.
@@ -4270,8 +4273,8 @@ StampedValueCollection
 MySqlConfigBackendDHCPv6::getAllGlobalParameters6(const ServerSelector& server_selector) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6);
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag.get()) };
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv6Impl::GET_ALL_GLOBAL_PARAMETERS6,
                                    in_bindings, parameters);
@@ -4287,8 +4290,8 @@ MySqlConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector&
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6)
         .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
@@ -4523,8 +4526,18 @@ MySqlConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteSharedNetwork6(const ServerSelector& server_selector,
                                                const std::string& name) {
+    /// @todo Using UNASSIGNED selector is allowed by the CB API but we don't have
+    /// dedicated query for this at the moment. The user should use ANY to delete
+    /// the shared network by name.
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "deleting an unassigned shared network requires "
+                  "an explicit server tag or using ANY server. The UNASSIGNED server "
+                  "selector is currently not supported");
+    }
+
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6)
         .arg(name);
+
     int index = (server_selector.amAny() ?
                  MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_ANY :
                  MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG);
@@ -4548,8 +4561,7 @@ MySqlConfigBackendDHCPv6::deleteAllSharedNetworks6(const ServerSelector& server_
     int index = (server_selector.amUnassigned() ?
                  MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6_UNASSIGNED :
                  MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6);
-    uint64_t result = impl_->deleteTransactional(index,
-                                                 server_selector, "deleting all shared networks",
+    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all shared networks",
                                                  "deleted all shared networks", true);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT)
         .arg(result);
@@ -4635,8 +4647,8 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address, pool_end_address,
-                                           code, space);
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address,
+                                           pool_end_address, code, space);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT)
         .arg(result);
     return (result);

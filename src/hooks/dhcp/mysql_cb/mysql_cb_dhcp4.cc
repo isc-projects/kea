@@ -247,6 +247,9 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
                               in_bindings);
 
+            // Successfully inserted global parameter. Now, we have to associate it
+            // with the server tag.
+
             // Let's first get the primary key of the global parameter.
             uint64_t id = mysql_insert_id(conn_.mysql_);
 
@@ -874,9 +877,10 @@ public:
                           (MySqlBindingCollection& out_bindings) {
             if (out_bindings[0]->getInteger<uint64_t>() > last_pool_id) {
                 // pool id (0)
+                last_pool_id = out_bindings[0]->getInteger<uint64_t>();
+
                 // pool start_address (1)
                 // pool end_address (2)
-                last_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
                 last_pool = Pool4::create(IOAddress(out_bindings[1]->getInteger<uint32_t>()),
                                           IOAddress(out_bindings[2]->getInteger<uint32_t>()));
@@ -945,11 +949,11 @@ public:
         std::vector<uint64_t> pool_ids;
 
         if (server_selector.amAny()) {
-                MySqlBindingCollection in_bindings = {
-                    MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
-                    MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
-                };
-                getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+                MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
+            };
+            getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
         } else {
             auto const& tags = server_selector.getTags();
             for (auto const& tag : tags) {
@@ -958,7 +962,6 @@ public:
                     MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
                     MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
                 };
-
                 getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
                 // Break if something is found?
             }
@@ -1672,8 +1675,8 @@ public:
                       " server is not supported");
 
         } else if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "creating or updating a shared network without"
-                      " assigning it to a server or all servers is not supported");
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
         }
 
         // Create binding for DDNS replace client name mode.

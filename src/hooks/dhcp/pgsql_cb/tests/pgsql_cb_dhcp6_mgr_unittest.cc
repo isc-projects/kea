@@ -60,15 +60,15 @@ TEST_F(PgSqlConfigBackendDHCPv6MgrTest, factoryRegistration) {
     ASSERT_NO_THROW(mgr.addBackend(validPgSQLConnectionString()));
 
     // Create a PgSQL backend selector for convenience.
-    BackendSelector mysql(BackendSelector::Type::POSTGRESQL);
+    BackendSelector pgsql(BackendSelector::Type::POSTGRESQL);
 
     // Should be able to create a global parameter.
     StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
-    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(mysql, ServerSelector::ALL(),
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(pgsql, ServerSelector::ALL(),
                                                                 server_tag));
     // Verify parameter can be fetched.
     server_tag.reset();
-    ASSERT_NO_THROW(server_tag = mgr.getPool()->getGlobalParameter6(mysql, ServerSelector::ALL(),
+    ASSERT_NO_THROW(server_tag = mgr.getPool()->getGlobalParameter6(pgsql, ServerSelector::ALL(),
                                                                     "server-tag"));
     ASSERT_TRUE(server_tag);
     EXPECT_EQ("server-tag", server_tag->getName());
@@ -81,7 +81,7 @@ TEST_F(PgSqlConfigBackendDHCPv6MgrTest, factoryRegistration) {
     ASSERT_THROW(mgr.addBackend(validPgSQLConnectionString()), InvalidType);
 
     // Attempting to read the global parameter should fail.
-    ASSERT_THROW(mgr.getPool()->getGlobalParameter6(mysql, ServerSelector::ALL(), "server-tag"),
+    ASSERT_THROW(mgr.getPool()->getGlobalParameter6(pgsql, ServerSelector::ALL(), "server-tag"),
                  NoSuchDatabase);
 }
 

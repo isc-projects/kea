@@ -201,7 +201,7 @@ public:
     /// doesn't exist.
     StampedValuePtr getGlobalParameter6(const ServerSelector& server_selector,
                                         const std::string& name) {
-       StampedValueCollection parameters;
+        StampedValueCollection parameters;
 
         auto const& tags = server_selector.getTags();
         for (auto const& tag : tags) {
@@ -218,8 +218,7 @@ public:
     /// @brief Sends query to insert or update global parameter.
     ///
     /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
-    /// @param value Value of the global parameter.
+    /// @param value StampedValue describing the parameter to create/update.
     void createUpdateGlobalParameter6(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
         if (server_selector.amUnassigned()) {
@@ -249,7 +248,6 @@ public:
         // Try to update the existing row.
         if (updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_GLOBAL_PARAMETER6,
                               in_bindings) == 0) {
-
             // No such parameter found, so let's insert it. We have to adjust the
             // bindings collection to match the prepared statement for insert.
             in_bindings.popBack();
@@ -269,7 +267,6 @@ public:
         }
 
         transaction.commit();
-
     }
 
     /// @brief Sends query to the database to retrieve multiple subnets.
@@ -476,7 +473,6 @@ public:
                                  const std::string& log_message,
                                  const bool cascade_delete,
                                  Args&&... keys) {
-
         PgSqlTransaction transaction(conn_);
 
         // Create scoped audit revision. As long as this instance exists
@@ -491,7 +487,6 @@ public:
         transaction.commit();
 
         return (count);
-
     }
 
     /// @brief Sends query to delete subnet by id.
@@ -602,7 +597,7 @@ public:
     /// @brief Sends query to insert DHCP option.
     ///
     /// This method expects that the server selector contains exactly one
-    /// server tag.
+    /// server tag.  It is intended to be used within a transaction.
     ///
     /// @param server_selector Server selector.
     /// @param in_bindings Collection of bindings representing an option.
@@ -632,7 +627,6 @@ public:
     /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption6(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
-
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
@@ -656,10 +650,10 @@ public:
         in_bindings.addTimestamp(option->getModificationTime());
         in_bindings.addNull();
 
-        // Remember the size before we added where clause arguments.
+        // Remember the size before we add where clause arguments.
         size_t pre_where_size = in_bindings.size();
 
-        // Now the add the update where clause parameters
+        // Now we add the update where clause parameters
         in_bindings.add(tag);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
@@ -783,7 +777,6 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef6(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
-
         createUpdateOptionDef(server_selector, option_def, DHCP6_OPTION_SPACE,
                               PgSqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
                               PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6,
@@ -814,7 +807,6 @@ public:
     uint64_t deleteOptionDef6(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
-
         PsqlBindArray in_bindings;
         in_bindings.add(code);
         in_bindings.add(space);
@@ -1221,8 +1213,10 @@ namespace {
 typedef std::array<PgSqlTaggedStatement, PgSqlConfigBackendDHCPv6Impl::NUM_STATEMENTS>
 TaggedStatementArray;
 
-/// @brief Prepared PostgreSQL statements used by the backend to insert and
-/// retrieve data from the database.
+/// @brief Prepared PgSQL statements used by the backend to insert and
+/// retrieve data from the database. They must be in the same order as
+/// PgSqlConfigBackendDHCPv6Impl::StatementIndex.  The statement is
+/// the corresponding enum name.
 TaggedStatementArray tagged_statements = { {
     {
         // PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
@@ -2859,8 +2853,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR     // 3 space
         },
         "DELETE_OPTION6",
-        PGSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0 \
-                                     AND o.code = $2 AND o.space = $3)
+        PGSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0 AND o.code = $2 AND o.space = $3)
     },
 
     // Delete all global options which are unassigned to any servers.
@@ -2884,8 +2877,8 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR // 3 space
         },
         "DELETE_OPTION6_SUBNET_ID",
-        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = $1 \
-                                   AND o.code = $2 AND o.space = $3)
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6,
+            WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = $1 AND o.code = $2 AND o.space = $3)
     },
 
     // Delete single option from a pool.
@@ -2926,8 +2919,8 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR     // 3 space
         },
         "DELETE_OPTION6_SHARED_NETWORK",
-        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 4 AND o.shared_network_name = $1 \
-                                   AND o.code = $2 AND o.space = $3)
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6,
+            WHERE o.scope_id = 4 AND o.shared_network_name = $1 AND o.code = $2 AND o.space = $3)
     },
 
     // Delete options belonging to a subnet.
@@ -3276,8 +3269,8 @@ StampedValueCollection
 PgSqlConfigBackendDHCPv6::getAllGlobalParameters6(const ServerSelector& server_selector) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS6);
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         impl_->getGlobalParameters(PgSqlConfigBackendDHCPv6Impl::GET_ALL_GLOBAL_PARAMETERS6,
@@ -3294,8 +3287,8 @@ PgSqlConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector&
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6)
         .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
-    auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    auto const& tags = server_selector.getTags();
+    for (auto const& tag : tags) {
         PsqlBindArray in_bindings;
         in_bindings.addTempString(tag.get());
         in_bindings.addTimestamp(modification_time);
@@ -3530,8 +3523,18 @@ PgSqlConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& 
 uint64_t
 PgSqlConfigBackendDHCPv6::deleteSharedNetwork6(const ServerSelector& server_selector,
                                                const std::string& name) {
+    /// @todo Using UNASSIGNED selector is allowed by the CB API but we don't have
+    /// dedicated query for this at the moment. The user should use ANY to delete
+    /// the shared network by name.
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "deleting an unassigned shared network requires "
+                  "an explicit server tag or using ANY server. The UNASSIGNED server "
+                  "selector is currently not supported");
+    }
+
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK6)
         .arg(name);
+
     int index = (server_selector.amAny() ?
                  PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_ANY :
                  PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG);
@@ -3555,8 +3558,7 @@ PgSqlConfigBackendDHCPv6::deleteAllSharedNetworks6(const ServerSelector& server_
     int index = (server_selector.amUnassigned() ?
                  PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6_UNASSIGNED :
                  PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6);
-    uint64_t result = impl_->deleteTransactional(index,
-                                                 server_selector, "deleting all shared networks",
+    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all shared networks",
                                                  "deleted all shared networks", true);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT)
         .arg(result);
@@ -3642,8 +3644,8 @@ PgSqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION6)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address, pool_end_address,
-                                           code, space);
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address,
+                                           pool_end_address, code, space);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION6_RESULT)
         .arg(result);
     return (result);
