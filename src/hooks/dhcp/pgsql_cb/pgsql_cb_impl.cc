@@ -468,7 +468,7 @@ PgSqlConfigBackendImpl::getOptionDefs(const int index,
 void
 PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_selector,
                                               const OptionDefinitionPtr& option_def,
-                                              const std::string& /*space*/,
+                                              const std::string& space,
                                               const int& /*get_option_def_code_space*/,
                                               const int& insert_option_def,
                                               const int& update_option_def,
@@ -545,7 +545,8 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
         // Successfully inserted the definition. Now, we have to associate it
         // with the server tag.
         PsqlBindArray attach_bindings;
-        uint64_t id = getLastInsertId("dhcp4_option_def", "id");
+        uint64_t id = getLastInsertId((space == DHCP4_OPTION_SPACE ?
+                                       "dhcp4_option_def" : "dhcp6_option_def"), "id");
         attach_bindings.add(id);
         attach_bindings.addTimestamp(option_def->getModificationTime());
 

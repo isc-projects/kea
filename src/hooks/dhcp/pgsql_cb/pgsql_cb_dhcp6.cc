@@ -199,9 +199,20 @@ public:
     ///
     /// @return Pointer to the retrieved value or null if such parameter
     /// doesn't exist.
-    StampedValuePtr getGlobalParameter6(const ServerSelector& /* server_selector */,
-                                        const std::string& /* name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    StampedValuePtr getGlobalParameter6(const ServerSelector& server_selector,
+                                        const std::string& name) {
+       StampedValueCollection parameters;
+
+        auto const& tags = server_selector.getTags();
+        for (auto const& tag : tags) {
+            PsqlBindArray in_bindings;
+            in_bindings.addTempString(tag.get());
+            in_bindings.add(name);
+
+            getGlobalParameters(GET_GLOBAL_PARAMETER6, in_bindings, parameters);
+        }
+
+        return (parameters.empty() ? StampedValuePtr() : *parameters.begin());
     }
 
     /// @brief Sends query to insert or update global parameter.
@@ -209,9 +220,56 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
-    void createUpdateGlobalParameter6(const db::ServerSelector& /* server_selector */,
-                                      const StampedValuePtr& /* value */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateGlobalParameter6(const db::ServerSelector& server_selector,
+                                      const StampedValuePtr& value) {
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        auto tag = getServerTag(server_selector, "creating or updating global parameter");
+
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(value->getName());
+        in_bindings.addTempString(value->getValue());
+        in_bindings.add(value->getType()),
+        in_bindings.addTimestamp(value->getModificationTime()),
+        in_bindings.addTempString(tag);
+        in_bindings.addTempString(value->getName());
+
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                                           server_selector, "global parameter set",
+                                           false);
+
+        // Try to update the existing row.
+        if (updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_GLOBAL_PARAMETER6,
+                              in_bindings) == 0) {
+
+            // No such parameter found, so let's insert it. We have to adjust the
+            // bindings collection to match the prepared statement for insert.
+            in_bindings.popBack();
+            in_bindings.popBack();
+
+            insertQuery(PgSqlConfigBackendDHCPv6Impl::INSERT_GLOBAL_PARAMETER6,
+                        in_bindings);
+
+            // Successfully inserted global parameter. Now, we have to associate it
+            // with the server tag.
+            PsqlBindArray attach_bindings;
+            uint64_t pid = getLastInsertId("dhcp6_global_parameter", "id");
+            attach_bindings.add(pid);   // id of newly inserted global.
+            attach_bindings.addTimestamp(value->getModificationTime());
+            attachElementToServers(PgSqlConfigBackendDHCPv6Impl::INSERT_GLOBAL_PARAMETER6_SERVER,
+                                   server_selector, attach_bindings);
+        }
+
+        transaction.commit();
+
     }
 
     /// @brief Sends query to the database to retrieve multiple subnets.
@@ -412,13 +470,28 @@ public:
     ///
     /// @return Number of deleted entries.
     template<typename... Args>
-    uint64_t deleteTransactional(const int /* index */,
-                                 const db::ServerSelector& /* server_selector */,
-                                 const std::string& /* operation */,
-                                 const std::string& /* log_message */,
-                                 const bool /* cascade_delete */,
-                                 Args&&... /* keys */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteTransactional(const int index,
+                                 const db::ServerSelector& server_selector,
+                                 const std::string& operation,
+                                 const std::string& log_message,
+                                 const bool cascade_delete,
+                                 Args&&... keys) {
+
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this,
+                           PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                           server_selector, log_message, cascade_delete);
+
+        auto count = deleteFromTable(index, server_selector, operation, keys...);
+
+        transaction.commit();
+
+        return (count);
+
     }
 
     /// @brief Sends query to delete subnet by id.
@@ -533,18 +606,89 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param in_bindings Collection of bindings representing an option.
-    void insertOption6(const ServerSelector& /* server_selector */,
-                       const PsqlBindArray& /* in_bindings */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    /// @param modification_ts option's modification timestamp
+    void insertOption6(const ServerSelector& server_selector,
+                       const PsqlBindArray& in_bindings,
+                       const boost::posix_time::ptime& modification_ts) {
+        // Attempt the insert.
+        insertQuery(PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION6, in_bindings);
+
+        // Fetch primary key value of the inserted option. We will use it in the
+        // next INSERT statement to associate this option with the server.
+        auto option_id = getLastInsertId("dhcp6_options", "option_id");
+
+        PsqlBindArray attach_bindings;
+        attach_bindings.add(option_id);   // id of newly inserted global.
+        attach_bindings.addTimestamp(modification_ts);
+
+        // Associate the option with the servers.
+        attachElementToServers(PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION6_SERVER,
+                               server_selector, attach_bindings);
     }
 
     /// @brief Sends query to insert or update global DHCP option.
     ///
     /// @param server_selector Server selector.
     /// @param option Pointer to the option descriptor encapsulating the option.
-    void createUpdateOption6(const ServerSelector& /* server_selector */,
-                             const OptionDescriptorPtr& /* option */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateOption6(const ServerSelector& server_selector,
+                             const OptionDescriptorPtr& option) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        auto tag = getServerTag(server_selector, "creating or updating global option");
+
+        // Create the input parameter bindings.
+        PsqlBindArray in_bindings;
+        in_bindings.add(option->option_->getType());
+        addOptionValueBinding(in_bindings, option);
+        in_bindings.addOptional(option->formatted_value_);
+        in_bindings.addOptional(option->space_name_);
+        in_bindings.add(option->persistent_);
+        in_bindings.addNull();
+        in_bindings.addNull();
+        in_bindings.add(0);
+        in_bindings.add(option->getContext());
+        in_bindings.addNull();
+        in_bindings.addNull();
+        in_bindings.addTimestamp(option->getModificationTime());
+        in_bindings.addNull();
+
+        // Remember the size before we added where clause arguments.
+        size_t pre_where_size = in_bindings.size();
+
+        // Now the add the update where clause parameters
+        in_bindings.add(tag);
+        in_bindings.add(option->option_->getType());
+        in_bindings.addOptional(option->space_name_);
+
+        // Start transaction.
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this,
+                           PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                           server_selector, "global option set", false);
+
+        // Try to update the option.
+        if (updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
+                              in_bindings) == 0) {
+            // The option doesn't exist, so we'll try to insert it.
+            // Remove the update where clause bindings.
+            while (in_bindings.size() > pre_where_size) {
+                in_bindings.popBack();
+            }
+
+            // Try to insert the option.
+            insertOption6(server_selector, in_bindings, option->getModificationTime());
+        }
+
+        // Commit the work.
+        transaction.commit();
     }
 
     /// @brief Sends query to insert or update DHCP option in a subnet.
@@ -637,9 +781,15 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param option_def Pointer to the option definition to be inserted or updated.
-    void createUpdateOptionDef6(const ServerSelector& /* server_selector */,
-                                const OptionDefinitionPtr& /* option_def */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateOptionDef6(const ServerSelector& server_selector,
+                                const OptionDefinitionPtr& option_def) {
+
+        createUpdateOptionDef(server_selector, option_def, DHCP6_OPTION_SPACE,
+                              PgSqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
+                              PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6,
+                              PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION_DEF6,
+                              PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                              PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6_SERVER);
     }
 
     /// @brief Sends query to insert or update option definition
@@ -661,10 +811,21 @@ public:
     /// @param code Option code.
     /// @param name Option name.
     /// @return Number of deleted option definitions.
-    uint64_t deleteOptionDef6(const ServerSelector& /* server_selector */,
-                              const uint16_t /* code */,
-                              const std::string& /* space */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteOptionDef6(const ServerSelector& server_selector,
+                              const uint16_t code,
+                              const std::string& space) {
+
+        PsqlBindArray in_bindings;
+        in_bindings.add(code);
+        in_bindings.add(space);
+
+        // Run DELETE.
+        return (deleteTransactional(PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION_DEF6_CODE_NAME,
+                                    server_selector,
+                                    "deleting option definition",
+                                    "option definition deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Sends query to delete option definitions for a client class.
@@ -684,10 +845,20 @@ public:
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
-    uint64_t deleteOption6(const ServerSelector& /* server_selector */,
-                           const uint16_t /* code */,
-                           const std::string& /* space */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteOption6(const ServerSelector& server_selector,
+                           const uint16_t code,
+                           const std::string& space) {
+        PsqlBindArray in_bindings;
+        in_bindings.add(code);
+        in_bindings.add(space);
+
+        // Run DELETE.
+        return (deleteTransactional(PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
+                                    server_selector,
+                                    "deleting global option",
+                                    "global option deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes subnet level option.

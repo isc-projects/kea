@@ -137,6 +137,60 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, getAndDeleteAllServersTest) {
     getAndDeleteAllServersTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6Test) {
+    createUpdateDeleteGlobalParameter6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, globalParameters6WithServerTagsTest) {
+    globalParameters6WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllGlobalParameters6Test) {
+    getAllGlobalParameters6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedGlobalParameters6Test) {
+    getModifiedGlobalParameters6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, nullKeyErrorTest) {
+    nullKeyErrorTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getOptionDef6Test) {
+    getOptionDef6Test();
+}
+
+// skipping shared-network and subnet tests for now
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, optionDefs6WithServerTagsTest) {
+    optionDefs6WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllOptionDefs6Test) {
+    getAllOptionDefs6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedOptionDefs6Test) {
+    getModifiedOptionDefs6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteOption6Test) {
+    createUpdateDeleteOption6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, globalOptions6WithServerTagsTest) {
+    globalOptions6WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllOptions6Test) {
+    getAllOptions6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedOptions6Test) {
+    getModifiedOptions6Test();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv6DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {
