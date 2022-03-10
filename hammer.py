@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 """Hammer - Kea development environment management tool."""
 
 from __future__ import print_function
@@ -1372,10 +1373,10 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     # check if it is already installed
     if (os.path.exists('/usr/local/lib/libfreeradius-client.so.2.0.0') and
         os.path.exists('/usr/local/include/freeradius-client.h')):
-        log.info('freeradius is already installed')
+        log.info('freeradius-client is already installed.')
         return
 
-    # install freeradius dependencies
+    # Install freeradius-client dependencies.
     if system in ['centos', 'rhel', 'fedora']:
         install_pkgs('nettle-devel', env=env, check_times=check_times)
     elif system in ['alpine', 'debian', 'ubuntu']:
@@ -1395,7 +1396,7 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     if system != 'alpine':
         execute('sudo ldconfig', env=env)  # TODO: this shouldn't be needed
     execute('rm -rf freeradius-client')
-    log.info('freeradius just installed')
+    log.info('freeradius-client successfully installed.')
 
 
 def prepare_system_local(features, check_times):
@@ -1433,7 +1434,7 @@ def prepare_system_local(features, check_times):
                 packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
-            packages.extend(['git'])
+            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
@@ -1492,7 +1493,7 @@ def prepare_system_local(features, check_times):
                 packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
-            packages.extend(['git'])
+            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
@@ -1548,9 +1549,7 @@ def prepare_system_local(features, check_times):
         #     packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
 
         if 'radius' in features:
-            packages.extend(['git'])
-            if 'forge' in features:
-                packages.extend(['freeradius'])
+            packages.extend(['freeradius', 'git'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1610,7 +1609,7 @@ def prepare_system_local(features, check_times):
                 packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
 
         if 'radius' in features:
-            packages.extend(['git'])
+            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
@@ -1690,7 +1689,7 @@ def prepare_system_local(features, check_times):
                 packages.append('postgresql-all')
 
         if 'radius' in features:
-            packages.extend(['git'])
+            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
@@ -1733,7 +1732,7 @@ def prepare_system_local(features, check_times):
                 packages.extend(['postgresql13-server', 'postgresql13-client'])
 
         if 'radius' in features:
-            packages.extend(['git'])
+            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['krb5', 'krb5-devel'])
