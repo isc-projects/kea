@@ -157,11 +157,160 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, nullKeyErrorTest) {
     nullKeyErrorTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateSubnet6SelectorsTest) {
+    createUpdateSubnet6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6Test) {
+    getSubnet6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6byIdSelectorsTest) {
+    getSubnet6byIdSelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6WithOptionalUnspecifiedTest) {
+    getSubnet6WithOptionalUnspecifiedTest();
+}
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6SharedNetworkTest) {
+    getSubnet6SharedNetworkTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6ByPrefixTest) {
+    getSubnet6ByPrefixTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSubnet6byPrefixSelectorsTest) {
+    getSubnet6byPrefixSelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSubnets6Test) {
+    getAllSubnets6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSubnets6SelectorsTest) {
+    getAllSubnets6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSubnets6WithServerTagsTest) {
+    getAllSubnets6WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSubnet6Test) {
+    deleteSubnet6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSubnet6ByIdSelectorsTest) {
+    deleteSubnet6ByIdSelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSubnet6ByPrefixSelectorsTest) {
+    deleteSubnet6ByPrefixSelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteAllSubnets6SelectorsTest) {
+    deleteAllSubnets6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, unassignedSubnet6Test) {
+    unassignedSubnet6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedSubnets6Test) {
+    getModifiedSubnets6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedSubnets6SelectorsTest) {
+    getModifiedSubnets6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, subnetLifetimeTest) {
+    subnetLifetimeTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6Test) {
+    getSharedNetworkSubnets6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, subnetUpdatePoolsTest) {
+    subnetUpdatePoolsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, subnetOptionsTest) {
+    subnetOptionsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSharedNetwork6Test) {
+    getSharedNetwork6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSharedNetwork6SelectorsTest) {
+    getSharedNetwork6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6Test) {
+    createUpdateSharedNetwork6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6SelectorsTest) {
+    createUpdateSharedNetwork6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getSharedNetwork6WithOptionalUnspecifiedTest) {
+    getSharedNetwork6WithOptionalUnspecifiedTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSharedNetworkSubnets6Test) {
+    deleteSharedNetworkSubnets6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSharedNetworks6Test) {
+    getAllSharedNetworks6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSharedNetworks6SelectorsTest) {
+    getAllSharedNetworks6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllSharedNetworks6WithServerTagsTest) {
+    getAllSharedNetworks6WithServerTagsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedSharedNetworks6Test) {
+    getModifiedSharedNetworks6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedSharedNetworks6SelectorsTest) {
+    getModifiedSharedNetworks6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSharedNetwork6Test) {
+    deleteSharedNetwork6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteSharedNetwork6SelectorsTest) {
+    deleteSharedNetwork6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteAllSharedNetworks6SelectorsTest) {
+    deleteAllSharedNetworks6SelectorsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, unassignedSharedNetworkTest) {
+    unassignedSharedNetworkTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, sharedNetworkLifetimeTest) {
+    sharedNetworkLifetimeTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, sharedNetworkOptionsTest) {
+    sharedNetworkOptionsTest();
+}
+
 TEST_F(PgSqlConfigBackendDHCPv6Test, getOptionDef6Test) {
     getOptionDef6Test();
 }
-
-// skipping shared-network and subnet tests for now
 
 TEST_F(PgSqlConfigBackendDHCPv6Test, optionDefs6WithServerTagsTest) {
     optionDefs6WithServerTagsTest();
@@ -189,6 +338,34 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, getAllOptions6Test) {
 
 TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedOptions6Test) {
     getModifiedOptions6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6Test) {
+    createUpdateDeleteSubnetOption6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6Test) {
+    createUpdateDeletePoolOption6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6Test) {
+    createUpdateDeletePdPoolOption6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6Test) {
+    createUpdateDeleteSharedNetworkOption6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, subnetOptionIdOrderTest) {
+    subnetOptionIdOrderTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, sharedNetworkOptionIdOrderTest) {
+    sharedNetworkOptionIdOrderTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, multipleAuditEntriesTest) {
+    multipleAuditEntriesTest();
 }
 
 /// @brief Test fixture for verifying database connection loss-recovery

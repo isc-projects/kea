@@ -600,7 +600,7 @@ public:
 
     /// @brief Returns backend type in the textual format.
     ///
-    /// @return "mysql".
+    /// @return "postgresql".
     virtual std::string getType() const;
 
     /// @brief Returns backend host.
@@ -619,13 +619,13 @@ public:
     /// @return Port number on which database service is available.
     virtual uint16_t getPort() const;
 
-    /// @brief Registers the MySQL backend factory with backend config manager
+    /// @brief Registers the PgSql backend factory with backend config manager
     ///
     /// This should be called by the hook lib load() function.
     /// @return True if the factory was registered successfully, false otherwise.
     static bool registerBackendType();
 
-    /// @brief Unregisters the MySQL backend factory and discards MySQL backends
+    /// @brief Unregisters the PgSql backend factory and discards PgSql backends
     ///
     /// This should be called by the hook lib unload() function.
     static void unregisterBackendType();

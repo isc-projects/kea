@@ -17,8 +17,8 @@
 namespace isc {
 namespace db {
 
-/// @brief Define PostgreSQL backend version: 10.0
-const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 10;
+/// @brief Define PostgreSQL backend version: 11.0
+const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 11;
 const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement

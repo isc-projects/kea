@@ -481,7 +481,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteServerTest() {
     // It should not be possible to create a duplicate of the logical
     // server 'all'.
     auto all_server = Server::create(ServerTag("all"), "this is logical server all");
-    EXPECT_THROW(cbptr_->createUpdateServer6(all_server), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->createUpdateServer6(all_server), isc::InvalidOperation);
 
     ServerPtr returned_server;
 
@@ -525,7 +525,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteServerTest() {
     EXPECT_TRUE(returned_server);
 
     // Deleting logical server 'all' is not allowed.
-    EXPECT_THROW(cbptr_->deleteServer6(ServerTag()), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->deleteServer6(ServerTag()), isc::InvalidOperation);
 
     // Delete the existing server.
     ASSERT_NO_THROW_LOG(servers_deleted = cbptr_->deleteServer6(ServerTag("server1")));
@@ -670,7 +670,7 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
 
     // Try to insert one of them and associate with non-existing server.
     // This should fail because the server must be inserted first.
-    EXPECT_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
                                                       global_parameter1),
                  NullKeyError);
 
@@ -1000,11 +1000,11 @@ GenericConfigBackendDHCPv6Test::createUpdateSubnet6SelectorsTest() {
                                                     subnet));
 
     // Not supported server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ANY(), subnet),
+    ASSERT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ANY(), subnet),
                  isc::InvalidOperation);
 
     // Not implemented server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::UNASSIGNED(),
                                              subnet),
                  isc::NotImplemented);
 }
@@ -1024,7 +1024,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     auto subnet2 = test_subnets_[2];
 
     // An attempt to add a subnet to a non-existing server (server1) should fail.
-    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                              subnet2),
                  NullKeyError);
 
@@ -1053,11 +1053,11 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     }
 
     // We are not going to support selection of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     subnet->getID()),
                  isc::InvalidOperation);
 
-    EXPECT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     subnet->toText()),
                  isc::InvalidOperation);
 
@@ -1141,7 +1141,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
     // Subnets are 2001:db8:1::/48 id 1024 and 2001:db8:3::/64 id 8192
     subnet2.reset(new Subnet6(IOAddress("2001:db8:1::"),
                               48, 30, 40, 50, 80, 8192));
-    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"), subnet2),
+    ASSERT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ONE("server2"),  subnet2),
                  DuplicateEntry);
 }
 
@@ -1154,7 +1154,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6byIdSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSubnet6(ServerSelector::ONE("server1"), SubnetID(1)));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     SubnetID(1)),
                  isc::InvalidOperation);
 }
@@ -1175,8 +1175,9 @@ GenericConfigBackendDHCPv6Test::getSubnet6WithOptionalUnspecifiedTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
-    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
-                                                    subnet->getID());
+    Subnet6Ptr returned_subnet;
+    ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                                             subnet->getID()));
     ASSERT_TRUE(returned_subnet);
 
     EXPECT_TRUE(returned_subnet->getIface().unspecified());
@@ -1305,7 +1306,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6byPrefixSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSubnet6(ServerSelector::ONE("server1"), "192.0.2.0/26"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     "192.0.2.0/26"),
                  isc::InvalidOperation);
 }
@@ -1418,7 +1419,7 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getAllSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" })));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getAllSubnets6(ServerSelector::ANY()), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->getAllSubnets6(ServerSelector::ANY()), isc::InvalidOperation);
 }
 
 void
@@ -1627,12 +1628,12 @@ GenericConfigBackendDHCPv6Test::deleteSubnet6ByIdSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet6(ServerSelector::ONE("server1"), SubnetID(1)));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            SubnetID(1)),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet6(ServerSelector::UNASSIGNED(), SubnetID(1)),
+    ASSERT_THROW(cbptr_->deleteSubnet6(ServerSelector::UNASSIGNED(), SubnetID(1)),
                  isc::NotImplemented);
 }
 
@@ -1644,12 +1645,12 @@ GenericConfigBackendDHCPv6Test::deleteSubnet6ByPrefixSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet6(ServerSelector::ONE("server1"), "192.0.2.0/26"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSubnet6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            "192.0.2.0/26"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet6(ServerSelector::UNASSIGNED(), "192.0.2.0/26"),
+    ASSERT_THROW(cbptr_->deleteSubnet6(ServerSelector::UNASSIGNED(), "192.0.2.0/26"),
                  isc::NotImplemented);
 }
 
@@ -1661,9 +1662,9 @@ GenericConfigBackendDHCPv6Test::deleteAllSubnets6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteAllSubnets6(ServerSelector::ONE("server1")));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteAllSubnets6(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->deleteAllSubnets6(ServerSelector::ANY()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteAllSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" })),
+    ASSERT_THROW(cbptr_->deleteAllSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" })),
                  isc::InvalidOperation);
 }
 
@@ -2008,7 +2009,7 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6Test() {
                                                            shared_network2));
 
     // We are not going to support selection of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            test_networks_[0]->getName()),
                  isc::InvalidOperation);
 
@@ -2088,7 +2089,7 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSharedNetwork6(ServerSelector::ONE("server1"), "level1"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            "level1"),
                  isc::InvalidOperation);
 }
@@ -2098,7 +2099,7 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6Test() {
     auto shared_network = test_networks_[0];
 
     // An attempt to insert the shared network for non-existing server should fail.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
                                                     shared_network),
                  NullKeyError);
 
@@ -2164,11 +2165,11 @@ GenericConfigBackendDHCPv6Test::createUpdateSharedNetwork6SelectorsTest() {
                                                            shared_network));
 
     // Not supported server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ANY(), shared_network),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ANY(), shared_network),
                  isc::InvalidOperation);
 
     // Not implemented server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::UNASSIGNED(),
                                                     shared_network),
                  isc::NotImplemented);
 }
@@ -2246,16 +2247,16 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6WithOptionalUnspecifiedTest() {
 
 void
 GenericConfigBackendDHCPv6Test::deleteSharedNetworkSubnets6Test() {
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::UNASSIGNED(),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ALL(),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ALL(),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ONE("server1"),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
 }
@@ -2420,7 +2421,7 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getAllSharedNetworks6(ServerSelector::MULTIPLE({ "server1", "server2" })));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getAllSharedNetworks6(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->getAllSharedNetworks6(ServerSelector::ANY()),
                  isc::InvalidOperation);
 }
 
@@ -2546,7 +2547,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6SelectorsTest() {
                                                            timestamps_["yesterday"]));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getModifiedSharedNetworks6(ServerSelector::ANY(),
+    ASSERT_THROW(cbptr_->getModifiedSharedNetworks6(ServerSelector::ANY(),
                                                     timestamps_["yesterday"]),
                  isc::InvalidOperation);
 }
@@ -2610,13 +2611,13 @@ GenericConfigBackendDHCPv6Test::deleteSharedNetwork6Test() {
     }
 
     // We are not going to support deletion of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                               shared_network3->getName()),
                  isc::InvalidOperation);
 
     // We currently don't support deleting a shared network with specifying
     // an unassigned server tag. Use ANY to delete any subnet instead.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::UNASSIGNED(),
                                               shared_network1->getName()),
                  isc::NotImplemented);
 
@@ -2649,12 +2650,12 @@ GenericConfigBackendDHCPv6Test::deleteSharedNetwork6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork6(ServerSelector::ONE("server1"), "level1"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                              "level1"),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           "level1"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::UNASSIGNED(), "level1"),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::UNASSIGNED(), "level1"),
                  isc::NotImplemented);
 }
 
@@ -2666,9 +2667,9 @@ GenericConfigBackendDHCPv6Test::deleteAllSharedNetworks6SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteAllSharedNetworks6(ServerSelector::ONE("server1")));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteAllSharedNetworks6(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->deleteAllSharedNetworks6(ServerSelector::ANY()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteAllSharedNetworks6(ServerSelector::MULTIPLE({ "server1", "server2" })),
+    ASSERT_THROW(cbptr_->deleteAllSharedNetworks6(ServerSelector::MULTIPLE({ "server1", "server2" })),
                  isc::InvalidOperation);
 }
 
@@ -2885,7 +2886,7 @@ GenericConfigBackendDHCPv6Test::optionDefs6WithServerTagsTest() {
 
     // An attempt to create option definition for non-existing server should
     // fail.
-    EXPECT_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server1"),
                                                 option1),
                  NullKeyError);
 
@@ -3278,7 +3279,7 @@ GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
     OptionDescriptorPtr opt_timezone2 = test_options_[6];
     OptionDescriptorPtr opt_timezone3 = test_options_[7];
 
-    EXPECT_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
                                              opt_timezone1),
                  NullKeyError);
 
@@ -3655,7 +3656,7 @@ void
 GenericConfigBackendDHCPv6Test::createUpdateDeletePoolOption6Test() {
     // Insert new subnet.
     Subnet6Ptr subnet = test_subnets_[1];
-    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     {
         SCOPED_TRACE("CREATE audit entry for a subnet");
@@ -3672,10 +3673,10 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePoolOption6Test() {
                                          IOAddress("2001:db8::10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ANY(),
-                                pool->getFirstAddress(),
-                                pool->getLastAddress(),
-                                opt_posix_timezone);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ANY(),
+                                                    pool->getFirstAddress(),
+                                                    pool->getLastAddress(),
+                                                    opt_posix_timezone));
 
     // Query for a subnet.
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -4399,7 +4400,7 @@ GenericConfigBackendDHCPv6Test::getModifiedClientClasses6Test() {
     EXPECT_EQ(0, client_classes.getClasses()->size());
 
     // Getting modified client classes for any server is unsupported.
-    EXPECT_THROW(cbptr_->getModifiedClientClasses6(ServerSelector::ANY(),
+    ASSERT_THROW(cbptr_->getModifiedClientClasses6(ServerSelector::ANY(),
                                                    timestamps_["two days ago"]),
                  InvalidOperation);
 }
@@ -4635,7 +4636,7 @@ GenericConfigBackendDHCPv6Test::deleteAllClientClasses6Test() {
     EXPECT_EQ(0, result);
 
     // Deleting multiple objects using ANY server tag is unsupported.
-    EXPECT_THROW(cbptr_->deleteAllClientClasses6(ServerSelector::ANY()), InvalidOperation);
+    ASSERT_THROW(cbptr_->deleteAllClientClasses6(ServerSelector::ANY()), InvalidOperation);
 }
 
 void
@@ -4662,20 +4663,20 @@ GenericConfigBackendDHCPv6Test::clientClassDependencies6Test() {
 
     // An attempt to move the first class to the end of the class hierarchy should
     // fail because other classes depend on it.
-    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, "bar"),
+    ASSERT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, "bar"),
                  DbOperationError);
 
     // Try to change the dependency of the first class. There are other classes
     // having indirect dependency on KNOWN class via this class. Therefore, the
     // update should be unsuccessful.
     class1->setTest("member('HA_server1')");
-    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""),
+    ASSERT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""),
                  DbOperationError);
 
     // Try to change the dependency of the second class. This should result in
     // an error because the third class depends on it.
     class2->setTest("member('HA_server1')");
-    EXPECT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class2, ""),
+    ASSERT_THROW(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class2, ""),
                  DbOperationError);
 
     // Changing the indirect dependency of the third class should succeed, because

@@ -925,14 +925,7 @@ public:
         in_bindings.addOptional(subnet->getDdnsSendUpdates(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsOverrideNoUpdate(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsOverrideClientUpdate(Network::Inheritance::NONE));
-
-        auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
-        if (!ddns_rcn_mode.unspecified()) {
-            in_bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
-        } else {
-            in_bindings.addNull();
-        }
-
+        addDdnsReplaceClientNameBinding(in_bindings, subnet);
         in_bindings.addOptional(subnet->getDdnsGeneratedPrefix(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getReservationsInSubnet(Network::Inheritance::NONE));
@@ -1493,14 +1486,7 @@ public:
         in_bindings.addOptional(shared_network->getDdnsSendUpdates(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsOverrideNoUpdate(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsOverrideClientUpdate(Network::Inheritance::NONE));
-
-        auto ddns_rcn_mode = shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
-        if (!ddns_rcn_mode.unspecified()) {
-            in_bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
-        } else {
-            in_bindings.addNull();
-        }
-
+        addDdnsReplaceClientNameBinding(in_bindings, shared_network);
         in_bindings.addOptional(shared_network->getDdnsGeneratedPrefix(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getReservationsInSubnet(Network::Inheritance::NONE));
@@ -1950,7 +1936,7 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
-        createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
+        createUpdateOptionDef(server_selector, Option::V4, option_def, DHCP4_OPTION_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
                               PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
@@ -1967,7 +1953,7 @@ public:
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def,
                                 const std::string& client_class_name) {
-        createUpdateOptionDef(server_selector, option_def, DHCP4_OPTION_SPACE,
+        createUpdateOptionDef(server_selector, Option::V4, option_def, DHCP4_OPTION_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                               PgSqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_CLIENT_CLASS,
                               PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4_CLIENT_CLASS,

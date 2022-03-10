@@ -351,6 +351,7 @@ public:
     /// @brief Creates or updates an option definition.
     ///
     /// @param server_selector Server selector.
+    /// @param universe Option universe, i.e. V4 or V6.
     /// @param option_def Option definition to be added or updated.
     /// @param space Default option space
     /// @param get_option_def_code_space Statement getting option
@@ -365,6 +366,7 @@ public:
     /// it is a global option definition.
     /// @throw NotImplemented if server selector is "unassigned".
     void createUpdateOptionDef(const db::ServerSelector& server_selector,
+                               const Option::Universe& universe,
                                const OptionDefinitionPtr& option_def,
                                const std::string& space,
                                const int& get_option_def_code_space,
@@ -552,6 +554,17 @@ public:
     void attachElementToServers(const int index,
                                 const db::ServerSelector& server_selector,
                                 const db::PsqlBindArray& in_bindings);
+
+    /// @brief Adds network ddns-replace-client-name mode to a bind array.
+    ///
+    /// If network's value of ddsn-replace-client-name mode has been specified
+    /// it is added to the binding, otherwise a null is added to the binding.
+    ///
+    /// @param bindings PsqlBindArray to which the mode should be added.
+    /// @param network Pointer to shared network or subnet for which mode binding
+    /// should be created.
+    void addDdnsReplaceClientNameBinding(db::PsqlBindArray& bindings,
+                                         const NetworkPtr& network);
 
     /// @brief Adds network relays addresses to a bind array.
     ///

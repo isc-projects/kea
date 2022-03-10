@@ -467,8 +467,9 @@ PgSqlConfigBackendImpl::getOptionDefs(const int index,
 
 void
 PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_selector,
+                                              const Option::Universe& universe,
                                               const OptionDefinitionPtr& option_def,
-                                              const std::string& space,
+                                              const std::string& /* space */,
                                               const int& /*get_option_def_code_space*/,
                                               const int& insert_option_def,
                                               const int& update_option_def,
@@ -545,7 +546,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
         // Successfully inserted the definition. Now, we have to associate it
         // with the server tag.
         PsqlBindArray attach_bindings;
-        uint64_t id = getLastInsertId((space == DHCP4_OPTION_SPACE ?
+        uint64_t id = getLastInsertId((universe == Option::V4 ?
                                        "dhcp4_option_def" : "dhcp6_option_def"), "id");
         attach_bindings.add(id);
         attach_bindings.addTimestamp(option_def->getModificationTime());
@@ -898,6 +899,7 @@ PgSqlConfigBackendImpl::attachElementToServers(const int index,
         server_bindings.popBack();
     }
 }
+
 ServerPtr
 PgSqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
     ServerCollection servers;
@@ -1042,6 +1044,17 @@ PgSqlConfigBackendImpl::getPort() const {
         // No port parameter or parameter invalid.
     }
     return (0);
+}
+
+void
+PgSqlConfigBackendImpl::addDdnsReplaceClientNameBinding(PsqlBindArray& bindings,
+                                                        const NetworkPtr& network) {
+    auto ddns_rcn_mode = network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+    if (!ddns_rcn_mode.unspecified()) {
+        bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
+    } else {
+        bindings.addNull();
+    }
 }
 
 void

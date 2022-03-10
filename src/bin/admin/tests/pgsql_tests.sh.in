@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "10.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "11.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -445,6 +445,22 @@ pgsql_upgrade_9_0_to_10_0() {
     assert_eq 1 "${count}" "func_dhcp6_client_class_check_dependency_BINS is missing RETURN NEW. (expected count %d, returned %d)"
 }
 
+pgsql_upgrade_10_0_to_11_0() {
+    run_command \
+        pgsql_execute "$session_sql"
+
+    # Get function source code so we can check that it returns NEW.
+    # Function name must be lower case for WHERE clause.
+    run_command \
+         pgsql_execute "select proname,prosrc from pg_proc where proname='createoptionauditdhcp6'"
+
+    assert_eq 0 "${EXIT_CODE}" "function createOptionAuditDHCP6() broken or missing. (expected status code %d, returned %d)"
+
+    count=$(echo "${OUTPUT}" | grep -Eci 'SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool WHERE id = pd_pool_id') || true
+    assert_eq 1 "${count}" "func_dhcp6_client_class_check_dependency_BINS is missing changed line. (expected count %d, returned %d)"
+}
+
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade-test"
 
@@ -460,9 +476,9 @@ pgsql_upgrade_test() {
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
-    # Verify upgraded schema reports version 10.0.
+    # Verify upgraded schema reports version 11.0.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "10.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "11.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0
@@ -487,6 +503,9 @@ pgsql_upgrade_test() {
 
     # Check 9.0 to 10.0 upgrade
     pgsql_upgrade_9_0_to_10_0
+
+    # Check 10.0 to 11.0 upgrade
+    pgsql_upgrade_10_0_to_11_0
 
     # Let's wipe the whole database
     pgsql_wipe
