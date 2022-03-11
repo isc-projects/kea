@@ -40,7 +40,7 @@ START TRANSACTION;
 
 -- Replace createOptionAuditDHCP6() with a version corrected
 -- where clause when scope is 6 (i.e. PD pool)
--- 
+--
 -- -----------------------------------------------------
 --
 -- Stored procedure which updates modification timestamp of
