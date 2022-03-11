@@ -2651,7 +2651,7 @@ GenericConfigBackendDHCPv6Test::deleteSharedNetwork6SelectorsTest() {
 
     // Not supported selectors.
     ASSERT_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                           "level1"),
+                                              "level1"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
@@ -3784,7 +3784,7 @@ void
 GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
     // Insert new subnet.
     Subnet6Ptr subnet = test_subnets_[1];
-    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet));
 
     {
         SCOPED_TRACE("CREATE audit entry for a subnet");
@@ -3803,10 +3803,10 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
     int pd_pool_len = prefixLengthFromRange(pd_pool->getFirstAddress(),
                                             pd_pool->getLastAddress());
-    cbptr_->createUpdateOption6(ServerSelector::ANY(),
-                                pd_pool->getFirstAddress(),
-                                static_cast<uint8_t>(pd_pool_len),
-                                opt_posix_timezone);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ANY(),
+                                                    pd_pool->getFirstAddress(),
+                                                    static_cast<uint8_t>(pd_pool_len),
+                                                    opt_posix_timezone));
 
     // Query for a subnet.
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),

@@ -6,10 +6,10 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <mysql_cb_dhcp6.h>
 #include <mysql_cb_impl.h>
 #include <mysql_query_macros_dhcp.h>
-#include <asiolink/addr_utilities.h>
 #include <cc/data.h>
 #include <config_backend/constants.h>
 #include <database/database_connection.h>
@@ -985,6 +985,9 @@ public:
                 last_pool = Pool6::create(Lease::TYPE_NA,
                                           IOAddress(out_bindings[1]->getString()),
                                           IOAddress(out_bindings[2]->getString()));
+
+                // pool subnet_id (3) (ignored)
+
                 // pool client_class (4)
                 if (!out_bindings[4]->amNull()) {
                     last_pool->allowClientClass(out_bindings[4]->getString());
@@ -1013,7 +1016,7 @@ public:
                     last_pool->setContext(user_context);
                 }
 
-                // pool: modification_ts (7)
+                // pool: modification_ts (7) (ignored)
 
                 pools.push_back(last_pool);
                 pool_ids.push_back(last_pool_id);
@@ -1193,6 +1196,7 @@ public:
         }
 
         pool_id = 0;
+
         return (Pool6Ptr());
     }
 
@@ -1420,7 +1424,8 @@ public:
     /// @param server_selector Server selector.
     /// @param pool Pointer to the pool to be inserted.
     /// @param subnet Pointer to the subnet that this pool belongs to.
-    void createPool6(const ServerSelector& server_selector, const Pool6Ptr& pool,
+    void createPool6(const ServerSelector& server_selector,
+                     const Pool6Ptr& pool,
                      const Subnet6Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(pool->getFirstAddress().toText()),
@@ -1720,8 +1725,8 @@ public:
                 // max_preferred_lifetime at 32.
                 if (!out_bindings[5]->amNull()) {
                     last_network->setPreferred(createTriplet(out_bindings[5],
-                                                         out_bindings[31],
-                                                         out_bindings[32]));
+                                                             out_bindings[31],
+                                                             out_bindings[32]));
                 }
 
                 // rapid_commit at 6.
@@ -1888,6 +1893,15 @@ public:
                 }
             }
 
+            // Check for new server tags.
+            if (!out_bindings[45]->amNull() &&
+                (last_tag != out_bindings[45]->getString())) {
+                last_tag = out_bindings[45]->getString();
+                if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
+                    last_network->setServerTag(last_tag);
+                }
+            }
+
             // Parse option from 14 to 26.
             if (!out_bindings[14]->amNull() &&
                 (last_option_id < out_bindings[14]->getInteger<uint64_t>())) {
@@ -1896,15 +1910,6 @@ public:
                 OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 14);
                 if (desc) {
                     last_network->getCfgOption()->add(*desc, desc->space_name_);
-                }
-            }
-
-            // Check for new server tags.
-            if (!out_bindings[45]->amNull() &&
-                (last_tag != out_bindings[45]->getString())) {
-                last_tag = out_bindings[45]->getString();
-                if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
-                    last_network->setServerTag(last_tag);
                 }
             }
         });
@@ -2884,7 +2889,9 @@ public:
                 last_client_class->setModificationTime(out_bindings[9]->getTimestamp());
 
                 // preferred lifetime: default, min, max
-                last_client_class->setPreferred(createTriplet(out_bindings[33], out_bindings[34], out_bindings[35]));
+                last_client_class->setPreferred(createTriplet(out_bindings[33],
+                                                              out_bindings[34],
+                                                              out_bindings[35]));
 
                 class_list.push_back(last_client_class);
             }

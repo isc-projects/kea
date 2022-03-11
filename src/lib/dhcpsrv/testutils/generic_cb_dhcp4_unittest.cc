@@ -449,7 +449,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteServerTest() {
     // It should not be possible to create a duplicate of the logical
     // server 'all'.
     auto all_server = Server::create(ServerTag("all"), "this is logical server all");
-    EXPECT_THROW(cbptr_->createUpdateServer4(all_server), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->createUpdateServer4(all_server), isc::InvalidOperation);
 
     ServerPtr returned_server;
 
@@ -493,7 +493,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteServerTest() {
     EXPECT_TRUE(returned_server);
 
     // Deleting logical server 'all' is not allowed.
-    EXPECT_THROW(cbptr_->deleteServer4(ServerTag()), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->deleteServer4(ServerTag()), isc::InvalidOperation);
 
     // Delete the existing server.
     ASSERT_NO_THROW_LOG(servers_deleted = cbptr_->deleteServer4(ServerTag("server1")));
@@ -638,7 +638,7 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
 
     // Try to insert one of them and associate with non-existing server.
     // This should fail because the server must be inserted first.
-    EXPECT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
                                                       global_parameter1),
                  NullKeyError);
 
@@ -968,11 +968,11 @@ GenericConfigBackendDHCPv4Test::createUpdateSubnet4SelectorsTest() {
                                                     subnet));
 
     // Not supported server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ANY(), subnet),
+    ASSERT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ANY(), subnet),
                  isc::InvalidOperation);
 
     // Not implemented server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(),
                                              subnet),
                  isc::NotImplemented);
 }
@@ -992,7 +992,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     auto subnet2 = test_subnets_[2];
 
     // An attempt to add a subnet to a non-existing server (server1) should fail.
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                              subnet2),
                  NullKeyError);
 
@@ -1021,11 +1021,11 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     }
 
     // We are not going to support selection of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     subnet->getID()),
                  isc::InvalidOperation);
 
-    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     subnet->toText()),
                  isc::InvalidOperation);
 
@@ -1109,7 +1109,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
     // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
     subnet2.reset(new Subnet4(IOAddress("10.0.0.0"),
                               8, 30, 40, 60, 8192));
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2),
+    ASSERT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2),
                  DuplicateEntry);
 }
 
@@ -1122,7 +1122,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4byIdSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSubnet4(ServerSelector::ONE("server1"), SubnetID(1)));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     SubnetID(1)),
                  isc::InvalidOperation);
 }
@@ -1143,8 +1143,9 @@ GenericConfigBackendDHCPv4Test::getSubnet4WithOptionalUnspecifiedTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
 
     // Fetch this subnet by subnet identifier.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-                                                    subnet->getID());
+    Subnet4Ptr returned_subnet;
+    ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                                             subnet->getID()));
     ASSERT_TRUE(returned_subnet);
 
     EXPECT_TRUE(returned_subnet->getIface().unspecified());
@@ -1291,7 +1292,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4byPrefixSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSubnet4(ServerSelector::ONE("server1"), "192.0.2.0/24"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                     "192.0.2.0/24"),
                  isc::InvalidOperation);
 }
@@ -1404,7 +1405,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getAllSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" })));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getAllSubnets4(ServerSelector::ANY()), isc::InvalidOperation);
+    ASSERT_THROW(cbptr_->getAllSubnets4(ServerSelector::ANY()), isc::InvalidOperation);
 }
 
 void
@@ -1613,12 +1614,12 @@ GenericConfigBackendDHCPv4Test::deleteSubnet4ByIdSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet4(ServerSelector::ONE("server1"), SubnetID(1)));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            SubnetID(1)),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), SubnetID(1)),
+    ASSERT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), SubnetID(1)),
                  isc::NotImplemented);
 }
 
@@ -1630,12 +1631,12 @@ GenericConfigBackendDHCPv4Test::deleteSubnet4ByPrefixSelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet4(ServerSelector::ONE("server1"), "192.0.2.0/24"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            "192.0.2.0/24"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), "192.0.2.0/24"),
+    ASSERT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), "192.0.2.0/24"),
                  isc::NotImplemented);
 }
 
@@ -1647,9 +1648,9 @@ GenericConfigBackendDHCPv4Test::deleteAllSubnets4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1")));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::ANY()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" })),
+    ASSERT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" })),
                  isc::InvalidOperation);
 }
 
@@ -1984,7 +1985,7 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4Test() {
                                                            shared_network2));
 
     // We are not going to support selection of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->getSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            test_networks_[0]->getName()),
                  isc::InvalidOperation);
 
@@ -2064,7 +2065,7 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getSharedNetwork4(ServerSelector::ONE("server1"), "level1"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->getSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            "level1"),
                  isc::InvalidOperation);
 }
@@ -2074,7 +2075,7 @@ GenericConfigBackendDHCPv4Test::createUpdateSharedNetwork4Test() {
     auto shared_network = test_networks_[0];
 
     // An attempt to insert the shared network for non-existing server should fail.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
                                                     shared_network),
                  NullKeyError);
 
@@ -2140,11 +2141,11 @@ GenericConfigBackendDHCPv4Test::createUpdateSharedNetwork4SelectorsTest() {
                                                            shared_network));
 
     // Not supported server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ANY(), shared_network),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ANY(), shared_network),
                  isc::InvalidOperation);
 
     // Not implemented server selectors.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
                                                     shared_network),
                  isc::NotImplemented);
 }
@@ -2222,16 +2223,16 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4WithOptionalUnspecifiedTest() {
 
 void
 GenericConfigBackendDHCPv4Test::deleteSharedNetworkSubnets4Test() {
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::UNASSIGNED(),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ONE("server1"),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                                      test_networks_[1]->getName()),
                  isc::InvalidOperation);
 }
@@ -2396,7 +2397,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->getAllSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" })));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::ANY()),
                  isc::InvalidOperation);
 }
 
@@ -2522,7 +2523,7 @@ GenericConfigBackendDHCPv4Test::getModifiedSharedNetworks4SelectorsTest() {
                                                            timestamps_["yesterday"]));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::ANY(),
+    ASSERT_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::ANY(),
                                                     timestamps_["yesterday"]),
                  isc::InvalidOperation);
 }
@@ -2586,13 +2587,13 @@ GenericConfigBackendDHCPv4Test::deleteSharedNetwork4Test() {
     }
 
     // We are not going to support deletion of a single entry for multiple servers.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                               shared_network3->getName()),
                  isc::InvalidOperation);
 
     // We currently don't support deleting a shared network with specifying
     // an unassigned server tag. Use ANY to delete any subnet instead.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
                                               shared_network1->getName()),
                  isc::NotImplemented);
 
@@ -2625,12 +2626,12 @@ GenericConfigBackendDHCPv4Test::deleteSharedNetwork4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"), "level1"));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                               "level1"),
                  isc::InvalidOperation);
 
     // Not implemented selectors.
-    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(), "level1"),
+    ASSERT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(), "level1"),
                  isc::NotImplemented);
 }
 
@@ -2642,9 +2643,9 @@ GenericConfigBackendDHCPv4Test::deleteAllSharedNetworks4SelectorsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
 
     // Not supported selectors.
-    EXPECT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::ANY()),
+    ASSERT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::ANY()),
                  isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" })),
+    ASSERT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" })),
                  isc::InvalidOperation);
 }
 
@@ -2859,7 +2860,7 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
 
     // An attempt to create option definition for non-existing server should
     // fail.
-    EXPECT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ONE("server1"),
                                                 option1),
                  NullKeyError);
 
@@ -3252,7 +3253,7 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
     OptionDescriptorPtr opt_boot_file_name2 = test_options_[6];
     OptionDescriptorPtr opt_boot_file_name3 = test_options_[7];
 
-    EXPECT_THROW(cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
+    ASSERT_THROW(cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
                                              opt_boot_file_name1),
                  NullKeyError);
 
@@ -3629,7 +3630,7 @@ void
 GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
     // Insert new subnet.
     Subnet4Ptr subnet = test_subnets_[1];
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
 
     {
         SCOPED_TRACE("CREATE audit entry for a subnet");
@@ -3646,10 +3647,10 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
                                          IOAddress("192.0.2.10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::ANY(),
-                                pool->getFirstAddress(),
-                                pool->getLastAddress(),
-                                opt_boot_file_name);
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption4(ServerSelector::ANY(),
+                                                    pool->getFirstAddress(),
+                                                    pool->getLastAddress(),
+                                                    opt_boot_file_name));
 
     // Query for a subnet.
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
@@ -4246,7 +4247,7 @@ GenericConfigBackendDHCPv4Test::getModifiedClientClasses4Test() {
     EXPECT_EQ(0, client_classes.getClasses()->size());
 
     // Getting modified client classes for any server is unsupported.
-    EXPECT_THROW(cbptr_->getModifiedClientClasses4(ServerSelector::ANY(),
+    ASSERT_THROW(cbptr_->getModifiedClientClasses4(ServerSelector::ANY(),
                                                    timestamps_["two days ago"]),
                  InvalidOperation);
 }
@@ -4482,7 +4483,7 @@ GenericConfigBackendDHCPv4Test::deleteAllClientClasses4Test() {
     EXPECT_EQ(0, result);
 
     // Deleting multiple objects using ANY server tag is unsupported.
-    EXPECT_THROW(cbptr_->deleteAllClientClasses4(ServerSelector::ANY()), InvalidOperation);
+    ASSERT_THROW(cbptr_->deleteAllClientClasses4(ServerSelector::ANY()), InvalidOperation);
 }
 
 void
@@ -4509,20 +4510,20 @@ GenericConfigBackendDHCPv4Test::clientClassDependencies4Test() {
 
     // An attempt to move the first class to the end of the class hierarchy should
     // fail because other classes depend on it.
-    EXPECT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, "bar"),
+    ASSERT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, "bar"),
                  DbOperationError);
 
     // Try to change the dependency of the first class. There are other classes
     // having indirect dependency on KNOWN class via this class. Therefore, the
     // update should be unsuccessful.
     class1->setTest("member('HA_server1')");
-    EXPECT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, ""),
+    ASSERT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, ""),
                  DbOperationError);
 
     // Try to change the dependency of the second class. This should result in
     // an error because the third class depends on it.
     class2->setTest("member('HA_server1')");
-    EXPECT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class2, ""),
+    ASSERT_THROW(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class2, ""),
                  DbOperationError);
 
     // Changing the indirect dependency of the third class should succeed, because

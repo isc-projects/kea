@@ -25,7 +25,6 @@
 #include <sstream>
 
 using namespace isc;
-using namespace isc::util;
 using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::db::test;
@@ -34,6 +33,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace isc::test;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace {

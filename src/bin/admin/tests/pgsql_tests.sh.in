@@ -457,7 +457,7 @@ pgsql_upgrade_10_0_to_11_0() {
     assert_eq 0 "${EXIT_CODE}" "function createOptionAuditDHCP6() broken or missing. (expected status code %d, returned %d)"
 
     count=$(echo "${OUTPUT}" | grep -Eci 'SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool WHERE id = pd_pool_id') || true
-    assert_eq 1 "${count}" "func_dhcp6_client_class_check_dependency_BINS is missing changed line. (expected count %d, returned %d)"
+    assert_eq 1 "${count}" "function createOptionAuditDHCP6() is missing changed line. (expected count %d, returned %d)"
 }
 
 

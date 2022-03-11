@@ -980,7 +980,7 @@ PgSqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
     in_bindings.addTempString(server->getDescription());
     in_bindings.addTimestamp(server->getModificationTime());
 
-    // Start a new transaction.
+    // Start transaction.
     PgSqlTransaction transaction(conn_);
 
     // Create scoped audit revision. As long as this instance exists

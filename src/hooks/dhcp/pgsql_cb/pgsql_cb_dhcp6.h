@@ -619,13 +619,13 @@ public:
     /// @return Port number on which database service is available.
     virtual uint16_t getPort() const;
 
-    /// @brief Registers the PgSql backend factory with backend config manager
+    /// @brief Registers the PgSQL backend factory with backend config manager
     ///
     /// This should be called by the hook lib load() function.
     /// @return True if the factory was registered successfully, false otherwise.
     static bool registerBackendType();
 
-    /// @brief Unregisters the PgSql backend factory and discards PgSql backends
+    /// @brief Unregisters the PgSQL backend factory and discards PgSQL backends
     ///
     /// This should be called by the hook lib unload() function.
     static void unregisterBackendType();
