@@ -197,7 +197,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   %@endverbatim
 
   The unit tests are run automatically when "make check" is executed (providing
-  that Kea has been build with the \c --with-mysql switch (see the installation
+  that Kea has been built with the \c --with-mysql switch (see the installation
   section in the <a href="https://kea.readthedocs.io/">Kea Administrator
   Reference Manual</a>).
 
@@ -392,12 +392,12 @@ local   all             postgres                                trust
 @section unitTestsKerberos Kerberos Configuration for Unit Tests
 
 The GSS-TSIG hook library uses the GSS-API with Kerberos. While there are
-no doubts that the hook can be safely used with a valid Kerberos configuration 
+no doubts that the hook can be safely used with a valid Kerberos configuration
 in production, unit tests reported problems on some systems.
 
 GSS-TSIG hook unit tests use a setup inherited from bind9 with old crypto
 settings which are not allowed by default Kerberos system configuration.
-A simple workaround is to set the KRB5_CONFIG environment variable to 
+A simple workaround is to set the KRB5_CONFIG environment variable to
 a random value that doesn't match a file (e.g. KRB5_CONFIG=).
 
 @section writingShellScriptsAndTests Writing shell scripts and tests

@@ -9,9 +9,13 @@
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
+
 #include <array>
+
+#include <gtest/gtest.h>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace isc::db;
 using namespace isc::db::test;
@@ -185,8 +189,8 @@ public:
         ASSERT_FALSE(in_bindings[1]->amNull());
 
         // Store data in the database.
-        ASSERT_NO_THROW(conn_.insertQuery(MySqlConnectionTest::INSERT_VALUE,
-                                          in_bindings));
+        ASSERT_NO_THROW_LOG(conn_.insertQuery(MySqlConnectionTest::INSERT_VALUE,
+                                              in_bindings));
 
         // Create input binding for select query.
         MySqlBindingCollection bindings =
@@ -204,9 +208,9 @@ public:
 
         // Execute select statement. We expect one row to be returned. For this
         // returned row the lambda provided as 4th argument should be executed.
-        ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
-                                          bindings, out_bindings,
-                                          [&](MySqlBindingCollection& out_bindings) {
+        ASSERT_NO_THROW_LOG(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
+                                              bindings, out_bindings,
+                                              [&](MySqlBindingCollection& out_bindings) {
 
             // Compare received data with input data assuming they are both non-null.
 
@@ -436,7 +440,7 @@ public:
             MySqlBinding::createNull(),
         };
 
-        ASSERT_NO_THROW(
+        ASSERT_NO_THROW_LOG(
             conn_.insertQuery(MySqlConnectionTest::INSERT_VALUE, in_bindings));
 
         // This variable will be checked to see if the row has been deleted
@@ -446,14 +450,14 @@ public:
         // Execute delete query but use int_value of non existing row.
         // The row should not be deleted.
         in_bindings = {MySqlBinding::createInteger<uint32_t>(1)};
-        ASSERT_NO_THROW(
+        ASSERT_NO_THROW_LOG(
             deleted = conn_.updateDeleteQuery(
                 MySqlConnectionTest::DELETE_BY_INT_VALUE, in_bindings));
         ASSERT_FALSE(deleted);
 
         // This time use the correct value.
         in_bindings = {MySqlBinding::createInteger<uint32_t>(1024)};
-        ASSERT_NO_THROW(
+        ASSERT_NO_THROW_LOG(
             deleted = conn_.updateDeleteQuery(
                 MySqlConnectionTest::DELETE_BY_INT_VALUE, in_bindings));
         // The row should have been deleted.
@@ -469,15 +473,15 @@ public:
             MySqlBinding::createTimestamp(),
         };
 
-        ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
-                                          in_bindings, out_bindings,
-                                          [&deleted](MySqlBindingCollection&) {
-                                              // This will be executed if the
-                                              // row is returned as a result of
-                                              // select query. We expect that
-                                              // this is not executed.
-                                              deleted = false;
-                                          }));
+        ASSERT_NO_THROW_LOG(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
+                                              in_bindings, out_bindings,
+                                              [&deleted](MySqlBindingCollection&) {
+                                                  // This will be executed if the
+                                                  // row is returned as a result of
+                                                  // select query. We expect that
+                                                  // this is not executed.
+                                                  deleted = false;
+                                              }));
         // Make sure that select query returned nothing.
         EXPECT_TRUE(deleted);
     }
@@ -653,7 +657,7 @@ TEST_F(MySqlSchemaTest, checkVersion) {
     // Check version
     auto parameters = DatabaseConnection::parse(validMySQLConnectionString());
     std::pair<uint32_t, uint32_t> version;
-    ASSERT_NO_THROW(version = MySqlConnection::getVersion(parameters));
+    ASSERT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
@@ -697,7 +701,7 @@ TEST_F(MySqlSecureConnectionTest, Tcp) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    ASSERT_NO_THROW(conn.openDatabase());
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
 }
 
 /// @brief Check the SSL/TLS protected connection.
@@ -713,7 +717,7 @@ TEST_F(MySqlSecureConnectionTest, Tls) {
                                             VALID_CERT, VALID_KEY, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    ASSERT_NO_THROW(conn.openDatabase());
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
     EXPECT_TRUE(conn.getTls());
     std::string cipher = conn.getTlsCipher();
     EXPECT_FALSE(cipher.empty());
