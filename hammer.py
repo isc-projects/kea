@@ -9,6 +9,7 @@
 """Hammer - Kea development environment management tool."""
 
 from __future__ import print_function
+
 import os
 import re
 import sys
@@ -27,6 +28,7 @@ import multiprocessing
 import grp
 import pwd
 import getpass
+
 try:
     import urllib.request
 except:
@@ -35,6 +37,7 @@ try:
     from urllib.parse import urljoin
 except:
     from urlparse import urljoin
+
 import xml.etree.ElementTree as ET
 
 
@@ -428,7 +431,7 @@ def _prepare_installed_packages_cache_for_alpine():
     return pkg_cache
 
 
-def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
+def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
     """Install native packages in a system.
 
     :param dict pkgs: specifies a list of packages to be installed
@@ -441,6 +444,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
 
     if not isinstance(pkgs, list):
         pkgs = pkgs.split()
+
+    if pkg_cache is None:
+        pkg_cache = {}
 
     # prepare cache if needed
     if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu']:#, 'alpine']: # TODO: complete caching support for alpine
@@ -1077,12 +1083,10 @@ def _install_sysrepo_from_sources():
         if len(libyang_version) > 0:
             libyang_version = libyang_version.rstrip()
             break
-    if libyang_version in versions:
-        sysrepo_version = versions[libyang_version]
-    else:
-        # Let's try the latest v1.x version. If it complains, please add the
-        # right version pair to the dictionary above.
-        sysrepo_version = '1.4.140'
+
+    # If missing, try the latest v1.x version. But if it complains further down,
+    # please add the right version pair to the {versions} dictionary.
+    sysrepo_version = versions.get(libyang_version, '1.4.140')
 
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
@@ -1122,9 +1126,68 @@ def _get_local_timezone():
 
 def _configure_mysql(system, revision, features):
     """Configure MySQL database."""
+
+    # Find MySQL's configuration directory which differs on various systems.
+    conf_d = None
+    for i in ['/etc/mysql/conf.d', '/etc/my.cnf.d']:
+        if os.path.isdir(i):
+            conf_d = i
+            break
+    if conf_d is None:
+        # No configuration directory found. This happens on some systems like
+        # Alpine. Consider /etc/my.cnf.d as default.
+        conf_d = '/etc/my.cnf.d'
+        execute('sudo mkdir -p {}'.format(conf_d))
+
+    # Some systems like Alpine only listen on the unix socket and have to have
+    # the bind-address configured manually.
+    return_code = execute("sudo grep -Er '^bind-address' {}".format(conf_d), raise_error=False)
+    if return_code != 0:
+        execute("printf '[mysqld]\nbind-address = 127.0.0.1\n' > ./bind-address.cnf")
+        bind_address_cnf = os.path.join(conf_d, 'bind-address.cnf')
+        execute('sudo cp ./bind-address.cnf {}'.format(bind_address_cnf))
+        execute('sudo chown mysql:mysql {}'.format(bind_address_cnf))
+        execute('sudo rm -f ./bind-address.cnf')
+
+    # If requested, configure TLS.
+    cert_dir = '/etc/mysql/ssl'
+    kea_cnf = os.path.join(conf_d, 'kea.cnf')
+    # But start fresh first. Not enabling TLS in hammer leaves TLS support removed.
+    execute('sudo rm -rf {} {}'.format(cert_dir, kea_cnf))
+    if 'tls' in features:
+        if not os.path.isdir(cert_dir):
+            execute('sudo mkdir -p {}'.format(cert_dir))
+        for file in [
+            './src/lib/asiolink/testutils/ca/kea-ca.crt',
+            './src/lib/asiolink/testutils/ca/kea-client.crt',
+            './src/lib/asiolink/testutils/ca/kea-client.key',
+            './src/lib/asiolink/testutils/ca/kea-server.crt',
+            './src/lib/asiolink/testutils/ca/kea-server.key',
+        ]:
+            if not os.path.exists(file):
+                print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
+                sys.exit(1)
+            basename = os.path.basename(file)
+            execute('sudo cp {} {}'.format(file, os.path.join(cert_dir, basename)))
+        with open('kea.cnf', 'w', encoding='utf-8') as f:
+            f.write('''\
+[mysqld]
+ssl_ca = {cert_dir}/kea-ca.crt
+ssl_cert = {cert_dir}/kea-server.crt
+ssl_key = {cert_dir}/kea-server.key
+
+[client-mariadb]
+ssl_ca = {cert_dir}/kea-ca.crt
+ssl_cert = {cert_dir}/kea-client.crt
+ssl_key = {cert_dir}/kea-client.key
+'''.format(cert_dir=cert_dir))
+        execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
+        # For all added files and directories, change owner to mysql.
+        execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
+
     if system in ['debian', 'fedora', 'centos']:
         execute('sudo systemctl enable mariadb.service')
-        execute('sudo systemctl start mariadb.service')
+        execute('sudo systemctl restart mariadb.service')
 
     elif system == 'ubuntu':
         execute('sudo systemctl enable mysql.service')
@@ -1138,7 +1201,7 @@ def _configure_mysql(system, revision, features):
     elif system == 'alpine':
         execute('sudo rc-update add mariadb')
         execute('sudo /etc/init.d/mariadb setup', raise_error=False)
-        execute('sudo /etc/init.d/mariadb start')
+        execute('sudo /etc/init.d/mariadb restart')
 
     cmd = "echo 'DROP DATABASE IF EXISTS keatest;' | sudo mysql -u root"
     execute(cmd)
@@ -1146,12 +1209,18 @@ def _configure_mysql(system, revision, features):
     execute(cmd, raise_error=False)
     cmd = "echo 'DROP USER 'keatest_readonly'@'localhost';' | sudo mysql -u root"
     execute(cmd, raise_error=False)
+    cmd = "echo 'DROP USER 'keatest_secure'@'localhost';' | sudo mysql -u root"
+    execute(cmd, raise_error=False)
     cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
     cmd += "CREATE DATABASE keatest;\n"
     cmd += "CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';\n"
+    if 'tls' in features:
+        cmd += "CREATE USER 'keatest_secure'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
+    if 'tls' in features:
+        cmd += "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost' REQUIRE X509;\n"
     cmd += "SET @@global.log_bin_trust_function_creators = 1;\n"
     cmd += "EOF\n\""
     execute(cmd)
@@ -1168,10 +1237,8 @@ def _configure_mysql(system, revision, features):
         cmd += "EOF\n\""
         execute(cmd)
 
-    log.info("FIX FOR ISSUE: %s %s", system, revision)
     if system == 'debian' and revision == '9':
-        log.info("FIX FOR ISSUE 2: %s %s", system, revision)
-        # fix for issue: https://gitlab.isc.org/isc-projects/kea/issues/389
+        log.info('FIX FOR ISSUE kea#389: {} {}'.format(system, revision))
         cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
         cmd += "use keatest;\n"
         cmd += "set global innodb_large_prefix=on;\n"
@@ -2232,7 +2299,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     elif system in ['arch']:
         pass
     else:
-        raise NotImplementedError('no implementation for %s' % self.system)
+        raise NotImplementedError('no implementation for %s' % system)
 
 
 def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, pkg_version, pkg_isc_version,
@@ -2417,9 +2484,10 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
         setattr(namespace, self.dest, values2)
 
 
-DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
-ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'native-pkg',
-                'radius', 'gssapi', 'netconf', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
+DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
+ALL_FEATURES = ['all', 'ccache', 'distcheck', 'docs', 'forge', 'gssapi',
+                'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
+                'pgsql', 'radius', 'shell', 'tls', 'unittest']
 
 
 def parse_args():

@@ -91,6 +91,7 @@ Procedure to build CA, server and client files:
   -extfile ext-addr-conf.cnf -sha256
 
 8 - use c_rehash or openssl rehash to create hashes
+ openssl rehash .
 
 Setup the control agent: kea-ctrl-agent.json sample.
 
