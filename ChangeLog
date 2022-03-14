@@ -1,3 +1,15 @@
+2000.   [func]      tmark
+	kea-dhcp6 fully supports using PostgreSQL for config
+	back end. This should be considered an experimental
+	feature.
+	(Gitlab #2355)
+
+1999.	[func]		tmark
+	With the addition of support for client classes,
+	kea-dhcp4 now fully supports using PostgreSQL for
+	config back end.
+	(Gitlab #2322)
+
 1997.	[bug]		tmark
 	The obsolete log message, DHCP4_NCR_CREATE, has been
 	removed from kea-dhcp4.
