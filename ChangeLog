@@ -6,7 +6,7 @@
 	``true`` and it defaults to ``false`` if not configured.
 	(Gitlab #2249)
 
-1999.   [func]		tmark, razvan
+1999.	[func]		tmark, razvan
 	The kea-dhcp6 server fully supports using PostgreSQL for config
 	back end. This should be considered an experimental feature.
 	(Gitlab #2355)

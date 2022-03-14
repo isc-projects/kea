@@ -1436,7 +1436,7 @@ TEST_F(ClassifyTest, earlyDrop) {
     // Send the discover.
     client2.doDiscover();
 
-    // Not matchine so not dropped.
+    // Not matching so not dropped.
     EXPECT_TRUE(client2.getContext().response_);
 }
 

@@ -401,9 +401,9 @@
         // Boolean parameter which controls whether an early global host
         // reservations lookup should be performed. This lookup takes place
         // before subnet selection and when a global reservation is found
-        // with some client classes triggers a second phase classification.
-        // It can be used too to drop queries using host reservations as
-        // a decision table indexed by reservation identifiers.
+        // with some client classes, it triggers a second phase classification.
+        // It can also be used to drop queries using host reservations as a
+        // decision table indexed by reservation identifiers.
         "early-global-reservations-lookup": true,
 
         // Boolean parameter which controls DHCP server's behavior with respect
