@@ -1088,10 +1088,10 @@ namespace {
     "  max_valid_lifetime = ?," \
     "  depend_on_known_directly = ?," \
     follow_class_name_set \
-    "  modification_ts = ?, " \
     "  preferred_lifetime = ?, " \
     "  min_preferred_lifetime = ?, " \
-    "  max_preferred_lifetime = ? " \
+    "  max_preferred_lifetime = ?, " \
+    "  modification_ts = ? " \
     "WHERE name = ?"
 #endif
 

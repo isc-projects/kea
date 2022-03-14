@@ -2410,7 +2410,7 @@ public:
         in_bindings.add(client_class->getValid().getMax());
         in_bindings.add(depend_on_known);
 
-        // 11
+        // follow-class-name (11)
         if (follow_class_name.empty()) {
             in_bindings.addNull();
         } else {
@@ -4015,7 +4015,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  8 min_valid_lifetime
             OID_INT8,       //  9 max_valid_lifetime
             OID_BOOL,       // 10 depend_on_known_directly
-            OID_VARCHAR,    // 11 filler for follow_class_name
+            OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
             OID_VARCHAR     // 13 name (of class to update)
         },
@@ -4380,7 +4380,7 @@ TaggedStatementArray tagged_statements = { {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_DEPENDENCY,
         1,
         {
-            OID_VARCHAR, // 1 classname
+            OID_VARCHAR, // 1 class name
         },
         "DELETE_CLIENT_CLASS4_DEPENDENCY",
         PGSQL_DELETE_CLIENT_CLASS_DEPENDENCY(dhcp4)
@@ -4391,7 +4391,7 @@ TaggedStatementArray tagged_statements = { {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_CLIENT_CLASS4_SERVER,
         1,
         {
-            OID_VARCHAR // 1 classname
+            OID_VARCHAR // 1 class name
         },
         "DELETE_CLIENT_CLASS4_SERVER",
         PGSQL_DELETE_CLIENT_CLASS_SERVER(dhcp4),

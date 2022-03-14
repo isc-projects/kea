@@ -2241,7 +2241,8 @@ public:
                 in_bindings.popBack();
             }
 
-            insertOption6(server_selector, in_bindings, option->getModificationTime());
+            insertOption6(server_selector, in_bindings,
+                          option->getModificationTime());
         }
     }
 
@@ -2312,7 +2313,8 @@ public:
         in_bindings.addTempString(client_class->getName());
 
         // Run DELETE.
-        return (deleteTransactional(DELETE_OPTION_DEFS6_CLIENT_CLASS, server_selector,
+        return (deleteTransactional(PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION_DEFS6_CLIENT_CLASS,
+                                    server_selector,
                                     "deleting option definition for a client class",
                                     "option definition deleted",
                                     true,
@@ -2678,9 +2680,7 @@ public:
         getClientClasses6(server_selector.amUnassigned() ?
                           PgSqlConfigBackendDHCPv6Impl::GET_MODIFIED_CLIENT_CLASSES6_UNASSIGNED :
                           PgSqlConfigBackendDHCPv6Impl::GET_MODIFIED_CLIENT_CLASSES6,
-                          server_selector,
-                          in_bindings,
-                          client_classes);
+                          server_selector, in_bindings, client_classes);
     }
 
     /// @brief Upserts client class.
@@ -4455,7 +4455,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  5 min_valid_lifetime
             OID_INT8,       //  6 max_valid_lifetime
             OID_BOOL,       //  7 depend_on_known_directly
-            OID_VARCHAR,    //  8 filler for follow_class_name
+            OID_VARCHAR,    //  8 follow_class_name
             OID_INT8,       //  9 preferred_lifetime
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
@@ -4849,7 +4849,7 @@ TaggedStatementArray tagged_statements = { {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_DEPENDENCY,
         1,
         {
-            OID_VARCHAR, // 1 classname
+            OID_VARCHAR, // 1 class name
         },
         "DELETE_CLIENT_CLASS6_DEPENDENCY",
         PGSQL_DELETE_CLIENT_CLASS_DEPENDENCY(dhcp6)
@@ -4860,7 +4860,7 @@ TaggedStatementArray tagged_statements = { {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_SERVER,
         1,
         {
-            OID_VARCHAR // 1 classname
+            OID_VARCHAR // 1 class name
         },
         "DELETE_CLIENT_CLASS6_SERVER",
         PGSQL_DELETE_CLIENT_CLASS_SERVER(dhcp6),

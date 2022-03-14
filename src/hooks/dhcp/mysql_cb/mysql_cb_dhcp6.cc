@@ -1220,7 +1220,6 @@ public:
                 MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
             };
             getPdPools(GET_PD_POOL_ANY, in_bindings, pd_pools, pd_pool_ids);
-
         } else {
             auto const& tags = server_selector.getTags();
             for (auto const& tag : tags) {
@@ -3042,10 +3041,10 @@ public:
             MySqlBinding::createBool(depend_on_known),
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),
-            MySqlBinding::createTimestamp(client_class->getModificationTime()),
             MySqlBinding::createInteger<uint32_t>(client_class->getPreferred()),
             MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMin()),
             MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMax()),
+            MySqlBinding::createTimestamp(client_class->getModificationTime()),
         };
 
         MySqlTransaction transaction(conn_);
@@ -3071,7 +3070,7 @@ public:
                 // If position is not specified, leave the class at the same position.
                 // Remove the binding which specifies the position and use different
                 // query.
-                in_bindings.erase(in_bindings.begin() + 7, in_bindings.begin() + 8);
+                in_bindings.erase(in_bindings.begin() + 10, in_bindings.begin() + 11);
                 conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
                                         in_bindings);
             } else {
@@ -3728,10 +3727,10 @@ TaggedStatementArray tagged_statements = { {
       "  max_valid_lifetime,"
       "  depend_on_known_directly,"
       "  follow_class_name,"
-      "  modification_ts,"
       "  preferred_lifetime,"
       "  min_preferred_lifetime,"
-      "  max_preferred_lifetime"
+      "  max_preferred_lifetime,"
+      "  modification_ts"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
 
