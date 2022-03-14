@@ -73,6 +73,7 @@ extern const isc::log::MessageID DHCP4_HOOKS_LIBS_RELOAD_FAIL;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP;
+extern const isc::log::MessageID DHCP4_HOOK_DDNS_UPDATE;
 extern const isc::log::MessageID DHCP4_HOOK_DECLINE_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_RELEASE_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_DROP;

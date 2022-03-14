@@ -72,6 +72,7 @@ extern const isc::log::MessageID DHCP4_HOOKS_LIBS_RELOAD_FAIL = "DHCP4_HOOKS_LIB
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP = "DHCP4_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP = "DHCP4_HOOK_BUFFER_RCVD_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP = "DHCP4_HOOK_BUFFER_SEND_SKIP";
+extern const isc::log::MessageID DHCP4_HOOK_DDNS_UPDATE = "DHCP4_HOOK_DDNS_UPDATE";
 extern const isc::log::MessageID DHCP4_HOOK_DECLINE_SKIP = "DHCP4_HOOK_DECLINE_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_RELEASE_SKIP = "DHCP4_HOOK_LEASE4_RELEASE_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_DROP = "DHCP4_HOOK_LEASES4_COMMITTED_DROP";
@@ -233,6 +234,7 @@ const char* values[] = {
     "DHCP4_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP4_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.",
     "DHCP4_HOOK_BUFFER_SEND_SKIP", "%1: prepared response is dropped because a callout set the next step to SKIP.",
+    "DHCP4_HOOK_DDNS_UPDATE", "A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6",
     "DHCP4_HOOK_DECLINE_SKIP", "Decline4 hook callouts set status to DROP, ignoring packet.",
     "DHCP4_HOOK_LEASE4_RELEASE_SKIP", "%1: lease was not released because a callout set the next step to SKIP",
     "DHCP4_HOOK_LEASES4_COMMITTED_DROP", "%1: packet is dropped, because a callout set the next step to DROP",
