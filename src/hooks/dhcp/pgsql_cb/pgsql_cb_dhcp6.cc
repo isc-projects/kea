@@ -2193,10 +2193,56 @@ public:
     /// @param selector Server selector.
     /// @param client_class Pointer to the client_class the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option..
-    void createUpdateOption6(const ServerSelector& /* server_selector */,
-                             const ClientClassDefPtr& /* client_class */,
-                             const OptionDescriptorPtr& /* option */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateOption6(const ServerSelector& server_selector,
+                             const ClientClassDefPtr& client_class,
+                             const OptionDescriptorPtr& option) {
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        PsqlBindArray in_bindings;
+        std::string class_name = client_class->getName();
+        in_bindings.add(option->option_->getType());
+        addOptionValueBinding(in_bindings, option);
+        in_bindings.addOptional(option->formatted_value_);
+        in_bindings.addOptional(option->space_name_);
+        in_bindings.add(option->persistent_);
+        in_bindings.add(class_name);
+        in_bindings.addNull();
+        in_bindings.add(2);
+        in_bindings.add(option->getContext());
+        in_bindings.addNull();
+        in_bindings.addNull();
+        in_bindings.addTimestamp(option->getModificationTime());
+        in_bindings.addNull();
+
+        // Remember the size before we add where clause arguments.
+        size_t pre_where_size = in_bindings.size();
+
+        // Now we add the update where clause parameters
+        in_bindings.add(class_name);
+        in_bindings.add(option->option_->getType());
+        in_bindings.addOptional(option->space_name_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this,
+                           PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                           server_selector, "client class specific option set",
+                           true);
+
+        if (updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_CLIENT_CLASS,
+                              in_bindings) == 0) {
+            // The option doesn't exist, so we'll try to insert it.
+            // Remove the update where clause bindings.
+            while (in_bindings.size() > pre_where_size) {
+                in_bindings.popBack();
+            }
+
+            insertOption6(server_selector, in_bindings, option->getModificationTime());
+        }
     }
 
     /// @brief Sends query to insert or update option definition.
@@ -2219,10 +2265,16 @@ public:
     /// @param server_selector Server selector.
     /// @param option_def Pointer to the option definition to be inserted or updated.
     /// @param client_class Client class name.
-    void createUpdateOptionDef6(const ServerSelector& /* server_selector */,
-                                const OptionDefinitionPtr& /* option_def */,
-                                const std::string& /* client_class_name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateOptionDef6(const ServerSelector& server_selector,
+                                const OptionDefinitionPtr& option_def,
+                                const std::string& client_class_name) {
+        createUpdateOptionDef(server_selector, Option::V6, option_def, DHCP6_OPTION_SPACE,
+                              PgSqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
+                              PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6_CLIENT_CLASS,
+                              PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION_DEF6_CLIENT_CLASS,
+                              PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                              PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6_SERVER,
+                              client_class_name);
     }
 
     /// @brief Sends query to delete option definition by code and
@@ -2254,9 +2306,17 @@ public:
     /// @param client_class Pointer to the client class for which option
     /// definitions should be deleted.
     /// @return Number of deleted option definitions.
-    uint64_t deleteOptionDefs6(const ServerSelector& /* server_selector */,
-                               const ClientClassDefPtr& /* client_class */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteOptionDefs6(const ServerSelector& server_selector,
+                               const ClientClassDefPtr& client_class) {
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(client_class->getName());
+
+        // Run DELETE.
+        return (deleteTransactional(DELETE_OPTION_DEFS6_CLIENT_CLASS, server_selector,
+                                    "deleting option definition for a client class",
+                                    "option definition deleted",
+                                    true,
+                                    in_bindings));
     }
 
     /// @brief Deletes global option.
@@ -2434,9 +2494,17 @@ public:
     /// @param client_class Pointer to the client class for which options
     /// should be deleted.
     /// @return Number of deleted options.
-    uint64_t deleteOptions6(const ServerSelector& /* server_selector */,
-                            const ClientClassDefPtr& /* client_class */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteOptions6(const ServerSelector& server_selector,
+                            const ClientClassDefPtr& client_class) {
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(client_class->getName());
+
+        // Run DELETE.
+        return (deleteTransactional(PgSqlConfigBackendDHCPv6Impl::
+                                    DELETE_OPTIONS6_CLIENT_CLASS, server_selector,
+                                    "deleting options for a client class",
+                                    "client class specific options deleted",
+                                    true, in_bindings));
     }
 
     /// @brief Common function to retrieve client classes.
@@ -2449,11 +2517,115 @@ public:
     /// if the query contains no WHERE clause.
     /// @param [out] client_classes Reference to a container where fetched client
     /// classes will be inserted.
-    void getClientClasses6(const StatementIndex& /* index */,
-                           const ServerSelector& /* server_selector */,
-                           const PsqlBindArray& /* in_bindings */,
-                           ClientClassDictionary& /* client_classes */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void getClientClasses6(const StatementIndex& index,
+                           const ServerSelector& server_selector,
+                           const PsqlBindArray& in_bindings,
+                           ClientClassDictionary& client_classes) {
+        std::list<ClientClassDefPtr> class_list;
+        uint64_t last_option_id = 0;
+        uint64_t last_option_def_id = 0;
+        std::string last_tag;
+
+        selectQuery(index, in_bindings,
+                    [this, &class_list, &last_option_id, &last_option_def_id, &last_tag]
+                    (PgSqlResult& r, int row) {
+            // Create a convenience worker for the row.
+            PgSqlResultRowWorker worker(r, row);
+
+            ClientClassDefPtr last_client_class;
+            if (!class_list.empty()) {
+                last_client_class = *class_list.rbegin();
+            }
+
+            // Class ID is column 0.
+            uint64_t id = worker.getBigInt(0) ;
+
+            if (!last_client_class || (last_client_class->getId() != id)) {
+                last_option_id = 0;
+                last_option_def_id = 0;
+                last_tag.clear();
+
+                auto options = boost::make_shared<CfgOption>();
+                auto option_defs = boost::make_shared<CfgOptionDef>();
+                auto expression = boost::make_shared<Expression>();
+
+                last_client_class = boost::make_shared<ClientClassDef>(worker.getString(1), expression, options);
+                last_client_class->setCfgOptionDef(option_defs);
+
+                // id
+                last_client_class->setId(id);
+
+                // name
+                last_client_class->setName(worker.getString(1));
+
+                // test
+                if (!worker.isColumnNull(2)) {
+                    last_client_class->setTest(worker.getString(2));
+                }
+
+                // required
+                if (!worker.isColumnNull(3)) {
+                    last_client_class->setRequired(worker.getBool(3));
+                }
+
+                // valid lifetime: default, min, max
+                last_client_class->setValid(worker.getTriplet(4, 5, 6));
+
+                // depend on known directly or indirectly
+                last_client_class->setDependOnKnown(worker.getBool(7) || worker.getBool(8));
+
+                // modification_ts
+                last_client_class->setModificationTime(worker.getTimestamp(9));
+
+                // class specific option definition from 10 to 19.
+                // class specific option from 20 to 31.
+
+                // preferred lifetime: default, min, max
+                last_client_class->setPreferred(worker.getTriplet(33, 34, 35));
+
+                class_list.push_back(last_client_class);
+            }
+
+            // Check for new server tags at 32.
+            if (!worker.isColumnNull(32)) {
+                std::string new_tag = worker.getString(32);
+                if (last_tag != new_tag) {
+                    if (!new_tag.empty() && !last_client_class->hasServerTag(ServerTag(new_tag))) {
+                        last_client_class->setServerTag(new_tag);
+                    }
+
+                    last_tag = new_tag;
+                }
+            }
+
+            // Parse client class specific option definition from 10 to 19.
+            if (!worker.isColumnNull(10) &&
+                (last_option_def_id < worker.getBigInt(10))) {
+                last_option_def_id = worker.getBigInt(10);
+
+                auto def = processOptionDefRow(worker, 10);
+                if (def) {
+                    last_client_class->getCfgOptionDef()->add(def);
+                }
+            }
+
+            // Parse client class specific option from 20 to 31.
+            if (!worker.isColumnNull(20) &&
+                (last_option_id < worker.getBigInt(20))) {
+                last_option_id = worker.getBigInt(20);
+
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 20);
+                if (desc) {
+                    last_client_class->getCfgOption()->add(*desc, desc->space_name_);
+                }
+            }
+        });
+
+        tossNonMatchingElements(server_selector, class_list);
+
+        for (auto c : class_list) {
+            client_classes.addClass(c);
+        }
     }
 
     /// @brief Sends query to retrieve a client class by name.
@@ -2461,9 +2633,16 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the class to be retrieved.
     /// @return Pointer to the client class or null if the class is not found.
-    ClientClassDefPtr getClientClass6(const ServerSelector& /* server_selector */,
-                                      const std::string& /* name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    ClientClassDefPtr getClientClass6(const ServerSelector& server_selector,
+                                      const std::string& name) {
+        PsqlBindArray in_bindings;
+        in_bindings.add(name);
+
+        ClientClassDictionary client_classes;
+        getClientClasses6(PgSqlConfigBackendDHCPv6Impl::GET_CLIENT_CLASS6_NAME,
+                          server_selector, in_bindings, client_classes);
+        return (client_classes.getClasses()->empty() ? ClientClassDefPtr() :
+                (*client_classes.getClasses()->begin()));
     }
 
     /// @brief Sends query to retrieve all client classes.
@@ -2471,9 +2650,13 @@ public:
     /// @param server_selector Server selector.
     /// @param [out] client_classes Reference to the client classes collection
     /// where retrieved classes will be stored.
-    void getAllClientClasses6(const ServerSelector& /* server_selector */,
-                              ClientClassDictionary& /* client_classes */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void getAllClientClasses6(const ServerSelector& server_selector,
+                              ClientClassDictionary& client_classes) {
+        PsqlBindArray in_bindings;
+        getClientClasses6(server_selector.amUnassigned() ?
+                          PgSqlConfigBackendDHCPv6Impl::GET_ALL_CLIENT_CLASSES6_UNASSIGNED :
+                          PgSqlConfigBackendDHCPv6Impl::GET_ALL_CLIENT_CLASSES6,
+                          server_selector, in_bindings, client_classes);
     }
 
     /// @brief Sends query to retrieve modified client classes.
@@ -2482,10 +2665,22 @@ public:
     /// @param modification_ts Lower bound modification timestamp.
     /// @param [out] client_classes Reference to the client classes collection
     /// where retrieved classes will be stored.
-    void getModifiedClientClasses6(const ServerSelector& /* server_selector */,
-                                   const boost::posix_time::ptime& /* modification_ts */,
-                                   ClientClassDictionary& /* client_classes */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void getModifiedClientClasses6(const ServerSelector& server_selector,
+                                   const boost::posix_time::ptime& modification_ts,
+                                   ClientClassDictionary& client_classes) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching modified client classes for ANY "
+                      "server is not supported");
+        }
+
+        PsqlBindArray in_bindings;
+        in_bindings.addTimestamp(modification_ts);
+        getClientClasses6(server_selector.amUnassigned() ?
+                          PgSqlConfigBackendDHCPv6Impl::GET_MODIFIED_CLIENT_CLASSES6_UNASSIGNED :
+                          PgSqlConfigBackendDHCPv6Impl::GET_MODIFIED_CLIENT_CLASSES6,
+                          server_selector,
+                          in_bindings,
+                          client_classes);
     }
 
     /// @brief Upserts client class.
@@ -2496,10 +2691,167 @@ public:
     /// new or updated class should be positioned. An empty value
     /// causes the class to be appended at the end of the class
     /// hierarchy.
-    void createUpdateClientClass6(const ServerSelector& /* server_selector */,
-                                  const ClientClassDefPtr& /* client_class */,
-                                  const std::string& /* follow_class_name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    void createUpdateClientClass6(const ServerSelector& server_selector,
+                                  const ClientClassDefPtr& client_class,
+                                  const std::string& follow_class_name) {
+        // We need to evaluate class expression to see if it references any
+        // other classes (dependencies). As part of this evaluation we will
+        // also check if the client class depends on KNOWN/UNKNOWN built-in
+        // classes.
+        std::list<std::string> dependencies;
+        auto depend_on_known = false;
+        if (!client_class->getTest().empty()) {
+            ExpressionPtr expression;
+            ExpressionParser parser;
+            // Parse the test expression. The callback function is normally used to
+            // interrupt config file parsing when one of the classes refers to a
+            // non-existing client class. It returns false in this case. Here,
+            // we use the callback to capture client classes referenced by the
+            // upserted client class and record whether this class depends on
+            // KNOWN/UNKNOWN built-ins. The callback always returns true to avoid
+            // reporting the parsing error. The dependency check is performed later
+            // at the database level.
+            parser.parse(expression, Element::create(client_class->getTest()), AF_INET6,
+                         [&dependencies, &depend_on_known](const ClientClass& client_class) -> bool {
+                if (isClientClassBuiltIn(client_class)) {
+                    if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+                        depend_on_known = true;
+                    }
+                } else {
+                    dependencies.push_back(client_class);
+                }
+                return (true);
+            });
+        }
+
+        PsqlBindArray in_bindings;
+        std::string class_name = client_class->getName();
+        in_bindings.add(class_name);
+        in_bindings.addTempString(client_class->getTest());
+        in_bindings.add(client_class->getRequired());
+        in_bindings.add(client_class->getValid());
+        in_bindings.add(client_class->getValid().getMin());
+        in_bindings.add(client_class->getValid().getMax());
+        in_bindings.add(depend_on_known);
+
+        // follow-class-name (8)
+        if (follow_class_name.empty()) {
+            in_bindings.addNull();
+        } else {
+            in_bindings.add(follow_class_name);
+        }
+
+        in_bindings.add(client_class->getPreferred());
+        in_bindings.add(client_class->getPreferred().getMin());
+        in_bindings.add(client_class->getPreferred().getMax());
+        in_bindings.addTimestamp(client_class->getModificationTime());
+
+        PgSqlTransaction transaction(conn_);
+
+        ScopedAuditRevision audit_revision(this, PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                                           server_selector, "client class set", true);
+
+        // Create a savepoint in case we are called as part of larger
+        // transaction.
+        conn_.createSavepoint("createUpdateClass6");
+
+        // Keeps track of whether the client class is inserted or updated.
+        auto update = false;
+        try {
+            insertQuery(PgSqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6, in_bindings);
+
+        } catch (const DuplicateEntry&) {
+            // It already exists, rollback to the savepoint to preserve
+            // any prior work.
+            conn_.rollbackToSavepoint("createUpdateClass6");
+
+            // Delete options and option definitions. They will be re-created from the new class
+            // instance.
+            deleteOptions6(ServerSelector::ANY(), client_class);
+            deleteOptionDefs6(ServerSelector::ANY(), client_class);
+
+            // Note: follow_class_name is left in the bindings even though it is
+            // not needed in both cases. This allows us to use one base query.
+
+            // Add the class name for the where clause.
+            in_bindings.add(class_name);
+            if (follow_class_name.empty()) {
+                // If position is not specified, leave the class at the same position.
+                updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
+                                  in_bindings);
+            } else {
+                // Update with follow_class_name specifying the position.
+                updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6,
+                                  in_bindings);
+            }
+
+            // Delete class associations with the servers and dependencies. We will re-create
+            // them according to the new class specification.
+            PsqlBindArray in_assoc_bindings;
+            in_assoc_bindings.add(class_name);
+            updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_DEPENDENCY,
+                              in_assoc_bindings);
+            updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_SERVER,
+                              in_assoc_bindings);
+            update = true;
+        }
+
+        // Associate client class with the servers.
+        PsqlBindArray attach_bindings;
+        attach_bindings.add(class_name);
+        attach_bindings.addTimestamp(client_class->getModificationTime());
+
+        attachElementToServers(PgSqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6_SERVER,
+                               server_selector, attach_bindings);
+
+        // Iterate over the captured dependencies and try to insert them into the database.
+        for (auto dependency : dependencies) {
+            try {
+                PsqlBindArray in_dependency_bindings;
+                in_dependency_bindings.add(class_name);
+                in_dependency_bindings.add(dependency);
+
+                // We deleted earlier dependencies, so we can simply insert new ones.
+                insertQuery(PgSqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6_DEPENDENCY,
+                            in_dependency_bindings);
+            } catch (const std::exception& ex) {
+                isc_throw(InvalidOperation, "unmet dependency on client class: " << dependency);
+            }
+        }
+
+        // If we performed client class update we also have to verify that its dependency
+        // on KNOWN/UNKNOWN client classes hasn't changed.
+        if (update) {
+            PsqlBindArray in_check_bindings;
+            insertQuery(PgSqlConfigBackendDHCPv6Impl::CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
+                              in_check_bindings);
+        }
+
+        // (Re)create option definitions.
+        if (client_class->getCfgOptionDef()) {
+            auto option_defs = client_class->getCfgOptionDef()->getContainer();
+            auto option_spaces = option_defs.getOptionSpaceNames();
+            for (auto option_space : option_spaces) {
+                OptionDefContainerPtr defs = option_defs.getItems(option_space);
+                for (auto def = defs->begin(); def != defs->end(); ++def) {
+                    createUpdateOptionDef6(server_selector, *def, client_class->getName());
+                }
+            }
+        }
+
+        // (Re)create options.
+        auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
+        for (auto option_space : option_spaces) {
+            OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
+            for (auto desc = options->begin(); desc != options->end(); ++desc) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+                desc_copy->space_name_ = option_space;
+                createUpdateOption6(server_selector, client_class, desc_copy);
+            }
+        }
+
+        // All ok. Commit the transaction.
+        transaction.commit();
     }
 
     /// @brief Removes client class by name.
@@ -2507,9 +2859,18 @@ public:
     /// @param server_selector Server selector.
     /// @param name Removed client class name.
     /// @return Number of deleted client classes.
-    uint64_t deleteClientClass6(const ServerSelector& /* server_selector */,
-                                const std::string& /* name */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteClientClass6(const ServerSelector& server_selector,
+                                const std::string& name) {
+        int index = server_selector.amAny() ?
+            PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_ANY :
+            PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6;
+
+        uint64_t result = deleteTransactional(index, server_selector,
+                                              "deleting client class",
+                                              "client class deleted",
+                                              true,
+                                              name);
+        return (result);
     }
 
     /// @brief Removes unassigned global parameters, global options and
@@ -4071,21 +4432,21 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  5 min_valid_lifetime
             OID_INT8,       //  6 max_valid_lifetime
             OID_BOOL,       //  7 depend_on_known_directly
-            OID_TIMESTAMP,  //  8 modification_ts
+            OID_VARCHAR,    //  8 follow_class_name
             OID_INT8,       //  9 preferred_lifetime
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
-            OID_VARCHAR,    // 12 name (of class to update)
-            OID_VARCHAR     // 13 follow_class_name
+            OID_TIMESTAMP,  // 12 modification_ts
+            OID_VARCHAR     // 13 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6",
-        PGSQL_UPDATE_CLIENT_CLASS6("follow_class_name = $13,")
+        PGSQL_UPDATE_CLIENT_CLASS6("follow_class_name = $8,")
     },
 
     // Update existing client class without specifying its position.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
-        12,
+        13,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4094,11 +4455,12 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  5 min_valid_lifetime
             OID_INT8,       //  6 max_valid_lifetime
             OID_BOOL,       //  7 depend_on_known_directly
-            OID_TIMESTAMP,  //  8 modification_ts
+            OID_VARCHAR,    //  8 filler for follow_class_name
             OID_INT8,       //  9 preferred_lifetime
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
-            OID_VARCHAR,    // 12 name (of class to update)
+            OID_TIMESTAMP,  // 12 modification_ts
+            OID_VARCHAR     // 13 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6_SAME_POSITION",
         PGSQL_UPDATE_CLIENT_CLASS6("")

@@ -1101,11 +1101,11 @@ namespace {
     "  max_valid_lifetime = $6," \
     "  depend_on_known_directly = $7," \
     follow_class_name_set \
-    "  modification_ts = $8, " \
     "  preferred_lifetime = $9, " \
     "  min_preferred_lifetime = $10, " \
-    "  max_preferred_lifetime = $11 " \
-    "WHERE name = $12"
+    "  max_preferred_lifetime = $11, " \
+    "  modification_ts = $12 " \
+    "WHERE name = $13"
 #endif
 
 #ifndef PGSQL_UPDATE_SERVER

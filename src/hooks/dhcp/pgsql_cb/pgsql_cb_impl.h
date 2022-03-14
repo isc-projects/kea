@@ -28,9 +28,6 @@
 #include <string>
 #include <vector>
 
-// Convenience string for emitting location info NotImplemented exceptions.
-#define NOT_IMPL_STR __FILE__ << ":" << __LINE__  << " - " << __FUNCTION__
-
 namespace isc {
 namespace dhcp {
 

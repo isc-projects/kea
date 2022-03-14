@@ -365,6 +365,34 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, sharedNetworkOptionIdOrderTest) {
     sharedNetworkOptionIdOrderTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv6Test, setAndGetAllClientClasses6Test) {
+    setAndGetAllClientClasses6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getClientClass6Test) {
+    getClientClass6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateClientClass6OptionsTest) {
+    createUpdateClientClass6OptionsTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedClientClasses6Test) {
+    getModifiedClientClasses6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteClientClass6Test) {
+    deleteClientClass6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, deleteAllClientClasses6Test) {
+    deleteAllClientClasses6Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, clientClassDependencies6Test) {
+    clientClassDependencies6Test();
+}
+
 TEST_F(PgSqlConfigBackendDHCPv6Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
 }
