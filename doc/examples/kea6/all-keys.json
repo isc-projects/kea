@@ -398,7 +398,7 @@
             "re-detect": true
         },
 
-        // Boolean parameter which controls  whether an early global host
+        // Boolean parameter which controls whether an early global host
         // reservations lookup should be performed. This lookup takes place
         // before subnet selection and when a global reservation is found
         // with some client classes triggers a second phase classification.

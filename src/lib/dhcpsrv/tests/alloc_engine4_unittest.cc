@@ -1331,6 +1331,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -1374,6 +1375,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -1647,6 +1649,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -1693,6 +1696,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -3066,18 +3070,21 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().commit();
 
     // This time the reservation should be returned.
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
     // It shouldn't be returned when reservations-in-subnet is disabled.
     subnet_->setReservationsInSubnet(false);
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.currentHost());
 
     // Check the reservations-in-subnet and reservations-out-of-pool flags.
     subnet_->setReservationsInSubnet(true);
     subnet_->setReservationsOutOfPool(true);
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
@@ -3090,6 +3097,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
@@ -3097,6 +3105,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     // Remove the subnet. Subnet id is required to find host reservations, so
     // if it is set to NULL, no reservation should be returned
     ctx.subnet_.reset();
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.currentHost());
 
@@ -3109,6 +3118,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
+    ctx.hosts_.clear();
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.currentHost());
 }

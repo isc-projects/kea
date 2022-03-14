@@ -455,8 +455,10 @@ public:
 
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_->earlyGHRLookup(query, ctx);
+        ASSERT_FALSE(drop);
         srv_->initContext(query, ctx, drop);
 
+        ASSERT_FALSE(drop);
         Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
 
         ASSERT_NO_THROW(srv_->processClientFqdn(query, answer, ctx));

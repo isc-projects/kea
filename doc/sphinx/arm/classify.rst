@@ -91,9 +91,9 @@ The classification process is conducted in several steps:
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
     possible to use the ``UNKNOWN`` class to select a shared network or
-    a subnet, and for using the ``KNOWN`` class only global reservations
-    can be used and the ``early-global-reservations-lookup`` parameter
-    must be configured to true
+    a subnet. For the ``KNOWN`` class only global reservations only
+    global reservations are used and the ``early-global-reservations-lookup``
+    parameter must be configured to true
 
 10. When the incoming packet belongs to the special class ``DROP``, it is
     dropped and an informational message is logged with the packet

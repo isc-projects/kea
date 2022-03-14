@@ -2465,7 +2465,7 @@ TEST_F(ClassifyTest, earlyDrop) {
 
     ASSERT_NO_THROW(client2.doSolicit(true));
 
-    // Not matchine so not dropped.
+    // Not matching so not dropped.
     EXPECT_TRUE(client2.getContext().response_);
 }
 

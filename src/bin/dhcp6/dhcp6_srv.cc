@@ -453,8 +453,8 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
 
             // Add classes from the global reservations.
             const ClientClasses& classes = global_host->getClientClasses6();
-             for (ClientClasses::const_iterator cclass = classes.cbegin();
-                  cclass != classes.cend(); ++cclass) {
+            for (ClientClasses::const_iterator cclass = classes.cbegin();
+                 cclass != classes.cend(); ++cclass) {
                  query->addClass(*cclass);
              }
 
@@ -550,7 +550,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
         // time evaluate to false as desired.
         removeDependentEvaluatedClasses(pkt);
         setReservedClientClasses(pkt, ctx);
-        evaluateClasses(pkt,  false);
+        evaluateClasses(pkt, false);
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.

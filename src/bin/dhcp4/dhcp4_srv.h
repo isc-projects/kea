@@ -603,7 +603,7 @@ protected:
     /// Returns ACK message, NAK message, or NULL
     ///
     /// @param request a message received from client
-    /// @param context pointer to the client context  where allocated and
+    /// @param context pointer to the client context where allocated and
     /// deleted leases are stored.
     ///
     /// @return ACK or NAK message
