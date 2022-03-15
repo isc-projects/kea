@@ -9,7 +9,7 @@
 1999.	[func]		tmark, razvan
 	The kea-dhcp6 server fully supports using PostgreSQL for config
 	back end. This should be considered an experimental feature.
-	(Gitlab #2355)
+	(Gitlab #2355, #2356)
 
 1998.	[func]		tmark, razvan
 	With the addition of support for client classes, the kea-dhcp4
