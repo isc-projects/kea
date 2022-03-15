@@ -845,7 +845,7 @@ protected:
     /// @brief Removed evaluated client classes.
     ///
     /// @todo: keep the list of dependent evaluated classes so
-    /// removed only them.
+    /// remove only them.
     ///
     /// @param pkt the packet.
     static void removeDependentEvaluatedClasses(const Pkt6Ptr& pkt);

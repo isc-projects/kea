@@ -141,7 +141,7 @@ public:
     /// @brief Removed evaluated client classes.
     ///
     /// @todo: keep the list of dependent evaluated classes so
-    /// removed only them.
+    /// remove only them.
     ///
     /// @param query the query message.
     static void removeDependentEvaluatedClasses(const Pkt4Ptr& query);
