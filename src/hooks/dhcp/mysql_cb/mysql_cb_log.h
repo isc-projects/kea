@@ -19,5 +19,4 @@ extern isc::log::Logger mysql_cb_logger;
 }  // namespace dhcp
 }  // namespace isc
 
-
 #endif

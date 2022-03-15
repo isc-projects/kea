@@ -9,9 +9,13 @@
 // issues related to namespaces.
 
 #include <config.h>
+
 #include <hooks/hooks.h>
+#include <mysql_cb_impl.h>
+
 #include <mysql_cb_dhcp4.h>
 #include <mysql_cb_dhcp6.h>
+#include <mysql_cb_log.h>
 
 using namespace isc::cb;
 using namespace isc::dhcp;

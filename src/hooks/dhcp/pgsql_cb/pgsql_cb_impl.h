@@ -118,8 +118,6 @@ public:
     /// @brief Destructor.
     virtual ~PgSqlConfigBackendImpl();
 
-    /// @todo: implement condCreateInteger(const util::Optional<T>& value)
-
     /// @brief Returns server tag associated with the particular selector.
     ///
     /// This method expects that there is exactly one server tag associated with
@@ -204,8 +202,6 @@ public:
                                const boost::posix_time::ptime& modification_time,
                                const uint64_t& modification_id,
                                db::AuditEntryCollection& audit_entries);
-
-    /// @todo: implement uint64_t deleteFromTable(const int index, ...)
 
     /// @brief Sends query to delete rows from a table.
     ///
@@ -648,7 +644,6 @@ public:
     /// will be inserted.
     void getAllServers(const int index, db::ServerCollection& servers);
 
-    /// @todo implement
     /// @brief Sends query to retrieve servers.
     ///
     /// @param index Index of the query to be used.
@@ -900,7 +895,7 @@ private:
     size_t last_insert_id_index_;
 };
 
-}  // namespace dhcp
-}  // end of namespace isc
+} // end of namespace isc::dhcp
+} // end of namespace isc
 
 #endif

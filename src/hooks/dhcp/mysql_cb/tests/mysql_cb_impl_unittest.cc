@@ -9,8 +9,8 @@
 #include <gtest/gtest.h>
 
 using namespace isc::db;
-using namespace isc::util;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 
@@ -57,4 +57,4 @@ TEST(MySqlConfigBackendImplTest, createTripletFromBinding) {
                  isc::Unexpected);
 }
 
-}
+}  // namespace

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <log/logger_support.h>
+
 #include <gtest/gtest.h>
 
 int

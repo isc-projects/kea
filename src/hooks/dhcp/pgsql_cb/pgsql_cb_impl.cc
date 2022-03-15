@@ -1134,5 +1134,5 @@ PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
     }
 }
 
-}  // namespace dhcp
-}  // end of namespace isc
+} // end of namespace isc::dhcp
+} // end of namespace isc

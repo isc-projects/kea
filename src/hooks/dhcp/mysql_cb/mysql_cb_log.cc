@@ -15,4 +15,3 @@ isc::log::Logger mysql_cb_logger("mysql-cb-hooks");
 
 }  // namespace dhcp
 }  // namespace isc
-

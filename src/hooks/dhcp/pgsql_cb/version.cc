@@ -11,8 +11,8 @@
 extern "C" {
 
 /// @brief returns Kea hooks version.
-int
-version() {
+int version() {
     return (KEA_HOOKS_VERSION);
 }
+
 }
