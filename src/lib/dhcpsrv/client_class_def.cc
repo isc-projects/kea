@@ -391,18 +391,20 @@ void
 ClientClassDictionary::initMatchExpr(uint16_t family) {
     std::queue<ExpressionPtr> expressions;
     for (auto c : *list_) {
-        ExpressionPtr match_expr = boost::make_shared<Expression>();
         if (!c->getTest().empty()) {
+            ExpressionPtr match_expr = boost::make_shared<Expression>();
             ExpressionParser parser;
             parser.parse(match_expr, Element::create(c->getTest()), family);
+            expressions.push(match_expr);
         }
-        expressions.push(match_expr);
     }
     // All expressions successfully initialized. Let's set them for the
     // client classes in the dictionary.
     for (auto c : *list_) {
-        c->setMatchExpr(expressions.front());
-        expressions.pop();
+        if (!c->getTest().empty()) {
+            c->setMatchExpr(expressions.front());
+            expressions.pop();
+        }
     }
 }
 

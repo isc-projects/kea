@@ -560,10 +560,9 @@ TEST(ClientClassDictionary, initMatchExpr) {
     // Create match expressions for all of them.
     ASSERT_NO_THROW(dictionary->initMatchExpr(AF_INET));
 
-    // Ensure that the expressions were created.
+    // Ensure that the expressions were created only if 'test' is not empty.
     auto classes = *(dictionary->getClasses());
-    EXPECT_TRUE(classes[0]->getMatchExpr());
-    EXPECT_EQ(0, classes[0]->getMatchExpr()->size());
+    EXPECT_FALSE(classes[0]->getMatchExpr());
 
     EXPECT_TRUE(classes[1]->getMatchExpr());
     EXPECT_EQ(3, classes[1]->getMatchExpr()->size());
