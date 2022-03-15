@@ -599,3 +599,10 @@ RADIUS to be stored and later used for sending accounting and access
 queries to the RADIUS server. In other words, the host-cache mechanism
 is mandatory, unless administrators do not want RADIUS communication for messages
 other than Discover and the first Request from each client.
+
+.. note::
+
+   Currently the RADIUS hook library is incompatible with the
+   ``early-global-reservations-lookup`` global parameter i.e.
+   setting the parameter to ``true`` raises an error when the
+   hook library is loaded.
