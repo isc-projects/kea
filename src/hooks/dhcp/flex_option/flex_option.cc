@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,10 +44,6 @@ parseAction(ConstElementPtr option,
             EvalContext::ParserType parser_type) {
     ConstElementPtr elem = option->get(name);
     if (elem) {
-        if (elem->getType() != Element::string) {
-            isc_throw(BadValue, "'" << name << "' must be a string: "
-                      << elem->str());
-        }
         string expr_text = elem->stringValue();
         if (expr_text.empty()) {
             isc_throw(BadValue, "'" << name << "' must not be empty");
@@ -73,6 +69,16 @@ parseAction(ConstElementPtr option,
 
 namespace isc {
 namespace flex_option {
+
+const SimpleKeywords FlexOptionImpl::OPTION_PARAMETERS = {
+  { "code",             Element::integer },
+  { "name",             Element::string },
+  { "csv-format",       Element::boolean },
+  { "add",              Element::string },
+  { "supersede",        Element::string },
+  { "remove",           Element::string },
+  { "comment",          Element::string }
+};
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
                                            OptionDefinitionPtr def)
@@ -114,6 +120,20 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     if (option->getType() != Element::map) {
         isc_throw(BadValue, "option element is not a map");
     }
+    // See SimpleParser::checkKeywords
+    for (auto entry : option->mapValue()) {
+        if (OPTION_PARAMETERS.count(entry.first) == 0) {
+            isc_throw(BadValue, "unknown parameter '" << entry.first << "'");
+        }
+        Element::types expected = OPTION_PARAMETERS.at(entry.first);
+        if (entry.second->getType() == expected) {
+            continue;
+        }
+        isc_throw(BadValue, "'" << entry.first << "' must be "
+                  << (expected == Element::integer ? "an " : "a ")
+                  << Element::typeToName(expected)
+                  << ": " << entry.second->str());
+    }
     ConstElementPtr code_elem = option->get("code");
     ConstElementPtr name_elem = option->get("name");
     ConstElementPtr csv_format_elem = option->get("csv-format");
@@ -133,10 +153,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
     uint16_t code;
     if (code_elem) {
-        if (code_elem->getType() != Element::integer) {
-            isc_throw(BadValue, "'code' must be an integer: "
-                      << code_elem->str());
-        }
         int64_t value = code_elem->intValue();
         int64_t max_code;
         if (family == AF_INET) {
@@ -164,10 +180,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         code = static_cast<uint16_t>(value);
     }
     if (name_elem) {
-        if (name_elem->getType() != Element::string) {
-            isc_throw(BadValue, "'name' must be a string: "
-                      << name_elem->str());
-        }
         string name = name_elem->stringValue();
         if (name.empty()) {
             isc_throw(BadValue, "'name' must not be empty");
@@ -196,10 +208,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
 
     bool csv_format = false;
     if (csv_format_elem) {
-        if (csv_format_elem->getType() != Element::boolean) {
-            isc_throw(BadValue, "'csv-format' must be a boolean: "
-                      << csv_format_elem->str());
-        }
         csv_format = csv_format_elem->boolValue();
     }
 

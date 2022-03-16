@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define FLEX_OPTION_H
 
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -267,6 +268,9 @@ protected:
     }
 
 private:
+    /// @brief Option parameters.
+    static const data::SimpleKeywords OPTION_PARAMETERS;
+
     /// @brief The option config map (code and pointer to option config).
     OptionConfigMap option_config_map_;
 
@@ -275,7 +279,6 @@ private:
     /// @param option The element with option config.
     /// @throw BadValue and similar exceptions on error.
     void parseOptionConfig(isc::data::ConstElementPtr option);
-
 };
 
 /// @brief The type of shared pointers to Flex Option implementations.

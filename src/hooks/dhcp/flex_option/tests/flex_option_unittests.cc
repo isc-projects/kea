@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,6 +120,18 @@ TEST_F(FlexOptionTest, optionConfigNotMap) {
     options->add(option);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     EXPECT_EQ("option element is not a map", impl_->getErrMsg());
+}
+
+// Verify that an unknown option keyword is rejected.
+TEST_F(FlexOptionTest, optionConfigUnknown) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr unknown = Element::create(string("'ab'"));
+    // The right keyword is remove...
+    option->set("delete", unknown);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("unknown parameter 'delete'", impl_->getErrMsg());
 }
 
 // Verify that an option configuration must have code or name.
