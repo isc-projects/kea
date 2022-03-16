@@ -1,4 +1,10 @@
-2000.	[func]		`fdupont
+2001.	[bug]		razvan
+	Fixed a bug which causes client classes with empty test
+	expressions to fail class evaluation when those classes are
+	retrieved from config back end.
+	(Gitlab #2336)
+
+2000.	[func]		fdupont
 	Added the ``early-global-reservations-lookup`` configuration
 	parameter which allows to perform a search for global host
 	reservations and set client classes before the subnet
