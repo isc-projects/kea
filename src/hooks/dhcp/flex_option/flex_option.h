@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcp/classify.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -118,6 +119,20 @@ public:
             return (expr_);
         }
 
+        /// @brief Set client class.
+        ///
+        /// @param class_name the client class aka guard name.
+        void setClass(const isc::dhcp::ClientClass& class_name) {
+            class_ = class_name;
+        }
+
+        /// @brief Get client class.
+        ///
+        /// @return client class aka guard.
+        const isc::dhcp::ClientClass& getClass() const {
+            return (class_);
+        }
+
     private:
         /// @brief The code.
         uint16_t code_;
@@ -134,6 +149,9 @@ public:
 
         /// @brief The match expression.
         isc::dhcp::ExpressionPtr expr_;
+
+        /// @brief The client class aka guard.
+        isc::dhcp::ClientClass class_;
     };
 
     /// @brief The type of shared pointers to option config.
@@ -172,6 +190,13 @@ public:
                  PktType query, PktType response) {
         for (auto pair : getOptionConfigMap()) {
             const OptionConfigPtr& opt_cfg = pair.second;
+            const isc::dhcp::ClientClass& client_class = opt_cfg->getClass();
+            if (!client_class.empty()) {
+                if (!query->inClass(client_class)) {
+                    logClass(client_class, opt_cfg->getCode());
+                    continue;
+                }
+            }
             std::string value;
             isc::dhcp::OptionBuffer buffer;
             isc::dhcp::OptionPtr opt = response->getOption(opt_cfg->getCode());
@@ -251,6 +276,12 @@ public:
             }
         }
     }
+
+    /// @brief Log the client class.
+    ///
+    /// @param client_class The client class aka guard name.
+    /// @param code The option code.
+    void logClass(const isc::dhcp::ClientClass &client_class, uint16_t code);
 
     /// @brief Log the action.
     ///

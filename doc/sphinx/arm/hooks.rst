@@ -1873,6 +1873,10 @@ For instance, if the expression evaluation returns "example.com" and
 the option is defined with the ``fqdn`` type, the domain name will be
 encoded into DNS binary format.
 
+Since Kea 2.1.4, the ``client-class`` parameter specifies a guard: it takes
+a client class name, when not empty the entry is skipped if the query does
+not belong to the class.
+
 .. _host-cmds:
 
 ``host_cmds``: Host Commands

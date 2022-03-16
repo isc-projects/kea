@@ -77,12 +77,13 @@ const SimpleKeywords FlexOptionImpl::OPTION_PARAMETERS = {
   { "add",              Element::string },
   { "supersede",        Element::string },
   { "remove",           Element::string },
+  { "client-class",     Element::string },
   { "comment",          Element::string }
 };
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
                                            OptionDefinitionPtr def)
-    : code_(code), def_(def), action_(NONE) {
+    : code_(code), def_(def), action_(NONE), class_("") {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -137,6 +138,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     ConstElementPtr code_elem = option->get("code");
     ConstElementPtr name_elem = option->get("name");
     ConstElementPtr csv_format_elem = option->get("csv-format");
+    ConstElementPtr class_elem = option->get("client-class");
     OptionDefinitionPtr def;
     if (!code_elem && !name_elem) {
         isc_throw(BadValue, "'code' or 'name' must be specified: "
@@ -232,6 +234,9 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
 
     OptionConfigPtr opt_cfg(new OptionConfig(code, def));
+    if (class_elem) {
+        opt_cfg->setClass(class_elem->stringValue());
+    }
 
     // opt_cfg initial action is NONE.
     parseAction(option, opt_cfg, universe,
@@ -246,6 +251,15 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
 
     option_config_map_[code] = opt_cfg;
+}
+
+void
+FlexOptionImpl::logClass(const ClientClass& client_class, uint16_t code) {
+    LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
+              FLEX_OPTION_PROCESS_CLIENT_CLASS)
+        .arg(client_class)
+        .arg(code);
+    return;
 }
 
 void

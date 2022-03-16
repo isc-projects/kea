@@ -7,6 +7,7 @@
 
 extern const isc::log::MessageID FLEX_OPTION_LOAD_ERROR;
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_ADD;
+extern const isc::log::MessageID FLEX_OPTION_PROCESS_CLIENT_CLASS;
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_ERROR;
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_REMOVE;
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_SUPERSEDE;

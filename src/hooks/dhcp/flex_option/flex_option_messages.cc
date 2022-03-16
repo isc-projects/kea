@@ -6,6 +6,7 @@
 
 extern const isc::log::MessageID FLEX_OPTION_LOAD_ERROR = "FLEX_OPTION_LOAD_ERROR";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_ADD = "FLEX_OPTION_PROCESS_ADD";
+extern const isc::log::MessageID FLEX_OPTION_PROCESS_CLIENT_CLASS = "FLEX_OPTION_PROCESS_CLIENT_CLASS";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_ERROR = "FLEX_OPTION_PROCESS_ERROR";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_REMOVE = "FLEX_OPTION_PROCESS_REMOVE";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_SUPERSEDE = "FLEX_OPTION_PROCESS_SUPERSEDE";
@@ -16,6 +17,7 @@ namespace {
 const char* values[] = {
     "FLEX_OPTION_LOAD_ERROR", "loading Flex Option hooks library failed: %1",
     "FLEX_OPTION_PROCESS_ADD", "Added the option code %1 value by %2",
+    "FLEX_OPTION_PROCESS_CLIENT_CLASS", "Skip processing of the option code %1 for class '%2'",
     "FLEX_OPTION_PROCESS_ERROR", "An error occurred processing query %1: %2",
     "FLEX_OPTION_PROCESS_REMOVE", "Removed option code %1",
     "FLEX_OPTION_PROCESS_SUPERSEDE", "Supersedes the value of option code %1 by %2",

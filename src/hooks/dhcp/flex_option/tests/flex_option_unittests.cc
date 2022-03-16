@@ -1336,4 +1336,94 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
 
+// Verify that the client class must be a string.
+TEST_F(FlexOptionTest, optionConfigBadClass) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    option->set("remove", remove);
+    option->set("client-class", Element::create(true));
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'client-class' must be a string: true", impl_->getErrMsg());
+}
+
+// Verify that a valid client class is accepted.
+TEST_F(FlexOptionTest, optionConfigGuardValid) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    option->set("remove", remove);
+    option->set("client-class", Element::create(string("foobar")));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ("foobar", opt_cfg->getClass());
+}
+
+// Verify that a guarded action is skipped when query does not belong to the
+// client class.
+TEST_F(FlexOptionTest, optionConfigGuardNoMatch) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    option->set("remove", remove);
+    option->set("client-class", Element::create(string("foobar")));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionStringPtr str(new OptionString(Option::V4, DHO_HOST_NAME, "foo"));
+    response->addOption(str);
+    EXPECT_TRUE(response->getOption(DHO_HOST_NAME));
+    string response_txt = response->toText();
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_TRUE(response->getOption(DHO_HOST_NAME));
+}
+
+// Verify that a guarded action is applied when query belongs to the class.
+TEST_F(FlexOptionTest, optionConfigGuardMatch) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option->set("code", code);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    option->set("remove", remove);
+    option->set("client-class", Element::create(string("foobar")));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    query->addClass("foobar");
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    string response_txt = response->toText();
+    OptionStringPtr str(new OptionString(Option::V6, D6O_BOOTFILE_URL, "http"));
+    response->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(D6O_BOOTFILE_URL));
+}
+
 } // end of anonymous namespace

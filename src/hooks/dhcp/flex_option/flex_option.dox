@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -97,6 +97,8 @@ The sole parameter is a options list of options with:
    specified, it will default to false (raw data). When enabled, the option
    data will be parsed using csv format and packed according to the option
    definition.
+ - @b client-class - Specifies the guard i.e. the client class the query
+   must belong to.
 
 Note for the rare options which can be empty this mechanism does not work.
 The proposed solution in this case is to use a client class to set the

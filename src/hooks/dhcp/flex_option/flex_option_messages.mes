@@ -1,4 +1,4 @@
-# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 
 % FLEX_OPTION_LOAD_ERROR loading Flex Option hooks library failed: %1
 This error message indicates an error during loading the Flex Option
@@ -9,6 +9,11 @@ the log message.
 This debug message is printed when an option was added into the response
 packet. The option code and the value (between quotes if printable, in
 hexadecimal is not) are provided.
+
+% FLEX_OPTION_PROCESS_CLIENT_CLASS Skip processing of the option code %1 for class '%2'
+This debug message is printed when the processing for an option is skipped
+because the query does not belongs to the client class. The option code and
+the client class name are provided.
 
 % FLEX_OPTION_PROCESS_ERROR An error occurred processing query %1: %2
 This error message indicates an error during processing of a query
