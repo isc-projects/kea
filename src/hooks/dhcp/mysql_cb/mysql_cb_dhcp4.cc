@@ -2414,7 +2414,7 @@ public:
 
                 auto options = boost::make_shared<CfgOption>();
                 auto option_defs = boost::make_shared<CfgOptionDef>();
-                auto expression = boost::make_shared<Expression>();
+                ExpressionPtr expression;
 
                 last_client_class = boost::make_shared<ClientClassDef>(out_bindings[1]->getString(), expression, options);
                 last_client_class->setCfgOptionDef(option_defs);

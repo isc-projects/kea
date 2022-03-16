@@ -4168,8 +4168,11 @@ GenericConfigBackendDHCPv6Test::setAndGetAllClientClasses6Test() {
     auto classes_list = client_classes.getClasses();
     ASSERT_EQ(3, classes_list->size());
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
     EXPECT_EQ("bar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 1))->getMatchExpr());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 2))->getMatchExpr());
 
     // Move the third class between the first and second class.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ONE("server1"), class3, "foo"));
@@ -4179,8 +4182,11 @@ GenericConfigBackendDHCPv6Test::setAndGetAllClientClasses6Test() {
     classes_list = client_classes.getClasses();
     ASSERT_EQ(3, classes_list->size());
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 1))->getMatchExpr());
     EXPECT_EQ("bar", (*(classes_list->begin() + 2))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 2))->getMatchExpr());
 
     // Update the foobar class without specifying its position. It should not
     // be moved.
@@ -4190,8 +4196,11 @@ GenericConfigBackendDHCPv6Test::setAndGetAllClientClasses6Test() {
     classes_list = client_classes.getClasses();
     ASSERT_EQ(3, classes_list->size());
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
+    EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 1))->getMatchExpr());
     EXPECT_EQ("bar", (*(classes_list->begin() + 2))->getName());
+    EXPECT_FALSE((*(classes_list->begin() + 2))->getMatchExpr());
 }
 
 void
