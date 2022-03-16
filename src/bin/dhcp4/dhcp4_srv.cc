@@ -107,7 +107,7 @@ struct Dhcp4Hooks {
         hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
         hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
-        hook_index_ddns_update_       = HooksManager::registerHook("ddns_update");
+        hook_index_ddns_update_       = HooksManager::registerHook("ddns_update4");
     }
 };
 
@@ -2104,10 +2104,12 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             Pkt4Ptr query = ex.getQuery();
 
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
+            Subnet4Ptr subnet = ex.getContext()->subnet_;
 
             // Pass incoming packet as argument
             callout_handle->setArgument("query4", query);
             callout_handle->setArgument("response4", resp);
+            callout_handle->setArgument("subnet4", subnet);
             callout_handle->setArgument("hostname", hostname);
             callout_handle->setArgument("fwd-update", fqdn_fwd);
             callout_handle->setArgument("rev-update", fqdn_rev);
