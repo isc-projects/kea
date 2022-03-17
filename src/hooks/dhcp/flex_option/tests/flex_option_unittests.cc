@@ -228,6 +228,36 @@ TEST_F(FlexOptionTest, optionConfigBadCode6) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 }
 
+// Verify that the space must be a string.
+TEST_F(FlexOptionTest, optionConfigBadSpace) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr space = Element::create(true);
+    option->set("space", space);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'space' must be a string: true", impl_->getErrMsg());
+}
+
+// Verify that the space must be valid.
+TEST_F(FlexOptionTest, optionConfigInvalidSpace) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr space = Element::create(string("-bad-"));
+    option->set("space", space);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'-bad-' is not a valid space name", impl_->getErrMsg());
+}
+
 // Verify that the name must be a string.
 TEST_F(FlexOptionTest, optionConfigBadName) {
     ElementPtr options = Element::createList();
@@ -265,6 +295,22 @@ TEST_F(FlexOptionTest, optionConfigUnknownName) {
     option->set("name", name);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     EXPECT_EQ("no known 'foobar' option in 'dhcp4' space", impl_->getErrMsg());
+}
+
+// Verify that the space must be a known space.
+TEST_F(FlexOptionTest, optionConfigUnknownSpace) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr name = Element::create(string("host-name"));
+    option->set("name", name);
+    ElementPtr space = Element::create(string("foobar"));
+    option->set("space", space);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("no known 'host-name' option in 'foobar' space",
+              impl_->getErrMsg());
 }
 
 // Verify that the definition is not required when csv-format is not specified.
@@ -353,6 +399,32 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
     option->set("add", add);
     ElementPtr name = Element::create(string("my-option"));
     option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    auto map = impl_->getOptionConfigMap();
+    EXPECT_EQ(1, map.count(222));
+    auto opt_lst = map[222];
+    EXPECT_EQ(1, opt_lst.size());
+}
+
+// Verify that the name can be an user defined option in a custom space.
+TEST_F(FlexOptionTest, optionConfigDefinedSpace) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 "my-space", "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    option->set("name", name);
+    ElementPtr space = Element::create(string("my-space"));
+    option->set("space", space);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 

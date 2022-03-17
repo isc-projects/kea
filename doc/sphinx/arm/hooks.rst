@@ -1878,7 +1878,10 @@ a client class name, when not empty the entry is skipped if the query does
 not belong to the class.
 
 Since Kea 2.1.4, it is allowed to have multiple entries for the same option,
-but each entry must have exactly one action.
+but each entry must have exactly one action. If the option is not defined
+in the ``dhcp4`` for DHCPv4 or ``dhcp6`` for DHCPv6 you can specify the
+space where to find the option definition using its name with the new
+``space`` parameter.
 
 .. _host-cmds:
 

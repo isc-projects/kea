@@ -73,6 +73,7 @@ namespace flex_option {
 const SimpleKeywords FlexOptionImpl::OPTION_PARAMETERS = {
   { "code",             Element::integer },
   { "name",             Element::string },
+  { "space",            Element::string },
   { "csv-format",       Element::boolean },
   { "add",              Element::string },
   { "supersede",        Element::string },
@@ -137,6 +138,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
     ConstElementPtr code_elem = option->get("code");
     ConstElementPtr name_elem = option->get("name");
+    ConstElementPtr space_elem = option->get("space");
     ConstElementPtr csv_format_elem = option->get("csv-format");
     ConstElementPtr class_elem = option->get("client-class");
     OptionDefinitionPtr def;
@@ -153,6 +155,12 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         space = DHCP6_OPTION_SPACE;
         universe = Option::V6;
     }
+    if (space_elem) {
+        space = space_elem->stringValue();
+        if (!OptionSpace::validateName(space)) {
+            isc_throw(BadValue, "'" << space << "' is not a valid space name");
+        }
+    }
     uint16_t code;
     if (code_elem) {
         int64_t value = code_elem->intValue();
@@ -166,7 +174,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             isc_throw(OutOfRange, "invalid 'code' value " << value
                       << " not in [0.." << max_code << "]");
         }
-        if (family == AF_INET) {
+        if (space == DHCP4_OPTION_SPACE) {
             if (value == DHO_PAD) {
                 isc_throw(BadValue,
                           "invalid 'code' value 0: reserved for PAD");
@@ -174,7 +182,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
                 isc_throw(BadValue,
                           "invalid 'code' value 255: reserved for END");
             }
-        } else {
+        } else if (space == DHCP6_OPTION_SPACE) {
             if (value == 0) {
                 isc_throw(BadValue, "invalid 'code' value 0: reserved");
             }
