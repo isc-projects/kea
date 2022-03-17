@@ -42,14 +42,16 @@ public:
     ///  - add (if not already existing)
     ///  - supersede (as add but also when already existing)
     ///  - remove
+    ///  - sub-options
     enum Action {
         NONE,
         ADD,
         SUPERSEDE,
-        REMOVE
+        REMOVE,
+        SUB_OPTIONS
     };
 
-    /// @brief Option configuration.
+    /// @brief Base option configuration.
     ///
     /// Per option configuration.
     class OptionConfig {
@@ -162,6 +164,86 @@ public:
 
     /// @brief The type of the option config map.
     typedef std::map<uint16_t, OptionConfigList> OptionConfigMap;
+
+    /// @brief Sub-option configuration.
+    ///
+    /// Per sub-option configuration.
+    class SubOptionConfig : public OptionConfig {
+    public:
+        /// @brief Constructor.
+        ///
+        /// @param code the sub-option code.
+        /// @param def the sub-option definition.
+        /// @param container pointer to the container option.
+        SubOptionConfig(uint16_t code, isc::dhcp::OptionDefinitionPtr def,
+                        OptionConfigPtr container);
+
+        /// @brief Destructor.
+        virtual ~SubOptionConfig();
+
+        /// @brief Set vendor id.
+        ///
+        /// @param vendor_id the vendor id.
+        void setVendorId(uint32_t vendor_id) {
+            vendor_id_ = vendor_id;
+        }
+
+        /// @brief Return vendor id.
+        ///
+        /// @return vendor id.
+        uint32_t getVendorId() const {
+            return (vendor_id_);
+        }
+
+        /// @brief Return container code.
+        ///
+        /// @return container code.
+        uint16_t getContainerCode() const {
+            return (container_->getCode());
+        }
+
+        /// @brief Return container definition.
+        ///
+        /// @return container definition.
+        isc::dhcp::OptionDefinitionPtr getContainerDef() const {
+            return (container_->getOptionDef());
+        }
+
+        /// @brief Set action on the container.
+        ///
+        /// @param action the action.
+        void setContainerAction(Action action) {
+            container_action_ = action;
+        }
+
+        /// @brief Return action on the container.
+        ///
+        /// @return action on the container.
+        Action getContainerAction() const {
+            return (container_action_);
+        }
+
+    private:
+        /// @brief Pointer to the container option configuration.
+        OptionConfigPtr container_;
+
+        /// @brief Vendor id (0 when the container is not a vendor one).
+        uint32_t vendor_id_;
+
+        /// @brief The action on the container.
+        Action container_action_;
+    };
+
+    /// @brief The type of shared pointers to sub-option config.
+    typedef boost::shared_ptr<SubOptionConfig> SubOptionConfigPtr;
+
+    /// @brief The type of the sub-option config map.
+    /// @note the index is the sub-option code.
+    typedef std::map<uint16_t, SubOptionConfigPtr> SubOptionConfigMap;
+
+    /// @brief The type of the map of sub-option config maps.
+    /// @note the index is the container option code.
+    typedef std::map<uint16_t, SubOptionConfigMap> SubOptionConfigMapMap;
 
     /// @brief Constructor.
     FlexOptionImpl();
@@ -279,6 +361,10 @@ public:
                     }
                     logAction(REMOVE, opt_cfg->getCode(), "");
                     break;
+                case SUB_OPTIONS:
+                    /////// todo!
+                    logAction(SUB_OPTIONS, opt_cfg->getCode(), "");
+                    break;
                 }
             }
         }
@@ -309,8 +395,14 @@ private:
     /// @brief Option parameters.
     static const data::SimpleKeywords OPTION_PARAMETERS;
 
+    /// @brief Sub-option parameters.
+    static const data::SimpleKeywords SUB_OPTION_PARAMETERS;
+
     /// @brief The option config map (code and pointer to option config).
     OptionConfigMap option_config_map_;
+
+    /// @brief The sub-option config map of map.
+    SubOptionConfigMapMap sub_option_config_map_;
 
     /// @brief Parse an option config.
     ///

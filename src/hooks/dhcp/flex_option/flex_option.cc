@@ -71,15 +71,30 @@ namespace isc {
 namespace flex_option {
 
 const SimpleKeywords FlexOptionImpl::OPTION_PARAMETERS = {
-  { "code",             Element::integer },
-  { "name",             Element::string },
-  { "space",            Element::string },
-  { "csv-format",       Element::boolean },
-  { "add",              Element::string },
-  { "supersede",        Element::string },
-  { "remove",           Element::string },
-  { "client-class",     Element::string },
-  { "comment",          Element::string }
+    { "code",          Element::integer },
+    { "name",          Element::string },
+    { "space",         Element::string },
+    { "csv-format",    Element::boolean },
+    { "add",           Element::string },
+    { "supersede",     Element::string },
+    { "remove",        Element::string },
+    { "sub-options",   Element::list },
+    { "client-class",  Element::string },
+    { "comment",       Element::string }
+};
+
+const SimpleKeywords FlexOptionImpl::SUB_OPTION_PARAMETERS = {
+    { "code",              Element::integer },
+    { "name",              Element::string },
+    { "space",             Element::string },
+    { "csv-format",        Element::boolean },
+    { "add",               Element::string },
+    { "supersede",         Element::string },
+    { "remove",            Element::string },
+    { "container-add",     Element::boolean },
+    { "container-remove",  Element::boolean },
+    { "client-class",      Element::string },
+    { "comment",           Element::string }
 };
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
@@ -90,10 +105,25 @@ FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
 FlexOptionImpl::OptionConfig::~OptionConfig() {
 }
 
+FlexOptionImpl::SubOptionConfig::SubOptionConfig(uint16_t code,
+                                                 OptionDefinitionPtr def,
+                                                 OptionConfigPtr container)
+    : OptionConfig(code, def), container_(container), vendor_id_(0),
+      container_action_(NONE) {
+    if (!container) {
+        isc_throw(Unexpected, "null container?");
+    }
+}
+
+FlexOptionImpl::SubOptionConfig::~SubOptionConfig() {
+    container_.reset();
+}
+
 FlexOptionImpl::FlexOptionImpl() {
 }
 
 FlexOptionImpl::~FlexOptionImpl() {
+    sub_option_config_map_.clear();
     option_config_map_.clear();
 }
 
@@ -273,7 +303,7 @@ FlexOptionImpl::logClass(const ClientClass& client_class, uint16_t code) {
 void
 FlexOptionImpl::logAction(Action action, uint16_t code,
                           const string& value) const {
-    if (action == NONE) {
+    if ((action == NONE) || (action == SUB_OPTIONS)) {
         return;
     }
     if (action == REMOVE) {
