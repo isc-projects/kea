@@ -1,3 +1,9 @@
+2002.	[bug]		tmark
+	Fixed a bug in MySql config back end that caused it to
+	store unspecified, client-class valid and preferred life
+	time values as zero in the database.
+	(Gitlab #2344)
+
 2001.	[bug]		razvan
 	Fixed a bug which causes client classes with empty test
 	expressions to fail class evaluation when those classes are

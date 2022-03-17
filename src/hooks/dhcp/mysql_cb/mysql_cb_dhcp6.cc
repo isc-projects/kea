@@ -3035,15 +3035,15 @@ public:
             MySqlBinding::createString(client_class->getName()),
             MySqlBinding::createString(client_class->getTest()),
             MySqlBinding::createBool(client_class->getRequired()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMin()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMax()),
+            createBinding(client_class->getValid()),
+            createMinBinding(client_class->getValid()),
+            createMaxBinding(client_class->getValid()),
             MySqlBinding::createBool(depend_on_known),
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),
-            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMin()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getPreferred().getMax()),
+            createBinding(client_class->getPreferred()),
+            createMinBinding(client_class->getPreferred()),
+            createMaxBinding(client_class->getPreferred()),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
         };
 

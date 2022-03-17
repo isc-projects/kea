@@ -2605,9 +2605,9 @@ public:
             MySqlBinding::createString(client_class->getSname()),
             MySqlBinding::createString(client_class->getFilename()),
             MySqlBinding::createBool(client_class->getRequired()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMin()),
-            MySqlBinding::createInteger<uint32_t>(client_class->getValid().getMax()),
+            createBinding(client_class->getValid()),
+            createMinBinding(client_class->getValid()),
+            createMaxBinding(client_class->getValid()),
             MySqlBinding::createBool(depend_on_known),
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),

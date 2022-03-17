@@ -380,6 +380,7 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     ExpressionPtr match_expr = boost::make_shared<Expression>();
     CfgOptionPtr cfg_option = boost::make_shared<CfgOption>();
     auto class1 = boost::make_shared<ClientClassDef>("foo", match_expr, cfg_option);
+    class1->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
     class1->setRequired(true);
     class1->setNextServer(IOAddress("1.2.3.4"));
     class1->setSname("cool");
@@ -388,10 +389,12 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     test_client_classes_.push_back(class1);
 
     auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);
+    class2->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
     class2->setTest("member('foo')");
     test_client_classes_.push_back(class2);
 
     auto class3 = boost::make_shared<ClientClassDef>("foobar", match_expr, cfg_option);
+    class3->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
     class3->setTest("member('foo') and member('bar')");
     test_client_classes_.push_back(class3);
 }
@@ -4011,12 +4014,21 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     auto classes_list = client_classes.getClasses();
     ASSERT_EQ(3, classes_list->size());
-    EXPECT_EQ("foo", (*classes_list->begin())->getName());
-    EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
-    EXPECT_EQ("bar", (*(classes_list->begin() + 1))->getName());
-    EXPECT_FALSE((*(classes_list->begin() + 1))->getMatchExpr());
-    EXPECT_EQ("foobar", (*(classes_list->begin() + 2))->getName());
-    EXPECT_FALSE((*(classes_list->begin() + 2))->getMatchExpr());
+
+    auto fetched_class = classes_list->begin();
+    ASSERT_EQ("foo", (*fetched_class)->getName());
+    EXPECT_FALSE((*fetched_class)->getMatchExpr());
+    EXPECT_EQ(class1->toElement()->str(), (*fetched_class)->toElement()->str());
+
+    ++fetched_class;
+    ASSERT_EQ("bar", (*fetched_class)->getName());
+    EXPECT_FALSE((*fetched_class)->getMatchExpr());
+    EXPECT_EQ(class2->toElement()->str(), (*fetched_class)->toElement()->str());
+
+    ++fetched_class;
+    ASSERT_EQ("foobar", (*fetched_class)->getName());
+    EXPECT_FALSE((*fetched_class)->getMatchExpr());
+    EXPECT_EQ(class3->toElement()->str(), (*fetched_class)->toElement()->str());
 
     // Move the third class between the first and second class.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass4(ServerSelector::ONE("server1"), class3, "foo"));
