@@ -1856,7 +1856,7 @@ expression.
         ]
     }
 
-If (and only if) the query includes a ``host-name`` option (code 12),
+If (and only if) the **query** includes a ``host-name`` option (code 12),
 a ``boot-file-name`` option (code 67) is added to the response with the host
 name followed by ``.boot`` for content.
 
@@ -1876,6 +1876,9 @@ encoded into DNS binary format.
 Since Kea 2.1.4, the ``client-class`` parameter specifies a guard: it takes
 a client class name, when not empty the entry is skipped if the query does
 not belong to the class.
+
+Since Kea 2.1.4, it is allowed to have multiple entries for the same option,
+but each entry must have exactly one action.
 
 .. _host-cmds:
 

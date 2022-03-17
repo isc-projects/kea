@@ -204,9 +204,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         }
         code = def->getCode();
     }
-    if (option_config_map_.count(code)) {
-        isc_throw(BadValue, "option " << code << " was already specified");
-    }
 
     bool csv_format = false;
     if (csv_format_elem) {
@@ -250,7 +247,10 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "no action: " << option->str());
     }
 
-    option_config_map_[code] = opt_cfg;
+    // The [] operator creates the item if it does not exist before
+    // returning a reference to it.
+    OptionConfigList& opt_lst = option_config_map_[code];
+    opt_lst.push_back(opt_cfg);
 }
 
 void

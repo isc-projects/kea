@@ -157,8 +157,11 @@ public:
     /// @brief The type of shared pointers to option config.
     typedef boost::shared_ptr<OptionConfig> OptionConfigPtr;
 
+    /// @brief The type of lists of shared pointers to option config.
+    typedef std::list<OptionConfigPtr> OptionConfigList;
+
     /// @brief The type of the option config map.
-    typedef std::map<uint16_t, OptionConfigPtr> OptionConfigMap;
+    typedef std::map<uint16_t, OptionConfigList> OptionConfigMap;
 
     /// @brief Constructor.
     FlexOptionImpl();
@@ -189,90 +192,94 @@ public:
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
         for (auto pair : getOptionConfigMap()) {
-            const OptionConfigPtr& opt_cfg = pair.second;
-            const isc::dhcp::ClientClass& client_class = opt_cfg->getClass();
-            if (!client_class.empty()) {
-                if (!query->inClass(client_class)) {
-                    logClass(client_class, opt_cfg->getCode());
-                    continue;
+            for (const OptionConfigPtr& opt_cfg : pair.second) {
+                const isc::dhcp::ClientClass& client_class =
+                    opt_cfg->getClass();
+                if (!client_class.empty()) {
+                    if (!query->inClass(client_class)) {
+                        logClass(client_class, opt_cfg->getCode());
+                        continue;
+                    }
                 }
-            }
-            std::string value;
-            isc::dhcp::OptionBuffer buffer;
-            isc::dhcp::OptionPtr opt = response->getOption(opt_cfg->getCode());
-            isc::dhcp::OptionDefinitionPtr def = opt_cfg->getOptionDef();
-            switch (opt_cfg->getAction()) {
-            case NONE:
-                break;
-            case ADD:
-                // Don't add if option is already there.
-                if (opt) {
+                std::string value;
+                isc::dhcp::OptionBuffer buffer;
+                isc::dhcp::OptionPtr opt =
+                    response->getOption(opt_cfg->getCode());
+                isc::dhcp::OptionDefinitionPtr def = opt_cfg->getOptionDef();
+                switch (opt_cfg->getAction()) {
+                case NONE:
                     break;
-                }
-                value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
-                // Do nothing is the expression evaluates to empty.
-                if (value.empty()) {
-                    break;
-                }
-                // Set the value.
-                if (def) {
-                    std::vector<std::string> split_vec =
+                case ADD:
+                    // Don't add if option is already there.
+                    if (opt) {
+                        break;
+                    }
+                    value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
+                    // Do nothing is the expression evaluates to empty.
+                    if (value.empty()) {
+                        break;
+                    }
+                    // Set the value.
+                    if (def) {
+                        std::vector<std::string> split_vec =
                             isc::util::str::tokens(value, ",", true);
-                    opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                             split_vec);
-                } else {
-                    buffer.assign(value.begin(), value.end());
-                    opt.reset(new isc::dhcp::Option(universe,
-                                                    opt_cfg->getCode(),
-                                                    buffer));
-                }
-                // Add the option.
-                response->addOption(opt);
-                logAction(ADD, opt_cfg->getCode(), value);
-                break;
-            case SUPERSEDE:
-                // Do nothing is the expression evaluates to empty.
-                value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
-                if (value.empty()) {
+                        opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                                 split_vec);
+                    } else {
+                        buffer.assign(value.begin(), value.end());
+                        opt.reset(new isc::dhcp::Option(universe,
+                                                        opt_cfg->getCode(),
+                                                        buffer));
+                    }
+                    // Add the option.
+                    response->addOption(opt);
+                    logAction(ADD, opt_cfg->getCode(), value);
                     break;
-                }
-                // Remove the option if already there.
-                while (opt) {
-                    response->delOption(opt_cfg->getCode());
-                    opt = response->getOption(opt_cfg->getCode());
-                }
-                // Set the value.
-                if (def) {
-                    std::vector<std::string> split_vec =
+                case SUPERSEDE:
+                    // Do nothing is the expression evaluates to empty.
+                    value = isc::dhcp::evaluateString(*opt_cfg->getExpr(),
+                                                      *query);
+                    if (value.empty()) {
+                        break;
+                    }
+                    // Remove the option if already there.
+                    while (opt) {
+                        response->delOption(opt_cfg->getCode());
+                        opt = response->getOption(opt_cfg->getCode());
+                    }
+                    // Set the value.
+                    if (def) {
+                        std::vector<std::string> split_vec =
                             isc::util::str::tokens(value, ",", true);
-                    opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                             split_vec);
-                } else {
-                    buffer.assign(value.begin(), value.end());
-                    opt.reset(new isc::dhcp::Option(universe,
-                                                    opt_cfg->getCode(),
-                                                    buffer));
-                }
-                // Add the option.
-                response->addOption(opt);
-                logAction(SUPERSEDE, opt_cfg->getCode(), value);
-                break;
-            case REMOVE:
-                // Nothing to remove if option is not present.
-                if (!opt) {
+                        opt = def->optionFactory(universe, opt_cfg->getCode(),
+                                                 split_vec);
+                    } else {
+                        buffer.assign(value.begin(), value.end());
+                        opt.reset(new isc::dhcp::Option(universe,
+                                                        opt_cfg->getCode(),
+                                                        buffer));
+                    }
+                    // Add the option.
+                    response->addOption(opt);
+                    logAction(SUPERSEDE, opt_cfg->getCode(), value);
+                    break;
+                case REMOVE:
+                    // Nothing to remove if option is not present.
+                    if (!opt) {
+                        break;
+                    }
+                    // Do nothing is the expression evaluates to false.
+                    if (!isc::dhcp::evaluateBool(*opt_cfg->getExpr(), *query)) {
+                        break;
+                    }
+                    // Remove the option.
+                    while (opt) {
+                        response->delOption(opt_cfg->getCode());
+                        opt = response->getOption(opt_cfg->getCode());
+                    }
+                    logAction(REMOVE, opt_cfg->getCode(), "");
                     break;
                 }
-                // Do nothing is the expression evaluates to false.
-                if (!isc::dhcp::evaluateBool(*opt_cfg->getExpr(), *query)) {
-                    break;
-                }
-                // Remove the option.
-                while (opt) {
-                    response->delOption(opt_cfg->getCode());
-                    opt = response->getOption(opt_cfg->getCode());
-                }
-                logAction(REMOVE, opt_cfg->getCode(), "");
-                break;
             }
         }
     }

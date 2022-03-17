@@ -281,6 +281,8 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeNoCSVFormat) {
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
+    auto opt_lst = map[109];
+    EXPECT_EQ(1, opt_lst.size());
 }
 
 // Verify that the definition is not required when csv-format is false.
@@ -299,6 +301,8 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeDisableCSVFormat) {
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
+    auto opt_lst = map[109];
+    EXPECT_EQ(1, opt_lst.size());
 }
 
 // Verify that the code must be a known option when csv-format is true.
@@ -330,6 +334,8 @@ TEST_F(FlexOptionTest, optionConfigStandardName) {
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_HOST_NAME));
+    auto opt_lst = map[DHO_HOST_NAME];
+    EXPECT_EQ(1, opt_lst.size());
 }
 
 // Verify that the name can be an user defined option.
@@ -352,6 +358,8 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(222));
+    auto opt_lst = map[222];
+    EXPECT_EQ(1, opt_lst.size());
 }
 
 // Last resort is only option 43...
@@ -386,7 +394,7 @@ TEST_F(FlexOptionTest, optionConfigBadCSVFormat) {
     EXPECT_EQ("'csv-format' must be a boolean: 123", impl_->getErrMsg());
 }
 
-// Verify that an option can be configured only once.
+// Verify that an option can be configured more than once.
 TEST_F(FlexOptionTest, optionConfigTwice) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
@@ -396,9 +404,15 @@ TEST_F(FlexOptionTest, optionConfigTwice) {
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
 
+    // Add it a second time.
     options->add(option);
-    EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    EXPECT_EQ("option 12 was already specified", impl_->getErrMsg());
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    auto map = impl_->getOptionConfigMap();
+    EXPECT_EQ(1, map.count(DHO_HOST_NAME));
+    auto opt_lst = map[DHO_HOST_NAME];
+    EXPECT_EQ(2, opt_lst.size());
 }
 
 // Verify that the add value must be a string.
@@ -456,8 +470,13 @@ TEST_F(FlexOptionTest, optionConfigAdd4) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
@@ -488,8 +507,13 @@ TEST_F(FlexOptionTest, optionConfigAdd6) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(D6O_BOOTFILE_URL));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
@@ -560,8 +584,13 @@ TEST_F(FlexOptionTest, optionConfigSupersede4) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::SUPERSEDE, opt_cfg->getAction());
@@ -592,8 +621,13 @@ TEST_F(FlexOptionTest, optionConfigSupersede6) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(D6O_BOOTFILE_URL));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::SUPERSEDE, opt_cfg->getAction());
@@ -664,8 +698,13 @@ TEST_F(FlexOptionTest, optionConfigRemove4) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::REMOVE, opt_cfg->getAction());
@@ -701,8 +740,13 @@ TEST_F(FlexOptionTest, optionConfigRemove6) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(D6O_BOOTFILE_URL));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::REMOVE, opt_cfg->getAction());
@@ -783,15 +827,25 @@ TEST_F(FlexOptionTest, optionConfigList) {
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(2, map.size());
 
+    FlexOptionImpl::OptionConfigList opt1_lst;
+    ASSERT_NO_THROW(opt1_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt1_lst.empty());
+    EXPECT_EQ(1, opt1_lst.size());
     FlexOptionImpl::OptionConfigPtr opt1_cfg;
-    ASSERT_NO_THROW(opt1_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_NO_THROW(opt1_cfg = opt1_lst.front());
+
     ASSERT_TRUE(opt1_cfg);
     EXPECT_EQ(DHO_HOST_NAME, opt1_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::ADD, opt1_cfg->getAction());
     EXPECT_EQ("'abc'", opt1_cfg->getText());
 
+    FlexOptionImpl::OptionConfigList opt2_lst;
+    ASSERT_NO_THROW(opt2_lst = map.at(DHO_ROOT_PATH));
+    ASSERT_FALSE(opt2_lst.empty());
+    EXPECT_EQ(1, opt2_lst.size());
     FlexOptionImpl::OptionConfigPtr opt2_cfg;
-    ASSERT_NO_THROW(opt2_cfg = map.at(DHO_ROOT_PATH));
+    ASSERT_NO_THROW(opt2_cfg = opt2_lst.front());
+
     ASSERT_TRUE(opt2_cfg);
     EXPECT_EQ(DHO_ROOT_PATH, opt2_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::SUPERSEDE, opt2_cfg->getAction());
@@ -818,7 +872,8 @@ TEST_F(FlexOptionTest, processNone) {
         opt_cfg(new FlexOptionImpl::OptionConfig(D6O_BOOTFILE_URL, def));
     EXPECT_EQ(FlexOptionImpl::NONE, opt_cfg->getAction());
     auto map = impl_->getMutableOptionConfigMap();
-    map[DHO_HOST_NAME] = opt_cfg;
+    auto& opt_lst = map[DHO_HOST_NAME];
+    opt_lst.push_back(opt_cfg);
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1163,6 +1218,77 @@ TEST_F(FlexOptionTest, processSupersedeEmpty) {
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
+// Verify that SUPERSEDE if exists + ADD adds a not yet existing option.
+TEST_F(FlexOptionTest, processSupersedeAddNotExisting) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option1 = Element::createMap();
+    options->add(option1);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option1->set("code", code);
+    string action = "ifelse(option[bootfile-url].exists,'supersede','')";
+    ElementPtr supersede = Element::create(action);
+    option1->set("supersede", supersede);
+    ElementPtr option2 = Element::createMap();
+    options->add(option2);
+    option2->set("code", code);
+    ElementPtr add = Element::create(string("'add'"));
+    option2->set("add", add);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    EXPECT_FALSE(response->getOption(D6O_BOOTFILE_URL));
+
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    OptionPtr opt = response->getOption(D6O_BOOTFILE_URL);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "add", 3));
+}
+
+// Verify that SUPERSEDE if exists + ADD supersedes an existing option.
+TEST_F(FlexOptionTest, processSupersedeAddExisting) {
+    ElementPtr options = Element::createList();
+    ElementPtr option1 = Element::createMap();
+    options->add(option1);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option1->set("code", code);
+    string action = "ifelse(option[host-name].exists,'supersede','')";
+    ElementPtr supersede = Element::create(action);
+    option1->set("supersede", supersede);
+    ElementPtr option2 = Element::createMap();
+    options->add(option2);
+    option2->set("code", code);
+    ElementPtr add = Element::create(string("'add'"));
+    option2->set("add", add);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionStringPtr str(new OptionString(Option::V4, DHO_HOST_NAME, "foobar"));
+    // Be careful here: the expression is related to the query.
+    query->addOption(str);
+    response->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(DHO_HOST_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_HOST_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(9, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "supersede", 9));
+}
+
 // Verify that REMOVE action removes an already existing option.
 TEST_F(FlexOptionTest, processRemove) {
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1364,8 +1490,13 @@ TEST_F(FlexOptionTest, optionConfigGuardValid) {
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
-    ASSERT_NO_THROW(opt_cfg = map.at(DHO_HOST_NAME));
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
     ASSERT_TRUE(opt_cfg);
     EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
     EXPECT_EQ("foobar", opt_cfg->getClass());
