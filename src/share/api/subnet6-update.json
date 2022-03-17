@@ -2,7 +2,7 @@
     "access": "write",
     "avail": "1.6.0",
     "brief": [
-        "This command updates a subnet in the existing server configuration. This operation has no impact on other subnets."
+        "This command updates (overwrites) a single subnet in the existing server configuration. This operation has no impact on other subnets."
     ],
     "cmd-syntax": [
         "{",

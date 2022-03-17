@@ -2600,8 +2600,8 @@ The following commands are currently supported:
 -  ``subnet4-add/subnet6-add`` - adds a new subnet into the server's
    configuration.
 
--  ``subnet4-update/subnet6-update`` - updates a subnet in the server's
-   configuration.
+-  ``subnet4-update/subnet6-update`` - updates (replaces) a single subnet in
+   the server's configuration.
 
 -  ``subnet4-del/subnet6-del`` - removes a subnet from the server's
    configuration.
@@ -2933,9 +2933,9 @@ automatic ``subnet-id`` generation works in Kea.
 The ``subnet4-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update a subnet in the existing server
-configuration. This operation has no impact on other subnets. The subnet
-identifier is used to identify the subnet to replace; it must be
+This command is used to update (overwrite) a single subnet in the existing
+server configuration. This operation has no impact on other subnets. The
+subnet identifier is used to identify the subnet to replace; it must be
 specified and must be unique among all subnets. The subnet prefix should
 not be updated.
 
@@ -2980,9 +2980,9 @@ The response to this command has the following structure:
 The ``subnet6-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update a subnet in the existing server
-configuration. This operation has no impact on other subnets. The subnet
-identifier is used to identify the subnet to replace; it must be
+This command is used to update (overwrite) a single subnet in the existing
+server configuration. This operation has no impact on other subnets. The
+subnet identifier is used to identify the subnet to replace; it must be
 specified and must be unique among all subnets. The subnet prefix should
 not be updated.
 
