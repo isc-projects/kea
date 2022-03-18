@@ -17,6 +17,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 
+#include <tests/test_flex_option.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -27,61 +28,12 @@ using namespace isc::dhcp;
 using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::flex_option;
+using namespace isc::flex_option::test;
 
 namespace {
 
-/// @brief Test class derived from FlexOptionImpl
-class TestFlexOptionImpl : public FlexOptionImpl {
-public:
-    /// Export getMutableOptionConfigMap.
-    using FlexOptionImpl::getMutableOptionConfigMap;
-
-    /// @brief Configure clone which records the error.
-    ///
-    /// @param options The element with option config list.
-    void testConfigure(ConstElementPtr options) {
-        err_msg_.clear();
-        try {
-            configure(options);
-        } catch (const std::exception& ex) {
-            err_msg_ = string(ex.what());
-            throw;
-        }
-    }
-
-    /// @brief Get the last error message.
-    ///
-    /// @return The last error message.
-    const string& getErrMsg() const {
-        return (err_msg_);
-    }
-
-private:
-    /// @brief Last error message.
-    string err_msg_;
-};
-
-/// @brief The type of shared pointers to TestFlexOptionImpl
-typedef boost::shared_ptr<TestFlexOptionImpl> TestFlexOptionImplPtr;
-
 /// @brief Test fixture for testing the Flex Option library.
-class FlexOptionTest : public ::testing::Test {
-public:
-    /// @brief Constructor.
-    FlexOptionTest() {
-        impl_.reset(new TestFlexOptionImpl());
-        CfgMgr::instance().setFamily(AF_INET);
-    }
-
-    /// @brief Destructor.
-    virtual ~FlexOptionTest() {
-        CfgMgr::instance().setFamily(AF_INET);
-        impl_.reset();
-    }
-
-    /// @brief Flex Option implementation.
-    TestFlexOptionImplPtr impl_;
-};
+class FlexOptionTest : public BaseFlexOptionTest { };
 
 // Verify that the configuration must exist.
 TEST_F(FlexOptionTest, noConfig) {

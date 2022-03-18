@@ -328,12 +328,12 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         if (opt_cfg->getAction() == NONE) {
             isc_throw(BadValue, "no action: " << option->str());
         }
-    }
 
-    // The [] operator creates the item if it does not exist before
-    // returning a reference to it.
-    OptionConfigList& opt_lst = option_config_map_[code];
-    opt_lst.push_back(opt_cfg);
+        // The [] operator creates the item if it does not exist before
+        // returning a reference to it.
+        OptionConfigList& opt_lst = option_config_map_[code];
+        opt_lst.push_back(opt_cfg);
+    }
 }
 
 void
