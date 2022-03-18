@@ -3581,6 +3581,7 @@ both the command and the response.
 .. include:: hooks-host-cache.rst
 .. include:: hooks-lease-query.rst
 .. include:: hooks-run-script.rst
+.. include:: hooks-ddns-tuning.rst
 
 .. _user-context-hooks:
 

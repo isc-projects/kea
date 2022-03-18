@@ -24,6 +24,7 @@ rst_arm_sources += arm/hooks-lease-query.rst
 rst_arm_sources += arm/hooks-radius.rst
 rst_arm_sources += arm/hooks-run-script.rst
 rst_arm_sources += arm/hooks-stat-cmds.rst
+rst_arm_sources += arm/hooks-ddns-tuning.rst
 rst_arm_sources += arm/hooks.rst
 rst_arm_sources += arm/install.rst
 rst_arm_sources += arm/integrations.rst
