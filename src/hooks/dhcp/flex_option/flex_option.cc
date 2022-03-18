@@ -316,6 +316,18 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
 
     // opt_cfg initial action is NONE.
     if (sub_options) {
+        string action;
+        if (option->contains("add")) {
+            action = "add";
+        } else if (option->contains("supersede")) {
+            action = "supersede";
+        } else if (option->contains("remove")) {
+            action = "remove";
+        }
+        if (!action.empty()) {
+            isc_throw(BadValue, "'sub-options' and '" << action << "' are "
+                      << "incompatible in the same entry");
+        }
         parseSubOptions(sub_options, opt_cfg, universe);
     } else {
         parseAction(option, opt_cfg, universe,
@@ -340,7 +352,6 @@ void
 FlexOptionImpl::parseSubOptions(ConstElementPtr sub_options,
                                 OptionConfigPtr opt_cfg,
                                 Option::Universe universe) {
-    opt_cfg->setAction(FlexOptionImpl::SUB_OPTIONS);
     for (ConstElementPtr sub_option : sub_options->listValue()) {
         parseSubOption(sub_option, opt_cfg, universe);
     }
@@ -428,13 +439,13 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
             def = LibDHCP::getLastResortOptionDef(space, name);
         }
         if (!def) {
-            isc_throw(BadValue, "no known '" << name << "' option in '"
+            isc_throw(BadValue, "no known '" << name << "' sub-option in '"
                       << space << "' space");
         }
         if (code_elem && (def->getCode() != code)) {
-            isc_throw(BadValue, "option '" << name << "' is defined as code: "
-                      << def->getCode() << ", not the specified code: "
-                      << code);
+            isc_throw(BadValue, "sub-option '" << name
+                      << "' is defined as code: " << def->getCode()
+                      << ", not the specified code: " << code);
         }
         code = def->getCode();
     }
@@ -459,7 +470,7 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
             def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, code);
         }
         if (!def) {
-            isc_throw(BadValue, "no known option with code '" << code
+            isc_throw(BadValue, "no known sub-option with code '" << code
                       << "' in '" << space << "' space");
         }
     }
@@ -526,7 +537,7 @@ FlexOptionImpl::logClass(const ClientClass& client_class, uint16_t code) {
 void
 FlexOptionImpl::logAction(Action action, uint16_t code,
                           const string& value) {
-    if ((action == NONE) || (action == SUB_OPTIONS)) {
+    if (action == NONE) {
         return;
     }
     if (action == REMOVE) {
@@ -588,7 +599,7 @@ void
 FlexOptionImpl::logSubAction(Action action, uint16_t code,
                              uint16_t container_code,
                              const string& value) {
-    if ((action == NONE) || (action == SUB_OPTIONS)) {
+    if (action == NONE) {
         return;
     }
     if (action == REMOVE) {

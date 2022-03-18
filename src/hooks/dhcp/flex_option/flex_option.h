@@ -43,13 +43,11 @@ public:
     ///  - add (if not already existing)
     ///  - supersede (as add but also when already existing)
     ///  - remove
-    ///  - sub-options
     enum Action {
         NONE,
         ADD,
         SUPERSEDE,
-        REMOVE,
-        SUB_OPTIONS
+        REMOVE
     };
 
     /// @brief Base option configuration.
@@ -266,9 +264,9 @@ public:
         return (option_config_map_);
     }
 
-    /// @brief Get the sub-option config map of map.
+    /// @brief Get the sub-option config map of maps.
     ///
-    /// @return The sub-option config map of map.
+    /// @return The sub-option config map of maps.
     const SubOptionConfigMapMap& getSubOptionConfigMap() const {
         return (sub_option_config_map_);
     }
@@ -377,9 +375,6 @@ public:
                     }
                     logAction(REMOVE, opt_cfg->getCode(), "");
                     break;
-                case SUB_OPTIONS:
-                    // Done in another loop.
-                    break;
                 }
             }
         }
@@ -412,7 +407,6 @@ public:
                 uint32_t vendor_id = sub_cfg->getVendorId();
                 switch (sub_cfg->getAction()) {
                 case NONE:
-                case SUB_OPTIONS:
                     break;
                 case ADD:
                     // If no container and no magic add return
@@ -605,6 +599,13 @@ protected:
         return (option_config_map_);
     }
 
+    /// @brief Get a mutable reference to the sub-option config map of maps.
+    ///
+    /// @return The sub-option config map of maps.
+    SubOptionConfigMapMap& getMutableSubOptionConfigMap() {
+        return (sub_option_config_map_);
+    }
+
 private:
     /// @brief Option parameters.
     static const data::SimpleKeywords OPTION_PARAMETERS;
@@ -615,7 +616,7 @@ private:
     /// @brief The option config map (code and pointer to option config).
     OptionConfigMap option_config_map_;
 
-    /// @brief The sub-option config map of map.
+    /// @brief The sub-option config map of maps.
     SubOptionConfigMapMap sub_option_config_map_;
 
     /// @brief Parse an option config.

@@ -10,6 +10,7 @@
 #define TEST_FLEX_OPTION_H
 
 #include <flex_option.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <gtest/gtest.h>
 
@@ -23,7 +24,10 @@ public:
     /// Export getMutableOptionConfigMap.
     using FlexOptionImpl::getMutableOptionConfigMap;
 
-    /// @brief Configure clone which records the error.
+    /// Export getMutableSubOptionConfigMap.
+    using FlexOptionImpl::getMutableSubOptionConfigMap;
+
+    /// @Brief Configure clone which records the error.
     ///
     /// @param options The element with option config list.
     void testConfigure(isc::data::ConstElementPtr options) {
@@ -62,6 +66,7 @@ public:
 
     /// @brief Destructor.
     virtual ~BaseFlexOptionTest() {
+        LibDHCP::clearRuntimeOptionDefs();
         isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
         impl_.reset();
     }
