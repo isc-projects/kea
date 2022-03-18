@@ -1732,7 +1732,7 @@ def prepare_system_local(features, check_times):
                 packages.extend(['postgresql13-server', 'postgresql13-client'])
 
         if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
+            packages.extend(['freeradius3', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['krb5', 'krb5-devel'])
