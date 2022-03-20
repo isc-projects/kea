@@ -436,9 +436,6 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
             def = LibDHCP::getRuntimeOptionDef(space, name);
         }
         if (!def) {
-            def = LibDHCP::getLastResortOptionDef(space, name);
-        }
-        if (!def) {
             isc_throw(BadValue, "no known '" << name << "' sub-option in '"
                       << space << "' space");
         }
@@ -465,9 +462,6 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
         def = isc::dhcp::LibDHCP::getOptionDef(space, code);
         if (!def) {
             def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, code);
-        }
-        if (!def) {
-            def = isc::dhcp::LibDHCP::getLastResortOptionDef(space, code);
         }
         if (!def) {
             isc_throw(BadValue, "no known sub-option with code '" << code

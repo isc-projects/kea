@@ -59,6 +59,9 @@ TEST_F(FlexSubOptionTest, configEmpty) {
     ElementPtr sub_options = Element::createList();
     option->set("sub-options", sub_options);
     EXPECT_NO_THROW(impl_->testConfigure(options));
+
+    EXPECT_TRUE(impl_->getOptionConfigMap().empty());
+    EXPECT_TRUE(impl_->getSubOptionConfigMap().empty());
 }
 
 // Verify that a sub-option configuration must exist.
@@ -195,13 +198,12 @@ TEST_F(FlexSubOptionTest, subOptionConfigBadCode4) {
     code = Element::create(1);
     sub_option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_EQ("", impl_->getErrMsg());
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     code = Element::create(254);
     sub_option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 }
 
 // Verify that the v6 option code must be an integer in [0..65535].
@@ -239,12 +241,12 @@ TEST_F(FlexSubOptionTest, subOptionConfigBadCode6) {
     code = Element::create(1);
     sub_option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     code = Element::create(65535);
     sub_option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 }
 
 // Verify that the space must be a string.
@@ -369,7 +371,7 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeNoCSVFormat) {
     ElementPtr sub_code = Element::create(222);
     sub_option->set("code", sub_code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
@@ -397,7 +399,7 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeDisableCSVFormat) {
     // Disable csv-format.
     sub_option->set("csv-format", Element::create(false));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
@@ -429,4 +431,639 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeEnableCSVFormat) {
               impl_->getErrMsg());
 }
 
+// Verify that the name can be an user defined sub-option.
+TEST_F(FlexSubOptionTest, subOptionConfigDefinedName) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 "my-space", "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(109));
+    auto smap = map[109];
+    EXPECT_EQ(1, smap.count(222));
+}
+
+// Verify that the name can be a last resort space defined sub-option.
+TEST_F(FlexSubOptionTest, subOptionConfigLastResortName) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 VENDOR_ENCAPSULATED_OPTION_SPACE,
+                                                 "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
+    EXPECT_EQ(1, smap.count(222));
+}
+
+// Verify that the name can be a vendor defined sub-option.
+TEST_F(FlexSubOptionTest, subOptionConfigVendorName) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 "vendor-1234", "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_VENDOR_OPTS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("vendor-1234"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
+    auto smap = map[D6O_VENDOR_OPTS];
+    EXPECT_EQ(1, smap.count(222));
+}
+
+// Verify that the name can be a vendor standard sub-option.
+TEST_F(FlexSubOptionTest, subOptionConfigDosSISName) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_VIVSO_SUBOPTIONS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    // VENDOR_ID_CABLE_LABS is 4491
+    ElementPtr space = Element::create(string("vendor-4491"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("tftp-servers"));
+    sub_option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
+    auto smap = map[DHO_VIVSO_SUBOPTIONS];
+    // DOCSIS3_V4_TFTP_SERVERS is 2
+    EXPECT_EQ(1, smap.count(2));
+}
+
+// Verify that the name must match the code.
+TEST_F(FlexSubOptionTest, subOptionConfigCodeNameMismatch) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_VIVSO_SUBOPTIONS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    // VENDOR_ID_CABLE_LABS is 4491
+    ElementPtr space = Element::create(string("vendor-4491"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("tftp-servers"));
+    sub_option->set("name", name);
+    // DOCSIS3_V4_TFTP_SERVERS is 2
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "sub-option 'tftp-servers' is defined as code: 2, ";
+    expected += "not the specified code: 222";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the csv-format must be a boolean.
+TEST_F(FlexSubOptionTest, subOptionConfigBadCSVFormat) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr csv_format = Element::create(123);
+    sub_option->set("csv-format", csv_format);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'csv-format' must be a boolean: 123", impl_->getErrMsg());
+}
+
+// Verify that the container-add must be a boolean.
+TEST_F(FlexSubOptionTest, subOptionConfigBadContainerAdd) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr container_add = Element::create(123);
+    sub_option->set("container-add", container_add);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'container-add' must be a boolean: 123", impl_->getErrMsg());
+}
+
+// Verify that the container-remove must be a boolean.
+TEST_F(FlexSubOptionTest, subOptionConfigBadContainerRemove) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr container_remove = Element::create(123);
+    sub_option->set("container-remove", container_remove);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'container-remove' must be a boolean: 123", impl_->getErrMsg());
+}
+
+// Verify that multiple sub-option actions are not accepted.
+TEST_F(FlexSubOptionTest, subOptionConfigMultipleAction) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+
+    // Add it a second time.
+    sub_options->add(sub_option);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("sub-option 222 of option 109 was already specified",
+              impl_->getErrMsg());
+}
+
+// Verify that the add value must be a string.
+TEST_F(FlexSubOptionTest, subOptionConfigAddNotString) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr add = Element::create(true);
+    sub_option->set("add", add);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'add' must be a string: true", impl_->getErrMsg());
+}
+
+// Verify that the add value must not be empty.
+TEST_F(FlexSubOptionTest, subOptionConfigEmptyAdd) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr add = Element::create(string());
+    sub_option->set("add", add);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'add' must not be empty", impl_->getErrMsg());
+}
+
+// Verify that the add value must parse.
+TEST_F(FlexSubOptionTest, subOptionConfigBadAdd) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr add = Element::create(string("ifelse('a','b','c')"));
+    sub_option->set("add", add);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "can't parse add expression [ifelse('a','b','c')] ";
+    expected += "error: <string>:1.11: syntax error, ";
+    expected += "unexpected \",\", expecting == or +";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the supersede value must be a string.
+TEST_F(FlexSubOptionTest, subOptionConfigSupersedeNotString) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr supersede = Element::create(true);
+    sub_option->set("supersede", supersede);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'supersede' must be a string: true", impl_->getErrMsg());
+}
+
+// Verify that the supersede value must not be empty.
+TEST_F(FlexSubOptionTest, subOptionConfigEmptySupersede) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr supersede = Element::create(string());
+    sub_option->set("supersede", supersede);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'supersede' must not be empty", impl_->getErrMsg());
+}
+
+// Verify that the supersede value must parse.
+TEST_F(FlexSubOptionTest, subOptionConfigBadSupersede) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr supersede = Element::create(string("ifelse('a','b','c')"));
+    sub_option->set("supersede", supersede);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "can't parse supersede expression [ifelse('a','b','c')] ";
+    expected += "error: <string>:1.11: syntax error, ";
+    expected += "unexpected \",\", expecting == or +";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the remove value must be a string.
+TEST_F(FlexSubOptionTest, subOptionConfigRemoveNotString) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr remove = Element::create(true);
+    sub_option->set("remove", remove);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'remove' must be a string: true", impl_->getErrMsg());
+}
+
+// Verify that the remove value must not be empty.
+TEST_F(FlexSubOptionTest, subOptionConfigEmptyRemove) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr remove = Element::create(string());
+    sub_option->set("remove", remove);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'remove' must not be empty", impl_->getErrMsg());
+}
+
+// Verify that the remove value must parse.
+TEST_F(FlexSubOptionTest, subOptionConfigBadRemove) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    ElementPtr remove = Element::create(string("ifelse('a','b','c')"));
+    sub_option->set("remove", remove);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "can't parse remove expression [ifelse('a','b','c')] ";
+    expected += "error: <string>:1.11: syntax error, ";
+    expected += "unexpected \",\", expecting == or +";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that a complex example must parse.
+TEST_F(FlexSubOptionTest, subOptionConfigComplex) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(109);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+
+    ElementPtr sub_option1 = Element::createMap();
+    sub_options->add(sub_option1);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option1->set("space", space);
+    ElementPtr sub_code = Element::create(1);
+    sub_option1->set("code", sub_code);
+    ElementPtr add = Element::create(string("'abc'"));
+    sub_option1->set("add", add);
+
+    ElementPtr sub_option2 = Element::createMap();
+    sub_options->add(sub_option2);
+    sub_option2->set("space", space);
+    sub_code = Element::create(2);
+    sub_option2->set("code", sub_code);
+    ElementPtr supersede = Element::create(string("'def'"));
+    sub_option2->set("supersede", supersede);
+
+    ElementPtr sub_option3 = Element::createMap();
+    sub_options->add(sub_option3);
+    sub_option3->set("space", space);
+    sub_code = Element::create(3);
+    sub_option3->set("code", sub_code);
+    ElementPtr remove = Element::create(string("'a' == 'b'"));
+    sub_option3->set("remove", remove);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(109));
+    auto smap = map[109];
+    FlexOptionImpl::SubOptionConfigPtr sub_cfg;
+    ASSERT_NO_THROW(sub_cfg = smap.at(1));
+    ASSERT_TRUE(sub_cfg);
+    EXPECT_EQ(1, sub_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, sub_cfg->getAction());
+    EXPECT_EQ("'abc'", sub_cfg->getText());
+    EXPECT_EQ(109, sub_cfg->getContainerCode());
+
+    ASSERT_NO_THROW(sub_cfg = smap.at(2));
+    ASSERT_TRUE(sub_cfg);
+    EXPECT_EQ(2, sub_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::SUPERSEDE, sub_cfg->getAction());
+    EXPECT_EQ("'def'", sub_cfg->getText());
+    EXPECT_EQ(109, sub_cfg->getContainerCode());
+
+    ASSERT_NO_THROW(sub_cfg = smap.at(3));
+    ASSERT_TRUE(sub_cfg);
+    EXPECT_EQ(3, sub_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::REMOVE, sub_cfg->getAction());
+    EXPECT_EQ("'a' == 'b'", sub_cfg->getText());
+    EXPECT_EQ(109, sub_cfg->getContainerCode());
+}
+
+// Empty sub-option config list doing nothing is the same as empty option list.
+
+// Verify that NONE action really does nothing.
+TEST_F(FlexSubOptionTest, subProcessNone) {
+    auto rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                         DHO_DHCP_AGENT_OPTIONS);
+    FlexOptionImpl::OptionConfigPtr
+        opt_cfg(new FlexOptionImpl::OptionConfig(DHO_DHCP_AGENT_OPTIONS,
+                                                 rai_def));
+    // RAI_OPTION_AGENT_CIRCUIT_ID is 1 but has no definition.
+    OptionDefinitionPtr def;
+    FlexOptionImpl::SubOptionConfigPtr
+        sub_cfg(new FlexOptionImpl::SubOptionConfig(1, def, opt_cfg));
+    auto& map = impl_->getMutableSubOptionConfigMap();
+    auto& smap = map[DHO_DHCP_AGENT_OPTIONS];
+    smap[1] = sub_cfg;
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+}
+
+// Verify that ADD action adds the specified sub-option in csv format.
+TEST_F(FlexSubOptionTest, subProcessAddEnableCSVFormat) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "fqdn", true));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'example.com'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    sub_option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222, opt->getType());
+    OptionPtr sub = opt->getOption(1);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1, sub->getType());
+    // The fqdn array is the most complex encoding of one element...
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(13, buffer.size());
+    EXPECT_EQ(7, buffer[0]);
+    EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
+    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
+    EXPECT_EQ(0, buffer[12]);
+}
+
+// Verify that ADD action does not when the container does not exist and
+// container-add is false.
+TEST_F(FlexSubOptionTest, subProcessAddNoContainer) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'abc'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    sub_option->set("container-add", Element::create(false));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(222));
+}
+
 } // end of anonymous namespace
+// TEST_F(FlexSubOptionTest, subP

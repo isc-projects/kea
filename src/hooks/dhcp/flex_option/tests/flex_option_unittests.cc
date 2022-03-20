@@ -53,7 +53,9 @@ TEST_F(FlexOptionTest, configNotList) {
 TEST_F(FlexOptionTest, configEmpty) {
     ElementPtr options = Element::createList();
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_TRUE(impl_->getOptionConfigMap().empty());
 }
 
 // Verify that an option configuration must exist.
@@ -132,12 +134,12 @@ TEST_F(FlexOptionTest, optionConfigBadCode4) {
     code = Element::create(1);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     code = Element::create(254);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 }
 
 // Verify that the v6 option code must be in [1..65535].
@@ -172,12 +174,12 @@ TEST_F(FlexOptionTest, optionConfigBadCode6) {
     code = Element::create(1);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     code = Element::create(65535);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 }
 
 // Verify that the space must be a string.
@@ -275,7 +277,7 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeNoCSVFormat) {
     ElementPtr code = Element::create(109);
     option->set("code", code);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
@@ -295,7 +297,7 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeDisableCSVFormat) {
     // Disable csv-format.
     option->set("csv-format", Element::create(false));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
@@ -328,7 +330,7 @@ TEST_F(FlexOptionTest, optionConfigStandardName) {
     ElementPtr name = Element::create(string("host-name"));
     option->set("name", name);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_HOST_NAME));
@@ -352,7 +354,7 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
     ElementPtr name = Element::create(string("my-option"));
     option->set("name", name);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(222));
@@ -378,7 +380,7 @@ TEST_F(FlexOptionTest, optionConfigDefinedSpace) {
     ElementPtr space = Element::create(string("my-space"));
     option->set("space", space);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(222));
@@ -431,7 +433,7 @@ TEST_F(FlexOptionTest, optionConfigTwice) {
     // Add it a second time.
     options->add(option);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_HOST_NAME));
@@ -491,7 +493,7 @@ TEST_F(FlexOptionTest, optionConfigAdd4) {
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -528,7 +530,7 @@ TEST_F(FlexOptionTest, optionConfigAdd6) {
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -605,7 +607,7 @@ TEST_F(FlexOptionTest, optionConfigSupersede4) {
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -642,7 +644,7 @@ TEST_F(FlexOptionTest, optionConfigSupersede6) {
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -719,7 +721,7 @@ TEST_F(FlexOptionTest, optionConfigRemove4) {
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -761,7 +763,7 @@ TEST_F(FlexOptionTest, optionConfigRemove6) {
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -846,7 +848,7 @@ TEST_F(FlexOptionTest, optionConfigList) {
     option2->set("supersede", supersede2);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(2, map.size());
@@ -928,7 +930,7 @@ TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
     option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -976,7 +978,7 @@ TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
     option->set("csv-format", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1016,7 +1018,7 @@ TEST_F(FlexOptionTest, processAddExisting) {
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1041,7 +1043,7 @@ TEST_F(FlexOptionTest, processAddEmpty) {
     ElementPtr add = Element::create(string("''"));
     option->set("add", add);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1074,7 +1076,7 @@ TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
     option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1122,7 +1124,7 @@ TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
     option->set("csv-format", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1172,7 +1174,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1216,7 +1218,7 @@ TEST_F(FlexOptionTest, processSupersedeEmpty) {
     ElementPtr supersede = Element::create(string("''"));
     option->set("supersede", supersede);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1261,7 +1263,7 @@ TEST_F(FlexOptionTest, processSupersedeAddNotExisting) {
     option2->set("add", add);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1294,7 +1296,7 @@ TEST_F(FlexOptionTest, processSupersedeAddExisting) {
     option2->set("add", add);
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1325,7 +1327,7 @@ TEST_F(FlexOptionTest, processRemove) {
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1347,7 +1349,7 @@ TEST_F(FlexOptionTest, processRemoveNoOption) {
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1372,7 +1374,7 @@ TEST_F(FlexOptionTest, processRemoveFalse) {
     ElementPtr remove = Element::create(string("'abc' == 'xyz'"));
     option->set("remove", remove);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1398,7 +1400,7 @@ TEST_F(FlexOptionTest, processFullTest) {
     ElementPtr add = Element::create(expr);
     option->set("add", add);
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1431,7 +1433,7 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     // strings with escape characters are parsed in csv format.
     option->set("csv-format", Element::create(true));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1466,7 +1468,7 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     // strings with escape characters are parsed in csv format.
     option->set("csv-format", Element::create(true));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -1511,7 +1513,7 @@ TEST_F(FlexOptionTest, optionConfigGuardValid) {
     option->set("remove", remove);
     option->set("client-class", Element::create(string("foobar")));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigList opt_lst;
@@ -1538,7 +1540,7 @@ TEST_F(FlexOptionTest, optionConfigGuardNoMatch) {
     option->set("remove", remove);
     option->set("client-class", Element::create(string("foobar")));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -1566,7 +1568,7 @@ TEST_F(FlexOptionTest, optionConfigGuardMatch) {
     option->set("remove", remove);
     option->set("client-class", Element::create(string("foobar")));
     EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty());
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     query->addClass("foobar");
