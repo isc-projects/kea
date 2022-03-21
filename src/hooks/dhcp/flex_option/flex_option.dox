@@ -104,6 +104,15 @@ Note for the rare options which can be empty this mechanism does not work.
 The proposed solution in this case is to use a client class to set the
 empty value to the option in a option-data clause.
 
+The sub-option support is similar to the option one with in addition:
+ - @b container-add - Specifies if the container option should be created
+   when it does not exist (default behavior) in add and supersede actions.
+ - @b container-remove - Specifies if the container option should be
+   removed when the sub-option removal left it empty (default behavior)
+   in remove action.
+Sub-option configuration is a list in a @b sub-option entry of the container
+option configuration.
+
 ## Internal operation
 
 The first function called in @ref load() located in the
@@ -115,16 +124,16 @@ names. This library has two such functions: @ref pkt4_send and @ref pkt6_send,
 all located in flex_option_callouts.cc.
 
 kea-dhcp4 server calls @ref pkt4_send (and kea-dhcp6 @ref pkt6_send) with
-the query and response packets. For each configured option the action is
-applied by the template @c process located in flex_option.h. When
-required the expression is evaluated on the query packet and the result
+the query and response packets. For each configured option and sub-option
+the action is applied by the template @c process located in flex_option.h.
+When required the expression is evaluated on the query packet and the result
 is used by the action for instance to add a new option.
 
 In case any other library sets the SKIP flag before pkt4_send or pkt6_send, an
 exception with the message "the packet pack already handled" will be thrown, to
 indicate that the action can not be properly performed.
-To fix this, all other libraries which might set the SKIP flag must appear in the
-server configuration after this library.
+To fix this, all other libraries which might set the SKIP flag must appear
+in the server configuration after this library.
 
 @section libdhcp_flex_optionMTCompatibility Multi-Threading Compatibility
 

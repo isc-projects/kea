@@ -1883,6 +1883,78 @@ in the ``dhcp4`` for DHCPv4 or ``dhcp6`` for DHCPv6 you can specify the
 space where to find the option definition using its name with the new
 ``space`` parameter.
 
+Since Kea 2.1.4, sub-options are supported with a new entry ``sub-options``
+which replaces the action in the configuration of the container option,
+i.e. the option where sub-options are located.
+
+The ``sub-options`` entry takes a list of sub-option configuration similar
+to the option one with:
+
+- ``code`` - specifies the sub-option code.
+
+- ``name`` - specifies the sub-option name, either the ``code`` or ``name``
+  must be specified. When both are given they must match or the configuration
+  is rejected at load time.
+
+- ``space`` - specifies the space where the sub-option can be defined. This
+  parameter is optional because it can be found in the container option
+  definition but if no valid space name is available at load time the
+  configuration is rejected. Note that vendor spaces are supported for
+  the DHCPv4 ``vivso-suboptions`` and DHCPv6 ``vendor-opts``, both
+  pre-defined (e.g. DoCSIS vendor id 4491) or custom.
+
+- ``add`` - (action) adds a sub-option only when it does not already exist
+  and the expression does not evaluate to the empty string.
+
+- ``supersede`` - (action) adds or overwrites a sub-option if the expression
+  does not evaluate to the empty string.
+
+- ``remove`` - (action) removes a sub-option if it already exists and the
+  expression evaluates to true.
+
+- ``container-add`` - specifies the container option to be created when
+  it does not exit in the ``add`` and ``supersede`` action when set to true
+  (default value).
+
+- ``csv-format`` - specifies if the raw value of the evaluated expression
+  is used (false, default) or parsed using the sub-option definition (true).
+
+- ``container-remove`` - specifies the container option to be deleted when
+  it remained empty after the removal of a sub-option by the ``remove``
+  action when set to true (default value).
+
+- ``client-class`` - specifies if the sub-option entry must be skipped when
+  the **query** does not belong to the client class. Note the similar parameter
+  in the container option entry applies to the whole ``sub-options`` list.
+
+For instance this configuration adds a string sub-option in the DHCPv4
+``vendor-encapsulated-options`` (code 43) option. Note this option
+in last resort encapsulates the ``vendor-encapsulated-options`` space.
+
+::
+
+    "Dhcp4": {
+        "hooks-libraries": [
+            {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+                "parameters": {
+                    "options": [
+                            {
+                            "code": 43,
+                            "sub-options": [
+                                {
+                                   "code": 1,
+                                   "add": "'foobar'"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            ...
+        ]
+    }
+
+
 .. _host-cmds:
 
 ``host_cmds``: Host Commands
