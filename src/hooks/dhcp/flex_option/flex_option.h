@@ -298,8 +298,8 @@ public:
                 }
                 std::string value;
                 isc::dhcp::OptionBuffer buffer;
-                isc::dhcp::OptionPtr opt =
-                    response->getOption(opt_cfg->getCode());
+                uint16_t code = opt_cfg->getCode();
+                isc::dhcp::OptionPtr opt = response->getOption(code);
                 isc::dhcp::OptionDefinitionPtr def = opt_cfg->getOptionDef();
                 switch (opt_cfg->getAction()) {
                 case NONE:
@@ -319,17 +319,15 @@ public:
                     if (def) {
                         std::vector<std::string> split_vec =
                             isc::util::str::tokens(value, ",", true);
-                        opt = def->optionFactory(universe, opt_cfg->getCode(),
-                                                 split_vec);
+                        opt = def->optionFactory(universe, code, split_vec);
                     } else {
                         buffer.assign(value.begin(), value.end());
-                        opt.reset(new isc::dhcp::Option(universe,
-                                                        opt_cfg->getCode(),
+                        opt.reset(new isc::dhcp::Option(universe, code,
                                                         buffer));
                     }
                     // Add the option.
                     response->addOption(opt);
-                    logAction(ADD, opt_cfg->getCode(), value);
+                    logAction(ADD, code, value);
                     break;
                 case SUPERSEDE:
                     // Do nothing is the expression evaluates to empty.
@@ -338,26 +336,25 @@ public:
                     if (value.empty()) {
                         break;
                     }
-                    // Remove the option if already there.
-                    while (opt) {
-                        response->delOption(opt_cfg->getCode());
-                        opt = response->getOption(opt_cfg->getCode());
-                    }
                     // Set the value.
                     if (def) {
                         std::vector<std::string> split_vec =
                             isc::util::str::tokens(value, ",", true);
-                        opt = def->optionFactory(universe, opt_cfg->getCode(),
+                        opt = def->optionFactory(universe, code,
                                                  split_vec);
                     } else {
                         buffer.assign(value.begin(), value.end());
                         opt.reset(new isc::dhcp::Option(universe,
-                                                        opt_cfg->getCode(),
+                                                        code,
                                                         buffer));
+                    }
+                    // Remove the option if already there.
+                    while (response->getOption(code)) {
+                        response->delOption(code);
                     }
                     // Add the option.
                     response->addOption(opt);
-                    logAction(SUPERSEDE, opt_cfg->getCode(), value);
+                    logAction(SUPERSEDE, code, value);
                     break;
                 case REMOVE:
                     // Nothing to remove if option is not present.
@@ -369,11 +366,10 @@ public:
                         break;
                     }
                     // Remove the option.
-                    while (opt) {
-                        response->delOption(opt_cfg->getCode());
-                        opt = response->getOption(opt_cfg->getCode());
+                    while (response->getOption(code)) {
+                        response->delOption(code);
                     }
-                    logAction(REMOVE, opt_cfg->getCode(), "");
+                    logAction(REMOVE, code, "");
                     break;
                 }
             }
@@ -423,6 +419,21 @@ public:
                     if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
                         break;
                     }
+                    // Don't add if sub-option is already there.
+                    if (opt && opt->getOption(sub_code)) {
+                        break;
+                    }
+                    // Set the value.
+                    if (def) {
+                        std::vector<std::string> split_vec =
+                            isc::util::str::tokens(value, ",", true);
+                        sub = def->optionFactory(universe, sub_code,
+                                                 split_vec);
+                    } else {
+                        buffer.assign(value.begin(), value.end());
+                        sub.reset(new isc::dhcp::Option(universe, sub_code,
+                                                        buffer));
+                    }
                     // If the container does not exist add it.
                     if (!opt) {
                         if (!vendor_id) {
@@ -438,17 +449,6 @@ public:
                         } else {
                             logAction(ADD, opt_code, "");
                         }
-                    }
-                    // Set the value.
-                    if (def) {
-                        std::vector<std::string> split_vec =
-                            isc::util::str::tokens(value, ",", true);
-                        sub = def->optionFactory(universe, sub_code,
-                                                 split_vec);
-                    } else {
-                        buffer.assign(value.begin(), value.end());
-                        sub.reset(new isc::dhcp::Option(universe, sub_code,
-                                                        buffer));
                     }
                     // Add the sub-option.
                     opt->addOption(sub);
@@ -469,12 +469,21 @@ public:
                     if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
                         break;
                     }
+                    // Set the value.
+                    if (def) {
+                        std::vector<std::string> split_vec =
+                            isc::util::str::tokens(value, ",", true);
+                        sub = def->optionFactory(universe, sub_code,
+                                                 split_vec);
+                    } else {
+                        buffer.assign(value.begin(), value.end());
+                        sub.reset(new isc::dhcp::Option(universe, sub_code,
+                                                        buffer));
+                    }
                     // Remove the sub-option if already there.
                     if (opt) {
-                        sub = opt->getOption(sub_code);
-                        while (sub) {
+                        while (opt->getOption(sub_code)) {
                             opt->delOption(sub_code);
-                            sub = opt->getOption(sub_code);
                         }
                     }
                     // If the container does not exist add it.
@@ -492,17 +501,6 @@ public:
                         } else {
                             logAction(ADD, opt_code, "");
                         }
-                    }
-                    // Set the value.
-                    if (def) {
-                        std::vector<std::string> split_vec =
-                            isc::util::str::tokens(value, ",", true);
-                        sub = def->optionFactory(universe, sub_code,
-                                                 split_vec);
-                    } else {
-                        buffer.assign(value.begin(), value.end());
-                        sub.reset(new isc::dhcp::Option(universe, sub_code,
-                                                        buffer));
                     }
                     // Add the sub-option.
                     opt->addOption(sub);
@@ -527,9 +525,8 @@ public:
                         break;
                     }
                     // Remove the sub-option.
-                    while (sub) {
+                    while (opt->getOption(sub_code)) {
                         opt->delOption(sub_code);
-                        sub = opt->getOption(sub_code);
                     }
                     logSubAction(REMOVE, sub_code, opt_code, "");
                     // Remove the empty container when wanted.
