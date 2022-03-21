@@ -217,6 +217,16 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR6 = "DHCPSRV_PGSQL_UPD
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR = "DHCPSRV_QUEUE_NCR";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_FAILED = "DHCPSRV_QUEUE_NCR_FAILED";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_SKIP = "DHCPSRV_QUEUE_NCR_SKIP";
+extern const isc::log::MessageID DHCPSRV_SUBNET4O6_SELECT_FAILED = "DHCPSRV_SUBNET4O6_SELECT_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED = "DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED = "DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED = "DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS = "DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS = "DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS";
+extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS = "DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS";
+extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED = "DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED = "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED";
+extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED = "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_CALLBACK_FAILED = "DHCPSRV_TIMERMGR_CALLBACK_FAILED";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_REGISTER_TIMER = "DHCPSRV_TIMERMGR_REGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION = "DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION";
@@ -443,6 +453,16 @@ const char* values[] = {
     "DHCPSRV_QUEUE_NCR", "%1: Name change request to %2 DNS entry queued: %3",
     "DHCPSRV_QUEUE_NCR_FAILED", "%1: queuing %2 name change request failed for lease %3: %4",
     "DHCPSRV_QUEUE_NCR_SKIP", "%1: skip queuing name change request for lease: %2",
+    "DHCPSRV_SUBNET4O6_SELECT_FAILED", "Failed to select any subnet for the DHCPv4o6 packet",
+    "DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED", "Failed to select any subnet using address: %1",
+    "DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED", "Failed to select any subnet using interface: %1",
+    "DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED", "Failed to select any subnet using relay address: %1",
+    "DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS", "Failed to select any subnet because no suitable address to use for subnet selection was found.",
+    "DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS", "Failed to select any subnet because no suitable address to use for subnet selection was found in the relay supplied options.",
+    "DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS", "Failed to select any subnet because no relay address to use for subnet selection was found.",
+    "DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED", "Failed to select any subnet using address: %1",
+    "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED", "Failed to select any subnet using interface: %1",
+    "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED", "Failed to select any subnet using interface-id: %1",
     "DHCPSRV_TIMERMGR_CALLBACK_FAILED", "running handler for timer %1 caused exception: %2",
     "DHCPSRV_TIMERMGR_REGISTER_TIMER", "registering timer: %1, using interval: %2 ms",
     "DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION", "running operation for timer: %1",

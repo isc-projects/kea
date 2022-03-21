@@ -1095,6 +1095,46 @@ reverse update is disabled for this lease or the DNS updates are disabled
 in the configuration. The first argument includes the client identification
 information. The second argument includes the leased address.
 
+% DHCPSRV_SUBNET4O6_SELECT_FAILED Failed to select any subnet for the DHCPv4o6 packet
+A debug message issued when the server was unable to select any subnet for the
+DHCPv4o6 packet.
+
+% DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED Failed to select any subnet using address: %1
+A debug message issued when the server was unable to select any subnet using
+specified address.
+
+% DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED Failed to select any subnet using interface: %1
+A debug message issued when the server was unable to select any subnet using
+specified interface name.
+
+% DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED Failed to select any subnet using relay address: %1
+A debug message issued when the server was unable to select any subnet using
+the specified relay address.
+
+% DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS Failed to select any subnet because no suitable address to use for subnet selection was found.
+A debug message issued when the server was unable to select any subnet because
+no suitable address to use for subnet selection was found.
+
+% DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS Failed to select any subnet because no suitable address to use for subnet selection was found in the relay supplied options.
+A debug message issued when the server was unable to select any subnet because
+no suitable address to use for subnet selection was found in the relay supplied options.
+
+% DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS Failed to select any subnet because no relay address to use for subnet selection was found.
+A debug message issued when the server was unable to select any subnet because
+no relay address to use for subnet selection was found.
+
+% DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED Failed to select any subnet using address: %1
+A debug message issued when the server was unable to select any subnet using
+specified address.
+
+% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED Failed to select any subnet using interface: %1
+A debug message issued when the server was unable to select any subnet using
+specified interface name.
+
+% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED Failed to select any subnet using interface-id: %1
+A debug message issued when the server was unable to select any subnet using
+specified interface id.
+
 % DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
 This error message is emitted when the timer elapsed and the
 operation associated with this timer has thrown an exception.
