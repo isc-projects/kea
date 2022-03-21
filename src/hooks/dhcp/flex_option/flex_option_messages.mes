@@ -30,7 +30,7 @@ This debug message is printed when an sub-option was added into the response
 packet. The sub-option and container option codes, and the value
 (between quotes if printable, in hexadecimal is not) are provided.
 
-% FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS Skip processing of the sub-option code in option code %2 for class '%3'
+% FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS Skip processing of the sub-option code %1 in option code %2 for class '%3'
 This debug message is printed when the processing for a sub-option is skipped
 because the query does not belongs to the client class. The sub-option and
 container option codes, and the client class name are provided.

@@ -26,7 +26,7 @@ const char* values[] = {
     "FLEX_OPTION_PROCESS_ERROR", "An error occurred processing query %1: %2",
     "FLEX_OPTION_PROCESS_REMOVE", "Removed option code %1",
     "FLEX_OPTION_PROCESS_SUB_ADD", "Added the sub-option code %1 in option code %2 value by %3",
-    "FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS", "Skip processing of the sub-option code in option code %2 for class '%3'",
+    "FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS", "Skip processing of the sub-option code %1 in option code %2 for class '%3'",
     "FLEX_OPTION_PROCESS_SUB_REMOVE", "Removed sub-option code %1 in option code %2",
     "FLEX_OPTION_PROCESS_SUB_SUPERSEDE", "Supersedes the value of sub-option code %1 in option code %2 by %3",
     "FLEX_OPTION_PROCESS_SUPERSEDE", "Supersedes the value of option code %1 by %2",
