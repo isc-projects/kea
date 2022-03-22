@@ -2541,7 +2541,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
-    if (subnet->getID() != ctx->subnet_->getID()) {
+    if (subnet && ctx->subnet_ && subnet->getID() != ctx->subnet_->getID()) {
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
