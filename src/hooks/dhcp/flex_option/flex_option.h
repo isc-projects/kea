@@ -129,7 +129,7 @@ public:
 
         /// @brief Get client class.
         ///
-        /// @return client class aka guard.
+        /// @return client class aka guard name.
         const isc::dhcp::ClientClass& getClass() const {
             return (class_);
         }
@@ -151,7 +151,7 @@ public:
         /// @brief The match expression.
         isc::dhcp::ExpressionPtr expr_;
 
-        /// @brief The client class aka guard.
+        /// @brief The client class aka guard name.
         isc::dhcp::ClientClass class_;
     };
 
@@ -210,7 +210,7 @@ public:
 
         /// @brief Return container client class.
         ///
-        /// @return container client class.
+        /// @return container client class name.
         const isc::dhcp::ClientClass& getContainerClass() const {
             return (container_->getClass());
         }

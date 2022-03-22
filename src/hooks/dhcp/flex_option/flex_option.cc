@@ -459,6 +459,9 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     } else if (!def) {
         // Definition is required with csv format.
         def = isc::dhcp::LibDHCP::getOptionDef(space, code);
+        if (!def && vendor_id) {
+            def = LibDHCP::getVendorOptionDef(universe, vendor_id, code);
+        }
         if (!def) {
             def = isc::dhcp::LibDHCP::getRuntimeOptionDef(space, code);
         }
