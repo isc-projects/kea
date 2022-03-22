@@ -1,3 +1,8 @@
+2003.	[func]		fdupont
+	Added the support of sub-options in the flex_option
+	hook library.
+	(GitLab #2314)
+
 2002.	[bug]		tmark
 	Fixed a bug in MySql config back end that caused it to
 	store unspecified, client-class valid and preferred life
