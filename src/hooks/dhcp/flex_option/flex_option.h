@@ -561,7 +561,7 @@ public:
     ///
     /// @param action The action.
     /// @param code The option code.
-    /// @param vendor_id The vendore option vendor id.
+    /// @param vendor_id The vendor option vendor id.
     static void logAction(Action action, uint16_t code, uint32_t vendor_id);
 
     /// @brief Log the client class for sub-option.
@@ -585,7 +585,7 @@ public:
     /// @brief Check vendor option vendor id mismatch.
     ///
     /// @param opt The pointer to the option.
-    /// @param vendor_id The vendor id.
+    /// @param vendor_id The vendor option vendor id.
     static bool checkVendor(isc::dhcp::OptionPtr opt, uint32_t vendor_id);
 
 protected:
@@ -625,7 +625,7 @@ private:
     /// @brief Parse a sub-option.
     ///
     /// @param sub_option The sub-option element.
-    /// @param opt_cfg The container option.
+    /// @param opt_cfg The container option configuration.
     /// @param universe The universe.
     void parseSubOption(isc::data::ConstElementPtr sub_option,
                         OptionConfigPtr opt_cfg,
@@ -634,7 +634,7 @@ private:
     /// @brief Parse sub-options.
     ///
     /// @param sub_options The sub-option list.
-    /// @param opt_cfg The option configuration.
+    /// @param opt_cfg The container option configuration.
     /// @param universe The universe.
     void parseSubOptions(isc::data::ConstElementPtr sub_options,
                          OptionConfigPtr opt_cfg,
