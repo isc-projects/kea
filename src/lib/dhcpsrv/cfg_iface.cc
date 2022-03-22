@@ -23,6 +23,8 @@ const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
     : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false),
+      service_socket_require_all_(false), service_sockets_retry_wait_time_(5000),
+      service_sockets_max_retries_(0),
       outbound_iface_(SAME_AS_INBOUND) {
 }
 
@@ -149,10 +151,15 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     }
 
     // Set the callback which is called when the socket fails to open
-    // for some specific interface. This callback will simply log a
-    // warning message.
-    IfaceMgrErrorMsgCallback error_callback =
-        std::bind(&CfgIface::socketOpenErrorHandler, ph::_1);
+    // for some specific interface. If the config requires the binding
+    // of all sockets, then the callback is null - an exception is thrown
+    // on failure. 
+    IfaceMgrErrorMsgCallback error_callback = nullptr;
+    if (!CfgIface::getServiceSocketsRequireAll()) {
+        // This callback will simply log a warning message.
+        error_callback = std::bind(&CfgIface::socketOpenErrorHandler, ph::_1);
+    }
+
     bool sopen;
     if (family == AF_INET) {
         // Use broadcast only if we're using raw sockets. For the UDP sockets,
@@ -494,6 +501,11 @@ CfgIface::toElement() const {
 
     // Set re-detect
     result->set("re-detect", Element::create(re_detect_));
+
+    // Set server socket binding
+    result->set("service-sockets-require-all", Element::create(service_socket_require_all_));
+    result->set("service-sockets-retry-wait-time", Element::create(static_cast<int>(service_sockets_retry_wait_time_)));
+    result->set("service-sockets-max-retries", Element::create(static_cast<int>(service_sockets_max_retries_)));
 
     return (result);
 }

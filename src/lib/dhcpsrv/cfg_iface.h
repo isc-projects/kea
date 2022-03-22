@@ -302,6 +302,20 @@ public:
         re_detect_ = re_detect;
     }
 
+    /// @brief Indicates that Kea must successfully bind all socket services on init
+    ///
+    /// @return true if all sockets must be bound, false otherwise 
+    bool getServiceSocketsRequireAll() const {
+        return service_socket_require_all_;
+    }
+
+    /// @brief Set flag that Kea must successfully bind all socket services on init
+    ///
+    /// @param require_all true if all sockets must be bound, false otherwise 
+    void setServiceSocketsRequireAll(bool require_all) {
+        service_socket_require_all_ = require_all;
+    }
+
 private:
 
     /// @brief Checks if multiple IPv4 addresses has been activated on any
@@ -378,6 +392,15 @@ private:
 
     /// @brief A boolean value which reflects current re-detect setting
     bool re_detect_;
+
+    /// @brief A boolean value indicates that Kea must successfully bind all socket services on init
+    bool service_socket_require_all_;
+
+    /// @brief An interval between attempts to retry the socket service binding.
+    uint16_t service_sockets_retry_wait_time_;
+
+    /// @brief A maximum number of attempts to bind the service sockets.
+    uint16_t service_sockets_max_retries_;
 
     /// @brief Indicates how outbound interface is selected for relayed traffic.
     OutboundIface outbound_iface_;

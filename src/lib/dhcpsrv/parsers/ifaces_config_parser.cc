@@ -85,6 +85,10 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                 }
             }
 
+            if (element.first == "service-sockets-require-all") {
+                cfg->setServiceSocketsRequireAll(element.second->boolValue());
+            }
+
             if (element.first == "user-context") {
                 cfg->setContext(element.second);
                 continue;
