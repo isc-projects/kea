@@ -156,7 +156,6 @@ FlexOptionImpl::SubOptionConfig::SubOptionConfig(uint16_t code,
 }
 
 FlexOptionImpl::SubOptionConfig::~SubOptionConfig() {
-    container_.reset();
 }
 
 FlexOptionImpl::FlexOptionImpl() {

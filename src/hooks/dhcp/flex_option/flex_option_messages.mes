@@ -8,7 +8,7 @@ the log message.
 % FLEX_OPTION_PROCESS_ADD Added the option code %1 value by %2
 This debug message is printed when an option was added into the response
 packet. The option code and the value (between quotes if printable, in
-hexadecimal is not) are provided.
+hexadecimal if not) are provided.
 
 % FLEX_OPTION_PROCESS_CLIENT_CLASS Skip processing of the option code %1 for class '%2'
 This debug message is printed when the processing for an option is skipped
@@ -28,7 +28,7 @@ packet. The option code is provided.
 % FLEX_OPTION_PROCESS_SUB_ADD Added the sub-option code %1 in option code %2 value by %3
 This debug message is printed when an sub-option was added into the response
 packet. The sub-option and container option codes, and the value
-(between quotes if printable, in hexadecimal is not) are provided.
+(between quotes if printable, in hexadecimal if not) are provided.
 
 % FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS Skip processing of the sub-option code %1 in option code %2 for class '%3'
 This debug message is printed when the processing for a sub-option is skipped
@@ -41,13 +41,13 @@ packet. The sub-option and container option codes are provided.
 
 % FLEX_OPTION_PROCESS_SUB_SUPERSEDE Supersedes the value of sub-option code %1 in option code %2 by %3
 This debug message is printed when a sub-option was superseded into the
-response packet. The sub-option and container option codes,  and the value
-(between quotes if printable, in hexadecimal is not) are provided.
+response packet. The sub-option and container option codes, and the value
+(between quotes if printable, in hexadecimal if not) are provided.
 
 % FLEX_OPTION_PROCESS_SUPERSEDE Supersedes the value of option code %1 by %2
 This debug message is printed when an option was superseded into the response
 packet. The option code and the value (between quotes if printable, in
-hexadecimal is not) are provided.
+hexadecimal if not) are provided.
 
 % FLEX_OPTION_UNLOAD Flex Option hooks library has been unloaded
 This info message indicates that the Flex Option hooks library has been
