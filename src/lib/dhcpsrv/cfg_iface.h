@@ -316,6 +316,34 @@ public:
         service_socket_require_all_ = require_all;
     }
 
+    /// @brief Get an interval between attempts to retry the socket service binding.
+    ///
+    /// @return Miliseconds between attempts
+    uint16_t getServiceSocketsRetryWaitTime() const {
+        return service_sockets_retry_wait_time_;
+    }
+
+    /// @brief Set an interval between attempts to retry the socket service binding.
+    ///
+    /// @param interval Miliseconds between attempts
+    void setServiceSocketsRetryWaitTime(uint16_t interval) {
+        service_sockets_retry_wait_time_ = interval;
+    }
+    
+    /// @brief Get a maximum number of attempts to bind the service sockets.
+    ///
+    /// @return Number of attempts.
+    uint16_t getServiceSocketsMaxRetries() const {
+        return service_sockets_max_retries_;
+    }
+
+    /// @brief Set a maximum number of attempts to bind the service sockets.
+    ///
+    /// @param max_retries Number of attempts. Use 0 for disable.
+    void setServiceSocketsMaxRetries(uint16_t max_retries) {
+        service_sockets_max_retries_ = max_retries;
+    }
+
 private:
 
     /// @brief Checks if multiple IPv4 addresses has been activated on any
