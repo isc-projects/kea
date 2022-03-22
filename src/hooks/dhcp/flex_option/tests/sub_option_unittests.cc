@@ -500,6 +500,45 @@ TEST_F(FlexSubOptionTest, subOptionConfigLastResortName) {
     EXPECT_EQ(1, smap.count(222));
 }
 
+// Verify that the sub-option definition can be fetched from the last
+// resort space.
+TEST_F(FlexSubOptionTest, subOptionConfigLastResortCode) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    // Enable csv-format.
+    sub_option->set("csv-format", Element::create(true));
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string msg = "no known sub-option with code '222' in '";
+    msg += VENDOR_ENCAPSULATED_OPTION_SPACE;
+    msg += "' space";
+    EXPECT_EQ(msg, impl_->getErrMsg());
+
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 VENDOR_ENCAPSULATED_OPTION_SPACE,
+                                                 "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
+    EXPECT_EQ(1, smap.count(222));
+}
+
 // Verify that the name can be a vendor defined sub-option.
 TEST_F(FlexSubOptionTest, subOptionConfigVendorName) {
     CfgMgr::instance().setFamily(AF_INET6);
@@ -534,6 +573,47 @@ TEST_F(FlexSubOptionTest, subOptionConfigVendorName) {
     EXPECT_EQ(1, smap.count(222));
 }
 
+// Verify that the sub-option definition can be fetched from a custom
+// vendor space.
+TEST_F(FlexSubOptionTest, subOptionConfigVendorCode) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_VENDOR_OPTS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("vendor-1234"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(222);
+    sub_option->set("code", sub_code);
+    // Enable csv-format.
+    sub_option->set("csv-format", Element::create(true));
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("no known sub-option with code '222' in 'vendor-1234' space",
+              impl_->getErrMsg());
+
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-option", 222,
+                                                 "vendor-1234", "string"));
+    defs.addItem(def);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
+    auto smap = map[D6O_VENDOR_OPTS];
+    EXPECT_EQ(1, smap.count(222));
+}
+
 // Verify that the name can be a vendor standard sub-option.
 TEST_F(FlexSubOptionTest, subOptionConfigDosSISName) {
     ElementPtr options = Element::createList();
@@ -552,6 +632,37 @@ TEST_F(FlexSubOptionTest, subOptionConfigDosSISName) {
     sub_option->set("add", add);
     ElementPtr name = Element::create(string("tftp-servers"));
     sub_option->set("name", name);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getSubOptionConfigMap();
+    EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
+    auto smap = map[DHO_VIVSO_SUBOPTIONS];
+    // DOCSIS3_V4_TFTP_SERVERS is 2
+    EXPECT_EQ(1, smap.count(2));
+}
+
+// Verify that the sub-option definition can be fetched from a standard
+// vendor space.
+TEST_F(FlexSubOptionTest, subOptionConfigDosSISCode) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_VIVSO_SUBOPTIONS);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    // VENDOR_ID_CABLE_LABS is 4491
+    ElementPtr space = Element::create(string("vendor-4491"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'ab'"));
+    sub_option->set("add", add);
+    ElementPtr sub_code = Element::create(DOCSIS3_V4_TFTP_SERVERS);
+    sub_option->set("code", sub_code);
+    // Enable csv-format.
+    sub_option->set("csv-format", Element::create(true));
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
