@@ -87,14 +87,17 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
 
             if (element.first == "service-sockets-require-all") {
                 cfg->setServiceSocketsRequireAll(element.second->boolValue());
+                continue;
             }
 
             if (element.first == "service-sockets-retry-wait-time") {
                 cfg->setServiceSocketsRetryWaitTime(static_cast<uint16_t>(element.second->intValue()));
+                continue;
             }
 
             if (element.first == "service-sockets-max-retries") {
                 cfg->setServiceSocketsMaxRetries(static_cast<uint16_t>(element.second->intValue()));
+                continue;
             }
 
             if (element.first == "user-context") {
