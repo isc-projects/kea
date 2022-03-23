@@ -28,8 +28,8 @@ const char* values[] = {
     "FLEX_OPTION_PROCESS_SUB_ADD", "Added the sub-option code %1 in option code %2 with value %3",
     "FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS", "Skip processing of the sub-option code %1 in option code %2 for class '%3'",
     "FLEX_OPTION_PROCESS_SUB_REMOVE", "Removed sub-option code %1 in option code %2",
-    "FLEX_OPTION_PROCESS_SUB_SUPERSEDE", "Supersedes the sub-option code %1 in option code %2 by value %3",
-    "FLEX_OPTION_PROCESS_SUPERSEDE", "Supersedes the option code %1 by value %2",
+    "FLEX_OPTION_PROCESS_SUB_SUPERSEDE", "Supersedes the sub-option code %1 in option code %2 with value %3",
+    "FLEX_OPTION_PROCESS_SUPERSEDE", "Supersedes the option code %1 with value %2",
     "FLEX_OPTION_PROCESS_VENDOR_ID_MISMATCH", "Skip processing of vendor option code %1 with vendor id %2 not matching wanted %3",
     "FLEX_OPTION_UNLOAD", "Flex Option hooks library has been unloaded",
     NULL
