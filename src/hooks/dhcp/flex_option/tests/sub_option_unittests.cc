@@ -63,6 +63,7 @@ TEST_F(FlexSubOptionTest, configEmpty) {
     ElementPtr sub_options = Element::createList();
     option->set("sub-options", sub_options);
     EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     EXPECT_TRUE(impl_->getOptionConfigMap().empty());
     EXPECT_TRUE(impl_->getSubOptionConfigMap().empty());
@@ -941,10 +942,10 @@ TEST_F(FlexSubOptionTest, subOptionConfigRemoveNotString) {
     sub_option->set("space", space);
     ElementPtr sub_code = Element::create(222);
     sub_option->set("code", sub_code);
-    ElementPtr remove = Element::create(true);
+    ElementPtr remove = Element::createMap();
     sub_option->set("remove", remove);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    EXPECT_EQ("'remove' must be a string: true", impl_->getErrMsg());
+    EXPECT_EQ("'remove' must be a string: {  }", impl_->getErrMsg());
 }
 
 // Verify that the remove value must not be empty.
@@ -983,12 +984,12 @@ TEST_F(FlexSubOptionTest, subOptionConfigBadRemove) {
     sub_option->set("space", space);
     ElementPtr sub_code = Element::create(222);
     sub_option->set("code", sub_code);
-    ElementPtr remove = Element::create(string("ifelse('a','b','c')"));
+    ElementPtr remove = Element::create(string("'abc'"));
     sub_option->set("remove", remove);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    string expected = "can't parse remove expression [ifelse('a','b','c')] ";
-    expected += "error: <string>:1.11: syntax error, ";
-    expected += "unexpected \",\", expecting == or +";
+    string expected = "can't parse remove expression ['abc'] error: ";
+    expected += "<string>:1.6: syntax error, unexpected end of file, ";
+    expected += "expecting == or +";
     EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
@@ -1296,6 +1297,20 @@ TEST_F(FlexSubOptionTest, subProcessAdd) {
 
     // Only one option with code 222.
     EXPECT_EQ(1, response->options_.count(222));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222, opt->getType());
+    OptionPtr sub = opt->getOption(1);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1, sub->getType());
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(3, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    // Only one sub-option.
+    auto const& opts = opt->getOptions();
+    EXPECT_EQ(1, opts.size());
 }
 
 // Verify that ADD action does not add an already existing sub-option.
@@ -1430,7 +1445,7 @@ TEST_F(FlexSubOptionTest, subProcessAdd43) {
 
     OptionPtr opt = response->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(43, opt->getType());
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
     EXPECT_EQ(1, sub->getType());
@@ -1911,6 +1926,20 @@ TEST_F(FlexSubOptionTest, subProcessSupersede) {
 
     // Only one option with code 222.
     EXPECT_EQ(1, response->options_.count(222));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222, opt->getType());
+    OptionPtr sub = opt->getOption(1);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1, sub->getType());
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(3, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    // Only one sub-option.
+    auto const& opts = opt->getOptions();
+    EXPECT_EQ(1, opts.size());
 }
 
 // Verify that SUPERSEDE action replaces an already existing sub-option.
@@ -1953,6 +1982,9 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeExisting) {
     container->addOption(str);
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    // Only one option with code 222.
+    EXPECT_EQ(1, response->options_.count(222));
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
@@ -2043,7 +2075,7 @@ TEST_F(FlexSubOptionTest, subProcessSupersede43) {
 
     OptionPtr opt = response->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(43, opt->getType());
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
     EXPECT_EQ(1, sub->getType());
@@ -2063,13 +2095,14 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     option->set("sub-options", sub_options);
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
-    ElementPtr supersede = Element::create(string("10.1.2.3"));
+    ElementPtr supersede = Element::create(string("'10.1.2.3'"));
     sub_option->set("supersede", supersede);
     // DocSIS is 4491
     ElementPtr space = Element::create(string("vendor-4491"));
     sub_option->set("space", space);
     ElementPtr name = Element::create(string("tftp-servers"));
     sub_option->set("name", name);
+    sub_option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
@@ -2086,10 +2119,11 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(sub);
-    const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
-    uint8_t expected[] = { 10, 1, 2, 3 };
-    EXPECT_EQ(0, memcmp(&buffer[0], expected, 4));
+    Option4AddrLstPtr addr = boost::dynamic_pointer_cast<Option4AddrLst>(sub);
+    ASSERT_TRUE(addr);
+    auto const& addrs = addr->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.1.2.3", addrs[0].toText());
 }
 
 // Verify that SUPERSEDE action can handle DocSIS vendor-opts.
@@ -2423,6 +2457,7 @@ TEST_F(FlexSubOptionTest, subProcessRemoveLeaveContainer) {
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
     EXPECT_FALSE(opt->getOption(1));
+    EXPECT_TRUE(opt->getOptions().empty());
 }
 
 // Verify that REMOVE action removes an already existing sub-option but
@@ -2474,6 +2509,7 @@ TEST_F(FlexSubOptionTest, subProcessRemoveContainerNotEmpty) {
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
     EXPECT_FALSE(opt->getOption(2));
+    EXPECT_EQ(1, opt->getOptions().size());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();

@@ -21,11 +21,11 @@ namespace {
 
 const char* values[] = {
     "FLEX_OPTION_LOAD_ERROR", "loading Flex Option hooks library failed: %1",
-    "FLEX_OPTION_PROCESS_ADD", "Added the option code %1 value by %2",
+    "FLEX_OPTION_PROCESS_ADD", "Added the option code %1 with value %2",
     "FLEX_OPTION_PROCESS_CLIENT_CLASS", "Skip processing of the option code %1 for class '%2'",
     "FLEX_OPTION_PROCESS_ERROR", "An error occurred processing query %1: %2",
     "FLEX_OPTION_PROCESS_REMOVE", "Removed option code %1",
-    "FLEX_OPTION_PROCESS_SUB_ADD", "Added the sub-option code %1 in option code %2 by value %3",
+    "FLEX_OPTION_PROCESS_SUB_ADD", "Added the sub-option code %1 in option code %2 with value %3",
     "FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS", "Skip processing of the sub-option code %1 in option code %2 for class '%3'",
     "FLEX_OPTION_PROCESS_SUB_REMOVE", "Removed sub-option code %1 in option code %2",
     "FLEX_OPTION_PROCESS_SUB_SUPERSEDE", "Supersedes the sub-option code %1 in option code %2 by value %3",

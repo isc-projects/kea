@@ -233,7 +233,7 @@ TEST_F(FlexOptionTest, optionConfigEmptyName) {
     ElementPtr add = Element::create(string("'ab'"));
     option->set("add", add);
     ElementPtr name = Element::create(string());
-    option->set("name",name);
+    option->set("name", name);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
     EXPECT_EQ("'name' must not be empty", impl_->getErrMsg());
 }
@@ -708,7 +708,7 @@ TEST_F(FlexOptionTest, optionConfigBadRemove) {
     string expected = "can't parse remove expression ['abc'] error: ";
     expected += "<string>:1.6: syntax error, unexpected end of file, ";
     expected += "expecting == or +";
-    EXPECT_EQ(expected,impl_->getErrMsg());
+    EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
 // Verify that a valid v4 remove value is accepted.
