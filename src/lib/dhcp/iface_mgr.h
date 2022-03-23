@@ -623,6 +623,15 @@ typedef boost::shared_ptr<IfaceMgr> IfaceMgrPtr;
 typedef
 std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 
+/// @brief This type describes the callback function invoked when an opening of
+/// a socket fails and can be retried.
+///
+/// @param attempt A number of an opening attempt
+/// @return true if an opening should be retried, false otherwise, and a wait time
+/// from the last attempt
+typedef
+std::function<std::pair<bool, uint16_t>(uint16_t attempt, const std::string& msg)> IfaceMgrRetryCallback;
+
 /// @brief Handles network interfaces, transmission and reception.
 ///
 /// IfaceMgr is an interface manager class that detects available network
@@ -1059,13 +1068,18 @@ public:
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets4 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
+    /// @param retries A number of attempts to open a single socket. Default is
+    /// zero, which means that an opening isn't retried.
+    /// @param retry_wait_time An interval (in milliseconds) between attempts
+    /// to open a socket.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
                       const bool use_bcast = true,
-                      IfaceMgrErrorMsgCallback error_handler = 0);
+                      IfaceMgrErrorMsgCallback error_handler = 0,
+                      IfaceMgrRetryCallback retry_callback = 0);
 
     /// @brief Closes all open sockets.
     ///

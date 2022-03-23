@@ -150,15 +150,19 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         }
     }
 
-    // Set the callback which is called when the socket fails to open
-    // for some specific interface. If the config requires the binding
-    // of all sockets, then the callback is null - an exception is thrown
-    // on failure. 
+    // Set the callbacks which are called when the socket fails to open
+    // for some specific interface.
+    
+    // If the config requires the binding of all sockets, then the error
+    // callback is null - an exception is thrown on failure. 
     IfaceMgrErrorMsgCallback error_callback = nullptr;
     if (!CfgIface::getServiceSocketsRequireAll()) {
         // This callback will simply log a warning message.
         error_callback = std::bind(&CfgIface::socketOpenErrorHandler, ph::_1);
     }
+
+    IfaceMgrRetryCallback retry_callback =
+        std::bind(&CfgIface::socketOpenRetryHandler, this, ph::_1, ph::_2);
 
     bool sopen;
     if (family == AF_INET) {
@@ -173,7 +177,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         if (can_use_bcast && multipleAddressesPerInterfaceActive()) {
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
         }
-        sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast, error_callback);
+        sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast, error_callback,
+            retry_callback);
     } else {
         // use_bcast is ignored for V6.
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);
@@ -224,6 +229,22 @@ CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
 void
 CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+std::pair<bool, uint16_t>
+CfgIface::socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const {
+    auto max_retries = getServiceSocketsMaxRetries();
+    bool can_retry = attempt < max_retries;
+    if (can_retry) {
+        std::stringstream msg_stream;
+        msg_stream << msg << ", attempt: " << attempt + 1 << "/" << max_retries + 1;
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(msg_stream.str());
+    }
+
+    return std::make_pair(
+        can_retry,
+        getServiceSocketsRetryWaitTime()
+    );
 }
 
 std::string

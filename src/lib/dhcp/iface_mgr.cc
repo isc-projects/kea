@@ -516,7 +516,8 @@ void IfaceMgr::stubDetectIfaces() {
 
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
-                       IfaceMgrErrorMsgCallback error_handler) {
+                       IfaceMgrErrorMsgCallback error_handler,
+                       IfaceMgrRetryCallback retry_callback) {
     int count = 0;
     int bcast_num = 0;
 
@@ -574,21 +575,8 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // If selected interface is broadcast capable set appropriate
             // options on the socket so as it can receive and send broadcast
             // messages.
-            if (iface->flag_broadcast_ && use_bcast) {
-                // The DHCP server must have means to determine which interface
-                // the broadcast packets are coming from. This is achieved by
-                // binding a socket to the device (interface) and specialized
-                // packet filters (e.g. BPF and LPF) implement this mechanism.
-                // If the PktFilterInet (generic one) is used, the socket is
-                // bound to INADDR_ANY which effectively binds the socket to
-                // all addresses on all interfaces. So, only one of those can
-                // be opened. Currently, the direct response support is
-                // provided by the PktFilterLPF and PktFilterBPF, so by checking
-                // the support for direct response we actually determine that
-                // one of those objects is in use. For all other objects we
-                // assume that binding to the device is not supported and we
-                // cease opening sockets and display the appropriate message.
-                if (!isDirectResponseSupported() && bcast_num > 0) {
+            bool is_open_as_broadcast = iface->flag_broadcast_ && use_bcast;
+            if (is_open_as_broadcast && !isDirectResponseSupported() && bcast_num > 0) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "Binding socket to an interface is not"
                                    " supported on this OS; therefore only"
@@ -596,41 +584,52 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                    " can be opened. Sockets will not be opened"
                                    " on remaining interfaces");
                     continue;
-
-                } else {
-                    try {
-                        // We haven't open any broadcast sockets yet, so we can
-                        // open at least one more.
-                        openSocket(iface->getName(), addr.get(), port, true, true);
-                    } catch (const Exception& ex) {
-                        IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                       "failed to open socket on interface "
-                                       << iface->getName() << ", reason: "
-                                       << ex.what());
-                        continue;
-
-                    }
-                    // Binding socket to an interface is not supported so we
-                    // can't open any more broadcast sockets. Increase the
-                    // number of open broadcast sockets.
-                    ++bcast_num;
-                }
-
-            } else {
-                try {
-                    // Not broadcast capable, do not set broadcast flags.
-                    openSocket(iface->getName(), addr.get(), port, false, false);
-                } catch (const Exception& ex) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                   "failed to open socket on interface "
-                                   << iface->getName() << ", reason: "
-                                   << ex.what());
-                    continue;
-                }
-
             }
-            ++count;
 
+            bool is_opened = false;
+            bool should_retry = false;
+            uint16_t attempt = 0;
+            do
+            {
+                try {
+                    // We haven't open any broadcast sockets yet, so we can
+                    // open at least one more or
+                    // not broadcast capable, do not set broadcast flags.
+                    openSocket(iface->getName(), addr.get(), port, is_open_as_broadcast, is_open_as_broadcast);
+                    is_opened = true;
+                } catch (const Exception& ex) {
+                    auto err_stream = (std::stringstream("failed to open socket on interface ")
+                            << iface->getName() << ", reason: "
+                            << ex.what()
+                    ).str();
+
+                    uint16_t wait_time = 0;
+                    if (retry_callback != nullptr) {
+                        const auto& pair = retry_callback(attempt++, err_stream);
+                        should_retry = pair.first;
+                        wait_time = pair.second;
+                    }
+                    if (!should_retry) {
+                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_stream);
+                    } else {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
+                    }
+                }
+            }
+            while(!is_opened && should_retry);
+
+            if (!is_opened) {
+                continue;
+            }
+
+            if (is_open_as_broadcast) {
+                // Binding socket to an interface is not supported so we
+                // can't open any more broadcast sockets. Increase the
+                // number of open broadcast sockets.
+                ++bcast_num;
+            }
+
+            ++count;
         }
     }
 

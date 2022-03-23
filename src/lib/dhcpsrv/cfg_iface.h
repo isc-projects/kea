@@ -397,6 +397,20 @@ private:
     /// @param errmsg Error message being logged by the function.
     static void socketOpenErrorHandler(const std::string& errmsg);
 
+    /// @brief Retry handler for executed when opening a socket fail.
+    ///
+    /// A pointer to this function is passed to the @c IfaceMgr::openSockets4
+    /// or @c IfaceMgr::openSockets6. These functions call this handler when
+    /// they fail to open a socket. The handler decides if the opening should be
+    /// retried and logs info passed in the parameter. It also returns a time to
+    /// wait from the last attempt. It allows extending the waiting time dynamically
+    /// with the next tries.
+    ///
+    /// @param attemp An index of opening attempt
+    /// @param msg Message being logged by the function.
+    /// @return true if the opening should be retried and milliseconds to wait from last attempt
+    std::pair<bool, uint16_t> socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const;
+
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;
 
