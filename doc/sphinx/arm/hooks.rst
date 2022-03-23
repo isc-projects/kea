@@ -1873,9 +1873,9 @@ For instance, if the expression evaluation returns "example.com" and
 the option is defined with the ``fqdn`` type, the domain name will be
 encoded into DNS binary format.
 
-Since Kea 2.1.4, the ``client-class`` parameter specifies a guard: it takes
-a client class name, when not empty the entry is skipped if the query does
-not belong to the class.
+Since Kea 2.1.4, the ``client-class`` parameter specifies a class guard.
+It takes a client class name. If not empty, the client's packet needs to
+belong to specified class for this entry to be used.
 
 Since Kea 2.1.4, it is allowed to have multiple entries for the same option,
 but each entry must have exactly one action. If the option is not defined
