@@ -2095,14 +2095,13 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     option->set("sub-options", sub_options);
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
-    ElementPtr supersede = Element::create(string("'10.1.2.3'"));
+    ElementPtr supersede = Element::create(string("10.1.2.3"));
     sub_option->set("supersede", supersede);
     // DocSIS is 4491
     ElementPtr space = Element::create(string("vendor-4491"));
     sub_option->set("space", space);
     ElementPtr name = Element::create(string("tftp-servers"));
     sub_option->set("name", name);
-    sub_option->set("csv-format", Element::create(true));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
@@ -2119,11 +2118,10 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(sub);
-    Option4AddrLstPtr addr = boost::dynamic_pointer_cast<Option4AddrLst>(sub);
-    ASSERT_TRUE(addr);
-    auto const& addrs = addr->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("10.1.2.3", addrs[0].toText());
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(4, buffer.size());
+    uint8_t expected[] = { 10, 1, 2, 3 };
+    EXPECT_EQ(0, memcmp(&buffer[0], expected, 4));
 }
 
 // Verify that SUPERSEDE action can handle DocSIS vendor-opts.
