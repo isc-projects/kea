@@ -29,7 +29,9 @@ using namespace std;
 
 namespace {
 
-/// @brief Parse an action for an option.
+/// @brief Parse an action.
+///
+/// @note Shared code for option and sub-option.
 ///
 /// @param option The option element.
 /// @param opt_cfg The option configuration.
@@ -60,44 +62,6 @@ parseAction(ConstElementPtr option,
             eval_ctx.parseString(expr_text, parser_type);
             ExpressionPtr expr(new Expression(eval_ctx.expression));
             opt_cfg->setExpr(expr);
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "can't parse " << name << " expression ["
-                      << expr_text << "] error: " << ex.what());
-        }
-    }
-}
-
-/// @brief Parse an action for a sub-option.
-///
-/// @param sub_option The sub-option element.
-/// @param sub_cfg The sub-option configuration.
-/// @param universe The universe.
-/// @param name The action name.
-/// @param action The action.
-/// @param parser_type The type of the parser of the expression.
-void
-parseSubAction(ConstElementPtr sub_option,
-               FlexOptionImpl::SubOptionConfigPtr sub_cfg,
-               Option::Universe universe,
-               const string& name,
-               FlexOptionImpl::Action action,
-               EvalContext::ParserType parser_type) {
-    ConstElementPtr elem = sub_option->get(name);
-    if (elem) {
-        string expr_text = elem->stringValue();
-        if (expr_text.empty()) {
-            isc_throw(BadValue, "'" << name << "' must not be empty");
-        }
-        if (sub_cfg->getAction() != FlexOptionImpl::NONE) {
-            isc_throw(BadValue, "multiple actions: " << sub_option->str());
-        }
-        sub_cfg->setAction(action);
-        sub_cfg->setText(expr_text);
-        try {
-            EvalContext eval_ctx(universe);
-            eval_ctx.parseString(expr_text, parser_type);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
-            sub_cfg->setExpr(expr);
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "can't parse " << name << " expression ["
                       << expr_text << "] error: " << ex.what());
@@ -485,12 +449,12 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     }
 
     // sub_cfg initial action is NONE.
-    parseSubAction(sub_option, sub_cfg, universe,
-                   "add", ADD, EvalContext::PARSER_STRING);
-    parseSubAction(sub_option, sub_cfg, universe,
-                   "supersede", SUPERSEDE, EvalContext::PARSER_STRING);
-    parseSubAction(sub_option, sub_cfg, universe,
-                   "remove", REMOVE, EvalContext::PARSER_BOOL);
+    parseAction(sub_option, sub_cfg, universe,
+                "add", ADD, EvalContext::PARSER_STRING);
+    parseAction(sub_option, sub_cfg, universe,
+                "supersede", SUPERSEDE, EvalContext::PARSER_STRING);
+    parseAction(sub_option, sub_cfg, universe,
+                "remove", REMOVE, EvalContext::PARSER_BOOL);
 
     if (sub_cfg->getAction() == NONE) {
         isc_throw(BadValue, "no action: " << sub_option->str());
