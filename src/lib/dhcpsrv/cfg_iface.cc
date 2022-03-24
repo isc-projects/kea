@@ -181,7 +181,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
             retry_callback);
     } else {
         // use_bcast is ignored for V6.
-        sopen = IfaceMgr::instance().openSockets6(port, error_callback);
+        sopen = IfaceMgr::instance().openSockets6(port, error_callback, retry_callback);
     }
 
     if (!sopen) {
@@ -233,17 +233,16 @@ CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
 
 std::pair<bool, uint16_t>
 CfgIface::socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const {
-    auto max_retries = getServiceSocketsMaxRetries();
-    bool can_retry = attempt < max_retries;
+    bool can_retry = attempt < service_sockets_max_retries_;
     if (can_retry) {
         std::stringstream msg_stream;
-        msg_stream << msg << "; retries left: " << max_retries - attempt;
+        msg_stream << msg << "; retries left: " << service_sockets_max_retries_ - attempt;
         LOG_INFO(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(msg_stream.str());
     }
 
     return std::make_pair(
         can_retry,
-        getServiceSocketsRetryWaitTime()
+        service_sockets_retry_wait_time_
     );
 }
 

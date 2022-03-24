@@ -998,11 +998,17 @@ public:
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets6 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
+    /// @param retry_callback A pointer to a retry callback function which is
+    /// called by the openSockets4 when it fails to open a socket.
+    /// The responsibility of the callback is to decide if the opening should be
+    /// retried and after which time. This parameter can be null to indicate that
+    /// the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
-                      IfaceMgrErrorMsgCallback error_handler = 0);
+                      IfaceMgrErrorMsgCallback error_handler = 0,
+                      IfaceMgrRetryCallback retry_callback = 0);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
@@ -1068,10 +1074,11 @@ public:
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets4 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
-    /// @param retries A number of attempts to open a single socket. Default is
-    /// zero, which means that an opening isn't retried.
-    /// @param retry_wait_time An interval (in milliseconds) between attempts
-    /// to open a socket.
+    /// @param retry_callback A pointer to a retry callback function which is
+    /// called by the openSockets4 when it fails to open a socket.
+    /// The responsibility of the callback is to decide if the opening should be
+    /// retried and after which time. This parameter can be null to indicate that
+    /// the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.

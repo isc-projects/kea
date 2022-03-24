@@ -598,7 +598,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     openSocket(iface->getName(), addr.get(), port, is_open_as_broadcast, is_open_as_broadcast);
                     is_opened = true;
                 } catch (const Exception& ex) {
-                    auto err_stream = (std::stringstream("failed to open socket on interface ")
+                    auto err_msg = (std::stringstream("failed to open socket on interface ")
                             << iface->getName() << ", reason: "
                             << ex.what()
                     ).str();
@@ -606,12 +606,12 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     uint16_t wait_time = 0;
                     if (retry_callback != nullptr) {
                         // Callback produces a log message
-                        const auto& pair = retry_callback(attempt++, err_stream);
+                        const auto& pair = retry_callback(attempt++, err_msg);
                         should_retry = pair.first;
                         wait_time = pair.second;
                     }
                     if (!should_retry) {
-                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_stream);
+                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_msg);
                     } else {
                         // Wait before next attempt. The initialization cannot end before
                         // opening a socket so we can wait in the foreground.
@@ -650,7 +650,8 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
 bool
 IfaceMgr::openSockets6(const uint16_t port,
-                       IfaceMgrErrorMsgCallback error_handler) {
+                       IfaceMgrErrorMsgCallback error_handler,
+                       IfaceMgrRetryCallback retry_callback) {
     int count = 0;
 
     for (IfacePtr iface : ifaces_) {
@@ -687,19 +688,42 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         // Open unicast sockets if there are any unicast addresses defined
         for (Iface::Address addr : iface->getUnicasts()) {
+            bool is_opened = false;
+            bool should_retry = false;
+            uint16_t attempt = 0;
 
-            try {
-                openSocket(iface->getName(), addr, port);
-            } catch (const Exception& ex) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "Failed to open unicast socket on  interface "
-                               << iface->getName() << ", reason: "
-                               << ex.what());
+            do {
+                try {
+                    openSocket(iface->getName(), addr, port);
+                } catch (const Exception& ex) {
+                    auto err_msg = (std::stringstream("failed to open unicast socket on  interface ")
+                                << iface->getName() << ", reason: "
+                                << ex.what()).str();
+
+                    uint16_t wait_time = 0;
+                    if (retry_callback != nullptr) {
+                        // Callback produces a log message
+                        const auto& pair = retry_callback(attempt++, err_msg);
+                        should_retry = pair.first;
+                        wait_time = pair.second;
+                    }
+
+                    if (!should_retry) {
+                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_msg);
+                    } else {
+                        // Wait before next attempt. The initialization cannot end before
+                        // opening a socket so we can wait in the foreground.
+                        std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
+                    }
+                }
+            }
+            while (!is_opened && should_retry);
+
+            if (!is_opened) {
                 continue;
             }
 
             count++;
-
         }
 
         for (Iface::Address addr : iface->getAddresses()) {

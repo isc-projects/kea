@@ -473,6 +473,33 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"service-sockets-require-all\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp6Parser::make_SERVICE_SOCKETS_REQUIRE_ALL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("service-sockets-require-all", driver.loc_);
+    }
+}
+
+\"service-sockets-retry-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp6Parser::make_SERVICE_SOCKETS_RETRY_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("service-sockets-retry-wait-time", driver.loc_);
+    }
+}
+
+\"service-sockets-max-retries\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp6Parser::make_SERVICE_SOCKETS_MAX_RETRIES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("service-sockets-max-retries", driver.loc_);
+    }
+}
+
 \"sanity-checks\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

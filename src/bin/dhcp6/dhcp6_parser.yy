@@ -59,6 +59,9 @@ using namespace std;
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   RE_DETECT "re-detect"
+  SERVICE_SOCKETS_REQUIRE_ALL "service-sockets-require-all"
+  SERVICE_SOCKETS_RETRY_WAIT_TIME "service-sockets-retry-wait-time"
+  SERVICE_SOCKETS_MAX_RETRIES "service-sockets-max-retries"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -818,6 +821,9 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | re_detect
+                       | service_sockets_require_all
+                       | service_sockets_retry_wait_time
+                       | service_sockets_max_retries
                        | user_context
                        | comment
                        | unknown_map_entry
@@ -838,6 +844,25 @@ re_detect: RE_DETECT COLON BOOLEAN {
     ctx.unique("re-detect", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("re-detect", b);
+};
+
+
+service_sockets_require_all: SERVICE_SOCKETS_REQUIRE_ALL COLON BOOLEAN {
+    ctx.unique("service-sockets-require-all", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("service-sockets-require-all", b);
+};
+
+service_sockets_retry_wait_time: SERVICE_SOCKETS_RETRY_WAIT_TIME COLON INTEGER {
+    ctx.unique("service-sockets-retry-wait-time", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("service-sockets-retry-wait-time", n);
+};
+
+service_sockets_max_retries: SERVICE_SOCKETS_MAX_RETRIES COLON INTEGER {
+    ctx.unique("service-sockets-max-retries", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("service-sockets-max-retries", n);
 };
 
 lease_database: LEASE_DATABASE {
