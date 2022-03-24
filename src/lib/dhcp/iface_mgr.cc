@@ -12,6 +12,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
+#include <dhcp/iface_mgr_retry_callback.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
@@ -586,43 +587,25 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     continue;
             }
 
-            bool is_opened = false;
-            bool should_retry = false;
-            uint16_t attempt = 0;
-            do
-            {
-                try {
-                    // We haven't open any broadcast sockets yet, so we can
-                    // open at least one more or
-                    // not broadcast capable, do not set broadcast flags.
-                    openSocket(iface->getName(), addr.get(), port, is_open_as_broadcast, is_open_as_broadcast);
-                    is_opened = true;
-                } catch (const Exception& ex) {
-                    auto err_msg = (std::stringstream("failed to open socket on interface ")
-                            << iface->getName() << ", reason: "
-                            << ex.what()
-                    ).str();
+            auto msg_stream = std::stringstream("failed to open socket on interface ")
+                << iface->getName();
 
-                    uint16_t wait_time = 0;
-                    if (retry_callback != nullptr) {
-                        // Callback produces a log message
-                        const auto& pair = retry_callback(attempt++, err_msg);
-                        should_retry = pair.first;
-                        wait_time = pair.second;
-                    }
-                    if (!should_retry) {
-                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_msg);
-                    } else {
-                        // Wait before next attempt. The initialization cannot end before
-                        // opening a socket so we can wait in the foreground.
-                        std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
-                    }
-                }
-            }
-            while(!is_opened && should_retry);
-
-            if (!is_opened) {
-                continue;
+            try {
+                // We haven't open any broadcast sockets yet, so we can
+                // open at least one more or
+                // not broadcast capable, do not set broadcast flags.
+                callWithRetry<int>(
+                    std::bind(&IfaceMgr::openSocket, this,
+                        iface->getName(), addr.get(), port,
+                        is_open_as_broadcast, is_open_as_broadcast
+                    ),
+                    msg_stream.str(), retry_callback
+                );
+            } catch (const Exception& ex) {
+                msg_stream << ", reason: "
+                            << ex.what();
+                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
+                continue;              
             }
 
             if (is_open_as_broadcast) {
@@ -688,38 +671,21 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         // Open unicast sockets if there are any unicast addresses defined
         for (Iface::Address addr : iface->getUnicasts()) {
-            bool is_opened = false;
-            bool should_retry = false;
-            uint16_t attempt = 0;
+            auto msg_stream = std::stringstream("failed to open unicast socket on  interface ")
+                << iface->getName();
 
-            do {
-                try {
-                    openSocket(iface->getName(), addr, port);
-                } catch (const Exception& ex) {
-                    auto err_msg = (std::stringstream("failed to open unicast socket on  interface ")
-                                << iface->getName() << ", reason: "
-                                << ex.what()).str();
-
-                    uint16_t wait_time = 0;
-                    if (retry_callback != nullptr) {
-                        // Callback produces a log message
-                        const auto& pair = retry_callback(attempt++, err_msg);
-                        should_retry = pair.first;
-                        wait_time = pair.second;
-                    }
-
-                    if (!should_retry) {
-                        IFACEMGR_ERROR(SocketConfigError, error_handler, err_msg);
-                    } else {
-                        // Wait before next attempt. The initialization cannot end before
-                        // opening a socket so we can wait in the foreground.
-                        std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
-                    }
-                }
-            }
-            while (!is_opened && should_retry);
-
-            if (!is_opened) {
+            try {
+                callWithRetry<int>(
+                    std::bind(&IfaceMgr::openSocket, this,
+                        iface->getName(), addr, port, false, false
+                    ),
+                    msg_stream.str(),
+                    retry_callback
+                );
+            } catch (const Exception& ex) {
+                msg_stream << ", reason: "
+                    << ex.what();
+                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
                 continue;
             }
 
@@ -745,10 +711,23 @@ IfaceMgr::openSockets6(const uint16_t port,
             // Run OS-specific function to open a socket capable of receiving
             // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
             // address.
-            if (openMulticastSocket(*iface, addr, port, error_handler)) {
-                ++count;
-            }
+            auto msg_stream = std::stringstream("failed to open multicast socket on  interface ")
+                << iface->getName();
 
+            try {
+                callWithRetry<bool>(
+                    std::bind(&IfaceMgr::openMulticastSocket, this,
+                        // Pass a null pointer as an error handler to avoid
+                        // suppressing an exception in a system-specific function.
+                        std::ref(*iface), addr, port, nullptr),
+                    msg_stream.str(), retry_callback
+                );
+                ++count;
+            } catch (const Exception& ex) {
+                msg_stream << ", reason: "
+                    << ex.what();
+                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
+            }
         }
     }
 

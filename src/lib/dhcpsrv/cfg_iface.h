@@ -392,10 +392,10 @@ private:
     /// wait from the last attempt. It allows extending the waiting time dynamically
     /// with the next tries.
     ///
-    /// @param attemp An index of opening attempt
+    /// @param retries An index of opening retries
     /// @param msg Message being logged by the function.
     /// @return true if the opening should be retried and milliseconds to wait from last attempt
-    std::pair<bool, uint16_t> socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const;
+    std::pair<bool, uint16_t> socketOpenRetryHandler(uint16_t retries, const std::string& msg) const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

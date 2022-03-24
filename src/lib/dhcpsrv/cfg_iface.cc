@@ -232,11 +232,11 @@ CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
 }
 
 std::pair<bool, uint16_t>
-CfgIface::socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const {
-    bool can_retry = attempt < service_sockets_max_retries_;
+CfgIface::socketOpenRetryHandler(uint16_t retries, const std::string& msg) const {
+    bool can_retry = retries < service_sockets_max_retries_;
     if (can_retry) {
         std::stringstream msg_stream;
-        msg_stream << msg << "; retries left: " << service_sockets_max_retries_ - attempt;
+        msg_stream << msg << "; retries left: " << service_sockets_max_retries_ - retries;
         LOG_INFO(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(msg_stream.str());
     }
 
