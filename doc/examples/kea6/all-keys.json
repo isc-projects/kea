@@ -370,7 +370,22 @@
             // be re-detected upon server reconfiguration. The default value
             // is true which means that the interfaces are always
             // re-detected.
-            "re-detect": true
+            "re-detect": true,
+
+            // Kea tries to bind the service sockets during an initialiation. It may
+            // fail due to a port being already opened or misconfiguration. Kea suppresses
+            // these errors by default and only logs them. This flag prevents starting the
+            // DHCP server without binding all sockets.
+            "service-sockets-require-all": true,
+
+            // Kea tries to bind the service sockets during an initialiation. This option
+            // specifies how many times the opening port will be retried. The default value
+            // is 0 which means that the opening will be not repeated.
+            "service-sockets-max-retries": 5,
+
+            // Milliseconds to wait before the next attempt of opening a service socket if
+            // a port is already bound.
+            "service-sockets-retry-wait-time": 5000
         },
 
         // Boolean parameter which controls whether an early global host

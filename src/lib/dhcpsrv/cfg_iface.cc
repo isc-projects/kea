@@ -523,9 +523,15 @@ CfgIface::toElement() const {
     result->set("re-detect", Element::create(re_detect_));
 
     // Set server socket binding
-    result->set("service-sockets-require-all", Element::create(service_socket_require_all_));
-    result->set("service-sockets-retry-wait-time", Element::create(static_cast<int>(service_sockets_retry_wait_time_)));
-    result->set("service-sockets-max-retries", Element::create(static_cast<int>(service_sockets_max_retries_)));
+    if (service_socket_require_all_) {
+        result->set("service-sockets-require-all", Element::create(service_socket_require_all_));
+    }
+
+    if (service_sockets_max_retries_ != 0) {
+        result->set("service-sockets-max-retries", Element::create(static_cast<int>(service_sockets_max_retries_)));
+        // If the max retries parameter equals zero, then the wait time is not used.
+        result->set("service-sockets-retry-wait-time", Element::create(static_cast<int>(service_sockets_retry_wait_time_)));
+    }
 
     return (result);
 }
