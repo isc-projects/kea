@@ -605,6 +605,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
                     uint16_t wait_time = 0;
                     if (retry_callback != nullptr) {
+                        // Callback produces a log message
                         const auto& pair = retry_callback(attempt++, err_stream);
                         should_retry = pair.first;
                         wait_time = pair.second;
@@ -612,6 +613,8 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     if (!should_retry) {
                         IFACEMGR_ERROR(SocketConfigError, error_handler, err_stream);
                     } else {
+                        // Wait before next attempt. The initialization cannot end before
+                        // opening a socket so we can wait in the foreground.
                         std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
                     }
                 }

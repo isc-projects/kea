@@ -237,7 +237,7 @@ CfgIface::socketOpenRetryHandler(uint16_t attempt, const std::string& msg) const
     bool can_retry = attempt < max_retries;
     if (can_retry) {
         std::stringstream msg_stream;
-        msg_stream << msg << ", attempt: " << attempt + 1 << "/" << max_retries + 1;
+        msg_stream << msg << "; retries left: " << max_retries - attempt;
         LOG_INFO(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(msg_stream.str());
     }
 
