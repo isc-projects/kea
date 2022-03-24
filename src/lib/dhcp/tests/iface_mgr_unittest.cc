@@ -1989,6 +1989,60 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     EXPECT_EQ(2, errors_count_);
 }
 
+// Test that the external retry callback is called when trying to bind a new
+// socket to the address and port being in use. The opening should be repeated.
+TEST_F(IfaceMgrTest, openSocket4RetryCallback) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Open socket on eth0.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth0", IOAddress("10.0.0.1"),
+                                        DHCP4_SERVER_PORT));
+
+    // Install an retry callback before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on eth0.
+    // The callback counts the retry attempts. The retry indices must be sequential.
+    // The caller must wait specific time between calls.
+    uint16_t total_attempts = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+    isc::dhcp::IfaceMgrRetryCallback retry_callback =
+        [&total_attempts, &last_call_time](uint16_t current_attempt, const std::string& msg){
+            // An attempt index must be sequential.
+            EXPECT_EQ(total_attempts, current_attempt);
+            total_attempts++;
+
+            // A waiting time isn't too short.
+            auto now = std::chrono::system_clock::now();
+            if (current_attempt != 0) {
+                auto interval = now - last_call_time;
+                EXPECT_GE(interval, std::chrono::milliseconds(10));
+            }
+            last_call_time = now;
+
+            // Message has content.
+            EXPECT_FALSE(msg.empty());
+
+            // Test for 5 retries with 10 milliseconds waiting time.
+            return std::make_pair(current_attempt < 4, 10);
+        };
+
+    // The openSockets4 should detect that there is another socket already
+    // open and bound to the same address and port. An attempt to open
+    // another socket and bind to this address and port should fail and be repeated
+    // a few times. The exception is thrown because the error handler is NULL.
+    EXPECT_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, nullptr, retry_callback),
+        isc::dhcp::SocketConfigError);
+
+    // The callback should notice 5 attempts to open a port - 1 initial and 4 retries.
+    EXPECT_EQ(5, total_attempts);
+}
+
 // This test verifies that the function correctly checks that the v4 socket is
 // open and bound to a specific address.
 TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
@@ -2454,6 +2508,61 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     // when opening a socket on eth1.
     ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
     EXPECT_EQ(2, errors_count_);
+}
+
+// Test that the external retry callback is called when trying to bind a new
+// socket to the address and port being in use. The opening should be repeated.
+TEST_F(IfaceMgrTest, openSocket6RetryCallback) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Open multicast socket on eth0.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
+                                        IOAddress("fe80::3a60:77ff:fed5:cdef"),
+                                        DHCP6_SERVER_PORT, true));
+
+    // Install an retry callback before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on eth0.
+    // The callback counts the retry attempts. The retry indices must be sequential.
+    // The caller must wait specific time between calls.
+    uint16_t total_attempts = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+    isc::dhcp::IfaceMgrRetryCallback retry_callback =
+        [&total_attempts, &last_call_time](uint16_t current_attempt, const std::string& msg){
+            // An attempt index must be sequential.
+            EXPECT_EQ(total_attempts, current_attempt);
+            total_attempts++;
+
+            // A waiting time isn't too short.
+            auto now = std::chrono::system_clock::now();
+            if (current_attempt != 0) {
+                auto interval = now - last_call_time;
+                EXPECT_GE(interval, std::chrono::milliseconds(10));
+            }
+            last_call_time = now;
+
+            // Message has content.
+            EXPECT_FALSE(msg.empty());
+
+            // Test for 5 retries with 10 milliseconds waiting time.
+            return std::make_pair(current_attempt < 4, 10);
+        };
+
+    // The openSockets6 should detect that there is another socket already
+    // open and bound to the same address and port. An attempt to open
+    // another socket and bind to this address and port should fail and be repeated
+    // a few times. The exception is thrown because the error handler is NULL.
+    EXPECT_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, nullptr, retry_callback),
+        isc::dhcp::SocketConfigError);
+
+    // The callback should notice 5 attempts to open a port - 1 initial and 4 retries.
+    EXPECT_EQ(5, total_attempts);
 }
 
 // This test verifies that the function correctly checks that the v6 socket is
