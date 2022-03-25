@@ -1,3 +1,8 @@
+2004.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.4 development
+	version.
+	(Gitlab #2363)
+
 2003.	[func]		fdupont
 	Added the support of sub-options in the flex_option
 	hook library.
