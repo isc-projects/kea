@@ -1,3 +1,12 @@
+2006.	[func]		slawek
+	Added a parameter to specify mandatory successfully
+	binding all needed service sockets to initialize DHCP
+	services. If any socket is unavailable, then the service
+	fails to start. Added also two parameters to specify the
+	number of retries of open unavailable socket ports at
+	initialization and a time to wait between attempts.
+	(Gitlab #1716)
+
 2005.	[func]*		razvan
 	The support for Cassandra database backend has been removed.
 	(Gitlab #2116)
