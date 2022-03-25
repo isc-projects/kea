@@ -7,6 +7,8 @@
 #include <config.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/tests/pkt_filter_test_stub.h>
+#include <dhcp/tests/pkt_filter6_test_stub.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
@@ -506,6 +508,103 @@ TEST_F(CfgIfaceTest, unparse) {
         "\"re-detect\": false, "
         "\"user-context\": { \"comment\": \"bar\", \"foo\": 2 } }";
     runToElementTest<CfgIface>(expected, cfg6);
+}
+
+// This test verifies that it is possible to require that all
+// service sockets are opened properly. If any socket fails to
+// bind then an exception should be thrown.
+TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
+    CfgIface cfg4;
+    CfgIface cfg6;
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
+    
+    // Require all sockets bind successfully
+    cfg4.setServiceSocketsRequireAll(true);
+    cfg6.setServiceSocketsRequireAll(true);
+
+    // Open an available port
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+    ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
+    cfg4.closeSockets();
+    cfg6.closeSockets();
+
+    // Set the callback to throw an exception on open
+    auto open_callback = [](){
+        isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+    };
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(new isc::dhcp::test::PktFilterTestStub());
+    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter6(new isc::dhcp::test::PktFilter6TestStub());
+    filter->setOpenSocketCallback(open_callback);
+    filter6->setOpenSocketCallback(open_callback);
+    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter6);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter6));
+
+    // Open an unavailable port
+    EXPECT_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT), isc::dhcp::SocketConfigError);
+    EXPECT_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT), isc::dhcp::SocketConfigError);
+}
+
+// This test verifies that if any socket fails to bind, then the opening will retry.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets) {
+    CfgIface cfg4;
+    CfgIface cfg6;
+
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
+
+    const uint16_t RETRIES = 5;
+    const uint16_t WAIT_TIME = 10; // miliseconds
+
+    // Require retry socket binding
+    cfg4.setServiceSocketsMaxRetries(RETRIES);
+    cfg4.setServiceSocketsRetryWaitTime(WAIT_TIME);
+    cfg6.setServiceSocketsMaxRetries(RETRIES);
+    cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME](){
+        auto now = std::chrono::system_clock::now();
+        
+        // Don't check the waiting time for initial calls as they
+        // can be done immediately after the last call for the previous socket.
+        if (total_calls % (RETRIES + 1) != 0) {
+            auto interval = now - last_call_time;
+            EXPECT_GE(interval, std::chrono::milliseconds(WAIT_TIME));
+        }
+
+        last_call_time = now;
+        total_calls++;
+
+        // Fail to open a socket
+        isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+    };
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(new isc::dhcp::test::PktFilterTestStub());
+    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter6(new isc::dhcp::test::PktFilter6TestStub());
+    filter->setOpenSocketCallback(open_callback);
+    filter6->setOpenSocketCallback(open_callback);
+    ASSERT_TRUE(filter);
+    ASSERT_TRUE(filter6);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter6));
+
+    // Open an unavailable port
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+    ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
+
+    // For IPv4 bind to: eth0 and eth1 (2).
+    // For IPv6 bind to: unicast for eth0 and multicast for eth0 and eth1 (3).
+    // For each interface perform 1 init open and 5 retries (6).
+    // Perform 30 open calls ((2+3) * 6).
+    EXPECT_EQ(30, total_calls);
 }
 
 // This test verifies that it is possible to specify the socket

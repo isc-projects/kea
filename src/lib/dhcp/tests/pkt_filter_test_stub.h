@@ -16,6 +16,9 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief An open socket callback that can be use for a testing purposes.
+typedef std::function<void()> PktFilterOpenSocketCallback;
+
 /// @brief A stub implementation of the PktFilter class.
 ///
 /// This class implements abstract methods of the @c isc::dhcp::PktFilter
@@ -89,7 +92,15 @@ public:
     // Change the scope of the protected function so as they can be unit tested.
     using PktFilter::openFallbackSocket;
 
+    /// @brief Set an open socket callback. Use it for testing
+    // purposes, e.g., counting the number of calls or throwing an exception.
+    void setOpenSocketCallback(PktFilterOpenSocketCallback callback) {
+        open_socket_callback_ = callback;
+    }
+
     bool direct_response_supported_;
+private:
+    PktFilterOpenSocketCallback open_socket_callback_{nullptr};
 };
 
 } // namespace isc::dhcp::test

@@ -34,6 +34,10 @@ PktFilterTestStub::openSocket(Iface&,
         isc_throw(Unexpected,
                   "PktFilterTestStub: cannot open /dev/null:" << errmsg);
     }
+    
+    if (open_socket_callback_ != nullptr) {
+        open_socket_callback_();
+    }
 
     return (SocketInfo(addr, port, fd));
 }

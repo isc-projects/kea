@@ -293,6 +293,7 @@ TEST_F(IfacesConfigParserTest, serviceSocketRequireAll) {
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+    EXPECT_TRUE(cfg_iface->getServiceSocketsRequireAll());
 
     // Check it can be unparsed.
     runToElementTest<CfgIface>(config, *cfg_iface);
@@ -316,6 +317,7 @@ TEST_F(IfacesConfigParserTest, serviceSocketMaxRetries) {
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+    EXPECT_FALSE(cfg_iface->getServiceSocketsRequireAll());
 
     // Configuration should contain a number of retries and a wait time.
     std::string expected_config = "{ \"interfaces\": [ ],"
@@ -347,6 +349,7 @@ TEST_F(IfacesConfigParserTest, serviceSocketRetryWaitTime) {
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+    EXPECT_FALSE(cfg_iface->getServiceSocketsRequireAll());
 
     // Check it can be unparsed.
     runToElementTest<CfgIface>(config, *cfg_iface);
@@ -371,6 +374,7 @@ TEST_F(IfacesConfigParserTest, serviceSocketRetryWaitTimeWithoutMaxRetries) {
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+    EXPECT_FALSE(cfg_iface->getServiceSocketsRequireAll());
 
     // Retry wait time is not applicable; it is skipped.
     std::string expected_config = "{ \"interfaces\": [ ],"

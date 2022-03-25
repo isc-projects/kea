@@ -20,6 +20,10 @@ SocketInfo
 PktFilter6TestStub::openSocket(const Iface&,
            const isc::asiolink::IOAddress& addr,
            const uint16_t port, const bool) {
+    if (open_socket_callback_ != nullptr) {
+        open_socket_callback_();
+    }
+
     return (SocketInfo(addr, port, 0));
 }
 

@@ -16,6 +16,9 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief An open socket callback that can be use for a testing purposes.
+typedef std::function<void()> PktFilter6OpenSocketCallback;
+
 /// @brief A stub implementation of the PktFilter6 class.
 ///
 /// This class implements abstract methods of the @c isc::dhcp::PktFilter6
@@ -82,6 +85,14 @@ public:
     /// @return true if multicast join was successful
     static bool joinMulticast(int sock, const std::string& ifname,
                               const std::string & mcast);
+
+    /// @brief Set an open socket callback. Use it for testing
+    // purposes, e.g., counting the number of calls or throwing an exception.
+    void setOpenSocketCallback(PktFilter6OpenSocketCallback callback) {
+        open_socket_callback_ = callback;
+    }
+private:
+    PktFilter6OpenSocketCallback open_socket_callback_{nullptr};
 };
 
 } // namespace isc::dhcp::test
