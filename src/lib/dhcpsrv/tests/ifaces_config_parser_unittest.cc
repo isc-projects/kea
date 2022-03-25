@@ -275,4 +275,109 @@ TEST_F(IfacesConfigParserTest, outboundInterface) {
     EXPECT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
 }
 
+// Tests that service-sockets-require-all is parsed properly.
+TEST_F(IfacesConfigParserTest, serviceSocketRequireAll) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with a require all sockets to open selected.
+    std::string config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false,"
+        " \"service-sockets-require-all\": true }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser parser(AF_INET, false);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(config, *cfg_iface);
+}
+
+// Tests that service-sockets-max-retries is parsed properly.
+TEST_F(IfacesConfigParserTest, serviceSocketMaxRetries) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with a non-zero retries selected.
+    std::string config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false,"
+        " \"service-sockets-max-retries\": 42 }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser parser(AF_INET, false);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Configuration should contain a number of retries and a wait time.
+    std::string expected_config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false,"
+        " \"service-sockets-retry-wait-time\": 5000,"
+        " \"service-sockets-max-retries\": 42 }";
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(expected_config, *cfg_iface);
+}
+
+// Tests that service-sockets-retry-wait-time is parsed properly if
+// service-sockets-max-retries is provided.
+TEST_F(IfacesConfigParserTest, serviceSocketRetryWaitTime) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with a non-zero number of retries and a non-default wait time.
+    std::string config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false,"
+        " \"service-sockets-retry-wait-time\": 4224,"
+        " \"service-sockets-max-retries\": 42 }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser parser(AF_INET, false);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(config, *cfg_iface);
+}
+
+// Tests that service-sockets-retry-wait-time is ignored if
+// service-sockets-max-retries is not provided.
+TEST_F(IfacesConfigParserTest, serviceSocketRetryWaitTimeWithoutMaxRetries) {
+    // Create the reference configuration, which we will compare
+    // the parsed configuration to.
+    CfgIface cfg_ref;
+
+    // Configuration with zero (default) retries and a non-default wait time.
+    std::string config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false,"
+        " \"service-sockets-retry-wait-time\": 4224 }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser parser(AF_INET, false);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Retry wait time is not applicable; it is skipped.
+    std::string expected_config = "{ \"interfaces\": [ ],"
+        " \"re-detect\": false }";
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(expected_config, *cfg_iface);
+}
+
 } // end of anonymous namespace
