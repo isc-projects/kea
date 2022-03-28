@@ -145,6 +145,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | statistic_default_sample_count
                  | statistic_default_sample_age
                  | dhcp_multi_threading
+                 | early_global_reservations_lookup
                  | ip_reservations_unique
                  | reservations_lookup_first
                  | compatibility
@@ -214,6 +215,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      statistic_default_sample_count ::= "statistic-default-sample-count" ":" INTEGER
 
      statistic_default_sample_age ::= "statistic-default-sample-age" ":" INTEGER
+
+     early_global_reservations_lookup ::= "early-global-reservations-lookup" ":" BOOLEAN
 
      ip_reservations_unique ::= "ip-reservations-unique" ":" BOOLEAN
 

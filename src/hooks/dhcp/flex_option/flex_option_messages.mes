@@ -49,11 +49,11 @@ This debug message is printed when an option was superseded into the response
 packet. The option code and the value (between quotes if printable, in
 hexadecimal if not) are provided.
 
-% FLEX_OPTION_UNLOAD Flex Option hooks library has been unloaded
-This info message indicates that the Flex Option hooks library has been
-unloaded.
-
 % FLEX_OPTION_PROCESS_VENDOR_ID_MISMATCH Skip processing of vendor option code %1 with vendor id %2 not matching wanted %3
 This debug message is printed when a sub-option of a vendor option is
 processed but vendor ids do not match. The code of the vendor option
 and the two vendor ids are provided.
+
+% FLEX_OPTION_UNLOAD Flex Option hooks library has been unloaded
+This info message indicates that the Flex Option hooks library has been
+unloaded.
