@@ -577,6 +577,20 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // options on the socket so as it can receive and send broadcast
             // messages.
             bool is_open_as_broadcast = iface->flag_broadcast_ && use_bcast;
+
+            // The DHCP server must have means to determine which interface
+            // the broadcast packets are coming from. This is achieved by
+            // binding a socket to the device (interface) and specialized
+            // packet filters (e.g. BPF and LPF) implement this mechanism.
+            // If the PktFilterInet (generic one) is used, the socket is
+            // bound to INADDR_ANY which effectively binds the socket to
+            // all addresses on all interfaces. So, only one of those can
+            // be opened. Currently, the direct response support is
+            // provided by the PktFilterLPF and PktFilterBPF, so by checking
+            // the support for direct response we actually determine that
+            // one of those objects is in use. For all other objects we
+            // assume that binding to the device is not supported and we
+            // cease opening sockets and display the appropriate message.
             if (is_open_as_broadcast && !isDirectResponseSupported() && bcast_num > 0) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "Binding socket to an interface is not"
