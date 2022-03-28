@@ -25,14 +25,14 @@ similar way to other hook libraries by the ``kea-dhcp4`` and
         ]
     }
 
-This hook allows generating hostname procedurally, based on an expression.
+This hook allows generating the hostname procedurally, based on an expression.
 
 The expression can be defined globally in the hook parameters, using `hostname-expr`.
 If defined globally, it will apply to all hosts in all subnets. The expressions can use
 all tokens defined in :ref:`classify`.
 
 It is also possible to define this parameter in a subnet, using user context mechanism.
-If defined in on subnet level, the expression applies to specific subnet only.
+If defined at the subnet level, the expression applies to specific subnet only.
 
 .. code-block:: javascript
 
@@ -44,10 +44,12 @@ If defined in on subnet level, the expression applies to specific subnet only.
 
         // This is a subnet-specific user context.
         "user-context": {
-            "hostame-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
-                                     +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
-                                     +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                     +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+            "ddns-tuning:" {
+                "hostame-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
+                                         +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
+                                         +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
+                                         +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+            },
             "last-modified": "2017-09-04 13:32",
             "description": "you can put anything you like here",
             "phones": [ "x1234", "x2345" ],
@@ -55,6 +57,11 @@ If defined in on subnet level, the expression applies to specific subnet only.
             "billing": false
         }
     }]
+
+.. note::
+   The expression value above uses a slash, '\', to show line continuation.  This is for
+   clarity only and is not valid JSON supported by Kea parsing.  The actually value has
+   to be expressed in a single line.
 
 .. note::
 
