@@ -232,6 +232,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                             | dhcp_socket_type
                             | outbound_interface
                             | re_detect
+                            | service_sockets_require_all
+                            | service_sockets_retry_wait_time
+                            | service_sockets_max_retries
                             | user_context
                             | comment
                             | unknown_map_entry
@@ -251,6 +254,12 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                              | "use-routing"
 
      re_detect ::= "re-detect" ":" BOOLEAN
+
+     service_sockets_require_all ::= "service-sockets-require-all" ":" BOOLEAN
+
+     service_sockets_retry_wait_time ::= "service-sockets-retry-wait-time" ":" INTEGER
+
+     service_sockets_max_retries ::= "service-sockets-max-retries" ":" INTEGER
 
      lease_database ::= "lease-database" ":" "{" database_map_params "}"
 
