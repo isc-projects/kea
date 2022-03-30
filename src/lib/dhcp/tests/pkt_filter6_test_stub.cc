@@ -13,7 +13,7 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-PktFilter6TestStub::PktFilter6TestStub() {
+PktFilter6TestStub::PktFilter6TestStub() : open_socket_callback_(nullptr) {
 }
 
 SocketInfo

@@ -198,7 +198,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"interfaces-config\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-        return  isc::dhcp::Dhcp4Parser::make_INTERFACES_CONFIG(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_INTERFACES_CONFIG(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("interfaces-config", driver.loc_);
     }
@@ -207,7 +207,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"sanity-checks\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-        return  isc::dhcp::Dhcp4Parser::make_SANITY_CHECKS(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SANITY_CHECKS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("sanity-checks", driver.loc_);
     }
@@ -216,7 +216,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"lease-checks\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SANITY_CHECKS:
-        return  isc::dhcp::Dhcp4Parser::make_LEASE_CHECKS(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_LEASE_CHECKS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("lease-checks", driver.loc_);
     }
@@ -225,7 +225,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"dhcp-socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("dhcp-socket-type", driver.loc_);
     }
@@ -234,7 +234,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"raw\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
-        return  isc::dhcp::Dhcp4Parser::make_RAW(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_RAW(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("raw", driver.loc_);
     }
@@ -244,7 +244,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
     case isc::dhcp::Parser4Context::NCR_PROTOCOL:
-        return  isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("udp", driver.loc_);
     }
@@ -253,7 +253,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"outbound-interface\" {
     switch(driver.ctx_) {
     case Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_OUTBOUND_INTERFACE(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_OUTBOUND_INTERFACE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("outbound-interface", driver.loc_);
     }
@@ -280,7 +280,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_INTERFACES(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_INTERFACES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("interfaces", driver.loc_);
     }
@@ -289,7 +289,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"re-detect\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_RE_DETECT(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_RE_DETECT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("re-detect", driver.loc_);
     }
@@ -298,7 +298,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"service-sockets-require-all\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_REQUIRE_ALL(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_REQUIRE_ALL(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("service-sockets-require-all", driver.loc_);
     }
@@ -307,7 +307,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"service-sockets-retry-wait-time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_RETRY_WAIT_TIME(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_RETRY_WAIT_TIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("service-sockets-retry-wait-time", driver.loc_);
     }
@@ -316,7 +316,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"service-sockets-max-retries\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_MAX_RETRIES(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SERVICE_SOCKETS_MAX_RETRIES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("service-sockets-max-retries", driver.loc_);
     }
@@ -1989,7 +1989,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"compatibility\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-        return  isc::dhcp::Dhcp4Parser::make_COMPATIBILITY(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_COMPATIBILITY(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("compatibility", driver.loc_);
     }

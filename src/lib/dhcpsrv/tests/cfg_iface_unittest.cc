@@ -69,8 +69,6 @@ CfgIfaceTest::socketOpen(const std::string& iface_name,
     return (iface_mgr_test_config_.socketOpen(iface_name, address));
 }
 
-
-
 bool
 CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
     return (iface_mgr_test_config_.unicastOpen(iface_name));
@@ -520,7 +518,7 @@ TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
     ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
     ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
-    
+
     // Require all sockets bind successfully
     cfg4.setServiceSocketsRequireAll(true);
     cfg6.setServiceSocketsRequireAll(true);
@@ -573,7 +571,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets) {
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME](){
         auto now = std::chrono::system_clock::now();
-        
+
         // Don't check the waiting time for initial calls as they
         // can be done immediately after the last call for the previous socket.
         if (total_calls % (RETRIES + 1) != 0) {
@@ -652,6 +650,5 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
         InvalidSocketType);
 }
 #endif
-
 
 } // end of anonymous namespace

@@ -91,8 +91,11 @@ public:
     void setOpenSocketCallback(PktFilter6OpenSocketCallback callback) {
         open_socket_callback_ = callback;
     }
+
 private:
-    PktFilter6OpenSocketCallback open_socket_callback_{nullptr};
+
+    /// @brief The callback used when opening socket.
+    PktFilter6OpenSocketCallback open_socket_callback_;
 };
 
 } // namespace isc::dhcp::test

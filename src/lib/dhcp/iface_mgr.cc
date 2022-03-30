@@ -601,8 +601,8 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     continue;
             }
 
-            auto msg_stream = std::stringstream("failed to open socket on interface ")
-                << iface->getName();
+            std::stringstream msg_stream("failed to open socket on interface ");
+            msg_stream << iface->getName();
 
             try {
                 // We haven't open any broadcast sockets yet, so we can
@@ -619,7 +619,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 msg_stream << ", reason: "
                             << ex.what();
                 IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
-                continue;              
+                continue;
             }
 
             if (is_open_as_broadcast) {
@@ -685,16 +685,15 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         // Open unicast sockets if there are any unicast addresses defined
         for (Iface::Address addr : iface->getUnicasts()) {
-            auto msg_stream = std::stringstream("failed to open unicast socket on  interface ")
-                << iface->getName();
+            std::stringstream msg_stream("failed to open unicast socket on  interface ");
+            msg_stream << iface->getName();
 
             try {
                 callWithRetry<int>(
                     std::bind(&IfaceMgr::openSocket, this,
                         iface->getName(), addr, port, false, false
                     ),
-                    msg_stream.str(),
-                    retry_callback
+                    msg_stream.str(), retry_callback
                 );
             } catch (const Exception& ex) {
                 msg_stream << ", reason: "
@@ -725,8 +724,8 @@ IfaceMgr::openSockets6(const uint16_t port,
             // Run OS-specific function to open a socket capable of receiving
             // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
             // address.
-            auto msg_stream = std::stringstream("failed to open multicast socket on  interface ")
-                << iface->getName();
+            std::stringstream msg_stream("failed to open multicast socket on  interface ");
+            msg_stream << iface->getName();
 
             try {
                 callWithRetry<bool>(

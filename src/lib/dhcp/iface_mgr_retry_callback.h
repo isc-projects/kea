@@ -11,7 +11,6 @@
 #include <dhcp/iface_mgr.h>
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief An helper to call a function with retry.
@@ -31,8 +30,8 @@ namespace dhcp {
 /// time before next try. It should also log the info/warning message.
 template <typename T>
 T callWithRetry(std::function<T()> f,
-        const std::string& msg,
-        IfaceMgrRetryCallback retry_callback) {
+                const std::string& msg,
+                IfaceMgrRetryCallback retry_callback) {
 
     // If the retry callback is NULL, just call the function and return.
     if (retry_callback == nullptr) {
@@ -40,20 +39,23 @@ T callWithRetry(std::function<T()> f,
     }
 
     // Counter of the retries.
-    uint16_t retries = 0;
-    
+    uint64_t retries = 0;
+
     // Leave the loop on success (return statement)
     // or stop retrying (throw statement).
-    while(true)
-    {
+    while (true) {
         try {
             return f();
         } catch (const Exception& ex) {
-            auto retry_msg = (std::stringstream(msg)
-                                << ", reason: "
-                                << ex.what()).str();
+            std::stringstream message(msg);
+            message << ", reason: " << ex.what();
+            auto retry_msg = message.str();
+
             // Callback produces a log message
-            const auto [should_retry, wait_time] = retry_callback(retries++, retry_msg);
+            const std::pair<bool, uint64_t>& result = retry_callback(retries++, retry_msg);
+
+            bool should_retry = result.first;
+            uint64_t wait_time = result.second;
 
             if (!should_retry) {
                 throw;
@@ -61,13 +63,12 @@ T callWithRetry(std::function<T()> f,
                 // Wait before next attempt. The initialization cannot end before
                 // opening a socket so we can wait in the foreground.
                 std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
-            }   
+            }
         }
     }
 }
 
 }
-
 }
 
 #endif // IFACE_MGR_RETRY_CALLBACK_H

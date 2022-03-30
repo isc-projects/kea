@@ -846,7 +846,6 @@ re_detect: RE_DETECT COLON BOOLEAN {
     ctx.stack_.back()->set("re-detect", b);
 };
 
-
 service_sockets_require_all: SERVICE_SOCKETS_REQUIRE_ALL COLON BOOLEAN {
     ctx.unique("service-sockets-require-all", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));

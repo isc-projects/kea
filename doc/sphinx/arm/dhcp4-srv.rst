@@ -973,8 +973,8 @@ Kea binds the service sockets for each interface on startup. If another
 process is already using a port, then Kea logs the message and suppresses an
 error. DHCP service runs, but it is unavailable on some interfaces.
 
-The "service-sockets-require-all" option makes that Kea requires all sockets
-are successfully bound. If any opening fails, Kea interrupts the
+The "service-sockets-require-all" option makes Kea require all sockets to
+be successfully bound. If any opening fails, Kea interrupts the
 initialization and exits with a non-zero status. (Default is false).
 
 ::
@@ -990,7 +990,7 @@ initialization and exits with a non-zero status. (Default is false).
 Sometimes, immediate interruption isn't a good choice. The port can be
 unavailable only temporary. In this case, retrying the opening may resolve
 the problem. Kea provides two options to specify the retrying:
-``service-sockets-max-retries`` and ``service-sockets-retry-wait-time``. 
+``service-sockets-max-retries`` and ``service-sockets-retry-wait-time``.
 
 The first defines a maximal number of retries that Kea makes to open a socket.
 The zero value (default) means that the Kea doesn't retry the process.

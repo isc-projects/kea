@@ -98,9 +98,13 @@ public:
         open_socket_callback_ = callback;
     }
 
+    /// @brief Flag which indicates if direct response capability is supported.
     bool direct_response_supported_;
+
 private:
-    PktFilterOpenSocketCallback open_socket_callback_{nullptr};
+
+    /// @brief The callback used when opening socket.
+    PktFilterOpenSocketCallback open_socket_callback_;
 };
 
 } // namespace isc::dhcp::test

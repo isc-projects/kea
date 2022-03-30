@@ -152,9 +152,9 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
     // Set the callbacks which are called when the socket fails to open
     // for some specific interface.
-    
+
     // If the config requires the binding of all sockets, then the error
-    // callback is null - an exception is thrown on failure. 
+    // callback is null - an exception is thrown on failure.
     IfaceMgrErrorMsgCallback error_callback = nullptr;
     if (!CfgIface::getServiceSocketsRequireAll()) {
         // This callback will simply log a warning message.
@@ -231,8 +231,8 @@ CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
 }
 
-std::pair<bool, uint16_t>
-CfgIface::socketOpenRetryHandler(uint16_t retries, const std::string& msg) const {
+std::pair<bool, uint64_t>
+CfgIface::socketOpenRetryHandler(uint32_t retries, const std::string& msg) const {
     bool can_retry = retries < service_sockets_max_retries_;
     if (can_retry) {
         std::stringstream msg_stream;
@@ -529,7 +529,7 @@ CfgIface::toElement() const {
 
     if (service_sockets_max_retries_ != 0) {
         result->set("service-sockets-max-retries", Element::create(static_cast<int>(service_sockets_max_retries_)));
-        // If the max retries parameter equals zero, then the wait time is not used.
+        // If the max retries parameter is zero, the wait time is not used.
         result->set("service-sockets-retry-wait-time", Element::create(static_cast<int>(service_sockets_retry_wait_time_)));
     }
 

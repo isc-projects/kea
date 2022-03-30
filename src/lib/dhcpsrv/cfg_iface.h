@@ -302,32 +302,46 @@ public:
         re_detect_ = re_detect;
     }
 
-    /// @brief Indicates that Kea must successfully bind all socket services on init
+    /// @brief Set flag that Kea must successfully bind all socket services on init.
     ///
-    /// @return true if all sockets must be bound, false otherwise 
-    bool getServiceSocketsRequireAll() const {
-        return service_socket_require_all_;
-    }
-
-    /// @brief Set flag that Kea must successfully bind all socket services on init
-    ///
-    /// @param require_all true if all sockets must be bound, false otherwise 
+    /// @param require_all true if all sockets must be bound, false otherwise.
     void setServiceSocketsRequireAll(bool require_all) {
         service_socket_require_all_ = require_all;
     }
 
-    /// @brief Set an interval between attempts to retry the socket service binding.
+    /// @brief Indicates that Kea must successfully bind all socket services on init.
     ///
-    /// @param interval Miliseconds between attempts
-    void setServiceSocketsRetryWaitTime(uint16_t interval) {
+    /// @return true if all sockets must be bound, false otherwise.
+    bool getServiceSocketsRequireAll() const {
+        return (service_socket_require_all_);
+    }
+
+    /// @brief Set the socket service binding retry interval between attempts.
+    ///
+    /// @param interval Milliseconds between attempts.
+    void setServiceSocketsRetryWaitTime(uint64_t interval) {
         service_sockets_retry_wait_time_ = interval;
     }
 
-    /// @brief Set a maximum number of attempts to bind the service sockets.
+    /// @brief Indicates the socket service binding retry interval between attempts.
     ///
-    /// @param max_retries Number of attempts. Use 0 for disable.
-    void setServiceSocketsMaxRetries(uint16_t max_retries) {
+    /// @return Milliseconds between attempts.
+    uint64_t getServiceSocketsRetryWaitTime() {
+        return (service_sockets_retry_wait_time_);
+    }
+
+    /// @brief Set a maximum number of service sockets bind attempts.
+    ///
+    /// @param max_retries Number of attempts. The value 0 disables retries.
+    void setServiceSocketsMaxRetries(uint32_t max_retries) {
         service_sockets_max_retries_ = max_retries;
+    }
+
+    /// @brief Indicates the maximum number of service sockets bind attempts.
+    ///
+    /// @return Number of attempts.
+    uint32_t getServiceSocketsMaxRetries() {
+        return (service_sockets_max_retries_);
     }
 
 private:
@@ -394,8 +408,8 @@ private:
     ///
     /// @param retries An index of opening retries
     /// @param msg Message being logged by the function.
-    /// @return true if the opening should be retried and milliseconds to wait from last attempt
-    std::pair<bool, uint16_t> socketOpenRetryHandler(uint16_t retries, const std::string& msg) const;
+    /// @return true if the opening should be retried and milliseconds to wait from last attempt.
+    std::pair<bool, uint64_t> socketOpenRetryHandler(uint32_t retries, const std::string& msg) const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;
@@ -425,10 +439,10 @@ private:
     bool service_socket_require_all_;
 
     /// @brief An interval between attempts to retry the socket service binding.
-    uint16_t service_sockets_retry_wait_time_;
+    uint64_t service_sockets_retry_wait_time_;
 
     /// @brief A maximum number of attempts to bind the service sockets.
-    uint16_t service_sockets_max_retries_;
+    uint32_t service_sockets_max_retries_;
 
     /// @brief Indicates how outbound interface is selected for relayed traffic.
     OutboundIface outbound_iface_;

@@ -626,11 +626,11 @@ std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 /// @brief This type describes the callback function invoked when an opening of
 /// a socket fails and can be retried.
 ///
-/// @param retries A number of an opening retries
+/// @param retries A number of an opening retries.
 /// @return true if an opening should be retried, false otherwise, and a wait time
-/// from the last attempt
+/// from the last attempt.
 typedef
-std::function<std::pair<bool, uint16_t>(uint16_t retries, const std::string& msg)> IfaceMgrRetryCallback;
+std::function<std::pair<bool, uint64_t>(uint32_t retries, const std::string& msg)> IfaceMgrRetryCallback;
 
 /// @brief Handles network interfaces, transmission and reception.
 ///
