@@ -15,10 +15,6 @@
 #include <dhcpsrv/subnet_id.h>
 #include <testutils/gtest_utils.h>
 
-#ifdef HAVE_CQL
-#include <cql/testutils/cql_schema.h>
-#endif
-
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
 #endif
@@ -112,37 +108,33 @@ namespace {
 ///   - Using PostgreSQL lease database backend to store leases
 ///
 /// - Configuration 10:
-///   - Simple configuration with a single subnet and single pool
-///   - Using Cassandra lease database backend to store leases
-///
-/// - Configuration 11:
 ///   - Simple configuration with a single subnet
 ///   - One in-pool reservation for a circuit-id of 'charter950'
 ///
-/// - Configuration 12:
+/// - Configuration 11:
 ///   - Simple configuration with a single subnet
 ///   - One in-pool reservation for MAC address aa:bb:cc:dd:ee:ff
 ///   - The reservations-in-subnet flag is set to true
 ///
-/// - Configuration 13:
+/// - Configuration 12:
 ///   - Simple configuration with a single subnet as in #12
 ///   - The reservations-in-subnet flag is set to false for testing that the
 ///     reservations are ignored
 ///
-/// - Configuration 14:
+/// - Configuration 13:
 ///   - Simple configuration with a single subnet
 ///   - Two host reservations, one out of the pool, another one in pool
 ///   - The reservations-in-subnet and reservations-out-of-pool flags are set to
 ///     true to test that only out of pool reservations are honored.
 ///
-/// - Configuration 15:
+/// - Configuration 14:
 ///   - Use for testing authoritative flag
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - authoritative flag is set to true, thus the server responds
 ///     with DHCPNAK to requests from unknown clients.
 ///
-/// - Configuration 16:
+/// - Configuration 15:
 ///   - Use for testing authoritative flag
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
@@ -417,24 +409,6 @@ const char* DORA_CONFIGS[] = {
 
     // Configuration 10
     "{ \"interfaces-config\": {"
-        "   \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"lease-database\": {"
-        "   \"type\": \"cql\","
-        "   \"name\": \"keatest\","
-        "   \"user\": \"keatest\","
-        "   \"password\": \"keatest\""
-        "},"
-        "\"valid-lifetime\": 600,"
-        "\"subnet4\": [ { "
-        "    \"subnet\": \"10.0.0.0/24\", "
-        "    \"id\": 1,"
-        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
-        " } ]"
-    "}",
-
-    // Configuration 11
-    "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
         "\"host-reservation-identifiers\": [ \"circuit-id\" ],"
@@ -451,7 +425,7 @@ const char* DORA_CONFIGS[] = {
         "} ]"
     "}",
 
-    // Configuration 12
+    // Configuration 11
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -471,7 +445,7 @@ const char* DORA_CONFIGS[] = {
         "} ]"
     "}",
 
-    // Configuration 13
+    // Configuration 12
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -490,7 +464,7 @@ const char* DORA_CONFIGS[] = {
         "} ]"
     "}",
 
-    // Configuration 14
+    // Configuration 13
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -514,7 +488,7 @@ const char* DORA_CONFIGS[] = {
         "} ]"
     "}",
 
-    // Configuration 15
+    // Configuration 14
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -531,7 +505,7 @@ const char* DORA_CONFIGS[] = {
         " } ]"
     "}",
 
-    // Configuration 16
+    // Configuration 15
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -548,7 +522,7 @@ const char* DORA_CONFIGS[] = {
         " } ]"
     "}",
 
-    // Configuration 17
+    // Configuration 16
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -568,7 +542,6 @@ const char* DORA_CONFIGS[] = {
         "    }"
         "]"
     "}"
-
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -1097,7 +1070,7 @@ void
 DORATest::authoritative() {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(DORA_CONFIGS[15], *client.getServer());
+    configure(DORA_CONFIGS[14], *client.getServer());
     client.includeClientId("11:22");
 
     // Try to renew an address that is outside the pool.
@@ -1211,7 +1184,7 @@ void
 DORATest::notAuthoritative() {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(DORA_CONFIGS[16], *client.getServer());
+    configure(DORA_CONFIGS[15], *client.getServer());
     client.includeClientId("11:22");
 
     // Try to renew an address that is outside the pool.
@@ -2144,7 +2117,7 @@ DORATest::reservationModeDisabled() {
     // Configure DHCP server. In this configuration the reservations flags are
     // set to false. Thus, the server should ignore the reservation for
     // this client.
-    configure(DORA_CONFIGS[13], *client.getServer());
+    configure(DORA_CONFIGS[12], *client.getServer());
     // Client requests the 10.0.0.50 address and the server should assign it
     // as it ignores the reservation in the current mode.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -2159,7 +2132,7 @@ DORATest::reservationModeDisabled() {
     ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
 
     // Reconfigure the server to respect the host reservations.
-    configure(DORA_CONFIGS[12], *client.getServer());
+    configure(DORA_CONFIGS[11], *client.getServer());
 
     // The client requests the previously allocated address again, but the
     // server should allocate the reserved address this time.
@@ -2218,7 +2191,7 @@ DORATest::reservationModeOutOfPool() {
     Dhcp4Client clientA(Dhcp4Client::SELECTING);
     clientA.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure the server to respect out of the pool reservations.
-    configure(DORA_CONFIGS[14], *clientA.getServer());
+    configure(DORA_CONFIGS[13], *clientA.getServer());
     // The client for which we have a reservation is doing 4-way exchange
     // and requests a different address than reserved. The server should
     // allocate the reserved address to this client.
@@ -2563,7 +2536,7 @@ DORATest::changingCircuitId() {
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
 
     // Configure DHCP server.
-    configure(DORA_CONFIGS[11], *client.getServer());
+    configure(DORA_CONFIGS[10], *client.getServer());
 
     // Send DHCPDISCOVER.
     boost::shared_ptr<IOAddress> requested_address(new IOAddress("10.0.0.9"));
@@ -2636,7 +2609,7 @@ DORATest::storeExtendedInfoEnabled() {
     client.setCircuitId("charter950");
 
     // Configure DHCP server.
-    configure(DORA_CONFIGS[17], *client.getServer());
+    configure(DORA_CONFIGS[16], *client.getServer());
     // Client A performs 4-way exchange and should obtain a reserved
     // address.
     ASSERT_NO_THROW_LOG(client.doDORA(boost::shared_ptr<
@@ -2684,7 +2657,7 @@ DORATest::storeExtendedInfoDisabled() {
     client.setCircuitId("charter950");
 
     // Configure DHCP server.
-    configure(DORA_CONFIGS[17], *client.getServer());
+    configure(DORA_CONFIGS[16], *client.getServer());
     // Client A performs 4-way exchange and should obtain a reserved
     // address.
     ASSERT_NO_THROW_LOG(client.doDORA(boost::shared_ptr<
@@ -2795,48 +2768,6 @@ TEST_F(DORAPgSQLTest, multiStageBootMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     // DORA_CONFIGS[9] to be used for server configuration.
     testMultiStageBoot(9);
-}
-
-#endif
-
-#ifdef HAVE_CQL
-
-// Starting tests which require Cassandra backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-cql.
-class DORACQLTest : public DORATest {
-public:
-    /// @brief Constructor.
-    ///
-    /// Recreates CQL schema for a test.
-    DORACQLTest() : DORATest() {
-        // Ensure we have the proper schema with no transient data.
-        db::test::createCqlSchema();
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Destroys CQL schema.
-    virtual ~DORACQLTest() {
-        // If data wipe enabled, delete transient data otherwise destroy the schema
-        db::test::destroyCqlSchema();
-    }
-};
-
-// Test that the client using the same hardware address but multiple
-// client identifiers will obtain multiple leases (CQL lease database).
-TEST_F(DORACQLTest, multiStageBoot) {
-    Dhcpv4SrvMTTestGuard guard(*this, false);
-    // DORA_CONFIGS[10] to be used for server configuration.
-    testMultiStageBoot(10);
-}
-
-// Test that the client using the same hardware address but multiple
-// client identifiers will obtain multiple leases (CQL lease database).
-TEST_F(DORACQLTest, multiStageBootMultiThreading) {
-    Dhcpv4SrvMTTestGuard guard(*this, true);
-    // DORA_CONFIGS[10] to be used for server configuration.
-    testMultiStageBoot(10);
 }
 
 #endif

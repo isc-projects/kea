@@ -61,8 +61,8 @@ currently supported commands are:
    useful when upgrading Kea.
 
 -  ``lease-dump`` — dumps the contents of the lease database (for MySQL or
-   PostgreSQL backends) to a CSV (comma-separated values) text file. (Support
-   for the Cassandra backend has been deprecated.)
+   PostgreSQL backends) to a CSV (comma-separated values) text file.
+
    The first line of the file contains the column names. This can be used
    as a way to switch from a database backend to a memfile backend.
    Alternatively, it can be used as a diagnostic tool, so it provides a portable
@@ -82,9 +82,6 @@ supported types are:
 -  ``pgsql`` — information is stored in a PostgreSQL relational
    database.
 
--  ``cql`` — information is stored in an Apache Cassandra database.
-   This backend is deprecated.
-
 Additional parameters may be needed, depending on the setup and
 specific operation: username, password, and database name or the
 directory where specific files are located. See the appropriate manual
@@ -102,32 +99,32 @@ backend is essential for the success of the deployment.
 
 .. table:: List of available backends
 
-   +---------------+----------------+----------------+---------------+--------------+
-   | Feature       | Memfile        | MySQL          | PostgreSQL    | CQL          |
-   |               |                |                |               | (Cassandra)  |
-   +===============+================+================+===============+==============+
-   | Status        | Stable         | Stable         | Stable        | Deprecated   |
-   |               |                |                |               |              |
-   +---------------+----------------+----------------+---------------+--------------+
-   | Data format   | CSV file       | SQL RMDB       | SQL RMDB      | NoSQL        |
-   |               |                |                |               | database     |
-   |               |                |                |               | (Cassandra)  |
-   +---------------+----------------+----------------+---------------+--------------+
-   | Leases        | yes            | yes            | yes           | yes          |
-   +---------------+----------------+----------------+---------------+--------------+
-   | Host          | no             | yes            | yes           | yes          |
-   | reservations  |                |                |               |              |
-   |               |                |                |               |              |
-   +---------------+----------------+----------------+---------------+--------------+
-   | Options       | no             | yes            | yes           | yes          |
-   | defined on    |                |                |               |              |
-   | per host      |                |                |               |              |
-   | basis         |                |                |               |              |
-   +---------------+----------------+----------------+---------------+--------------+
-   | Configuration | no             | yes            | no            | no           |
-   | backend       |                |                |               |              |
-   |               |                |                |               |              |
-   +---------------+----------------+----------------+---------------+--------------+
+   +---------------+----------------+----------------+---------------+
+   | Feature       | Memfile        | MySQL          | PostgreSQL    |
+   |               |                |                |               |
+   +===============+================+================+===============+
+   | Status        | Stable         | Stable         | Stable        |
+   |               |                |                |               |
+   +---------------+----------------+----------------+---------------+
+   | Data format   | CSV file       | SQL RMDB       | SQL RMDB      |
+   |               |                |                |               |
+   |               |                |                |               |
+   +---------------+----------------+----------------+---------------+
+   | Leases        | yes            | yes            | yes           |
+   +---------------+----------------+----------------+---------------+
+   | Host          | no             | yes            | yes           |
+   | reservations  |                |                |               |
+   |               |                |                |               |
+   +---------------+----------------+----------------+---------------+
+   | Options       | no             | yes            | yes           |
+   | defined on    |                |                |               |
+   | per host      |                |                |               |
+   | basis         |                |                |               |
+   +---------------+----------------+----------------+---------------+
+   | Configuration | no             | yes            | yes           |
+   | backend       |                |                |               |
+   |               |                |                |               |
+   +---------------+----------------+----------------+---------------+
 
 Memfile
 -------
@@ -601,106 +598,6 @@ supported:
 .. code-block:: console
 
    $ ./configure [other-options] --disable-pgsql-ssl
-
-.. _cql-database:
-
-Cassandra
----------
-
-Cassandra (sometimes referred to as CQL) is the newest backend added to Kea; initial
-development was contributed by Deutsche Telekom. The Cassandra backend
-is able to store leases, host reservations, and options defined on a
-per-host basis.
-
-.. note::
-
-  The Cassandra backend was deprecated in Kea 1.9.9. New users are discouraged from
-  using Cassandra and existing users should consider a migration strategy. See
-  :ref:`deprecated` for details.
-
-.. _cql-database-create:
-
-First-Time Creation of the Cassandra Database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When setting up the Cassandra database for the first time,
-the keyspace area within it must be created. This needs to be done
-manually; it cannot be performed by ``kea-admin``.
-
-To create the database:
-
-1. Export ``CQLSH_HOST`` environment variable:
-
-   .. code-block:: console
-
-      $ export CQLSH_HOST=localhost
-
-2. Log into CQL:
-
-   .. code-block:: console
-
-      $ cqlsh
-      cql>
-
-3. Create the CQL keyspace:
-
-   ::
-
-      cql> CREATE KEYSPACE keyspace-name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};
-
-   (``keyspace-name`` is the name chosen for the keyspace.)
-
-4. At this point, the database tables can be created.
-   To do this:
-
-   ::
-
-      cqlsh -k keyspace-name -f path-to-kea/share/kea/scripts/cql/dhcpdb_create.cql
-
-   (``path-to-kea`` is the location where Kea is installed.)
-
-It is also possible to exit Cassandra and create the tables using
-the ``kea-admin`` tool. If the tables were not created in Step 4, do so now by
-running the ``kea-admin`` tool:
-
-.. code-block:: console
-
-   $ kea-admin db-init cql -n database-name
-
-Do not do this if the tables were created in Step 4. ``kea-admin``
-implements rudimentary checks; it will refuse to initialize a database
-that contains any existing tables. To start from scratch,
-all data must be removed manually. (This process is a manual operation
-on purpose, to avoid accidentally irretrievable mistakes by ``kea-admin``.)
-
-.. _cql-upgrade:
-
-Upgrading a Cassandra Database From an Earlier Version of Kea
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Sometimes a new Kea version uses a newer database schema, so the
-existing database needs to be upgraded. This can be done using the
-``kea-admin db-upgrade`` command.
-
-To check the current version of the database, use the following command:
-
-.. code-block:: console
-
-   $ kea-admin db-version cql -n database-name
-
-(See :ref:`kea-database-version`
-for a discussion about versioning.) If the version does not match the
-minimum required for the new version of Kea (as described in the release
-notes), the database needs to be upgraded.
-
-Before upgrading, please make sure that the database is backed up. The
-upgrade process does not discard any data, but depending on the nature
-of the changes, it may be impossible to subsequently downgrade to an
-earlier version. To perform an upgrade, issue the following command:
-
-.. code-block:: console
-
-   $ kea-admin db-upgrade cql -n database-name
 
 Using Read-Only Databases With Host Reservations
 ------------------------------------------------

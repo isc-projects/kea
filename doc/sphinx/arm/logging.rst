@@ -211,8 +211,7 @@ libraries), or hook libraries (open source or premium).
    | ``kea-dhcp4.database``,          | core                   | Used to log messages           |
    | ``kea-dhcp6.database``           |                        | relating to general            |
    |                                  |                        | operations on the              |
-   |                                  |                        | relational databases           |
-   |                                  |                        | and Cassandra.                 |
+   |                                  |                        | relational databases.          |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.ddns``,              | core                   | Used by the DHCP               |
    | ``kea-dhcp6.ddns``               |                        | server to log                  |

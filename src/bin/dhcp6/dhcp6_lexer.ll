@@ -594,15 +594,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"cql\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp6Parser::make_CQL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("cql", driver.loc_);
-    }
-}
-
 \"user\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
@@ -681,39 +672,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"keyspace\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_KEYSPACE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("keyspace", driver.loc_);
-    }
-}
-
-\"consistency\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_CONSISTENCY(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("consistency", driver.loc_);
-    }
-}
-
-\"serial-consistency\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SERIAL_CONSISTENCY(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("serial-consistency", driver.loc_);
-    }
-}
-
 \"reconnect-wait-time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
@@ -760,50 +718,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_SERVE_RETRY_CONTINUE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("serve-retry-continue", driver.loc_);
-    }
-}
-
-\"request-timeout\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_REQUEST_TIMEOUT(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("request-timeout", driver.loc_);
-    }
-}
-
-\"tcp-keepalive\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_TCP_KEEPALIVE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-keepalive", driver.loc_);
-    }
-}
-
-\"tcp-nodelay\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_TCP_NODELAY(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-nodelay", driver.loc_);
-    }
-}
-
-\"contact-points\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_CONTACT_POINTS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("contact-points", driver.loc_);
     }
 }
 

@@ -9,10 +9,6 @@ if HAVE_PGSQL
 SUBDIRS += pgsql
 endif
 
-if HAVE_CQL
-SUBDIRS += cql
-endif
-
 SUBDIRS += config_backend hooks dhcp http config stats
 
 if HAVE_SYSREPO

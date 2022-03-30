@@ -60,8 +60,6 @@
        time.
      - <b>postgresql</b> - Use PostgreSQL as the database. Must be enabled
        at compilation time.
-     - <b>cql</b> - Use Cassandra (CQL) as the database. Must be enabled at
-       compilation time.
 
   The following sections list the database-specific keywords:
 
@@ -90,20 +88,6 @@
     specified, no user ID is used - the database is assumed to be open.
 
   For details, see @ref isc::db::PgSqlConnection::openDatabase().
-
-  @subsection dhcpdb-keywords-cql Cassandra (CQL) connection string keywords
-
-  - <b>contact-points</b> - a list of comma separated IP addresses of the
-    cluster contact points>
-  - <b>port</b> - an integer specifying a connection port. If not specified, the
-    default port will be used.
-  - <b>user</b> - a database user name under which the database is accessed. If
-    not specified, no user name is used - the database is assumed to be open.
-  - <b>password</b> - an optional password if required for connection
-  - <b>keyspace</b> - an optional keyspace. If not specified, the default value
-    of 'keatest' will be used.
-
-  For details, see @ref isc::db::CqlConnection::openDatabase().
 
   @subsection infinite-valid-lifetime Infinite Valid Lifetime
 

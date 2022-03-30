@@ -10,9 +10,6 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -61,9 +58,6 @@ endif
 if HAVE_PGSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
-if HAVE_CQL
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
 
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 
@@ -84,9 +78,6 @@ kea_dhcp6_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 kea_dhcp6_LDFLAGS += $(PGSQL_LIBS)
-endif
-if HAVE_CQL
-kea_dhcp6_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)

@@ -172,7 +172,7 @@ TEST(ConfigControlInfo, copyAndEquality) {
 
     // Make a third instance with a different db.
     ConfigControlInfo ctl3;
-    ASSERT_NO_THROW(ctl1.addConfigDatabase("type=cql host=other.org"));
+    ASSERT_NO_THROW(ctl1.addConfigDatabase("type=mysql host=other.org"));
 
     // They should not equal.
     EXPECT_FALSE(ctl3.equals(ctl1));

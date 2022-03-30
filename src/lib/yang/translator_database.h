@@ -28,15 +28,8 @@ namespace yang {
 ///     "lfc-interval": <lfc interval>,
 ///     "readonly": <readonly flag>,
 ///     "connect-timeout": <connect timeout>,
-///     "contact-points": <contact points>,
-///     "keyspace": <keyspace>,
 ///     "max-reconnect-tries": <maximum reconnect tries>,
 ///     "reconnect-wait-time": <reconnect wait time>,
-///     "request-timeout": <request timeout>,
-///     "tcp-keepalive": <TCP keepalive>,
-///     "tcp-nodelay": <TCP nodelay flag>,
-///     "consistency": <consistency level>,
-///     "serial-consistency": <serial consistency level>,
 ///     "max-row-errors": <maximum row errors>,
 ///     "user-context": { <json map> },
 ///     "comment": <comment>
@@ -56,15 +49,8 @@ namespace yang {
 ///    +--rw lfc-interval?          uint32
 ///    +--rw readonly?              boolean
 ///    +--rw connect-timeout?       uint32
-///    +--rw contact-points?        string
-///    +--rw keyspace?              string
 ///    +--rw max-reconnect-tries?   uint32
 ///    +--rw reconnect-wait-time?   uint32
-///    +--rw request-timeout?       uint32
-///    +--rw tcp-keepalive?         uint32
-///    +--rw tcp-nodelay?           boolean
-///    +--rw consistency?           string
-///    +--rw serial-consistency?    string
 ///    +--rw max-row-errors?        uint32
 ///    +--rw on-fail?               string
 ///    +--rw user-context?          user-context

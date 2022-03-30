@@ -245,7 +245,7 @@ Lease Storage
 
 All leases issued by the server are stored in the lease database.
 There are four database backends available: memfile
-(the default), MySQL, PostgreSQL, and Cassandra (deprecated).
+(the default), MySQL, PostgreSQL.
 
 Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -382,7 +382,7 @@ Lease Database Configuration
 
 Lease database configuration is controlled through the
 ``Dhcp6``/``lease-database`` parameters. The database type must be set to
-``memfile``, ``mysql``, or ``postgresql``, or ``cql``, e.g.:
+``memfile``, ``mysql``, or ``postgresql``, e.g.:
 
 ::
 
@@ -390,20 +390,13 @@ Lease database configuration is controlled through the
 
 Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
-:ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
-:ref:`cql-database-create`).
+:ref:`mysql-database-create` or :ref:`pgsql-database-create`).
 
 For MySQL or PostgreSQL:
 
 ::
 
    "Dhcp6": { "lease-database": { "name": "database-name" , ... }, ... }
-
-For Cassandra:
-
-::
-
-   "Dhcp6": { "lease-database": { "keyspace": "database-name" , ... }, ... }
 
 If the database is located on a different system from the DHCPv6 server,
 the database host name must also be specified:
@@ -412,24 +405,12 @@ the database host name must also be specified:
 
    "Dhcp6": { "lease-database": { "host": "remote-host-name", ... }, ... }
 
-For Cassandra, multiple contact points can be provided:
-
-::
-
-   "Dhcp6": { "lease-database": { "contact-points": "remote-host-name[, ...]" , ... }, ... }
-
 Normally, the database is on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
 
 ::
 
    "Dhcp6": { "lease-database": { "host" : "", ... }, ... }
-
-For Cassandra:
-
-::
-
-   "Dhcp6": { "lease-database": { "contact-points": "", ... }, ... }
 
 Should the database use a port other than the default, it may be
 specified as well:
@@ -461,9 +442,7 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only). For Cassandra, Kea uses an interface that connects to
-all nodes in a cluster at the same time. Any connectivity issues should
-be handled by internal Cassandra mechanisms.
+only).
 
 The number of milliseconds the server waits between attempts to
 reconnect to the lease database after connectivity has been lost may
@@ -475,7 +454,7 @@ also be specified:
 
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
-loss of connectivity. The default value for Cassandra is 2000 ms.
+loss of connectivity.
 
 ::
 
@@ -512,13 +491,6 @@ The possible values are:
    exclusively as a configuration tool.
 
 The host parameter is used by the MySQL and PostgreSQL backends.
-Cassandra has a concept of contact points that can be used to
-contact the cluster, instead of a single IP or hostname. It takes a
-list of comma-separated IP addresses, which may be specified as:
-
-::
-
-    "Dhcp6": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
 
 Finally, the credentials of the account under which the server will
 access the database should be set:
@@ -533,14 +505,6 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
 
-.. _cassandra-database-configuration6:
-
-Cassandra-Specific Parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The parameters are the same for both DHCPv4 and DHCPv6. See
-:ref:`cassandra-database-configuration4` for details.
-
 .. _hosts6-storage:
 
 Hosts Storage
@@ -552,7 +516,7 @@ lease database. In fact, the Kea server opens independent connections for
 each purpose, be it lease or hosts information, which gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
-supported hosts database types are MySQL, PostgreSQL, and Cassandra.
+supported hosts database types are MySQL and PostgreSQL.
 
 The following configuration can be used to configure a
 connection to MySQL:
@@ -650,9 +614,7 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only). For Cassandra, Kea uses an interface that connects to
-all nodes in a cluster at the same time. Any connectivity issues should
-be handled by internal Cassandra mechanisms.
+only).
 
 The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
@@ -664,7 +626,7 @@ be specified:
 
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
-loss of connectivity. The default value for Cassandra is 2000 ms.
+loss of connectivity.
 
 ::
 
@@ -715,8 +677,6 @@ entry, as in:
 ::
 
    "Dhcp6": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
-
-For Cassandra-specific parameters, see :ref:`cassandra-database-configuration4`.
 
 If the same host is configured both in-file and in-database, Kea does not issue a warning,
 as it would if both were specified in the same data source.
@@ -4032,15 +3992,15 @@ reserved class has been also assigned.
    :ref:`subnet-selection-with-class-reservations6`
    for specific use cases.
 
-.. _reservations6-mysql-pgsql-cql:
+.. _reservations6-mysql-pgsql:
 
-Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
-------------------------------------------------------------
+Storing Host Reservations in MySQL or PostgreSQL
+------------------------------------------------
 
-Kea can store host reservations in MySQL, PostgreSQL, or
-Cassandra. See :ref:`hosts6-storage` for information on
-how to configure Kea to use reservations stored in MySQL, PostgreSQL, or
-Cassandra. Kea provides a dedicated hook for managing reservations in a
+Kea can store host reservations in MySQL or PostgreSQL.
+See :ref:`hosts6-storage` for information on how to
+configure Kea to use reservations stored in MySQL or PostgreSQL.
+Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`host-cmds` provides detailed information.
 The `Kea wiki
 <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
@@ -4664,7 +4624,7 @@ allows such reservations to be created both in the Kea configuration
 file and in the host database backend, via the ``host-cmds`` hook library.
 
 This setting is currently supported by the most popular host database
-backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
+backends, i.e. MySQL and PostgreSQL.
 Host Cache (see :ref:`hooks-host-cache`), or the RADIUS backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
 to ``false`` when any of these three backends is in use yields a
@@ -6562,7 +6522,7 @@ option is actually needed. An example configuration looks as follows:
                "comment": "Those v4-v6 migration technologies are tricky.",
                "experimental": true,
                "billing-department": 42,
-               "contact-points": [ "Alice", "Bob" ]
+               "contacts": [ "Alice", "Bob" ]
            }
        } ]
    }

@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# This auxiliary script is considered temporary in nature. It will not be
-# necessary once the DataStax cpp-driver project accepts proper cql_config
-# script.
-
-# This variable should point to the directory where cpp-driver is compiled.
-# You can download cpp-driver sources from https://github.com/datastax/cpp-driver
-export CPP_DRIVER_PATH="/please/specify/path/to/cpp-driver/in/cql_config_defines.sh"

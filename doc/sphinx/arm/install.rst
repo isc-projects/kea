@@ -95,12 +95,6 @@ the system:
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local PostgreSQL server.
 
--  The cpp-driver from DataStax is needed when using the ``--with-cql``
-   configuration flag to build Kea with the Cassandra database backend.
-   In this case, an instance of the Cassandra server running locally
-   or on a machine reachable over a network is required. Note that running
-   the unit tests requires a local Cassandra server.
-
 -  The FreeRADIUS client library is required to connect to a RADIUS server.
    This is specified using the ``--with-freeradius`` configuration switch.
 
@@ -211,10 +205,6 @@ options. Some commonly used options are:
  - ``--with-pgsql``
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
-
- - ``--with-cql``
-   Build Kea with code to allow it to store leases and host reservations
-   in a Cassandra (CQL) database. Support for Cassandra is now deprecated.
 
  - ``--with-log4cplus``
    Define the path to find the Log4cplus headers and libraries. Normally
@@ -406,14 +396,12 @@ DHCP Database Installation and Configuration
 Kea stores its leases in a lease database. The software has been written
 in a way that makes it possible to choose which database product should
 be used to store the lease information. Kea supports four
-database backends: MySQL, PostgreSQL, Cassandra[1], and memfile. To limit
-external dependencies, MySQL, PostgreSQL, and Cassandra support are
-disabled by default and only memfile is available. Support for the
-optional external database backend must be explicitly included when Kea
-is built. This section covers the building of Kea with one of the
-optional backends and the creation of the lease database.
-
-[1] As of Kea 1.9.9, support for Cassandra is deprecated.
+database backends: MySQL, PostgreSQL and memfile. To limit external
+dependencies, MySQL and PostgreSQL support are disabled by default and only
+memfile is available. Support for the optional external database backend must
+be explicitly included when Kea is built.
+This section covers the building of Kea with one of the optional backends and
+the creation of the lease database.
 
 .. note::
 
@@ -475,63 +463,6 @@ the switch:
 
 See :ref:`pgsql-database-create` for details regarding PostgreSQL
 database configuration.
-
-Building with CQL (Cassandra) Support
--------------------------------------
-
-As of Kea 1.9.9, support for Cassandra is deprecated. It is still
-available in current versions, but the support will be removed in a future
-version; new users are encouraged to choose an alternative.
-
-Install Cassandra according to the instructions for the system. The
-Cassandra project website contains useful pointers:
-https://cassandra.apache.org.
-
-If a cpp-driver package is available as binary or as source,
-simply install or build and install the package. Then build and install
-Kea as described in :ref:`installation`. To enable the
-Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), enter:
-
-.. code-block:: console
-
-   $ ./configure [other-options] --with-cql=path-to-pkg-config
-
-If ``pkg-config`` is at its standard location (and thus in the
-shell path), the path does not need to be specified. If it does not work
-(e.g. no pkg-config, package not available in pkg-config with the
-cassandra name), the ``cql_config`` script in the tools/ directory
-can still be used as described below.
-
-Download and compile cpp-driver from DataStax. For details regarding
-dependencies for building cpp-driver, see the project homepage
-https://github.com/datastax/cpp-driver.
-
-.. code-block:: console
-
-   $ git clone https://github.com/datastax/cpp-driver.git
-   $ cd cpp-driver
-   $ mkdir build
-   $ cd build
-   $ cmake ..
-   $ make
-
-Kea's cpp-driver does not include the cql_config script. A
-cql_config script is present in the tools/ directory of the Kea sources.
-Before using it, please create a cql_config_defines.sh file in the same
-directory (there is an example available in cql_config_define.sh.sample;
-copy it over to cql_config_defines.sh and edit the path
-specified in it) and change the environment variable CPP_DRIVER_PATH to
-point to the directory where the cpp-driver sources are located. Make
-sure that appropriate access rights are set on this file; it should be
-executable by the system user building Kea.
-
-Build and install Kea as described in :ref:`installation`,
-with the following modification. To enable the Cassandra (CQL) database
-code, at the "configure" step (see :ref:`configure`), enter:
-
-.. code-block:: console
-
-   $ ./configure [other-options] --with-cql=path-to-cql_config
 
 
 
@@ -632,21 +563,6 @@ Deprecated Features
 This section lists significant features that have been or will be removed. We try to
 deprecate features before removing them to signal
 to current users to plan a migration. New users should not rely on deprecated features.
-
-Cassandra (CQL) Support
------------------------
-
-Cassandra is a non-relational NoSQL database. This feature never gained much
-traction with users, particularly compared to the level of interest in and deployments of
-the alternatives, MySQL and PostgreSQL.
-
-The non-relational nature of Cassandra makes it exceedingly difficult to implement more complex
-DHCP features, such as the configuration backend. Cassandra also introduces performance degradation,
-is complicated to set up, and is an ongoing maintenance burden.
-
-Cassandra support is deprecated as of Kea 1.9.9. The feature will
-function as before in the Kea 2.0.x and 2.1.x series, but will print a warning. The
-feature will be removed entirely in a future release.
 
 Sysrepo 0.x
 -----------

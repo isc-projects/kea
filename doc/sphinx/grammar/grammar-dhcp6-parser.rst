@@ -274,16 +274,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
-                       | contact_points
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
-                       | request_timeout
-                       | tcp_keepalive
-                       | tcp_nodelay
-                       | keyspace
-                       | consistency
-                       | serial_consistency
                        | max_row_errors
                        | trust_anchor
                        | cert_file
@@ -296,7 +289,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      db_type ::= "memfile"
             | "mysql"
             | "postgresql"
-            | "cql"
 
      user ::= "user" ":" STRING
 
@@ -326,21 +318,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      max_row_errors ::= "max-row-errors" ":" INTEGER
 
-     request_timeout ::= "request-timeout" ":" INTEGER
-
-     tcp_keepalive ::= "tcp-keepalive" ":" INTEGER
-
-     tcp_nodelay ::= "tcp-nodelay" ":" BOOLEAN
-
-     contact_points ::= "contact-points" ":" STRING
-
      max_reconnect_tries ::= "max-reconnect-tries" ":" INTEGER
-
-     keyspace ::= "keyspace" ":" STRING
-
-     consistency ::= "consistency" ":" STRING
-
-     serial_consistency ::= "serial-consistency" ":" STRING
 
      trust_anchor ::= "trust-anchor" ":" STRING
 

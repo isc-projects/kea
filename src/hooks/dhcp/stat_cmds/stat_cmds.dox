@@ -41,9 +41,9 @@ constructed and shipped back to the client.
 
 This lease statistics commands interact with both the isc::dhcp::StatsMgr
 and the isc::dhcp::LeaseMgr instance.  At the time of writing this text
-(May, 2018), Kea supports four types of lease managers: memfile, MySQL,
-PostgreSQL or Cassandra. The lease statistics commands provided by this
-library provide a unified interface supported by all four of these backends.
+(May, 2018), Kea supports four types of lease managers: memfile, MySQL or
+PostgreSQL. The lease statistics commands provided by this library provide a
+unified interface supported by all four of these backends.
 
 As with other hooks, this one keeps its code in a separate namespace which
 corresponds to the file name of the library: isc::stat_cmds.

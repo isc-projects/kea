@@ -282,7 +282,6 @@ TEST(ParserTest, file) {
     configs.push_back("all-keys.json");
     configs.push_back("all-options.json");
     configs.push_back("backends.json");
-    configs.push_back("cassandra.json");
     configs.push_back("classify.json");
     configs.push_back("classify2.json");
     configs.push_back("comments.json");

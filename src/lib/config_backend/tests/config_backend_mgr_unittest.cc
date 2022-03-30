@@ -469,7 +469,7 @@ TEST_F(ConfigBackendMgrTest, getSingleProperty) {
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperty("cats",
-                                                    BackendSelector(BackendSelector::Type::CQL)),
+                                                    BackendSelector(static_cast<BackendSelector::Type>(-1))),
                  NoSuchDatabase);
 }
 
@@ -498,7 +498,7 @@ TEST_F(ConfigBackendMgrTest, getMultipleProperties) {
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",
-                                                      BackendSelector(BackendSelector::Type::CQL)),
+                                                      BackendSelector(static_cast<BackendSelector::Type>(-1))),
                  NoSuchDatabase);
 
 }
@@ -521,7 +521,7 @@ TEST_F(ConfigBackendMgrTest, getAllProperties) {
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",
-                                                      BackendSelector(BackendSelector::Type::CQL)),
+                                                      BackendSelector(static_cast<BackendSelector::Type>(-1))),
                  NoSuchDatabase);
 }
 

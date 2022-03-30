@@ -1,4 +1,0 @@
-address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context
-2001:db8::10,0x3230,30,1430694930,40,50,1,60,70,True,True,one.example.com,0x3830,90,16,0,
-2001:db8::11,null,30,1433464245,40,50,1,60,70,True,True,,0x3830,90,1,1,
-2001:db8::12,0x3231,30,1436173267,40,50,1,60,70,True,True,three.example.com,0x3830,90,4,2,

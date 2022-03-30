@@ -32,9 +32,9 @@ interface from control agent), the code receives a JSON command with
 parameters. Those are parsed and then actual operation commences.  This
 operation always interacts with an instantiation of isc::dhcp::LeaseMgr
 instance, which is Kea's way of storing leases. At the time of writing this text
-(Aug. 2017), Kea supports four types of lease managers: memfile, MySQL,
-PostgreSQL or Cassandra. The lease commands provided by this library
-provide a unified interface for those backends.
+(Aug. 2017), Kea supports four types of lease managers: memfile, MySQL or
+PostgreSQL. The lease commands provided by this library provide a unified
+interface for those backends.
 
 As with other hooks, this one also keeps its code in a separate namespace which
 corresponds to the file name of the library: isc::lease_cmds.
@@ -74,8 +74,8 @@ The lease manipulation commands were implemented to provide a convenient interfa
 for sysadmins. The primary goal was to offer a way to interact with the live
 lease database in unified way, regardless of the actual backend being used.
 
-For some backends (MySQL, PostgreSQL and Cassandra) it is possible to interact
-directly with the backend while Kea is running and possibly change its content. This
+For some backends (MySQL and PostgreSQL) it is possible to interact directly
+with the backend while Kea is running and possibly change its content. This
 ability is both powerful and dangerous. In particular, only rudimentary
 checks are enforced by the DB schemas (e.g. not possible to have two leases
 for the same address). However, it does not prevent sysadmins from making

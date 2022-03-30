@@ -261,8 +261,6 @@ the following:
    PostgreSQL:
      no
 
-   Cassandra CQL:
-     no
    Google Test:
      no
    Google Benchmark:

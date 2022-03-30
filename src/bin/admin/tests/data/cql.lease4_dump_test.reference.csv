@@ -1,4 +1,0 @@
-address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context
--1073741302,0x3230,0x3330,40,1430694930,50,True,True,one.example.com,0,
--1073741301,null,0x313233,40,1433464245,50,True,True,,1,
--1073741300,0x3232,null,40,1436173267,50,True,True,three.example.com,2,

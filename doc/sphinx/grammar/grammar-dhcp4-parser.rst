@@ -291,16 +291,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
-                       | contact_points
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
-                       | request_timeout
-                       | tcp_keepalive
-                       | tcp_nodelay
-                       | keyspace
-                       | consistency
-                       | serial_consistency
                        | max_row_errors
                        | trust_anchor
                        | cert_file
@@ -313,7 +306,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      db_type ::= "memfile"
             | "mysql"
             | "postgresql"
-            | "cql"
 
      user ::= "user" ":" STRING
 
@@ -332,20 +324,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      readonly ::= "readonly" ":" BOOLEAN
 
      connect_timeout ::= "connect-timeout" ":" INTEGER
-
-     request_timeout ::= "request-timeout" ":" INTEGER
-
-     tcp_keepalive ::= "tcp-keepalive" ":" INTEGER
-
-     tcp_nodelay ::= "tcp-nodelay" ":" BOOLEAN
-
-     contact_points ::= "contact-points" ":" STRING
-
-     keyspace ::= "keyspace" ":" STRING
-
-     consistency ::= "consistency" ":" STRING
-
-     serial_consistency ::= "serial-consistency" ":" STRING
 
      max_reconnect_tries ::= "max-reconnect-tries" ":" INTEGER
 

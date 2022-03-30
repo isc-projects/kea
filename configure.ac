@@ -824,75 +824,15 @@ if test "${pgsql_ssl}" = "yes"; then
     AC_DEFINE([HAVE_PGSQL_SSL], [1], [PostgreSQL was built with OpenSSL support])
 fi
 
-# allow building kea programs with static link to cassandra cpp-driver.
-AC_ARG_ENABLE([cql-static-lib],
-  [AS_HELP_STRING([--enable-cql-static-lib],
-    [build programs with cassandra cpp driver static library [[default=no]]])],
-    [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
-AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
-#AC_DEFINE USE_CQL_STATIC_LIB? (unused)
-
-cql_lib="cassandra"
-if test "${enable_cql_static_lib}" = "yes" ; then
-    cql_lib="${cql_lib}_static"
-fi
-
 cql_config="no"
 AC_ARG_WITH([cql],
   [AS_HELP_STRING([--with-cql[[=PATH]]],
     [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)])],
   [cql_config="$withval"])
 
-if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="$PKG_CONFIG"
-elif test "${cql_config}" != "no" ; then
-    CQL_CONFIG="${cql_config}"
+if test "${cql_config}" != "no" ; then
+    AC_MSG_ERROR([$CQL_CONFIG CAssandra is no longer supported])
 fi
-
-if test "$CQL_CONFIG" != "" ; then
-    if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
-    fi
-
-    $CQL_CONFIG --print-errors $cql_lib
-    if test $? -ne 0; then
-        AC_MSG_ERROR([$CQL_CONFIG $cql_lib failed])
-    fi
-
-    CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
-    CQL_CPPFLAGS=`$CQL_CONFIG --cflags-only-other $cql_lib`
-    CQL_LIBS=`$CQL_CONFIG --libs $cql_lib`
-    CQL_LIBS="$CQL_LIBS $CRYPTO_LIBS"
-    CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
-
-    CQL_CPPFLAGS="${CQL_CPPFLAGS} ${CQL_INCLUDEDIR}"
-    AC_SUBST(CQL_CPPFLAGS)
-    AC_SUBST(CQL_LIBS)
-
-    # Check that a simple program using CQL functions can compile and link.
-    CPPFLAGS_SAVED="$CPPFLAGS"
-    LIBS_SAVED="$LIBS"
-
-    CPPFLAGS="$CQL_CPPFLAGS $CPPFLAGS"
-    LIBS="$CQL_LIBS $LIBS"
-
-    AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <cassandra.h>],
-                             [CassCluster* cluster = cass_cluster_new();
-                              cass_cluster_free(cluster);])],
-            [AC_MSG_RESULT([checking for Cassandra CQL headers and library... yes])],
-            [AC_MSG_RESULT([checking for Cassandra CQL headers and library... no])
-             AC_MSG_ERROR([Needs Cassandra CQL library])]
-    )
-    CPPFLAGS=$CPPFLAGS_SAVED
-    LIBS=$LIBS_SAVED
-
-    # Note that CQL is present in the config.h file
-    AC_DEFINE([HAVE_CQL], [1], [CQL is present])
-fi
-
-# ... and at the shell level, so Makefile.am can take action depending on this.
-AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
 # Check for sysrepo.
 AX_SYSREPO
@@ -1554,8 +1494,6 @@ AC_CONFIG_FILES([src/bin/admin/Makefile])
 AC_CONFIG_FILES([src/bin/admin/kea-admin],
                 [chmod +x src/bin/admin/kea-admin])
 AC_CONFIG_FILES([src/bin/admin/tests/Makefile])
-AC_CONFIG_FILES([src/bin/admin/tests/cql_tests.sh],
-                [chmod +x src/bin/admin/tests/cql_tests.sh])
 AC_CONFIG_FILES([src/bin/admin/tests/data/Makefile])
 AC_CONFIG_FILES([src/bin/admin/tests/admin_tests.sh],
                 [chmod +x src/bin/admin/tests/admin_tests.sh])
@@ -1726,9 +1664,6 @@ AC_CONFIG_FILES([src/lib/mysql/tests/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/tests/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/testutils/Makefile])
-AC_CONFIG_FILES([src/lib/cql/Makefile])
-AC_CONFIG_FILES([src/lib/cql/tests/Makefile])
-AC_CONFIG_FILES([src/lib/cql/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/process/Makefile])
 AC_CONFIG_FILES([src/lib/process/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
@@ -1755,17 +1690,6 @@ AC_CONFIG_FILES([src/share/Makefile])
 AC_CONFIG_FILES([src/share/api/Makefile])
 AC_CONFIG_FILES([src/share/database/Makefile])
 AC_CONFIG_FILES([src/share/database/scripts/Makefile])
-AC_CONFIG_FILES([src/share/database/scripts/cql/Makefile])
-AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh],
-                [chmod +x src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh],
-                [chmod +x src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh],
-                [chmod +x src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh],
-                [chmod +x src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh])
-AC_CONFIG_FILES([src/share/database/scripts/cql/wipe_data.sh],
-                [chmod +x src/share/database/scripts/cql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/Makefile])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_001.0_to_002.0.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_001.0_to_002.0.sh])
@@ -2018,22 +1942,6 @@ else
 cat >> config.report << END
 
 PostgreSQL:
-  no
-END
-fi
-
-if test "$CQL_CPPFLAGS" != "" ; then
-cat >> config.report << END
-
-Cassandra CQL (deprecated):
-  CQL_VERSION:     ${CQL_VERSION}
-  CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
-  CQL_LIBS:        ${CQL_LIBS}
-END
-else
-cat >> config.report << END
-
-Cassandra CQL:
   no
 END
 fi

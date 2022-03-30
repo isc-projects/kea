@@ -65,7 +65,7 @@ const uint8_t AUTH_KEY_LEN = 16;
 /// @brief Maximum length of authentication keys (coded in hexadecimal).
 const size_t TEXT_AUTH_KEY_LEN = AUTH_KEY_LEN * 2;
 
-/// @brief HostID (used only when storing in MySQL, PostgreSQL or Cassandra)
+/// @brief HostID (used only when storing in MySQL or PostgreSQL backends)
 typedef uint64_t HostID;
 
 /// @brief Authentication keys.
@@ -665,13 +665,13 @@ public:
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
-    /// @brief Sets Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
+    /// @brief Sets Host ID (primary key in MySQL and PostgreSQL backends)
     /// @param id HostId value
     void setHostId(HostID id) {
         host_id_ = id;
     }
 
-    /// @brief Returns Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
+    /// @brief Returns Host ID (primary key in MySQL and PostgreSQL backends)
     /// @return id HostId value (or 0 if not set)
     HostID getHostId() const {
         return (host_id_);
@@ -757,7 +757,7 @@ private:
     std::string boot_file_name_;
 
     /// @brief HostID (a unique identifier assigned when the host is stored in
-    ///     MySQL, PostgreSQL or Cassandra)
+    /// MySQL or PostgreSQL backends)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.

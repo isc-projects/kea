@@ -52,15 +52,12 @@ DbAccessParser::parse(std::string& access_string,
     int64_t port = 0;
     int64_t max_reconnect_tries = 0;
     int64_t reconnect_wait_time = 0;
-    int64_t request_timeout = 0;
-    int64_t tcp_keepalive = 0;
     int64_t max_row_errors = 0;
 
     // 2. Update the copy with the passed keywords.
     for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
         try {
             if ((param.first == "persist") ||
-                (param.first == "tcp-nodelay") ||
                 (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
@@ -85,16 +82,6 @@ DbAccessParser::parse(std::string& access_string,
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(reconnect_wait_time);
 
-            } else if (param.first == "request-timeout") {
-                request_timeout = param.second->intValue();
-                values_copy[param.first] =
-                    boost::lexical_cast<std::string>(request_timeout);
-
-            } else if (param.first == "tcp-keepalive") {
-                tcp_keepalive = param.second->intValue();
-                values_copy[param.first] =
-                    boost::lexical_cast<std::string>(tcp_keepalive);
-
             } else if (param.first == "port") {
                 port = param.second->intValue();
                 values_copy[param.first] =
@@ -112,10 +99,6 @@ DbAccessParser::parse(std::string& access_string,
                 // password
                 // host
                 // name
-                // contact-points
-                // keyspace
-                // consistency
-                // serial-consistency
                 // on-fail
                 // trust-anchor
                 // cert-file
@@ -149,8 +132,7 @@ DbAccessParser::parse(std::string& access_string,
     string dbtype = type_ptr->second;
     if ((dbtype != "memfile") &&
         (dbtype != "mysql") &&
-        (dbtype != "postgresql") &&
-        (dbtype != "cql")) {
+        (dbtype != "postgresql")) {
         ConstElementPtr value = database_config->get("type");
         isc_throw(DbConfigError, "unknown backend database type: " << dbtype
                   << " (" << value->getPosition() << ")");
@@ -209,24 +191,6 @@ DbAccessParser::parse(std::string& access_string,
         (reconnect_wait_time > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("reconnect-wait-time");
         isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
-                  << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << "(" << value->getPosition() << ")");
-    }
-
-    // Check that request_timeout value makes sense.
-    if ((request_timeout < 0) ||
-        (request_timeout > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("request-timeout");
-        isc_throw(DbConfigError, "request-timeout " << request_timeout
-                  << " must be in range 0...MAX_UINT32 (4294967295) "
-                  << "(" << value->getPosition() << ")");
-    }
-
-    // Check that tcp_keepalive value makes sense.
-    if ((tcp_keepalive < 0) ||
-        (tcp_keepalive > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("tcp-keepalive");
-        isc_throw(DbConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << "(" << value->getPosition() << ")");
     }

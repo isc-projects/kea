@@ -288,7 +288,7 @@ Lease Storage
 
 All leases issued by the server are stored in the lease database.
 There are four database backends available: memfile
-(the default), MySQL, PostgreSQL, and Cassandra (deprecated).
+(the default), MySQL, PostgreSQL.
 
 Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -425,7 +425,7 @@ Lease Database Configuration
 
 Lease database configuration is controlled through the
 ``Dhcp4``/``lease-database`` parameters. The database type must be set to
-``memfile``, ``mysql``, ``postgresql``, or ``cql``, e.g.:
+``memfile``, ``mysql``, or ``postgresql``, e.g.:
 
 ::
 
@@ -433,20 +433,13 @@ Lease database configuration is controlled through the
 
 Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
-:ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
-:ref:`cql-database-create`).
+:ref:`mysql-database-create` or :ref:`pgsql-database-create`).
 
 For MySQL or PostgreSQL:
 
 ::
 
    "Dhcp4": { "lease-database": { "name": "database-name" , ... }, ... }
-
-For Cassandra:
-
-::
-
-   "Dhcp4": { "lease-database": { "keyspace": "database-name" , ... }, ... }
 
 If the database is located on a different system from the DHCPv4 server,
 the database host name must also be specified:
@@ -455,24 +448,12 @@ the database host name must also be specified:
 
    "Dhcp4": { "lease-database": { "host": "remote-host-name", ... }, ... }
 
-For Cassandra, multiple contact points can be provided:
-
-::
-
-    "Dhcp4": { "lease-database": { "contact-points": "remote-host-name[, ...]" , ... }, ... }
-
 Normally, the database is on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
 
 ::
 
    "Dhcp4": { "lease-database": { "host" : "", ... }, ... }
-
-For Cassandra:
-
-::
-
-    "Dhcp4": { "lease-database": { "contact-points": "", ... }, ... }
 
 Should the database use a port other than the default, it may be
 specified as well:
@@ -504,9 +485,7 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only). For Cassandra, Kea uses an interface that connects to
-all nodes in a cluster at the same time. Any connectivity issues should
-be handled by internal Cassandra mechanisms.
+only).
 
 The number of milliseconds the server waits between attempts to
 reconnect to the lease database after connectivity has been lost may
@@ -518,7 +497,7 @@ also be specified:
 
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
-loss of connectivity. The default value for Cassandra is 2000 ms.
+loss of connectivity.
 
 ::
 
@@ -555,13 +534,6 @@ The possible values are:
    exclusively as a configuration tool.
 
 The host parameter is used by the MySQL and PostgreSQL backends.
-Cassandra has a concept of contact points that can be used to
-contact the cluster, instead of a single IP or hostname. It takes a
-list of comma-separated IP addresses, which may be specified as:
-
-::
-
-    "Dhcp4": { "lease-database": { "contact-points" : "192.0.2.1,192.0.2.2", ... }, ... }
 
 Finally, the credentials of the account under which the server will
 access the database should be set:
@@ -576,82 +548,6 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
 
-.. _cassandra-database-configuration4:
-
-Cassandra-Specific Parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Cassandra backend is configured slightly differently. Cassandra has
-a concept of contact points that can be used to contact the cluster,
-instead of a single IP or hostname. It takes a list of comma-separated
-IP addresses, which may be specified as:
-
-::
-
-   "Dhcp4": {
-       "lease-database": {
-           "type": "cql",
-           "contact-points": "ip-address1, ip-address2 [,...]",
-           ...
-       },
-       ...
-   }
-
-Cassandra also supports a number of optional parameters:
-
--  ``reconnect-wait-time`` - governs how long Kea waits before
-   attempting to reconnect. Expressed in milliseconds. The default is
-   2000 [ms].
-
--  ``connect-timeout`` - sets the timeout for connecting to a node.
-   Expressed in milliseconds. The default is 5000 [ms].
-
--  ``request-timeout`` - sets the timeout for waiting for a response
-   from a node. Expressed in milliseconds. The default is 12000 [ms].
-
--  ``tcp-keepalive`` - governs the TCP keep-alive mechanism. Expressed
-   in seconds of delay. If the parameter is not present, the mechanism
-   is disabled.
-
--  ``tcp-nodelay`` - enables/disables Nagle's algorithm on connections.
-   The default is ``true``.
-
--  ``consistency`` - configures the consistency level. The default is
-   ``quorum``. Supported values are: ``any``, ``one``, ``two``, ``three``, ``quorum``, ``all``,
-   ``local-quorum``, ``each-quorum``, ``serial``, ``local-serial``, and ``local-one``. See
-   `Cassandra
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`__
-   for more details.
-
--  ``serial-consistency`` - configures the serial consistency level, which
-   manages lightweight transaction isolation. The default is ``serial``.
-   Supported values are: ``any``, ``one``, ``two``, ``three``, ``quorum``, ``all``, ``local-quorum``,
-   ``each-quorum``, ``serial``, ``local-serial``, and ``local-one``. See `Cassandra serial
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`__
-   for more details.
-
-For example, a complex Cassandra configuration with most parameters
-specified could look as follows:
-
-::
-
-   "Dhcp4": {
-     "lease-database": {
-         "type": "cql",
-         "keyspace": "keatest",
-         "contact-points": "192.0.2.1, 192.0.2.2, 192.0.2.3",
-         "port": 9042,
-         "reconnect-wait-time": 2000,
-         "connect-timeout": 5000,
-         "request-timeout": 12000,
-         "tcp-keepalive": 1,
-         "tcp-nodelay": true
-       },
-       ...
-   }
-
-Similar parameters can be specified for the hosts database.
-
 .. _hosts4-storage:
 
 Hosts Storage
@@ -663,8 +559,7 @@ lease database. In fact, the Kea server opens independent connections for
 each purpose, be it lease or hosts information, which gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
-supported hosts database types are MySQL, PostgreSQL, and Cassandra,
-although support for Cassandra has been deprecated.
+supported hosts database types are MySQL and PostgreSQL.
 
 The following configuration can be used to configure a
 connection to MySQL:
@@ -762,9 +657,7 @@ If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of 0 (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
-only). For Cassandra, Kea uses an interface that connects to
-all nodes in a cluster at the same time. Any connectivity issues should
-be handled by internal Cassandra mechanisms.
+only).
 
 The number of milliseconds the server waits between attempts to
 reconnect to the host database after connectivity has been lost may also
@@ -776,7 +669,7 @@ be specified:
 
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
-loss of connectivity. The default value for Cassandra is 2000 ms.
+loss of connectivity.
 
 ::
 
@@ -827,8 +720,6 @@ entry, as in:
 ::
 
    "Dhcp4": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
-
-For Cassandra-specific parameters, see :ref:`cassandra-database-configuration4`.
 
 If the same host is configured both in-file and in-database, Kea does not issue a warning,
 as it would if both were specified in the same data source.
@@ -4653,15 +4544,15 @@ reserved class has been also assigned.
    :ref:`subnet-selection-with-class-reservations4`
    for specific use cases.
 
-.. _reservations4-mysql-pgsql-cql:
+.. _reservations4-mysql-pgsql:
 
-Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
-------------------------------------------------------------
+Storing Host Reservations in MySQL or PostgreSQL
+------------------------------------------------
 
-Kea can store host reservations in MySQL, PostgreSQL, or
-Cassandra. See :ref:`hosts4-storage` for information on how to
-configure Kea to use reservations stored in MySQL, PostgreSQL, or
-Cassandra. Kea provides a dedicated hook for managing reservations in a
+Kea can store host reservations in MySQL or PostgreSQL.
+See :ref:`hosts4-storage` for information on how to
+configure Kea to use reservations stored in MySQL or PostgreSQL.
+Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`host-cmds` provides detailed information.
 The `Kea wiki
 <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
@@ -5300,7 +5191,7 @@ for the same IP address within a given subnet. Setting this parameter to
 file and in the host database backend, via the ``host-cmds`` hook library.
 
 This setting is currently supported by the most popular host database
-backends, i.e. MySQL and PostgreSQL. It is not supported for Cassandra,
+backends, i.e. MySQL and PostgreSQL.
 Host Cache (see :ref:`hooks-host-cache`), or the RADIUS backend
 (see :ref:`hooks-radius`). An attempt to set ``ip-reservations-unique``
 to ``false`` when any of these three backends is in use yields a

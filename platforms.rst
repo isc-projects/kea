@@ -107,11 +107,6 @@ Some optional features of Kea have additional dependencies.
    requires PostgreSQL headers and libraries. This is an optional
    dependency; Kea can be built without PostgreSQL support.
 
--  To store lease information in a Cassandra database (CQL),
-   Kea requires Cassandra headers and libraries. This is an optional
-   dependency; Kea can be built without Cassandra support. (Cassandra
-   support is deprecated.)
-
 -  Integration with RADIUS is provided in Kea via the hook library
    available to ISC's paid support customers. Use of this library requires
    the FreeRADIUS-client library to be present on the system where Kea

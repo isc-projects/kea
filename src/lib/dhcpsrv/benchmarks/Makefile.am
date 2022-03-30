@@ -35,11 +35,6 @@ run_benchmarks_SOURCES += pgsql_lease_mgr_benchmark.cc
 run_benchmarks_SOURCES += pgsql_host_data_source_benchmark.cc
 endif
 
-if HAVE_CQL
-run_benchmarks_SOURCES += cql_lease_mgr_benchmark.cc
-run_benchmarks_SOURCES += cql_host_data_source_benchmark.cc
-endif
-
 run_benchmarks_CPPFLAGS  = $(AM_CPPFLAGS) $(BENCHMARK_INCLUDES) $(BENCHMARK_CPPFLAGS)
 
 if HAVE_MYSQL
@@ -48,10 +43,6 @@ endif
 
 if HAVE_PGSQL
 run_benchmarks_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
-
-if HAVE_CQL
-run_benchmarks_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
 run_benchmarks_CXXFLAGS = $(AM_CXXFLAGS)
@@ -64,10 +55,6 @@ endif
 
 if HAVE_PGSQL
 run_benchmarks_LDFLAGS += $(PGSQL_LIBS)
-endif
-
-if HAVE_CQL
-run_benchmarks_LDFLAGS += $(CQL_LIBS)
 endif
 
 run_benchmarks_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
@@ -90,10 +77,6 @@ if HAVE_PGSQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 endif
 
-if HAVE_CQL
-run_benchmarks_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
-endif
-
 run_benchmarks_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -108,10 +91,6 @@ endif
 
 if HAVE_PGSQL
 run_benchmarks_LDADD += $(PGSQL_LIBS)
-endif
-
-if HAVE_CQL
-run_benchmarks_LDADD += $(CQL_LIBS)
 endif
 
 run_benchmarks_LDADD += $(LOG4CPLUS_LIBS)

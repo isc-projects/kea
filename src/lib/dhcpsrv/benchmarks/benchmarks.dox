@@ -22,15 +22,13 @@ $ make
 
 The benchmarks are built in @b src/lib/dhcpsrv/benchmarks directory.
 Note that the benchmarks are backend-specific, so please make sure you
-enable the backends you want to measure (See --with-mysql,
---with-pgsql, --with-cql parameters for configure). Once the
-benchmark is built, you can run specific benchmarks. Make sure you
-have the environment ready for use, i.e. the actual database backend
-is set up, the DB or keyspace is created. The setup is the same as for
-running unit-tests. DB name or keyspace should be keatest, and
-username keatest, password keatest should give you full write access
-to the database. Any data present in the DB before the tests will be
-removed.
+enable the backends you want to measure (See --with-mysql and --with-pgsql
+parameters for configure). Once the benchmark is built, you can run specific
+benchmarks. Make sure you have the environment ready for use, i.e. the actual
+database backend is set up, the DB is created. The setup is the same
+as for running unit-tests. DB name should be keatest, and username
+keatest, password keatest should give you full write access to the database.
+Any data present in the DB before the tests will be removed.
 
 To get a list of available benchmarks, use the following command:
 
@@ -47,8 +45,8 @@ specify its name. Wildcards are supported:
 # This will run one specific benchmark
 $ ./run-benchmarks --benchmark_filter=MemfileLeaseMgrBenchmark/insertLeases4/512
 
-# This will run all benchmarks related to Cassandra:
-$ ./run-benchmarks --benchmark_filter=CqlHostDataSourceBenchmark
+# This will run all benchmarks related to MySql:
+$ ./run-benchmarks --benchmark_filter=MySqlHostDataSourceBenchmark
 
 @endcode
 

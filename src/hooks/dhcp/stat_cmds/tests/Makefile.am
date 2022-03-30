@@ -12,10 +12,6 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
-
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -72,9 +68,6 @@ stat_cmds_unittests_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 stat_cmds_unittests_LDFLAGS += $(PGSQL_LIBS)
-endif
-if HAVE_CQL
-stat_cmds_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 
 endif

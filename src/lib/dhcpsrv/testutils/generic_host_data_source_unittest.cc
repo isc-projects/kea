@@ -409,14 +409,10 @@ GenericHostDataSourceTest::testGetAll4() {
     // Make sure we got something back.
     ASSERT_EQ(4, from_hds.size());
 
-    // Then let's check that what we got seems correct.
-    // There is no ORDER BY in Cassandra so skip it.
-    if (hdsptr_->getType() != "cql") {
-        HostDataSourceUtils::compareHosts(host1, from_hds[0]);
-        HostDataSourceUtils::compareHosts(host2, from_hds[1]);
-        HostDataSourceUtils::compareHosts(host3, from_hds[2]);
-        HostDataSourceUtils::compareHosts(host4, from_hds[3]);
-    }
+    HostDataSourceUtils::compareHosts(host1, from_hds[0]);
+    HostDataSourceUtils::compareHosts(host2, from_hds[1]);
+    HostDataSourceUtils::compareHosts(host3, from_hds[2]);
+    HostDataSourceUtils::compareHosts(host4, from_hds[3]);
 }
 
 void
@@ -453,14 +449,10 @@ GenericHostDataSourceTest::testGetAll6() {
     // Make sure we got something back.
     ASSERT_EQ(4, from_hds.size());
 
-    // Then let's check that what we got seems correct.
-    // There is no ORDER BY in Cassandra so skip it.
-    if (hdsptr_->getType() != "cql") {
-        HostDataSourceUtils::compareHosts(host1, from_hds[0]);
-        HostDataSourceUtils::compareHosts(host2, from_hds[1]);
-        HostDataSourceUtils::compareHosts(host3, from_hds[2]);
-        HostDataSourceUtils::compareHosts(host4, from_hds[3]);
-    }
+    HostDataSourceUtils::compareHosts(host1, from_hds[0]);
+    HostDataSourceUtils::compareHosts(host2, from_hds[1]);
+    HostDataSourceUtils::compareHosts(host3, from_hds[2]);
+    HostDataSourceUtils::compareHosts(host4, from_hds[3]);
 }
 
 void
@@ -919,8 +911,7 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -983,8 +974,7 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1019,8 +1009,7 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1083,8 +1072,7 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1119,8 +1107,7 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1188,8 +1175,7 @@ GenericHostDataSourceTest::testGetPage4All() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1257,8 +1243,7 @@ GenericHostDataSourceTest::testGetPage6All() {
     ASSERT_EQ(0, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
-    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
-    // sorted by host identifier
+    // MySql and PostgreSql) so the hosts must be sorted by host identifier
     std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
 
     // Verify we got what we expected.
@@ -1535,12 +1520,6 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Verify that the values returned are proper.
     int i = 0;
-    if (hdsptr_->getType() == "cql") {
-        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
-        // are eventually implemented as ordered in the Cassandra host data
-        // source.
-        std::sort(all_by_addr.begin(), all_by_addr.end(), compareHostsForSort4);
-    }
     for (ConstHostCollection::const_iterator it = all_by_addr.begin();
          it != all_by_addr.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -1554,12 +1533,6 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Check that the returned values are as expected.
     i = 0;
-    if (hdsptr_->getType() == "cql") {
-        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
-        // are eventually implemented as ordered in the Cassandra host data
-        // source.
-        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort4);
-    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -1682,12 +1655,6 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
 
     // Check that the returned values are as expected.
     int i = 0;
-    if (hdsptr_->getType() == "cql") {
-        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
-        // are eventually implemented as ordered in the Cassandra host data
-        // source.
-        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort6);
-    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("0.0.0.0"), (*it)->getIPv4Reservation());
@@ -2364,8 +2331,7 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
          it != hosts.end(); it++) {
         IPv6ResrvRange range = (*it)->getIPv6Reservations();
         // This get6() call is particularly useful to test because it involves a
-        // subquery for MySQL and PostgreSQL and two separate queries for
-        // Cassandra.
+        // subquery for MySQL and PostgreSQL.
         ConstHostPtr from_hds =
             hdsptr_->get6(range.first->second.getPrefix(), 128);
         ASSERT_TRUE(from_hds);

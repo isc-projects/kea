@@ -191,66 +191,6 @@ checked_pgsql_version() {
     return "${EXIT_CODE}"
 }
 
-cql_execute() {
-    query=$1
-    shift
-
-    if test -n "${db_port+x}"; then
-        export CQLSH_PORT="${db_port}"
-    fi
-
-    if [ $# -gt 1 ]; then
-        run_command \
-            cqlsh "$@" -e "$query"
-    else
-        run_command \
-            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" \
-            ${extra_arguments} -e "${query}"
-    fi
-
-    if [ "${EXIT_CODE}" -ne 0 ]; then
-        printf "cqlsh returned with exit status %s\n" "${EXIT_CODE}"
-    fi
-
-    printf '%s\n' "${OUTPUT}"
-    return "${EXIT_CODE}"
-}
-
-cql_execute_script() {
-    file=$1
-    shift
-
-    if test -n "${db_port+x}"; then
-        export CQLSH_PORT="${db_port}"
-    fi
-
-    if [ $# -gt 1 ]; then
-        run_command \
-            cqlsh "$@" -e "$file"
-    else
-        run_command \
-            cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" \
-            ${extra_arguments} -f "${file}"
-    fi
-
-    if [ "${EXIT_CODE}" -ne 0 ]; then
-        printf "cqlsh returned with exit status %s\n" "${EXIT_CODE}"
-    fi
-
-    printf '%s\n' "${OUTPUT}"
-    return "${EXIT_CODE}"
-}
-
-cql_version() {
-    run_command \
-        cql_execute "SELECT version, minor FROM schema_version" "$@"
-    version="${OUTPUT}"
-    select_exit_code="${EXIT_CODE}"
-    version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
-    echo "$version"
-    return "${select_exit_code}"
-}
-
 # recount IPv4 leases from scratch
 _RECOUNT4_QUERY=\
 "

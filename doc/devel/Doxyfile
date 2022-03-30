@@ -873,7 +873,6 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/cfgrpt \
                          ../../src/lib/config \
                          ../../src/lib/config_backend \
-                         ../../src/lib/cql \
                          ../../src/lib/cryptolink \
                          ../../src/lib/d2srv \
                          ../../src/lib/database \

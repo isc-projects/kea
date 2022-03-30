@@ -25,7 +25,7 @@
 
     // We need to specify the database used to store leases. As of
     // September 2016, four database backends are supported: MySQL,
-    // PostgreSQL, Cassandra, and the in-memory database, Memfile.
+    // PostgreSQL and the in-memory database, Memfile.
     // We will use memfile  because it doesn't require any prior set up.
     "lease-database": {
         "type": "memfile",

@@ -54,8 +54,8 @@
 
     // Use Memfile lease database backend to store leases in a CSV file.
     // Depending on how Kea was compiled, it may also support SQL databases
-    // (MySQL and/or PostgreSQL) and even Cassandra. Those database backends
-    // require more parameters, like name, host and possibly user and password.
+    // (MySQL and/or PostgreSQL). Those database backends require more
+    // parameters, like name, host and possibly user and password.
     // There are dedicated examples for each backend. See Section 7.2.2 "Lease
     // Storage" for details.
     "lease-database": {

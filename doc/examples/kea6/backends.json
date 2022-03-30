@@ -4,7 +4,6 @@
 // - memfile
 // - MySQL
 // - PostgreSQL
-// - CQL (Cassandra) backend
 
 { "Dhcp6":
 
@@ -64,21 +63,6 @@
 //      "max-reconnect-tries": 3,
 //      "on-fail": "stop-retry-exit",
 //      "connect-timeout": 3
-//  },
-
-// 4. CQL (Cassandra) backend. Leases will be stored in Cassandra
-// database. Make sure it is up, running and properly initialized. See
-// kea-admin documentation for details on how to initialize the
-// database. The only strictly required parameters are type, keyspace
-// and contact-points. At least one contact point must be specified, but
-// more than one is required for redundancy. Make sure you specify the
-// contact points without spaces. Kea must be compiled with --with-cql
-// option to use this backend.
-//  "lease-database": {
-//      "type": "cql",
-//      "keyspace": "keatest",
-//      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
-//      "port": 9042
 //  },
 
 // Addresses will be assigned with preferred and valid lifetimes

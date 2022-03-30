@@ -135,9 +135,6 @@ BackendSelector::stringToBackendType(const std::string& type) {
     } else if (type == "postgresql") {
         return (BackendSelector::Type::POSTGRESQL);
 
-    } else if (type == "cql") {
-        return (BackendSelector::Type::CQL);
-
     } else {
         isc_throw(BadValue, "unsupported configuration backend type '" << type << "'");
     }
@@ -150,8 +147,6 @@ BackendSelector::backendTypeToString(const BackendSelector::Type& type) {
         return ("mysql");
     case BackendSelector::Type::POSTGRESQL:
         return ("postgresql");
-    case BackendSelector::Type::CQL:
-        return ("cql");
     default:
         ;
     }

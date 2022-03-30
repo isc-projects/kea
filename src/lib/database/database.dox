@@ -10,8 +10,7 @@
 @section databaseMTConsiderations Multi-Threading Consideration for Database
 
 MySQL and PostgreSQL provide connection pools which are used to make
-lease, host and legal log backends thread safe. Cassandra/CQL is
-thread safe by design.
+lease, host and legal log backends thread safe.
 
 MySQL and PostgreSQL are inter-process safe only when transactions are used
 (including the MySQL auto-transaction mode which includes queries into

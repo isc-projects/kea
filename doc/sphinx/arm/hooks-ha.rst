@@ -1107,9 +1107,9 @@ In some cases, though, it is desirable to disable lease updates and/or
 database synchronization between the active servers, if the exchange of
 information about the allocated leases is performed using some other
 mechanism. Kea supports various database types that can be used to store
-leases, including MySQL and PostgreSQL; Cassandra support is deprecated as of Kea 1.9.9. Those databases
-include built-in solutions for data replication which are often used by
-Kea administrators to provide redundancy.
+leases, including MySQL and PostgreSQL. Those databases include built-in
+solutions for data replication which are often used by Kea administrators
+to provide redundancy.
 
 The HA hook library supports such scenarios by disabling lease updates
 over the control channel and/or lease-database synchronization, leaving

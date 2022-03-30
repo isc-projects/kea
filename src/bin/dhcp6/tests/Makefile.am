@@ -121,9 +121,6 @@ endif
 if HAVE_PGSQL
 dhcp6_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_CQL
-dhcp6_unittests_LDFLAGS += $(CQL_LIBS)
-endif
 dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 dhcp6_unittests_LDADD = $(top_builddir)/src/bin/dhcp6/libdhcp6.la
@@ -147,10 +144,6 @@ endif
 if HAVE_PGSQL
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-if HAVE_CQL
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la

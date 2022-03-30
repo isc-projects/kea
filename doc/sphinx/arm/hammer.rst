@@ -83,7 +83,7 @@ To exclude the installation and generation of docs, type:
 
    $ ./hammer.py build -p local -x install docs
 
-The basic scope can be extended by mysql, pgsql, cql, native-pkg,
+The basic scope can be extended by mysql, pgsql, native-pkg,
 radius, shell, and forge.
 
 .. note::

@@ -276,7 +276,6 @@ TEST(ParserTest, file) {
                                "all-keys.json",
                                "all-options.json",
                                "backends.json",
-                               "cassandra.json",
                                "classify.json",
                                "classify2.json",
                                "comments.json",

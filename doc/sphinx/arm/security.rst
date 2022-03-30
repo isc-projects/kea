@@ -200,9 +200,9 @@ Securing Database Connections
 -----------------------------
 
 Kea can use an external MySQL or PostgreSQL database to store configuration,
-host reservations, or leases, or for forensic logging. (Support for Cassandra is deprecated.) The use
-of databases is a popular feature, but it
-is optional; it is also possible to store data in a flat file on disk.
+host reservations, or leases, or for forensic logging. The use of databases is a
+popular feature, but it is optional; it is also possible to store data in a flat
+file on disk.
 
 When using a database, Kea stores and uses the following credentials to authenticate with the database:
 username, password, host, port, and database name. **These are stored in clear text
@@ -210,11 +210,6 @@ in the configuration file.**
 
 Depending on the database configuration, it is also possible to verify whether the system user matches the
 database username. Consult the MySQL or PostgreSQL manual for details.
-
-Kea does not currently support SSL/TLS connection to databases. There is a community-contributed patch
-available for `SSL support for MySQL <https://github.com/isc-projects/kea/pull/15>`_ and
-`SSL support for Cassandra <https://github.com/isc-projects/kea/pull/118>`_. If the communication
-channel to the database is a concern, the database can be run locally on the Kea server.
 
 Information Leakage Through Logging
 -----------------------------------

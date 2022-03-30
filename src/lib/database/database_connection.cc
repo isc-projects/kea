@@ -226,8 +226,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             (keyword == "connect-timeout") ||
             (keyword == "reconnect-wait-time") ||
             (keyword == "max-reconnect-tries") ||
-            (keyword == "request-timeout") ||
-            (keyword == "tcp-keepalive") ||
             (keyword == "port") ||
             (keyword == "max-row-errors")) {
             // integer parameters
@@ -240,7 +238,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                     .arg("integer").arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
-                   (keyword == "tcp-nodelay") ||
                    (keyword == "readonly")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
@@ -255,10 +252,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "password") ||
                    (keyword == "host") ||
                    (keyword == "name") ||
-                   (keyword == "contact-points") ||
-                   (keyword == "consistency") ||
-                   (keyword == "serial-consistency") ||
-                   (keyword == "keyspace") ||
                    (keyword == "on-fail") ||
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||

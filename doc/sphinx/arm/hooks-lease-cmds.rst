@@ -4,8 +4,8 @@
 ==============================
 
 Kea allows users to store lease information in several
-backends (memfile, MySQL, PostgreSQL, and Cassandra), and this library
-provides an interface that can manipulate leases in a unified, safe way.
+backends (memfile, MySQL and PostgreSQL), and this library provides an
+interface that can manipulate leases in a unified, safe way.
 In particular, it allows things that were previously impossible: lease
 manipulation in memfile while Kea is running, sanity check changes,
 lease existence checks, and removal of all leases belonging to a
@@ -698,9 +698,7 @@ brevity.
 
 Generally, the returned list is not sorted in any particular order. Some
 lease database backends may sort leases in ascending order of addresses,
-but the controlling client must not rely on this behavior. In cases of
-highly distributed databases, such as Cassandra (now deprecated), ordering may be
-inefficient or even impossible.
+but the controlling client must not rely on this behavior.
 
 The ``count`` parameter contains the number of returned leases on the
 page.

@@ -6,22 +6,6 @@
 
 $NAMESPACE isc::db
 
-% DATABASE_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
-The server has issued a begin transaction call.
-
-% DATABASE_CQL_CONNECTION_COMMIT committing to Cassandra database on current connection.
-A commit call been issued on the server. For Cassandra, this is a no-op.
-
-% DATABASE_CQL_CONNECTION_ROLLBACK rolling back Cassandra database on current connection.
-The code has issued a rollback call. For Cassandra, this is a no-op.
-
-% DATABASE_CQL_DEALLOC_ERROR An error occurred while closing the CQL connection: %1
-This is an error message issued when a DHCP server (either V4 or V6) experienced
-and error freeing CQL database resources as part of closing its connection to
-the Cassandra database. The connection is closed as part of normal server
-shutdown. This error is most likely a programmatic issue that is highly
-unlikely to occur or negatively impact server operation.
-
 % DATABASE_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which

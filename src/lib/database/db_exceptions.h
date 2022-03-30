@@ -12,18 +12,6 @@
 namespace isc {
 namespace db {
 
-/// @brief Database statement not applied
-///
-/// Cassandra have a concept of mutation (any statement that does change the
-/// data, like INSERT, UPDATE or DELETE). Under certain conditions it may be
-/// possible that those statements may fail to apply.
-class StatementNotApplied : public Exception {
-public:
-    StatementNotApplied(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {
-    }
-};
-
 /// @brief Multiple lease records found where one expected
 class MultipleRecords : public Exception {
 public:

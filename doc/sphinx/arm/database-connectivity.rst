@@ -82,5 +82,3 @@ Currently the support for each database is:
 -  PostgreSQL only uses the configuration to enable the SSL/TLS support
    in the client library (libpq). Anything else must be done in the
    PostgreSQL local configuration.
-
--  Cassandra/CQL does not support this.

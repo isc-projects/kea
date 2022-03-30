@@ -8,10 +8,6 @@
 namespace isc {
 namespace db {
 
-extern const isc::log::MessageID DATABASE_CQL_CONNECTION_BEGIN_TRANSACTION;
-extern const isc::log::MessageID DATABASE_CQL_CONNECTION_COMMIT;
-extern const isc::log::MessageID DATABASE_CQL_CONNECTION_ROLLBACK;
-extern const isc::log::MessageID DATABASE_CQL_DEALLOC_ERROR;
 extern const isc::log::MessageID DATABASE_INVALID_ACCESS;
 extern const isc::log::MessageID DATABASE_MYSQL_COMMIT;
 extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR;

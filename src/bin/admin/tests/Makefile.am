@@ -4,7 +4,6 @@ SUBDIRS = data .
 EXTRA_DIST  =
 EXTRA_DIST += dhcpdb_create_1.0.mysql
 EXTRA_DIST += dhcpdb_create_1.0.pgsql
-EXTRA_DIST += dhcpdb_create_1.0.cql
 
 # Shell tests
 SHTESTS  =
@@ -15,9 +14,6 @@ SHTESTS += mysql_tests.sh
 endif
 if HAVE_PGSQL
 SHTESTS += pgsql_tests.sh
-endif
-if HAVE_CQL
-SHTESTS += cql_tests.sh
 endif
 
 # Run tests on "make check".

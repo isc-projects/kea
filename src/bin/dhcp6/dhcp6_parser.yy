@@ -67,7 +67,6 @@ using namespace std;
   MEMFILE "memfile"
   MYSQL "mysql"
   POSTGRESQL "postgresql"
-  CQL "cql"
   USER "user"
   PASSWORD "password"
   HOST "host"
@@ -76,19 +75,12 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
-  CONTACT_POINTS "contact-points"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   ON_FAIL "on-fail"
   STOP_RETRY_EXIT "stop-retry-exit"
   SERVE_RETRY_EXIT "serve-retry-exit"
   SERVE_RETRY_CONTINUE "serve-retry-continue"
-  KEYSPACE "keyspace"
-  CONSISTENCY "consistency"
-  SERIAL_CONSISTENCY "serial-consistency"
-  REQUEST_TIMEOUT "request-timeout"
-  TCP_KEEPALIVE "tcp-keepalive"
-  TCP_NODELAY "tcp-nodelay"
   MAX_ROW_ERRORS "max-row-errors"
   TRUST_ANCHOR "trust-anchor"
   CERT_FILE "cert-file"
@@ -923,16 +915,9 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
-                  | contact_points
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
-                  | request_timeout
-                  | tcp_keepalive
-                  | tcp_nodelay
-                  | keyspace
-                  | consistency
-                  | serial_consistency
                   | max_row_errors
                   | trust_anchor
                   | cert_file
@@ -952,7 +937,6 @@ database_type: TYPE {
 db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
        | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
        | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
-       | CQL { $$ = ElementPtr(new StringElement("cql", ctx.loc2pos(@1))); }
        ;
 
 user: USER {
@@ -1046,64 +1030,10 @@ max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.stack_.back()->set("max-row-errors", n);
 };
 
-request_timeout: REQUEST_TIMEOUT COLON INTEGER {
-    ctx.unique("request-timeout", ctx.loc2pos(@1));
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("request-timeout", n);
-};
-
-tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
-    ctx.unique("tcp-keepalive", ctx.loc2pos(@1));
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("tcp-keepalive", n);
-};
-
-tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
-    ctx.unique("tcp-nodelay", ctx.loc2pos(@1));
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("tcp-nodelay", n);
-};
-
-contact_points: CONTACT_POINTS {
-    ctx.unique("contact-points", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("contact-points", cp);
-    ctx.leave();
-};
-
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ctx.unique("max-reconnect-tries", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
-};
-
-keyspace: KEYSPACE {
-    ctx.unique("keyspace", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("keyspace", ks);
-    ctx.leave();
-};
-
-consistency: CONSISTENCY {
-    ctx.unique("consistency", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("consistency", c);
-    ctx.leave();
-};
-
-serial_consistency: SERIAL_CONSISTENCY {
-    ctx.unique("serial-consistency", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("serial-consistency", c);
-    ctx.leave();
 };
 
 trust_anchor: TRUST_ANCHOR {

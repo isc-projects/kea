@@ -154,8 +154,6 @@ TEST(BackendSelectorTest, stringToBackendType) {
               BackendSelector::stringToBackendType("mysql"));
     EXPECT_EQ(BackendSelector::Type::POSTGRESQL,
               BackendSelector::stringToBackendType("postgresql"));
-    EXPECT_EQ(BackendSelector::Type::CQL,
-              BackendSelector::stringToBackendType("cql"));
     EXPECT_THROW(BackendSelector::stringToBackendType("unsupported"),
                  BadValue);
 }
@@ -166,8 +164,6 @@ TEST(BackendSelectorTest, backendTypeToString) {
               BackendSelector::backendTypeToString(BackendSelector::Type::MYSQL));
     EXPECT_EQ("postgresql",
               BackendSelector::backendTypeToString(BackendSelector::Type::POSTGRESQL));
-    EXPECT_EQ("cql",
-              BackendSelector::backendTypeToString(BackendSelector::Type::CQL));
 }
 
 // Tests toElement from backend selectors.

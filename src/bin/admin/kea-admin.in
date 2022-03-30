@@ -72,7 +72,7 @@ COMMAND: Currently supported operations are:
  - lease-upload: Uploads leases from a CSV file to the database.
  - stats-recount: Recounts lease statistics.
 
-BACKEND - one of the supported backends: memfile|mysql|pgsql|cql
+BACKEND - one of the supported backends: memfile|mysql|pgsql
 
 PARAMETERS: Parameters are optional in general, but may be required
             for specific operations.
@@ -307,30 +307,6 @@ pgsql_init() {
     exit 0
 }
 
-cql_init() {
-    printf 'Checking if there is a database initialized already...\n'
-
-    run_command \
-        cql_execute "DESCRIBE tables;"
-
-    # Shellcheck complaints about missing quotes and word splitting here. There
-    # is no problem here as wc -w always returns a single number.
-    # shellcheck disable=SC2046
-    if test "$(printf '%s' "${OUTPUT}" | grep -c '<empty>')" -gt 0; then
-        printf 'Creating and initializing tables using script %s...\n' "${scripts_dir}/cql/dhcpdb_create.cql"
-        cql_execute_script "${scripts_dir}/cql/dhcpdb_create.cql"
-    else
-        log_error "Expected empty database ${db_name}. Aborting, the following tables are present:
-        ${OUTPUT}"
-        exit 2
-    fi
-
-    version=$(cql_version)
-    printf "Database version reported after initialization: %s\n" "$version"
-
-    exit 0
-}
-
 ### Functions that implement database version checking commands
 memfile_version() {
     # @todo Implement this?
@@ -417,41 +393,6 @@ pgsql_upgrade() {
     done
 
     version=$(checked_pgsql_version)
-    printf "Database version reported after upgrade: %s\n" "$version"
-    exit 0
-}
-
-cql_upgrade() {
-    version=$(cql_version)
-    printf "Database version reported before upgrade: %s\n" "$version"
-
-    # Check if the scripts directory exists at all.
-    if [ ! -d ${scripts_dir}/cql ]; then
-        log_error "Invalid scripts directory: ${scripts_dir}/cql"
-        exit 1
-    fi
-
-    # Check if directory is readable.
-    if [ ! -r ${scripts_dir}/cql ]; then
-        log_error "Directory is not readable: ${scripts_dir}/cql"
-        exit 1
-    fi
-
-    # Check if there are upgrade scripts.
-    run_command \
-        find "${scripts_dir}/cql" -name 'upgrade*.sh' -type f
-    if [ "${EXIT_CODE}" -eq 0 ]; then # Upgrade scripts are present.
-        for script in "${scripts_dir}"/cql/upgrade*.sh
-        do
-            echo "Processing $script file..."
-            "${script}" -u "${db_user}" -p "${db_password}" \
-            -k "${db_name}" ${extra_arguments}
-        done
-    else
-        echo "No upgrade script available."
-    fi
-
-    version=$(cql_version)
     printf "Database version reported after upgrade: %s\n" "$version"
     exit 0
 }
@@ -603,48 +544,6 @@ pgsql_dump() {
     fi
 
     echo lease${dhcp_version} successfully dumped to "${dump_file}"
-    exit 0
-}
-
-cql_dump() {
-    # Get the query appropriate to lease version. Explicitly specify all columns
-    # so that they are returned in expected order.
-    if [ ${dhcp_version} -eq 4 ]; then
-        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context FROM lease4"
-    elif [ ${dhcp_version} -eq 6 ]; then
-        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context FROM lease6"
-    else
-        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
-        usage
-        exit 1
-    fi
-
-    # Check if file was specified.
-    if [ "$dump_file" = "" ]; then
-        log_error "lease-dump: output file needs to be specified with -o"
-        usage
-        exit 1
-    fi
-
-    # If output file exists, notify user, allow them a chance to bail.
-    check_file_overwrite "$dump_file"
-
-    # Run query, check for failure.
-    run_command \
-        cql_execute "${dump_query}"
-    if [ "${EXIT_CODE}" -ne 0 ]; then
-        log_error "lease-dump: cql_execute failed, exit code ${EXIT_CODE}"
-        exit 1
-    fi
-
-    # Parse and display header.
-    echo "${OUTPUT}" | head -n 2 | tail -n 1 | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' > "$dump_file"
-
-    # Parse and display contents - done separately from header to allow sorting
-    # by address. awk script replaces head -n -2 which is not portable.
-    echo "${OUTPUT}" | tail -n +4 | awk 'n>=2 { print a[n%2] } { a[n%2]=$0; n=n+1 }' | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' | sort -r >> "$dump_file"
-
-    echo "lease${dhcp_version} successfully dumped to ${dump_file}"
     exit 0
 }
 
@@ -863,7 +762,7 @@ if [ -z "${backend}" ]; then
     usage
     exit 1
 fi
-is_in_list "${backend}" "memfile mysql pgsql cql"
+is_in_list "${backend}" "memfile mysql pgsql"
 if [ "${_inlist}" -eq 0 ]; then
     log_error "invalid backend: ${backend}"
     exit 1
@@ -1024,9 +923,6 @@ case ${command} in
             pgsql)
                 pgsql_init
                 ;;
-            cql)
-                cql_init
-                ;;
             esac
         ;;
     db-version)
@@ -1041,9 +937,6 @@ case ${command} in
             pgsql)
                 checked_pgsql_version
                 ;;
-            cql)
-                cql_version
-                ;;
             esac
         ;;
     db-upgrade)
@@ -1057,9 +950,6 @@ case ${command} in
             pgsql)
                 pgsql_upgrade
                 ;;
-            cql)
-                cql_upgrade
-                ;;
             esac
         ;;
     lease-dump)
@@ -1072,9 +962,6 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_dump
-                ;;
-            cql)
-                cql_dump
                 ;;
             esac
         ;;
@@ -1090,10 +977,6 @@ case ${command} in
             pgsql)
                 lease_upload
                 ;;
-            cql)
-                log_error 'lease-export cql is deprecated'
-                exit 1
-                ;;
             esac
         ;;
     stats-recount)
@@ -1106,9 +989,6 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_recount
-                ;;
-            cql)
-                log_info "cql does not keep lease statistics"
                 ;;
             esac
         ;;

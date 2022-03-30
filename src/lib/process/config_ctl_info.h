@@ -125,7 +125,7 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 ///     {
 ///         # first config db
 ///         # common database access parameters
-///         "type": <"mysql"|"postgresql"|"cql">,
+///         "type": <"mysql"|"postgresql">,
 ///         "name": <"db name">,
 ///         "host": <"db host name">,
 ///             :

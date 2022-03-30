@@ -48,10 +48,6 @@ if HAVE_PGSQL
 libdhcpsrvtest_la_CPPFLAGS += $(PGSQL_CPPFLAGS)
 libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
-if HAVE_CQL
-libdhcpsrvtest_la_CPPFLAGS += $(CQL_CPPFLAGS)
-libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
 
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
 if HAVE_MYSQL
@@ -60,10 +56,6 @@ endif
 if HAVE_PGSQL
 libdhcpsrvtest_la_LDFLAGS  += $(PGSQL_LIBS)
 endif
-if HAVE_CQL
-libdhcpsrvtest_la_LDFLAGS  += $(CQL_LIBS)
-endif
-
 
 libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la

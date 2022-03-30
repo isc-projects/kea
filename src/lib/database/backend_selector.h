@@ -62,7 +62,6 @@ public:
     enum class Type {
         MYSQL,
         POSTGRESQL,
-        CQL,
         UNSPEC
     };
 

@@ -33,9 +33,6 @@ endif
 if HAVE_PGSQL
 lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_CQL
-lfc_unittests_LDFLAGS += $(CQL_LIBS)
-endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 lfc_unittests_LDADD = $(top_builddir)/src/bin/lfc/liblfc.la
@@ -54,9 +51,6 @@ lfc_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 if HAVE_PGSQL
 lfc_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-if HAVE_CQL
-lfc_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
 lfc_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

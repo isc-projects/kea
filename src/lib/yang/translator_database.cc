@@ -85,14 +85,6 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     if (connect_timeout) {
         result->set("connect-timeout", connect_timeout);
     }
-    ConstElementPtr contact_points = getItem(xpath + "/contact-points");
-    if (contact_points) {
-        result->set("contact-points", contact_points);
-    }
-    ConstElementPtr keyspace = getItem(xpath + "/keyspace");
-    if (keyspace) {
-        result->set("keyspace", keyspace);
-    }
     ConstElementPtr max_reconnect = getItem(xpath + "/max-reconnect-tries");
     if (max_reconnect) {
         result->set("max-reconnect-tries", max_reconnect);
@@ -100,26 +92,6 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     ConstElementPtr reconnect_time = getItem(xpath + "/reconnect-wait-time");
     if (reconnect_time) {
         result->set("reconnect-wait-time", reconnect_time);
-    }
-    ConstElementPtr request_timeout = getItem(xpath + "/request-timeout");
-    if (request_timeout) {
-        result->set("request-timeout", request_timeout);
-    }
-    ConstElementPtr keepalive = getItem(xpath + "/tcp-keepalive");
-    if (keepalive) {
-        result->set("tcp-keepalive", keepalive);
-    }
-    ConstElementPtr nodelay = getItem(xpath + "/tcp-nodelay");
-    if (nodelay) {
-        result->set("tcp-nodelay", nodelay);
-    }
-    ConstElementPtr consistency = getItem(xpath + "/consistency");
-    if (consistency) {
-        result->set("consistency", consistency);
-    }
-    ConstElementPtr serial_consistency = getItem(xpath + "/serial-consistency");
-    if (serial_consistency) {
-        result->set("serial-consistency", serial_consistency);
     }
     ConstElementPtr max_row_errors = getItem(xpath + "/max-row-errors");
     if (max_row_errors) {
@@ -204,14 +176,6 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     if (connect_timeout) {
         setItem(xpath + "/connect-timeout", connect_timeout, SR_UINT32_T);
     }
-    ConstElementPtr contact_points = elem->get("contact-points");
-    if (contact_points) {
-        setItem(xpath + "/contact-points", contact_points, SR_STRING_T);
-    }
-    ConstElementPtr keyspace = elem->get("keyspace");
-    if (keyspace) {
-        setItem(xpath + "/keyspace", keyspace, SR_STRING_T);
-    }
     ConstElementPtr max_reconnect = elem->get("max-reconnect-tries");
     if (max_reconnect) {
         setItem(xpath + "/max-reconnect-tries", max_reconnect, SR_UINT32_T);
@@ -219,26 +183,6 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     ConstElementPtr reconnect_wait = elem->get("reconnect-wait-time");
     if (reconnect_wait) {
         setItem(xpath + "/reconnect-wait-time", reconnect_wait, SR_UINT32_T);
-    }
-    ConstElementPtr request_timeout = elem->get("request-timeout");
-    if (request_timeout) {
-        setItem(xpath + "/request-timeout", request_timeout, SR_UINT32_T);
-    }
-    ConstElementPtr keepalive = elem->get("tcp-keepalive");
-    if (keepalive) {
-        setItem(xpath + "/tcp-keepalive", keepalive, SR_UINT32_T);
-    }
-    ConstElementPtr nodelay = elem->get("tcp-nodelay");
-    if (nodelay) {
-        setItem(xpath + "/tcp-nodelay", nodelay, SR_BOOL_T);
-    }
-    ConstElementPtr consistency = elem->get("consistency");
-    if (consistency) {
-        setItem(xpath + "/consistency", consistency, SR_STRING_T);
-    }
-    ConstElementPtr serial_consistency = elem->get("serial-consistency");
-    if (serial_consistency) {
-        setItem(xpath + "/serial-consistency", serial_consistency, SR_STRING_T);
     }
     ConstElementPtr max_row_errors = elem->get("max-row-errors");
     if (max_row_errors) {

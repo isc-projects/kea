@@ -43,9 +43,6 @@ endif
 if HAVE_PGSQL
 kea_lfc_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
-if HAVE_CQL
-kea_lfc_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
 
 kea_lfc_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 
@@ -65,9 +62,6 @@ kea_lfc_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 kea_lfc_LDFLAGS += $(PGSQL_LIBS)
-endif
-if HAVE_CQL
-kea_lfc_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_lfcdir = $(pkgdatadir)

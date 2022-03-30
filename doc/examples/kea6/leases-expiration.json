@@ -12,7 +12,7 @@
 
 // We need to specify the database used to store leases. As of
 // September 2016, four database backends are supported: MySQL,
-// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// PostgreSQL and the in-memory database, Memfile.
 // We'll use memfile  because it doesn't require any prior set up.
 // Note, we're setting the maximum number of row read errors to 100,
 // (defaults to 0, meaning unlimited).

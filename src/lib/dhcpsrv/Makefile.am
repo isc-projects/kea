@@ -19,9 +19,6 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -140,11 +137,6 @@ libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 
-if HAVE_CQL
-libkea_dhcpsrv_la_SOURCES += cql_host_data_source.cc cql_host_data_source.h
-libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
-endif
-
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += resource_handler.cc resource_handler.h
 libkea_dhcpsrv_la_SOURCES += sanity_checker.cc sanity_checker.h
@@ -211,9 +203,6 @@ endif
 if HAVE_PGSQL
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
-if HAVE_CQL
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
 
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -233,9 +222,6 @@ libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 libkea_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
-endif
-if HAVE_CQL
-libkea_dhcpsrv_la_LDFLAGS += $(CQL_LIBS)
 endif
 
 # The message file should be in the distribution
@@ -376,12 +362,6 @@ libkea_dhcpsrv_include_HEADERS = \
 	timer_mgr.h \
 	utils.h \
 	writable_host_data_source.h
-
-if HAVE_CQL
-libkea_dhcpsrv_include_HEADERS += \
-	cql_host_data_source.h \
-	cql_lease_mgr.h
-endif
 
 if HAVE_MYSQL
 libkea_dhcpsrv_include_HEADERS += \
