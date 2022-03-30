@@ -91,7 +91,10 @@ def diff(dhcpdb_create_script, upgrade_script):
     if dhcpdb_create_script.endswith('.pgsql'):
         create_text = [i.replace('$', r'\$') for i in create_text]
 
-    latest_upgrade_script = find_files_in_same_directory_starting_with(upgrade_script, 'upgrade_')[-1]
+    latest_upgrade_script = find_last_file_in_same_directory_starting_with(upgrade_script, 'upgrade_')
+    if latest_upgrade_script is None:
+        print('Warning: could not find latest upgrade script.', file=sys.stderr)
+        return 0
     if upgrade_script == latest_upgrade_script:
         # Truncate the create script to the length of the upgrade script to
         # exclude chances of wrong matching.
@@ -189,6 +192,20 @@ def find_files_in_same_directory_starting_with(file, startswith):
     return sorted(files)
 
 
+def find_last_file_in_same_directory_starting_with(file: str, startswith: str):
+    """
+    Returns the last file in lexicographical order that starts with the
+    {startswith} string and that is in the same directory as {file}.
+
+    :param file: the path to the file that lives in the same directory as the desired file
+    :param startswith: the substring that the file name should start with
+    """
+    files = find_files_in_same_directory_starting_with(file, startswith)
+    if len(files) > 0:
+        return files[-1]
+    return None
+
+
 def get_files_changed_in_gitref_range(gitref_range):
     # Change to toplevel for easier management of file names.
     toplevel = execute('git rev-parse --show-toplevel')
@@ -234,11 +251,17 @@ def main(parameters):
         basename = os.path.basename(i)
         if basename.startswith('dhcpdb_create'):
             # Get the latest upgrade script.
-            latest_upgrade_script = find_files_in_same_directory_starting_with(i, 'upgrade_')[-1]
+            latest_upgrade_script = find_last_file_in_same_directory_starting_with(i, 'upgrade_')
+            if latest_upgrade_script is None:
+                print('Warning: could not find latest upgrade script.', file=sys.stderr)
+                continue
             pairs.add((i, latest_upgrade_script))
         elif basename.startswith('upgrade_'):
             # Get the dhcpdb_create script.
-            dhcpdb_create = find_files_in_same_directory_starting_with(i, 'dhcpdb_create')[-1]
+            dhcpdb_create = find_last_file_in_same_directory_starting_with(i, 'dhcpdb_create')
+            if dhcpdb_create is None:
+                print('Warning: could not find dhcpdb_create script.', file=sys.stderr)
+                continue
             pairs.add((dhcpdb_create, i))
     pairs = sorted(pairs)
 
