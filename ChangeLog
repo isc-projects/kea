@@ -1,4 +1,4 @@
-2005.	[fund]*		razvan
+2005.	[func]*		razvan
 	The support for Cassandra database backend has been removed.
 	(Gitlab #2116)
 

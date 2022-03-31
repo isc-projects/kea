@@ -32,10 +32,10 @@ a root privileges. You can install the software by running:
 
 Kea depends on C++ compiler, make, libtool, boost (at least includes, but many
 OSes require boost-system library), log4cplus and one crypto library (either
-OpenSSL or Botan) for compilation.  Optional backends (MySQL, PostgreSQL and
-Cassandra) have additional dependencies. For detailed installation directions,
-see the documentation in doc/sphinx/arm/install.rst text file 
-or on the Kea online docs: https://kea.readthedocs.io/.
+OpenSSL or Botan) for compilation.  Optional backends (MySQL and PostgreSQL)
+have additional dependencies. For detailed installation directions, see the
+documentation in doc/sphinx/arm/install.rst text file or on the Kea online
+docs: https://kea.readthedocs.io/.
 Other optional dependencies are FreeRADIUS client (this requires a subscriber
 only RADIUS hook) and Sysrepo, a system for providing YANG/NETCONF interface.
 
