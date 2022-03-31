@@ -16,6 +16,7 @@ extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPING = "COMMAND_HTTP_
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR1 = "COMMAND_PROCESS_ERROR1";
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR2 = "COMMAND_PROCESS_ERROR2";
 extern const isc::log::MessageID COMMAND_RECEIVED = "COMMAND_RECEIVED";
+extern const isc::log::MessageID COMMAND_RECEIVED_FROM = "COMMAND_RECEIVED_FROM";
 extern const isc::log::MessageID COMMAND_REGISTERED = "COMMAND_REGISTERED";
 extern const isc::log::MessageID COMMAND_RESPONSE_ERROR = "COMMAND_RESPONSE_ERROR";
 extern const isc::log::MessageID COMMAND_SOCKET_ACCEPT_FAIL = "COMMAND_SOCKET_ACCEPT_FAIL";
@@ -49,6 +50,7 @@ const char* values[] = {
     "COMMAND_PROCESS_ERROR1", "Error while processing command: %1",
     "COMMAND_PROCESS_ERROR2", "Error while processing command: %1",
     "COMMAND_RECEIVED", "Received command '%1'",
+    "COMMAND_RECEIVED_FROM", "Received command '%1' from %2",
     "COMMAND_REGISTERED", "Command %1 registered",
     "COMMAND_RESPONSE_ERROR", "Server failed to generate response for command: %1",
     "COMMAND_SOCKET_ACCEPT_FAIL", "Failed to accept incoming connection on command socket %1: %2",
