@@ -76,6 +76,9 @@ TEST_F(HttpRequestTest, minimal) {
     EXPECT_EQ("/isc/org", request_->getUri());
     EXPECT_EQ(1, request_->getHttpVersion().major_);
     EXPECT_EQ(1, request_->getHttpVersion().minor_);
+    EXPECT_TRUE(request_->getRemote().empty());
+    request_->setRemote("127.0.0.1");
+    EXPECT_EQ("127.0.0.1", request_->getRemote());
 
     EXPECT_THROW(request_->getHeaderValue("Content-Length"),
                  HttpMessageNonExistingHeader);

@@ -99,6 +99,21 @@ public:
         return (context_);
     }
 
+    /// @brief Returns remote address.
+    ///
+    /// @return remote address from HTTP connection
+    /// getRemoteEndpointAddressAsText method.
+    std::string getRemote() const {
+        return (remote_);
+    }
+
+    /// @brief Set remote address.
+    ///
+    /// @param remote Remote end-point address in textual form.
+    void setRemote(const std::string& remote) {
+        remote_ = remote;
+    }
+
     /// @brief Specifies an HTTP method allowed for the request.
     ///
     /// Allowed methods must be specified prior to calling @ref create method.

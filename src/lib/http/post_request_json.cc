@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,7 +86,11 @@ PostHttpRequestJson::parseBodyAsJson() {
    try {
        // Only parse the body if it hasn't been parsed yet.
        if (!json_ && !context_->body_.empty()) {
-           json_ = Element::fromJSON(context_->body_);
+           ElementPtr json = Element::fromJSON(context_->body_);
+           if (!remote_.empty() && (json->getType() == Element::map)) {
+               json->set("remote-address", Element::create(remote_));
+           }
+           json_ = json;
        }
     } catch (const std::exception& ex) {
         isc_throw(HttpRequestJsonError, "unable to parse the body of the HTTP"
