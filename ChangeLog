@@ -1,3 +1,7 @@
+2005.	[fund]*		razvan
+	The support for Cassandra database backend has been removed.
+	(Gitlab #2116)
+
 Kea 2.1.4 (development) released on March 30, 2022
 
 2004.	[build]		razvan
@@ -11,7 +15,7 @@ Kea 2.1.4 (development) released on March 30, 2022
 	(GitLab #2314)
 
 2002.	[bug]		tmark
-	Fixed a bug in MySql config back end that caused it to
+	Fixed a bug in MySql config backend that caused it to
 	store unspecified, client-class valid and preferred life
 	time values as zero in the database.
 	(Gitlab #2344)
@@ -19,7 +23,7 @@ Kea 2.1.4 (development) released on March 30, 2022
 2001.	[bug]		razvan
 	Fixed a bug which causes client classes with empty test
 	expressions to fail class evaluation when those classes are
-	retrieved from config back end.
+	retrieved from config backend.
 	(Gitlab #2336)
 
 2000.	[func]		fdupont
@@ -32,12 +36,12 @@ Kea 2.1.4 (development) released on March 30, 2022
 
 1999.	[func]		tmark, razvan
 	The kea-dhcp6 server fully supports using PostgreSQL for config
-	back end. This should be considered an experimental feature.
+	backend. This should be considered an experimental feature.
 	(Gitlab #2355, #2356)
 
 1998.	[func]		tmark, razvan
 	With the addition of support for client classes, the kea-dhcp4
-	server now fully supports using PostgreSQL for config back end.
+	server now fully supports using PostgreSQL for config backend.
 	(Gitlab #2322)
 
 1997.	[bug]		tmark
@@ -54,7 +58,7 @@ Kea 2.1.3 (development) released on Feb 23, 2022
 
 1995.	[func]		tmark
 	kea-dhcp4 now supports using PostgreSQL for config
-	back end for everything except client classes. The
+	backend for everything except client classes. The
 	new hook library is libdhcp_pgsql_cb.so. This should
 	be considered an experimental feature.
 	(Gitlab #95)
@@ -1435,7 +1439,7 @@ Kea 1.8.0 (stable) released on Aug 26, 2020
 
 1792.	[doc]		tmark
 	Added the Database Connectivity section to the ARM which explains
-	how Kea servers respond to back end database connectivity issues.
+	how Kea servers respond to backend database connectivity issues.
 	(Gitlab #1284)
 
 1791.	[doc]		tmark
@@ -2004,7 +2008,7 @@ Kea 1.7.4 (development) released on Jan 29, 2020
 	(Gitlab #1080)
 
 1702.	[func]		razvan
-	Update and delete operations on database back-ends use lease old
+	Update and delete operations on database backends use lease old
 	expire value (internal storage) to detect concurrent actions on
 	the same lease.
 	(Gitlab #1040)
@@ -2848,7 +2852,7 @@ Kea 1.6.0-beta (development) released on May 29, 2019
 
 1554.	[func]		tmark
 	kea-dhcp6 now uses globals, option definitions, options,
-	share-networks, and subnets from configuration back ends.
+	share-networks, and subnets from configuration backends.
 	(Gitlab #413,!288, git ff367e273ed8763b354db272c5955a78203d865e)
 
 1553.	[func]		marcin
@@ -2875,7 +2879,7 @@ Kea 1.6.0-beta (development) released on May 29, 2019
 
 1549.	[func]		tmark
 	kea-dhcp6 can now be configured to fetch data from configuration
-	back ends. It does not yet utilize the data fetched.
+	backends. It does not yet utilize the data fetched.
 	(Gitlab #104,!290, git d8a25c1ecd17ad24bdce6af19e7a42ce66d4c4f2)
 
 1548.	[func]		razvan
@@ -3687,7 +3691,7 @@ Kea 1.4.0 released on June 15, 2018
 
 1415.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now validate the schema version
-	of lease and host back ends after establishing a connection.
+	of lease and host backends after establishing a connection.
 	If a schema version does not match the version the server
 	expects, the server will emit an error log and close
 	the connection. This applies to MySQL, PostgreSQL, and Cassandra.
@@ -3786,7 +3790,7 @@ Kea 1.4.0-beta released on May 18, 2018
 
 1399.	[func]		tmark
 	Support for fetching lease allocation statistics by subnet-id
-	or subnet-id range has been added to the Cassandra back end. This
+	or subnet-id range has been added to the Cassandra backend. This
 	allows it to be used in conjunction with the Stat Cmds hooks
 	library commands for fetching shared lease statistics.
 	(Trac #5588, git 3fcfefdea5ac838936c2109ecbbbc32eabc8fdba)
@@ -5197,7 +5201,7 @@ Kea 1.1.0-beta released on August 31, 2016
 1156.	[bug]		tmark
 	Lease statistics are now recalculated during server startup and
 	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
-	back ends.  This addresses issues caused by accumulated values being lost
+	backends.  This addresses issues caused by accumulated values being lost
 	across restarts and reconfigurations making rendering values incorrect.
 	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
 
