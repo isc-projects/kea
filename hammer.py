@@ -1307,67 +1307,6 @@ def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep
                    sleep_time_after_attempt=sleep_time_after_attempt, capture=capture)
 
 
-def _install_cassandra_deb(system, revision, env, check_times):
-    """Install Cassandra and cpp-driver using DEB package."""
-    if system == 'ubuntu' and revision == '20.10':
-        # no support for ubuntu 20.10
-        return 0
-    if not os.path.exists('/usr/sbin/cassandra'):
-        cmd = 'echo "deb https://downloads.apache.org/cassandra/debian 311x main" '
-        cmd += '| sudo tee /etc/apt/sources.list.d/cassandra.sources.list'
-        execute(cmd, env=env, check_times=check_times)
-        execute('wget -qO- https://downloads.apache.org/cassandra/KEYS | sudo apt-key add -',
-                env=env, check_times=check_times)
-        _apt_update(system, revision, env=env, check_times=check_times)
-        # ca-certificates-java needs to be installed first because it fails if installed together with cassandra
-        install_pkgs('ca-certificates-java', env=env, check_times=check_times)
-        install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
-
-    if not os.path.exists('/usr/include/cassandra.h'):
-        if system == 'ubuntu' and revision == '16.04':
-            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
-                    env=env, check_times=check_times)
-            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
-                    env=env, check_times=check_times)
-        else:
-            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
-                    env=env, check_times=check_times)
-            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
-                    env=env, check_times=check_times)
-            if system == 'debian' and revision == '10':
-                install_pkgs('multiarch-support', env=env, check_times=check_times)
-
-        execute('sudo dpkg -i cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
-                env=env, check_times=check_times)
-        execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
-                env=env, check_times=check_times)
-
-
-def _install_cassandra_rpm(system, revision, env, check_times):
-    """Install Cassandra and cpp-driver using RPM package."""
-    if not os.path.exists('/usr/bin/cassandra'):
-        install_pkgs('yum-utils', env=env, check_times=check_times)
-        execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/', raise_error=False)
-        execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
-        pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
-        install_pkgs(pkgs, env=env, check_times=check_times)
-
-    execute('sudo systemctl daemon-reload')
-
-    if system == 'fedora' and int(revision) >= 30:
-        execute("echo '-Xms1G -Xmx1G' | sudo tee -a /etc/cassandra/jvm.options")
-    execute('sudo systemctl start cassandra')
-
-    if not os.path.exists('/usr/include/cassandra.h'):
-        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm')
-        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        if system == 'centos':
-            execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        else:
-            execute('sudo dnf install -y cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-
-
 def _install_freeradius_client(system, revision, features, env, check_times):
     """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
     # check if it is already installed
@@ -1460,9 +1399,6 @@ def prepare_system_local(features, check_times):
 
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
-        if 'cql' in features:
-            _install_cassandra_rpm(system, revision, env, check_times)
-
     # prepare centos
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
@@ -1524,9 +1460,6 @@ def prepare_system_local(features, check_times):
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
 
-        if 'cql' in features:
-            _install_cassandra_rpm(system, revision, env, check_times)
-
     # prepare rhel
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
@@ -1570,9 +1503,6 @@ def prepare_system_local(features, check_times):
             deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
-
-        if 'cql' in features:
-            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
@@ -1629,9 +1559,6 @@ def prepare_system_local(features, check_times):
                                  'libsysrepo-dev', 'libsysrepo-cpp-dev'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
-
-        if 'cql' in features:
-            _install_cassandra_deb(system, revision, env, check_times)
 
     # prepare debian
     elif system == 'debian':
@@ -1704,10 +1631,6 @@ def prepare_system_local(features, check_times):
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
-
-        if 'cql' in features and revision != '8':
-            # there is no libuv1 package in case of debian 8
-            _install_cassandra_deb(system, revision, env, check_times)
 
     # prepare freebsd
     elif system == 'freebsd':
@@ -1917,11 +1840,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
-    if 'cql' in features and not (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '34', '20.10']):
-        # debian 8, fedora 33/34, ubuntu 20.10 does not have all deps required
-        # combinations in (system in ['debian', 'fedora', 'ubuntu'] and revision in ['8', '33', '20.10'])
-        # will not generate errors
-        cmd += ' --with-cql=/usr/bin/pkg-config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
         if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
@@ -2500,7 +2418,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
-ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
+ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'native-pkg',
                 'radius', 'gssapi', 'netconf', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
 
 
