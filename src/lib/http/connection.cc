@@ -401,13 +401,11 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
     // Receiving is in progress, so push back the timeout.
     setupRequestTimer(transaction);
 
-    const std::string& remote = getRemoteEndpointAddressAsText();
-
     if (length != 0) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                   HTTP_DATA_RECEIVED)
             .arg(length)
-            .arg(remote);
+            .arg(getRemoteEndpointAddressAsText());
 
         transaction->getParser()->postBuffer(static_cast<void*>(transaction->getInputBufData()),
                                              length);
@@ -422,7 +420,6 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
     } else {
         try {
             // The whole message has been received, so let's finalize it.
-            transaction->getRequest()->setRemote(remote);
             transaction->getRequest()->finalize();
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
@@ -431,18 +428,18 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_CLIENT_REQUEST_RECEIVED_DETAILS)
-                .arg(remote)
+                .arg(getRemoteEndpointAddressAsText())
                 .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
 
         } catch (const std::exception& ex) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                       HTTP_BAD_CLIENT_REQUEST_RECEIVED)
-                .arg(remote)
+                .arg(getRemoteEndpointAddressAsText())
                 .arg(ex.what());
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
-                .arg(remote)
+                .arg(getRemoteEndpointAddressAsText())
                 .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
@@ -455,7 +452,7 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
-            .arg(remote);
+            .arg(getRemoteEndpointAddressAsText());
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                   HTTP_SERVER_RESPONSE_SEND_DETAILS)

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,7 @@ const char *CONTROL_RESULT = "result";
 const char *CONTROL_TEXT = "text";
 const char *CONTROL_ARGUMENTS = "arguments";
 const char *CONTROL_SERVICE = "service";
+const char *CONTROL_REMOTE_ADDRESS = "remote-address";
 
 // Full version, with status, text and arguments
 ConstElementPtr
@@ -184,7 +185,8 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     for (auto param : command_params) {
         if ((param.first != CONTROL_COMMAND) &&
             (param.first != CONTROL_ARGUMENTS) &&
-            (param.first != CONTROL_SERVICE)) {
+            (param.first != CONTROL_SERVICE) &&
+            (param.first != CONTROL_REMOTE_ADDRESS)) {
             isc_throw(CtrlChannelError, "Received command contains unsupported "
                       "parameter '" << param.first << "'");
         }
