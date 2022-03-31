@@ -325,7 +325,7 @@ TEST_F(ConfigTestIetfV6, validateIetf6) {
 TEST_F(ConfigTestKeaV4, examples4) {
     vector<string> examples = {
         "advanced.json",
-        //"all-keys-netconf.json",
+        "all-keys-netconf.json",
         "all-options.json",
         "backends.json",
         "classify.json",
@@ -365,7 +365,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
 TEST_F(ConfigTestKeaV6, examples6) {
     vector<string> examples = {
         "advanced.json",
-        //"all-keys-netconf.json",
+        "all-keys-netconf.json",
         "all-options.json",
         "backends.json",
         "classify.json",

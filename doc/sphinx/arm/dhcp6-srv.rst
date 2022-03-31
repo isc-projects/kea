@@ -382,7 +382,7 @@ Lease Database Configuration
 
 Lease database configuration is controlled through the
 ``Dhcp6``/``lease-database`` parameters. The database type must be set to
-``memfile``, ``mysql``, or ``postgresql``, e.g.:
+``memfile``, ``mysql`` or ``postgresql``, e.g.:
 
 ::
 

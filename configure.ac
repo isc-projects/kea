@@ -831,7 +831,7 @@ AC_ARG_WITH([cql],
   [cql_config="$withval"])
 
 if test "${cql_config}" != "no" ; then
-    AC_MSG_ERROR([$CQL_CONFIG CAssandra is no longer supported])
+    AC_MSG_ERROR([$CQL_CONFIG Cassandra is no longer supported])
 fi
 
 # Check for sysrepo.

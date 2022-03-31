@@ -295,19 +295,6 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "kea"
-            },
-            {
-                // Database password.
-                "password": "kea",
-
-                // Port on which the database is available.
-                "port": 9042,
-
-                // Type of the database, e.g. "mysql", "postgresql".
-                "type": "mysql",
-
-                // User name to be used to access the database.
                 "user": "kea",
 
                 // Connection reconnect wait time.
@@ -400,7 +387,7 @@
             // because non stored leases will be lost upon Kea server restart.
             "persist": true,
 
-            // Lease database backend type, i.e. "memfile", "mysql", or
+            // Lease database backend type, i.e. "memfile", "mysql" or
             // "postgresql".
             "type": "memfile"
         },

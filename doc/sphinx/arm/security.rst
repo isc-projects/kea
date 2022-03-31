@@ -199,10 +199,9 @@ Limiting user permission to read or write the Kea configuration file is an impor
 Securing Database Connections
 -----------------------------
 
-Kea can use an external MySQL or PostgreSQL database to store configuration,
-host reservations, or leases, or for forensic logging. The use of databases is a
-popular feature, but it is optional; it is also possible to store data in a flat
-file on disk.
+Kea can use an external MySQL or PostgreSQL database to store configuration, host reservations,
+or/and leases, or/and for forensic logging. The use of databases is a popular feature, but it is optional;
+it is also possible to store data in a flat file on disk.
 
 When using a database, Kea stores and uses the following credentials to authenticate with the database:
 username, password, host, port, and database name. **These are stored in clear text

@@ -1537,7 +1537,7 @@ table is part of the Kea database schemas.
 
 Configuration parameters are extended by standard lease database
 parameters as defined in :ref:`database-configuration4`. The ``type``
-parameter should be ``mysql``, ``postgresql``, or ``logfile``; when
+parameter should be ``mysql``, ``postgresql`` or ``logfile``; when
 it is absent or set to ``logfile``, files are used.
 
 This database feature is experimental. No specific tools are provided
