@@ -175,13 +175,25 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   mysql> CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';
   mysql> CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';
   mysql> CREATE USER 'keatest_secure'@'localhost' IDENTIFIED BY 'keatest';
+  mysql> ALTER USER 'keatest_secure'@'localhost' REQUIRE X509;
   mysql>@endverbatim\n
+  Some old versions of MySQL do not support the REQUIRE keyword in ALTER
+  USER. Fortunately all versions support it in GRANT even it is less secured
+  as the requirement will apply only to commands for the database instead
+  to all connections so all commands. And of course in production many
+  stronger requirements are available: X509 only requires the user to
+  present a certificate: you can specify which certificate by requiring
+  for instance a particular Subject Name, etc.
   -# Grant the created users permissions to access the <i>keatest</i> database
   (again, the apostrophes around the user names and <i>localhost</i>
   are required):
   @verbatim
   mysql> GRANT ALL ON keatest.* TO 'keatest'@'localhost';
   mysql> GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';
+  mysql> GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost';
+  mysql>@endverbatim\n
+  When the REQUIRE in ALTER USER is not supported change the last line by:
+  @verbatim
   mysql> GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost' REQUIRE X509;
   mysql>@endverbatim\n
   -# If you get <i>You do not have the SUPER privilege and binary logging is
@@ -249,6 +261,9 @@ statement should be replaced by:
 ...
 ssl-mode=VERIFY_IDENTITY
 @endverbatim
+
+On Debian some MySQL packages use GnuTLS instead OpenSSL to provide
+the SSL/TLS support: this is known to not work with this proposed setup.
 
  @subsection pgsqlUnitTestsPrerequisites PostgreSQL Database
 

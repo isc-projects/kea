@@ -1220,6 +1220,9 @@ ssl_key = {cert_dir}/kea-client.key
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
     if 'tls' in features:
+        # ALTER USER is the best place to put the REQUIRE but it is not
+        # supported by old versions so downgrade to GRANT.
+        # X509 is weak too but enough for testing purpose.
         cmd += "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost' REQUIRE X509;\n"
     cmd += "SET @@global.log_bin_trust_function_creators = 1;\n"
     cmd += "EOF\n\""
