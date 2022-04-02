@@ -178,7 +178,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   mysql> ALTER USER 'keatest_secure'@'localhost' REQUIRE X509;
   mysql>@endverbatim\n
   Some old versions of MySQL do not support the REQUIRE keyword in ALTER
-  USER. Fortunately all versions support it in GRANT even it is less secured
+  USER. Fortunately all versions support it in GRANT even if it is less secure
   as the requirement will apply only to commands for the database instead
   to all connections so all commands. And of course in production many
   stronger requirements are available: X509 only requires the user to
