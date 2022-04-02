@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -387,6 +387,33 @@ TEST_F(HttpRequestTest, basicAuth) {
     std::string value;
     EXPECT_NO_THROW(value = request_->getHeaderValue("Authorization"));
     EXPECT_EQ(value, "Basic " + basic_auth->getCredential());
+}
+
+/// This test verifies that access parameters are handled as expected.
+TEST_F(HttpRequestTest, parameters) {
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
+    ASSERT_NO_THROW(request_->create());
+
+    EXPECT_TRUE(request_->getRemote().empty());
+    EXPECT_FALSE(request_->getTls());
+    EXPECT_TRUE(request_->getSubject().empty());
+    EXPECT_TRUE(request_->getIssuer().empty());
+    EXPECT_TRUE(request_->getBasicAuth().empty());
+    EXPECT_TRUE(request_->getCustom().empty());
+
+    request_->setRemote("my-remote");
+    request_->setTls(true);
+    request_->setSubject("my-subject");
+    request_->setIssuer("my-issuer");
+    request_->setBasicAuth("foo");
+    request_->setCustom("bar");
+
+    EXPECT_EQ("my-remote", request_->getRemote());
+    EXPECT_TRUE(request_->getTls());
+    EXPECT_EQ("my-subject", request_->getSubject());
+    EXPECT_EQ("my-issuer", request_->getIssuer());
+    EXPECT_EQ("foo", request_->getBasicAuth());
+    EXPECT_EQ("bar", request_->getCustom());
 }
 
 }

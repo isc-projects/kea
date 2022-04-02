@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -267,9 +267,13 @@ public:
     /// @brief Closes the socket.
     void close();
 
+    /// @brief Records connection parameters into the HTTP request.
+    ///
+    /// @param request Pointer to the HTTP request.
+    void recordParameters(const HttpRequestPtr& request) const;
+
     /// @brief Asynchronously performs TLS handshake.
     ///
-
     /// When the handshake is performed successfully or skipped because TLS
     /// was not enabled, the asynchronous read from the socket is started.
     void doHandshake();

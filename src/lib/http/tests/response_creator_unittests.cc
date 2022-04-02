@@ -156,6 +156,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
     request->context()->method_ = "GET";
     request->context()->uri_ = "/foo";
     ASSERT_NO_THROW(request->finalize());
+    HttpRequest::recordBasicAuth = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -170,6 +171,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
               "{ \"result\": 401, \"text\": \"Unauthorized\" }",
               response->toString());
 
+    EXPECT_TRUE(request->getBasicAuth().empty());
     addString("HTTP_CLIENT_REQUEST_NO_AUTH_HEADER received HTTP request "
               "without required authentication header");
     EXPECT_TRUE(checkFile());
@@ -195,6 +197,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
     HttpHeaderContext auth("Authorization", "Basic =");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
+    HttpRequest::recordBasicAuth = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -209,6 +212,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
               "{ \"result\": 401, \"text\": \"Unauthorized\" }",
               response->toString());
 
+    EXPECT_TRUE(request->getBasicAuth().empty());
     addString("HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER received HTTP request "
               "with malformed authentication header: "
               "header content is too short");
@@ -235,6 +239,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
     HttpHeaderContext auth("Authorization", "Basis dGVzdDoxMjPCow==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
+    HttpRequest::recordBasicAuth = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -249,6 +254,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
               "{ \"result\": 401, \"text\": \"Unauthorized\" }",
               response->toString());
 
+    EXPECT_TRUE(request->getBasicAuth().empty());
     addString("HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER received HTTP request "
               "with malformed authentication header: "
               "not basic authentication");
@@ -276,6 +282,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
     HttpHeaderContext auth("Authorization", "Basic dGvZdDoxMjPcOw==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
+    HttpRequest::recordBasicAuth = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -290,6 +297,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
               "{ \"result\": 401, \"text\": \"Unauthorized\" }",
               response->toString());
 
+    EXPECT_TRUE(request->getBasicAuth().empty());
     addString("HTTP_CLIENT_REQUEST_NOT_AUTHORIZED received HTTP request "
               "with not matching authentication header");
     EXPECT_TRUE(checkFile());
@@ -315,15 +323,18 @@ TEST_F(HttpResponseCreatorAuthTest, matching) {
     HttpHeaderContext auth("Authorization", "Basic dGVzdDoxMjPCow==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
+    HttpRequest::recordBasicAuth = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
     ASSERT_NO_THROW(response = auth_config->checkAuth(*creator, request));
     EXPECT_FALSE(response);
 
+    EXPECT_EQ("test", request->getBasicAuth());
     addString("HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request "
               "authorized for 'test'");
     EXPECT_TRUE(checkFile());
+    HttpRequest::recordBasicAuth = false;
 }
 
 }

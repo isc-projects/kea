@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,6 +90,37 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
 
 HttpConnection::~HttpConnection() {
     close();
+}
+
+void
+HttpConnection::recordParameters(const HttpRequestPtr& request) const {
+    if (!request) {
+        // Should never happen.
+        return;
+    }
+
+    // Record the remote address.
+    request->setRemote(getRemoteEndpointAddressAsText());
+
+    // Record TLS parameters.
+    if (!tls_socket_) {
+        return;
+    }
+
+    // The connection uses HTTPS aka HTTP over TLS.
+    request->setTls(true);
+
+    // Record the first commonName of the subjectName of the client
+    // certificate when wanted.
+    if (HttpRequest::recordSubject) {
+        request->setSubject(tls_socket_->getTlsStream().getSubject());
+    }
+
+    // Record the first commonName of the issuerName of the client
+    // certificate when wanted.
+    if (HttpRequest::recordIssuer) {
+        request->setIssuer(tls_socket_->getTlsStream().getIssuer());
+    }
 }
 
 void
@@ -215,6 +246,7 @@ HttpConnection::doRead(TransactionPtr transaction) {
         // new request.
         if (!transaction) {
             transaction = Transaction::create(response_creator_);
+            recordParameters(transaction->getRequest());
         }
 
         // Create instance of the callback. It is safe to pass the local instance

@@ -58,6 +58,7 @@ public:
             ADD_FAILURE() << "CtrlAgentResponseCreator::createNewHttpRequest"
                 " returns NULL!";
         }
+        HttpRequest::recordBasicAuth = true;
         // Initialize process and cfgmgr.
         try {
             initProcess();
@@ -71,6 +72,7 @@ public:
     ///
     /// Removes registered commands from the command manager.
     virtual ~CtrlAgentResponseCreatorTest() {
+        HttpRequest::recordBasicAuth = false;
         CtrlAgentCommandMgr::instance().deregisterAll();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
@@ -264,6 +266,7 @@ TEST_F(CtrlAgentResponseCreatorTest, noAuth) {
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_TRUE(request_->getBasicAuth().empty());
     ASSERT_TRUE(response);
 
     // Response must be convertible to HttpResponseJsonPtr.
@@ -306,6 +309,7 @@ TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_EQ("foo", request_->getBasicAuth());
     ASSERT_TRUE(response);
 
     // Response must be convertible to HttpResponseJsonPtr.
@@ -359,6 +363,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_TRUE(request_->getBasicAuth().empty());
     ASSERT_TRUE(response);
 
     // Request should have no extra.
@@ -433,6 +438,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_EQ("foo", request_->getBasicAuth());
     ASSERT_TRUE(response);
 
     // Request should have no extra.

@@ -366,6 +366,9 @@ BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
         if (it != credentials.end()) {
             LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);
+            if (HttpRequest::recordBasicAuth) {
+                request->setBasicAuth(it->second);
+            }
             authentic = true;
         } else {
             LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_NOT_AUTHORIZED);

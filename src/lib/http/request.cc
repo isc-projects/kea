@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,10 +21,18 @@ const std::string crlf = "\r\n";
 namespace isc {
 namespace http {
 
+bool HttpRequest::recordSubject = false;
+
+bool HttpRequest::recordIssuer = false;
+
+bool HttpRequest::recordBasicAuth = false;
+
 HttpRequest::HttpRequest()
     : HttpMessage(INBOUND), required_methods_(),
       method_(Method::HTTP_METHOD_UNKNOWN),
-      context_(new HttpRequestContext()) {
+      context_(new HttpRequestContext()),
+      remote_(""), tls_(false), subject_(""), issuer_(""),
+      basic_auth_(""), custom_("") {
 }
 
 HttpRequest::HttpRequest(const Method& method,
@@ -34,7 +42,9 @@ HttpRequest::HttpRequest(const Method& method,
                          const BasicHttpAuthPtr& basic_auth)
     : HttpMessage(OUTBOUND), required_methods_(),
       method_(Method::HTTP_METHOD_UNKNOWN),
-      context_(new HttpRequestContext()) {
+      context_(new HttpRequestContext()),
+      remote_(""), tls_(false), subject_(""), issuer_(""),
+      basic_auth_(""), custom_("") {
     context()->method_ = methodToString(method);
     context()->uri_ = uri;
     context()->http_version_major_ = version.major_;

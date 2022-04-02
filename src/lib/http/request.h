@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,14 @@ typedef boost::shared_ptr<HttpRequest> HttpRequestPtr;
 /// which derives from @c PostHttpRequest requires that the POST message
 /// includes body holding a JSON structure and provides methods to parse the
 /// JSON body.
+///
+/// Objects of this class is used to record some parameters for access control:
+///  - the remote address
+///  - the use of TLS
+///  - the first commonName of the SubjectName of the client certificate
+///  - the first commonName of the IssuerName of the client certificate
+///  - the user ID of the basic HTTP authentication
+///  - a custom value
 ///
 /// Callouts are associated to the request.
 class HttpRequest : public HttpMessage, public hooks::CalloutHandleAssociate {
@@ -150,6 +158,104 @@ public:
     /// otherwise.
     bool isPersistent() const;
 
+    /// Access control parameters: get/set methods.
+
+    /// @brief Returns recorded remote address.
+    ///
+    /// @return recorded remote address.
+    std::string getRemote() const {
+        return (remote_);
+    }
+
+    /// @brief Set (record) remote address.
+    ///
+    /// @param remote Remote end-point address in textual form.
+    void setRemote(const std::string& remote) {
+        remote_ = remote;
+    }
+
+    /// @brief Returns recorded TLS usage.
+    ///
+    /// @return recorded TLS usage.
+    bool getTls() const {
+        return (tls_);
+    }
+
+    /// @brief Set (record) TLS usage.
+    ///
+    /// @param tls TLS usage.
+    void setTls(bool tls) {
+        tls_ = tls;
+    }
+
+    /// @brief Returns recorded subject name.
+    ///
+    /// @return recorded subject name.
+    std::string getSubject() const {
+        return (subject_);
+    }
+
+    /// @brief Set (record) subjet name.
+    ///
+    /// @param subjet Subject name.
+    void setSubject(const std::string& subject) {
+        subject_ = subject;
+    }
+
+    /// @brief Returns recorded issuer name.
+    ///
+    /// @return recorded issuer name.
+    std::string getIssuer() const {
+        return (issuer_);
+    }
+
+    /// @brief Set (record) issuer name.
+    ///
+    /// @param issuer Issuer name.
+    void setIssuer(const std::string& issuer) {
+        issuer_ = issuer;
+    }
+
+    /// @brief Returns recorded basic auth.
+    ///
+    /// @return recorded basic auth.
+    std::string getBasicAuth() const {
+        return (basic_auth_);
+    }
+
+    /// @brief Set (record) basic auth.
+    ///
+    /// @param basic_auth Basic auth.
+    void setBasicAuth(const std::string& basic_auth) {
+        basic_auth_ = basic_auth;
+    }
+
+    /// @brief Returns recorded custom name.
+    ///
+    /// @return recorded custom name.
+    std::string getCustom() const {
+        return (custom_);
+    }
+
+    /// @brief Set (record) custom name.
+    ///
+    /// @param custom Custom name.
+    void setCustom(const std::string& custom) {
+        custom_ = custom;
+    }
+
+    /// Access control parameters: want to record flags.
+    /// Remote address and TLS usage are always recorded.
+
+    /// @brief Record subjet name.
+    static bool recordSubject;
+
+    /// @brief Record issuer name.
+    static bool recordIssuer;
+
+    /// @brief Record basic auth.
+    static bool recordBasicAuth;
+
 protected:
 
     /// @brief Converts HTTP method specified in textual format to @ref Method.
@@ -179,6 +285,24 @@ protected:
     /// @brief Pointer to the @ref HttpRequestContext holding parsed
     /// data.
     HttpRequestContextPtr context_;
+
+    /// @brief Remote address.
+    std::string remote_;
+
+    /// @brief TLS usage.
+    bool tls_;
+
+    /// @brief Subject name.
+    std::string subject_;
+
+    /// @brief Issuer name.
+    std::string issuer_;
+
+    /// @brief Basic auth.
+    std::string basic_auth_;
+
+    /// @brief Custom name.
+    std::string custom_;
 };
 
 }
