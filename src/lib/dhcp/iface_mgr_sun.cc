@@ -144,7 +144,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
                        "Failed to open link-local socket on "
-                       " interface " << iface.getName() << ": "
+                       "interface " << iface.getName() << ": "
                        << ex.what());
         return (false);
 

@@ -1311,8 +1311,7 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
 }
 
 void
-ControlledDhcpv4Srv::openSocketsFailedCallback(
-        util::ReconnectCtlPtr db_reconnect_ctl) {
+ControlledDhcpv4Srv::openSocketsFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl) {
     if (!db_reconnect_ctl) {
         // This should never happen
         LOG_ERROR(dhcp4_logger, DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL);

@@ -74,7 +74,7 @@ public:
     }
 
     /// @brief Returns an index of current retry.
-    unsigned int retryIndex() {
+    unsigned int retryIndex() const {
         return (max_retries_ - retries_left_);
     }
 

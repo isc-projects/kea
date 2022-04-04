@@ -61,11 +61,10 @@ IfaceMgr::instancePtr() {
 }
 
 Iface::Iface(const std::string& name, unsigned int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
-     flag_loopback_(false), flag_up_(false), flag_running_(false),
-     flag_multicast_(false), flag_broadcast_(false), flags_(0),
-     inactive4_(false), inactive6_(false)
-{
+    : name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
+      flag_loopback_(false), flag_up_(false), flag_running_(false),
+      flag_multicast_(false), flag_broadcast_(false), flags_(0),
+      inactive4_(false), inactive6_(false) {
     // Sanity checks.
     if (name.empty()) {
         isc_throw(BadValue, "Interface name must not be empty");
@@ -134,7 +133,7 @@ Iface::getPlainMac() const {
     tmp << hex;
     for (int i = 0; i < mac_len_; i++) {
         tmp.width(2);
-        tmp <<  static_cast<int>(mac_[i]);
+        tmp << static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {
             tmp << ":";
         }
@@ -565,7 +564,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                             << " has no usable IPv4 addresses configured");
             continue;
         }
-        
 
         for (Iface::Address addr : iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
@@ -592,15 +590,15 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // assume that binding to the device is not supported and we
             // cease opening sockets and display the appropriate message.
             if (is_open_as_broadcast && !isDirectResponseSupported() && bcast_num > 0) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                   "Binding socket to an interface is not"
-                                   " supported on this OS; therefore only"
-                                   " one socket listening to broadcast traffic"
-                                   " can be opened. Sockets will not be opened"
-                                   " on remaining interfaces");
-                    continue;
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "Binding socket to an interface is not"
+                               " supported on this OS; therefore only"
+                               " one socket listening to broadcast traffic"
+                               " can be opened. Sockets will not be opened"
+                               " on remaining interfaces");
+                continue;
             }
-        
+
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
             if (!skip_opened || !IfaceMgr::hasOpenSocket(addr.get())) {
@@ -608,10 +606,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     // We haven't open any broadcast sockets yet, so we can
                     // open at least one more or
                     // not broadcast capable, do not set broadcast flags.
-                    IfaceMgr::openSocket(
-                        iface->getName(), addr.get(), port,
-                        is_open_as_broadcast, is_open_as_broadcast
-                    );
+                    IfaceMgr::openSocket(iface->getName(), addr.get(), port,
+                                         is_open_as_broadcast,
+                                         is_open_as_broadcast);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                         "failed to open socket on interface "
@@ -689,12 +686,11 @@ IfaceMgr::openSockets6(const uint16_t port,
             // for preventing bind errors or re-opening sockets.
             if (!skip_open || !IfaceMgr::hasOpenSocket(addr)) {
                 try {
-                    IfaceMgr::openSocket(
-                        iface->getName(), addr, port, false, false
-                    );
+                    IfaceMgr::openSocket(iface->getName(), addr, port, false,
+                                         false);
                 } catch (const Exception& ex) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler, 
-                        "failed to open unicast socket on  interface "
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                        "failed to open unicast socket on interface "
                         << iface->getName()
                         << ", reason: " << ex.what());
                     continue;
@@ -735,7 +731,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                     );
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                        "failed to open multicast socket on  interface "
+                        "failed to open multicast socket on interface "
                         << iface->getName() << ", reason: " << ex.what());
                     continue;
                 }
@@ -1104,10 +1100,8 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
 }
 
 int
-IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
-                          const uint16_t port, const bool receive_bcast,
-                          const bool send_bcast) {
-
+IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, const uint16_t port,
+                      const bool receive_bcast, const bool send_bcast) {
     // Assuming that packet filter is not null, because its modifier checks it.
     SocketInfo info = packet_filter_->openSocket(iface, addr, port,
                                                  receive_bcast, send_bcast);

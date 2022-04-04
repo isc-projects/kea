@@ -16,6 +16,7 @@
 
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 /// @brief Test fixture for exercising DbLostCallback invocation
@@ -40,7 +41,7 @@ public:
     ///
     /// @param db_reconnect_ctl ReconnectCtl containing reconnect
     /// parameters
-    bool dbLostCallback(isc::util::ReconnectCtlPtr db_reconnect_ctl) {
+    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         if (!db_reconnect_ctl) {
             isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
         }
@@ -53,7 +54,7 @@ public:
     ///
     /// @param db_reconnect_ctl ReconnectCtl containing reconnect
     /// parameters
-    bool dbRecoveredCallback(isc::util::ReconnectCtlPtr db_reconnect_ctl) {
+    bool dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
         if (!db_reconnect_ctl) {
             isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
         }
@@ -67,7 +68,7 @@ public:
     ///
     /// @param db_reconnect_ctl ReconnectCtl containing reconnect
     /// parameters
-    bool dbFailedCallback(isc::util::ReconnectCtlPtr db_reconnect_ctl) {
+    bool dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
         if (!db_reconnect_ctl) {
             isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
         }
@@ -78,7 +79,7 @@ public:
     }
 
     /// @brief Retainer for the control passed into the callback
-    isc::util::ReconnectCtlPtr db_reconnect_ctl_;
+    ReconnectCtlPtr db_reconnect_ctl_;
 };
 
 /// @brief getParameter test

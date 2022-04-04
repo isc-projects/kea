@@ -544,13 +544,12 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     // address fails.
     int sock;
     try {
-        sock = openSocket(iface.getName(), addr, port,
-                          iface.flag_multicast_);
+        sock = openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
                        "Failed to open link-local socket on "
-                       " interface " << iface.getName() << ": "
+                       "interface " << iface.getName() << ": "
                        << ex.what());
         return (false);
 

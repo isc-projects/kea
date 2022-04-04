@@ -320,28 +320,28 @@ public:
     /// @brief Set the socket service binding retry interval between attempts.
     ///
     /// @param interval Milliseconds between attempts.
-    void setServiceSocketsRetryWaitTime(unsigned int interval) {
+    void setServiceSocketsRetryWaitTime(uint32_t interval) {
         service_sockets_retry_wait_time_ = interval;
     }
 
     /// @brief Indicates the socket service binding retry interval between attempts.
     ///
     /// @return Milliseconds between attempts.
-    unsigned int getServiceSocketsRetryWaitTime() const {
+    uint32_t getServiceSocketsRetryWaitTime() const {
         return (service_sockets_retry_wait_time_);
     }
 
     /// @brief Set a maximum number of service sockets bind attempts.
     ///
     /// @param max_retries Number of attempts. The value 0 disables retries.
-    void setServiceSocketsMaxRetries(unsigned int max_retries) {
+    void setServiceSocketsMaxRetries(uint32_t max_retries) {
         service_sockets_max_retries_ = max_retries;
     }
 
     /// @brief Indicates the maximum number of service sockets bind attempts.
     ///
     /// @return Number of attempts.
-    unsigned int getServiceSocketsMaxRetries() const {
+    uint32_t getServiceSocketsMaxRetries() const {
         return (service_sockets_max_retries_);
     }
 
@@ -423,7 +423,9 @@ private:
     /// one socket is successfully opened, and the second is true if no errors
     /// occur.
     static std::pair<bool, bool> openSocketsForFamily(const uint16_t family,
-        const uint16_t port, const bool can_use_bcast, const bool skip_opened);
+                                                      const uint16_t port,
+                                                      const bool can_use_bcast,
+                                                      const bool skip_opened);
 
     /// @brief Creates a ReconnectCtl based on the configuration's
     /// retry parameters.
@@ -443,25 +445,9 @@ private:
     /// used. For the UDP sockets, we only handle the relayed (unicast)
     /// traffic. This parameter is ignored for IPv6.
     /// @return True if at least one socket opened successfully.
-    static bool openSocketsWithRetry(
-        util::ReconnectCtlPtr reconnect_ctl,
-        const uint16_t family, const uint16_t port, const bool can_use_bcast);
-
-    /// @brief Retry handler for executed when opening a socket fail.
-    ///
-    /// A pointer to this function is passed to the @c IfaceMgr::openSockets4
-    /// or @c IfaceMgr::openSockets6. These functions call this handler when
-    /// they fail to open a socket. The handler decides if the opening should
-    /// be retried and logs info passed in the parameter. It also returns a
-    /// time to wait from the last attempt. It allows extending the waiting
-    /// time dynamically with the next tries.
-    ///
-    /// @param retries An index of opening retries
-    /// @param msg Message being logged by the function.
-    /// @return true if the opening should be retried and milliseconds to wait
-    /// from last attempt.
-    std::pair<bool, uint64_t> socketOpenRetryHandler(uint32_t retries,
-        const std::string& msg) const;
+    static bool openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
+                                     const uint16_t family, const uint16_t port,
+                                     const bool can_use_bcast);
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;
@@ -491,7 +477,7 @@ private:
     bool service_socket_require_all_;
 
     /// @brief An interval between attempts to retry the socket service binding.
-    uint64_t service_sockets_retry_wait_time_;
+    uint32_t service_sockets_retry_wait_time_;
 
     /// @brief A maximum number of attempts to bind the service sockets.
     uint32_t service_sockets_max_retries_;

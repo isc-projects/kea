@@ -44,7 +44,6 @@ namespace dhcp {
 
 void
 MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr value) {
-    CfgIface cfg_iface;
     uint32_t source = 0;
     size_t cnt = 0;
 

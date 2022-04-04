@@ -17,12 +17,15 @@
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
 
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
+
+CfgIface::OpenSocketsFailedCallback CfgIface::open_sockets_failed_callback_ = 0;
 
 CfgIface::CfgIface()
     : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false),
@@ -163,9 +166,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // handle the relayed traffic. We have to issue a warning, however, to
     // draw administrator's attention.
     if (family == AF_INET && can_use_bcast && multipleAddressesPerInterfaceActive()) {
-        if (can_use_bcast && multipleAddressesPerInterfaceActive()) {
-            LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
-        }
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
     }
 
     auto reconnect_ctl = makeReconnectCtl(family);
@@ -180,32 +181,30 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
 std::pair<bool, bool>
 CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
-        const bool can_use_bcast, const bool skip_opened) {
+                               const bool can_use_bcast, const bool skip_opened) {
     bool no_errors = true;
 
     // Set the callbacks which are called when the socket fails to open
     // for some specific interface.
-    auto error_callback = [&no_errors](const std::string& errmsg){
+    auto error_callback = [&no_errors](const std::string& errmsg) {
         socketOpenErrorHandler(errmsg);
         no_errors = false;
     };
 
     bool sopen = false;
     if (family == AF_INET) {
-        sopen = IfaceMgr::instance().openSockets4(
-            port, can_use_bcast, error_callback, skip_opened
-        );
+        sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast,
+                                                  error_callback, skip_opened);
     } else {
         // use_bcast is ignored for V6.
-        sopen = IfaceMgr::instance().openSockets6(
-            port, error_callback, skip_opened
-        );
+        sopen = IfaceMgr::instance().openSockets6(port, error_callback,
+                                                  skip_opened);
     }
 
-    return std::make_pair(sopen, no_errors);
+    return (std::make_pair(sopen, no_errors));
 }
 
-util::ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
+ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
     // Create unique timer name per instance.
     std::string timer_name = "ConfigInterface[";
     timer_name += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
@@ -215,7 +214,7 @@ util::ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
 
     auto on_fail_action = util::OnFailAction::SERVE_RETRY_CONTINUE;
     if (CfgIface::getServiceSocketsRequireAll()) {
-        on_fail_action = util::OnFailAction::STOP_RETRY_EXIT;
+        on_fail_action = util::OnFailAction::SERVE_RETRY_EXIT;
     }
 
     auto reconnect_ctl = boost::make_shared<util::ReconnectCtl>("open-sockets", timer_name,
@@ -224,12 +223,13 @@ util::ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
         CfgIface::getServiceSocketsRetryWaitTime(),
         on_fail_action);
 
-    return reconnect_ctl;
+    return (reconnect_ctl);
 }
 
-bool 
+bool
 CfgIface::openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
-        const uint16_t family, const uint16_t port, const bool can_use_bcast) {
+                               const uint16_t family, const uint16_t port,
+                               const bool can_use_bcast) {
     util::MultiThreadingCriticalSection cs;
 
     // Skip opened sockets in the retry calls.
@@ -247,32 +247,27 @@ CfgIface::openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
         // Start the timer.
         if (!TimerMgr::instance()->isTimerRegistered(timer_name)) {
             TimerMgr::instance()->registerTimer(timer_name,
-                std::bind(&CfgIface::openSocketsWithRetry, reconnect_ctl,
-                    family, port, can_use_bcast
-                ),
-                reconnect_ctl->retryInterval(),
-                asiolink::IntervalTimer::ONE_SHOT);
+                                                std::bind(&CfgIface::openSocketsWithRetry,
+                                                          reconnect_ctl, family,
+                                                          port, can_use_bcast),
+                                                reconnect_ctl->retryInterval(),
+                                                asiolink::IntervalTimer::ONE_SHOT);
         }
         TimerMgr::instance()->setup(timer_name);
-    // Has errors but retries exceed    
-    } else if (has_errors) {
-        // Cancel the timer.
-        if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
-            TimerMgr::instance()->unregisterTimer(timer_name);
-        }
-
-        if (open_sockets_failed_callback_ != nullptr) {
-            open_sockets_failed_callback_(reconnect_ctl);
-        }
-    // Has no errors
     } else {
         // Cancel the timer.
         if (TimerMgr::instance()->isTimerRegistered(timer_name)) {
             TimerMgr::instance()->unregisterTimer(timer_name);
         }
+        // Has errors but retries exceed
+        if (has_errors) {
+            if (open_sockets_failed_callback_ != nullptr) {
+                open_sockets_failed_callback_(reconnect_ctl);
+            }
+        }
     }
 
-    return sopen;
+    return (sopen);
 }
 
 void
@@ -604,8 +599,6 @@ CfgIface::toElement() const {
 
     return (result);
 }
-
-CfgIface::OpenSocketsFailedCallback CfgIface::open_sockets_failed_callback_ = 0;
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

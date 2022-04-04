@@ -18,6 +18,7 @@
 #include <boost/foreach.hpp>
 #include <vector>
 
+using namespace isc::util;
 using namespace std;
 
 namespace isc {
@@ -175,20 +176,20 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of 0;
     }
 
-    util::OnFailAction action = util::OnFailAction::STOP_RETRY_EXIT;
+    OnFailAction action = OnFailAction::STOP_RETRY_EXIT;
     try {
         parm_str = getParameter("on-fail");
-        action = util::ReconnectCtl::onFailActionFromText(parm_str);
+        action = ReconnectCtl::onFailActionFromText(parm_str);
     } catch (...) {
         // Wasn't specified so we'll use default of "stop-retry-exit";
     }
 
-    reconnect_ctl_ = boost::make_shared<util::ReconnectCtl>(type, timer_name, retries,
-                                                            interval, action);
+    reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
+                                                      interval, action);
 }
 
 bool
-DatabaseConnection::invokeDbLostCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbLostCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_lost_callback_) {
         return (DatabaseConnection::db_lost_callback_(db_reconnect_ctl));
     }
@@ -197,7 +198,7 @@ DatabaseConnection::invokeDbLostCallback(const util::ReconnectCtlPtr& db_reconne
 }
 
 bool
-DatabaseConnection::invokeDbRecoveredCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbRecoveredCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_recovered_callback_) {
         return (DatabaseConnection::db_recovered_callback_(db_reconnect_ctl));
     }
@@ -206,7 +207,7 @@ DatabaseConnection::invokeDbRecoveredCallback(const util::ReconnectCtlPtr& db_re
 }
 
 bool
-DatabaseConnection::invokeDbFailedCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbFailedCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_failed_callback_) {
         return (DatabaseConnection::db_failed_callback_(db_reconnect_ctl));
     }

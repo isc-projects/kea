@@ -387,7 +387,8 @@ private:
     /// deleted.
     void deleteExpiredReclaimedLeases(const uint32_t secs);
 
-    /// @brief Callback DB backends should invoke upon loss of the connectivity
+    /// @brief Callback DB backends should be invoked upon loss of the
+    /// connectivity.
     ///
     /// This function is invoked by DB backends when they detect a loss of
     /// connectivity.  The parameter, db_reconnect_ctl, conveys the configured
@@ -405,8 +406,8 @@ private:
     /// @return false if reconnect is not configured, true otherwise
     bool dbLostCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
-    /// @brief Callback DB backends should invoke upon restoration of
-    /// connectivity
+    /// @brief Callback DB backends should be invoked upon restoration of
+    /// connectivity.
     ///
     /// This function is invoked by DB backends when they recover the
     /// connectivity. It starts the DHCP service after the connection is
@@ -415,8 +416,8 @@ private:
     /// @return false if reconnect is not configured, true otherwise
     bool dbRecoveredCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
-    /// @brief Callback DB backends should invoke upon failing to restore
-    /// connectivity
+    /// @brief Callback DB backends should be invoked upon failing to restore
+    /// connectivity.
     ///
     /// This function is invoked by DB backends when they fail to recover the
     /// connectivity. It stops the server.

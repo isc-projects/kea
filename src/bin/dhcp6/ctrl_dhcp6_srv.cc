@@ -1331,8 +1331,7 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
 }
 
 void
-ControlledDhcpv6Srv::openSocketsFailedCallback(
-        util::ReconnectCtlPtr db_reconnect_ctl) {
+ControlledDhcpv6Srv::openSocketsFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl) {
     if (!db_reconnect_ctl) {
         // This should never happen
         LOG_ERROR(dhcp6_logger, DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL);

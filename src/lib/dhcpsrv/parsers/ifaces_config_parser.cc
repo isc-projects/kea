@@ -91,12 +91,12 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
             }
 
             if (element.first == "service-sockets-retry-wait-time") {
-                cfg->setServiceSocketsRetryWaitTime(static_cast<uint16_t>(element.second->intValue()));
+                cfg->setServiceSocketsRetryWaitTime(static_cast<uint32_t>(element.second->intValue()));
                 continue;
             }
 
             if (element.first == "service-sockets-max-retries") {
-                cfg->setServiceSocketsMaxRetries(static_cast<uint16_t>(element.second->intValue()));
+                cfg->setServiceSocketsMaxRetries(static_cast<uint32_t>(element.second->intValue()));
                 continue;
             }
 

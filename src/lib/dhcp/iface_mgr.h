@@ -986,7 +986,7 @@ public:
     /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
-    /// @param error_handler A pointer to an error handler function which is
+    /// @param error_handler a pointer to an error handler function which is
     /// called by the openSockets6 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
     /// @param skip_opened skip the addresses that already have the opened port
@@ -1122,7 +1122,7 @@ public:
     /// function is called. Call closeSockets(AF_INET) to close all hanging IPv4
     /// sockets opened by the current packet filter object.
     ///
-    /// @param packet_filter A pointer to the new packet filter object to be
+    /// @param packet_filter a pointer to the new packet filter object to be
     /// used by @c IfaceMgr.
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is null.
@@ -1143,7 +1143,7 @@ public:
     /// function. Call closeSockets(AF_INET6) to close all hanging IPv6 sockets
     /// opened by the current packet filter object.
     ///
-    /// @param packet_filter A pointer to the new packet filter object to be
+    /// @param packet_filter a pointer to the new packet filter object to be
     /// used by @c IfaceMgr.
     ///
     /// @throw isc::dhcp::InvalidPacketFilter if specified object is null.
