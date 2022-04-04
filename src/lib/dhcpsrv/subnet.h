@@ -146,10 +146,9 @@ public:
     ///
     /// @param pool pool to be added
     ///
-    /// @throw isc::BadValue if the pool type is invalid, the pool
-    /// is not an IA_PD pool and the address range of this pool does not
-    /// match the subnet prefix, or the pool overlaps with an existing pool
-    /// within the subnet.
+    /// @throw isc::BadValue if the pool type is invalid, in the case of address
+    /// pools if the address range of the pool does not match the subnet prefix,
+    /// or if the pool overlaps with an existing pool within the subnet.
     void addPool(const PoolPtr& pool);
 
     /// @brief Deletes all pools of specified type.

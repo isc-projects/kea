@@ -1142,6 +1142,34 @@ and which is delegated a prefix from this pool.
        ]
    }
 
+.. note::
+
+    Here are some liberties and limits to the values that subnets and pools can
+    take in Kea configurations that are out of the ordinary:
+
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Kea configuration case                                                        | Result        | Comment                                                                        |
+    +===============================================================================+===============+================================================================================+
+    | Overlapping subnets                                                           | Allowed       | Administrator consideration needs to be given to how clients are matched to    |
+    |                                                                               |               | these subnets.                                                                 |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping address pools in one subnet                                       | Startup error | DHCP6_PARSER_FAIL                                                              |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping address pools in different subnets                                | Allowed       | Can act as a substitute for a global pool mechanic. When assigning leases from |
+    |                                                                               |               | one pool, Kea correctly excludes leases given under any pool that overlaps     |
+    |                                                                               |               | with it such that no lease is given twice.                                     |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Address pools that are outside the subnet they are configured under           | Startup error | DHCP6_PARSER_FAIL                                                              |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping prefix delegation pools in one subnet                             | Startup error | DHCP6_PARSER_FAIL                                                              |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping prefix delegation pools in different subnets                      | Allowed       | Can act as a substitute for a global pool mechanic. When assigning leases from |
+    |                                                                               |               | one pool, Kea correctly excludes leases given under any pool that overlaps     |
+    |                                                                               |               | with it such that no lease is given twice.                                     |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Prefix delegation pools that are outside the subnet they are configured under | Allowed       |                                                                                |
+    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+
 .. _dhcp6-std-options:
 
 Standard DHCPv6 Options

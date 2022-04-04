@@ -1231,6 +1231,26 @@ address) address from that pool. In the aforementioned example of pool
 assigned as well. This may be invalid in some network configurations. To
 avoid this, use the ``min-max`` notation.
 
+.. note::
+
+    Here are some liberties and limits to the values that subnets and pools can
+    take in Kea configurations that are out of the ordinary:
+
+    +-------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Kea configuration case                                      | Result        | Comment                                                                        |
+    +=============================================================+===============+================================================================================+
+    | Overlapping subnets                                         | Allowed       | Administrator consideration needs to be given to how clients are matched to    |
+    |                                                             |               | these subnets.                                                                 |
+    +-------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping pools in one subnet                             | Startup error | DHCP4_PARSER_FAIL                                                              |
+    +-------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Overlapping address pools in different subnets              | Allowed       | Can act as a substitute for a global pool mechanic. When assigning leases from |
+    |                                                             |               | one pool, Kea correctly excludes leases given under any pool that overlaps     |
+    |                                                             |               | with it such that no lease is given twice.                                     |
+    +-------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    | Pools that are outside the subnet they are configured under | Startup error | DHCP4_PARSER_FAIL                                                              |
+    +-------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+
 .. _dhcp4-t1-t2-times:
 
 Sending T1 (Option 58) and T2 (Option 59)
