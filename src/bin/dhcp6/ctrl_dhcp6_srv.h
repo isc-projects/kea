@@ -11,7 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <database/database_connection.h>
+#include <util/reconnect_ctl.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
@@ -403,7 +403,7 @@ private:
     /// configured reconnect parameters
     ///
     /// @return false if reconnect is not configured, true otherwise
-    bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+    bool dbLostCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback DB backends should invoke upon restoration of
     /// connectivity
@@ -413,7 +413,7 @@ private:
     /// recovered.
     ///
     /// @return false if reconnect is not configured, true otherwise
-    bool dbRecoveredCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+    bool dbRecoveredCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback DB backends should invoke upon failing to restore
     /// connectivity
@@ -422,7 +422,13 @@ private:
     /// connectivity. It stops the server.
     ///
     /// @return false if reconnect is not configured, true otherwise
-    bool dbFailedCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+    bool dbFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief This callback should be invoked upon failing to bind sockets.
+    ///
+    /// This function is invoked during the configuration of the interfaces
+    /// when they fail to bind the service sockets. It may stop the server.
+    void openSocketsFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback invoked periodically to fetch configuration updates
     /// from the Config Backends.

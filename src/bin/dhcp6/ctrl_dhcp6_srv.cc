@@ -958,6 +958,11 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure a callback to shut down the server when the bind socket
+    // attempts exceeded.
+    CfgIface::open_sockets_failed_callback_ =
+        std::bind(&ControlledDhcpv6Srv::openSocketsFailedCallback, srv, ph::_1);
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function
@@ -1323,6 +1328,23 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     return (true);
+}
+
+void
+ControlledDhcpv6Srv::openSocketsFailedCallback(
+        util::ReconnectCtlPtr db_reconnect_ctl) {
+    if (!db_reconnect_ctl) {
+        // This should never happen
+        LOG_ERROR(dhcp6_logger, DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL);
+        return;
+    }
+
+    LOG_INFO(dhcp6_logger, DHCP6_OPEN_SOCKETS_FAILED)
+            .arg(db_reconnect_ctl->maxRetries());
+
+    if (db_reconnect_ctl->exitOnFailure()) {
+        shutdownServer(EXIT_FAILURE);
+    }
 }
 
 void

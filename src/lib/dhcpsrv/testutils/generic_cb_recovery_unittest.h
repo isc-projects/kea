@@ -7,7 +7,7 @@
 #ifndef GENERIC_CONFIG_BACKEND_RECOVERY_H
 #define GENERIC_CONFIG_BACKEND_RECOVERY_H
 
-#include <database/database_connection.h>
+#include <util/reconnect_ctl.h>
 #include <database/server_collection.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
@@ -130,7 +130,7 @@ public:
     void testDbLostAndFailedAfterTimeoutCallback();
 
     /// @brief Callback function registered with the CB manager
-    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_lost_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_lost_callback_called_);
     }
 
@@ -138,7 +138,7 @@ public:
     uint32_t db_lost_callback_called_;
 
     /// @brief Callback function registered with the CB manager
-    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_recovered_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_recovered_callback_called_);
     }
 
@@ -146,7 +146,7 @@ public:
     uint32_t db_recovered_callback_called_;
 
     /// @brief Callback function registered with the CB manager
-    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_failed_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_failed_callback_called_);
     }
 

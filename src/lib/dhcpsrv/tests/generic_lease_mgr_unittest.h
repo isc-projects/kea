@@ -626,7 +626,7 @@ public:
     void testDbLostAndFailedAfterTimeoutCallback();
 
     /// @brief Callback function registered with the lease manager
-    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_lost_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_lost_callback_called_);
     }
 
@@ -634,7 +634,7 @@ public:
     uint32_t db_lost_callback_called_;
 
     /// @brief Callback function registered with the lease manager
-    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_recovered_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_recovered_callback_called_);
     }
 
@@ -642,7 +642,7 @@ public:
     uint32_t db_recovered_callback_called_;
 
     /// @brief Callback function registered with the lease manager
-    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_failed_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_failed_callback_called_);
     }
 

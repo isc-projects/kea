@@ -96,6 +96,8 @@ extern const isc::log::MessageID DHCP6_NOT_RUNNING;
 extern const isc::log::MessageID DHCP6_NO_INTERFACES;
 extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET;
+extern const isc::log::MessageID DHCP6_OPEN_SOCKETS_FAILED;
+extern const isc::log::MessageID DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS;

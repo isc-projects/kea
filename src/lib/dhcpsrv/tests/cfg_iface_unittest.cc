@@ -10,6 +10,10 @@
 #include <dhcp/tests/pkt_filter_test_stub.h>
 #include <dhcp/tests/pkt_filter6_test_stub.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <asiolink/io_service.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
@@ -52,10 +56,39 @@ public:
     /// @param iface_name Interface name.
     bool unicastOpen(const std::string& iface_name) const;
 
+    /// @brief Wait for specific timeout.
+    ///
+    /// @param timeout Wait timeout in milliseconds.
+    void doWait(const long timeout);
+
     /// @brief Holds a fake configuration of the interfaces.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
+    /// @brief Pointer to IO service used by the tests.
+    asiolink::IOServicePtr io_service_;
+
+private:
+
+    /// @brief Prepares the class for a test.
+    virtual void SetUp();
+
+    /// @brief Cleans up after the test.
+    virtual void TearDown();
+
 };
+
+void
+CfgIfaceTest::SetUp() {
+    io_service_.reset(new asiolink::IOService());
+    auto timer_mgr_ = TimerMgr::instance();
+    timer_mgr_->setIOService(io_service_);
+}
+
+void
+CfgIfaceTest::TearDown() {
+    // Remove all timers.
+    TimerMgr::instance()->unregisterTimers();
+}
 
 bool
 CfgIfaceTest::socketOpen(const std::string& iface_name,
@@ -74,6 +107,16 @@ CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
     return (iface_mgr_test_config_.unicastOpen(iface_name));
 }
 
+void
+CfgIfaceTest::doWait(const long timeout) {
+    asiolink::IntervalTimer timer(*io_service_);
+    timer.setup([this]() {
+        io_service_->stop();
+    }, timeout, asiolink::IntervalTimer::ONE_SHOT);
+    io_service_->run();
+    io_service_->get_io_service().reset();
+}
+
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv4 sockets are opened on these interfaces.
 TEST_F(CfgIfaceTest, explicitNamesV4) {
@@ -82,7 +125,7 @@ TEST_F(CfgIfaceTest, explicitNamesV4) {
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth0"));
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1"));
 
-    // Open sockets on specified interfaces.
+    // Open sockets on spsetecified interfaces.
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
 
     // Sockets should be now open on eth0 and eth1, but not on loopback.
@@ -514,6 +557,18 @@ TEST_F(CfgIfaceTest, unparse) {
 TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
     CfgIface cfg4;
     CfgIface cfg6;
+
+    // Configure a fail callback
+    uint16_t fail_calls = 0;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&fail_calls](util::ReconnectCtlPtr reconnect_ctl){
+            EXPECT_TRUE(reconnect_ctl != nullptr);
+            EXPECT_TRUE(reconnect_ctl->exitOnFailure());
+            fail_calls++;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
     ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
@@ -521,9 +576,11 @@ TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
 
     // Require all sockets bind successfully
     cfg4.setServiceSocketsRequireAll(true);
+    cfg4.setServiceSocketsMaxRetries(0);
     cfg6.setServiceSocketsRequireAll(true);
+    cfg6.setServiceSocketsMaxRetries(0);
 
-    // Open an available port
+    // Open the available ports
     ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
     ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
     cfg4.closeSockets();
@@ -543,66 +600,213 @@ TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter6));
 
     // Open an unavailable port
-    EXPECT_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT), isc::dhcp::SocketConfigError);
-    EXPECT_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT), isc::dhcp::SocketConfigError);
+    EXPECT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+    EXPECT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
+
+    // Both instances should call the fail callback.
+    EXPECT_EQ(fail_calls, 2);
+
+    // Reset global handlers
+    CfgIface::open_sockets_failed_callback_ = nullptr;
 }
 
-// This test verifies that if any socket fails to bind, then the opening will retry.
-TEST_F(CfgIfaceTest, retryOpenServiceSockets) {
+// This test verifies that if any IPv4 socket fails to bind,
+// the opening will retry.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     CfgIface cfg4;
-    CfgIface cfg6;
 
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
-    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
-    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
 
+    // Parameters
+    const uint16_t RETRIES = 5;
+    const uint16_t WAIT_TIME = 10; // miliseconds
+    // The number of sockets opened in a single retry attempt.
+    const uint16_t CALLS_PER_RETRY = 2;
+
+    // Require retry socket binding
+    cfg4.setServiceSocketsMaxRetries(RETRIES);
+    cfg4.setServiceSocketsRetryWaitTime(WAIT_TIME);
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
+                          CALLS_PER_RETRY](){
+        auto now = std::chrono::system_clock::now();
+
+        // Check waiting time only for the first call in a retry attempt.
+        if (total_calls % CALLS_PER_RETRY == 0) {
+            // Don't check the waiting time for initial call.
+            if (total_calls != 0) {
+                auto interval = now - last_call_time;
+                auto interval_ms =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        interval
+                    ).count();
+                
+                EXPECT_GE(interval_ms, WAIT_TIME);
+            }
+
+            last_call_time = now;
+        }
+
+        total_calls++;
+
+        // Fail to open a socket
+        isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(
+        new isc::dhcp::test::PktFilterTestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    // Open an unavailable port
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+
+    // Wait for a finish sockets binding (with a safe margin). 
+    doWait(RETRIES * WAIT_TIME * 2);
+
+    // For each interface perform 1 init open and a few retries.
+    EXPECT_EQ(CALLS_PER_RETRY * (RETRIES + 1), total_calls);
+}
+
+// This test verifies that if any IPv4 socket fails to bind, the opening will
+// retry, but the opened sockets will not be re-bound.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
+    CfgIface cfg4;
+
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+
+    // Parameters
     const uint16_t RETRIES = 5;
     const uint16_t WAIT_TIME = 10; // miliseconds
 
     // Require retry socket binding
     cfg4.setServiceSocketsMaxRetries(RETRIES);
     cfg4.setServiceSocketsRetryWaitTime(WAIT_TIME);
-    cfg6.setServiceSocketsMaxRetries(RETRIES);
-    cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME](){
         auto now = std::chrono::system_clock::now();
+        bool is_eth1 = total_calls == 1;
 
-        // Don't check the waiting time for initial calls as they
-        // can be done immediately after the last call for the previous socket.
-        if (total_calls % (RETRIES + 1) != 0) {
-            auto interval = now - last_call_time;
-            EXPECT_GE(interval, std::chrono::milliseconds(WAIT_TIME));
+        // Skip the wait time check for the socket when two sockets are
+        // binding in a single attempt.
+        if (!is_eth1) {
+            // Don't check the waiting time for initial call.
+            if (total_calls != 0) {
+                auto interval = now - last_call_time;
+                auto interval_ms =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        interval
+                    ).count();
+                
+                EXPECT_GE(interval_ms, WAIT_TIME);
+            }
+
+            last_call_time = now;
         }
 
-        last_call_time = now;
+        total_calls++;
+
+        // Fail to open a socket on eth0, success for eth1
+        if (!is_eth1) {
+            isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+        }
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(
+        new isc::dhcp::test::PktFilterTestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    // Open an unavailable port
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+
+    // Wait for a finish sockets binding (with a safe margin). 
+    doWait(RETRIES * WAIT_TIME * 2);
+
+    // For eth0 interface perform 1 init open and a few retries,
+    // for eth1 interface perform only init open.
+    EXPECT_EQ((RETRIES + 1) + 1, total_calls);
+}
+
+// This test verifies that if any IPv6 socket fails to bind,
+// the opening will retry.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
+    CfgIface cfg6;
+
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
+
+    // Parameters
+    const uint16_t RETRIES = 5;
+    const uint16_t WAIT_TIME = 10; // miliseconds
+    // The number of sockets opened in a single retry attempt.
+    // 2 multicast sockets and 1 unicast.
+    const uint16_t CALLS_PER_RETRY = 3;
+
+    // Require retry socket binding
+    cfg6.setServiceSocketsMaxRetries(RETRIES);
+    cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
+                          CALLS_PER_RETRY](){
+        auto now = std::chrono::system_clock::now();
+
+        // Check waiting time only for the first call in a retry attempt.
+        if (total_calls % CALLS_PER_RETRY == 0) {
+            // Don't check the waiting time for initial call.
+            if (total_calls != 0) {
+                auto interval = now - last_call_time;
+                auto interval_ms =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        interval
+                    ).count();
+                
+                EXPECT_GE(interval_ms, WAIT_TIME);
+            }
+
+            last_call_time = now;
+        }
+
         total_calls++;
 
         // Fail to open a socket
         isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
     };
-    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(new isc::dhcp::test::PktFilterTestStub());
-    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter6(new isc::dhcp::test::PktFilter6TestStub());
+
+    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter(
+        new isc::dhcp::test::PktFilter6TestStub()
+    );
     filter->setOpenSocketCallback(open_callback);
-    filter6->setOpenSocketCallback(open_callback);
     ASSERT_TRUE(filter);
-    ASSERT_TRUE(filter6);
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
-    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter6));
 
     // Open an unavailable port
-    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
     ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
 
-    // For IPv4 bind to: eth0 and eth1 (2).
-    // For IPv6 bind to: unicast for eth0 and multicast for eth0 and eth1 (3).
-    // For each interface perform 1 init open and 5 retries (6).
-    // Perform 30 open calls ((2+3) * 6).
-    EXPECT_EQ(30, total_calls);
+    // Wait for a finish sockets binding (with a safe margin). 
+    doWait(RETRIES * WAIT_TIME * 2);
+
+    // For each interface perform 1 init open and a few retries.
+    EXPECT_EQ(CALLS_PER_RETRY * (RETRIES + 1), total_calls);
 }
 
 // This test verifies that it is possible to specify the socket

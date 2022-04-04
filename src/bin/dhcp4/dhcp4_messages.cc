@@ -95,6 +95,8 @@ extern const isc::log::MessageID DHCP4_NO_LEASE_INIT_REBOOT = "DHCP4_NO_LEASE_IN
 extern const isc::log::MessageID DHCP4_NO_SOCKETS_OPEN = "DHCP4_NO_SOCKETS_OPEN";
 extern const isc::log::MessageID DHCP4_OPEN_CONFIG_DB = "DHCP4_OPEN_CONFIG_DB";
 extern const isc::log::MessageID DHCP4_OPEN_SOCKET = "DHCP4_OPEN_SOCKET";
+extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_FAILED = "DHCP4_OPEN_SOCKETS_FAILED";
+extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL = "DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL";
 extern const isc::log::MessageID DHCP4_OPEN_SOCKET_FAIL = "DHCP4_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0001 = "DHCP4_PACKET_DROP_0001";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0002 = "DHCP4_PACKET_DROP_0002";
@@ -254,6 +256,8 @@ const char* values[] = {
     "DHCP4_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
     "DHCP4_OPEN_CONFIG_DB", "Opening configuration database: %1",
     "DHCP4_OPEN_SOCKET", "opening service sockets on port %1",
+    "DHCP4_OPEN_SOCKETS_FAILED", "maximum number of open service sockets attempts: %1, has been exhausted without success",
+    "DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL", "unexpected error in bind service sockets.",
     "DHCP4_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP4_PACKET_DROP_0001", "failed to parse packet from %1 to %2, received over interface %3, reason: %4",
     "DHCP4_PACKET_DROP_0002", "%1, from interface %2: no suitable subnet configured for a direct client",

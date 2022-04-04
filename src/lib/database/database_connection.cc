@@ -175,20 +175,20 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
         // Wasn't specified so we'll use default of 0;
     }
 
-    OnFailAction action = OnFailAction::STOP_RETRY_EXIT;
+    util::OnFailAction action = util::OnFailAction::STOP_RETRY_EXIT;
     try {
         parm_str = getParameter("on-fail");
-        action = ReconnectCtl::onFailActionFromText(parm_str);
+        action = util::ReconnectCtl::onFailActionFromText(parm_str);
     } catch (...) {
         // Wasn't specified so we'll use default of "stop-retry-exit";
     }
 
-    reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval, action);
+    reconnect_ctl_ = boost::make_shared<util::ReconnectCtl>(type, timer_name, retries,
+                                                            interval, action);
 }
 
 bool
-DatabaseConnection::invokeDbLostCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbLostCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_lost_callback_) {
         return (DatabaseConnection::db_lost_callback_(db_reconnect_ctl));
     }
@@ -197,7 +197,7 @@ DatabaseConnection::invokeDbLostCallback(const ReconnectCtlPtr& db_reconnect_ctl
 }
 
 bool
-DatabaseConnection::invokeDbRecoveredCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbRecoveredCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_recovered_callback_) {
         return (DatabaseConnection::db_recovered_callback_(db_reconnect_ctl));
     }
@@ -206,7 +206,7 @@ DatabaseConnection::invokeDbRecoveredCallback(const ReconnectCtlPtr& db_reconnec
 }
 
 bool
-DatabaseConnection::invokeDbFailedCallback(const ReconnectCtlPtr& db_reconnect_ctl) {
+DatabaseConnection::invokeDbFailedCallback(const util::ReconnectCtlPtr& db_reconnect_ctl) {
     if (DatabaseConnection::db_failed_callback_) {
         return (DatabaseConnection::db_failed_callback_(db_reconnect_ctl));
     }
@@ -271,32 +271,6 @@ isc::data::ElementPtr
 DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
     ParameterMap params = parse(dbaccess);
     return (toElement(params));
-}
-
-std::string
-ReconnectCtl::onFailActionToText(OnFailAction action) {
-    switch (action) {
-    case OnFailAction::STOP_RETRY_EXIT:
-        return ("stop-retry-exit");
-    case OnFailAction::SERVE_RETRY_EXIT:
-        return ("serve-retry-exit");
-    case OnFailAction::SERVE_RETRY_CONTINUE:
-        return ("serve-retry-continue");
-    }
-    return ("invalid-action-type");
-}
-
-OnFailAction
-ReconnectCtl::onFailActionFromText(const std::string& text) {
-    if (text == "stop-retry-exit") {
-        return (OnFailAction::STOP_RETRY_EXIT);
-    } else if (text == "serve-retry-exit") {
-        return (OnFailAction::SERVE_RETRY_EXIT);
-    } else if (text == "serve-retry-continue") {
-        return (OnFailAction::SERVE_RETRY_CONTINUE);
-    } else {
-        isc_throw(BadValue, "Invalid action on connection loss: " << text);
-    }
 }
 
 DbCallback DatabaseConnection::db_lost_callback_ = 0;

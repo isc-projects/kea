@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <util/reconnect_ctl.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
@@ -319,30 +320,38 @@ public:
     /// @brief Set the socket service binding retry interval between attempts.
     ///
     /// @param interval Milliseconds between attempts.
-    void setServiceSocketsRetryWaitTime(uint64_t interval) {
+    void setServiceSocketsRetryWaitTime(unsigned int interval) {
         service_sockets_retry_wait_time_ = interval;
     }
 
     /// @brief Indicates the socket service binding retry interval between attempts.
     ///
     /// @return Milliseconds between attempts.
-    uint64_t getServiceSocketsRetryWaitTime() {
+    unsigned int getServiceSocketsRetryWaitTime() const {
         return (service_sockets_retry_wait_time_);
     }
 
     /// @brief Set a maximum number of service sockets bind attempts.
     ///
     /// @param max_retries Number of attempts. The value 0 disables retries.
-    void setServiceSocketsMaxRetries(uint32_t max_retries) {
+    void setServiceSocketsMaxRetries(unsigned int max_retries) {
         service_sockets_max_retries_ = max_retries;
     }
 
     /// @brief Indicates the maximum number of service sockets bind attempts.
     ///
     /// @return Number of attempts.
-    uint32_t getServiceSocketsMaxRetries() {
+    unsigned int getServiceSocketsMaxRetries() const {
         return (service_sockets_max_retries_);
     }
+
+    /// @brief Represents a callback invoked if all retries of the
+    /// opening sockets fail.
+    typedef std::function<void(util::ReconnectCtlPtr)> OpenSocketsFailedCallback;
+
+    /// @brief Optional callback function to invoke if all retries of the
+    /// opening sockets fail.
+    static OpenSocketsFailedCallback open_sockets_failed_callback_;
 
 private:
 
@@ -358,7 +367,7 @@ private:
     ///
     /// @return true if multiple addresses are activated on any interface,
     /// false otherwise.
-    bool multipleAddressesPerInterfaceActive() const;
+    static bool multipleAddressesPerInterfaceActive();
 
     /// @brief Selects or deselects interfaces.
     ///
@@ -397,19 +406,62 @@ private:
     /// @param errmsg Error message being logged by the function.
     static void socketOpenErrorHandler(const std::string& errmsg);
 
+    /// @brief Calls a family-specific function to open sockets.
+    ///
+    /// It is a static function for a safe call from a CfgIface instance or a
+    /// timer handler.
+    ///
+    /// @param family Address family (AF_INET or AF_INET6).
+    /// @param port Port number to be used to bind sockets to.
+    /// @param can_use_bcast A boolean flag which indicates if the broadcast
+    /// traffic should be received through the socket and the raw sockets are
+    /// used. For the UDP sockets, we only handle the relayed (unicast)
+    /// traffic. This parameter is ignored for IPv6.
+    /// @param skip_opened Omits the already opened sockets (doesn't try to
+    /// re-bind).
+    /// @return Pair of boolean flags. The first boolean is true if at least
+    /// one socket is successfully opened, and the second is true if no errors
+    /// occur.
+    static std::pair<bool, bool> openSocketsForFamily(const uint16_t family,
+        const uint16_t port, const bool can_use_bcast, const bool skip_opened);
+
+    /// @brief Creates a ReconnectCtl based on the configuration's
+    /// retry parameters.
+    ///
+    /// @param family IP family
+    /// @return The reconnect control created using the configuration
+    /// parameters.
+    util::ReconnectCtlPtr makeReconnectCtl(const uint16_t family) const;
+
+    /// Calls the @c CfgIface::openSocketsForFamily function and retry it if
+    /// socket opening fails.
+    ///
+    /// @param family Address family (AF_INET or AF_INET6).
+    /// @param port Port number to be used to bind sockets to.
+    /// @param can_use_bcast A boolean flag which indicates if the broadcast
+    /// traffic should be received through the socket and the raw sockets are
+    /// used. For the UDP sockets, we only handle the relayed (unicast)
+    /// traffic. This parameter is ignored for IPv6.
+    /// @return True if at least one socket opened successfully.
+    static bool openSocketsWithRetry(
+        util::ReconnectCtlPtr reconnect_ctl,
+        const uint16_t family, const uint16_t port, const bool can_use_bcast);
+
     /// @brief Retry handler for executed when opening a socket fail.
     ///
     /// A pointer to this function is passed to the @c IfaceMgr::openSockets4
     /// or @c IfaceMgr::openSockets6. These functions call this handler when
-    /// they fail to open a socket. The handler decides if the opening should be
-    /// retried and logs info passed in the parameter. It also returns a time to
-    /// wait from the last attempt. It allows extending the waiting time dynamically
-    /// with the next tries.
+    /// they fail to open a socket. The handler decides if the opening should
+    /// be retried and logs info passed in the parameter. It also returns a
+    /// time to wait from the last attempt. It allows extending the waiting
+    /// time dynamically with the next tries.
     ///
     /// @param retries An index of opening retries
     /// @param msg Message being logged by the function.
-    /// @return true if the opening should be retried and milliseconds to wait from last attempt.
-    std::pair<bool, uint64_t> socketOpenRetryHandler(uint32_t retries, const std::string& msg) const;
+    /// @return true if the opening should be retried and milliseconds to wait
+    /// from last attempt.
+    std::pair<bool, uint64_t> socketOpenRetryHandler(uint32_t retries,
+        const std::string& msg) const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

@@ -623,15 +623,6 @@ typedef boost::shared_ptr<IfaceMgr> IfaceMgrPtr;
 typedef
 std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 
-/// @brief This type describes the callback function invoked when an opening of
-/// a socket fails and can be retried.
-///
-/// @param retries A number of an opening retries.
-/// @return true if an opening should be retried, false otherwise, and a wait time
-/// from the last attempt.
-typedef
-std::function<std::pair<bool, uint64_t>(uint32_t retries, const std::string& msg)> IfaceMgrRetryCallback;
-
 /// @brief Handles network interfaces, transmission and reception.
 ///
 /// IfaceMgr is an interface manager class that detects available network
@@ -998,17 +989,13 @@ public:
     /// @param error_handler A pointer to an error handler function which is
     /// called by the openSockets6 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
-    /// @param retry_callback A pointer to a retry callback function which is
-    /// called by the openSockets4 when it fails to open a socket.
-    /// The responsibility of the callback is to decide if the opening should be
-    /// retried and after which time. This parameter can be null to indicate that
-    /// the callback should not be used.
+    /// @param skip_opened skip the addresses that already have the opened port
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
                       IfaceMgrErrorMsgCallback error_handler = 0,
-                      IfaceMgrRetryCallback retry_callback = 0);
+                      const bool skip_opened = false);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
@@ -1071,14 +1058,10 @@ public:
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
-    /// @param error_handler A pointer to an error handler function which is
+    /// @param error_handler a pointer to an error handler function which is
     /// called by the openSockets4 when it fails to open a socket. This
     /// parameter can be null to indicate that the callback should not be used.
-    /// @param retry_callback A pointer to a retry callback function which is
-    /// called by the openSockets4 when it fails to open a socket.
-    /// The responsibility of the callback is to decide if the opening should be
-    /// retried and after which time. This parameter can be null to indicate that
-    /// the callback should not be used.
+    /// @param skip_opened skip the addresses that already have the opened port
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.
@@ -1086,7 +1069,7 @@ public:
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
                       const bool use_bcast = true,
                       IfaceMgrErrorMsgCallback error_handler = 0,
-                      IfaceMgrRetryCallback retry_callback = 0);
+                      const bool skip_opened = false);
 
     /// @brief Closes all open sockets.
     ///

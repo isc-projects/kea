@@ -12,7 +12,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
-#include <dhcp/iface_mgr_retry_callback.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
@@ -518,7 +517,7 @@ void IfaceMgr::stubDetectIfaces() {
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler,
-                       IfaceMgrRetryCallback retry_callback) {
+                       const bool skip_opened) {
     int count = 0;
     int bcast_num = 0;
 
@@ -528,44 +527,45 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         if (iface->inactive4_) {
             continue;
 
-        } else {
-            // If the interface has been specified in the configuration that
-            // it should be used to listen the DHCP traffic we have to check
-            // that the interface configuration is valid and that the interface
-            // is not a loopback interface. In both cases, we want to report
-            // that the socket will not be opened.
-            // Relax the check when the loopback interface was explicitly
-            // allowed
-            if (iface->flag_loopback_ && !allow_loopback_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "must not open socket on the loopback"
-                               " interface " << iface->getName());
-                continue;
-
-            }
-
-            if (!iface->flag_up_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "the interface " << iface->getName()
-                               << " is down");
-                continue;
-            }
-
-            if (!iface->flag_running_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "the interface " << iface->getName()
-                               << " is not running");
-                continue;
-            }
-
-            IOAddress out_address("0.0.0.0");
-            if (!iface->getAddress4(out_address)) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "the interface " << iface->getName()
-                               << " has no usable IPv4 addresses configured");
-                continue;
-            }
         }
+
+        // If the interface has been specified in the configuration that
+        // it should be used to listen the DHCP traffic we have to check
+        // that the interface configuration is valid and that the interface
+        // is not a loopback interface. In both cases, we want to report
+        // that the socket will not be opened.
+        // Relax the check when the loopback interface was explicitly
+        // allowed
+        if (iface->flag_loopback_ && !allow_loopback_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                            "must not open socket on the loopback"
+                            " interface " << iface->getName());
+            continue;
+
+        }
+
+        if (!iface->flag_up_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                            "the interface " << iface->getName()
+                            << " is down");
+            continue;
+        }
+
+        if (!iface->flag_running_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                            "the interface " << iface->getName()
+                            << " is not running");
+            continue;
+        }
+
+        IOAddress out_address("0.0.0.0");
+        if (!iface->getAddress4(out_address)) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                            "the interface " << iface->getName()
+                            << " has no usable IPv4 addresses configured");
+            continue;
+        }
+        
 
         for (Iface::Address addr : iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
@@ -600,26 +600,26 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                    " on remaining interfaces");
                     continue;
             }
-
-            std::stringstream msg_stream("failed to open socket on interface ");
-            msg_stream << iface->getName();
-
-            try {
-                // We haven't open any broadcast sockets yet, so we can
-                // open at least one more or
-                // not broadcast capable, do not set broadcast flags.
-                callWithRetry<int>(
-                    std::bind(&IfaceMgr::openSocket, this,
+        
+            // Skip the address that already has a bound socket. It allows
+            // for preventing bind errors or re-opening sockets.
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr.get())) {
+                try {
+                    // We haven't open any broadcast sockets yet, so we can
+                    // open at least one more or
+                    // not broadcast capable, do not set broadcast flags.
+                    IfaceMgr::openSocket(
                         iface->getName(), addr.get(), port,
                         is_open_as_broadcast, is_open_as_broadcast
-                    ),
-                    msg_stream.str(), retry_callback
-                );
-            } catch (const Exception& ex) {
-                msg_stream << ", reason: "
-                            << ex.what();
-                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
-                continue;
+                    );
+                } catch (const Exception& ex) {
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                        "failed to open socket on interface "
+                            << iface->getName()
+                            << ", reason: "
+                            << ex.what());
+                    continue;
+                }
             }
 
             if (is_open_as_broadcast) {
@@ -648,7 +648,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 bool
 IfaceMgr::openSockets6(const uint16_t port,
                        IfaceMgrErrorMsgCallback error_handler,
-                       IfaceMgrRetryCallback retry_callback) {
+                       const bool skip_open) {
     int count = 0;
 
     for (IfacePtr iface : ifaces_) {
@@ -685,21 +685,20 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         // Open unicast sockets if there are any unicast addresses defined
         for (Iface::Address addr : iface->getUnicasts()) {
-            std::stringstream msg_stream("failed to open unicast socket on  interface ");
-            msg_stream << iface->getName();
-
-            try {
-                callWithRetry<int>(
-                    std::bind(&IfaceMgr::openSocket, this,
+            // Skip the address that already has a bound socket. It allows
+            // for preventing bind errors or re-opening sockets.
+            if (!skip_open || !IfaceMgr::hasOpenSocket(addr)) {
+                try {
+                    IfaceMgr::openSocket(
                         iface->getName(), addr, port, false, false
-                    ),
-                    msg_stream.str(), retry_callback
-                );
-            } catch (const Exception& ex) {
-                msg_stream << ", reason: "
-                    << ex.what();
-                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
-                continue;
+                    );
+                } catch (const Exception& ex) {
+                    IFACEMGR_ERROR(SocketConfigError, error_handler, 
+                        "failed to open unicast socket on  interface "
+                        << iface->getName()
+                        << ", reason: " << ex.what());
+                    continue;
+                }
             }
 
             count++;
@@ -724,23 +723,25 @@ IfaceMgr::openSockets6(const uint16_t port,
             // Run OS-specific function to open a socket capable of receiving
             // packets sent to All_DHCP_Relay_Agents_and_Servers multicast
             // address.
-            std::stringstream msg_stream("failed to open multicast socket on  interface ");
-            msg_stream << iface->getName();
 
-            try {
-                callWithRetry<bool>(
-                    std::bind(&IfaceMgr::openMulticastSocket, this,
+            // Skip the address that already has a bound socket. It allows
+            // for preventing bind errors or re-opening sockets.
+            if (!skip_open || !IfaceMgr::hasOpenSocket(addr)) {
+                try {
+                    IfaceMgr::openMulticastSocket(
                         // Pass a null pointer as an error handler to avoid
                         // suppressing an exception in a system-specific function.
-                        std::ref(*iface), addr, port, nullptr),
-                    msg_stream.str(), retry_callback
-                );
-                ++count;
-            } catch (const Exception& ex) {
-                msg_stream << ", reason: "
-                    << ex.what();
-                IFACEMGR_ERROR(SocketConfigError, error_handler, msg_stream.str());
+                        *iface, addr, port, nullptr
+                    );
+                } catch (const Exception& ex) {
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                        "failed to open multicast socket on  interface "
+                        << iface->getName() << ", reason: " << ex.what());
+                    continue;
+                }
             }
+
+            ++count;
         }
     }
 

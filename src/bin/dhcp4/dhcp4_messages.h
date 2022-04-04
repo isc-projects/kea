@@ -96,6 +96,8 @@ extern const isc::log::MessageID DHCP4_NO_LEASE_INIT_REBOOT;
 extern const isc::log::MessageID DHCP4_NO_SOCKETS_OPEN;
 extern const isc::log::MessageID DHCP4_OPEN_CONFIG_DB;
 extern const isc::log::MessageID DHCP4_OPEN_SOCKET;
+extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_FAILED;
+extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL;
 extern const isc::log::MessageID DHCP4_OPEN_SOCKET_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0001;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0002;

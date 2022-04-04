@@ -148,7 +148,7 @@ public:
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters.
     /// @return true if connection has been recovered, false otherwise.
-    static bool dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
+    static bool dbReconnect(util::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();

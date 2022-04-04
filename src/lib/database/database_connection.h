@@ -12,6 +12,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <exceptions/exceptions.h>
+#include <util/reconnect_ctl.h>
 #include <functional>
 #include <map>
 #include <string>
@@ -76,127 +77,8 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Type of action to take on connection loss.
-enum class OnFailAction {
-    STOP_RETRY_EXIT,
-    SERVE_RETRY_EXIT,
-    SERVE_RETRY_CONTINUE
-};
-
-/// @brief Warehouses DB reconnect control values
-///
-/// When a DatabaseConnection loses connectivity to its backend, it
-/// creates an instance of this class based on its configuration parameters and
-/// passes the instance into connection's DB lost callback.  This allows
-/// the layer(s) above the connection to know how to proceed.
-///
-class ReconnectCtl {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param backend_type type of the caller backend.
-    /// @param timer_name timer associated to this object.
-    /// @param max_retries maximum number of reconnect attempts to make.
-    /// @param retry_interval amount of time to between reconnect attempts.
-    /// @param action which should be taken on connection loss.
-    ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
-                 unsigned int max_retries, unsigned int retry_interval,
-                 OnFailAction action) :
-          backend_type_(backend_type), timer_name_(timer_name),
-          max_retries_(max_retries), retries_left_(max_retries),
-          retry_interval_(retry_interval), action_(action) {}
-
-    /// @brief Returns the type of the caller backend.
-    std::string backendType() const {
-        return (backend_type_);
-    }
-
-    /// @brief Returns the associated timer name.
-    ///
-    /// @return the associated timer.
-    std::string timerName() const {
-        return (timer_name_);
-    }
-
-    /// @brief Decrements the number of retries remaining
-    ///
-    /// Each call decrements the number of retries by one until zero is reached.
-    /// @return true the number of retries remaining is greater than zero.
-    bool checkRetries() {
-        return (retries_left_ ? --retries_left_ : false);
-    }
-
-    /// @brief Returns the maximum number of retries allowed.
-    unsigned int maxRetries() {
-        return (max_retries_);
-    }
-
-    /// @brief Returns the number for retries remaining.
-    unsigned int retriesLeft() {
-        return (retries_left_);
-    }
-
-    /// @brief Returns the amount of time to wait between reconnect attempts.
-    unsigned int retryInterval() {
-        return (retry_interval_);
-    }
-
-    /// @brief Resets the retries count.
-    void resetRetries() {
-        retries_left_ = max_retries_;
-    }
-
-    /// @brief Return true if the connection loss should affect the service,
-    /// false otherwise
-    bool alterServiceState() {
-        return (action_ == OnFailAction::STOP_RETRY_EXIT);
-    }
-
-    /// @brief Return true if the connection recovery mechanism should shut down
-    /// the server on failure, false otherwise.
-    bool exitOnFailure() {
-        return ((action_ == OnFailAction::STOP_RETRY_EXIT) ||
-                (action_ == OnFailAction::SERVE_RETRY_EXIT));
-    }
-
-    /// @brief Convert action to string.
-    ///
-    /// @param action The action type to be converted to text.
-    /// @return The text representation of the action type.
-    static std::string onFailActionToText(OnFailAction action);
-
-    /// @brief Convert string to action.
-    ///
-    /// @param text The text to be converted to action type.
-    /// @return The action type corresponding to the text representation.
-    static OnFailAction onFailActionFromText(const std::string& text);
-
-private:
-
-    /// @brief Caller backend type.
-    const std::string backend_type_;
-
-    /// @brief Timer associated to this object.
-    std::string timer_name_;
-
-    /// @brief Maximum number of retry attempts to make.
-    unsigned int max_retries_;
-
-    /// @brief Number of attempts remaining.
-    unsigned int retries_left_;
-
-    /// @brief The amount of time to wait between reconnect attempts.
-    unsigned int retry_interval_;
-
-    /// @brief Action to take on connection loss.
-    OnFailAction action_;
-};
-
-/// @brief Pointer to an instance of ReconnectCtl
-typedef boost::shared_ptr<ReconnectCtl> ReconnectCtlPtr;
-
 /// @brief Defines a callback prototype for propagating events upward
-typedef std::function<bool (ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
+typedef std::function<bool (util::ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
 
 /// @brief Function which returns the IOService that can be used to recover the
 /// connection.
@@ -254,7 +136,7 @@ public:
     /// @brief The reconnect settings.
     ///
     /// @return The reconnect settings.
-    ReconnectCtlPtr reconnectCtl() {
+    util::ReconnectCtlPtr reconnectCtl() {
         return (reconnect_ctl_);
     }
 
@@ -298,19 +180,19 @@ public:
     ///
     /// @return Returns the result of the callback or false if there is no
     /// callback.
-    static bool invokeDbLostCallback(const ReconnectCtlPtr& db_reconnect_ctl);
+    static bool invokeDbLostCallback(const util::ReconnectCtlPtr& db_reconnect_ctl);
 
     /// @brief Invokes the connection's restored connectivity callback
     ///
     /// @return Returns the result of the callback or false if there is no
     /// callback.
-    static bool invokeDbRecoveredCallback(const ReconnectCtlPtr& db_reconnect_ctl);
+    static bool invokeDbRecoveredCallback(const util::ReconnectCtlPtr& db_reconnect_ctl);
 
     /// @brief Invokes the connection's restore failed connectivity callback
     ///
     /// @return Returns the result of the callback or false if there is no
     /// callback.
-    static bool invokeDbFailedCallback(const ReconnectCtlPtr& db_reconnect_ctl);
+    static bool invokeDbFailedCallback(const util::ReconnectCtlPtr& db_reconnect_ctl);
 
     /// @brief Unparse a parameter map
     ///
@@ -380,7 +262,7 @@ private:
     bool unusable_;
 
     /// @brief Reconnect settings.
-    ReconnectCtlPtr reconnect_ctl_;
+    util::ReconnectCtlPtr reconnect_ctl_;
 };
 
 }  // namespace db

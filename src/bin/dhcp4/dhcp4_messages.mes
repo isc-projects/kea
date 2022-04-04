@@ -226,6 +226,17 @@ should be reported.
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
 
+% DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL unexpected error in bind service sockets.
+This is an error message indicating a programmatic error that should not
+occur. It prohibits the server from attempting to bind to its
+service sockets if they are unavailable, and the server exits. This error
+should be reported.
+
+% DHCP4_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of reconnect attempts. This might cause the server
+to shut down as specified in the configuration.
+
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
 update request to the DHCP-DDNS server.  This is most likely a configuration or

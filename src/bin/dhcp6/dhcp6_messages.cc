@@ -95,6 +95,8 @@ extern const isc::log::MessageID DHCP6_NOT_RUNNING = "DHCP6_NOT_RUNNING";
 extern const isc::log::MessageID DHCP6_NO_INTERFACES = "DHCP6_NO_INTERFACES";
 extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN = "DHCP6_NO_SOCKETS_OPEN";
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET = "DHCP6_OPEN_SOCKET";
+extern const isc::log::MessageID DHCP6_OPEN_SOCKETS_FAILED = "DHCP6_OPEN_SOCKETS_FAILED";
+extern const isc::log::MessageID DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL = "DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL";
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL = "DHCP6_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED = "DHCP6_PACKET_DROP_DHCP_DISABLED";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS = "DHCP6_PACKET_DROP_DROP_CLASS";
@@ -255,6 +257,8 @@ const char* values[] = {
     "DHCP6_NO_INTERFACES", "failed to detect any network interfaces",
     "DHCP6_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
     "DHCP6_OPEN_SOCKET", "opening service sockets on port %1",
+    "DHCP6_OPEN_SOCKETS_FAILED", "maximum number of open service sockets attempts: %1, has been exhausted without success",
+    "DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL", "unexpected error in bind service sockets.",
     "DHCP6_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP6_PACKET_DROP_DHCP_DISABLED", "%1: DHCP service is globally disabled",
     "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1",

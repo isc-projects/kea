@@ -8,7 +8,7 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <asiolink/io_address.h>
-#include <database/database_connection.h>
+#include <util/reconnect_ctl.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
@@ -653,7 +653,7 @@ public:
     void testDbLostAndFailedAfterTimeoutCallback();
 
     /// @brief Callback function registered with the host manager
-    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_lost_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_lost_callback_called_);
     }
 
@@ -661,7 +661,7 @@ public:
     uint32_t db_lost_callback_called_;
 
     /// @brief Callback function registered with the host manager
-    bool db_recovered_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_recovered_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_recovered_callback_called_);
     }
 
@@ -669,7 +669,7 @@ public:
     uint32_t db_recovered_callback_called_;
 
     /// @brief Callback function registered with the host manager
-    bool db_failed_callback(db::ReconnectCtlPtr /* not_used */) {
+    bool db_failed_callback(util::ReconnectCtlPtr /* not_used */) {
         return (++db_failed_callback_called_);
     }
 
