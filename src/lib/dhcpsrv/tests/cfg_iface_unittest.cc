@@ -37,8 +37,6 @@ public:
         iface_mgr_test_config_(true) {
     }
 
-    virtual ~CfgIfaceTest() { }
-
     /// @brief Checks if socket of the specified family is opened on interface.
     ///
     /// @param iface_name Interface name.
@@ -76,7 +74,6 @@ private:
 
     /// @brief Cleans up after the test.
     virtual void TearDown();
-
 };
 
 void
@@ -623,6 +620,8 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     const uint16_t RETRIES = 5;
     const uint16_t WAIT_TIME = 10; // miliseconds
     // The number of sockets opened in a single retry attempt.
+    // iface: eth0 addr: 10.0.0.1 port: 67 rbcast: 0 sbcast: 0
+    // iface: eth1 addr: 192.0.2.3 port: 67 rbcast: 0 sbcast: 0
     const uint16_t CALLS_PER_RETRY = 2;
 
     // Require retry socket binding
@@ -703,7 +702,9 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
         // Skip the wait time check for the socket when two sockets are
         // binding in a single attempt.
 
-        // Don't check the waiting time for initial call.
+        // Don't check the waiting time for initial calls.
+        // iface: eth0 addr: 10.0.0.1 port: 67 rbcast: 0 sbcast: 0
+        // iface: eth1 addr: 192.0.2.3 port: 67 rbcast: 0 sbcast: 0 - fails
         if (total_calls > 1) {
             auto interval = now - last_call_time;
             auto interval_ms =
@@ -756,7 +757,10 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
     const uint16_t RETRIES = 5;
     const uint16_t WAIT_TIME = 10; // miliseconds
     // The number of sockets opened in a single retry attempt.
-    // 2 multicast sockets and 1 unicast.
+    // 1 unicast and 2 multicast sockets.
+    // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0
+    // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
+    // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1
     const uint16_t CALLS_PER_RETRY = 3;
 
     // Require retry socket binding
@@ -835,7 +839,11 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
         // Skip the wait time check for the socket when two sockets are
         // binding in a single attempt.
 
-        // Don't check the waiting time for initial call.
+        // Don't check the waiting time for initial calls.
+        // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0
+        // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
+        // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0
+        // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1 - fails
         if (total_calls > 4) {
             auto interval = now - last_call_time;
             auto interval_ms =

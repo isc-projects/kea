@@ -844,7 +844,7 @@ public:
     /// @brief Receive IPv4 packets or data from external sockets
     ///
     /// Wrapper around calls to either @c receive4Direct or @c
-    /// receive4Indirect.  The former is called when packet queuing is
+    /// receive4Indirect.  The former is called when packet queueing is
     /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
@@ -857,7 +857,7 @@ public:
     /// @brief Receive IPv4 packets or data from external sockets
     ///
     /// Wrapper around calls to either @c receive4Direct or @c
-    /// receive4Indirect.  The former is called when packet queuing is
+    /// receive4Indirect.  The former is called when packet queueing is
     /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
@@ -1267,7 +1267,7 @@ public:
     /// (AF_INET or AF_INET6)
     /// @param queue_control configuration containing "dhcp-queue-control"
     /// content
-    /// @return true if packet queueuing has been enabled, false otherwise
+    /// @return true if packet queueing has been enabled, false otherwise
     /// @throw InvalidOperation if the receiver thread is currently running.
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);

@@ -525,7 +525,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         // proceed to the next detected interface.
         if (iface->inactive4_) {
             continue;
-
         }
 
         // If the interface has been specified in the configuration that
@@ -540,7 +539,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                             "must not open socket on the loopback"
                             " interface " << iface->getName());
             continue;
-
         }
 
         if (!iface->flag_up_) {
@@ -645,49 +643,45 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 bool
 IfaceMgr::openSockets6(const uint16_t port,
                        IfaceMgrErrorMsgCallback error_handler,
-                       const bool skip_open) {
+                       const bool skip_opened) {
     int count = 0;
 
     for (IfacePtr iface : ifaces_) {
         if (iface->inactive6_) {
             continue;
+        }
 
-        } else {
-            // If the interface has been specified in the configuration that
-            // it should be used to listen the DHCP traffic we have to check
-            // that the interface configuration is valid and that the interface
-            // is not a loopback interface. In both cases, we want to report
-            // that the socket will not be opened.
-            // Relax the check when the loopback interface was explicitly
-            // allowed
-            if (iface->flag_loopback_ && !allow_loopback_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "must not open socket on the loopback"
-                               " interface " << iface->getName());
-                continue;
-
-            } else if (!iface->flag_up_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "the interface " << iface->getName()
-                               << " is down");
-                continue;
-            } else if (!iface->flag_running_) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "the interface " << iface->getName()
-                               << " is not running");
-                continue;
-            }
-
+        // If the interface has been specified in the configuration that
+        // it should be used to listen the DHCP traffic we have to check
+        // that the interface configuration is valid and that the interface
+        // is not a loopback interface. In both cases, we want to report
+        // that the socket will not be opened.
+        // Relax the check when the loopback interface was explicitly
+        // allowed
+        if (iface->flag_loopback_ && !allow_loopback_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "must not open socket on the loopback"
+                           " interface " << iface->getName());
+            continue;
+        } else if (!iface->flag_up_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "the interface " << iface->getName()
+                           << " is down");
+            continue;
+        } else if (!iface->flag_running_) {
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "the interface " << iface->getName()
+                           << " is not running");
+            continue;
         }
 
         // Open unicast sockets if there are any unicast addresses defined
         for (Iface::Address addr : iface->getUnicasts()) {
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-            if (!skip_open || !IfaceMgr::hasOpenSocket(addr)) {
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr)) {
                 try {
-                    IfaceMgr::openSocket(iface->getName(), addr, port, false,
-                                         false);
+                    IfaceMgr::openSocket(iface->getName(), addr, port, false, false);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                         "failed to open unicast socket on interface "
@@ -722,13 +716,11 @@ IfaceMgr::openSockets6(const uint16_t port,
 
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-            if (!skip_open || !IfaceMgr::hasOpenSocket(addr)) {
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr)) {
                 try {
-                    IfaceMgr::openMulticastSocket(
-                        // Pass a null pointer as an error handler to avoid
-                        // suppressing an exception in a system-specific function.
-                        *iface, addr, port, nullptr
-                    );
+                    // Pass a null pointer as an error handler to avoid
+                    // suppressing an exception in a system-specific function.
+                    IfaceMgr::openMulticastSocket(*iface, addr, port, nullptr);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                         "failed to open multicast socket on interface "

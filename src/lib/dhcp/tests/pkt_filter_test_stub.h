@@ -93,7 +93,7 @@ public:
     using PktFilter::openFallbackSocket;
 
     /// @brief Set an open socket callback. Use it for testing
-    // purposes, e.g., counting the number of calls or throwing an exception.
+    // purposes, e.g. counting the number of calls or throwing an exception.
     void setOpenSocketCallback(PktFilterOpenSocketCallback callback) {
         open_socket_callback_ = callback;
     }

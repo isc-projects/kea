@@ -217,11 +217,11 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
         on_fail_action = util::OnFailAction::SERVE_RETRY_EXIT;
     }
 
-    auto reconnect_ctl = boost::make_shared<util::ReconnectCtl>("open-sockets", timer_name,
-        // Add one attempt for an initial call.
-        CfgIface::getServiceSocketsMaxRetries(),
-        CfgIface::getServiceSocketsRetryWaitTime(),
-        on_fail_action);
+    // Add one attempt for an initial call.
+    auto reconnect_ctl = boost::make_shared<util::ReconnectCtl>("Socket", timer_name,
+                                                                CfgIface::getServiceSocketsMaxRetries(),
+                                                                CfgIface::getServiceSocketsRetryWaitTime(),
+                                                                on_fail_action);
 
     return (reconnect_ctl);
 }
