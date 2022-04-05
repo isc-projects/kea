@@ -24,16 +24,16 @@ authorization. When a DHCP packet is received, the Kea server sends an
 Access-Request to the RADIUS server and waits for a response. The server
 then sends back either an Access-Accept with specific client attributes,
 or an Access-Reject. There are two cases supported here: first, the
-Access-Accept includes a Framed-IP-Address (for DHCPv4) or
-Framed-IPv6-Address (for DHCPv6), which is interpreted by Kea as an
-instruction to assign that specified IPv4 or IPv6 address. This
+Access-Accept includes a Framed-IP-Address attribute (for DHCPv4) or a
+Framed-IPv6-Address attribute (for DHCPv6), which are interpreted by Kea as
+instructions to assign the specified IPv4 or IPv6 address. This
 effectively means RADIUS can act as an address-reservation database.
 
 The second supported case is the ability to assign clients to specific
 pools based on a RADIUS response. In this case, the RADIUS server sends
-back an Access-Accept with a Framed-Pool (IPv4) or Framed-IPv6-Pool
-(IPv6). In both cases, Kea interprets those attributes as client
-classes. With the addition of the ability to limit access to pools to
+back an Access-Accept with a Framed-Pool attribute.
+For both DHCPv4 and DHCPv6, Kea interprets this attribute as a client class.
+With the addition of the ability to limit access to pools to
 specific classes (see :ref:`classification-pools`), RADIUS can be
 used to force the client to be assigned a dynamic address from a
 specific pool. Furthermore, the same mechanism can be used to control
