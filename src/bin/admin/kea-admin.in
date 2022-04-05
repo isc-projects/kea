@@ -31,9 +31,11 @@
 # used.
 set -eu
 
-# Get the location of the kea-admin scripts
+# Shell ${variables} derived from autoconf @variables@. Some depend on others, so mind the order.
 prefix="@prefix@"
 export prefix
+exec_prefix="@exec_prefix@"
+export exec_prefix
 SCRIPTS_DIR_DEFAULT="@datarootdir@/@PACKAGE@/scripts"
 scripts_dir="${SCRIPTS_DIR_DEFAULT}"
 VERSION="@PACKAGE_VERSION@"
@@ -43,12 +45,18 @@ dhcp_version=0
 dump_file=""
 dump_qry=""
 
-# Include utilities. Use installed version if available and
-# use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+# Include the installed admin-utils.sh if available. Fallback to sources otherwise.
+if test -d "@datarootdir@/@PACKAGE_NAME@"; then
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
     . "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
+fi
+
+# Find the installed kea-lfc if available. Fallback to sources otherwise.
+if test -d "@sbindir@"; then
+    kea_lfc="@sbindir@/kea-lfc"
+else
+    kea_lfc="@abs_top_srcdir@/src/bin/lfc/kea-lfc"
 fi
 
 # Prints out usage version.
@@ -480,7 +488,7 @@ mysql_dump() {
     check_file_overwrite "$dump_file"
 
     # Check the temp file too
-    tmp_file="$dump_file.tmp"
+    tmp_file="/tmp/$(basename "${dump_file}").tmp"
     check_file_overwrite $tmp_file
 
     # Run the sql to output tab-delimited lease data to a temp file.
@@ -499,9 +507,11 @@ mysql_dump() {
         exit 1
     fi
 
-    # delete the tmp file on success
-    rm $tmp_file
-    echo lease${dhcp_version} successfully dumped to "${dump_file}"
+    # Clean up the temporary file.
+    rm -f "${tmp_file}"
+    log_info "Removed temporary file ${tmp_file}."
+
+    log_info "Successfully dumped lease${dhcp_version} to ${dump_file}."
     exit 0
 }
 
@@ -632,10 +642,27 @@ lease_upload() {
     fi
 
     # Check that the input file has at least one row of values.
-    if test "$(wc -l < "${input_file}")" -le 1; then
+    input_file_line_length=$(wc -l < "${input_file}")
+    if test "${input_file_line_length}" -le 1; then
         log_error 'CSV file has no leases'
         exit 1
     fi
+
+    # Invoke LFC on the input file.
+    log_info "Looking at ${input_file_line_length} lines of CSV in ${input_file}..."
+    cleaned_up_csv="/tmp/$(basename "${input_file}").tmp"
+    check_file_overwrite "${cleaned_up_csv}"
+    cp "${input_file}" "${cleaned_up_csv}"
+    echo "${kea_lfc}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
+        -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
+        -f "${cleaned_up_csv}.completed" -p "${cleaned_up_csv}.pid" \
+        -cignored-path >> /opt/a.txt
+    "${kea_lfc}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
+        -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
+        -f "${cleaned_up_csv}.completed" -p "${cleaned_up_csv}.pid" \
+        -cignored-path
+    cleaned_up_csv_line_length=$(wc -l < "${cleaned_up_csv}")
+    log_info "Reduced to ${cleaned_up_csv_line_length} lines in ${cleaned_up_csv}."
 
     # Determine the columns whose values need to be stringified to avoid syntax
     # errors in the MySQL client. These are columns which are VARCHARs or need
@@ -673,7 +700,7 @@ lease_upload() {
         else
             header_parsed=true
         fi
-    done < "${input_file}"
+    done < "${cleaned_up_csv}"
     sql_statement="${sql_statement} COMMIT;"
 
     # Execute the SQL insert statements.
@@ -686,8 +713,12 @@ lease_upload() {
         exit 1
     fi
 
+    # Clean up the temporary CSV.
+    rm -f "${cleaned_up_csv}"
+    log_info "Removed temporary file ${cleaned_up_csv}."
+
     # Print a confirmation message.
-    printf 'lease%s successfully updated.\n' "${dhcp_version}"
+    log_info "Successfully updated table lease${dhcp_version}."
 }
 
 ### Functions used for recounting statistics
