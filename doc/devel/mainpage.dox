@@ -45,7 +45,7 @@
  *   - @subpage writingShellScriptsAndTests
  *
  * @section performance Performance
- * - @subpage benchmarks
+ * - @subpage perfdhcpInternals
  *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
@@ -107,7 +107,6 @@
  * - @subpage dhcpDatabaseBackends
  * - @subpage configBackend
  *   - @subpage configBackendJSONDesign
- * - @subpage perfdhcpInternals
  *
  * @section libraries Kea libraries
  * - @subpage libutil

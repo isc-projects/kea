@@ -293,13 +293,6 @@ developers, or people who want to extend Kea code or send patches:
    the Kea message compiler needs to be built and used. This option
    permits that.
 
- - ``--with-benchmark``, ``--with-benchmark-source``
-   Enable the building of the database backend benchmarks using the
-   Google Benchmark framework. This option specifies the path to the
-   gtest source. (If the framework is not installed on the system, it
-   can be downloaded from https://github.com/google/benchmark.)
-   This support is experimental.
-
 As an example, the following command configures Kea to find the Boost
 headers in /usr/pkg/include, specifies that PostgreSQL support should be
 enabled, and sets the installation location to /opt/kea:
