@@ -430,10 +430,9 @@ private:
     /// @brief Creates a ReconnectCtl based on the configuration's
     /// retry parameters.
     ///
-    /// @param family IP family
     /// @return The reconnect control created using the configuration
     /// parameters.
-    util::ReconnectCtlPtr makeReconnectCtl(const uint16_t family) const;
+    util::ReconnectCtlPtr makeReconnectCtl() const;
 
     /// Calls the @c CfgIface::openSocketsForFamily function and retry it if
     /// socket opening fails.

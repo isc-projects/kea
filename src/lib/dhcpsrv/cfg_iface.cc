@@ -169,7 +169,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
     }
 
-    auto reconnect_ctl = makeReconnectCtl(family);
+    auto reconnect_ctl = makeReconnectCtl();
     auto sopen = openSocketsWithRetry(reconnect_ctl, family, port, can_use_bcast);
 
     if (!sopen) {
@@ -204,13 +204,9 @@ CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
     return (std::make_pair(sopen, no_errors));
 }
 
-ReconnectCtlPtr CfgIface::makeReconnectCtl(const uint16_t family) const {
+ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
     // Create unique timer name per instance.
-    std::string timer_name = "ConfigInterface[";
-    timer_name += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name += "]SocketReopenFamily";
-    timer_name += boost::lexical_cast<std::string>(family);
-    timer_name += "Timer";
+    std::string timer_name = "ConfigInterfaceSocketReopenTimer";
 
     auto on_fail_action = util::OnFailAction::SERVE_RETRY_CONTINUE;
     if (CfgIface::getServiceSocketsRequireAll()) {
@@ -233,12 +229,18 @@ CfgIface::openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
     util::MultiThreadingCriticalSection cs;
 
     // Skip opened sockets in the retry calls.
-    bool skip_opened = reconnect_ctl->retriesLeft() != reconnect_ctl->maxRetries();
+    bool is_initial_call = reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries();
+    bool skip_opened = !is_initial_call;
     auto result_pair = openSocketsForFamily(family, port, can_use_bcast, skip_opened);
     bool sopen = result_pair.first;
     bool has_errors = !result_pair.second;
 
     auto timer_name = reconnect_ctl->timerName();
+
+    // On the initial call, unregister the previous, pending timer.
+    if (is_initial_call && TimerMgr::instance()->isTimerRegistered(timer_name)) {
+        TimerMgr::instance()->unregisterTimer(timer_name);
+    }
 
     // Has errors and can retry
     if (has_errors && reconnect_ctl->retriesLeft() > 0) {

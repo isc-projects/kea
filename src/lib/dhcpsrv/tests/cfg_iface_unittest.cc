@@ -588,7 +588,7 @@ TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
     cfg6.closeSockets();
 
     // Set the callback to throw an exception on open
-    auto open_callback = []() {
+    auto open_callback = [](uint16_t) {
         isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
     };
     boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(new isc::dhcp::test::PktFilterTestStub());
@@ -632,7 +632,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
-                          CALLS_PER_RETRY]() {
+                          CALLS_PER_RETRY](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
         // Check waiting time only for the first call in a retry attempt.
@@ -695,7 +695,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
-    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME]() {
+    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME](uint16_t) {
         auto now = std::chrono::system_clock::now();
         bool is_eth1 = total_calls == 1;
 
@@ -745,6 +745,66 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
     EXPECT_EQ((RETRIES + 1) + 1, total_calls);
 }
 
+// Test that only one reopen timer is active simultaneously. If a new opening
+// starts, then the previous should be interrupted.
+TEST_F(CfgIfaceTest, retryDoubleOpenServiceSockets4) {
+    CfgIface cfg4;
+
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+
+    // Initial timer has a high frequency.
+    cfg4.setServiceSocketsMaxRetries(10000);
+    cfg4.setServiceSocketsRetryWaitTime(1);
+
+    // Set the callback that interrupt the previous execution.
+    uint16_t first_port_calls = 0;
+    uint16_t second_port_calls = 0;
+    auto open_callback = [&first_port_calls, &second_port_calls](uint16_t port) {
+        // First timer must be interrupted.
+        if (second_port_calls > 0) {
+            EXPECT_TRUE(port == 2);
+        }
+
+        if (port == 1) {
+            first_port_calls++;
+        } else {
+            second_port_calls++;
+        }
+
+        // Fail to open and retry.
+        isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(
+        new isc::dhcp::test::PktFilterTestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    // First opening.
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, 1));
+
+    // Wait a short time.
+    doWait(10);
+
+    // Reconfigure the interface parameters.
+    cfg4.setServiceSocketsMaxRetries(1);
+    cfg4.setServiceSocketsRetryWaitTime(10);
+
+    // Second opening.
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, 2));
+
+    doWait(50);
+
+    // The first timer should perform some calls.
+    EXPECT_GT(first_port_calls, 0);
+    // The secondary timer should make 2 calls: initial and 1 retry.
+    EXPECT_EQ(second_port_calls, 2);
+}
+
 // This test verifies that if any IPv6 socket fails to bind,
 // the opening will retry.
 TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
@@ -771,7 +831,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
-                          CALLS_PER_RETRY]() {
+                          CALLS_PER_RETRY](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
         // Check waiting time only for the first call in a retry attempt.
@@ -832,7 +892,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
-    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME]() {
+    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME](uint16_t) {
         auto now = std::chrono::system_clock::now();
         bool is_eth0 = total_calls < 3;
 
@@ -882,6 +942,66 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     // For eth0 interface perform only 3 init open,
     // for eth1 interface perform 1 init open and a few retries.
     EXPECT_EQ((RETRIES + 1) + 3, total_calls);
+}
+
+// Test that only one reopen timer is active simultaneously. If a new opening
+// starts, then the previous should be interrupted.
+TEST_F(CfgIfaceTest, retryDoubleOpenServiceSockets6) {
+    CfgIface cfg6;
+
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0"));
+
+    // Initial timer has a high frequency.
+    cfg6.setServiceSocketsMaxRetries(10000);
+    cfg6.setServiceSocketsRetryWaitTime(1);
+
+    // Set the callback that interrupt the previous execution.
+    uint16_t first_port_calls = 0;
+    uint16_t second_port_calls = 0;
+    auto open_callback = [&first_port_calls, &second_port_calls](uint16_t port) {
+        // First timer must be interrupted.
+        if (second_port_calls > 0) {
+            EXPECT_TRUE(port == 2);
+        }
+
+        if (port == 1) {
+            first_port_calls++;
+        } else {
+            second_port_calls++;
+        }
+
+        // Fail to open and retry.
+        isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter(
+        new isc::dhcp::test::PktFilter6TestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    // First opening.
+    ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, 1));
+
+    // Wait a short time.
+    doWait(10);
+
+    // Reconfigure the interface parameters.
+    cfg6.setServiceSocketsMaxRetries(1);
+    cfg6.setServiceSocketsRetryWaitTime(10);
+
+    // Second opening.
+    ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, 2));
+
+    doWait(50);
+
+    // The first timer should perform some calls.
+    EXPECT_GT(first_port_calls, 0);
+    // The secondary timer should make 2 calls: initial and 1 retry.
+    EXPECT_EQ(second_port_calls, 2);
 }
 
 // This test verifies that it is possible to specify the socket

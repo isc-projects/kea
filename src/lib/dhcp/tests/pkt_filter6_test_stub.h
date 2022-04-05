@@ -17,7 +17,9 @@ namespace dhcp {
 namespace test {
 
 /// @brief An open socket callback that can be use for a testing purposes.
-typedef std::function<void()> PktFilter6OpenSocketCallback;
+///
+/// @param port Port number to bind socket to.
+typedef std::function<void(uint16_t port)> PktFilter6OpenSocketCallback;
 
 /// @brief A stub implementation of the PktFilter6 class.
 ///

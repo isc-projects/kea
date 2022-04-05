@@ -36,7 +36,7 @@ PktFilterTestStub::openSocket(Iface&,
     }
 
     if (open_socket_callback_ != nullptr) {
-        open_socket_callback_();
+        open_socket_callback_(port);
     }
 
     return (SocketInfo(addr, port, fd));
