@@ -229,9 +229,8 @@ CfgIface::openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
     util::MultiThreadingCriticalSection cs;
 
     // Skip opened sockets in the retry calls.
-    bool is_initial_call = reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries();
-    bool skip_opened = !is_initial_call;
-    auto result_pair = openSocketsForFamily(family, port, can_use_bcast, skip_opened);
+    bool is_initial_call = (reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries());
+    auto result_pair = openSocketsForFamily(family, port, can_use_bcast, !is_initial_call);
     bool sopen = result_pair.first;
     bool has_errors = !result_pair.second;
 
