@@ -46,9 +46,8 @@ MultiThreadingMgr::enterCriticalSection() {
     if (getMode() && !inside) {
         if (getThreadPoolSize()) {
             // We simply pause without waiting for all tasks to complete.
-            // We could also call pause(false) which does not wait for
-            // threads to stop and wait() so that all tasks are complete
-            // and threads are stopped.
+            // We could also call wait() and pause(false) so that all tasks are
+            // complete and threads are stopped.
             thread_pool_.pause();
         }
         // Now it is safe to call callbacks which can also create other CSs.
@@ -71,7 +70,14 @@ MultiThreadingMgr::exitCriticalSection() {
     --critical_section_count_;
     if (getMode() && !isInCriticalSection()) {
         if (getThreadPoolSize()) {
-            thread_pool_.resume();
+            // If apply has been called, threads have never been started inside
+            // a critical section, so start them now, otherwise just resume
+            // paused threads.
+            if (!thread_pool_.enabled()) {
+                thread_pool_.start(getThreadPoolSize());
+            } else {
+                thread_pool_.resume();
+            }
         }
         // Now it is safe to call callbacks which can also create other CSs.
         callExitCallbacks();

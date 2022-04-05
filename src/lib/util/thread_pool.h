@@ -156,6 +156,24 @@ struct ThreadPool {
         queue_.resume();
     }
 
+    /// @brief return the state of the queue
+    ///
+    /// Returns the state of the queue
+    ///
+    /// @return the state
+    bool enabled() {
+        return (queue_.enabled());
+    }
+
+    /// @brief return the state of the threads
+    ///
+    /// Returns the state of the threads
+    ///
+    /// @return the state
+    bool paused() {
+        return (queue_.paused());
+    }
+
     /// @brief set maximum number of work items in the queue
     ///
     /// @param max_queue_size the maximum size (0 means unlimited)
@@ -490,9 +508,11 @@ private:
         void disable() {
             {
                 std::lock_guard<std::mutex> lock(mutex_);
+                paused_ = false;
                 enabled_ = false;
             }
             // Notify pop so that it can exit.
+            pause_cv_.notify_all();
             cv_.notify_all();
         }
 
@@ -503,6 +523,15 @@ private:
         /// @return the state
         bool enabled() {
             return (enabled_);
+        }
+
+        /// @brief return the state of the threads
+        ///
+        /// Returns the state of the threads
+        ///
+        /// @return the state
+        bool paused() {
+            return (paused_);
         }
 
     private:

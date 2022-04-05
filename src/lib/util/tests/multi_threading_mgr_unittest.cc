@@ -294,7 +294,7 @@ public:
     ///
     /// @return True if the pool is running, false otherwise.
     bool isThreadPoolRunning() {
-        return (MultiThreadingMgr::instance().getThreadPool().size());
+        return (!MultiThreadingMgr::instance().getThreadPool().paused());
     }
 
     /// @brief Checks callback invocations over a series of nested

@@ -776,7 +776,6 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
->>>>>>> 0d7199fdd8 ([#1599] implemented pause and resume)
 }
 
 /// @brief test ThreadPool max queue size
