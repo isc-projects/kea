@@ -551,8 +551,8 @@ pgsql_lease4_dump_test() {
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
 insert into lease4 values(10,E'\\\\x3230',E'\\\\x3330',40,TO_TIMESTAMP(1642000000),50,'t','t','one.example.com',0,'');\
-insert into lease4 values(11,'',E'\\\\x313233',40,TO_TIMESTAMP(1643210000),50,'t','t','',1,'{}');\
-insert into lease4 values(12,E'\\\\x3232','',40,TO_TIMESTAMP(1643212345),50,'t','t','three,example,com',2,'{\"a\":1,\"b\":\"c\"}');"
+insert into lease4 values(11,'',E'\\\\x313233',40,TO_TIMESTAMP(1643210000),50,'t','t','',1,'{  }');\
+insert into lease4 values(12,E'\\\\x3232','',40,TO_TIMESTAMP(1643212345),50,'t','t','three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }');"
 
     run_command \
         pgsql_execute "$insert_sql"
@@ -615,8 +615,8 @@ pgsql_lease6_dump_test() {
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
 insert into lease6 values('::10',E'\\\\x3230',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,''); \
-insert into lease6 values('::11','',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{}'); \
-insert into lease6 values('::12',E'\\\\x3231',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{\"a\":1,\"b\":\"c\"}');"
+insert into lease6 values('::11',E'\\\\x3231',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }'); \
+insert into lease6 values('::12',E'\\\\x3232',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }');"
 
     run_command \
         pgsql_execute "$insert_sql"
@@ -650,10 +650,14 @@ pgsql_lease4_upload_test() {
     # Wipe the whole database.
     pgsql_wipe
 
+    # Make sure there's no output file left from previous failures, otherwise
+    # kea-admin is going to ask you if you want to overwrite which blocks tests.
+    rm -f "${output_file}"
+
     # Initialize the database.
     run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" \
-        -n "${db_name}" -d "${db_scripts_dir}"
+            -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
     # Upload leases.
@@ -693,10 +697,14 @@ pgsql_lease6_upload_test() {
     # Wipe the whole database.
     pgsql_wipe
 
+    # Make sure there's no output file left from previous failures, otherwise
+    # kea-admin is going to ask you if you want to overwrite which blocks tests.
+    rm -f "${output_file}"
+
     # Initialize the database.
     run_command \
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" \
-        -n "${db_name}" -d "${db_scripts_dir}"
+            -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
     # Upload leases.

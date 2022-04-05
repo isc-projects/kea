@@ -1,4 +1,4 @@
 address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context
 0.0.0.10,32:30,33:30,40,1642000000,50,1,1,one.example.com,0,
-0.0.0.11,,31:32:33,40,1643210000,50,1,1,,1,{}
-0.0.0.12,32:32,,40,1643212345,50,1,1,three&#x2cexample&#x2ccom,2,{"a":1&#x2c"b":"c"}
+0.0.0.11,,31:32:33,40,1643210000,50,1,1,,1,{  }
+0.0.0.12,32:32,,40,1643212345,50,1,1,three&#x2cexample&#x2ccom,2,{ "a": 1&#x2c "b": "c" }

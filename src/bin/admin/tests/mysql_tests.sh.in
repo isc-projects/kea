@@ -1049,8 +1049,8 @@ mysql_lease4_dump_test() {
     # Insert the reference record
     insert_sql="\
 insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL);
-insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{}');\
-insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{\"a\":1,\"b\":\"c\"}');"
+insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }');\
+insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }');"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1098,8 +1098,8 @@ mysql_lease6_dump_test() {
     # Insert the reference record
     insert_sql="\
 insert into lease6 values('::10',20,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
-insert into lease6 values('::11',NULL,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{}');\
-insert into lease6 values('::12',21,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{\"a\":1,\"b\":\"c\"}');"
+insert into lease6 values('::11',21,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }');\
+insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }');"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1133,9 +1133,14 @@ mysql_lease4_upload_test() {
     # Wipe the whole database.
     mysql_wipe
 
+    # Make sure there's no output file left from previous failures, otherwise
+    # kea-admin is going to ask you if you want to overwrite which blocks tests.
+    rm -f "${output_file}"
+
     # Initialize the database.
     run_command \
-        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" \
+            -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
     # Upload leases.
@@ -1175,9 +1180,14 @@ mysql_lease6_upload_test() {
     # Wipe the whole database.
     mysql_wipe
 
+    # Make sure there's no output file left from previous failures, otherwise
+    # kea-admin is going to ask you if you want to overwrite which blocks tests.
+    rm -f "${output_file}"
+
     # Initialize the database.
     run_command \
-        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" \
+            -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
     # Upload leases.

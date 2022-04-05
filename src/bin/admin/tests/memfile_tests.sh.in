@@ -68,10 +68,10 @@ memfile_header_v6() {
 # Print data copied from mysql_upgrade_12_to_13_test and pgsql_upgrade_7_0_to_8_0.
 # @{
 memfile_data_v4() {
-    printf '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }'
+    printf '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{"a":1&#x2c"b":2}'
 }
 memfile_data_v6() {
-    printf '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16'
+    printf '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{"a":1&#x2c"b":2},90,16'
 }
 # @}
 

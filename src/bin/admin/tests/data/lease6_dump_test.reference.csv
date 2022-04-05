@@ -1,4 +1,4 @@
 address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source
 ::10,32:30,30,1642000000,40,50,1,60,70,1,1,one.example.com,38:30,0,,90,16
-::11,,30,1643210000,40,50,1,60,70,1,1,,38:30,1,{},90,1
-::12,32:31,30,1643212345,40,50,1,60,70,1,1,three&#x2cexample&#x2ccom,38:30,2,{"a":1&#x2c"b":"c"},90,4
+::11,32:31,30,1643210000,40,50,1,60,70,1,1,,38:30,1,{  },90,1
+::12,32:32,30,1643212345,40,50,1,60,70,1,1,three&#x2cexample&#x2ccom,38:30,2,{ "a": 1&#x2c "b": "c" },90,4
