@@ -208,25 +208,25 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
     // Create unique timer name per instance.
     std::string timer_name = "ConfigInterfaceSocketReopenTimer";
 
-    auto on_fail_action = util::OnFailAction::SERVE_RETRY_CONTINUE;
+    auto on_fail_action = OnFailAction::SERVE_RETRY_CONTINUE;
     if (CfgIface::getServiceSocketsRequireAll()) {
-        on_fail_action = util::OnFailAction::SERVE_RETRY_EXIT;
+        on_fail_action = OnFailAction::SERVE_RETRY_EXIT;
     }
 
     // Add one attempt for an initial call.
-    auto reconnect_ctl = boost::make_shared<util::ReconnectCtl>("Socket", timer_name,
-                                                                CfgIface::getServiceSocketsMaxRetries(),
-                                                                CfgIface::getServiceSocketsRetryWaitTime(),
-                                                                on_fail_action);
+    auto reconnect_ctl = boost::make_shared<ReconnectCtl>("Socket", timer_name,
+                                                          CfgIface::getServiceSocketsMaxRetries(),
+                                                          CfgIface::getServiceSocketsRetryWaitTime(),
+                                                          on_fail_action);
 
     return (reconnect_ctl);
 }
 
 bool
-CfgIface::openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
+CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
                                const uint16_t family, const uint16_t port,
                                const bool can_use_bcast) {
-    util::MultiThreadingCriticalSection cs;
+    MultiThreadingCriticalSection cs;
 
     // Skip opened sockets in the retry calls.
     bool is_initial_call = (reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries());

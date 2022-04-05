@@ -413,6 +413,9 @@ private:
     /// connectivity. It starts the DHCP service after the connection is
     /// recovered.
     ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters
+    ///
     /// @return false if reconnect is not configured, true otherwise
     bool dbRecoveredCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
@@ -422,6 +425,9 @@ private:
     /// This function is invoked by DB backends when they fail to recover the
     /// connectivity. It stops the server.
     ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters
+    ///
     /// @return false if reconnect is not configured, true otherwise
     bool dbFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl);
 
@@ -429,7 +435,10 @@ private:
     ///
     /// This function is invoked during the configuration of the interfaces
     /// when they fail to bind the service sockets. It may stop the server.
-    void openSocketsFailedCallback(util::ReconnectCtlPtr db_reconnect_ctl);
+    ///
+    /// @param reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters
+    void openSocketsFailedCallback(util::ReconnectCtlPtr reconnect_ctl);
 
     /// @brief Callback invoked periodically to fetch configuration updates
     /// from the Config Backends.

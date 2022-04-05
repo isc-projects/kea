@@ -89,7 +89,7 @@ public:
                               const std::string & mcast);
 
     /// @brief Set an open socket callback. Use it for testing
-    // purposes, e.g., counting the number of calls or throwing an exception.
+    /// purposes, e.g. counting the number of calls or throwing an exception.
     void setOpenSocketCallback(PktFilter6OpenSocketCallback callback) {
         open_socket_callback_ = callback;
     }

@@ -22,6 +22,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace {
 
@@ -562,7 +563,7 @@ TEST_F(CfgIfaceTest, requireOpenAllServiceSockets) {
     // Configure a fail callback
     uint16_t fail_calls = 0;
     CfgIface::OpenSocketsFailedCallback on_fail_callback =
-        [&fail_calls](util::ReconnectCtlPtr reconnect_ctl) {
+        [&fail_calls](ReconnectCtlPtr reconnect_ctl) {
             EXPECT_TRUE(reconnect_ctl != nullptr);
             EXPECT_TRUE(reconnect_ctl->exitOnFailure());
             fail_calls++;
