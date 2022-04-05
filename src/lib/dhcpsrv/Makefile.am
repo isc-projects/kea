@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-SUBDIRS = . testutils tests benchmarks
+SUBDIRS = . testutils tests
 
 # DATA_DIR is the directory where to put default CSV files and the DHCPv6
 # server ID file (i.e. the file where the server finds its DUID at startup).

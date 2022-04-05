@@ -639,19 +639,6 @@ fi
 # variables.
 AX_ISC_GTEST
 
-enable_benchmark="no"
-BENCHMARK_INCLUDES=
-
-AC_ARG_WITH([benchmark-source],
-            [AS_HELP_STRING([--with-benchmark-source[[=PATH]]],
-                            [location of the benchmark source])],
-            [enable_benchmark="yes" ; BENCHMARK_SOURCE="$withval"])
-
-AC_ARG_WITH([benchmark],
-            [AS_HELP_STRING([--with-benchmark[[=PATH]]],
-                            [specify a path to benchmark header files (PATH/include) and library (PATH/lib)])],
-        [benchmark_path="$withval"; enable_benchmark="yes"], [benchmark_path="no"])
-
 # Sets up for use of botan unless openssl is specified
 # sets variables CRYPTO_*
 AX_CRYPTO
@@ -957,89 +944,6 @@ AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 # Now that Crypto backend and Boost were done we can address TLS.
 AX_TLS
 
-#
-# Check availability of benchmark.
-#
-BENCHMARK_CPPFLAGS=
-BENCHMARK_LDFLAGS=
-BENCHMARK_LDADD=
-DISTCHECK_BENCHMARK_CONFIGURE_FLAG=
-BENCHMARK_VERSION="unknown"
-
-if test "x$enable_benchmark" = "xyes" ; then
-
-    DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark=$benchmark_path"
-
-    if test -n "$with_benchmark_source" ; then
-
-        if test "x$BENCHMARK_SOURCE" = "xyes" ; then
-
-            AC_MSG_CHECKING([for benchmark source])
-            # If not specified, try some common paths.
-            BENCHMARK_SOURCE=
-            for d in /usr/src/benchmark /usr/local /usr/pkg /opt /opt/local ; do
-                if test -f $d/src/benchmark.cc; then
-                    BENCHMARK_SOURCE=$d
-                    AC_MSG_RESULT([$BENCHMARK_SOURCE])
-                    break
-                fi
-            done
-            if test -z $BENCHMARK_SOURCE ; then
-                AC_MSG_ERROR([no benchmark source but it was selected])
-            fi
-        else
-            if test ! -d $BENCHMARK_SOURCE/src; then
-                BENCHMARK_SOURCE=$BENCHMARK_SOURCE/benchmark
-            fi
-            if test -f $BENCHMARK_SOURCE/src/benchmark.cc; then
-                have_benchmark_source=yes
-            else
-                AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])
-            fi
-        fi
-        have_benchmark_source=yes
-        BENCHMARK_CPPFLAGS=`cat \${BENCHMARK_SOURCE}/build/src/CMakeFiles/benchmark.dir/flags.make | grep CXX_DEFINES | cut -d "=" -f 2`
-        BENCHMARK_LDADD="\$(BENCHMARK_SOURCE)/build/src/libbenchmark.a"
-        DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark-source=$BENCHMARK_SOURCE"
-        BENCHMARK_INCLUDES="-I$BENCHMARK_SOURCE \
-                            -I$BENCHMARK_SOURCE/src \
-                            -I$BENCHMARK_SOURCE/include \
-                            -I$BENCHMARK_SOURCE/include/benchmark"
-        BENCHMARK_VERSION="$(basename $BENCHMARK_SOURCE)"
-    fi
-
-    if test "$benchmark_path" != "no" ; then
-        if test "$benchmark_path" != "yes"; then
-            BENCHMARK_PATHS=$benchmark_path
-        fi
-        if test -z "${BENCHMARK_PATHS}" ; then
-            BENCHMARK_PATHS="/usr /usr/local"
-        fi
-        BENCHMARK_FOUND="false"
-        for dir in ${BENCHMARK_PATHS}; do
-            if test -f "$dir/include/benchmark/benchmark.h"; then
-                if ! test -f "$dir/lib/libbenchmark.a"; then
-                    AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
-                    continue
-                fi
-                BENCHMARK_INCLUDES="-I$dir/include"
-                BENCHMARK_LDFLAGS="-L$dir/lib"
-                BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
-                BENCHMARK_FOUND="true"
-                break
-            fi
-        done
-        if test "${BENCHMARK_FOUND}" != "true"; then
-            AC_MSG_ERROR([Cannot find benchmark in: $BENCHMARK_PATHS])
-        fi
-
-    fi
-
-    if test $enable_gtest = no; then
-        AC_MSG_ERROR([--with-benchmark and --with-benchmark-source require --with-gtest or --with-gtest-source])
-    fi
-
-fi
 AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
 AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
 AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
@@ -1619,7 +1523,6 @@ AC_CONFIG_FILES([src/lib/dhcp/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp_ddns/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp_ddns/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/Makefile])
-AC_CONFIG_FILES([src/lib/dhcpsrv/benchmarks/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_libraries.h])
 AC_CONFIG_FILES([src/lib/dhcpsrv/testutils/Makefile])
@@ -1995,25 +1898,6 @@ else
 cat >> config.report << END
 
 Google Test:
-  no
-END
-fi
-
-if test "$enable_benchmark" != "no"; then
-cat >> config.report << END
-
-Google Benchmark:
-  BENCHMARK_VERSION:   ${BENCHMARK_VERSION}
-  BENCHMARK_CPPFLAGS:  ${BENCHMARK_CPPFLAGS}
-  BENCHMARK_INCLUDES:  ${BENCHMARK_INCLUDES}
-  BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
-  BENCHMARK_LDADD:     ${BENCHMARK_LDADD}
-  BENCHMARK_SOURCE:    ${BENCHMARK_SOURCE}
-END
-else
-cat >> config.report << END
-
-Google Benchmark:
   no
 END
 fi
