@@ -413,8 +413,17 @@ check_file_overwrite () {
     if [ -e "${file}" ]
     then
         echo "Output file, $file, exists and will be overwritten."
-        echo "Do you wish to continue? (y/n)"
-        read -r ans
+        echo "Do you wish to continue? (y/N)"
+
+        # Ask for an answer only on an interactive shell to prevent blocking in
+        # automated or non-interactive scenarios where the answer defaults to no.
+        if test -t 0; then
+            read -r ans
+        else
+            log_warning 'Non-interactive tty detected. Assuming no.'
+            ans='N'
+        fi
+
         if [ "${ans}" != "y" ]
         then
             echo "$command aborted by user."
@@ -845,13 +854,18 @@ do
                 shift
                 db_password=${1}
             else
-                # Otherwise read from standard input while hiding feedback to
-                # the terminal.
-                printf 'Password: '
-                stty -echo
-                read -r db_password
-                stty echo
-                printf '\n'
+                # If it's an interactive shell...
+                if test -t 0; then
+                    # Read from standard input while hiding feedback to the terminal.
+                    printf 'Password: '
+                    stty -echo
+                    read -r db_password
+                    stty echo
+                    printf '\n'
+                else
+                    log_warning 'Non-interactive tty detected. Assuming empty password.'
+                    db_password=''
+                fi
             fi
             ;;
         # Specify database name
