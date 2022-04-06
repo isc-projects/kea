@@ -7,7 +7,7 @@
         "    \"command\": \"gss-tsig-purge-all\"",
         "}"
     ],
-    "description": [ "See <xref linkend=\"command-gss-tsig--purge-all\"/>" ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-purge-all\"/>" ],
     "hook": "gss_tsig",
     "name": "gss-tsig-purge-all",
     "support": [ "kea-dhcp-ddns" ],

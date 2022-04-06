@@ -1,23 +1,24 @@
 {
     "access": "write",
     "avail": "2.0.0",
-    "brief": [ "This command removes not usable GSS-TSIG keys for the specified server." ],
+    "brief": [ "The command unconditionally creates new GSS-TSIG keys for (rekeys) a specified DNS server."
+    ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"gss-tsig-purge\",",
+        "    \"command\": \"gss-tsig-rekey\",",
         "    \"arguments\": {",
         "        \"server-id\": \"foo\"",
         "    }",
         "}"
     ],
-    "description": [ "See <xref linkend=\"command-gss-tsig-purge\"/>" ],
+    "description": [ "See <xref linkend=\"command-gss-tsig-rekey\"/>" ],
     "hook": "gss_tsig",
-    "name": "gss-tsig-purge",
+    "name": "gss-tsig-rekey",
     "support": [ "kea-dhcp-ddns" ],
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"2 purged keys for GSS-TSIG server[foo]\"",
+        "    \"text\": \"GSS-TSIG server[foo] rekeyed\"",
         "}"
     ]
 }

@@ -29,6 +29,8 @@ src/share/api/gss-tsig-key-get.json
 src/share/api/gss-tsig-list.json
 src/share/api/gss-tsig-purge-all.json
 src/share/api/gss-tsig-purge.json
+src/share/api/gss-tsig-rekey-all.json
+src/share/api/gss-tsig-rekey.json
 src/share/api/ha-continue.json
 src/share/api/ha-heartbeat.json
 src/share/api/ha-maintenance-cancel.json
