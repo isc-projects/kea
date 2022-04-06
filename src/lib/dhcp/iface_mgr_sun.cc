@@ -65,7 +65,7 @@ IfaceMgr::detectIfaces(bool update_only) {
 
         IfacePtr iface;
         if (update_only) {
-            iface = getIface(iface_name);
+            iface = getIface(ifname);
         }
         if (!iface) {
             iface.reset(new Iface(ifname, ifindex));
