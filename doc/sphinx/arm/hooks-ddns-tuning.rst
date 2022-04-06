@@ -4,35 +4,59 @@
 ===================================
 
 This hook library adds support for fine tuning various DNS update aspects.
-Currently is supports procedural hostname generation and an ability to fine
-tune which devices should do the DNS update. The DDNS Tuning hook is a premium
-feature.
+Currently it supports procedural host name generation. The DDNS Tuning hook
+is a premium feature.
 
-The library, which was added in Kea 2.1.4, can be loaded in a
-similar way to other hook libraries by the ``kea-dhcp4`` and
-``kea-dhcp6`` processes.
+The library, which was added in Kea 2.1.4, is loaded in a
+can be loaded by ``kea--dhcp4`` and ``kea-dhcp6`` by adding it
+to  ``hooks-libraries`` element of the server's configuration:
 
 .. code-block:: javascript
 
     {
         "hooks-libraries": [
+            :
+            ,
             {
                 "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
                 "parameters": {
-                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')"
+                    :
                 }
-            }
+            },
+            :
         ]
     }
 
-This hook allows generating the hostname procedurally, based on an expression.
+Procedural Host name generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The expression can be defined globally in the hook parameters, using `hostname-expr`.
-If defined globally, it will apply to all hosts in all subnets. The expressions can use
-all tokens defined in :ref:`classify`.
+This hook library provides the ability to generate host names, procedurally, based on
+an expression. The expression can be defined globally in the hook parameters, using
+`hostname-expr`.  If defined globally, it will apply to all hosts in all subnets. The
+expressions can use all tokens defined in :ref:`classify`.  An example of a global
+expression is shown below:
 
-It is also possible to define this parameter in a subnet, using user context mechanism.
-If defined at the subnet level, the expression applies to specific subnet only.
+.. code-block:: javascript
+
+    {
+        "hooks-libraries": [
+            :
+            ,
+            {
+                "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
+                "parameters": {
+                    :
+                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')"
+                }
+            },
+            :
+        ]
+    }
+
+It is also possible to define this parameter in a subnet, using user-context mechanism.
+If defined at the subnet level, the expression applies to specific subnet only.  If the
+subnet expression is defined as empty, "", it will suppresses (or disables) the use of
+a global expression for that subnet.  An example subnet expression is shown below:
 
 .. code-block:: javascript
 
@@ -65,7 +89,52 @@ If defined at the subnet level, the expression applies to specific subnet only.
 
 .. note::
 
-   Privacy should be taken into consideration when generating a hostname. The hostname is
+   Privacy should be taken into consideration when generating a host name. The host name is
    usually inserted into the DNS, which is a public system. Exposing identifiers that
    can be used to track devices, such as MAC address, are usually a very bad idea.
    The global expression example used MAC address for simplicity.
+
+DHCPv4 host name generation
+---------------------------
+
+With this library installed the behavior for ``kea-dhcp4`` when forming host names in
+response to a client query (e.g. DISCOVER, REQUEST) is as follows:
+
+  1. If a host name is supplied via a host reservation use it along with the DDNS
+  behavioral parameters to form the final host name. Goto step 4.
+
+  2. If the client supplied an FQDN option (option 81) use the domain name value
+  specified within it along with the DDNS behavioral parameters to form the final
+  host name. Goto step 4.
+
+  3. If the client supplied a host name option (option 12) use the host name specified
+  within it along with the DDNS behavioral parameters to form the final host name.
+
+  4. If there is an ddns-tuning in-scope host name expression (either global or subnet),
+  calculate the host name using the expression.   If the calculated value is not a fully
+  qualified name and there is an in-scope ddns-qualifying-suffix, append the suffix.
+
+  5. If value calculated by the hook is not an empty string and is different than the
+  the host name formed in the prior steps (1 or 2), the calculated value becomes the
+  final host name.
+
+DHCPv6 host name generation
+---------------------------
+
+With this library installed the behavior for ``kea-dhcp6`` when forming host names in
+response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
+
+  1. If a host name is supplied via a host reservation use it along with the DDNS
+  behavioral parameters to form the final host name. Goto step 3.
+
+  2. If the client supplied an FQDN option (option 39) use the domain name value
+  specified within it along with the DDNS behavioral parameters to form the final
+  host name. Goto step 3.
+
+  3. If there is an ddns-tuning in-scope host name expression (either global or subnet),
+  calculate the host name using the expression.   If the calculated value is not a fully
+  qualified name and there is an in-scope ddns-qualifying-suffix, append the suffix.
+
+  4. If value calculated by the hook is not an empty string and is different than the
+  the host name formed in the prior steps (1 or 2), the calculated value becomes the
+  final host name.
