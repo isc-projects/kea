@@ -247,7 +247,9 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
 
 void
 Iface::addAddress(const isc::asiolink::IOAddress& addr) {
-    addrs_.push_back(Address(addr));
+    if (!hasAddress(addr)) {
+        addrs_.push_back(Address(addr));
+    }
 }
 
 void

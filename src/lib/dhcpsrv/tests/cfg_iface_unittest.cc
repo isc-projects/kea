@@ -79,6 +79,7 @@ private:
 
 void
 CfgIfaceTest::SetUp() {
+    IfaceMgr::instance().setTestMode(true);
     io_service_.reset(new asiolink::IOService());
     TimerMgr::instance()->setIOService(io_service_);
 }
@@ -87,6 +88,11 @@ void
 CfgIfaceTest::TearDown() {
     // Remove all timers.
     TimerMgr::instance()->unregisterTimers();
+
+    IfaceMgr::instance().setTestMode(false);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
 
     // Reset global handlers
     CfgIface::open_sockets_failed_callback_ = nullptr;

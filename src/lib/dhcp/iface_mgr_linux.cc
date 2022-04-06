@@ -225,8 +225,7 @@ void Netlink::rtnl_send_request(int family, int type) {
 /// @param storage A vector that holds pointers to netlink messages. The caller
 ///        is responsible for freeing the pointed-to messages.
 /// @param msg A netlink message to be added.
-void Netlink::rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
-{
+void Netlink::rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg) {
     // we need to make a copy of this message. We really can't allocate
     // nlmsghdr directly as it is only part of the structure. There are
     // many message types with varying lengths and a common header.
@@ -247,8 +246,7 @@ void Netlink::rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *
 /// @param table rtattr Messages will be stored here
 /// @param rta Pointer to first rtattr object
 /// @param len Length (in bytes) of concatenated rtattr list.
-void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr* rta, int len)
-{
+void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr* rta, int len) {
     std::fill(table.begin(), table.end(), static_cast<struct rtattr*>(NULL));
     // RTA_OK and RTA_NEXT() are macros defined in linux/rtnetlink.h
     // they are used to handle rtattributes. RTA_OK checks if the structure
@@ -415,7 +413,11 @@ namespace dhcp {
 ///
 /// Uses the socket-based netlink protocol to retrieve the list of interfaces
 /// from the Linux kernel.
-void IfaceMgr::detectIfaces() {
+void IfaceMgr::detectIfaces(bool update_only) {
+    if (isTestMode() && update_only) {
+        return;
+    }
+
     // Copies of netlink messages about links will be stored here.
     Netlink::NetlinkMessages link_info;
 
@@ -476,7 +478,19 @@ void IfaceMgr::detectIfaces() {
         if (interface_info->ifi_index < 0) {
             isc_throw(OutOfRange, "negative interface index");
         }
-        IfacePtr iface(new Iface(iface_name, interface_info->ifi_index));
+        IfacePtr iface;
+        bool created = true;
+
+        if (update_only) {
+            iface = getIface(iface_name);
+            if (iface) {
+                created = false;
+            }
+        }
+
+        if (!iface) {
+            iface.reset(new Iface(iface_name, interface_info->ifi_index));
+        }
 
         iface->setHWType(interface_info->ifi_type);
         iface->setFlags(interface_info->ifi_flags);
@@ -494,7 +508,9 @@ void IfaceMgr::detectIfaces() {
 
         // addInterface can now throw so protect against memory leaks.
         try {
-            addInterface(iface);
+            if (created) {
+                addInterface(iface);
+            }
         } catch (...) {
             nl.release_list(link_info);
             nl.release_list(addr_info);

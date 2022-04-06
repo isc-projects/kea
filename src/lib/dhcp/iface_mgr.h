@@ -769,7 +769,10 @@ public:
     /// This method will eventually detect available interfaces. For now
     /// it offers stub implementation. First interface name and link-local
     /// IPv6 address is read from interfaces.txt file.
-    void detectIfaces();
+    ///
+    /// @param update_only Only add interfaces that do not exist and update
+    /// existing interfaces.
+    void detectIfaces(bool update_only = false);
 
     /// @brief Clears unicast addresses on all interfaces.
     void clearUnicasts();

@@ -39,11 +39,16 @@ protected:
 void
 IfacesConfigParserTest::SetUp() {
     CfgMgr::instance().clear();
+    IfaceMgr::instance().setTestMode(true);
 }
 
 void
 IfacesConfigParserTest::TearDown() {
     CfgMgr::instance().clear();
+    IfaceMgr::instance().setTestMode(false);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
 }
 
 // This test checks that the parser correctly parses the list of interfaces

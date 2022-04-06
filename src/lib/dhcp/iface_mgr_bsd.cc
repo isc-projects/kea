@@ -30,12 +30,16 @@ namespace dhcp {
 
 /// This is a BSD specific interface detection method.
 void
-IfaceMgr::detectIfaces() {
+IfaceMgr::detectIfaces(bool update_only) {
+    if (isTestMode() && update_only) {
+        return;
+    }
+
     struct ifaddrs* iflist = 0;// The whole interface list
     struct ifaddrs* ifptr = 0; // The interface we're processing now
 
     // Gets list of ifaddrs struct
-    if(getifaddrs(&iflist) != 0) {
+    if (getifaddrs(&iflist) != 0) {
         isc_throw(Unexpected, "Network interfaces detection failed.");
     }
 
@@ -54,23 +58,31 @@ IfaceMgr::detectIfaces() {
             isc_throw(Unexpected, "Interface " << ifname << " has no index");
         }
 
-        if ((iface_iter = ifaces.find(ifname)) != ifaces.end()) {
+        iface_iter = ifaces.find(ifname);
+        if (iface_iter != ifaces.end()) {
             continue;
         }
 
-        IfacePtr iface(new Iface(ifname, ifindex));
+        IfacePtr iface;
+        if (update_only) {
+            iface = getIface(iface_name);
+        }
+        if (!iface) {
+            iface.reset(new Iface(ifname, ifindex));
+        }
         iface->setFlags(ifptr->ifa_flags);
         ifaces.insert(pair<string, IfacePtr>(ifname, iface));
     }
 
     // Second lookup to get MAC and IP addresses
     for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
-        if ((iface_iter = ifaces.find(ifptr->ifa_name)) == ifaces.end()) {
+        iface_iter = ifaces.find(ifptr->ifa_name);
+        if (iface_iter == ifaces.end()) {
             continue;
         }
         // Common byte pointer for following data
         const uint8_t * ptr = 0;
-        if(ifptr->ifa_addr->sa_family == AF_LINK) {
+        if (ifptr->ifa_addr->sa_family == AF_LINK) {
             // HWAddr
             struct sockaddr_dl * ldata =
                 reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_addr);
@@ -78,7 +90,7 @@ IfaceMgr::detectIfaces() {
 
             iface_iter->second->setHWType(ldata->sdl_type);
             iface_iter->second->setMac(ptr, ldata->sdl_alen);
-        } else if(ifptr->ifa_addr->sa_family == AF_INET6) {
+        } else if (ifptr->ifa_addr->sa_family == AF_INET6) {
             // IPv6 Addr
             struct sockaddr_in6 * adata =
                 reinterpret_cast<struct sockaddr_in6 *>(ifptr->ifa_addr);
@@ -100,9 +112,15 @@ IfaceMgr::detectIfaces() {
     freeifaddrs(iflist);
 
     // Interfaces registering
-    for(IfaceLst::const_iterator iface_iter = ifaces.begin();
+    for (IfaceLst::const_iterator iface_iter = ifaces.begin();
         iface_iter != ifaces.end(); ++iface_iter) {
-        addInterface(iface_iter->second);
+        IfacePtr iface;
+        if (update_only) {
+            iface = getIface(iface_iter->first);
+        }
+        if (!iface) {
+            addInterface(iface_iter->second);
+        }
     }
 }
 
@@ -173,7 +191,6 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
     iface.addSocket(info);
     return (info.sockfd_);
 }
-
 
 } // end of isc::dhcp namespace
 } // end of dhcp namespace

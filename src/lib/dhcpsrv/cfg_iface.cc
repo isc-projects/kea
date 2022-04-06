@@ -191,6 +191,8 @@ CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
         no_errors = false;
     };
 
+    IfaceMgr::instance().detectIfaces(true);
+
     bool sopen = false;
     if (family == AF_INET) {
         sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast,
@@ -206,7 +208,7 @@ CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
 
 ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
     // Create unique timer name per instance.
-    std::string timer_name = "ConfigInterfaceSocketReopenTimer";
+    std::string timer_name = "SocketReopenTimer";
 
     auto on_fail_action = OnFailAction::SERVE_RETRY_CONTINUE;
     if (CfgIface::getServiceSocketsRequireAll()) {
