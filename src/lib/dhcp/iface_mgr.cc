@@ -611,7 +611,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                          is_open_as_broadcast);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                        "failed to open socket on interface "
+                        "Failed to open socket on interface "
                             << iface->getName()
                             << ", reason: "
                             << ex.what());
@@ -686,7 +686,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                     IfaceMgr::openSocket(iface->getName(), addr, port, false, false);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                        "failed to open unicast socket on interface "
+                        "Failed to open unicast socket on interface "
                         << iface->getName()
                         << ", reason: " << ex.what());
                     continue;
@@ -725,7 +725,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                     IfaceMgr::openMulticastSocket(*iface, addr, port, nullptr);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
-                        "failed to open multicast socket on interface "
+                        "Failed to open multicast socket on interface "
                         << iface->getName() << ", reason: " << ex.what());
                     continue;
                 }
