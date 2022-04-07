@@ -17,7 +17,6 @@ extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPING;
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR1;
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR2;
 extern const isc::log::MessageID COMMAND_RECEIVED;
-extern const isc::log::MessageID COMMAND_RECEIVED_FROM;
 extern const isc::log::MessageID COMMAND_REGISTERED;
 extern const isc::log::MessageID COMMAND_RESPONSE_ERROR;
 extern const isc::log::MessageID COMMAND_SOCKET_ACCEPT_FAIL;

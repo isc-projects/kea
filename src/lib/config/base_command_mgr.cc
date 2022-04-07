@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,19 +121,8 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
     try {
         ConstElementPtr arg;
         std::string name = parseCommand(arg, cmd);
-        ConstElementPtr remote = cmd->get(CONTROL_REMOTE_ADDRESS);
-        std::string remote_addr;
-        if (remote && (remote->getType() == Element::string)) {
-            remote_addr = remote->stringValue();
-        }
 
-        if (remote_addr.empty()) {
-            LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
-        } else {
-            LOG_INFO(command_logger, COMMAND_RECEIVED_FROM)
-                .arg(name)
-                .arg(remote_addr);
-        }
+        LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
         ConstElementPtr response = handleCommand(name, arg, cmd);
 
