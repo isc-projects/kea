@@ -1,3 +1,7 @@
+2011.	[func]		djt
+	Add client remote-address to CTRL_AGENT_COMMAND_FORWARDED
+	log message if it is available. (Gitlab #687)
+
 2010.	[func]		razvan
 	Several extra log messages now detail the subnet selection
 	process. The messages are available on debuglevel 40.
