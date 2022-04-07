@@ -1219,14 +1219,18 @@ ssl_key = {cert_dir}/kea-client.key
         cmd += "CREATE USER 'keatest_secure'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
-    if 'tls' in features:
-        # ALTER USER is the best place to put the REQUIRE but it is not
-        # supported by old versions so downgrade to GRANT.
-        # X509 is weak too but enough for testing purpose.
-        cmd += "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost' REQUIRE X509;\n"
-    cmd += "SET @@global.log_bin_trust_function_creators = 1;\n"
     cmd += "EOF\n\""
     execute(cmd)
+    if 'tls' in features:
+        # ALTER USER is the best place to put the REQUIRE but, if it is not
+        # supported, then downgrade to GRANT.
+        exit_code = execute('''sudo mysql -u root -e "ALTER USER 'keatest_secure'@'localhost' REQUIRE X509;"''', raise_error=False)
+        if exit_code == 0:
+            # If ALTER succeeds, then we still have to GRANT without REQUIRE.
+            execute('''sudo mysql -u root -e "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost';"''')
+        else:
+            execute('''sudo mysql -u root -e "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost' REQUIRE X509;"''')
+    execute('sudo mysql -u root -e "SET @@global.log_bin_trust_function_creators = 1;"')
 
     if 'forge' in features:
         cmd = "echo 'DROP DATABASE IF EXISTS keadb;' | sudo mysql -u root"
