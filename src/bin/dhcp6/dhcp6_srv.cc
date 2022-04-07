@@ -1972,12 +1972,18 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
             LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_DDNS_UPDATE)
                       .arg(ctx.hostname_).arg(hook_hostname).arg(ctx.fwd_dns_update_).arg(hook_fwd_dns_update)
                       .arg(ctx.rev_dns_update_).arg(hook_rev_dns_update);
+
+            // Update the FQDN option in the response.
+            fqdn_resp = boost::dynamic_pointer_cast<Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
+            if (fqdn) {
+                fqdn_resp->setDomainName(hook_hostname, Option6ClientFqdn::FULL);
+            }
+
             ctx.hostname_ = hook_hostname;
             ctx.fwd_dns_update_ = hook_fwd_dns_update;
             ctx.rev_dns_update_ = hook_rev_dns_update;
         }
     }
-
 }
 
 void

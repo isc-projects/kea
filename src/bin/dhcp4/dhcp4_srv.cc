@@ -2100,7 +2100,6 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             }
         }
 
-
         // Optionally, call a hook that may possibly override the decisions made
         // earlier.
         if (HooksManager::calloutsPresent(Hooks.hook_index_ddns4_update_)) {
@@ -2138,6 +2137,14 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                 hostname = hook_hostname;
                 fqdn_fwd = hook_fqdn_fwd;
                 fqdn_rev = hook_fqdn_rev;
+
+                // If there's an outbound FQDN option in the response we need
+                // to update it with the new host name.
+                Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
+                                            (resp->getOption(DHO_FQDN));
+                if (fqdn) {
+                    fqdn->setDomainName(hook_hostname, Option4ClientFqdn::FULL);
+                }
             }
         }
 
