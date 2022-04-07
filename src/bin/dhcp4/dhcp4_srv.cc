@@ -2138,6 +2138,13 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                 fqdn_fwd = hook_fqdn_fwd;
                 fqdn_rev = hook_fqdn_rev;
 
+                // If there's an outbound host-name option in the response we need to updated it.
+                OptionStringPtr hostname_opt = boost::dynamic_pointer_cast<OptionString>
+                                              (resp->getOption(DHO_HOST_NAME));
+                if (hostname_opt) {
+                    hostname_opt->setValue(hook_hostname);
+                }
+
                 // If there's an outbound FQDN option in the response we need
                 // to update it with the new host name.
                 Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
