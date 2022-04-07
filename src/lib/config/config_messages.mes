@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,11 +54,6 @@ provided, if available. Additional log messages may provide more details.
 This informational message indicates that a command was received over command
 socket. The nature of this command and its possible results will be logged
 with separate messages.
-
-% COMMAND_RECEIVED_FROM Received command '%1' from %2
-This informational message indicates that a command was received from HTTP.
-Only the command name and the remote address are displayed, other details
-will be logged with separate messages.
 
 % COMMAND_REGISTERED Command %1 registered
 This debug message indicates that the daemon started supporting specified
