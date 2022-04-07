@@ -1,3 +1,9 @@
+2009.	[func]		tmark
+	Added new hook callout points: ddns4_udpate to kea_dhcp4
+	and ddns6_update to kea_dhcp6.  This enables use of the
+	ddsn-tuning hook library.
+	(Gitlab #1548)
+
 2008.	[func]*		tomek
 	The support for benchmarks have been removed.
 	(Gitlab #2372)
