@@ -444,6 +444,11 @@ not build the wire data (pack) because it was already done by the
 book. The argument specifies the client and transaction identification
 information.
 
+% DHCP6_HOOK_DDNS_UPDATE A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
+This message indicates that there was a hook called on ddns_update hook point
+and that hook updated the DDNS update parameters: hostname, or whether to
+conduct forward (A record) or reverse (PTR record) DDNS updates.
+
 % DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on the
 subnet6_select hook point set the drop flag. For this particular hook

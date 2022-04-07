@@ -103,6 +103,7 @@ struct Dhcp6Hooks {
     int hook_index_buffer6_send_;     ///< index for "buffer6_send" hook point
     int hook_index_lease6_decline_;   ///< index for "lease6_decline" hook point
     int hook_index_host6_identifier_; ///< index for "host6_identifier" hook point
+    int hook_index_ddns6_update_;     ///< index for "ddns6_update" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
@@ -115,6 +116,7 @@ struct Dhcp6Hooks {
         hook_index_buffer6_send_      = HooksManager::registerHook("buffer6_send");
         hook_index_lease6_decline_    = HooksManager::registerHook("lease6_decline");
         hook_index_host6_identifier_  = HooksManager::registerHook("host6_identifier");
+        hook_index_ddns6_update_      = HooksManager::registerHook("ddns6_update");
     }
 };
 
@@ -1937,6 +1939,45 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
         .arg(question->getLabel())
         .arg(fqdn_resp->toText());
     answer->addOption(fqdn_resp);
+
+    // Optionally, call a hook that may override the decisions made
+    // earlier.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_ddns6_update_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(question);
+        Subnet6Ptr subnet = ctx.subnet_;
+
+        // Setup the callout arguments.
+        callout_handle->setArgument("query6", question);
+        callout_handle->setArgument("response6", answer);
+        callout_handle->setArgument("subnet6", subnet);
+        callout_handle->setArgument("hostname", ctx.hostname_);
+        callout_handle->setArgument("fwd-update", ctx.fwd_dns_update_);
+        callout_handle->setArgument("rev-update", ctx.rev_dns_update_);
+        callout_handle->setArgument("ddns-params", ddns_params);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_ddns6_update_, *callout_handle);
+
+        // Let's get the parameters returned by hook.
+        string hook_hostname;
+        bool hook_fwd_dns_update;
+        bool hook_rev_dns_update;
+        callout_handle->getArgument("hostname", hook_hostname);
+        callout_handle->getArgument("fwd-update", hook_fwd_dns_update);
+        callout_handle->getArgument("rev-update", hook_rev_dns_update);
+
+        // If there's anything changed by the hook, log it and then update the parameters
+        if ((ctx.hostname_ != hook_hostname) || (ctx.fwd_dns_update_!= hook_fwd_dns_update) ||
+            (ctx.rev_dns_update_ != hook_rev_dns_update)) {
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_DDNS_UPDATE)
+                      .arg(ctx.hostname_).arg(hook_hostname).arg(ctx.fwd_dns_update_).arg(hook_fwd_dns_update)
+                      .arg(ctx.rev_dns_update_).arg(hook_rev_dns_update);
+            ctx.hostname_ = hook_hostname;
+            ctx.fwd_dns_update_ = hook_fwd_dns_update;
+            ctx.rev_dns_update_ = hook_rev_dns_update;
+        }
+    }
+
 }
 
 void
@@ -2023,6 +2064,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                      (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev)) {
                     extended_only = true;
                 } else {
+                    std::cout << __LINE__ << "**** doing remove - l.hostname: " << (*l)->hostname_
+                              << ", opt-fqdn: " << opt_fqdn->getDomainName() << std::endl;
                     // Queue a CHG_REMOVE of the old data.
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true

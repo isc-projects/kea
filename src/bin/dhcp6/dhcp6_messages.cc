@@ -68,6 +68,7 @@ extern const isc::log::MessageID DHCP6_HOOKS_LIBS_RELOAD_FAIL = "DHCP6_HOOKS_LIB
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP = "DHCP6_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP = "DHCP6_HOOK_BUFFER_RCVD_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_SEND_SKIP = "DHCP6_HOOK_BUFFER_SEND_SKIP";
+extern const isc::log::MessageID DHCP6_HOOK_DDNS_UPDATE = "DHCP6_HOOK_DDNS_UPDATE";
 extern const isc::log::MessageID DHCP6_HOOK_DECLINE_DROP = "DHCP6_HOOK_DECLINE_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_DECLINE_SKIP = "DHCP6_HOOK_DECLINE_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP = "DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP";
@@ -230,6 +231,7 @@ const char* values[] = {
     "DHCP6_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP6_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP",
     "DHCP6_HOOK_BUFFER_SEND_SKIP", "%1: prepared DHCPv6 response was dropped because a callout set the next step to SKIP",
+    "DHCP6_HOOK_DDNS_UPDATE", "A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6",
     "DHCP6_HOOK_DECLINE_DROP", "During Decline processing (client=%1, interface=%2, addr=%3) hook callout set next step to DROP, dropping packet.",
     "DHCP6_HOOK_DECLINE_SKIP", "During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to SKIP, skipping decline.",
     "DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP", "%1: DHCPv6 address lease was not released because a callout set the next step to SKIP",

@@ -69,6 +69,7 @@ extern const isc::log::MessageID DHCP6_HOOKS_LIBS_RELOAD_FAIL;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_SEND_SKIP;
+extern const isc::log::MessageID DHCP6_HOOK_DDNS_UPDATE;
 extern const isc::log::MessageID DHCP6_HOOK_DECLINE_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_DECLINE_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP;
