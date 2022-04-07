@@ -121,7 +121,7 @@ public:
                 "    \"authoritative\": true,"
                 "    \"boot-file-name\": \"/dev/null\","
                 "    \"client-class\": \"srv1\","
-                "    \"interface\": \"eth1\","
+                "    \"interface\": \"eth1961\","
                 "    \"match-client-id\": true,"
                 "    \"name\": \"bird\","
                 "    \"next-server\": \"10.0.0.1\","
@@ -253,7 +253,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getAuthoritative());
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(99, network->getT1());
     EXPECT_EQ(199, network->getT2());
     EXPECT_EQ(399, network->getValid());
@@ -465,7 +465,7 @@ TEST_F(SharedNetwork4ParserTest, iface) {
     EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 
     // Retry with the interface check enabled.
     SharedNetwork4Parser parser;
@@ -477,12 +477,12 @@ TEST_F(SharedNetwork4ParserTest, iface) {
     EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 
     EXPECT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 }
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -545,7 +545,7 @@ public:
             std::string config = "{"
                 "    \"client-class\": \"srv1\","
                 + std::string(use_iface_id_ ? "\"interface-id\": " : "\"interface\": ") +
-                "\"eth1\","
+                "\"eth1961\","
                 "    \"name\": \"bird\","
                 "    \"preferred-lifetime\": 211,"
                 "    \"min-preferred-lifetime\": 111,"
@@ -663,7 +663,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     // Check basic parameters.
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(211, network->getPreferred());
     EXPECT_EQ(111, network->getPreferred().getMin());
     EXPECT_EQ(311, network->getPreferred().getMax());
@@ -1000,7 +1000,7 @@ TEST_F(SharedNetwork6ParserTest, iface) {
     EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 
     // Retry with the interface check enabled.
     SharedNetwork6Parser parser;
@@ -1012,12 +1012,12 @@ TEST_F(SharedNetwork6ParserTest, iface) {
     EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 
     EXPECT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_FALSE(network->getIface().unspecified());
-    EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ("eth1961", network->getIface().get());
 }
 
 } // end of anonymous namespace

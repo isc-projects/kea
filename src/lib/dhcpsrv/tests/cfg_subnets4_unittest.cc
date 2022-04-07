@@ -1757,7 +1757,7 @@ TEST(CfgSubnets4Test, iface) {
         "        {"
         "            \"id\": 1,\n"
         "            \"subnet\": \"10.1.2.0/24\", \n"
-        "            \"interface\": \"eth1\"\n"
+        "            \"interface\": \"eth1961\"\n"
         "        }";
 
     data::ElementPtr elems;
@@ -1770,7 +1770,7 @@ TEST(CfgSubnets4Test, iface) {
     EXPECT_NO_THROW(subnet = parser_no_check.parse(elems));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getIface().unspecified());
-    EXPECT_EQ("eth1", subnet->getIface().get());
+    EXPECT_EQ("eth1961", subnet->getIface().get());
 
     // Retry with the interface check enabled.
     Subnet4ConfigParser parser;
@@ -1782,12 +1782,12 @@ TEST(CfgSubnets4Test, iface) {
     EXPECT_NO_THROW(subnet = parser_no_check.parse(elems));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getIface().unspecified());
-    EXPECT_EQ("eth1", subnet->getIface().get());
+    EXPECT_EQ("eth1961", subnet->getIface().get());
 
     EXPECT_NO_THROW(subnet = parser.parse(elems));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getIface().unspecified());
-    EXPECT_EQ("eth1", subnet->getIface().get());
+    EXPECT_EQ("eth1961", subnet->getIface().get());
 }
 
 // This test verifies that update statistics works as expected.

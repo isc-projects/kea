@@ -121,7 +121,6 @@ IfaceMgrTestConfig::createIfaces() {
     addIface("eth1961", ETH1961_INDEX);
     addAddress("eth1961", IOAddress("198.51.100.1"));
     addAddress("eth1961", IOAddress("fe80::3a60:77ff:fed5:9876"));
-
 }
 
 void
