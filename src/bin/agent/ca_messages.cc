@@ -25,7 +25,7 @@ extern const isc::log::MessageID CTRL_AGENT_STARTED = "CTRL_AGENT_STARTED";
 namespace {
 
 const char* values[] = {
-    "CTRL_AGENT_COMMAND_FORWARDED", "command %1 successfully forwarded to the service %2",
+    "CTRL_AGENT_COMMAND_FORWARDED", "command %1 successfully forwarded to the service %2 from remote address %3",
     "CTRL_AGENT_COMMAND_FORWARD_BEGIN", "begin forwarding command %1 to service %2",
     "CTRL_AGENT_COMMAND_FORWARD_FAILED", "failed forwarding command %1: %2",
     "CTRL_AGENT_CONFIG_CHECK_FAIL", "Control Agent configuration check failed: %1",
