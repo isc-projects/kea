@@ -2499,7 +2499,7 @@ TEST_F(IfaceMgrTest, openSockets6SkipOpen) {
     // and bind to this address and port should fail.
     ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
                                         IOAddress("fe80::3a60:77ff:fed5:cdef"),
-                                        DHCP6_SERVER_PORT, true));
+                                        DHCP6_SERVER_PORT, false));
 
     // The function doesn't throw an exception when it tries to open a socket
     // and bind it to the address in use but the skip open flag is provided.

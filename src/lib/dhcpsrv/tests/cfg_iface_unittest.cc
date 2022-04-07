@@ -638,8 +638,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
-    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
-                          CALLS_PER_RETRY](uint16_t) {
+    auto open_callback = [&total_calls, &last_call_time, WAIT_TIME, CALLS_PER_RETRY](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
         // Check waiting time only for the first call in a retry attempt.
@@ -837,8 +836,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
-    auto open_callback = [&total_calls, &last_call_time, RETRIES, WAIT_TIME,
-                          CALLS_PER_RETRY](uint16_t) {
+    auto open_callback = [&total_calls, &last_call_time, WAIT_TIME, CALLS_PER_RETRY](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
         // Check waiting time only for the first call in a retry attempt.
