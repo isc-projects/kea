@@ -1187,7 +1187,8 @@ Here is an example of a response indicating that two GSS-TSIG keys for server "f
 The ``gss-tsig-rekey-all`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command unconditionally creates new GSS-TSIG keys (rekeys) for all DNS servers.
+This command unconditionally creates new GSS-TSIG keys (rekeys) for
+all DNS servers.
 
 An example command invocation looks like this:
 
@@ -1214,7 +1215,8 @@ reconnected to the network.
 The ``gss-tsig-rekey`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command unconditionally creates new GSS-TSIG keys (rekeys) for a specified DNS server.
+This command unconditionally creates new GSS-TSIG keys (rekeys) for
+a specified DNS server.
 
 An example command invocation looks like this:
 

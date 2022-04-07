@@ -1,7 +1,8 @@
 {
     "access": "write",
     "avail": "2.0.0",
-    "brief": [ "This command removes not usable GSS-TSIG keys for the specified server." ],
+    "brief": [ "This command removes not usable GSS-TSIG keys for the specified server."
+    ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"gss-tsig-purge\",",
