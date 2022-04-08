@@ -1,3 +1,8 @@
+2012.	[func]		djt
+	Add CTRL_AGENT_COMMAND_RECEIVED log line with command and
+	source address to the kea-ctrl-agent for commands which
+	are not forwarded on to another daemon. (Gitlab #687)
+
 2011.	[func]		djt
 	Add client remote-address to CTRL_AGENT_COMMAND_FORWARDED
 	log message if it is available. (Gitlab #687)
