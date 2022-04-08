@@ -107,6 +107,9 @@ private:
     /// thus the constructor is private.
     CtrlAgentCommandMgr();
 
+    /// @brief Remote address of HTTP endpoint.
+    std::string remote_addr_;
+
 };
 
 } // end of namespace isc::agent

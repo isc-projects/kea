@@ -6,6 +6,10 @@
 
 $NAMESPACE isc::agent
 
+% CTRL_AGENT_COMMAND_RECEIVED command %1 received from remote address %2
+This informational message is issued when the CA receives a control message,
+whether it is destined to the control agent itself, or to be forwarded on.
+
 % CTRL_AGENT_COMMAND_FORWARDED command %1 successfully forwarded to the service %2 from remote address %3
 This informational message is issued when the CA successfully forwards
 the control message to the specified Kea service and receives a response.

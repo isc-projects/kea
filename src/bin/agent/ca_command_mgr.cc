@@ -65,6 +65,16 @@ CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
                                    const isc::data::ConstElementPtr& params,
                                    const isc::data::ConstElementPtr& original_cmd) {
 
+    ConstElementPtr raddr_ptr = original_cmd->get("remote-address");
+    if (raddr_ptr && (raddr_ptr->getType() == Element::string)) {
+        remote_addr_ = raddr_ptr->stringValue();
+    } else {
+        remote_addr_ = "(unknown)";
+    }
+    LOG_INFO(agent_logger, CTRL_AGENT_COMMAND_RECEIVED)
+        .arg(cmd_name)
+        .arg(remote_addr_);
+
     ConstElementPtr services = Element::createList();
 
     // Retrieve 'service' parameter to determine if we should forward the
@@ -250,17 +260,10 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
     try {
         answer = received_feed->toElement();
 
-        std::string remote_addr;
-        ConstElementPtr raddr_ptr = command->get("remote-address");
-        if (raddr_ptr && (raddr_ptr->getType() == Element::string)) {
-            remote_addr = raddr_ptr->stringValue();
-        } else {
-            remote_addr = "(unknown)";
-        }
         LOG_INFO(agent_logger, CTRL_AGENT_COMMAND_FORWARDED)
             .arg(cmd_name)
             .arg(service)
-            .arg(remote_addr);
+            .arg(remote_addr_);
 
     } catch (const std::exception& ex) {
         isc_throw(CommandForwardingError, "internal server error: unable to parse"
