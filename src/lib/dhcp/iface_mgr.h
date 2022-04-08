@@ -1195,6 +1195,11 @@ public:
     /// socket is bound to the port (and address is unspecified), the
     /// method will check if the address passed in the argument is configured
     /// on an interface.
+    /// Note: On BSD and Solaris the socket is opened for "::" address instead
+    /// of the link-local address or the "ff02::1:2" address. If there are
+    /// multiple interfaces joining the multicast group, this function matches
+    /// the "::" address bound by any interface, not necessary the one with the
+    /// specified link-local address and returns true.
     ///
     /// @param addr Address of the socket being searched.
     ///

@@ -170,6 +170,10 @@ IfaceMgr::openMulticastSocket(Iface& iface,
 int
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
                       const bool join_multicast) {
+    // On Solaris, we bind the socket to in6addr_any and join multicast group
+    // to receive multicast traffic. So, if the multicast is requested,
+    // replace the address specified by the caller with the "unspecified"
+    // address.
     IOAddress actual_address = join_multicast ? IOAddress("::") : addr;
     SocketInfo info = packet_filter6_->openSocket(iface, actual_address, port,
                                                   join_multicast);

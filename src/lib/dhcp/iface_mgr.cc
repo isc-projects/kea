@@ -722,7 +722,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                 try {
                     // Pass a null pointer as an error handler to avoid
                     // suppressing an exception in a system-specific function.
-                    IfaceMgr::openMulticastSocket(*iface, addr, port, nullptr);
+                    IfaceMgr::openMulticastSocket(*iface, addr, port);
                 } catch (const Exception& ex) {
                     IFACEMGR_ERROR(SocketConfigError, error_handler,
                         "Failed to open multicast socket on interface "

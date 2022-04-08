@@ -264,7 +264,7 @@ CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
         }
         // Has errors but retries exceed
         if (has_errors) {
-            if (open_sockets_failed_callback_ != nullptr) {
+            if (open_sockets_failed_callback_) {
                 open_sockets_failed_callback_(reconnect_ctl);
             }
         }

@@ -16,7 +16,7 @@ namespace dhcp {
 namespace test {
 
 PktFilterTestStub::PktFilterTestStub()
-    : direct_response_supported_(true), open_socket_callback_(nullptr) {
+    : direct_response_supported_(true), open_socket_callback_() {
 }
 
 bool
@@ -35,7 +35,7 @@ PktFilterTestStub::openSocket(Iface&,
                   "PktFilterTestStub: cannot open /dev/null:" << errmsg);
     }
 
-    if (open_socket_callback_ != nullptr) {
+    if (open_socket_callback_) {
         open_socket_callback_(port);
     }
 
