@@ -2004,8 +2004,6 @@ TEST_F(IfaceMgrTest, openSockets4SkipOpen) {
     // Open socket on eth1. The openSockets4 should detect that this
     // socket has been already open and an attempt to open another socket
     // and bind to this address and port should fail.
-    // This test checks if calling openSockets4 does not throw when sockets are
-    // already opened for the interface "eth1".
     ASSERT_NO_THROW(ifacemgr.openSocket("eth1", IOAddress("192.0.2.3"),
                                         DHCP4_SERVER_PORT));
 
@@ -2499,17 +2497,9 @@ TEST_F(IfaceMgrTest, openSockets6SkipOpen) {
     // Open socket on eth0. The openSockets6 should detect that this
     // socket has been already open and an attempt to open another socket
     // and bind to this address and port should fail.
-    // This test checks if calling openSockets6 does not throw when sockets are
-    // already opened for the interface "eth0".
-    // Because the @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
-    // address on BSD and Solaris on any interface, we make sure that the
-    // interface "eth0" does not join the multicast group. Otherwise the
-    // @ref IfaceMgr::openSockets6 will see that at least one socket for address
-    // "::" has been opened for interface "eth1" and will not try to open the
-    // rest of the sockets.
     ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
                                         IOAddress("fe80::3a60:77ff:fed5:cdef"),
-                                        DHCP6_SERVER_PORT, false));
+                                        DHCP6_SERVER_PORT, true));
 
     // The function doesn't throw an exception when it tries to open a socket
     // and bind it to the address in use but the skip open flag is provided.

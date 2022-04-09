@@ -681,7 +681,12 @@ IfaceMgr::openSockets6(const uint16_t port,
         for (Iface::Address addr : iface->getUnicasts()) {
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr)) {
+            // The @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
+            // address on BSD and Solaris on any interface, so we make sure that
+            // that interface actually has opened sockets by checking the numner
+            // of sockets to be non zero.
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||
+                !iface->getSockets().size()) {
                 try {
                     IfaceMgr::openSocket(iface->getName(), addr, port, false, false);
                 } catch (const Exception& ex) {
@@ -718,7 +723,12 @@ IfaceMgr::openSockets6(const uint16_t port,
 
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr)) {
+            // The @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
+            // address on BSD and Solaris on any interface, so we make sure that
+            // the interface actually has opened sockets by checking the numner
+            // of sockets to be non zero.
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||
+                !iface->getSockets().size()) {
                 try {
                     // Pass a null pointer as an error handler to avoid
                     // suppressing an exception in a system-specific function.

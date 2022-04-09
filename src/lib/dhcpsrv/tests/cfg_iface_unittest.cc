@@ -690,9 +690,6 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
 
-    // This test checks if calling @ref CfgIface::openSockets does activate the
-    // retry mechanism for the interface "eth1".
-
     // Parameters
     const uint16_t RETRIES = 5;
     const uint16_t WAIT_TIME = 10; // miliseconds
@@ -889,17 +886,6 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
     ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
 
-    // This test checks if calling @ref CfgIface::openSockets does activate the
-    // retry mechanism for the interface "eth1".
-    // Because the @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
-    // address on BSD and Solaris on any interface, we make sure that the
-    // interface "eth0" does not join the multicast group. Otherwise the
-    // @ref IfaceMgr::openSockets6 will see that at least one socket for address
-    // "::" has been opened for interface "eth1" and will not try to open the
-    // rest of the sockets.
-    // Make eth0 multicast-incapable.
-    IfaceMgr::instance().getIface("eth0")->flag_multicast_ = false;
-
     // Parameters
     const uint16_t RETRIES = 5;
     const uint16_t WAIT_TIME = 10; // miliseconds
@@ -908,12 +894,18 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     cfg6.setServiceSocketsMaxRetries(RETRIES);
     cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
+#if defined OS_LINUX
+    const uint32_t opened_by_eth0 = 3;
+#else
+    const uint32_t opened_by_eth0 = 2;
+#endif
+
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, WAIT_TIME](uint16_t) {
         auto now = std::chrono::system_clock::now();
-        bool is_eth0 = total_calls < 2;
+        bool is_eth0 = total_calls < opened_by_eth0;
 
         // Skip the wait time check for the socket when two sockets are
         // binding in a single attempt.
@@ -921,8 +913,10 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
         // Don't check the waiting time for initial calls.
         // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0
         // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
+        // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
         // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1 - fails
-        if (total_calls > 3) {
+
+        if (total_calls > (opened_by_eth0 + 1)) {
             auto interval = now - last_call_time;
             auto interval_ms =
                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -957,9 +951,9 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 2);
 
-    // For eth0 interface perform only 2 init open,
+    // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
     // for eth1 interface perform 1 init open and a few retries.
-    EXPECT_EQ((RETRIES + 1) + 2, total_calls);
+    EXPECT_EQ((RETRIES + 1) + opened_by_eth0, total_calls);
 }
 
 // Test that only one reopen timer is active simultaneously. If a new opening
