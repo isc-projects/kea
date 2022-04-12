@@ -124,17 +124,26 @@ DHCPv6 host name generation
 With this library installed the behavior for ``kea-dhcp6`` when forming host names in
 response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 
-  1. If a host name is supplied via a host reservation use it along with the DDNS
-  behavioral parameters to form the final host name. Goto step 3.
-
-  2. If the client supplied an FQDN option (option 39) use the domain name value
+  1. If the client supplied an FQDN option (option 39) use the domain name value
   specified within it along with the DDNS behavioral parameters to form the final
-  host name. Goto step 3.
+  host name. Goto step 4.
 
-  3. If there is an ddns-tuning in-scope host name expression (either global or subnet),
+  2. If the client did not supply an FQDN but ddns-replace-client-name is either
+  ``always`` or ``when-not-present``, then calculate the final form of the host
+  name and use it to create an outbound FQDN. Goto step 4.
+
+  3. If there is no outbound FQDN at this point, client name processing for this
+  packet stops. Without an outbound FQDN there is no way to communicate a host
+  name to the client.
+
+  4. If a host name is supplied via a host reservation use it along with the DDNS
+  behavioral parameters to form the final host name, and supersedes the FQDN value
+  calculated in steps 1 or 2.
+
+  5. If there is a ddns-tuning in-scope host name expression (either global or subnet),
   calculate the host name using the expression.   If the calculated value is not a fully
   qualified name and there is an in-scope ddns-qualifying-suffix, append the suffix.
 
-  4. If value calculated by the hook is not an empty string and is different than the
+  6. If value calculated by the hook is not an empty string and is different than the
   the host name formed in the prior steps (1 or 2), the calculated value becomes the
   final host name.
