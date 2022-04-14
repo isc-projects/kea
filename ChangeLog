@@ -1,3 +1,8 @@
+2007.	[func]		tmark
+	Added split() function to classification expression
+	language.
+	(GitLab #2272)
+
 2006.	[func]		slawek
 	Added ``service-sockets-require-all`` parameter to specify
 	mandatory successfully binding all needed service sockets to
