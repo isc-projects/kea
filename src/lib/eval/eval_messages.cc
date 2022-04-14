@@ -27,6 +27,10 @@ extern const isc::log::MessageID EVAL_DEBUG_PKT4 = "EVAL_DEBUG_PKT4";
 extern const isc::log::MessageID EVAL_DEBUG_PKT6 = "EVAL_DEBUG_PKT6";
 extern const isc::log::MessageID EVAL_DEBUG_RELAY6 = "EVAL_DEBUG_RELAY6";
 extern const isc::log::MessageID EVAL_DEBUG_RELAY6_RANGE = "EVAL_DEBUG_RELAY6_RANGE";
+extern const isc::log::MessageID EVAL_DEBUG_SPLIT = "EVAL_DEBUG_SPLIT";
+extern const isc::log::MessageID EVAL_DEBUG_SPLIT_DELIM_EMPTY = "EVAL_DEBUG_SPLIT_DELIM_EMPTY";
+extern const isc::log::MessageID EVAL_DEBUG_SPLIT_EMPTY = "EVAL_DEBUG_SPLIT_EMPTY";
+extern const isc::log::MessageID EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE = "EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE";
 extern const isc::log::MessageID EVAL_DEBUG_STRING = "EVAL_DEBUG_STRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING = "EVAL_DEBUG_SUBSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_EMPTY = "EVAL_DEBUG_SUBSTRING_EMPTY";
@@ -75,6 +79,10 @@ const char* values[] = {
     "EVAL_DEBUG_PKT6", "Pushing PKT6 field %1 with value %2",
     "EVAL_DEBUG_RELAY6", "Pushing PKT6 relay field %1 nest %2 with value %3",
     "EVAL_DEBUG_RELAY6_RANGE", "Pushing PKT6 relay field %1 nest %2 with value %3",
+    "EVAL_DEBUG_SPLIT", "Popping field %1, delimiters %2, string %3, pushing result %4",
+    "EVAL_DEBUG_SPLIT_DELIM_EMPTY", "Popping field %1, delimiters %2, string %3, pushing result %4",
+    "EVAL_DEBUG_SPLIT_EMPTY", "Popping field %1, delimiters %2, string %3, pushing result %4",
+    "EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE", "Popping field %1, delimiters %2, string %3, pushing result %4",
     "EVAL_DEBUG_STRING", "Pushing text string %1",
     "EVAL_DEBUG_SUBSTRING", "Popping length %1, start %2, string %3 pushing result %4",
     "EVAL_DEBUG_SUBSTRING_EMPTY", "Popping length %1, start %2, string %3 pushing result %4",

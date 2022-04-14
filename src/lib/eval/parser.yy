@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,6 +70,7 @@ using namespace isc::eval;
   YIADDR "yiaddr"
   SIADDR "siaddr"
   SUBSTRING "substring"
+  SPLIT "split"
   ALL "all"
   COMA ","
   CONCAT "concat"
@@ -360,6 +361,11 @@ string_expr : STRING
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
+            | SPLIT "(" string_expr "," string_expr "," int_expr ")"
+                  {
+                      TokenPtr split(new TokenSplit());
+                      ctx.expression.push_back(split);
+                  }
             | CONCAT "(" string_expr "," string_expr ")"
                   {
                       TokenPtr conc(new TokenConcat());
@@ -619,6 +625,12 @@ length_expr : INTEGER
             | ALL
                  {
                      TokenPtr str(new TokenString("all"));
+                     ctx.expression.push_back(str);
+                 }
+            ;
+int_expr : INTEGER
+                 {
+                     TokenPtr str(new TokenString($1));
                      ctx.expression.push_back(str);
                  }
             ;

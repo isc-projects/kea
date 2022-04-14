@@ -453,7 +453,7 @@ protected:
 /// encapsulation
 ///
 /// This represents a reference to a given option similar to TokenOption
-/// but from within the information from a relay.  In the expresssion
+/// but from within the information from a relay.  In the expression
 /// relay6[nest-level].option[option-code], nest-level indicates which
 /// of the relays to examine and option-code which option to extract.
 ///
@@ -788,6 +788,50 @@ public:
     /// @throw EvalBadStack if there are less than 3 values on stack
     /// @throw EvalTypeError if start is not a number or length a number or
     ///        the special value "all".
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (3 arguments will be popped, 1 result
+    ///        will be pushed)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+class TokenSplit : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenSplit() {}
+
+    /// @brief Extract a field from a delimited string
+    ///
+    /// Evaluation does not use packet information.  It requires at least
+    /// three values to be present on the stack.  It will consume the top
+    /// three values on the stack as parameters and push the resulting substring
+    /// onto the stack.  From the top it expects the values on the stack as:
+    /// -  field
+    /// -  delims
+    /// -  str
+    ///
+    /// str is the string to split.  If it is empty, an empty
+    /// string is pushed onto the value stack.
+    /// delims is string of character delimiters by which to split str. If it is
+    /// empty the entire value of str will be pushed on onto the value stack.
+    /// field is the field number (starting at 1) of the desired field.  If it is
+    /// out of range an empty string is pushed on the the value stack.
+    ///
+    /// The following examples all use the base string "one.two..four" and shows
+    /// the value returned for a given field:
+    /// ```
+    /// field => value
+    /// --------------
+    /// -  0  => ""
+    /// -  1  => "one"
+    /// -  2  => "two"
+    /// -  3  => ""
+    /// -  4  => "four"
+    /// -  5  => ""
+    /// ```
+    ///
+    /// @throw EvalBadStack if there are less than 3 values on stack
+    /// @throw EvalTypeError if field is not a number
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result

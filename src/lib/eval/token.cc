@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
 #include <cstring>
 #include <string>
 #include <iomanip>
@@ -773,6 +777,90 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         .arg(start_str)
         .arg(toHex(string_str))
         .arg(toHex(values.top()));
+}
+
+void
+TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() < 3) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "3 values for split operator, got " << values.size());
+    }
+
+    // Pop the parameters.
+    string field_str = values.top();
+    values.pop();
+    string delim_str = values.top();
+    values.pop();
+    string string_str = values.top();
+    values.pop();
+
+    // If we have no string to start with we push an empty string and leave
+    if (string_str.empty()) {
+        values.push("");
+
+        // Log what we popped and pushed
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_EMPTY)
+            .arg(field_str)
+            .arg(delim_str)
+            .arg(string_str)
+            .arg("0x");
+        return;
+    }
+
+    // Convert the starting position and length from strings to numbers
+    // the length may also be "all" in which case simply make it the
+    // length of the string.
+    // If we have a problem push an empty string and leave
+    int field;
+    try {
+        field = boost::lexical_cast<int>(field_str);
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(EvalTypeError, "the parameter '" << field_str
+                  << "' for the field field for split "
+                  << "couldn't be converted to an integer.");
+    }
+
+    // If we have no string to start with we push an empty string and leave
+    if (delim_str.empty()) {
+        values.push(string_str);
+
+        // Log what we popped and pushed
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_DELIM_EMPTY)
+            .arg(field_str)
+            .arg(delim_str)
+            .arg(string_str)
+            .arg(toHex(values.top()));
+        return;
+    }
+
+    // Split the string into fields.
+    std::vector<std::string> fields;
+    boost::split(fields, string_str, boost::is_any_of(delim_str),
+                 boost::algorithm::token_compress_off);
+
+    // Range check the field.
+    if (field < 1 || field > fields.size()) {
+        // Push an empty string if field is out of range.
+        values.push("");
+
+        // Log what we popped and pushed
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE)
+            .arg(field_str)
+            .arg(delim_str)
+            .arg(string_str)
+            .arg("0x");
+        return;
+    }
+
+    // Push the desired field.
+    values.push(fields[field - 1]);
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT)
+            .arg(field_str)
+            .arg(delim_str)
+            .arg(string_str)
+            .arg(toHex(values.top()));
 }
 
 void

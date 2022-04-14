@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -215,6 +215,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "data"         return isc::eval::EvalParser::make_DATA(loc);
 "enterprise"   return isc::eval::EvalParser::make_ENTERPRISE(loc);
 "substring"    return isc::eval::EvalParser::make_SUBSTRING(loc);
+"split"        return isc::eval::EvalParser::make_SPLIT(loc);
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);

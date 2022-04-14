@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,9 @@
 #include <log/logger_support.h>
 #include <testutils/log_utils.h>
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/constants.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -238,6 +241,45 @@ public:
         values_.push(test_string);
         values_.push(test_start);
         values_.push(test_length);
+
+        // evaluate the token
+        if (should_throw) {
+            EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+            ASSERT_EQ(0, values_.size());
+        } else {
+            EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+            // verify results
+            ASSERT_EQ(1, values_.size());
+            EXPECT_EQ(result_string, values_.top());
+
+            // remove result
+            values_.pop();
+        }
+    }
+
+    /// @brief Verify that the split eval works properly
+    ///
+    /// This function takes the parameters and sets up the value
+    /// stack then executes the eval and checks the results.
+    ///
+    /// @param test_string The string to operate on
+    /// @param test_delimiters The string of delimiter characters to split upon
+    /// @param test_field The field number of the desired field
+    /// @param result_string The expected result of the eval
+    /// @param should_throw The eval will throw
+    void verifySplitEval(const std::string& test_string,
+                         const std::string& test_delimeters,
+                         const std::string& test_field,
+                         const std::string& result_string,
+                         bool should_throw = false) {
+        // create the token
+        ASSERT_NO_THROW(t_.reset(new TokenSplit()));
+
+        // push values on stack
+        values_.push(test_string);
+        values_.push(test_delimeters);
+        values_.push(test_field);
 
         // evaluate the token
         if (should_throw) {
@@ -3322,6 +3364,116 @@ TEST_F(TokenTest, integer) {
     testInteger(encode(256), 256);
     testInteger(encode(1410), 1410);
     testInteger(encode(4294967295), 4294967295);
+}
+
+// Verify TokenSplit::eval, single delimeter.
+TEST_F(TokenTest, split) {
+    // Get the whole string
+    std::string input(".two.three..five.");
+    std::string delims(".");
+
+    // Empty input string should yield empty result.
+    verifySplitEval("", delims, "1", "");
+
+    // Empty delimiters string should original string result.
+    verifySplitEval(input, "", "1", input);
+
+    // Field number less than one yield empty result.
+    verifySplitEval(input, delims, "0", "");
+
+    // Now get each field in succession.
+    verifySplitEval(input, delims, "1", "");
+    verifySplitEval(input, delims, "2", "two");
+    verifySplitEval(input, delims, "3", "three");
+    verifySplitEval(input, delims, "4", "");
+    verifySplitEval(input, delims, "5", "five");
+    verifySplitEval(input, delims, "6", "");
+
+    // Too large of a field should yield empty result.
+    verifySplitEval(input, delims, "7", "");
+
+    // A string without delimiters returns as field 1.
+    verifySplitEval("just_one", delims, "1", "just_one");
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SPLIT_EMPTY Popping field 1, delimiters .,"
+              " string , pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT_DELIM_EMPTY Popping field 1, delimiters ,"
+              " string .two.three..five., pushing result 0x2E74776F2E74687265652E2E666976652E");
+    addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field 0, delimiters .,"
+              " string .two.three..five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 1, delimiters .,"
+              " string .two.three..five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 2, delimiters .,"
+              " string .two.three..five., pushing result 0x74776F");
+    addString("EVAL_DEBUG_SPLIT Popping field 3, delimiters .,"
+              " string .two.three..five., pushing result 0x7468726565");
+    addString("EVAL_DEBUG_SPLIT Popping field 4, delimiters .,"
+              " string .two.three..five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 5, delimiters .,"
+              " string .two.three..five., pushing result 0x66697665");
+    addString("EVAL_DEBUG_SPLIT Popping field 6, delimiters .,"
+              " string .two.three..five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field 7, delimiters .,"
+              " string .two.three..five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 1, delimiters .,"
+              " string just_one, pushing result 0x6A7573745F6F6E65");
+    EXPECT_TRUE(checkFile());
+}
+
+// Verify TokenSplit::eval with  more than one delimeter.
+TEST_F(TokenTest, splitMultipleDelims) {
+    // Get the whole string
+    std::string input(".two:three.:five.");
+    std::string delims(".:");
+
+    // Empty input string should yield empty result.
+    verifySplitEval("", delims, "1", "");
+
+    // Too small of a field should yield empty result.
+    verifySplitEval(input, delims, "0", "");
+
+    // Now get each field in succession.
+    verifySplitEval(input, delims, "1", "");
+    verifySplitEval(input, delims, "2", "two");
+    verifySplitEval(input, delims, "3", "three");
+    verifySplitEval(input, delims, "4", "");
+    verifySplitEval(input, delims, "5", "five");
+    verifySplitEval(input, delims, "6", "");
+
+    // Too large of a field should yield empty result.
+    verifySplitEval(input, delims, "7", "");
+
+    // A string without delimiters returns as field 1.
+    verifySplitEval("just_one", delims, "1", "just_one");
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+
+    addString("EVAL_DEBUG_SPLIT_EMPTY Popping field 1, delimiters .:,"
+              " string , pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field 0, delimiters .:,"
+              " string .two:three.:five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 1, delimiters .:,"
+              " string .two:three.:five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 2, delimiters .:,"
+              " string .two:three.:five., pushing result 0x74776F");
+    addString("EVAL_DEBUG_SPLIT Popping field 3, delimiters .:,"
+              " string .two:three.:five., pushing result 0x7468726565");
+    addString("EVAL_DEBUG_SPLIT Popping field 4, delimiters .:,"
+              " string .two:three.:five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 5, delimiters .:,"
+              " string .two:three.:five., pushing result 0x66697665");
+    addString("EVAL_DEBUG_SPLIT Popping field 6, delimiters .:,"
+              " string .two:three.:five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field 7, delimiters .:,"
+              " string .two:three.:five., pushing result 0x");
+    addString("EVAL_DEBUG_SPLIT Popping field 1, delimiters .:,"
+              " string just_one, pushing result 0x6A7573745F6F6E65");
+    EXPECT_TRUE(checkFile());
 }
 
 };
