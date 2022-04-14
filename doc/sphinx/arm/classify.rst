@@ -474,7 +474,7 @@ Notes:
    |                       |                         | a hexadecimal string, |
    |                       |                         | e.g. 0a:1b:2c:3e      |
    +-----------------------+-------------------------+-----------------------+
-   | Split                 | split('foo.bar','.',2)  | Return the second     |
+   | Split                 | split('foo.bar', '.' ,2)| Return the second     |
    |                       |                         | field, splitting on   |
    |                       |                         | dots.                 |
    +-----------------------+-------------------------+-----------------------+
@@ -601,8 +601,8 @@ an empty string for that field number.  If value is an empty string, the result
 will an empty string.  If the delimiters list is empty, the result will be the
 original value.  If the is less than one or larger than the number of fields,
 the result will be an empty string. Some examples follow:
-
 ::
+
            split ('one.two..four', '.', 1) == 'one'
            split ('one.two..four', '.', 2) == 'two'
            split ('one.two..four', '.', 3) == ''
