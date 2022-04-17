@@ -112,13 +112,13 @@ HttpConnection::recordParameters(const HttpRequestPtr& request) const {
 
     // Record the first commonName of the subjectName of the client
     // certificate when wanted.
-    if (HttpRequest::recordSubject) {
+    if (HttpRequest::recordSubject_) {
         request->setSubject(tls_socket_->getTlsStream().getSubject());
     }
 
     // Record the first commonName of the issuerName of the client
     // certificate when wanted.
-    if (HttpRequest::recordIssuer) {
+    if (HttpRequest::recordIssuer_) {
         request->setIssuer(tls_socket_->getTlsStream().getIssuer());
     }
 }

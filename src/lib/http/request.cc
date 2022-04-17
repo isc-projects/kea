@@ -21,11 +21,11 @@ const std::string crlf = "\r\n";
 namespace isc {
 namespace http {
 
-bool HttpRequest::recordSubject = false;
+bool HttpRequest::recordSubject_ = false;
 
-bool HttpRequest::recordIssuer = false;
+bool HttpRequest::recordIssuer_ = false;
 
-bool HttpRequest::recordBasicAuth = false;
+bool HttpRequest::recordBasicAuth_ = false;
 
 HttpRequest::HttpRequest()
     : HttpMessage(INBOUND), required_methods_(),

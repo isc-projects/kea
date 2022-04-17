@@ -139,11 +139,11 @@ private:
     virtual HttpResponsePtr
     createDynamicHttpResponse(HttpRequestPtr request) {
         // Check access parameters.
-        if (HttpRequest::recordSubject) {
+        if (HttpRequest::recordSubject_) {
             EXPECT_TRUE(request->getTls());
             EXPECT_EQ("kea-client", request->getSubject());
         }
-        if (HttpRequest::recordIssuer) {
+        if (HttpRequest::recordIssuer_) {
             EXPECT_TRUE(request->getTls());
             EXPECT_EQ("kea-ca", request->getIssuer());
         }
@@ -317,8 +317,8 @@ public:
         listener3_->stop();
         io_service_.poll();
         MultiThreadingMgr::instance().setMode(false);
-        HttpRequest::recordSubject = false;
-        HttpRequest::recordIssuer = false;
+        HttpRequest::recordSubject_ = false;
+        HttpRequest::recordIssuer_ = false;
     }
 
     /// @brief Creates HTTP request with JSON body.
@@ -525,8 +525,8 @@ public:
         }));
 
         // Record subjet and issuer: they will be check during response creation.
-        HttpRequest::recordSubject = true;
-        HttpRequest::recordIssuer = true;
+        HttpRequest::recordSubject_ = true;
+        HttpRequest::recordIssuer_ = true;
 
         // Actually trigger the requests.
         ASSERT_NO_THROW(runIOService());

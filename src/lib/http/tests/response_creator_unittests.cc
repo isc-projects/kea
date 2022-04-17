@@ -156,7 +156,7 @@ TEST_F(HttpResponseCreatorAuthTest, noAuth) {
     request->context()->method_ = "GET";
     request->context()->uri_ = "/foo";
     ASSERT_NO_THROW(request->finalize());
-    HttpRequest::recordBasicAuth = true;
+    HttpRequest::recordBasicAuth_ = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -197,7 +197,7 @@ TEST_F(HttpResponseCreatorAuthTest, authTooShort) {
     HttpHeaderContext auth("Authorization", "Basic =");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
-    HttpRequest::recordBasicAuth = true;
+    HttpRequest::recordBasicAuth_ = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -239,7 +239,7 @@ TEST_F(HttpResponseCreatorAuthTest, badScheme) {
     HttpHeaderContext auth("Authorization", "Basis dGVzdDoxMjPCow==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
-    HttpRequest::recordBasicAuth = true;
+    HttpRequest::recordBasicAuth_ = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -282,7 +282,7 @@ TEST_F(HttpResponseCreatorAuthTest, notMatching) {
     HttpHeaderContext auth("Authorization", "Basic dGvZdDoxMjPcOw==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
-    HttpRequest::recordBasicAuth = true;
+    HttpRequest::recordBasicAuth_ = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -323,7 +323,7 @@ TEST_F(HttpResponseCreatorAuthTest, matching) {
     HttpHeaderContext auth("Authorization", "Basic dGVzdDoxMjPCow==");
     request->context()->headers_.push_back(auth);
     ASSERT_NO_THROW(request->finalize());
-    HttpRequest::recordBasicAuth = true;
+    HttpRequest::recordBasicAuth_ = true;
 
     HttpResponsePtr response;
     TestHttpResponseCreatorPtr creator(new TestHttpResponseCreator());;
@@ -334,7 +334,7 @@ TEST_F(HttpResponseCreatorAuthTest, matching) {
     addString("HTTP_CLIENT_REQUEST_AUTHORIZED received HTTP request "
               "authorized for 'test'");
     EXPECT_TRUE(checkFile());
-    HttpRequest::recordBasicAuth = false;
+    HttpRequest::recordBasicAuth_ = false;
 }
 
 }

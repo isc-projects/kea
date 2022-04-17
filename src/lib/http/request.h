@@ -162,14 +162,14 @@ public:
 
     /// @brief Returns recorded remote address.
     ///
-    /// @return recorded remote address.
+    /// @return recorded remote address in textual form.
     std::string getRemote() const {
         return (remote_);
     }
 
     /// @brief Set (record) remote address.
     ///
-    /// @param remote Remote end-point address in textual form.
+    /// @param remote the remote address in textual form.
     void setRemote(const std::string& remote) {
         remote_ = remote;
     }
@@ -183,7 +183,7 @@ public:
 
     /// @brief Set (record) TLS usage.
     ///
-    /// @param tls TLS usage.
+    /// @param tls the TLS usage.
     void setTls(bool tls) {
         tls_ = tls;
     }
@@ -195,9 +195,9 @@ public:
         return (subject_);
     }
 
-    /// @brief Set (record) subjet name.
+    /// @brief Set (record) subject name.
     ///
-    /// @param subjet Subject name.
+    /// @param subject the subject name.
     void setSubject(const std::string& subject) {
         subject_ = subject;
     }
@@ -211,7 +211,7 @@ public:
 
     /// @brief Set (record) issuer name.
     ///
-    /// @param issuer Issuer name.
+    /// @param issuer the issuer name.
     void setIssuer(const std::string& issuer) {
         issuer_ = issuer;
     }
@@ -225,7 +225,7 @@ public:
 
     /// @brief Set (record) basic auth.
     ///
-    /// @param basic_auth Basic auth.
+    /// @param basic_auth the basic auth.
     void setBasicAuth(const std::string& basic_auth) {
         basic_auth_ = basic_auth;
     }
@@ -239,22 +239,22 @@ public:
 
     /// @brief Set (record) custom name.
     ///
-    /// @param custom Custom name.
+    /// @param custom the custom name.
     void setCustom(const std::string& custom) {
         custom_ = custom;
     }
 
-    /// Access control parameters: want to record flags.
+    /// Access control parameters: Flags which indicate what information to record.
     /// Remote address and TLS usage are always recorded.
 
     /// @brief Record subjet name.
-    static bool recordSubject;
+    static bool recordSubject_;
 
     /// @brief Record issuer name.
-    static bool recordIssuer;
+    static bool recordIssuer_;
 
     /// @brief Record basic auth.
-    static bool recordBasicAuth;
+    static bool recordBasicAuth_;
 
 protected:
 

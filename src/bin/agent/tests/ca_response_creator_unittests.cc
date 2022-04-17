@@ -58,7 +58,7 @@ public:
             ADD_FAILURE() << "CtrlAgentResponseCreator::createNewHttpRequest"
                 " returns NULL!";
         }
-        HttpRequest::recordBasicAuth = true;
+        HttpRequest::recordBasicAuth_ = true;
         // Initialize process and cfgmgr.
         try {
             initProcess();
@@ -72,7 +72,7 @@ public:
     ///
     /// Removes registered commands from the command manager.
     virtual ~CtrlAgentResponseCreatorTest() {
-        HttpRequest::recordBasicAuth = false;
+        HttpRequest::recordBasicAuth_ = false;
         CtrlAgentCommandMgr::instance().deregisterAll();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
