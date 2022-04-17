@@ -807,9 +807,7 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         return;
     }
 
-    // Convert the starting position and length from strings to numbers
-    // the length may also be "all" in which case simply make it the
-    // length of the string.
+    // Convert the field position from string to number
     // If we have a problem push an empty string and leave
     int field;
     try {
@@ -820,7 +818,7 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
                   << "couldn't be converted to an integer.");
     }
 
-    // If we have no string to start with we push an empty string and leave
+    // If we have no delimiter to start with we push the input string and leave
     if (delim_str.empty()) {
         values.push(string_str);
 

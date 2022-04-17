@@ -815,7 +815,7 @@ public:
     /// delims is string of character delimiters by which to split str. If it is
     /// empty the entire value of str will be pushed on onto the value stack.
     /// field is the field number (starting at 1) of the desired field.  If it is
-    /// out of range an empty string is pushed on the the value stack.
+    /// out of range an empty string is pushed on the value stack.
     ///
     /// The following examples all use the base string "one.two..four" and shows
     /// the value returned for a given field:

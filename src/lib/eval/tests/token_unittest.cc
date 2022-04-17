@@ -3375,10 +3375,10 @@ TEST_F(TokenTest, split) {
     // Empty input string should yield empty result.
     verifySplitEval("", delims, "1", "");
 
-    // Empty delimiters string should original string result.
+    // Empty delimiters string should yield original string result.
     verifySplitEval(input, "", "1", input);
 
-    // Field number less than one yield empty result.
+    // Field number less than one should yield empty result.
     verifySplitEval(input, delims, "0", "");
 
     // Now get each field in succession.
@@ -3423,7 +3423,7 @@ TEST_F(TokenTest, split) {
     EXPECT_TRUE(checkFile());
 }
 
-// Verify TokenSplit::eval with  more than one delimeter.
+// Verify TokenSplit::eval with more than one delimeter.
 TEST_F(TokenTest, splitMultipleDelims) {
     // Get the whole string
     std::string input(".two:three.:five.");

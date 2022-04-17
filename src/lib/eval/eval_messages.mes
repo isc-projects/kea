@@ -264,23 +264,22 @@ client classification expressions.
 
 % EVAL_DEBUG_SPLIT_EMPTY Popping field %1, delimiters %2, string %3, pushing result %4
 This debug message indicates that the string popped from the stack was empty
-and so the result will also be empty.  The field, deli meter string, and string are
+and so the result will also be empty. The field, delimiter and string are
 still popped from the stack and the result is still pushed.
 
 % EVAL_DEBUG_SPLIT_DELIM_EMPTY Popping field %1, delimiters %2, string %3, pushing result %4
-This debug message indicates that the deli meter string popped from the stack was empty
-and so the result will also be empty.  The field, deli meter string, and string are
-still popped from the stack and the result is still pushed.
+This debug message indicates that the delimiter popped from the stack was empty
+and so the result will be the entire string. The field, delimiter and string
+are still popped from the stack and the result is still pushed.
 
 % EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field %1, delimiters %2, string %3, pushing result %4
 This debug message indicates that the field is either less than one or larger
-than the number of fields in the string popped from the stack. the result will
-be empty. The field, deli meter string, and string are still popped from the
-stack and the result is still pushed.
+than the number of fields in the string popped from the stack. The result will
+be empty. The field, delimiter and string are still popped from the stack and
+the result is still pushed.
 
 % EVAL_DEBUG_SPLIT Popping field %1, delimiters %2, string %3, pushing result %4
-This debug message indicates that three values are being popped from
-the value stack and a result is being pushed onto the value stack. The
-values being popped are the field, delimiter_string and string and the
-result is the extracted field. The resulting string is pushed onto
-the stack. The strings are displayed in hex.
+This debug message indicates that three values are being popped from the stack
+and a result is being pushed onto the stack. The values being popped are the
+field, delimiter and string. The result is the extracted field which is pushed
+onto the stack. The strings are displayed in hex.
