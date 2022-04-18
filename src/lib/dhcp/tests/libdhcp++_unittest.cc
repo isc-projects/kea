@@ -669,6 +669,37 @@ static uint8_t v4_opts[] = {
     0x01, 0x02, 0x03, 0x00 // Vendor Specific Information continued
 };
 
+// This test verifies that split options for v4 is working correctly.
+TEST_F(LibDhcpTest, longOption) {
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(2560);
+    for (unsigned i = 0; i < 2560; ++i) {
+        buf_in[i] = i;
+    }
+
+    // Use scoped pointer because it allows to declare the option
+    // in the function scope and initialize it under ASSERT.
+    boost::shared_ptr<OptionCustom> option;
+    // Custom option may throw exception if the provided buffer is
+    // malformed.
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
+    );
+    ASSERT_TRUE(option);
+    isc::util::OutputBuffer buf(0);
+    OptionCollection col;
+    col.insert(std::make_pair(213, option));
+    LibDHCP::splitOptions4(col);
+    LibDHCP::packOptions4(buf, col, true);
+
+    EXPECT_EQ(11, col.size());
+}
+
 // This test verifies that pack options for v4 is working correctly.
 TEST_F(LibDhcpTest, packOptions4) {
 

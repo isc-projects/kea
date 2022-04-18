@@ -36,7 +36,6 @@ Option::factory(Option::Universe u,
     return(LibDHCP::optionFactory(u, type, buf));
 }
 
-
 Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
     check();
@@ -89,7 +88,7 @@ Option::clone() const {
 
 void
 Option::check() const {
-    if ( (universe_ != V4) && (universe_ != V6) ) {
+    if ((universe_ != V4) && (universe_ != V6)) {
         isc_throw(BadValue, "Invalid universe type specified. "
                   << "Only V4 and V6 are allowed.");
     }
@@ -99,11 +98,6 @@ Option::check() const {
         if (type_ > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big. "
                       << "For DHCPv4 allowed type range is 0..255");
-        } else if (data_.size() > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
-            /// TODO Larger options can be stored as separate instances
-            /// of DHCPv4 options. Clients MUST concatenate them.
-            /// Fortunately, there are no such large options used today.
         }
     }
 
@@ -186,10 +180,8 @@ uint16_t Option::len() const {
     size_t length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& option : options_) {
+        length += option.second->len();
     }
 
     // note that this is not equal to length field. This value denotes
@@ -209,10 +201,9 @@ Option::valid() const {
 }
 
 OptionPtr Option::getOption(uint16_t opt_type) const {
-    isc::dhcp::OptionCollection::const_iterator x =
-        options_.find(opt_type);
-    if ( x != options_.end() ) {
-        return (*x).second;
+    auto const& x = options_.find(opt_type);
+    if (x != options_.end()) {
+        return (x->second);
     }
     return OptionPtr(); // NULL
 }
@@ -220,11 +211,9 @@ OptionPtr Option::getOption(uint16_t opt_type) const {
 void
 Option::getOptionsCopy(OptionCollection& options_copy) const {
     OptionCollection local_options;
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end(); ++it) {
-        OptionPtr copy = it->second->clone();
-        local_options.insert(std::make_pair(it->second->getType(),
-                                            copy));
+    for (auto const& option : options_) {
+        OptionPtr copy = option.second->clone();
+        local_options.insert(std::make_pair(option.second->getType(), copy));
     }
     // All options copied successfully, so assign them to the output
     // parameter.
@@ -232,14 +221,13 @@ Option::getOptionsCopy(OptionCollection& options_copy) const {
 }
 
 bool Option::delOption(uint16_t opt_type) {
-    isc::dhcp::OptionCollection::iterator x = options_.find(opt_type);
-    if ( x != options_.end() ) {
+    auto const& x = options_.find(opt_type);
+    if (x != options_.end()) {
         options_.erase(x);
-        return true; // delete successful
+        return (true); // delete successful
     }
     return (false); // option not found, can't delete
 }
-
 
 std::string Option::toText(int indent) const {
     std::stringstream output;
@@ -325,9 +313,8 @@ Option::suboptionsToText(const int indent) const {
 
     if (!options_.empty()) {
         output << "," << std::endl << "options:";
-        for (OptionCollection::const_iterator opt = options_.begin();
-             opt != options_.end(); ++opt) {
-            output << std::endl << (*opt).second->toText(indent);
+        for (auto const& opt : options_) {
+            output << std::endl << opt.second->toText(indent);
         }
     }
 

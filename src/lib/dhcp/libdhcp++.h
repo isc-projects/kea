@@ -194,6 +194,13 @@ public:
                              const isc::dhcp::OptionCollection& options,
                              bool top = false);
 
+    /// @brief Split long options in multiple suboptions with the same option
+    /// code (RFC3396).
+    ///
+    /// @param options The option container which needs to be updated with split
+    /// options.
+    static void splitOptions4(isc::dhcp::OptionCollection& options);
+
     /// @brief Stores DHCPv6 options in a buffer.
     ///
     /// Stores all options defined in options containers in a on-wire

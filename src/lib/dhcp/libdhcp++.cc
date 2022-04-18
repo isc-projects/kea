@@ -93,7 +93,7 @@ bool LibDHCP::initialized_ = LibDHCP::initOptionDefs();
 
 const OptionDefContainerPtr
 LibDHCP::getOptionDefs(const std::string& space) {
-    OptionDefContainers::const_iterator container = option_defs_.find(space);
+    auto const& container = option_defs_.find(space);
     if (container != option_defs_.end()) {
         return (container->second);
     }
@@ -214,12 +214,10 @@ void
 LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
     OptionDefSpaceContainer defs_copy;
     std::list<std::string> option_space_names = defs.getOptionSpaceNames();
-    for (std::list<std::string>::const_iterator name = option_space_names.begin();
-         name != option_space_names.end(); ++name) {
-        OptionDefContainerPtr container = defs.getItems(*name);
-        for (OptionDefContainer::const_iterator def = container->begin();
-             def != container->end(); ++def) {
-            OptionDefinitionPtr def_copy(new OptionDefinition(**def));
+    for (auto const& name : option_space_names) {
+        OptionDefContainerPtr container = defs.getItems(name);
+        for (auto const& def : *container) {
+            OptionDefinitionPtr def_copy(new OptionDefinition(*def));
             defs_copy.addItem(def_copy);
         }
     }
@@ -812,8 +810,8 @@ LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
 
 void
 LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
-                     const OptionCollection& options,
-                     bool top /* = false */) {
+                      const OptionCollection& options,
+                      bool top /* = false */) {
     OptionPtr agent;
     OptionPtr end;
 
@@ -828,42 +826,111 @@ LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
         }
     }
 
-    for (OptionCollection::const_iterator it = options.begin();
-         it != options.end(); ++it) {
+    for (auto const& option : options) {
 
         // TYPE is already done, RAI and END options must be last.
-        switch (it->first) {
+        switch (option.first) {
             case DHO_DHCP_MESSAGE_TYPE:
                 break;
             case DHO_DHCP_AGENT_OPTIONS:
-                agent = it->second;
+                agent = option.second;
                 break;
             case DHO_END:
-                end = it->second;
+                end = option.second;
                 break;
             default:
-                it->second->pack(buf);
+                option.second->pack(buf);
                 break;
         }
     }
 
     // Add the RAI option if it exists.
     if (agent) {
-       agent->pack(buf);
+        agent->pack(buf);
     }
 
     // And at the end the END option.
     if (end)  {
-       end->pack(buf);
+        end->pack(buf);
+    }
+}
+
+void
+LibDHCP::splitOptions4(OptionCollection& options) {
+    // We need to loop until all options have been split.
+    for (;;) {
+        bool found = false;
+        // Iterate over all options in the container.
+        for (auto const& option : options) {
+            OptionPtr candidate = option.second;
+            OptionCollection& sub_options = candidate->getMutableOptions();
+            // Split suboptions recursively, if any.
+            if (sub_options.size()) {
+                LibDHCP::splitOptions4(sub_options);
+            }
+            uint32_t header_len = candidate->getHeaderLen();
+            // Maximum option buffer size is 255 - header size.
+            uint8_t len = 255 - header_len;
+            // Current option size after split is the sum of the data, the
+            // suboptions and the header size. The header is duplicated in all
+            // new options, but the rest of the data must be serialized.
+            uint32_t size = candidate->len() - header_len;
+            // Only split if data does not fit in the current option.
+            if (size > len) {
+                // Make a copy of the options so we can safely iterate over the
+                // old container.
+                OptionCollection copy = options;
+                // Erase the old option from the new container so that only new
+                // options are present.
+                copy.erase(option.first);
+                uint32_t offset = 0;
+                // Drain the option buffer in multiple new options until all
+                // data is serialized.
+                for (; offset != size;) {
+                    // Adjust the data length of the new option if remaining
+                    // data is less than the 255 - header size (for the last
+                    // option).
+                    if (size - offset < len) {
+                        len = size - offset;
+                    }
+                    // Create new option with data starting from offset and
+                    // containing truncated length.
+                    OptionPtr new_option(new Option(candidate->getUniverse(),
+                                                    candidate->getType(),
+                                                    OptionBuffer(candidate->getData()[offset],
+                                                                 len)));
+                    // If this is the first option, also add (if necessary,
+                    // already split) suboptions, if any.
+                    if (!offset) {
+                        new_option->getMutableOptions() = candidate->getOptions();
+                    }
+                    // Adjust the offset for remaining data to be written to the
+                    // next new option.
+                    offset += len;
+                    // Add the new option to the new container.
+                    copy.insert(make_pair(candidate->getType(), new_option));
+                }
+                // After all new options have been split and added, update the
+                // option container with the new container.
+                options = copy;
+                // Other options might need splitting, so we need to iterate
+                // again until no option needs splitting.
+                found = true;
+                break;
+            }
+        }
+        // No option needs splitting, so we can exit the loop.
+        if (!found) {
+            break;
+        }
     }
 }
 
 void
 LibDHCP::packOptions6(isc::util::OutputBuffer& buf,
                       const OptionCollection& options) {
-    for (OptionCollection::const_iterator it = options.begin();
-         it != options.end(); ++it) {
-        it->second->pack(buf);
+    for (auto const& option : options) {
+        option.second->pack(buf);
     }
 }
 

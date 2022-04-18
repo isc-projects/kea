@@ -117,6 +117,10 @@ Pkt4::pack() {
         // write DHCP magic cookie
         buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
+        // The RFC3396 adds support for long options split over multiple options
+        // using the same code.
+        LibDHCP::splitOptions4(options_);
+
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.
         LibDHCP::packOptions4(buffer_out_, options_, true);
