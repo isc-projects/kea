@@ -596,8 +596,8 @@ Split
 The Split operator ``split(value, delimiters, field-number)`` accepts a list
 of characters to use as delimiters and a positive field number of the
 desired field when the value is split into fields separated by the delimiters.
-Adjacent delimit are not compressed out, rather they result in an empty string
-for that field number. If value is an empty string, the result will be an
+Adjacent delimiters are not compressed out, rather they result in an empty
+string for that field number. If value is an empty string, the result will be an
 empty string. If the delimiters list is empty, the result will be the original
 value. If the field-number is less than one or larger than the number of
 fields, the result will be an empty string. Some examples follow:
