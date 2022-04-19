@@ -562,7 +562,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // Check if option unpacking must be deferred
         if (shouldDeferOptionUnpack(option_space, opt_type)) {
             num_defs = 0;
-            // Only store deferred options once.
+            // Store deferred option only once.
             bool found = false;
             for (auto const& existing : deferred) {
                 if (existing == opt_type) {
@@ -629,8 +629,8 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
             // Fuse suboptions recursively, if any.
             if (sub_options.size()) {
                 // Fusing suboptions might result in new options with multiple
-                // options having the same code , so we need to iterate again
-                // until no options needs fusing.
+                // options having the same code, so we need to iterate again
+                // until no option needs fusing.
                 found_suboptions = LibDHCP::fuseOptions4(sub_options);
                 if (found_suboptions) {
                     result = true;
@@ -950,7 +950,7 @@ LibDHCP::splitOptions4(OptionCollection& options) {
             // Current option size after split is the sum of the data, the
             // suboptions and the header size. The header is duplicated in all
             // new options, but the rest of the data must be serialized.
-            uint32_t size = candidate->len() - header_len;
+            uint32_t size = candidate->getData().size();
             // Only split if data does not fit in the current option.
             if (size > len) {
                 // Make a copy of the options so we can safely iterate over the

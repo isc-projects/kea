@@ -258,7 +258,7 @@ public:
     ///
     /// @param options The option container which needs to be updated with fused
     /// options.
-    /// @return True any options have been fused, false otherwise.
+    /// @return True if any option has been fused, false otherwise.
     static bool fuseOptions4(isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv4 options and creates

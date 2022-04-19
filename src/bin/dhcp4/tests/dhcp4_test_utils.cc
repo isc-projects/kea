@@ -580,15 +580,7 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
                                             << ex.what()));
     }
 
-    try {
-        // Parse the new packet and return to the caller.
-        dst_pkt->unpack();
-    } catch (const Exception& ex) {
-        return (::testing::AssertionFailure(::testing::Message()
-                                            << "Failed to parse a"
-                                            << " destination packet: "
-                                            << ex.what()));
-    }
+    // The dst_pkt unpack is performed on processPacket by the server.
 
     return (::testing::AssertionSuccess());
 }
@@ -674,6 +666,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // which was parsed from its wire format.
     Pkt4Ptr received;
     ASSERT_TRUE(createPacketFromBuffer(req, received));
+    received->unpack();
     // Set interface. It is required for the server to generate server id.
     received->setIface("eth0");
     received->setIndex(ETH0_INDEX);
@@ -706,6 +699,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     addPrlOption(req);
 
     ASSERT_TRUE(createPacketFromBuffer(req, received));
+    received->unpack();
     ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
 
     // Set interface. It is required for the server to generate server id.
@@ -743,6 +737,7 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // in the packet so as the existing lease is not returned.
     req->setHWAddr(1, 6, std::vector<uint8_t>(2, 6));
     ASSERT_TRUE(createPacketFromBuffer(req, received));
+    received->unpack();
     ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
 
     // Set interface. It is required for the server to generate server id.
@@ -953,6 +948,8 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     pkt->data_.resize(pkt->getBuffer().getLength());
     // Copy out_buffer_ to data_ to pretend that it's what was just received.
     memcpy(&pkt->data_[0], pkt->getBuffer().getData(), pkt->getBuffer().getLength());
+    // Clear options so that they can be recreated on unpack.
+    pkt->options_.clear();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(pkt);

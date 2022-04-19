@@ -195,10 +195,10 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             return (option);
         }
 
-        switch(type_) {
+        switch (type_) {
         case OPT_EMPTY_TYPE:
             if (getEncapsulatedSpace().empty()) {
-                    return (factoryEmpty(u, type));
+                return (factoryEmpty(u, type));
             } else {
                 return (OptionPtr(new OptionCustom(*this, u, begin, end)));
             }

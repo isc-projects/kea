@@ -230,7 +230,9 @@ public:
     /// @brief returns option universe (V4 or V6)
     ///
     /// @return universe type
-    Universe getUniverse() const { return universe_; };
+    Universe getUniverse() const {
+        return (universe_);
+    }
 
     /// @brief Writes option in wire-format to a buffer.
     ///
@@ -286,7 +288,9 @@ public:
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
-    uint16_t getType() const { return (type_); }
+    uint16_t getType() const {
+        return (type_);
+    }
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
@@ -308,7 +312,9 @@ public:
     ///
     /// @return pointer to actual data (or reference to an empty vector
     ///         if there is no data)
-    virtual const OptionBuffer& getData() const { return (data_); }
+    virtual const OptionBuffer& getData() const {
+        return (data_);
+    }
 
     /// Adds a sub-option.
     ///

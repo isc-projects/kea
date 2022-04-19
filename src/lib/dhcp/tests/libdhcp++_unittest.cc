@@ -678,18 +678,12 @@ TEST_F(LibDhcpTest, splitLongOption) {
     // used as reference when we read back the data from a created
     // option.
     OptionBuffer buf_in(2560);
-    for (unsigned i = 0; i < 2560; ++i) {
+    for (uint32_t i = 0; i < 2560; ++i) {
         buf_in[i] = i;
     }
 
-    // Use scoped pointer because it allows to declare the option
-    // in the function scope and initialize it under ASSERT.
     boost::shared_ptr<OptionCustom> option;
-    // Custom option may throw exception if the provided buffer is
-    // malformed.
-    ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
-    );
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
     ASSERT_TRUE(option);
     isc::util::OutputBuffer buf(0);
     OptionCollection col;
@@ -697,7 +691,14 @@ TEST_F(LibDhcpTest, splitLongOption) {
     LibDHCP::splitOptions4(col);
     LibDHCP::packOptions4(buf, col, true);
 
-    EXPECT_EQ(11, col.size());
+    ASSERT_EQ(11, col.size());
+    uint8_t index = 0;
+    for (auto const& option : col) {
+        for (auto const& value : option.second->getData()) {
+            ASSERT_EQ(value, index);
+            index++;
+        }
+    }
 }
 
 // This test verifies that fuse options for v4 is working correctly.
@@ -706,30 +707,31 @@ TEST_F(LibDhcpTest, fuseLongOption) {
                              "option-foo-space");
 
     OptionCollection col;
-    for (uint32_t i = 0; i < 16; i++) {
+    for (uint8_t i = 0; i < 16; ++i) {
         // Create a buffer holding some binary data. This data will be
         // used as reference when we read back the data from a created
         // option.
         OptionBuffer buf_in(64);
-        for (unsigned i = 0; i < 64; ++i) {
-            buf_in[i] = i;
+        for (uint8_t j = 0; j < 64; ++j) {
+            buf_in[j] = i * 64 + j;
         }
 
-        // Use scoped pointer because it allows to declare the option
-        // in the function scope and initialize it under ASSERT.
         boost::shared_ptr<OptionCustom> option;
-        // Custom option may throw exception if the provided buffer is
-        // malformed.
-        ASSERT_NO_THROW(
-            option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
-        );
+        ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
         ASSERT_TRUE(option);
         col.insert(std::make_pair(213, option));
     }
     ASSERT_EQ(16, col.size());
     LibDHCP::fuseOptions4(col);
 
-    EXPECT_EQ(1, col.size());
+    ASSERT_EQ(1, col.size());
+    uint8_t index = 0;
+    for (auto const& option : col) {
+        for (auto const& value: option.second->getData()) {
+            ASSERT_EQ(index, value);
+            index++;
+        }
+    }
 }
 
 // This test verifies that pack options for v4 is working correctly.

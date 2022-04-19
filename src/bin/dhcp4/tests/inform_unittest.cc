@@ -8,6 +8,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
@@ -498,48 +499,40 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Client requests big option.
     client.requestOption(240);
     // Client also sends multiple options with the same code.
-    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
-                             "option-foo-space");
-    for (uint32_t i = 0; i < 16; i++) {
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    // Create RAI options which should be fused by the server.
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    for (uint8_t i = 0; i < 4; ++i) {
         // Create a buffer holding some binary data. This data will be
         // used as reference when we read back the data from a created
         // option.
-        OptionBuffer buf_in(64);
-        for (unsigned i = 0; i < 64; ++i) {
-            buf_in[i] = i;
+        OptionBuffer buf_in(16);
+        for (uint8_t j = 0; j < 16; ++j) {
+            buf_in[j] = i * 16 + j;
         }
 
-        // Use scoped pointer because it allows to declare the option
-        // in the function scope and initialize it under ASSERT.
-        boost::shared_ptr<OptionCustom> option;
-        // Custom option may throw exception if the provided buffer is
-        // malformed.
-        ASSERT_NO_THROW(
-            option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
-        );
-        ASSERT_TRUE(option);
-        client.addExtraOption(option);
+        OptionPtr circuit_id_opt(new Option(Option::V4,
+                                            RAI_OPTION_AGENT_CIRCUIT_ID, buf_in));
+        ASSERT_TRUE(circuit_id_opt);
+        rai->addOption(circuit_id_opt);
     }
+    client.addExtraOption(rai);
 
-    // Client also sends multiple options with the same code.
-    OptionDefinition opt_def_bar("option-bar", 232, "my-space", "binary",
-                                 "option-bar-space");
+    // Client sends large options which should be split by the client.
+    OptionDefinition opt_def_bar("option-foo", 231, "my-space", "binary",
+                                 "option-foo-space");
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
     // option.
     OptionBuffer buf_in(2560);
-    for (unsigned i = 0; i < 2560; ++i) {
+    for (uint32_t i = 0; i < 2560; ++i) {
         buf_in[i] = i;
     }
 
-    // Use scoped pointer because it allows to declare the option
-    // in the function scope and initialize it under ASSERT.
     boost::shared_ptr<OptionCustom> option;
-    // Custom option may throw exception if the provided buffer is
-    // malformed.
-    ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def_bar, Option::V4, buf_in));
-    );
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def_bar, Option::V4, buf_in)));
     ASSERT_TRUE(option);
     client.addExtraOption(option);
     // Client sends DHCPINFORM and should receive reserved fields.
@@ -550,10 +543,15 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
-    // Long option should have been split by the client.
+    // Long option should have been split by the client on pack.
     uint32_t count = 0;
+    uint8_t index = 0;
     for (auto const& option : client.getContext().query_->options_) {
-        if (option.first == 232) {
+        if (option.first == 231) {
+            for (auto const& value : option.second->getData()) {
+                ASSERT_EQ(value, index);
+                index++;
+            }
             count++;
         }
     }
@@ -561,12 +559,21 @@ TEST_F(InformTest, messageFieldsLongOptions) {
 
     count = 0;
     for (auto const& option : resp->options_) {
-        if (option.second->getType() == 231) {
-            count++;
+        if (option.first == DHO_DHCP_AGENT_OPTIONS) {
+            for (auto const& suboption: option.second->getOptions()) {
+                if (suboption.first == RAI_OPTION_AGENT_CIRCUIT_ID) {
+                    uint8_t index = 0;
+                    for (auto const& value : suboption.second->getData()) {
+                        ASSERT_EQ(value, index);
+                        index++;
+                    }
+                    count++;
+                }
+            }
         }
     }
-    // Multiple options should have been fused by the server.
-    EXPECT_EQ(count, 1);
+    // Multiple options should have been fused by the server on unpack.
+    ASSERT_EQ(count, 1);
 
     // Check that the reserved and requested values have been assigned.
     string expected =
@@ -583,9 +590,9 @@ TEST_F(InformTest, messageFieldsLongOptions) {
             count++;
         }
     }
-    // Multiple options should have been fused by the server.
-    EXPECT_EQ(count, 1);
-    EXPECT_EQ(value, string("data") + expected + string("-data"));
+    // Multiple options should have been fused by the server on unpack.
+    ASSERT_EQ(count, 1);
+    ASSERT_EQ(value, string("data") + expected + string("-data"));
 }
 
 /// This test verifies that after a client completes its INFORM exchange,

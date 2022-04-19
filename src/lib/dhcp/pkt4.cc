@@ -83,7 +83,7 @@ Pkt4::pack() {
         buffer_out_.writeUint8(op_);
         buffer_out_.writeUint8(hwaddr_->htype_);
         buffer_out_.writeUint8(hw_len < MAX_CHADDR_LEN ?
-                              hw_len : MAX_CHADDR_LEN);
+                               hw_len : MAX_CHADDR_LEN);
         buffer_out_.writeUint8(hops_);
         buffer_out_.writeUint32(transid_);
         buffer_out_.writeUint16(secs_);
