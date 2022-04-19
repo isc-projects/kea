@@ -237,7 +237,7 @@ Dhcp4Client::appendExtraOptions() {
     if (!extra_options_.empty()) {
         for (OptionCollection::iterator opt = extra_options_.begin();
              opt != extra_options_.end(); ++opt) {
-            context_.query_->addOption(opt->second);
+            context_.query_->Pkt::addOption(opt->second);
         }
     }
 }

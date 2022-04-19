@@ -194,8 +194,8 @@ public:
                              const isc::dhcp::OptionCollection& options,
                              bool top = false);
 
-    /// @brief Split long options in multiple suboptions with the same option
-    /// code (RFC3396).
+    /// @brief Split long options in multiple options with the same option code
+    /// (RFC3396).
     ///
     /// @param options The option container which needs to be updated with split
     /// options.
@@ -252,6 +252,14 @@ public:
                                  isc::dhcp::OptionCollection& options,
                                  size_t* relay_msg_offset = 0,
                                  size_t* relay_msg_len = 0);
+
+    /// @brief Fuse multiple options with the same option code in long options
+    /// (RFC3396).
+    ///
+    /// @param options The option container which needs to be updated with fused
+    /// options.
+    /// @return True any options have been fused, false otherwise.
+    static bool fuseOptions4(isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv4 options and creates
     /// Option objects.

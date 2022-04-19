@@ -4119,6 +4119,8 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
                 .arg(code);
             continue;
         }
+        // Because options have already been fused, the buffer contains entire
+        // data.
         const OptionBuffer buf = opt->getData();
         try {
             // Unpack the option

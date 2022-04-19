@@ -127,10 +127,10 @@ Pkt4::pack() {
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)
-         buffer_out_.writeUint8(DHO_END);
-     } catch(const Exception& e) {
+        buffer_out_.writeUint8(DHO_END);
+    } catch(const Exception& e) {
         // An exception is thrown and message will be written to Logger
-         isc_throw(InvalidOperation, e.what());
+        isc_throw(InvalidOperation, e.what());
     }
 }
 
@@ -209,6 +209,10 @@ Pkt4::unpack() {
     //                  << ", were able to parse " << offset << " bytes.");
     // }
     (void)offset;
+
+    // The RFC3396 adds support for multiple options using the same code fused
+    // into long options.
+    LibDHCP::fuseOptions4(options_);
 
     // No need to call check() here. There are thorough tests for this
     // later (see Dhcp4Srv::accept()). We want to drop the packet later,

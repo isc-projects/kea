@@ -562,7 +562,17 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // Check if option unpacking must be deferred
         if (shouldDeferOptionUnpack(option_space, opt_type)) {
             num_defs = 0;
-            deferred.push_back(opt_type);
+            // Only store deferred options once.
+            bool found = false;
+            for (auto const& existing : deferred) {
+                if (existing == opt_type) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                deferred.push_back(opt_type);
+            }
         }
 
         OptionPtr opt;
@@ -603,6 +613,72 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
     }
     last_offset = offset;
     return (last_offset);
+}
+
+bool
+LibDHCP::fuseOptions4(OptionCollection& options) {
+    bool result = false;
+    // We need to loop until all options have been fused.
+    for (;;) {
+        uint32_t found = 0;
+        bool found_suboptions = false;
+        // Iterate over all options in the container.
+        for (auto const& option : options) {
+            OptionPtr candidate = option.second;
+            OptionCollection& sub_options = candidate->getMutableOptions();
+            // Fuse suboptions recursively, if any.
+            if (sub_options.size()) {
+                // Fusing suboptions might result in new options with multiple
+                // options having the same code , so we need to iterate again
+                // until no options needs fusing.
+                found_suboptions = LibDHCP::fuseOptions4(sub_options);
+                if (found_suboptions) {
+                    result = true;
+                }
+            }
+            OptionBuffer data;
+            OptionCollection suboptions;
+            // Make a copy of the options so we can safely iterate over the
+            // old container.
+            OptionCollection copy = options;
+            for (auto const& old_option : copy) {
+                if (old_option.first == option.first) {
+                    // Copy the option data to the buffer.
+                    data.insert(data.end(), old_option.second->getData().begin(),
+                                old_option.second->getData().end());
+                    suboptions.insert(old_option.second->getOptions().begin(),
+                                      old_option.second->getOptions().end());
+                    // Other options might need fusing, so we need to iterate
+                    // again until no options needs fusing.
+                    found++;
+                }
+            }
+            if (found > 1) {
+                result = true;
+                // Erase the old options from the new container so that only the
+                // new option is present.
+                copy.erase(option.first);
+                // Create new option with entire data.
+                OptionPtr new_option(new Option(candidate->getUniverse(),
+                                                candidate->getType(), data));
+                // Recreate suboptions container.
+                new_option->getMutableOptions() = suboptions;
+                // Add the new option to the new container.
+                copy.insert(make_pair(candidate->getType(), new_option));
+                // After all options have been fused and new option added,
+                // update the option container with the new container.
+                options = copy;
+                break;
+            } else {
+                found = 0;
+            }
+        }
+        // No option needs fusing, so we can exit the loop.
+        if ((found <= 1) && !found_suboptions) {
+            break;
+        }
+    }
+    return (result);
 }
 
 size_t
@@ -897,8 +973,8 @@ LibDHCP::splitOptions4(OptionCollection& options) {
                     // containing truncated length.
                     OptionPtr new_option(new Option(candidate->getUniverse(),
                                                     candidate->getType(),
-                                                    OptionBuffer(candidate->getData()[offset],
-                                                                 len)));
+                                                    OptionBuffer(candidate->getData().begin() + offset,
+                                                                 candidate->getData().begin() + offset + len)));
                     // If this is the first option, also add (if necessary,
                     // already split) suboptions, if any.
                     if (!offset) {

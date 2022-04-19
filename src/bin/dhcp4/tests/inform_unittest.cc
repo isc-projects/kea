@@ -57,20 +57,10 @@ namespace {
 ///   - 1 reservation for this subnet:
 ///     - Client's HW address: aa:bb:cc:dd:ee:ff
 ///     - option 240 = data
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
+///            -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
+///            -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
+///            -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
 ///            -data
-///     - tftp-server-name = some-name
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            .example.org
-///     - boot-file-name = bootfile
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            -010203040506070809-010203040506070809-010203040506070809-010203040506070809
-///            .efi
 const char* INFORM_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -160,24 +150,8 @@ const char* INFORM_CONFIGS[] = {
         "        \"code\": 240,"
         "        \"encapsulate\": \"\","
         "        \"name\": \"my-option\","
-        "        \"record-types\": \"string\","
-        "        \"space\": \"dhcp\","
-        "        \"type\": \"record\""
-        "    }"
-        "],"
-        "\"option-data\": ["
-        "    {"
-        "        \"always-send\": false,"
-        "        \"code\": 240,"
-        "        \"name\": \"my-option\","
-        "        \"csv-format\": true,"
-        "        \"data\": \"data"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-data\","
-        "        \"space\": \"dhcp\","
-        "        \"type\": \"record\""
+        "        \"space\": \"dhcp4\","
+        "        \"type\": \"string\""
         "    }"
         "],"
         "\"subnet4\": [ { "
@@ -185,16 +159,20 @@ const char* INFORM_CONFIGS[] = {
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
-        "         \"tftp-server-name\": \"some-name"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        ".example.org\","
-        "         \"boot-file-name\": \"bootfile"
-        "-090807060504030201-090807060504030201-090807060504030201-090807060504030201"
-        "-090807060504030201-090807060504030201-090807060504030201-090807060504030201"
-        "-090807060504030201-090807060504030201-090807060504030201-090807060504030201"
-        ".efi\""
+        "         \"option-data\": ["
+        "            {"
+        "              \"always-send\": false,"
+        "              \"code\": 240,"
+        "              \"name\": \"my-option\","
+        "              \"csv-format\": true,"
+        "              \"data\": \"data"
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809"
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809"
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809"
+        "-data\","
+        "              \"space\": \"dhcp4\""
+        "    }"
+        "],"
         "       }"
         "    ]"
         "} ]"
@@ -516,9 +494,54 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // configuration used below.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
-    configure(INFORM_CONFIGS[2], *client.getServer());
-    // Client requests big option
+    configure(INFORM_CONFIGS[3], *client.getServer());
+    // Client requests big option.
     client.requestOption(240);
+    // Client also sends multiple options with the same code.
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
+    for (uint32_t i = 0; i < 16; i++) {
+        // Create a buffer holding some binary data. This data will be
+        // used as reference when we read back the data from a created
+        // option.
+        OptionBuffer buf_in(64);
+        for (unsigned i = 0; i < 64; ++i) {
+            buf_in[i] = i;
+        }
+
+        // Use scoped pointer because it allows to declare the option
+        // in the function scope and initialize it under ASSERT.
+        boost::shared_ptr<OptionCustom> option;
+        // Custom option may throw exception if the provided buffer is
+        // malformed.
+        ASSERT_NO_THROW(
+            option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
+        );
+        ASSERT_TRUE(option);
+        client.addExtraOption(option);
+    }
+
+    // Client also sends multiple options with the same code.
+    OptionDefinition opt_def_bar("option-bar", 232, "my-space", "binary",
+                                 "option-bar-space");
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(2560);
+    for (unsigned i = 0; i < 2560; ++i) {
+        buf_in[i] = i;
+    }
+
+    // Use scoped pointer because it allows to declare the option
+    // in the function scope and initialize it under ASSERT.
+    boost::shared_ptr<OptionCustom> option;
+    // Custom option may throw exception if the provided buffer is
+    // malformed.
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def_bar, Option::V4, buf_in));
+    );
+    ASSERT_TRUE(option);
+    client.addExtraOption(option);
     // Client sends DHCPINFORM and should receive reserved fields.
     ASSERT_NO_THROW(client.doInform());
     // Make sure that the server responded.
@@ -527,44 +550,42 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
+    // Long option should have been split by the client.
+    uint32_t count = 0;
+    for (auto const& option : client.getContext().query_->options_) {
+        if (option.first == 232) {
+            count++;
+        }
+    }
+    ASSERT_EQ(11, count);
+
+    count = 0;
+    for (auto const& option : resp->options_) {
+        if (option.second->getType() == 231) {
+            count++;
+        }
+    }
+    // Multiple options should have been fused by the server.
+    EXPECT_EQ(count, 1);
+
     // Check that the reserved and requested values have been assigned.
     string expected =
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809"
-        "-010203040506070809-010203040506070809-010203040506070809-010203040506070809";
-    uint32_t count = 0;
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809"
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809"
+        "-00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809";
+
+    count = 0;
     string value = "";
     for (auto const& option : resp->options_) {
         if (option.second->getType() == 240) {
             value += string(reinterpret_cast<const char*>(&option.second->getData()[0]),
                             option.second->getData().size());
+            count++;
         }
-        count++;
     }
-    EXPECT_EQ(count, 2);
+    // Multiple options should have been fused by the server.
+    EXPECT_EQ(count, 1);
     EXPECT_EQ(value, string("data") + expected + string("-data"));
-    count = 0;
-    value = "";
-    for (auto const& option : resp->options_) {
-        if (option.second->getType() == DHO_TFTP_SERVER_NAME) {
-            value += string(reinterpret_cast<const char*>(&option.second->getData()[0]),
-                            option.second->getData().size());
-        }
-        count++;
-    }
-    EXPECT_EQ(count, 2);
-    EXPECT_EQ(value, string("some-name") + expected + string(".example.org"));
-    count = 0;
-    value = "";
-    for (auto const& option : resp->options_) {
-        if (option.second->getType() == DHO_BOOT_FILE_NAME) {
-            value += string(reinterpret_cast<const char*>(&option.second->getData()[0]),
-                            option.second->getData().size());
-        }
-        count++;
-    }
-    EXPECT_EQ(count, 2);
-    EXPECT_EQ(value, string("bootfile") + expected + string(".efi"));
 }
 
 /// This test verifies that after a client completes its INFORM exchange,

@@ -94,7 +94,6 @@ Option::check() const {
     }
 
     if (universe_ == V4) {
-
         if (type_ > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big. "
                       << "For DHCPv4 allowed type range is 0..255");
@@ -333,13 +332,6 @@ Option::getHeaderLen() const {
 }
 
 void Option::addOption(OptionPtr opt) {
-    if (universe_ == V4) {
-        // check for uniqueness (DHCPv4 options must be unique)
-        if (getOption(opt->getType())) {
-            isc_throw(BadValue, "Option " << opt->getType()
-                      << " already present in this message.");
-        }
-    }
     options_.insert(make_pair(opt->getType(), opt));
 }
 
