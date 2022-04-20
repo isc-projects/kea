@@ -263,8 +263,6 @@ the following:
 
    Google Test:
      no
-   Google Benchmark:
-     no
 
    FreeRADIUS client:
      FREERADIUS_INCLUDE:    -I/usr/local/include

@@ -944,15 +944,6 @@ AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 # Now that Crypto backend and Boost were done we can address TLS.
 AX_TLS
 
-AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
-AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
-AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
-AC_SUBST(BENCHMARK_CPPFLAGS)
-AC_SUBST(BENCHMARK_INCLUDES)
-AC_SUBST(BENCHMARK_LDFLAGS)
-AC_SUBST(BENCHMARK_LDADD)
-AC_SUBST(BENCHMARK_SOURCE)
-
 #
 # Some Googletest versions bug with C++11 compilers
 #
@@ -1926,7 +1917,6 @@ cat >> config.report << END
 Developer:
   Enable Debugging:          $debug_enabled
   Google Tests:              $enable_gtest
-  Google Benchmark:          $enable_benchmark
   Valgrind:                  $found_valgrind
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks
