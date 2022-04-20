@@ -1,3 +1,7 @@
+2008.	[func]*		tomek
+	The support for benchmarks have been removed.
+	(Gitlab #2372)
+
 2007.	[func]		tmark
 	Added split() function to classification expression
 	language.
