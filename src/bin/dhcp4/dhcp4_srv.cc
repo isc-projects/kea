@@ -94,7 +94,7 @@ struct Dhcp4Hooks {
     int hook_index_buffer4_send_;      ///< index for "buffer4_send" hook point
     int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
     int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
-    int hook_index_ddns4_update_;       ///< index for "ddns_update" hook point
+    int hook_index_ddns4_update_;      ///< index for "ddns4_update" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
@@ -107,7 +107,7 @@ struct Dhcp4Hooks {
         hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
         hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
-        hook_index_ddns4_update_       = HooksManager::registerHook("ddns4_update");
+        hook_index_ddns4_update_      = HooksManager::registerHook("ddns4_update");
     }
 };
 
@@ -2049,18 +2049,19 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
     // option. In that the server should prefer Client FQDN option and
     // ignore the Hostname option.
     try {
+        Pkt4Ptr query = ex.getQuery();
         Pkt4Ptr resp = ex.getResponse();
         Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
-            (ex.getQuery()->getOption(DHO_FQDN));
+            (query->getOption(DHO_FQDN));
         if (fqdn) {
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
-                .arg(ex.getQuery()->getLabel());
+                .arg(query->getLabel());
             processClientFqdnOption(ex);
 
         } else {
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_CLIENT_HOSTNAME_PROCESS)
-                    .arg(ex.getQuery()->getLabel());
+                    .arg(query->getLabel());
             processHostnameOption(ex);
         }
 
@@ -2103,12 +2104,10 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         // Optionally, call a hook that may possibly override the decisions made
         // earlier.
         if (HooksManager::calloutsPresent(Hooks.hook_index_ddns4_update_)) {
-            Pkt4Ptr query = ex.getQuery();
-
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
             Subnet4Ptr subnet = ex.getContext()->subnet_;
 
-            // Pass incoming packet as argument
+            // Setup the callout arguments.
             callout_handle->setArgument("query4", query);
             callout_handle->setArgument("response4", resp);
             callout_handle->setArgument("subnet4", subnet);
@@ -2128,7 +2127,8 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             callout_handle->getArgument("fwd-update", hook_fqdn_fwd);
             callout_handle->getArgument("rev-update", hook_fqdn_rev);
 
-            // If there's anything changed by the hook, log it and then update the parameters
+            // If there's anything changed by the hook, log it and then update
+            // the parameters.
             if ((hostname != hook_hostname) || (fqdn_fwd != hook_fqdn_fwd) ||
                 (fqdn_rev != hook_fqdn_rev)) {
                 LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_DDNS_UPDATE)
@@ -2138,7 +2138,8 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                 fqdn_fwd = hook_fqdn_fwd;
                 fqdn_rev = hook_fqdn_rev;
 
-                // If there's an outbound host-name option in the response we need to updated it.
+                // If there's an outbound host-name option in the response we
+                // need to updated it with the new host name.
                 OptionStringPtr hostname_opt = boost::dynamic_pointer_cast<OptionString>
                                               (resp->getOption(DHO_HOST_NAME));
                 if (hostname_opt) {

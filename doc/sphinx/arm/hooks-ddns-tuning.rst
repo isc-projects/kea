@@ -7,9 +7,9 @@ This hook library adds support for fine tuning various DNS update aspects.
 Currently it supports procedural host name generation. The DDNS Tuning hook
 is a premium feature.
 
-The library, which was added in Kea 2.1.4, is loaded in a
-can be loaded by ``kea--dhcp4`` and ``kea-dhcp6`` by adding it
-to  ``hooks-libraries`` element of the server's configuration:
+The library, which was added in Kea 2.1.5, can be loaded by the ``kea-dhcp4``
+and ``kea-dhcp6`` daemons by adding it to ``hooks-libraries`` element of the
+server's configuration:
 
 .. code-block:: javascript
 
@@ -32,8 +32,8 @@ Procedural Host name generation
 
 This hook library provides the ability to generate host names, procedurally, based on
 an expression. The expression can be defined globally in the hook parameters, using
-`hostname-expr`.  If defined globally, it will apply to all hosts in all subnets. The
-expressions can use all tokens defined in :ref:`classify`.  An example of a global
+`hostname-expr`. If defined globally, it will apply to all hosts in all subnets. The
+expressions can use all tokens defined in :ref:`classify`. An example of a global
 expression is shown below:
 
 .. code-block:: javascript
@@ -54,9 +54,9 @@ expression is shown below:
     }
 
 It is also possible to define this parameter in a subnet, using user-context mechanism.
-If defined at the subnet level, the expression applies to specific subnet only.  If the
-subnet expression is defined as empty, "", it will suppresses (or disables) the use of
-a global expression for that subnet.  An example subnet expression is shown below:
+If defined at the subnet level, the expression applies to specific subnet only. If the
+subnet expression is defined as empty, "", it suppresses (or disables) the use of a
+global expression for that subnet. An example subnet expression is shown below:
 
 .. code-block:: javascript
 
@@ -83,14 +83,15 @@ a global expression for that subnet.  An example subnet expression is shown belo
     }]
 
 .. note::
-   The expression value above uses a slash, '\', to show line continuation.  This is for
-   clarity only and is not valid JSON supported by Kea parsing.  The actually value has
+
+   The expression value above uses a slash, '\', to show line continuation. This is for
+   clarity only and is not valid JSON supported by Kea parsing. The actually value has
    to be expressed in a single line.
 
 .. note::
 
-   Privacy should be taken into consideration when generating a host name. The host name is
-   usually inserted into the DNS, which is a public system. Exposing identifiers that
+   Privacy should be taken into consideration when generating a host name. The host name
+   is usually inserted into the DNS, which is a public system. Exposing identifiers that
    can be used to track devices, such as MAC address, are usually a very bad idea.
    The global expression example used MAC address for simplicity.
 
@@ -111,10 +112,10 @@ response to a client query (e.g. DISCOVER, REQUEST) is as follows:
   within it along with the DDNS behavioral parameters to form the final host name.
 
   4. If there is an ddns-tuning in-scope host name expression (either global or subnet),
-  calculate the host name using the expression.   If the calculated value is not a fully
+  calculate the host name using the expression. If the calculated value is not a fully
   qualified name and there is an in-scope ddns-qualifying-suffix, append the suffix.
 
-  5. If value calculated by the hook is not an empty string and is different than the
+  5. If the value calculated by the hook is not an empty string and is different than
   the host name formed in the prior steps (1 or 2), the calculated value becomes the
   final host name.
 
@@ -141,9 +142,9 @@ response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
   calculated in steps 1 or 2.
 
   5. If there is a ddns-tuning in-scope host name expression (either global or subnet),
-  calculate the host name using the expression.   If the calculated value is not a fully
+  calculate the host name using the expression. If the calculated value is not a fully
   qualified name and there is an in-scope ddns-qualifying-suffix, append the suffix.
 
-  6. If value calculated by the hook is not an empty string and is different than the
+  6. If the value calculated by the hook is not an empty string and is different than
   the host name formed in the prior steps (1 or 2), the calculated value becomes the
   final host name.

@@ -393,7 +393,7 @@ The server will now abort processing of the packet as if it was never
 received. The lease will continue to be assigned to this client.
 
 % DHCP4_HOOK_DDNS_UPDATE A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
-This message indicates that there was a hook called on ddns_update hook point
+This message indicates that there was a hook called on ddns4_update hook point
 and that hook updated the DDNS update parameters: hostname, or whether to
 conduct forward (A record) or reverse (PTR record) DDNS updates.
 

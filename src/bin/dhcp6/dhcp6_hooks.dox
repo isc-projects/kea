@@ -325,13 +325,13 @@ called before "subnet6_select".
    and various configuration values (e.g host reservations, DDNS behaviorial
    parameters, etc).  Upon return from the callout, any changes to these
    values will be applied as follows:
-   - If <b>hostname</b> has changed it will be used to update the outbound FQDN
-   option (option 39) if it exists, and used as the FQDN sent
-   in DNS updates
+   - If <b>hostname</b> has changed it will be used to update the outbound
+   FQDN option (option 39) if it exists, and used as the FQDN sent in DNS
+   updates
    - Forward DNS update(s) will be done if <b>fwd_udpate</b> is true (and
-  <b>kea-dhcp-ddns</b> connectivity is enabled)
+   <b>kea-dhcp-ddns</b> connectivity is enabled)
    - Reverse DNS update(s) will be done if <b>rev_udpate</b> is true (and
-  <b>kea-dhcp-ddns</b> connectivity is enabled)
+   <b>kea-dhcp-ddns</b> connectivity is enabled)
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
 

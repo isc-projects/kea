@@ -1970,7 +1970,8 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
         if ((ctx.hostname_ != hook_hostname) || (ctx.fwd_dns_update_!= hook_fwd_dns_update) ||
             (ctx.rev_dns_update_ != hook_rev_dns_update)) {
             LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_DDNS_UPDATE)
-                      .arg(ctx.hostname_).arg(hook_hostname).arg(ctx.fwd_dns_update_).arg(hook_fwd_dns_update)
+                      .arg(ctx.hostname_).arg(hook_hostname)
+                      .arg(ctx.fwd_dns_update_).arg(hook_fwd_dns_update)
                       .arg(ctx.rev_dns_update_).arg(hook_rev_dns_update);
 
             // Update the FQDN option in the response.
@@ -2070,8 +2071,6 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                      (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev)) {
                     extended_only = true;
                 } else {
-                    std::cout << __LINE__ << "**** doing remove - l.hostname: " << (*l)->hostname_
-                              << ", opt-fqdn: " << opt_fqdn->getDomainName() << std::endl;
                     // Queue a CHG_REMOVE of the old data.
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true
