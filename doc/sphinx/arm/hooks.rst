@@ -130,7 +130,7 @@ first section of the output should look something like this:
      OS Family:        Linux
      Using GNU sed:    yes
      Premium package:  yes
-     Included Hooks:   forensic_log flex_id host_cmds subnet_cmds radius host_cache class_cmds cb_cmds lease_query
+     Included Hooks:   forensic_log flex_id host_cmds
 
 The last line indicates which specific hooks were detected. Note that
 some hooks may require their own dedicated switches, e.g. the RADIUS hook
