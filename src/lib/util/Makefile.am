@@ -47,7 +47,7 @@ libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_util_la_LDFLAGS  = -no-undefined -version-info 48:0:0
+libkea_util_la_LDFLAGS  = -no-undefined -version-info 49:0:0
 
 EXTRA_DIST = util.dox
 
