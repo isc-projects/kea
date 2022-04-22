@@ -175,20 +175,6 @@ public:
 
     /// Access control parameters: get/set methods.
 
-    /// @brief Returns recorded remote address.
-    ///
-    /// @return recorded remote address in textual form.
-    std::string getRemote() const {
-        return (remote_);
-    }
-
-    /// @brief Set (record) remote address.
-    ///
-    /// @param remote the remote address in textual form.
-    void setRemote(const std::string& remote) {
-        remote_ = remote;
-    }
-
     /// @brief Returns recorded TLS usage.
     ///
     /// @return recorded TLS usage.
