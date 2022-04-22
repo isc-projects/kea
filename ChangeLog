@@ -1,6 +1,6 @@
 2010.	[func]		razvan
 	Several extra log messages now detail the subnet selection
-	process.
+	process. The messages are available on debuglevel 40.
 	(Gitlab #2352)
 
 2009.	[func]		tmark
