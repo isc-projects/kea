@@ -102,7 +102,7 @@ public:
     /// @brief Returns remote address.
     ///
     /// @return remote address from HTTP connection
-    /// getRemoteEndpointAddressAsText method.
+    /// getRemote method.
     std::string getRemote() const {
         return (remote_);
     }
