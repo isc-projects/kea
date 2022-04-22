@@ -1147,28 +1147,33 @@ and which is delegated a prefix from this pool.
     Here are some liberties and limits to the values that subnets and pools can
     take in Kea configurations that are out of the ordinary:
 
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Kea configuration case                                                        | Result        | Comment                                                                        |
-    +===============================================================================+===============+================================================================================+
-    | Overlapping subnets                                                           | Allowed       | Administrator consideration needs to be given to how clients are matched to    |
-    |                                                                               |               | these subnets.                                                                 |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Overlapping address pools in one subnet                                       | Startup error | DHCP6_PARSER_FAIL                                                              |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Overlapping address pools in different subnets                                | Allowed       | Can act as a substitute for a global pool mechanic. When assigning leases from |
-    |                                                                               |               | one pool, Kea correctly excludes leases given under any pool that overlaps     |
-    |                                                                               |               | with it such that no lease is given twice.                                     |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Address pools that are outside the subnet they are configured under           | Startup error | DHCP6_PARSER_FAIL                                                              |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Overlapping prefix delegation pools in one subnet                             | Startup error | DHCP6_PARSER_FAIL                                                              |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Overlapping prefix delegation pools in different subnets                      | Allowed       | Can act as a substitute for a global pool mechanic. When assigning leases from |
-    |                                                                               |               | one pool, Kea correctly excludes leases given under any pool that overlaps     |
-    |                                                                               |               | with it such that no lease is given twice.                                     |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
-    | Prefix delegation pools that are outside the subnet they are configured under | Allowed       |                                                                                |
-    +-------------------------------------------------------------------------------+---------------+--------------------------------------------------------------------------------+
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Kea configuration case                                                        | Allowed | Comment                                                                            |
+    +===============================================================================+=========+====================================================================================+
+    | Overlapping subnets                                                           | Yes     | Administrator consideration needs to be given to how clients are matched to        |
+    |                                                                               |         | these subnets.                                                                     |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Overlapping address pools in one subnet                                       | No      | Startup error: DHCP6_PARSER_FAIL                                                   |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Overlapping address pools in different subnets                                | Yes     | Specifying the same address pool in different subnets can be used as an equivalent |
+    |                                                                               |         | of the global address pool. In that case, the server can assign addresses from the |
+    |                                                                               |         | same range regardless of the client's subnet. If an address from such a pool is    |
+    |                                                                               |         | assigned to a client in one subnet, the same address will be renewed for this      |
+    |                                                                               |         | client if it moves to another subnet. Another client in a different subnet will    |
+    |                                                                               |         | not be assigned an address already assigned to the client in any of the subnets.   |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Address pools that are outside the subnet they are configured under           | No      | Startup error: DHCP6_PARSER_FAIL                                                   |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Overlapping prefix delegation pools in one subnet                             | No      | Startup error: DHCP6_PARSER_FAIL                                                   |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Overlapping prefix delegation pools in different subnets                      | Yes     | Can act as a substitute for a global pool mechanic. When assigning leases from     |
+    |                                                                               |         | one pool, Kea correctly excludes leases given under any pool that overlaps         |
+    |                                                                               |         | with it such that no lease is given twice.                                         |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
+    | Prefix delegation pools not matching the subnet prefix                        | Yes     | It is common in many deployments to configure the prefix delegation pools not      |
+    |                                                                               |         | matching the subnet prefix, e.g. a prefix pool of 3000::/96 within the             |
+    |                                                                               |         | 2001:db8:1::/64 subnet. Such use cases are supported by Kea DHCPv6 server.         |
+    +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
 
 .. _dhcp6-std-options:
 
