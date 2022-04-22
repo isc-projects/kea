@@ -657,7 +657,7 @@ TEST_F(HttpControlSocketTest, configGet) {
     ASSERT_TRUE(command);
     ASSERT_EQ(Element::string, command->getType());
     string expected = "{ \"command\": \"config-get\", "
-        "\"service\": [ \"foo\" ] }";
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
@@ -684,7 +684,7 @@ TEST_F(HttpControlSocketTest, configGetCA) {
     ConstElementPtr command = reflected->get("received");
     ASSERT_TRUE(command);
     ASSERT_EQ(Element::string, command->getType());
-    string expected = "{ \"command\": \"config-get\" }";
+    string expected = "{ \"command\": \"config-get\", \"remote-address\": \"127.0.0.1\" }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
@@ -715,7 +715,7 @@ TEST_F(HttpControlSocketTest, configTest) {
     ASSERT_EQ(Element::string, command->getType());
     string expected = "{ \"arguments\": { \"bar\": 1 }, "
         "\"command\": \"config-test\", "
-        "\"service\": [ \"foo\" ] }";
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
@@ -746,7 +746,7 @@ TEST_F(HttpControlSocketTest, configTestCA) {
     ASSERT_TRUE(command);
     ASSERT_EQ(Element::string, command->getType());
     string expected = "{ \"arguments\": { \"bar\": 1 }, "
-        "\"command\": \"config-test\" }";
+        "\"command\": \"config-test\", \"remote-address\": \"127.0.0.1\" }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
@@ -777,7 +777,7 @@ TEST_F(HttpControlSocketTest, configSet) {
     ASSERT_EQ(Element::string, command->getType());
     string expected = "{ \"arguments\": { \"bar\": 1 }, "
         "\"command\": \"config-set\", "
-        "\"service\": [ \"foo\" ] }";
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
@@ -808,7 +808,7 @@ TEST_F(HttpControlSocketTest, configSetCA) {
     ASSERT_TRUE(command);
     ASSERT_EQ(Element::string, command->getType());
     string expected = "{ \"arguments\": { \"bar\": 1 }, "
-        "\"command\": \"config-set\" }";
+        "\"command\": \"config-set\", \"remote-address\": \"127.0.0.1\" }";
     EXPECT_EQ(expected, command->stringValue());
 }
 
