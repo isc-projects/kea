@@ -1250,7 +1250,7 @@ avoid this, use the ``min-max`` notation.
     |                                                             |         | client if it moves to another subnet. Another client in a different subnet will      |
     |                                                             |         | not be assigned an address already assigned to the client in any of the subnets.     |
     +-------------------------------------------------------------+---------+--------------------------------------------------------------------------------------+
-    | Pools that are outside the subnet they are configured under | No      | Startup error: DHCP4_PARSER_FAIL                                                     |
+    | Pools not matching the subnet prefix                        | No      | Startup error: DHCP4_PARSER_FAIL                                                     |
     +-------------------------------------------------------------+---------+--------------------------------------------------------------------------------------+
 
 .. _dhcp4-t1-t2-times:

@@ -1166,9 +1166,12 @@ and which is delegated a prefix from this pool.
     +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
     | Overlapping prefix delegation pools in one subnet                             | No      | Startup error: DHCP6_PARSER_FAIL                                                   |
     +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
-    | Overlapping prefix delegation pools in different subnets                      | Yes     | Can act as a substitute for a global pool mechanic. When assigning leases from     |
-    |                                                                               |         | one pool, Kea correctly excludes leases given under any pool that overlaps         |
-    |                                                                               |         | with it such that no lease is given twice.                                         |
+    | Overlapping prefix delegation pools in different subnets                      | Yes     | Specifying the same prefix delegation pool in different subnets can be used as an  |
+    |                                                                               |         | equivalent of the global pool. In that case, the server can delegate the same      |
+    |                                                                               |         | prefixes regardless of the client's subnet. If a prefix from such a pool is        |
+    |                                                                               |         | delegated to a client in one subnet, the same prefix will be renewed for this      |
+    |                                                                               |         | client if it moves to another subnet. Another client in a different subnet will    |
+    |                                                                               |         | not be delegated a prefix already delegated to the client in any of the subnets.   |
     +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
     | Prefix delegation pools not matching the subnet prefix                        | Yes     | It is common in many deployments to configure the prefix delegation pools not      |
     |                                                                               |         | matching the subnet prefix, e.g. a prefix pool of 3000::/96 within the             |
