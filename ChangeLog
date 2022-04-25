@@ -1,3 +1,8 @@
+2013.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.5 development
+	version.
+	(Gitlab #2385)
+
 2012.	[doc]		andrei
 	Documented whether it's OK or not to have overlapping pools,
 	including PD pools in IPv6.
