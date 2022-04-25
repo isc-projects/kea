@@ -97,6 +97,7 @@ exclude_patterns = [
     'arm/hooks-radius.rst',
     'arm/hooks-run-script.rst',
     'arm/hooks-stat-cmds.rst',
+    'arm/hooks-ddns-tuning.rst',
     'arm/hammer.rst',
     'arm/ext-netconf.rst',
     'arm/ext-gss-tsig.rst',
