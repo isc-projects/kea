@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.5.1.
+// A Bison parser, made by GNU Bison 3.8.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -38,8 +38,9 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
-// Undocumented macros, especially those whose name start with YY_,
-// are private implementation details.  Do not rely on them.
+// DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+// especially those whose name start with YY_ or yy_.  They are
+// private implementation details that can be changed or removed.
 
 #ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 # define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
@@ -56,7 +57,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 60 "dhcp6_parser.h"
+#line 61 "dhcp6_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -103,9 +104,9 @@ using namespace std;
 #endif
 # include "location.hh"
 #include <typeinfo>
-#ifndef YY_ASSERT
+#ifndef PARSER6__ASSERT
 # include <cassert>
-# define YY_ASSERT assert
+# define PARSER6__ASSERT assert
 #endif
 
 
@@ -127,17 +128,23 @@ using namespace std;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                            \
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
     _Pragma ("GCC diagnostic push")                                     \
     _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+# endif
 # define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
@@ -199,7 +206,7 @@ using namespace std;
 
 #line 14 "dhcp6_parser.yy"
 namespace isc { namespace dhcp {
-#line 203 "dhcp6_parser.h"
+#line 210 "dhcp6_parser.h"
 
 
 
@@ -208,37 +215,49 @@ namespace isc { namespace dhcp {
   class Dhcp6Parser
   {
   public:
-#ifndef PARSER6_STYPE
+#ifdef PARSER6_STYPE
+# ifdef __GNUC__
+#  pragma GCC message "bison: do not #define PARSER6_STYPE in C++, use %define api.value.type"
+# endif
+    typedef PARSER6_STYPE value_type;
+#else
   /// A buffer to store and retrieve objects.
   ///
   /// Sort of a variant, but does not keep track of the nature
   /// of the stored data, since that knowledge is available
   /// via the current parser state.
-  class semantic_type
+  class value_type
   {
   public:
     /// Type of *this.
-    typedef semantic_type self_type;
+    typedef value_type self_type;
 
     /// Empty construction.
-    semantic_type () YY_NOEXCEPT
-      : yybuffer_ ()
+    value_type () YY_NOEXCEPT
+      : yyraw_ ()
       , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
-    semantic_type (YY_RVREF (T) t)
+    value_type (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (sizeof (T) <= size);
       new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    value_type (const self_type&) = delete;
+    /// Non copyable.
+    self_type& operator= (const self_type&) = delete;
+#endif
+
     /// Destruction, allowed only if empty.
-    ~semantic_type () YY_NOEXCEPT
+    ~value_type () YY_NOEXCEPT
     {
-      YY_ASSERT (!yytypeid_);
+      PARSER6__ASSERT (!yytypeid_);
     }
 
 # if 201103L <= YY_CPLUSPLUS
@@ -247,8 +266,8 @@ namespace isc { namespace dhcp {
     T&
     emplace (U&&... u)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (!yytypeid_);
+      PARSER6__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (std::forward <U>(u)...);
     }
@@ -258,8 +277,8 @@ namespace isc { namespace dhcp {
     T&
     emplace ()
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (!yytypeid_);
+      PARSER6__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T ();
     }
@@ -269,8 +288,8 @@ namespace isc { namespace dhcp {
     T&
     emplace (const T& t)
     {
-      YY_ASSERT (!yytypeid_);
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (!yytypeid_);
+      PARSER6__ASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
     }
@@ -299,9 +318,9 @@ namespace isc { namespace dhcp {
     T&
     as () YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (yytypeid_);
+      PARSER6__ASSERT (*yytypeid_ == typeid (T));
+      PARSER6__ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -310,9 +329,9 @@ namespace isc { namespace dhcp {
     const T&
     as () const YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == typeid (T));
-      YY_ASSERT (sizeof (T) <= size);
+      PARSER6__ASSERT (yytypeid_);
+      PARSER6__ASSERT (*yytypeid_ == typeid (T));
+      PARSER6__ASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
@@ -328,8 +347,8 @@ namespace isc { namespace dhcp {
     void
     swap (self_type& that) YY_NOEXCEPT
     {
-      YY_ASSERT (yytypeid_);
-      YY_ASSERT (*yytypeid_ == *that.yytypeid_);
+      PARSER6__ASSERT (yytypeid_);
+      PARSER6__ASSERT (*yytypeid_ == *that.yytypeid_);
       std::swap (as<T> (), that.as<T> ());
     }
 
@@ -378,16 +397,19 @@ namespace isc { namespace dhcp {
     }
 
   private:
-    /// Prohibit blind copies.
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
+    value_type (const self_type&);
+    /// Non copyable.
     self_type& operator= (const self_type&);
-    semantic_type (const self_type&);
+#endif
 
     /// Accessor to raw memory as \a T.
     template <typename T>
     T*
     yyas_ () YY_NOEXCEPT
     {
-      void *yyp = yybuffer_.yyraw;
+      void *yyp = yyraw_;
       return static_cast<T*> (yyp);
      }
 
@@ -396,7 +418,7 @@ namespace isc { namespace dhcp {
     const T*
     yyas_ () const YY_NOEXCEPT
     {
-      const void *yyp = yybuffer_.yyraw;
+      const void *yyp = yyraw_;
       return static_cast<const T*> (yyp);
      }
 
@@ -433,18 +455,19 @@ namespace isc { namespace dhcp {
     union
     {
       /// Strongest alignment constraints.
-      long double yyalign_me;
+      long double yyalign_me_;
       /// A buffer large enough to store any of the semantic values.
-      char yyraw[size];
-    } yybuffer_;
+      char yyraw_[size];
+    };
 
     /// Whether the content is built: if defined, the name of the stored type.
     const std::type_info *yytypeid_;
   };
 
-#else
-    typedef PARSER6_STYPE semantic_type;
 #endif
+    /// Backward compatibility (Bison 3.8).
+    typedef value_type semantic_type;
+
     /// Symbol locations.
     typedef location location_type;
 
@@ -466,242 +489,913 @@ namespace isc { namespace dhcp {
       location_type location;
     };
 
-    /// Tokens.
+    /// Token kinds.
     struct token
     {
-      enum yytokentype
+      enum token_kind_type
       {
-        TOKEN_END = 0,
-        TOKEN_COMMA = 258,
-        TOKEN_COLON = 259,
-        TOKEN_LSQUARE_BRACKET = 260,
-        TOKEN_RSQUARE_BRACKET = 261,
-        TOKEN_LCURLY_BRACKET = 262,
-        TOKEN_RCURLY_BRACKET = 263,
-        TOKEN_NULL_TYPE = 264,
-        TOKEN_DHCP6 = 265,
-        TOKEN_DATA_DIRECTORY = 266,
-        TOKEN_CONFIG_CONTROL = 267,
-        TOKEN_CONFIG_DATABASES = 268,
-        TOKEN_CONFIG_FETCH_WAIT_TIME = 269,
-        TOKEN_INTERFACES_CONFIG = 270,
-        TOKEN_INTERFACES = 271,
-        TOKEN_RE_DETECT = 272,
-        TOKEN_SERVICE_SOCKETS_REQUIRE_ALL = 273,
-        TOKEN_SERVICE_SOCKETS_RETRY_WAIT_TIME = 274,
-        TOKEN_SERVICE_SOCKETS_MAX_RETRIES = 275,
-        TOKEN_LEASE_DATABASE = 276,
-        TOKEN_HOSTS_DATABASE = 277,
-        TOKEN_HOSTS_DATABASES = 278,
-        TOKEN_TYPE = 279,
-        TOKEN_MEMFILE = 280,
-        TOKEN_MYSQL = 281,
-        TOKEN_POSTGRESQL = 282,
-        TOKEN_USER = 283,
-        TOKEN_PASSWORD = 284,
-        TOKEN_HOST = 285,
-        TOKEN_PORT = 286,
-        TOKEN_PERSIST = 287,
-        TOKEN_LFC_INTERVAL = 288,
-        TOKEN_READONLY = 289,
-        TOKEN_CONNECT_TIMEOUT = 290,
-        TOKEN_MAX_RECONNECT_TRIES = 291,
-        TOKEN_RECONNECT_WAIT_TIME = 292,
-        TOKEN_ON_FAIL = 293,
-        TOKEN_STOP_RETRY_EXIT = 294,
-        TOKEN_SERVE_RETRY_EXIT = 295,
-        TOKEN_SERVE_RETRY_CONTINUE = 296,
-        TOKEN_MAX_ROW_ERRORS = 297,
-        TOKEN_TRUST_ANCHOR = 298,
-        TOKEN_CERT_FILE = 299,
-        TOKEN_KEY_FILE = 300,
-        TOKEN_CIPHER_LIST = 301,
-        TOKEN_PREFERRED_LIFETIME = 302,
-        TOKEN_MIN_PREFERRED_LIFETIME = 303,
-        TOKEN_MAX_PREFERRED_LIFETIME = 304,
-        TOKEN_VALID_LIFETIME = 305,
-        TOKEN_MIN_VALID_LIFETIME = 306,
-        TOKEN_MAX_VALID_LIFETIME = 307,
-        TOKEN_RENEW_TIMER = 308,
-        TOKEN_REBIND_TIMER = 309,
-        TOKEN_CALCULATE_TEE_TIMES = 310,
-        TOKEN_T1_PERCENT = 311,
-        TOKEN_T2_PERCENT = 312,
-        TOKEN_CACHE_THRESHOLD = 313,
-        TOKEN_CACHE_MAX_AGE = 314,
-        TOKEN_DECLINE_PROBATION_PERIOD = 315,
-        TOKEN_SERVER_TAG = 316,
-        TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT = 317,
-        TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE = 318,
-        TOKEN_DDNS_SEND_UPDATES = 319,
-        TOKEN_DDNS_OVERRIDE_NO_UPDATE = 320,
-        TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE = 321,
-        TOKEN_DDNS_REPLACE_CLIENT_NAME = 322,
-        TOKEN_DDNS_GENERATED_PREFIX = 323,
-        TOKEN_DDNS_QUALIFYING_SUFFIX = 324,
-        TOKEN_DDNS_UPDATE_ON_RENEW = 325,
-        TOKEN_DDNS_USE_CONFLICT_RESOLUTION = 326,
-        TOKEN_STORE_EXTENDED_INFO = 327,
-        TOKEN_SUBNET6 = 328,
-        TOKEN_OPTION_DEF = 329,
-        TOKEN_OPTION_DATA = 330,
-        TOKEN_NAME = 331,
-        TOKEN_DATA = 332,
-        TOKEN_CODE = 333,
-        TOKEN_SPACE = 334,
-        TOKEN_CSV_FORMAT = 335,
-        TOKEN_ALWAYS_SEND = 336,
-        TOKEN_RECORD_TYPES = 337,
-        TOKEN_ENCAPSULATE = 338,
-        TOKEN_ARRAY = 339,
-        TOKEN_PARKED_PACKET_LIMIT = 340,
-        TOKEN_SHARED_NETWORKS = 341,
-        TOKEN_POOLS = 342,
-        TOKEN_POOL = 343,
-        TOKEN_PD_POOLS = 344,
-        TOKEN_PREFIX = 345,
-        TOKEN_PREFIX_LEN = 346,
-        TOKEN_EXCLUDED_PREFIX = 347,
-        TOKEN_EXCLUDED_PREFIX_LEN = 348,
-        TOKEN_DELEGATED_LEN = 349,
-        TOKEN_USER_CONTEXT = 350,
-        TOKEN_COMMENT = 351,
-        TOKEN_SUBNET = 352,
-        TOKEN_INTERFACE = 353,
-        TOKEN_INTERFACE_ID = 354,
-        TOKEN_ID = 355,
-        TOKEN_RAPID_COMMIT = 356,
-        TOKEN_RESERVATION_MODE = 357,
-        TOKEN_DISABLED = 358,
-        TOKEN_OUT_OF_POOL = 359,
-        TOKEN_GLOBAL = 360,
-        TOKEN_ALL = 361,
-        TOKEN_RESERVATIONS_GLOBAL = 362,
-        TOKEN_RESERVATIONS_IN_SUBNET = 363,
-        TOKEN_RESERVATIONS_OUT_OF_POOL = 364,
-        TOKEN_MAC_SOURCES = 365,
-        TOKEN_RELAY_SUPPLIED_OPTIONS = 366,
-        TOKEN_HOST_RESERVATION_IDENTIFIERS = 367,
-        TOKEN_SANITY_CHECKS = 368,
-        TOKEN_LEASE_CHECKS = 369,
-        TOKEN_CLIENT_CLASSES = 370,
-        TOKEN_REQUIRE_CLIENT_CLASSES = 371,
-        TOKEN_TEST = 372,
-        TOKEN_ONLY_IF_REQUIRED = 373,
-        TOKEN_CLIENT_CLASS = 374,
-        TOKEN_RESERVATIONS = 375,
-        TOKEN_IP_ADDRESSES = 376,
-        TOKEN_PREFIXES = 377,
-        TOKEN_DUID = 378,
-        TOKEN_HW_ADDRESS = 379,
-        TOKEN_HOSTNAME = 380,
-        TOKEN_FLEX_ID = 381,
-        TOKEN_RELAY = 382,
-        TOKEN_IP_ADDRESS = 383,
-        TOKEN_HOOKS_LIBRARIES = 384,
-        TOKEN_LIBRARY = 385,
-        TOKEN_PARAMETERS = 386,
-        TOKEN_EXPIRED_LEASES_PROCESSING = 387,
-        TOKEN_RECLAIM_TIMER_WAIT_TIME = 388,
-        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 389,
-        TOKEN_HOLD_RECLAIMED_TIME = 390,
-        TOKEN_MAX_RECLAIM_LEASES = 391,
-        TOKEN_MAX_RECLAIM_TIME = 392,
-        TOKEN_UNWARNED_RECLAIM_CYCLES = 393,
-        TOKEN_SERVER_ID = 394,
-        TOKEN_LLT = 395,
-        TOKEN_EN = 396,
-        TOKEN_LL = 397,
-        TOKEN_IDENTIFIER = 398,
-        TOKEN_HTYPE = 399,
-        TOKEN_TIME = 400,
-        TOKEN_ENTERPRISE_ID = 401,
-        TOKEN_DHCP4O6_PORT = 402,
-        TOKEN_DHCP_MULTI_THREADING = 403,
-        TOKEN_ENABLE_MULTI_THREADING = 404,
-        TOKEN_THREAD_POOL_SIZE = 405,
-        TOKEN_PACKET_QUEUE_SIZE = 406,
-        TOKEN_CONTROL_SOCKET = 407,
-        TOKEN_SOCKET_TYPE = 408,
-        TOKEN_SOCKET_NAME = 409,
-        TOKEN_DHCP_QUEUE_CONTROL = 410,
-        TOKEN_ENABLE_QUEUE = 411,
-        TOKEN_QUEUE_TYPE = 412,
-        TOKEN_CAPACITY = 413,
-        TOKEN_DHCP_DDNS = 414,
-        TOKEN_ENABLE_UPDATES = 415,
-        TOKEN_QUALIFYING_SUFFIX = 416,
-        TOKEN_SERVER_IP = 417,
-        TOKEN_SERVER_PORT = 418,
-        TOKEN_SENDER_IP = 419,
-        TOKEN_SENDER_PORT = 420,
-        TOKEN_MAX_QUEUE_SIZE = 421,
-        TOKEN_NCR_PROTOCOL = 422,
-        TOKEN_NCR_FORMAT = 423,
-        TOKEN_OVERRIDE_NO_UPDATE = 424,
-        TOKEN_OVERRIDE_CLIENT_UPDATE = 425,
-        TOKEN_REPLACE_CLIENT_NAME = 426,
-        TOKEN_GENERATED_PREFIX = 427,
-        TOKEN_UDP = 428,
-        TOKEN_TCP = 429,
-        TOKEN_JSON = 430,
-        TOKEN_WHEN_PRESENT = 431,
-        TOKEN_NEVER = 432,
-        TOKEN_ALWAYS = 433,
-        TOKEN_WHEN_NOT_PRESENT = 434,
-        TOKEN_HOSTNAME_CHAR_SET = 435,
-        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 436,
-        TOKEN_EARLY_GLOBAL_RESERVATIONS_LOOKUP = 437,
-        TOKEN_IP_RESERVATIONS_UNIQUE = 438,
-        TOKEN_RESERVATIONS_LOOKUP_FIRST = 439,
-        TOKEN_LOGGERS = 440,
-        TOKEN_OUTPUT_OPTIONS = 441,
-        TOKEN_OUTPUT = 442,
-        TOKEN_DEBUGLEVEL = 443,
-        TOKEN_SEVERITY = 444,
-        TOKEN_FLUSH = 445,
-        TOKEN_MAXSIZE = 446,
-        TOKEN_MAXVER = 447,
-        TOKEN_PATTERN = 448,
-        TOKEN_COMPATIBILITY = 449,
-        TOKEN_LENIENT_OPTION_PARSING = 450,
-        TOKEN_TOPLEVEL_JSON = 451,
-        TOKEN_TOPLEVEL_DHCP6 = 452,
-        TOKEN_SUB_DHCP6 = 453,
-        TOKEN_SUB_INTERFACES6 = 454,
-        TOKEN_SUB_SUBNET6 = 455,
-        TOKEN_SUB_POOL6 = 456,
-        TOKEN_SUB_PD_POOL = 457,
-        TOKEN_SUB_RESERVATION = 458,
-        TOKEN_SUB_OPTION_DEFS = 459,
-        TOKEN_SUB_OPTION_DEF = 460,
-        TOKEN_SUB_OPTION_DATA = 461,
-        TOKEN_SUB_HOOKS_LIBRARY = 462,
-        TOKEN_SUB_DHCP_DDNS = 463,
-        TOKEN_SUB_CONFIG_CONTROL = 464,
-        TOKEN_STRING = 465,
-        TOKEN_INTEGER = 466,
-        TOKEN_FLOAT = 467,
-        TOKEN_BOOLEAN = 468
+        TOKEN_PARSER6_EMPTY = -2,
+    TOKEN_END = 0,                 // "end of file"
+    TOKEN_PARSER6_error = 256,     // error
+    TOKEN_PARSER6_UNDEF = 257,     // "invalid token"
+    TOKEN_COMMA = 258,             // ","
+    TOKEN_COLON = 259,             // ":"
+    TOKEN_LSQUARE_BRACKET = 260,   // "["
+    TOKEN_RSQUARE_BRACKET = 261,   // "]"
+    TOKEN_LCURLY_BRACKET = 262,    // "{"
+    TOKEN_RCURLY_BRACKET = 263,    // "}"
+    TOKEN_NULL_TYPE = 264,         // "null"
+    TOKEN_DHCP6 = 265,             // "Dhcp6"
+    TOKEN_DATA_DIRECTORY = 266,    // "data-directory"
+    TOKEN_CONFIG_CONTROL = 267,    // "config-control"
+    TOKEN_CONFIG_DATABASES = 268,  // "config-databases"
+    TOKEN_CONFIG_FETCH_WAIT_TIME = 269, // "config-fetch-wait-time"
+    TOKEN_INTERFACES_CONFIG = 270, // "interfaces-config"
+    TOKEN_INTERFACES = 271,        // "interfaces"
+    TOKEN_RE_DETECT = 272,         // "re-detect"
+    TOKEN_SERVICE_SOCKETS_REQUIRE_ALL = 273, // "service-sockets-require-all"
+    TOKEN_SERVICE_SOCKETS_RETRY_WAIT_TIME = 274, // "service-sockets-retry-wait-time"
+    TOKEN_SERVICE_SOCKETS_MAX_RETRIES = 275, // "service-sockets-max-retries"
+    TOKEN_LEASE_DATABASE = 276,    // "lease-database"
+    TOKEN_HOSTS_DATABASE = 277,    // "hosts-database"
+    TOKEN_HOSTS_DATABASES = 278,   // "hosts-databases"
+    TOKEN_TYPE = 279,              // "type"
+    TOKEN_MEMFILE = 280,           // "memfile"
+    TOKEN_MYSQL = 281,             // "mysql"
+    TOKEN_POSTGRESQL = 282,        // "postgresql"
+    TOKEN_USER = 283,              // "user"
+    TOKEN_PASSWORD = 284,          // "password"
+    TOKEN_HOST = 285,              // "host"
+    TOKEN_PORT = 286,              // "port"
+    TOKEN_PERSIST = 287,           // "persist"
+    TOKEN_LFC_INTERVAL = 288,      // "lfc-interval"
+    TOKEN_READONLY = 289,          // "readonly"
+    TOKEN_CONNECT_TIMEOUT = 290,   // "connect-timeout"
+    TOKEN_MAX_RECONNECT_TRIES = 291, // "max-reconnect-tries"
+    TOKEN_RECONNECT_WAIT_TIME = 292, // "reconnect-wait-time"
+    TOKEN_ON_FAIL = 293,           // "on-fail"
+    TOKEN_STOP_RETRY_EXIT = 294,   // "stop-retry-exit"
+    TOKEN_SERVE_RETRY_EXIT = 295,  // "serve-retry-exit"
+    TOKEN_SERVE_RETRY_CONTINUE = 296, // "serve-retry-continue"
+    TOKEN_MAX_ROW_ERRORS = 297,    // "max-row-errors"
+    TOKEN_TRUST_ANCHOR = 298,      // "trust-anchor"
+    TOKEN_CERT_FILE = 299,         // "cert-file"
+    TOKEN_KEY_FILE = 300,          // "key-file"
+    TOKEN_CIPHER_LIST = 301,       // "cipher-list"
+    TOKEN_PREFERRED_LIFETIME = 302, // "preferred-lifetime"
+    TOKEN_MIN_PREFERRED_LIFETIME = 303, // "min-preferred-lifetime"
+    TOKEN_MAX_PREFERRED_LIFETIME = 304, // "max-preferred-lifetime"
+    TOKEN_VALID_LIFETIME = 305,    // "valid-lifetime"
+    TOKEN_MIN_VALID_LIFETIME = 306, // "min-valid-lifetime"
+    TOKEN_MAX_VALID_LIFETIME = 307, // "max-valid-lifetime"
+    TOKEN_RENEW_TIMER = 308,       // "renew-timer"
+    TOKEN_REBIND_TIMER = 309,      // "rebind-timer"
+    TOKEN_CALCULATE_TEE_TIMES = 310, // "calculate-tee-times"
+    TOKEN_T1_PERCENT = 311,        // "t1-percent"
+    TOKEN_T2_PERCENT = 312,        // "t2-percent"
+    TOKEN_CACHE_THRESHOLD = 313,   // "cache-threshold"
+    TOKEN_CACHE_MAX_AGE = 314,     // "cache-max-age"
+    TOKEN_DECLINE_PROBATION_PERIOD = 315, // "decline-probation-period"
+    TOKEN_SERVER_TAG = 316,        // "server-tag"
+    TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT = 317, // "statistic-default-sample-count"
+    TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE = 318, // "statistic-default-sample-age"
+    TOKEN_DDNS_SEND_UPDATES = 319, // "ddns-send-updates"
+    TOKEN_DDNS_OVERRIDE_NO_UPDATE = 320, // "ddns-override-no-update"
+    TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE = 321, // "ddns-override-client-update"
+    TOKEN_DDNS_REPLACE_CLIENT_NAME = 322, // "ddns-replace-client-name"
+    TOKEN_DDNS_GENERATED_PREFIX = 323, // "ddns-generated-prefix"
+    TOKEN_DDNS_QUALIFYING_SUFFIX = 324, // "ddns-qualifying-suffix"
+    TOKEN_DDNS_UPDATE_ON_RENEW = 325, // "ddns-update-on-renew"
+    TOKEN_DDNS_USE_CONFLICT_RESOLUTION = 326, // "ddns-use-conflict-resolution"
+    TOKEN_STORE_EXTENDED_INFO = 327, // "store-extended-info"
+    TOKEN_SUBNET6 = 328,           // "subnet6"
+    TOKEN_OPTION_DEF = 329,        // "option-def"
+    TOKEN_OPTION_DATA = 330,       // "option-data"
+    TOKEN_NAME = 331,              // "name"
+    TOKEN_DATA = 332,              // "data"
+    TOKEN_CODE = 333,              // "code"
+    TOKEN_SPACE = 334,             // "space"
+    TOKEN_CSV_FORMAT = 335,        // "csv-format"
+    TOKEN_ALWAYS_SEND = 336,       // "always-send"
+    TOKEN_RECORD_TYPES = 337,      // "record-types"
+    TOKEN_ENCAPSULATE = 338,       // "encapsulate"
+    TOKEN_ARRAY = 339,             // "array"
+    TOKEN_PARKED_PACKET_LIMIT = 340, // "parked-packet-limit"
+    TOKEN_SHARED_NETWORKS = 341,   // "shared-networks"
+    TOKEN_POOLS = 342,             // "pools"
+    TOKEN_POOL = 343,              // "pool"
+    TOKEN_PD_POOLS = 344,          // "pd-pools"
+    TOKEN_PREFIX = 345,            // "prefix"
+    TOKEN_PREFIX_LEN = 346,        // "prefix-len"
+    TOKEN_EXCLUDED_PREFIX = 347,   // "excluded-prefix"
+    TOKEN_EXCLUDED_PREFIX_LEN = 348, // "excluded-prefix-len"
+    TOKEN_DELEGATED_LEN = 349,     // "delegated-len"
+    TOKEN_USER_CONTEXT = 350,      // "user-context"
+    TOKEN_COMMENT = 351,           // "comment"
+    TOKEN_SUBNET = 352,            // "subnet"
+    TOKEN_INTERFACE = 353,         // "interface"
+    TOKEN_INTERFACE_ID = 354,      // "interface-id"
+    TOKEN_ID = 355,                // "id"
+    TOKEN_RAPID_COMMIT = 356,      // "rapid-commit"
+    TOKEN_RESERVATION_MODE = 357,  // "reservation-mode"
+    TOKEN_DISABLED = 358,          // "disabled"
+    TOKEN_OUT_OF_POOL = 359,       // "out-of-pool"
+    TOKEN_GLOBAL = 360,            // "global"
+    TOKEN_ALL = 361,               // "all"
+    TOKEN_RESERVATIONS_GLOBAL = 362, // "reservations-global"
+    TOKEN_RESERVATIONS_IN_SUBNET = 363, // "reservations-in-subnet"
+    TOKEN_RESERVATIONS_OUT_OF_POOL = 364, // "reservations-out-of-pool"
+    TOKEN_MAC_SOURCES = 365,       // "mac-sources"
+    TOKEN_RELAY_SUPPLIED_OPTIONS = 366, // "relay-supplied-options"
+    TOKEN_HOST_RESERVATION_IDENTIFIERS = 367, // "host-reservation-identifiers"
+    TOKEN_SANITY_CHECKS = 368,     // "sanity-checks"
+    TOKEN_LEASE_CHECKS = 369,      // "lease-checks"
+    TOKEN_CLIENT_CLASSES = 370,    // "client-classes"
+    TOKEN_REQUIRE_CLIENT_CLASSES = 371, // "require-client-classes"
+    TOKEN_TEST = 372,              // "test"
+    TOKEN_ONLY_IF_REQUIRED = 373,  // "only-if-required"
+    TOKEN_CLIENT_CLASS = 374,      // "client-class"
+    TOKEN_RESERVATIONS = 375,      // "reservations"
+    TOKEN_IP_ADDRESSES = 376,      // "ip-addresses"
+    TOKEN_PREFIXES = 377,          // "prefixes"
+    TOKEN_DUID = 378,              // "duid"
+    TOKEN_HW_ADDRESS = 379,        // "hw-address"
+    TOKEN_HOSTNAME = 380,          // "hostname"
+    TOKEN_FLEX_ID = 381,           // "flex-id"
+    TOKEN_RELAY = 382,             // "relay"
+    TOKEN_IP_ADDRESS = 383,        // "ip-address"
+    TOKEN_HOOKS_LIBRARIES = 384,   // "hooks-libraries"
+    TOKEN_LIBRARY = 385,           // "library"
+    TOKEN_PARAMETERS = 386,        // "parameters"
+    TOKEN_EXPIRED_LEASES_PROCESSING = 387, // "expired-leases-processing"
+    TOKEN_RECLAIM_TIMER_WAIT_TIME = 388, // "reclaim-timer-wait-time"
+    TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 389, // "flush-reclaimed-timer-wait-time"
+    TOKEN_HOLD_RECLAIMED_TIME = 390, // "hold-reclaimed-time"
+    TOKEN_MAX_RECLAIM_LEASES = 391, // "max-reclaim-leases"
+    TOKEN_MAX_RECLAIM_TIME = 392,  // "max-reclaim-time"
+    TOKEN_UNWARNED_RECLAIM_CYCLES = 393, // "unwarned-reclaim-cycles"
+    TOKEN_SERVER_ID = 394,         // "server-id"
+    TOKEN_LLT = 395,               // "LLT"
+    TOKEN_EN = 396,                // "EN"
+    TOKEN_LL = 397,                // "LL"
+    TOKEN_IDENTIFIER = 398,        // "identifier"
+    TOKEN_HTYPE = 399,             // "htype"
+    TOKEN_TIME = 400,              // "time"
+    TOKEN_ENTERPRISE_ID = 401,     // "enterprise-id"
+    TOKEN_DHCP4O6_PORT = 402,      // "dhcp4o6-port"
+    TOKEN_DHCP_MULTI_THREADING = 403, // "multi-threading"
+    TOKEN_ENABLE_MULTI_THREADING = 404, // "enable-multi-threading"
+    TOKEN_THREAD_POOL_SIZE = 405,  // "thread-pool-size"
+    TOKEN_PACKET_QUEUE_SIZE = 406, // "packet-queue-size"
+    TOKEN_CONTROL_SOCKET = 407,    // "control-socket"
+    TOKEN_SOCKET_TYPE = 408,       // "socket-type"
+    TOKEN_SOCKET_NAME = 409,       // "socket-name"
+    TOKEN_DHCP_QUEUE_CONTROL = 410, // "dhcp-queue-control"
+    TOKEN_ENABLE_QUEUE = 411,      // "enable-queue"
+    TOKEN_QUEUE_TYPE = 412,        // "queue-type"
+    TOKEN_CAPACITY = 413,          // "capacity"
+    TOKEN_DHCP_DDNS = 414,         // "dhcp-ddns"
+    TOKEN_ENABLE_UPDATES = 415,    // "enable-updates"
+    TOKEN_QUALIFYING_SUFFIX = 416, // "qualifying-suffix"
+    TOKEN_SERVER_IP = 417,         // "server-ip"
+    TOKEN_SERVER_PORT = 418,       // "server-port"
+    TOKEN_SENDER_IP = 419,         // "sender-ip"
+    TOKEN_SENDER_PORT = 420,       // "sender-port"
+    TOKEN_MAX_QUEUE_SIZE = 421,    // "max-queue-size"
+    TOKEN_NCR_PROTOCOL = 422,      // "ncr-protocol"
+    TOKEN_NCR_FORMAT = 423,        // "ncr-format"
+    TOKEN_OVERRIDE_NO_UPDATE = 424, // "override-no-update"
+    TOKEN_OVERRIDE_CLIENT_UPDATE = 425, // "override-client-update"
+    TOKEN_REPLACE_CLIENT_NAME = 426, // "replace-client-name"
+    TOKEN_GENERATED_PREFIX = 427,  // "generated-prefix"
+    TOKEN_UDP = 428,               // "UDP"
+    TOKEN_TCP = 429,               // "TCP"
+    TOKEN_JSON = 430,              // "JSON"
+    TOKEN_WHEN_PRESENT = 431,      // "when-present"
+    TOKEN_NEVER = 432,             // "never"
+    TOKEN_ALWAYS = 433,            // "always"
+    TOKEN_WHEN_NOT_PRESENT = 434,  // "when-not-present"
+    TOKEN_HOSTNAME_CHAR_SET = 435, // "hostname-char-set"
+    TOKEN_HOSTNAME_CHAR_REPLACEMENT = 436, // "hostname-char-replacement"
+    TOKEN_EARLY_GLOBAL_RESERVATIONS_LOOKUP = 437, // "early-global-reservations-lookup"
+    TOKEN_IP_RESERVATIONS_UNIQUE = 438, // "ip-reservations-unique"
+    TOKEN_RESERVATIONS_LOOKUP_FIRST = 439, // "reservations-lookup-first"
+    TOKEN_LOGGERS = 440,           // "loggers"
+    TOKEN_OUTPUT_OPTIONS = 441,    // "output_options"
+    TOKEN_OUTPUT = 442,            // "output"
+    TOKEN_DEBUGLEVEL = 443,        // "debuglevel"
+    TOKEN_SEVERITY = 444,          // "severity"
+    TOKEN_FLUSH = 445,             // "flush"
+    TOKEN_MAXSIZE = 446,           // "maxsize"
+    TOKEN_MAXVER = 447,            // "maxver"
+    TOKEN_PATTERN = 448,           // "pattern"
+    TOKEN_COMPATIBILITY = 449,     // "compatibility"
+    TOKEN_LENIENT_OPTION_PARSING = 450, // "lenient-option-parsing"
+    TOKEN_TOPLEVEL_JSON = 451,     // TOPLEVEL_JSON
+    TOKEN_TOPLEVEL_DHCP6 = 452,    // TOPLEVEL_DHCP6
+    TOKEN_SUB_DHCP6 = 453,         // SUB_DHCP6
+    TOKEN_SUB_INTERFACES6 = 454,   // SUB_INTERFACES6
+    TOKEN_SUB_SUBNET6 = 455,       // SUB_SUBNET6
+    TOKEN_SUB_POOL6 = 456,         // SUB_POOL6
+    TOKEN_SUB_PD_POOL = 457,       // SUB_PD_POOL
+    TOKEN_SUB_RESERVATION = 458,   // SUB_RESERVATION
+    TOKEN_SUB_OPTION_DEFS = 459,   // SUB_OPTION_DEFS
+    TOKEN_SUB_OPTION_DEF = 460,    // SUB_OPTION_DEF
+    TOKEN_SUB_OPTION_DATA = 461,   // SUB_OPTION_DATA
+    TOKEN_SUB_HOOKS_LIBRARY = 462, // SUB_HOOKS_LIBRARY
+    TOKEN_SUB_DHCP_DDNS = 463,     // SUB_DHCP_DDNS
+    TOKEN_SUB_CONFIG_CONTROL = 464, // SUB_CONFIG_CONTROL
+    TOKEN_STRING = 465,            // "constant string"
+    TOKEN_INTEGER = 466,           // "integer"
+    TOKEN_FLOAT = 467,             // "floating point"
+    TOKEN_BOOLEAN = 468            // "boolean"
+      };
+      /// Backward compatibility alias (Bison 3.6).
+      typedef token_kind_type yytokentype;
+    };
+
+    /// Token kind, as returned by yylex.
+    typedef token::token_kind_type token_kind_type;
+
+    /// Backward compatibility alias (Bison 3.6).
+    typedef token_kind_type token_type;
+
+    /// Symbol kinds.
+    struct symbol_kind
+    {
+      enum symbol_kind_type
+      {
+        YYNTOKENS = 214, ///< Number of tokens.
+        S_YYEMPTY = -2,
+        S_YYEOF = 0,                             // "end of file"
+        S_YYerror = 1,                           // error
+        S_YYUNDEF = 2,                           // "invalid token"
+        S_COMMA = 3,                             // ","
+        S_COLON = 4,                             // ":"
+        S_LSQUARE_BRACKET = 5,                   // "["
+        S_RSQUARE_BRACKET = 6,                   // "]"
+        S_LCURLY_BRACKET = 7,                    // "{"
+        S_RCURLY_BRACKET = 8,                    // "}"
+        S_NULL_TYPE = 9,                         // "null"
+        S_DHCP6 = 10,                            // "Dhcp6"
+        S_DATA_DIRECTORY = 11,                   // "data-directory"
+        S_CONFIG_CONTROL = 12,                   // "config-control"
+        S_CONFIG_DATABASES = 13,                 // "config-databases"
+        S_CONFIG_FETCH_WAIT_TIME = 14,           // "config-fetch-wait-time"
+        S_INTERFACES_CONFIG = 15,                // "interfaces-config"
+        S_INTERFACES = 16,                       // "interfaces"
+        S_RE_DETECT = 17,                        // "re-detect"
+        S_SERVICE_SOCKETS_REQUIRE_ALL = 18,      // "service-sockets-require-all"
+        S_SERVICE_SOCKETS_RETRY_WAIT_TIME = 19,  // "service-sockets-retry-wait-time"
+        S_SERVICE_SOCKETS_MAX_RETRIES = 20,      // "service-sockets-max-retries"
+        S_LEASE_DATABASE = 21,                   // "lease-database"
+        S_HOSTS_DATABASE = 22,                   // "hosts-database"
+        S_HOSTS_DATABASES = 23,                  // "hosts-databases"
+        S_TYPE = 24,                             // "type"
+        S_MEMFILE = 25,                          // "memfile"
+        S_MYSQL = 26,                            // "mysql"
+        S_POSTGRESQL = 27,                       // "postgresql"
+        S_USER = 28,                             // "user"
+        S_PASSWORD = 29,                         // "password"
+        S_HOST = 30,                             // "host"
+        S_PORT = 31,                             // "port"
+        S_PERSIST = 32,                          // "persist"
+        S_LFC_INTERVAL = 33,                     // "lfc-interval"
+        S_READONLY = 34,                         // "readonly"
+        S_CONNECT_TIMEOUT = 35,                  // "connect-timeout"
+        S_MAX_RECONNECT_TRIES = 36,              // "max-reconnect-tries"
+        S_RECONNECT_WAIT_TIME = 37,              // "reconnect-wait-time"
+        S_ON_FAIL = 38,                          // "on-fail"
+        S_STOP_RETRY_EXIT = 39,                  // "stop-retry-exit"
+        S_SERVE_RETRY_EXIT = 40,                 // "serve-retry-exit"
+        S_SERVE_RETRY_CONTINUE = 41,             // "serve-retry-continue"
+        S_MAX_ROW_ERRORS = 42,                   // "max-row-errors"
+        S_TRUST_ANCHOR = 43,                     // "trust-anchor"
+        S_CERT_FILE = 44,                        // "cert-file"
+        S_KEY_FILE = 45,                         // "key-file"
+        S_CIPHER_LIST = 46,                      // "cipher-list"
+        S_PREFERRED_LIFETIME = 47,               // "preferred-lifetime"
+        S_MIN_PREFERRED_LIFETIME = 48,           // "min-preferred-lifetime"
+        S_MAX_PREFERRED_LIFETIME = 49,           // "max-preferred-lifetime"
+        S_VALID_LIFETIME = 50,                   // "valid-lifetime"
+        S_MIN_VALID_LIFETIME = 51,               // "min-valid-lifetime"
+        S_MAX_VALID_LIFETIME = 52,               // "max-valid-lifetime"
+        S_RENEW_TIMER = 53,                      // "renew-timer"
+        S_REBIND_TIMER = 54,                     // "rebind-timer"
+        S_CALCULATE_TEE_TIMES = 55,              // "calculate-tee-times"
+        S_T1_PERCENT = 56,                       // "t1-percent"
+        S_T2_PERCENT = 57,                       // "t2-percent"
+        S_CACHE_THRESHOLD = 58,                  // "cache-threshold"
+        S_CACHE_MAX_AGE = 59,                    // "cache-max-age"
+        S_DECLINE_PROBATION_PERIOD = 60,         // "decline-probation-period"
+        S_SERVER_TAG = 61,                       // "server-tag"
+        S_STATISTIC_DEFAULT_SAMPLE_COUNT = 62,   // "statistic-default-sample-count"
+        S_STATISTIC_DEFAULT_SAMPLE_AGE = 63,     // "statistic-default-sample-age"
+        S_DDNS_SEND_UPDATES = 64,                // "ddns-send-updates"
+        S_DDNS_OVERRIDE_NO_UPDATE = 65,          // "ddns-override-no-update"
+        S_DDNS_OVERRIDE_CLIENT_UPDATE = 66,      // "ddns-override-client-update"
+        S_DDNS_REPLACE_CLIENT_NAME = 67,         // "ddns-replace-client-name"
+        S_DDNS_GENERATED_PREFIX = 68,            // "ddns-generated-prefix"
+        S_DDNS_QUALIFYING_SUFFIX = 69,           // "ddns-qualifying-suffix"
+        S_DDNS_UPDATE_ON_RENEW = 70,             // "ddns-update-on-renew"
+        S_DDNS_USE_CONFLICT_RESOLUTION = 71,     // "ddns-use-conflict-resolution"
+        S_STORE_EXTENDED_INFO = 72,              // "store-extended-info"
+        S_SUBNET6 = 73,                          // "subnet6"
+        S_OPTION_DEF = 74,                       // "option-def"
+        S_OPTION_DATA = 75,                      // "option-data"
+        S_NAME = 76,                             // "name"
+        S_DATA = 77,                             // "data"
+        S_CODE = 78,                             // "code"
+        S_SPACE = 79,                            // "space"
+        S_CSV_FORMAT = 80,                       // "csv-format"
+        S_ALWAYS_SEND = 81,                      // "always-send"
+        S_RECORD_TYPES = 82,                     // "record-types"
+        S_ENCAPSULATE = 83,                      // "encapsulate"
+        S_ARRAY = 84,                            // "array"
+        S_PARKED_PACKET_LIMIT = 85,              // "parked-packet-limit"
+        S_SHARED_NETWORKS = 86,                  // "shared-networks"
+        S_POOLS = 87,                            // "pools"
+        S_POOL = 88,                             // "pool"
+        S_PD_POOLS = 89,                         // "pd-pools"
+        S_PREFIX = 90,                           // "prefix"
+        S_PREFIX_LEN = 91,                       // "prefix-len"
+        S_EXCLUDED_PREFIX = 92,                  // "excluded-prefix"
+        S_EXCLUDED_PREFIX_LEN = 93,              // "excluded-prefix-len"
+        S_DELEGATED_LEN = 94,                    // "delegated-len"
+        S_USER_CONTEXT = 95,                     // "user-context"
+        S_COMMENT = 96,                          // "comment"
+        S_SUBNET = 97,                           // "subnet"
+        S_INTERFACE = 98,                        // "interface"
+        S_INTERFACE_ID = 99,                     // "interface-id"
+        S_ID = 100,                              // "id"
+        S_RAPID_COMMIT = 101,                    // "rapid-commit"
+        S_RESERVATION_MODE = 102,                // "reservation-mode"
+        S_DISABLED = 103,                        // "disabled"
+        S_OUT_OF_POOL = 104,                     // "out-of-pool"
+        S_GLOBAL = 105,                          // "global"
+        S_ALL = 106,                             // "all"
+        S_RESERVATIONS_GLOBAL = 107,             // "reservations-global"
+        S_RESERVATIONS_IN_SUBNET = 108,          // "reservations-in-subnet"
+        S_RESERVATIONS_OUT_OF_POOL = 109,        // "reservations-out-of-pool"
+        S_MAC_SOURCES = 110,                     // "mac-sources"
+        S_RELAY_SUPPLIED_OPTIONS = 111,          // "relay-supplied-options"
+        S_HOST_RESERVATION_IDENTIFIERS = 112,    // "host-reservation-identifiers"
+        S_SANITY_CHECKS = 113,                   // "sanity-checks"
+        S_LEASE_CHECKS = 114,                    // "lease-checks"
+        S_CLIENT_CLASSES = 115,                  // "client-classes"
+        S_REQUIRE_CLIENT_CLASSES = 116,          // "require-client-classes"
+        S_TEST = 117,                            // "test"
+        S_ONLY_IF_REQUIRED = 118,                // "only-if-required"
+        S_CLIENT_CLASS = 119,                    // "client-class"
+        S_RESERVATIONS = 120,                    // "reservations"
+        S_IP_ADDRESSES = 121,                    // "ip-addresses"
+        S_PREFIXES = 122,                        // "prefixes"
+        S_DUID = 123,                            // "duid"
+        S_HW_ADDRESS = 124,                      // "hw-address"
+        S_HOSTNAME = 125,                        // "hostname"
+        S_FLEX_ID = 126,                         // "flex-id"
+        S_RELAY = 127,                           // "relay"
+        S_IP_ADDRESS = 128,                      // "ip-address"
+        S_HOOKS_LIBRARIES = 129,                 // "hooks-libraries"
+        S_LIBRARY = 130,                         // "library"
+        S_PARAMETERS = 131,                      // "parameters"
+        S_EXPIRED_LEASES_PROCESSING = 132,       // "expired-leases-processing"
+        S_RECLAIM_TIMER_WAIT_TIME = 133,         // "reclaim-timer-wait-time"
+        S_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 134, // "flush-reclaimed-timer-wait-time"
+        S_HOLD_RECLAIMED_TIME = 135,             // "hold-reclaimed-time"
+        S_MAX_RECLAIM_LEASES = 136,              // "max-reclaim-leases"
+        S_MAX_RECLAIM_TIME = 137,                // "max-reclaim-time"
+        S_UNWARNED_RECLAIM_CYCLES = 138,         // "unwarned-reclaim-cycles"
+        S_SERVER_ID = 139,                       // "server-id"
+        S_LLT = 140,                             // "LLT"
+        S_EN = 141,                              // "EN"
+        S_LL = 142,                              // "LL"
+        S_IDENTIFIER = 143,                      // "identifier"
+        S_HTYPE = 144,                           // "htype"
+        S_TIME = 145,                            // "time"
+        S_ENTERPRISE_ID = 146,                   // "enterprise-id"
+        S_DHCP4O6_PORT = 147,                    // "dhcp4o6-port"
+        S_DHCP_MULTI_THREADING = 148,            // "multi-threading"
+        S_ENABLE_MULTI_THREADING = 149,          // "enable-multi-threading"
+        S_THREAD_POOL_SIZE = 150,                // "thread-pool-size"
+        S_PACKET_QUEUE_SIZE = 151,               // "packet-queue-size"
+        S_CONTROL_SOCKET = 152,                  // "control-socket"
+        S_SOCKET_TYPE = 153,                     // "socket-type"
+        S_SOCKET_NAME = 154,                     // "socket-name"
+        S_DHCP_QUEUE_CONTROL = 155,              // "dhcp-queue-control"
+        S_ENABLE_QUEUE = 156,                    // "enable-queue"
+        S_QUEUE_TYPE = 157,                      // "queue-type"
+        S_CAPACITY = 158,                        // "capacity"
+        S_DHCP_DDNS = 159,                       // "dhcp-ddns"
+        S_ENABLE_UPDATES = 160,                  // "enable-updates"
+        S_QUALIFYING_SUFFIX = 161,               // "qualifying-suffix"
+        S_SERVER_IP = 162,                       // "server-ip"
+        S_SERVER_PORT = 163,                     // "server-port"
+        S_SENDER_IP = 164,                       // "sender-ip"
+        S_SENDER_PORT = 165,                     // "sender-port"
+        S_MAX_QUEUE_SIZE = 166,                  // "max-queue-size"
+        S_NCR_PROTOCOL = 167,                    // "ncr-protocol"
+        S_NCR_FORMAT = 168,                      // "ncr-format"
+        S_OVERRIDE_NO_UPDATE = 169,              // "override-no-update"
+        S_OVERRIDE_CLIENT_UPDATE = 170,          // "override-client-update"
+        S_REPLACE_CLIENT_NAME = 171,             // "replace-client-name"
+        S_GENERATED_PREFIX = 172,                // "generated-prefix"
+        S_UDP = 173,                             // "UDP"
+        S_TCP = 174,                             // "TCP"
+        S_JSON = 175,                            // "JSON"
+        S_WHEN_PRESENT = 176,                    // "when-present"
+        S_NEVER = 177,                           // "never"
+        S_ALWAYS = 178,                          // "always"
+        S_WHEN_NOT_PRESENT = 179,                // "when-not-present"
+        S_HOSTNAME_CHAR_SET = 180,               // "hostname-char-set"
+        S_HOSTNAME_CHAR_REPLACEMENT = 181,       // "hostname-char-replacement"
+        S_EARLY_GLOBAL_RESERVATIONS_LOOKUP = 182, // "early-global-reservations-lookup"
+        S_IP_RESERVATIONS_UNIQUE = 183,          // "ip-reservations-unique"
+        S_RESERVATIONS_LOOKUP_FIRST = 184,       // "reservations-lookup-first"
+        S_LOGGERS = 185,                         // "loggers"
+        S_OUTPUT_OPTIONS = 186,                  // "output_options"
+        S_OUTPUT = 187,                          // "output"
+        S_DEBUGLEVEL = 188,                      // "debuglevel"
+        S_SEVERITY = 189,                        // "severity"
+        S_FLUSH = 190,                           // "flush"
+        S_MAXSIZE = 191,                         // "maxsize"
+        S_MAXVER = 192,                          // "maxver"
+        S_PATTERN = 193,                         // "pattern"
+        S_COMPATIBILITY = 194,                   // "compatibility"
+        S_LENIENT_OPTION_PARSING = 195,          // "lenient-option-parsing"
+        S_TOPLEVEL_JSON = 196,                   // TOPLEVEL_JSON
+        S_TOPLEVEL_DHCP6 = 197,                  // TOPLEVEL_DHCP6
+        S_SUB_DHCP6 = 198,                       // SUB_DHCP6
+        S_SUB_INTERFACES6 = 199,                 // SUB_INTERFACES6
+        S_SUB_SUBNET6 = 200,                     // SUB_SUBNET6
+        S_SUB_POOL6 = 201,                       // SUB_POOL6
+        S_SUB_PD_POOL = 202,                     // SUB_PD_POOL
+        S_SUB_RESERVATION = 203,                 // SUB_RESERVATION
+        S_SUB_OPTION_DEFS = 204,                 // SUB_OPTION_DEFS
+        S_SUB_OPTION_DEF = 205,                  // SUB_OPTION_DEF
+        S_SUB_OPTION_DATA = 206,                 // SUB_OPTION_DATA
+        S_SUB_HOOKS_LIBRARY = 207,               // SUB_HOOKS_LIBRARY
+        S_SUB_DHCP_DDNS = 208,                   // SUB_DHCP_DDNS
+        S_SUB_CONFIG_CONTROL = 209,              // SUB_CONFIG_CONTROL
+        S_STRING = 210,                          // "constant string"
+        S_INTEGER = 211,                         // "integer"
+        S_FLOAT = 212,                           // "floating point"
+        S_BOOLEAN = 213,                         // "boolean"
+        S_YYACCEPT = 214,                        // $accept
+        S_start = 215,                           // start
+        S_216_1 = 216,                           // $@1
+        S_217_2 = 217,                           // $@2
+        S_218_3 = 218,                           // $@3
+        S_219_4 = 219,                           // $@4
+        S_220_5 = 220,                           // $@5
+        S_221_6 = 221,                           // $@6
+        S_222_7 = 222,                           // $@7
+        S_223_8 = 223,                           // $@8
+        S_224_9 = 224,                           // $@9
+        S_225_10 = 225,                          // $@10
+        S_226_11 = 226,                          // $@11
+        S_227_12 = 227,                          // $@12
+        S_228_13 = 228,                          // $@13
+        S_229_14 = 229,                          // $@14
+        S_value = 230,                           // value
+        S_sub_json = 231,                        // sub_json
+        S_map2 = 232,                            // map2
+        S_233_15 = 233,                          // $@15
+        S_map_value = 234,                       // map_value
+        S_map_content = 235,                     // map_content
+        S_not_empty_map = 236,                   // not_empty_map
+        S_list_generic = 237,                    // list_generic
+        S_238_16 = 238,                          // $@16
+        S_list_content = 239,                    // list_content
+        S_not_empty_list = 240,                  // not_empty_list
+        S_list_strings = 241,                    // list_strings
+        S_242_17 = 242,                          // $@17
+        S_list_strings_content = 243,            // list_strings_content
+        S_not_empty_list_strings = 244,          // not_empty_list_strings
+        S_unknown_map_entry = 245,               // unknown_map_entry
+        S_syntax_map = 246,                      // syntax_map
+        S_247_18 = 247,                          // $@18
+        S_global_object = 248,                   // global_object
+        S_249_19 = 249,                          // $@19
+        S_global_object_comma = 250,             // global_object_comma
+        S_sub_dhcp6 = 251,                       // sub_dhcp6
+        S_252_20 = 252,                          // $@20
+        S_global_params = 253,                   // global_params
+        S_global_param = 254,                    // global_param
+        S_data_directory = 255,                  // data_directory
+        S_256_21 = 256,                          // $@21
+        S_preferred_lifetime = 257,              // preferred_lifetime
+        S_min_preferred_lifetime = 258,          // min_preferred_lifetime
+        S_max_preferred_lifetime = 259,          // max_preferred_lifetime
+        S_valid_lifetime = 260,                  // valid_lifetime
+        S_min_valid_lifetime = 261,              // min_valid_lifetime
+        S_max_valid_lifetime = 262,              // max_valid_lifetime
+        S_renew_timer = 263,                     // renew_timer
+        S_rebind_timer = 264,                    // rebind_timer
+        S_calculate_tee_times = 265,             // calculate_tee_times
+        S_t1_percent = 266,                      // t1_percent
+        S_t2_percent = 267,                      // t2_percent
+        S_cache_threshold = 268,                 // cache_threshold
+        S_cache_max_age = 269,                   // cache_max_age
+        S_decline_probation_period = 270,        // decline_probation_period
+        S_ddns_send_updates = 271,               // ddns_send_updates
+        S_ddns_override_no_update = 272,         // ddns_override_no_update
+        S_ddns_override_client_update = 273,     // ddns_override_client_update
+        S_ddns_replace_client_name = 274,        // ddns_replace_client_name
+        S_275_22 = 275,                          // $@22
+        S_ddns_replace_client_name_value = 276,  // ddns_replace_client_name_value
+        S_ddns_generated_prefix = 277,           // ddns_generated_prefix
+        S_278_23 = 278,                          // $@23
+        S_ddns_qualifying_suffix = 279,          // ddns_qualifying_suffix
+        S_280_24 = 280,                          // $@24
+        S_ddns_update_on_renew = 281,            // ddns_update_on_renew
+        S_ddns_use_conflict_resolution = 282,    // ddns_use_conflict_resolution
+        S_hostname_char_set = 283,               // hostname_char_set
+        S_284_25 = 284,                          // $@25
+        S_hostname_char_replacement = 285,       // hostname_char_replacement
+        S_286_26 = 286,                          // $@26
+        S_store_extended_info = 287,             // store_extended_info
+        S_statistic_default_sample_count = 288,  // statistic_default_sample_count
+        S_statistic_default_sample_age = 289,    // statistic_default_sample_age
+        S_server_tag = 290,                      // server_tag
+        S_291_27 = 291,                          // $@27
+        S_parked_packet_limit = 292,             // parked_packet_limit
+        S_early_global_reservations_lookup = 293, // early_global_reservations_lookup
+        S_ip_reservations_unique = 294,          // ip_reservations_unique
+        S_reservations_lookup_first = 295,       // reservations_lookup_first
+        S_interfaces_config = 296,               // interfaces_config
+        S_297_28 = 297,                          // $@28
+        S_sub_interfaces6 = 298,                 // sub_interfaces6
+        S_299_29 = 299,                          // $@29
+        S_interfaces_config_params = 300,        // interfaces_config_params
+        S_interfaces_config_param = 301,         // interfaces_config_param
+        S_interfaces_list = 302,                 // interfaces_list
+        S_303_30 = 303,                          // $@30
+        S_re_detect = 304,                       // re_detect
+        S_service_sockets_require_all = 305,     // service_sockets_require_all
+        S_service_sockets_retry_wait_time = 306, // service_sockets_retry_wait_time
+        S_service_sockets_max_retries = 307,     // service_sockets_max_retries
+        S_lease_database = 308,                  // lease_database
+        S_309_31 = 309,                          // $@31
+        S_hosts_database = 310,                  // hosts_database
+        S_311_32 = 311,                          // $@32
+        S_hosts_databases = 312,                 // hosts_databases
+        S_313_33 = 313,                          // $@33
+        S_database_list = 314,                   // database_list
+        S_not_empty_database_list = 315,         // not_empty_database_list
+        S_database = 316,                        // database
+        S_317_34 = 317,                          // $@34
+        S_database_map_params = 318,             // database_map_params
+        S_database_map_param = 319,              // database_map_param
+        S_database_type = 320,                   // database_type
+        S_321_35 = 321,                          // $@35
+        S_db_type = 322,                         // db_type
+        S_user = 323,                            // user
+        S_324_36 = 324,                          // $@36
+        S_password = 325,                        // password
+        S_326_37 = 326,                          // $@37
+        S_host = 327,                            // host
+        S_328_38 = 328,                          // $@38
+        S_port = 329,                            // port
+        S_name = 330,                            // name
+        S_331_39 = 331,                          // $@39
+        S_persist = 332,                         // persist
+        S_lfc_interval = 333,                    // lfc_interval
+        S_readonly = 334,                        // readonly
+        S_connect_timeout = 335,                 // connect_timeout
+        S_reconnect_wait_time = 336,             // reconnect_wait_time
+        S_on_fail = 337,                         // on_fail
+        S_338_40 = 338,                          // $@40
+        S_on_fail_mode = 339,                    // on_fail_mode
+        S_max_row_errors = 340,                  // max_row_errors
+        S_max_reconnect_tries = 341,             // max_reconnect_tries
+        S_trust_anchor = 342,                    // trust_anchor
+        S_343_41 = 343,                          // $@41
+        S_cert_file = 344,                       // cert_file
+        S_345_42 = 345,                          // $@42
+        S_key_file = 346,                        // key_file
+        S_347_43 = 347,                          // $@43
+        S_cipher_list = 348,                     // cipher_list
+        S_349_44 = 349,                          // $@44
+        S_sanity_checks = 350,                   // sanity_checks
+        S_351_45 = 351,                          // $@45
+        S_sanity_checks_params = 352,            // sanity_checks_params
+        S_sanity_checks_param = 353,             // sanity_checks_param
+        S_lease_checks = 354,                    // lease_checks
+        S_355_46 = 355,                          // $@46
+        S_mac_sources = 356,                     // mac_sources
+        S_357_47 = 357,                          // $@47
+        S_mac_sources_list = 358,                // mac_sources_list
+        S_mac_sources_value = 359,               // mac_sources_value
+        S_duid_id = 360,                         // duid_id
+        S_string_id = 361,                       // string_id
+        S_host_reservation_identifiers = 362,    // host_reservation_identifiers
+        S_363_48 = 363,                          // $@48
+        S_host_reservation_identifiers_list = 364, // host_reservation_identifiers_list
+        S_host_reservation_identifier = 365,     // host_reservation_identifier
+        S_hw_address_id = 366,                   // hw_address_id
+        S_flex_id = 367,                         // flex_id
+        S_relay_supplied_options = 368,          // relay_supplied_options
+        S_369_49 = 369,                          // $@49
+        S_dhcp_multi_threading = 370,            // dhcp_multi_threading
+        S_371_50 = 371,                          // $@50
+        S_multi_threading_params = 372,          // multi_threading_params
+        S_multi_threading_param = 373,           // multi_threading_param
+        S_enable_multi_threading = 374,          // enable_multi_threading
+        S_thread_pool_size = 375,                // thread_pool_size
+        S_packet_queue_size = 376,               // packet_queue_size
+        S_hooks_libraries = 377,                 // hooks_libraries
+        S_378_51 = 378,                          // $@51
+        S_hooks_libraries_list = 379,            // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 380,  // not_empty_hooks_libraries_list
+        S_hooks_library = 381,                   // hooks_library
+        S_382_52 = 382,                          // $@52
+        S_sub_hooks_library = 383,               // sub_hooks_library
+        S_384_53 = 384,                          // $@53
+        S_hooks_params = 385,                    // hooks_params
+        S_hooks_param = 386,                     // hooks_param
+        S_library = 387,                         // library
+        S_388_54 = 388,                          // $@54
+        S_parameters = 389,                      // parameters
+        S_390_55 = 390,                          // $@55
+        S_expired_leases_processing = 391,       // expired_leases_processing
+        S_392_56 = 392,                          // $@56
+        S_expired_leases_params = 393,           // expired_leases_params
+        S_expired_leases_param = 394,            // expired_leases_param
+        S_reclaim_timer_wait_time = 395,         // reclaim_timer_wait_time
+        S_flush_reclaimed_timer_wait_time = 396, // flush_reclaimed_timer_wait_time
+        S_hold_reclaimed_time = 397,             // hold_reclaimed_time
+        S_max_reclaim_leases = 398,              // max_reclaim_leases
+        S_max_reclaim_time = 399,                // max_reclaim_time
+        S_unwarned_reclaim_cycles = 400,         // unwarned_reclaim_cycles
+        S_subnet6_list = 401,                    // subnet6_list
+        S_402_57 = 402,                          // $@57
+        S_subnet6_list_content = 403,            // subnet6_list_content
+        S_not_empty_subnet6_list = 404,          // not_empty_subnet6_list
+        S_subnet6 = 405,                         // subnet6
+        S_406_58 = 406,                          // $@58
+        S_sub_subnet6 = 407,                     // sub_subnet6
+        S_408_59 = 408,                          // $@59
+        S_subnet6_params = 409,                  // subnet6_params
+        S_subnet6_param = 410,                   // subnet6_param
+        S_subnet = 411,                          // subnet
+        S_412_60 = 412,                          // $@60
+        S_interface = 413,                       // interface
+        S_414_61 = 414,                          // $@61
+        S_interface_id = 415,                    // interface_id
+        S_416_62 = 416,                          // $@62
+        S_client_class = 417,                    // client_class
+        S_418_63 = 418,                          // $@63
+        S_require_client_classes = 419,          // require_client_classes
+        S_420_64 = 420,                          // $@64
+        S_reservations_global = 421,             // reservations_global
+        S_reservations_in_subnet = 422,          // reservations_in_subnet
+        S_reservations_out_of_pool = 423,        // reservations_out_of_pool
+        S_reservation_mode = 424,                // reservation_mode
+        S_425_65 = 425,                          // $@65
+        S_hr_mode = 426,                         // hr_mode
+        S_id = 427,                              // id
+        S_rapid_commit = 428,                    // rapid_commit
+        S_shared_networks = 429,                 // shared_networks
+        S_430_66 = 430,                          // $@66
+        S_shared_networks_content = 431,         // shared_networks_content
+        S_shared_networks_list = 432,            // shared_networks_list
+        S_shared_network = 433,                  // shared_network
+        S_434_67 = 434,                          // $@67
+        S_shared_network_params = 435,           // shared_network_params
+        S_shared_network_param = 436,            // shared_network_param
+        S_option_def_list = 437,                 // option_def_list
+        S_438_68 = 438,                          // $@68
+        S_sub_option_def_list = 439,             // sub_option_def_list
+        S_440_69 = 440,                          // $@69
+        S_option_def_list_content = 441,         // option_def_list_content
+        S_not_empty_option_def_list = 442,       // not_empty_option_def_list
+        S_option_def_entry = 443,                // option_def_entry
+        S_444_70 = 444,                          // $@70
+        S_sub_option_def = 445,                  // sub_option_def
+        S_446_71 = 446,                          // $@71
+        S_option_def_params = 447,               // option_def_params
+        S_not_empty_option_def_params = 448,     // not_empty_option_def_params
+        S_option_def_param = 449,                // option_def_param
+        S_option_def_name = 450,                 // option_def_name
+        S_code = 451,                            // code
+        S_option_def_code = 452,                 // option_def_code
+        S_option_def_type = 453,                 // option_def_type
+        S_454_72 = 454,                          // $@72
+        S_option_def_record_types = 455,         // option_def_record_types
+        S_456_73 = 456,                          // $@73
+        S_space = 457,                           // space
+        S_458_74 = 458,                          // $@74
+        S_option_def_space = 459,                // option_def_space
+        S_option_def_encapsulate = 460,          // option_def_encapsulate
+        S_461_75 = 461,                          // $@75
+        S_option_def_array = 462,                // option_def_array
+        S_option_data_list = 463,                // option_data_list
+        S_464_76 = 464,                          // $@76
+        S_option_data_list_content = 465,        // option_data_list_content
+        S_not_empty_option_data_list = 466,      // not_empty_option_data_list
+        S_option_data_entry = 467,               // option_data_entry
+        S_468_77 = 468,                          // $@77
+        S_sub_option_data = 469,                 // sub_option_data
+        S_470_78 = 470,                          // $@78
+        S_option_data_params = 471,              // option_data_params
+        S_not_empty_option_data_params = 472,    // not_empty_option_data_params
+        S_option_data_param = 473,               // option_data_param
+        S_option_data_name = 474,                // option_data_name
+        S_option_data_data = 475,                // option_data_data
+        S_476_79 = 476,                          // $@79
+        S_option_data_code = 477,                // option_data_code
+        S_option_data_space = 478,               // option_data_space
+        S_option_data_csv_format = 479,          // option_data_csv_format
+        S_option_data_always_send = 480,         // option_data_always_send
+        S_pools_list = 481,                      // pools_list
+        S_482_80 = 482,                          // $@80
+        S_pools_list_content = 483,              // pools_list_content
+        S_not_empty_pools_list = 484,            // not_empty_pools_list
+        S_pool_list_entry = 485,                 // pool_list_entry
+        S_486_81 = 486,                          // $@81
+        S_sub_pool6 = 487,                       // sub_pool6
+        S_488_82 = 488,                          // $@82
+        S_pool_params = 489,                     // pool_params
+        S_pool_param = 490,                      // pool_param
+        S_pool_entry = 491,                      // pool_entry
+        S_492_83 = 492,                          // $@83
+        S_user_context = 493,                    // user_context
+        S_494_84 = 494,                          // $@84
+        S_comment = 495,                         // comment
+        S_496_85 = 496,                          // $@85
+        S_pd_pools_list = 497,                   // pd_pools_list
+        S_498_86 = 498,                          // $@86
+        S_pd_pools_list_content = 499,           // pd_pools_list_content
+        S_not_empty_pd_pools_list = 500,         // not_empty_pd_pools_list
+        S_pd_pool_entry = 501,                   // pd_pool_entry
+        S_502_87 = 502,                          // $@87
+        S_sub_pd_pool = 503,                     // sub_pd_pool
+        S_504_88 = 504,                          // $@88
+        S_pd_pool_params = 505,                  // pd_pool_params
+        S_pd_pool_param = 506,                   // pd_pool_param
+        S_pd_prefix = 507,                       // pd_prefix
+        S_508_89 = 508,                          // $@89
+        S_pd_prefix_len = 509,                   // pd_prefix_len
+        S_excluded_prefix = 510,                 // excluded_prefix
+        S_511_90 = 511,                          // $@90
+        S_excluded_prefix_len = 512,             // excluded_prefix_len
+        S_pd_delegated_len = 513,                // pd_delegated_len
+        S_reservations = 514,                    // reservations
+        S_515_91 = 515,                          // $@91
+        S_reservations_list = 516,               // reservations_list
+        S_not_empty_reservations_list = 517,     // not_empty_reservations_list
+        S_reservation = 518,                     // reservation
+        S_519_92 = 519,                          // $@92
+        S_sub_reservation = 520,                 // sub_reservation
+        S_521_93 = 521,                          // $@93
+        S_reservation_params = 522,              // reservation_params
+        S_not_empty_reservation_params = 523,    // not_empty_reservation_params
+        S_reservation_param = 524,               // reservation_param
+        S_ip_addresses = 525,                    // ip_addresses
+        S_526_94 = 526,                          // $@94
+        S_prefixes = 527,                        // prefixes
+        S_528_95 = 528,                          // $@95
+        S_duid = 529,                            // duid
+        S_530_96 = 530,                          // $@96
+        S_hw_address = 531,                      // hw_address
+        S_532_97 = 532,                          // $@97
+        S_hostname = 533,                        // hostname
+        S_534_98 = 534,                          // $@98
+        S_flex_id_value = 535,                   // flex_id_value
+        S_536_99 = 536,                          // $@99
+        S_reservation_client_classes = 537,      // reservation_client_classes
+        S_538_100 = 538,                         // $@100
+        S_relay = 539,                           // relay
+        S_540_101 = 540,                         // $@101
+        S_relay_map = 541,                       // relay_map
+        S_ip_address = 542,                      // ip_address
+        S_543_102 = 543,                         // $@102
+        S_client_classes = 544,                  // client_classes
+        S_545_103 = 545,                         // $@103
+        S_client_classes_list = 546,             // client_classes_list
+        S_client_class_entry = 547,              // client_class_entry
+        S_548_104 = 548,                         // $@104
+        S_client_class_params = 549,             // client_class_params
+        S_not_empty_client_class_params = 550,   // not_empty_client_class_params
+        S_client_class_param = 551,              // client_class_param
+        S_client_class_name = 552,               // client_class_name
+        S_client_class_test = 553,               // client_class_test
+        S_554_105 = 554,                         // $@105
+        S_only_if_required = 555,                // only_if_required
+        S_server_id = 556,                       // server_id
+        S_557_106 = 557,                         // $@106
+        S_server_id_params = 558,                // server_id_params
+        S_server_id_param = 559,                 // server_id_param
+        S_server_id_type = 560,                  // server_id_type
+        S_561_107 = 561,                         // $@107
+        S_duid_type = 562,                       // duid_type
+        S_htype = 563,                           // htype
+        S_identifier = 564,                      // identifier
+        S_565_108 = 565,                         // $@108
+        S_time = 566,                            // time
+        S_enterprise_id = 567,                   // enterprise_id
+        S_dhcp4o6_port = 568,                    // dhcp4o6_port
+        S_control_socket = 569,                  // control_socket
+        S_570_109 = 570,                         // $@109
+        S_control_socket_params = 571,           // control_socket_params
+        S_control_socket_param = 572,            // control_socket_param
+        S_socket_type = 573,                     // socket_type
+        S_574_110 = 574,                         // $@110
+        S_socket_name = 575,                     // socket_name
+        S_576_111 = 576,                         // $@111
+        S_dhcp_queue_control = 577,              // dhcp_queue_control
+        S_578_112 = 578,                         // $@112
+        S_queue_control_params = 579,            // queue_control_params
+        S_queue_control_param = 580,             // queue_control_param
+        S_enable_queue = 581,                    // enable_queue
+        S_queue_type = 582,                      // queue_type
+        S_583_113 = 583,                         // $@113
+        S_capacity = 584,                        // capacity
+        S_arbitrary_map_entry = 585,             // arbitrary_map_entry
+        S_586_114 = 586,                         // $@114
+        S_dhcp_ddns = 587,                       // dhcp_ddns
+        S_588_115 = 588,                         // $@115
+        S_sub_dhcp_ddns = 589,                   // sub_dhcp_ddns
+        S_590_116 = 590,                         // $@116
+        S_dhcp_ddns_params = 591,                // dhcp_ddns_params
+        S_dhcp_ddns_param = 592,                 // dhcp_ddns_param
+        S_enable_updates = 593,                  // enable_updates
+        S_dep_qualifying_suffix = 594,           // dep_qualifying_suffix
+        S_595_117 = 595,                         // $@117
+        S_server_ip = 596,                       // server_ip
+        S_597_118 = 597,                         // $@118
+        S_server_port = 598,                     // server_port
+        S_sender_ip = 599,                       // sender_ip
+        S_600_119 = 600,                         // $@119
+        S_sender_port = 601,                     // sender_port
+        S_max_queue_size = 602,                  // max_queue_size
+        S_ncr_protocol = 603,                    // ncr_protocol
+        S_604_120 = 604,                         // $@120
+        S_ncr_protocol_value = 605,              // ncr_protocol_value
+        S_ncr_format = 606,                      // ncr_format
+        S_607_121 = 607,                         // $@121
+        S_dep_override_no_update = 608,          // dep_override_no_update
+        S_dep_override_client_update = 609,      // dep_override_client_update
+        S_dep_replace_client_name = 610,         // dep_replace_client_name
+        S_611_122 = 611,                         // $@122
+        S_dep_generated_prefix = 612,            // dep_generated_prefix
+        S_613_123 = 613,                         // $@123
+        S_dep_hostname_char_set = 614,           // dep_hostname_char_set
+        S_615_124 = 615,                         // $@124
+        S_dep_hostname_char_replacement = 616,   // dep_hostname_char_replacement
+        S_617_125 = 617,                         // $@125
+        S_config_control = 618,                  // config_control
+        S_619_126 = 619,                         // $@126
+        S_sub_config_control = 620,              // sub_config_control
+        S_621_127 = 621,                         // $@127
+        S_config_control_params = 622,           // config_control_params
+        S_config_control_param = 623,            // config_control_param
+        S_config_databases = 624,                // config_databases
+        S_625_128 = 625,                         // $@128
+        S_config_fetch_wait_time = 626,          // config_fetch_wait_time
+        S_loggers = 627,                         // loggers
+        S_628_129 = 628,                         // $@129
+        S_loggers_entries = 629,                 // loggers_entries
+        S_logger_entry = 630,                    // logger_entry
+        S_631_130 = 631,                         // $@130
+        S_logger_params = 632,                   // logger_params
+        S_logger_param = 633,                    // logger_param
+        S_debuglevel = 634,                      // debuglevel
+        S_severity = 635,                        // severity
+        S_636_131 = 636,                         // $@131
+        S_output_options_list = 637,             // output_options_list
+        S_638_132 = 638,                         // $@132
+        S_output_options_list_content = 639,     // output_options_list_content
+        S_output_entry = 640,                    // output_entry
+        S_641_133 = 641,                         // $@133
+        S_output_params_list = 642,              // output_params_list
+        S_output_params = 643,                   // output_params
+        S_output = 644,                          // output
+        S_645_134 = 645,                         // $@134
+        S_flush = 646,                           // flush
+        S_maxsize = 647,                         // maxsize
+        S_maxver = 648,                          // maxver
+        S_pattern = 649,                         // pattern
+        S_650_135 = 650,                         // $@135
+        S_compatibility = 651,                   // compatibility
+        S_652_136 = 652,                         // $@136
+        S_compatibility_params = 653,            // compatibility_params
+        S_compatibility_param = 654,             // compatibility_param
+        S_lenient_option_parsing = 655           // lenient_option_parsing
       };
     };
 
-    /// (External) token type, as returned by yylex.
-    typedef token::yytokentype token_type;
+    /// (Internal) symbol kind.
+    typedef symbol_kind::symbol_kind_type symbol_kind_type;
 
-    /// Symbol type: an internal symbol number.
-    typedef int symbol_number_type;
-
-    /// The symbol type number to denote an empty symbol.
-    enum { empty_symbol = -2 };
-
-    /// Internal symbol number for tokens (subsumed by symbol_number_type).
-    typedef unsigned char token_number_type;
+    /// The number of tokens.
+    static const symbol_kind_type YYNTOKENS = symbol_kind::YYNTOKENS;
 
     /// A complete symbol.
     ///
-    /// Expects its Base type to provide access to the symbol type
-    /// via type_get ().
+    /// Expects its Base type to provide access to the symbol kind
+    /// via kind ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -711,20 +1405,58 @@ namespace isc { namespace dhcp {
       typedef Base super_type;
 
       /// Default constructor.
-      basic_symbol ()
+      basic_symbol () YY_NOEXCEPT
         : value ()
         , location ()
       {}
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      basic_symbol (basic_symbol&& that);
+      basic_symbol (basic_symbol&& that)
+        : Base (std::move (that))
+        , value ()
+        , location (std::move (that.location))
+      {
+        switch (this->kind ())
+    {
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_on_fail_mode: // on_fail_mode
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_duid_type: // duid_type
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
+        value.move< ElementPtr > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_BOOLEAN: // "boolean"
+        value.move< bool > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_FLOAT: // "floating point"
+        value.move< double > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_INTEGER: // "integer"
+        value.move< int64_t > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_STRING: // "constant string"
+        value.move< std::string > (std::move (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+      }
 #endif
 
       /// Copy constructor.
       basic_symbol (const basic_symbol& that);
 
-      /// Constructor for valueless symbols, and symbols from each type.
+      /// Constructors for typed symbols.
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, location_type&& l)
         : Base (t)
@@ -736,6 +1468,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, ElementPtr&& v, location_type&& l)
         : Base (t)
@@ -749,6 +1482,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
         : Base (t)
@@ -762,6 +1496,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
         : Base (t)
@@ -775,6 +1510,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, int64_t&& v, location_type&& l)
         : Base (t)
@@ -788,6 +1524,7 @@ namespace isc { namespace dhcp {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
@@ -808,46 +1545,48 @@ namespace isc { namespace dhcp {
         clear ();
       }
 
+
+
       /// Destroy contents, and record that is empty.
-      void clear ()
+      void clear () YY_NOEXCEPT
       {
         // User destructor.
-        symbol_number_type yytype = this->type_get ();
+        symbol_kind_type yykind = this->kind ();
         basic_symbol<Base>& yysym = *this;
         (void) yysym;
-        switch (yytype)
+        switch (yykind)
         {
        default:
           break;
         }
 
-        // Type destructor.
-switch (yytype)
+        // Value type destructor.
+switch (yykind)
     {
-      case 230: // value
-      case 234: // map_value
-      case 276: // ddns_replace_client_name_value
-      case 322: // db_type
-      case 339: // on_fail_mode
-      case 426: // hr_mode
-      case 562: // duid_type
-      case 605: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_on_fail_mode: // on_fail_mode
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_duid_type: // duid_type
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 213: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 212: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 211: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 210: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -858,6 +1597,15 @@ switch (yytype)
         Base::clear ();
       }
 
+      /// The user-facing name of this symbol.
+      std::string name () const YY_NOEXCEPT
+      {
+        return Dhcp6Parser::symbol_name (this->kind ());
+      }
+
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
       /// Whether empty.
       bool empty () const YY_NOEXCEPT;
 
@@ -865,7 +1613,7 @@ switch (yytype)
       void move (basic_symbol& s);
 
       /// The semantic value.
-      semantic_type value;
+      value_type value;
 
       /// The location.
       location_type location;
@@ -878,121 +1626,131 @@ switch (yytype)
     };
 
     /// Type access provider for token (enum) based symbols.
-    struct by_type
+    struct by_kind
     {
+      /// The symbol kind as needed by the constructor.
+      typedef token_kind_type kind_type;
+
       /// Default constructor.
-      by_type ();
+      by_kind () YY_NOEXCEPT;
 
 #if 201103L <= YY_CPLUSPLUS
       /// Move constructor.
-      by_type (by_type&& that);
+      by_kind (by_kind&& that) YY_NOEXCEPT;
 #endif
 
       /// Copy constructor.
-      by_type (const by_type& that);
-
-      /// The symbol type as needed by the constructor.
-      typedef token_type kind_type;
+      by_kind (const by_kind& that) YY_NOEXCEPT;
 
       /// Constructor from (external) token numbers.
-      by_type (kind_type t);
+      by_kind (kind_type t) YY_NOEXCEPT;
+
+
 
       /// Record that this symbol is empty.
-      void clear ();
+      void clear () YY_NOEXCEPT;
 
-      /// Steal the symbol type from \a that.
-      void move (by_type& that);
+      /// Steal the symbol kind from \a that.
+      void move (by_kind& that);
 
       /// The (internal) type number (corresponding to \a type).
       /// \a empty when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
-      /// The symbol type.
-      /// \a empty_symbol when empty.
-      /// An int, not token_number_type, to be able to store empty_symbol.
-      int type;
+      /// Backward compatibility (Bison 3.6).
+      symbol_kind_type type_get () const YY_NOEXCEPT;
+
+      /// The symbol kind.
+      /// \a S_YYEMPTY when empty.
+      symbol_kind_type kind_;
     };
 
+    /// Backward compatibility for a private implementation detail (Bison 3.6).
+    typedef by_kind by_type;
+
     /// "External" symbols: returned by the scanner.
-    struct symbol_type : basic_symbol<by_type>
+    struct symbol_type : basic_symbol<by_kind>
     {
       /// Superclass.
-      typedef basic_symbol<by_type> super_type;
+      typedef basic_symbol<by_kind> super_type;
 
       /// Empty symbol.
-      symbol_type () {}
+      symbol_type () YY_NOEXCEPT {}
 
       /// Constructor for valueless symbols, and symbols from each type.
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, location_type l)
-        : super_type(token_type (tok), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_SERVICE_SOCKETS_REQUIRE_ALL || tok == token::TOKEN_SERVICE_SOCKETS_RETRY_WAIT_TIME || tok == token::TOKEN_SERVICE_SOCKETS_MAX_RETRIES || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_ON_FAIL || tok == token::TOKEN_STOP_RETRY_EXIT || tok == token::TOKEN_SERVE_RETRY_EXIT || tok == token::TOKEN_SERVE_RETRY_CONTINUE || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_TRUST_ANCHOR || tok == token::TOKEN_CERT_FILE || tok == token::TOKEN_KEY_FILE || tok == token::TOKEN_CIPHER_LIST || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_CACHE_THRESHOLD || tok == token::TOKEN_CACHE_MAX_AGE || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_DDNS_UPDATE_ON_RENEW || tok == token::TOKEN_DDNS_USE_CONFLICT_RESOLUTION || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_PARKED_PACKET_LIMIT || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_RESERVATIONS_GLOBAL || tok == token::TOKEN_RESERVATIONS_IN_SUBNET || tok == token::TOKEN_RESERVATIONS_OUT_OF_POOL || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_DHCP_MULTI_THREADING || tok == token::TOKEN_ENABLE_MULTI_THREADING || tok == token::TOKEN_THREAD_POOL_SIZE || tok == token::TOKEN_PACKET_QUEUE_SIZE || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_EARLY_GLOBAL_RESERVATIONS_LOOKUP || tok == token::TOKEN_IP_RESERVATIONS_UNIQUE || tok == token::TOKEN_RESERVATIONS_LOOKUP_FIRST || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_COMPATIBILITY || tok == token::TOKEN_LENIENT_OPTION_PARSING || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_CONFIG_CONTROL);
-      }
+        : super_type (token_kind_type (tok), std::move (l))
 #else
       symbol_type (int tok, const location_type& l)
-        : super_type(token_type (tok), l)
-      {
-        YY_ASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DATA_DIRECTORY || tok == token::TOKEN_CONFIG_CONTROL || tok == token::TOKEN_CONFIG_DATABASES || tok == token::TOKEN_CONFIG_FETCH_WAIT_TIME || tok == token::TOKEN_INTERFACES_CONFIG || tok == token::TOKEN_INTERFACES || tok == token::TOKEN_RE_DETECT || tok == token::TOKEN_SERVICE_SOCKETS_REQUIRE_ALL || tok == token::TOKEN_SERVICE_SOCKETS_RETRY_WAIT_TIME || tok == token::TOKEN_SERVICE_SOCKETS_MAX_RETRIES || tok == token::TOKEN_LEASE_DATABASE || tok == token::TOKEN_HOSTS_DATABASE || tok == token::TOKEN_HOSTS_DATABASES || tok == token::TOKEN_TYPE || tok == token::TOKEN_MEMFILE || tok == token::TOKEN_MYSQL || tok == token::TOKEN_POSTGRESQL || tok == token::TOKEN_USER || tok == token::TOKEN_PASSWORD || tok == token::TOKEN_HOST || tok == token::TOKEN_PORT || tok == token::TOKEN_PERSIST || tok == token::TOKEN_LFC_INTERVAL || tok == token::TOKEN_READONLY || tok == token::TOKEN_CONNECT_TIMEOUT || tok == token::TOKEN_MAX_RECONNECT_TRIES || tok == token::TOKEN_RECONNECT_WAIT_TIME || tok == token::TOKEN_ON_FAIL || tok == token::TOKEN_STOP_RETRY_EXIT || tok == token::TOKEN_SERVE_RETRY_EXIT || tok == token::TOKEN_SERVE_RETRY_CONTINUE || tok == token::TOKEN_MAX_ROW_ERRORS || tok == token::TOKEN_TRUST_ANCHOR || tok == token::TOKEN_CERT_FILE || tok == token::TOKEN_KEY_FILE || tok == token::TOKEN_CIPHER_LIST || tok == token::TOKEN_PREFERRED_LIFETIME || tok == token::TOKEN_MIN_PREFERRED_LIFETIME || tok == token::TOKEN_MAX_PREFERRED_LIFETIME || tok == token::TOKEN_VALID_LIFETIME || tok == token::TOKEN_MIN_VALID_LIFETIME || tok == token::TOKEN_MAX_VALID_LIFETIME || tok == token::TOKEN_RENEW_TIMER || tok == token::TOKEN_REBIND_TIMER || tok == token::TOKEN_CALCULATE_TEE_TIMES || tok == token::TOKEN_T1_PERCENT || tok == token::TOKEN_T2_PERCENT || tok == token::TOKEN_CACHE_THRESHOLD || tok == token::TOKEN_CACHE_MAX_AGE || tok == token::TOKEN_DECLINE_PROBATION_PERIOD || tok == token::TOKEN_SERVER_TAG || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_COUNT || tok == token::TOKEN_STATISTIC_DEFAULT_SAMPLE_AGE || tok == token::TOKEN_DDNS_SEND_UPDATES || tok == token::TOKEN_DDNS_OVERRIDE_NO_UPDATE || tok == token::TOKEN_DDNS_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_DDNS_REPLACE_CLIENT_NAME || tok == token::TOKEN_DDNS_GENERATED_PREFIX || tok == token::TOKEN_DDNS_QUALIFYING_SUFFIX || tok == token::TOKEN_DDNS_UPDATE_ON_RENEW || tok == token::TOKEN_DDNS_USE_CONFLICT_RESOLUTION || tok == token::TOKEN_STORE_EXTENDED_INFO || tok == token::TOKEN_SUBNET6 || tok == token::TOKEN_OPTION_DEF || tok == token::TOKEN_OPTION_DATA || tok == token::TOKEN_NAME || tok == token::TOKEN_DATA || tok == token::TOKEN_CODE || tok == token::TOKEN_SPACE || tok == token::TOKEN_CSV_FORMAT || tok == token::TOKEN_ALWAYS_SEND || tok == token::TOKEN_RECORD_TYPES || tok == token::TOKEN_ENCAPSULATE || tok == token::TOKEN_ARRAY || tok == token::TOKEN_PARKED_PACKET_LIMIT || tok == token::TOKEN_SHARED_NETWORKS || tok == token::TOKEN_POOLS || tok == token::TOKEN_POOL || tok == token::TOKEN_PD_POOLS || tok == token::TOKEN_PREFIX || tok == token::TOKEN_PREFIX_LEN || tok == token::TOKEN_EXCLUDED_PREFIX || tok == token::TOKEN_EXCLUDED_PREFIX_LEN || tok == token::TOKEN_DELEGATED_LEN || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_SUBNET || tok == token::TOKEN_INTERFACE || tok == token::TOKEN_INTERFACE_ID || tok == token::TOKEN_ID || tok == token::TOKEN_RAPID_COMMIT || tok == token::TOKEN_RESERVATION_MODE || tok == token::TOKEN_DISABLED || tok == token::TOKEN_OUT_OF_POOL || tok == token::TOKEN_GLOBAL || tok == token::TOKEN_ALL || tok == token::TOKEN_RESERVATIONS_GLOBAL || tok == token::TOKEN_RESERVATIONS_IN_SUBNET || tok == token::TOKEN_RESERVATIONS_OUT_OF_POOL || tok == token::TOKEN_MAC_SOURCES || tok == token::TOKEN_RELAY_SUPPLIED_OPTIONS || tok == token::TOKEN_HOST_RESERVATION_IDENTIFIERS || tok == token::TOKEN_SANITY_CHECKS || tok == token::TOKEN_LEASE_CHECKS || tok == token::TOKEN_CLIENT_CLASSES || tok == token::TOKEN_REQUIRE_CLIENT_CLASSES || tok == token::TOKEN_TEST || tok == token::TOKEN_ONLY_IF_REQUIRED || tok == token::TOKEN_CLIENT_CLASS || tok == token::TOKEN_RESERVATIONS || tok == token::TOKEN_IP_ADDRESSES || tok == token::TOKEN_PREFIXES || tok == token::TOKEN_DUID || tok == token::TOKEN_HW_ADDRESS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_FLEX_ID || tok == token::TOKEN_RELAY || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_EXPIRED_LEASES_PROCESSING || tok == token::TOKEN_RECLAIM_TIMER_WAIT_TIME || tok == token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME || tok == token::TOKEN_HOLD_RECLAIMED_TIME || tok == token::TOKEN_MAX_RECLAIM_LEASES || tok == token::TOKEN_MAX_RECLAIM_TIME || tok == token::TOKEN_UNWARNED_RECLAIM_CYCLES || tok == token::TOKEN_SERVER_ID || tok == token::TOKEN_LLT || tok == token::TOKEN_EN || tok == token::TOKEN_LL || tok == token::TOKEN_IDENTIFIER || tok == token::TOKEN_HTYPE || tok == token::TOKEN_TIME || tok == token::TOKEN_ENTERPRISE_ID || tok == token::TOKEN_DHCP4O6_PORT || tok == token::TOKEN_DHCP_MULTI_THREADING || tok == token::TOKEN_ENABLE_MULTI_THREADING || tok == token::TOKEN_THREAD_POOL_SIZE || tok == token::TOKEN_PACKET_QUEUE_SIZE || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_DHCP_QUEUE_CONTROL || tok == token::TOKEN_ENABLE_QUEUE || tok == token::TOKEN_QUEUE_TYPE || tok == token::TOKEN_CAPACITY || tok == token::TOKEN_DHCP_DDNS || tok == token::TOKEN_ENABLE_UPDATES || tok == token::TOKEN_QUALIFYING_SUFFIX || tok == token::TOKEN_SERVER_IP || tok == token::TOKEN_SERVER_PORT || tok == token::TOKEN_SENDER_IP || tok == token::TOKEN_SENDER_PORT || tok == token::TOKEN_MAX_QUEUE_SIZE || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_OVERRIDE_NO_UPDATE || tok == token::TOKEN_OVERRIDE_CLIENT_UPDATE || tok == token::TOKEN_REPLACE_CLIENT_NAME || tok == token::TOKEN_GENERATED_PREFIX || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_JSON || tok == token::TOKEN_WHEN_PRESENT || tok == token::TOKEN_NEVER || tok == token::TOKEN_ALWAYS || tok == token::TOKEN_WHEN_NOT_PRESENT || tok == token::TOKEN_HOSTNAME_CHAR_SET || tok == token::TOKEN_HOSTNAME_CHAR_REPLACEMENT || tok == token::TOKEN_EARLY_GLOBAL_RESERVATIONS_LOOKUP || tok == token::TOKEN_IP_RESERVATIONS_UNIQUE || tok == token::TOKEN_RESERVATIONS_LOOKUP_FIRST || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_COMPATIBILITY || tok == token::TOKEN_LENIENT_OPTION_PARSING || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCP6 || tok == token::TOKEN_SUB_DHCP6 || tok == token::TOKEN_SUB_INTERFACES6 || tok == token::TOKEN_SUB_SUBNET6 || tok == token::TOKEN_SUB_POOL6 || tok == token::TOKEN_SUB_PD_POOL || tok == token::TOKEN_SUB_RESERVATION || tok == token::TOKEN_SUB_OPTION_DEFS || tok == token::TOKEN_SUB_OPTION_DEF || tok == token::TOKEN_SUB_OPTION_DATA || tok == token::TOKEN_SUB_HOOKS_LIBRARY || tok == token::TOKEN_SUB_DHCP_DDNS || tok == token::TOKEN_SUB_CONFIG_CONTROL);
-      }
+        : super_type (token_kind_type (tok), l)
 #endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        PARSER6__ASSERT (tok == token::TOKEN_END
+                   || (token::TOKEN_PARSER6_error <= tok && tok <= token::TOKEN_SUB_CONFIG_CONTROL));
+#endif
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, bool v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_BOOLEAN);
-      }
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const bool& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_BOOLEAN);
-      }
+        : super_type (token_kind_type (tok), v, l)
 #endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        PARSER6__ASSERT (tok == token::TOKEN_BOOLEAN);
+#endif
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, double v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_FLOAT);
-      }
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const double& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_FLOAT);
-      }
+        : super_type (token_kind_type (tok), v, l)
 #endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        PARSER6__ASSERT (tok == token::TOKEN_FLOAT);
+#endif
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, int64_t v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_INTEGER);
-      }
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const int64_t& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_INTEGER);
-      }
+        : super_type (token_kind_type (tok), v, l)
 #endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        PARSER6__ASSERT (tok == token::TOKEN_INTEGER);
+#endif
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING);
-      }
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const std::string& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOKEN_STRING);
-      }
+        : super_type (token_kind_type (tok), v, l)
 #endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        PARSER6__ASSERT (tok == token::TOKEN_STRING);
+#endif
+      }
     };
 
     /// Build a parser object.
     Dhcp6Parser (isc::dhcp::Parser6Context& ctx_yyarg);
     virtual ~Dhcp6Parser ();
+
+#if 201103L <= YY_CPLUSPLUS
+    /// Non copyable.
+    Dhcp6Parser (const Dhcp6Parser&) = delete;
+    /// Non copyable.
+    Dhcp6Parser& operator= (const Dhcp6Parser&) = delete;
+#endif
 
     /// Parse.  An alias for parse ().
     /// \returns  0 iff parsing succeeded.
@@ -1024,7 +1782,11 @@ switch (yytype)
     /// Report a syntax error.
     void error (const syntax_error& err);
 
-    // Implementation of make_symbol for each symbol type.
+    /// The user-facing name of the symbol whose (internal) number is
+    /// YYSYMBOL.  No bounds checking.
+    static std::string symbol_name (symbol_kind_type yysymbol);
+
+    // Implementation of make_symbol for each token kind.
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
@@ -1038,6 +1800,36 @@ switch (yytype)
       make_END (const location_type& l)
       {
         return symbol_type (token::TOKEN_END, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_PARSER6_error (location_type l)
+      {
+        return symbol_type (token::TOKEN_PARSER6_error, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PARSER6_error (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PARSER6_error, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_PARSER6_UNDEF (location_type l)
+      {
+        return symbol_type (token::TOKEN_PARSER6_UNDEF, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PARSER6_UNDEF (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PARSER6_UNDEF, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -4207,20 +4999,43 @@ switch (yytype)
 #endif
 
 
+    class context
+    {
+    public:
+      context (const Dhcp6Parser& yyparser, const symbol_type& yyla);
+      const symbol_type& lookahead () const YY_NOEXCEPT { return yyla_; }
+      symbol_kind_type token () const YY_NOEXCEPT { return yyla_.kind (); }
+      const location_type& location () const YY_NOEXCEPT { return yyla_.location; }
+
+      /// Put in YYARG at most YYARGN of the expected tokens, and return the
+      /// number of tokens stored in YYARG.  If YYARG is null, return the
+      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
+      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
+
+    private:
+      const Dhcp6Parser& yyparser_;
+      const symbol_type& yyla_;
+    };
+
   private:
-    /// This class is not copyable.
+#if YY_CPLUSPLUS < 201103L
+    /// Non copyable.
     Dhcp6Parser (const Dhcp6Parser&);
+    /// Non copyable.
     Dhcp6Parser& operator= (const Dhcp6Parser&);
+#endif
+
 
     /// Stored state numbers (used for stacks).
     typedef short state_type;
 
-    /// Generate an error message.
-    /// \param yystate   the state where the error occurred.
-    /// \param yyla      the lookahead token.
-    virtual std::string yysyntax_error_ (state_type yystate,
-                                         const symbol_type& yyla) const;
+    /// The arguments of the error message.
+    int yy_syntax_error_arguments_ (const context& yyctx,
+                                    symbol_kind_type yyarg[], int yyargn) const;
 
+    /// Generate an error message.
+    /// \param yyctx     the context in which the error occurred.
+    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -4228,19 +5043,26 @@ switch (yytype)
 
     /// Whether the given \c yypact_ value indicates a defaulted state.
     /// \param yyvalue   the value to check
-    static bool yy_pact_value_is_default_ (int yyvalue);
+    static bool yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT;
 
     /// Whether the given \c yytable_ value indicates a syntax error.
     /// \param yyvalue   the value to check
-    static bool yy_table_value_is_error_ (int yyvalue);
+    static bool yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT;
 
     static const short yypact_ninf_;
     static const signed char yytable_ninf_;
 
-    /// Convert a scanner token number \a t to a symbol number.
-    /// In theory \a t should be a token_type, but character literals
-    /// are valid, yet not members of the token_type enum.
-    static token_number_type yytranslate_ (int t);
+    /// Convert a scanner token kind \a t to a symbol kind.
+    /// In theory \a t should be a token_kind_type, but character literals
+    /// are valid, yet not members of the token_kind_type enum.
+    static symbol_kind_type yytranslate_ (int t) YY_NOEXCEPT;
+
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *yystr);
+
+    /// For a symbol, its name in clear.
+    static const char* const yytname_[];
+
 
     // Tables.
     // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
@@ -4265,37 +5087,31 @@ switch (yytype)
 
     static const short yycheck_[];
 
-    // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-    // symbol of state STATE-NUM.
+    // YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+    // state STATE-NUM.
     static const short yystos_[];
 
-    // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
+    // YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.
     static const short yyr1_[];
 
-    // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
+    // YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.
     static const signed char yyr2_[];
 
 
-    /// Convert the symbol name \a n to a form suitable for a diagnostic.
-    static std::string yytnamerr_ (const char *n);
-
-
-    /// For a symbol, its name in clear.
-    static const char* const yytname_[];
 #if PARSER6_DEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
     static const short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
-    virtual void yy_reduce_print_ (int r);
+    virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
-    virtual void yystack_print_ ();
+    virtual void yy_stack_print_ () const;
 
     /// Debugging level.
     int yydebug_;
     /// Debug stream.
     std::ostream* yycdebug_;
 
-    /// \brief Display a symbol type, value and location.
+    /// \brief Display a symbol kind, value and location.
     /// \param yyo    The output stream.
     /// \param yysym  The symbol.
     template <typename Base>
@@ -4316,7 +5132,7 @@ switch (yytype)
       /// Default constructor.
       by_state () YY_NOEXCEPT;
 
-      /// The symbol type as needed by the constructor.
+      /// The symbol kind as needed by the constructor.
       typedef state_type kind_type;
 
       /// Constructor.
@@ -4328,12 +5144,12 @@ switch (yytype)
       /// Record that this symbol is empty.
       void clear () YY_NOEXCEPT;
 
-      /// Steal the symbol type from \a that.
+      /// Steal the symbol kind from \a that.
       void move (by_state& that);
 
-      /// The (internal) type number (corresponding to \a state).
-      /// \a empty_symbol when empty.
-      symbol_number_type type_get () const YY_NOEXCEPT;
+      /// The symbol kind (corresponding to \a state).
+      /// \a symbol_kind::S_YYEMPTY when empty.
+      symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
       /// We use the initial state, as it does not have a value.
@@ -4372,14 +5188,21 @@ switch (yytype)
     {
     public:
       // Hide our reversed order.
-      typedef typename S::reverse_iterator iterator;
-      typedef typename S::const_reverse_iterator const_iterator;
+      typedef typename S::iterator iterator;
+      typedef typename S::const_iterator const_iterator;
       typedef typename S::size_type size_type;
       typedef typename std::ptrdiff_t index_type;
 
-      stack (size_type n = 200)
+      stack (size_type n = 200) YY_NOEXCEPT
         : seq_ (n)
       {}
+
+#if 201103L <= YY_CPLUSPLUS
+      /// Non copyable.
+      stack (const stack&) = delete;
+      /// Non copyable.
+      stack& operator= (const stack&) = delete;
+#endif
 
       /// Random access.
       ///
@@ -4431,31 +5254,25 @@ switch (yytype)
         return index_type (seq_.size ());
       }
 
-      std::ptrdiff_t
-      ssize () const YY_NOEXCEPT
-      {
-        return std::ptrdiff_t (size ());
-      }
-
       /// Iterator on top of the stack (going downwards).
       const_iterator
       begin () const YY_NOEXCEPT
       {
-        return seq_.rbegin ();
+        return seq_.begin ();
       }
 
       /// Bottom of the stack.
       const_iterator
       end () const YY_NOEXCEPT
       {
-        return seq_.rend ();
+        return seq_.end ();
       }
 
       /// Present a slice of the top of a stack.
       class slice
       {
       public:
-        slice (const stack& stack, index_type range)
+        slice (const stack& stack, index_type range) YY_NOEXCEPT
           : stack_ (stack)
           , range_ (range)
         {}
@@ -4472,8 +5289,12 @@ switch (yytype)
       };
 
     private:
+#if YY_CPLUSPLUS < 201103L
+      /// Non copyable.
       stack (const stack&);
+      /// Non copyable.
       stack& operator= (const stack&);
+#endif
       /// The wrapped container.
       S seq_;
     };
@@ -4501,35 +5322,30 @@ switch (yytype)
     void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
 
     /// Pop \a n symbols from the stack.
-    void yypop_ (int n = 1);
-
-    /// Some specific tokens.
-    static const token_number_type yy_error_token_ = 1;
-    static const token_number_type yy_undef_token_ = 2;
+    void yypop_ (int n = 1) YY_NOEXCEPT;
 
     /// Constants.
     enum
     {
-      yyeof_ = 0,
       yylast_ = 1327,     ///< Last index in yytable_.
       yynnts_ = 442,  ///< Number of nonterminal symbols.
-      yyfinal_ = 30, ///< Termination state number.
-      yyntokens_ = 214  ///< Number of tokens.
+      yyfinal_ = 30 ///< Termination state number.
     };
 
 
     // User arguments.
     isc::dhcp::Parser6Context& ctx;
+
   };
 
   inline
-  Dhcp6Parser::token_number_type
-  Dhcp6Parser::yytranslate_ (int t)
+  Dhcp6Parser::symbol_kind_type
+  Dhcp6Parser::yytranslate_ (int t) YY_NOEXCEPT
   {
     // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
     // TOKEN-NUM as returned by yylex.
     static
-    const token_number_type
+    const unsigned char
     translate_table[] =
     {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -4580,92 +5396,50 @@ switch (yytype)
      195,   196,   197,   198,   199,   200,   201,   202,   203,   204,
      205,   206,   207,   208,   209,   210,   211,   212,   213
     };
-    const int user_token_number_max_ = 468;
+    // Last valid token kind.
+    const int code_max = 468;
 
     if (t <= 0)
-      return yyeof_;
-    else if (t <= user_token_number_max_)
-      return translate_table[t];
+      return symbol_kind::S_YYEOF;
+    else if (t <= code_max)
+      return static_cast <symbol_kind_type> (translate_table[t]);
     else
-      return yy_undef_token_;
+      return symbol_kind::S_YYUNDEF;
   }
 
   // basic_symbol.
-#if 201103L <= YY_CPLUSPLUS
-  template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (basic_symbol&& that)
-    : Base (std::move (that))
-    , value ()
-    , location (std::move (that.location))
-  {
-    switch (this->type_get ())
-    {
-      case 230: // value
-      case 234: // map_value
-      case 276: // ddns_replace_client_name_value
-      case 322: // db_type
-      case 339: // on_fail_mode
-      case 426: // hr_mode
-      case 562: // duid_type
-      case 605: // ncr_protocol_value
-        value.move< ElementPtr > (std::move (that.value));
-        break;
-
-      case 213: // "boolean"
-        value.move< bool > (std::move (that.value));
-        break;
-
-      case 212: // "floating point"
-        value.move< double > (std::move (that.value));
-        break;
-
-      case 211: // "integer"
-        value.move< int64_t > (std::move (that.value));
-        break;
-
-      case 210: // "constant string"
-        value.move< std::string > (std::move (that.value));
-        break;
-
-      default:
-        break;
-    }
-
-  }
-#endif
-
   template <typename Base>
   Dhcp6Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
     : Base (that)
     , value ()
     , location (that.location)
   {
-    switch (this->type_get ())
+    switch (this->kind ())
     {
-      case 230: // value
-      case 234: // map_value
-      case 276: // ddns_replace_client_name_value
-      case 322: // db_type
-      case 339: // on_fail_mode
-      case 426: // hr_mode
-      case 562: // duid_type
-      case 605: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_on_fail_mode: // on_fail_mode
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_duid_type: // duid_type
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 213: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 212: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 211: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 210: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -4677,11 +5451,20 @@ switch (yytype)
 
 
 
+
+  template <typename Base>
+  Dhcp6Parser::symbol_kind_type
+  Dhcp6Parser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
+
+
   template <typename Base>
   bool
   Dhcp6Parser::basic_symbol<Base>::empty () const YY_NOEXCEPT
   {
-    return Base::type_get () == empty_symbol;
+    return this->kind () == symbol_kind::S_YYEMPTY;
   }
 
   template <typename Base>
@@ -4689,32 +5472,32 @@ switch (yytype)
   Dhcp6Parser::basic_symbol<Base>::move (basic_symbol& s)
   {
     super_type::move (s);
-    switch (this->type_get ())
+    switch (this->kind ())
     {
-      case 230: // value
-      case 234: // map_value
-      case 276: // ddns_replace_client_name_value
-      case 322: // db_type
-      case 339: // on_fail_mode
-      case 426: // hr_mode
-      case 562: // duid_type
-      case 605: // ncr_protocol_value
+      case symbol_kind::S_value: // value
+      case symbol_kind::S_map_value: // map_value
+      case symbol_kind::S_ddns_replace_client_name_value: // ddns_replace_client_name_value
+      case symbol_kind::S_db_type: // db_type
+      case symbol_kind::S_on_fail_mode: // on_fail_mode
+      case symbol_kind::S_hr_mode: // hr_mode
+      case symbol_kind::S_duid_type: // duid_type
+      case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 213: // "boolean"
+      case symbol_kind::S_BOOLEAN: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 212: // "floating point"
+      case symbol_kind::S_FLOAT: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 211: // "integer"
+      case symbol_kind::S_INTEGER: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 210: // "constant string"
+      case symbol_kind::S_STRING: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -4725,57 +5508,67 @@ switch (yytype)
     location = YY_MOVE (s.location);
   }
 
-  // by_type.
+  // by_kind.
   inline
-  Dhcp6Parser::by_type::by_type ()
-    : type (empty_symbol)
+  Dhcp6Parser::by_kind::by_kind () YY_NOEXCEPT
+    : kind_ (symbol_kind::S_YYEMPTY)
   {}
 
 #if 201103L <= YY_CPLUSPLUS
   inline
-  Dhcp6Parser::by_type::by_type (by_type&& that)
-    : type (that.type)
+  Dhcp6Parser::by_kind::by_kind (by_kind&& that) YY_NOEXCEPT
+    : kind_ (that.kind_)
   {
     that.clear ();
   }
 #endif
 
   inline
-  Dhcp6Parser::by_type::by_type (const by_type& that)
-    : type (that.type)
+  Dhcp6Parser::by_kind::by_kind (const by_kind& that) YY_NOEXCEPT
+    : kind_ (that.kind_)
   {}
 
   inline
-  Dhcp6Parser::by_type::by_type (token_type t)
-    : type (yytranslate_ (t))
+  Dhcp6Parser::by_kind::by_kind (token_kind_type t) YY_NOEXCEPT
+    : kind_ (yytranslate_ (t))
   {}
+
+
 
   inline
   void
-  Dhcp6Parser::by_type::clear ()
+  Dhcp6Parser::by_kind::clear () YY_NOEXCEPT
   {
-    type = empty_symbol;
+    kind_ = symbol_kind::S_YYEMPTY;
   }
 
   inline
   void
-  Dhcp6Parser::by_type::move (by_type& that)
+  Dhcp6Parser::by_kind::move (by_kind& that)
   {
-    type = that.type;
+    kind_ = that.kind_;
     that.clear ();
   }
 
   inline
-  int
-  Dhcp6Parser::by_type::type_get () const YY_NOEXCEPT
+  Dhcp6Parser::symbol_kind_type
+  Dhcp6Parser::by_kind::kind () const YY_NOEXCEPT
   {
-    return type;
+    return kind_;
   }
+
+
+  inline
+  Dhcp6Parser::symbol_kind_type
+  Dhcp6Parser::by_kind::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
+
 
 #line 14 "dhcp6_parser.yy"
 } } // isc::dhcp
-#line 4778 "dhcp6_parser.h"
-
+#line 5572 "dhcp6_parser.h"
 
 
 

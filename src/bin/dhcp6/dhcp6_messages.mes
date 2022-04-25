@@ -176,16 +176,6 @@ should be reported.
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
 
-% DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL unexpected error in bind service sockets.
-This is an error message indicating a programmatic error that should not occur.
-It prohibits the server from attempting to bind to its service sockets if they
-are unavailable, and the server exits. This error should be reported.
-
-% DHCP6_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
-This error indicates that the server failed to bind service sockets after making
-the maximum configured number of reconnect attempts. This might cause the server
-to shut down as specified in the configuration.
-
 % DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST created name change request: %1
 This debug message is logged when the new NameChangeRequest has been created
 to perform the DNS Update, which adds new RRs.
@@ -373,6 +363,11 @@ or released leases), but the response will not be send to the client.
 The argument includes the client and transaction identification
 information.
 
+% DHCP6_HOOK_DDNS_UPDATE A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
+This message indicates that there was a hook called on ddns6_update hook point
+and that hook updated the DDNS update parameters: hostname, or whether to
+conduct forward (A record) or reverse (PTR record) DDNS updates.
+
 % DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set next step to DROP, dropping packet.
 This message indicates that the server received DECLINE message, it was verified
 to be correct and matching server's lease information. The server called hooks
@@ -443,11 +438,6 @@ point, the setting of the value by a callout instructs the server to
 not build the wire data (pack) because it was already done by the
 book. The argument specifies the client and transaction identification
 information.
-
-% DHCP6_HOOK_DDNS_UPDATE A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
-This message indicates that there was a hook called on ddns6_update hook point
-and that hook updated the DDNS update parameters: hostname, or whether to
-conduct forward (A record) or reverse (PTR record) DDNS updates.
 
 % DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on the
@@ -563,6 +553,16 @@ configured to receive the traffic.
 % DHCP6_OPEN_SOCKET opening service sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
+
+% DHCP6_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of reconnect attempts. This might cause the server
+to shut down as specified in the configuration.
+
+% DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL unexpected error in bind service sockets.
+This is an error message indicating a programmatic error that should not occur.
+It prohibits the server from attempting to bind to its service sockets if they
+are unavailable, and the server exits. This error should be reported.
 
 % DHCP6_OPEN_SOCKET_FAIL failed to open socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
