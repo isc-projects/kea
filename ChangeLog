@@ -3,8 +3,8 @@ Kea 2.1.5 (development) released on Apr 27, 2022
 2015.	[bug]		tmark
 	Fixed an issue in kea-dhcp6 that was causing the server
 	not to update the FQDN option in outbound responses when
-	the ddsn-tuning hook lib calculates a new host name.
-	(Gitlba #2392)
+	the ddns-tuning hook lib calculates a new host name.
+	(Gitlab #2392)
 
 2014.	[bug]		tmark
 	Correct an issue that was causing reconfigure to fail
