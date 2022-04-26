@@ -1,5 +1,11 @@
 Kea 2.1.5 (development) released on Apr 27, 2022
 
+2014.	[bug]		tmark
+	Correct an issue that was causing reconfigure to fail
+	in kea-dhcp4 and kea-dhcp6 when using ddns-tuning hook
+	library.
+	(Gitlab #2390)
+
 2013.	[build]		razvan
 	Library version numbers bumped for Kea 2.1.5 development
 	version.

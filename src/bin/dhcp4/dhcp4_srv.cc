@@ -2105,9 +2105,15 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         // earlier.
         if (HooksManager::calloutsPresent(Hooks.hook_index_ddns4_update_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
-            Subnet4Ptr subnet = ex.getContext()->subnet_;
+
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Setup the callout arguments.
+            Subnet4Ptr subnet = ex.getContext()->subnet_;
             callout_handle->setArgument("query4", query);
             callout_handle->setArgument("response4", resp);
             callout_handle->setArgument("subnet4", subnet);

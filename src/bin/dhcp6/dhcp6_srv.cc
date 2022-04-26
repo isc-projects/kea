@@ -1944,9 +1944,15 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     // earlier.
     if (HooksManager::calloutsPresent(Hooks.hook_index_ddns6_update_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
-        Subnet6Ptr subnet = ctx.subnet_;
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Setup the callout arguments.
+        Subnet6Ptr subnet = ctx.subnet_;
         callout_handle->setArgument("query6", question);
         callout_handle->setArgument("response6", answer);
         callout_handle->setArgument("subnet6", subnet);
