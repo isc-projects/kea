@@ -1981,7 +1981,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
                       .arg(ctx.rev_dns_update_).arg(hook_rev_dns_update);
 
             // Update the FQDN option in the response.
-            fqdn_resp = boost::dynamic_pointer_cast<Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
+            fqdn_resp = boost::dynamic_pointer_cast<Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
             if (fqdn) {
                 fqdn_resp->setDomainName(hook_hostname, Option6ClientFqdn::FULL);
             }
