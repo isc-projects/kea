@@ -32,7 +32,7 @@ Kea 2.1.5 (development) released on Apr 27, 2022
 2009.	[func]		tmark
 	Added new hook callout points: ddns4_udpate to Kea DHCPv4
 	server and ddns6_update to Kea DHCPv6 server. This enables
-	use of the ddsn-tuning hook library.
+	use of the ddns-tuning hook library.
 	(Gitlab #1548)
 
 2008.	[func]*		tomek
