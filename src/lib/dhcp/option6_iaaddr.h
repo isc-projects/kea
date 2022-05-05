@@ -55,7 +55,7 @@ public:
     /// byte after stored option.
     ///
     /// @param buf pointer to a buffer
-    void pack(isc::util::OutputBuffer& buf) const;
+    void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///

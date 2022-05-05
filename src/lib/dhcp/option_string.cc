@@ -71,9 +71,9 @@ OptionString::len() const {
 }
 
 void
-OptionString::pack(isc::util::OutputBuffer& buf) const {
+OptionString::pack(isc::util::OutputBuffer& buf, bool check) const {
     // Pack option header.
-    packHeader(buf);
+    packHeader(buf, check);
     // Pack data.
     const OptionBuffer& data = getData();
     buf.writeData(&data[0], data.size());

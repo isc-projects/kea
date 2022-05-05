@@ -54,7 +54,7 @@ Option6IA::clone() const {
     return (cloneInternal<Option6IA>());
 }
 
-void Option6IA::pack(isc::util::OutputBuffer& buf) const {
+void Option6IA::pack(isc::util::OutputBuffer& buf, bool) const {
     buf.writeUint16(type_);
     buf.writeUint16(len() - OPTION6_HDR_LEN);
     buf.writeUint32(iaid_);

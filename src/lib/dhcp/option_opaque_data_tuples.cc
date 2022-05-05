@@ -33,13 +33,15 @@ OptionOpaqueDataTuples::clone() const {
 }
 
 void
-OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) const {
-    packHeader(buf);
+OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf, bool check) const {
+    packHeader(buf, check);
 
     for (TuplesCollection::const_iterator it = tuples_.begin();
          it != tuples_.end(); ++it) {
         it->pack(buf);
     }
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

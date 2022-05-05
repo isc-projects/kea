@@ -87,7 +87,7 @@ public:
     /// is moved to the end of stored data.
     ///
     /// @param [out] buf output buffer where the option will be stored.
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Decodes option data from the provided buffer.
     ///

@@ -46,7 +46,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///
@@ -100,13 +100,11 @@ public:
     }
 
 private:
-
     /// @brief Numeric status code.
     uint16_t status_code_;
 
     /// @brief Textual message.
     std::string status_message_;
-
 };
 
 /// The SLP Service Scope option has a similar layout...
@@ -142,7 +140,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///
@@ -194,13 +192,11 @@ public:
     }
 
 private:
-
     /// @brief Mandatory flag.
     bool mandatory_flag_;
 
     /// @brief Scope list.
     std::string scope_list_;
-
 };
 
 } // isc::dhcp namespace

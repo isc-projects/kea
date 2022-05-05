@@ -241,9 +241,11 @@ public:
     /// another).
     ///
     /// @param buf pointer to a buffer
+    /// @param check flag which indicates if checking the option length is
+    /// required (used in V4 only)
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///
@@ -350,7 +352,8 @@ public:
     ///
     /// @warning This function returns a reference to the container holding
     /// encapsulated options, which is valid as long as the object which
-    /// returned it exists.
+    /// returned it exists. Any changes to the container will be reflected
+    /// in the option content.
     OptionCollection& getMutableOptions() {
         return (options_);
     }
@@ -513,7 +516,7 @@ protected:
     /// directly by other classes.
     ///
     /// @param [out] buf output buffer.
-    void packHeader(isc::util::OutputBuffer& buf) const;
+    void packHeader(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Store sub options in a buffer.
     ///
@@ -528,7 +531,7 @@ protected:
     /// exceptions thrown by pack methods invoked on objects
     /// representing sub options. We should consider whether to aggregate
     /// those into one exception which can be documented here.
-    void packOptions(isc::util::OutputBuffer& buf) const;
+    void packOptions(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Builds a collection of sub options from the buffer.
     ///

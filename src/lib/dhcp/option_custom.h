@@ -342,7 +342,7 @@ public:
     /// @brief Writes DHCP option in a wire format to a buffer.
     ///
     /// @param buf output buffer (option will be stored there).
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///

@@ -33,22 +33,22 @@ OptionPtr
 Option::factory(Option::Universe u,
         uint16_t type,
         const OptionBuffer& buf) {
-    return(LibDHCP::optionFactory(u, type, buf));
+    return (LibDHCP::optionFactory(u, type, buf));
 }
 
 Option::Option(Universe u, uint16_t type)
-    :universe_(u), type_(type) {
+    : universe_(u), type_(type) {
     check();
 }
 
 Option::Option(Universe u, uint16_t type, const OptionBuffer& data)
-    :universe_(u), type_(type), data_(data) {
+    : universe_(u), type_(type), data_(data) {
     check();
 }
 
 Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
                OptionBufferConstIter last)
-    :universe_(u), type_(type), data_(first, last) {
+    : universe_(u), type_(type), data_(first, last) {
     check();
 }
 
@@ -104,26 +104,23 @@ Option::check() const {
     // both types and data size.
 }
 
-void Option::pack(isc::util::OutputBuffer& buf) const {
+void Option::pack(isc::util::OutputBuffer& buf, bool check) const {
     // Write a header.
-    packHeader(buf);
+    packHeader(buf, check);
     // Write data.
     if (!data_.empty()) {
         buf.writeData(&data_[0], data_.size());
     }
     // Write sub-options.
-    packOptions(buf);
+    packOptions(buf, check);
 }
 
 void
-Option::packHeader(isc::util::OutputBuffer& buf) const {
+Option::packHeader(isc::util::OutputBuffer& buf, bool check) const {
     if (universe_ == V4) {
-        if (len() > 255) {
+        if (check && len() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
                       << "At most 255 bytes are supported.");
-            /// TODO Larger options can be stored as separate instances
-            /// of DHCPv4 options. Clients MUST concatenate them.
-            /// Fortunately, there are no such large options used today.
         }
 
         buf.writeUint8(type_);
@@ -136,10 +133,10 @@ Option::packHeader(isc::util::OutputBuffer& buf) const {
 }
 
 void
-Option::packOptions(isc::util::OutputBuffer& buf) const {
+Option::packOptions(isc::util::OutputBuffer& buf, bool check) const {
     switch (universe_) {
     case V4:
-        LibDHCP::packOptions4(buf, options_);
+        LibDHCP::packOptions4(buf, options_, false, check);
         return;
     case V6:
         LibDHCP::packOptions6(buf, options_);
@@ -237,7 +234,7 @@ std::string Option::toText(int indent) const {
             output << ":";
         }
         output << setfill('0') << setw(2) << hex
-            << static_cast<unsigned short>(data_[i]);
+               << static_cast<unsigned short>(data_[i]);
     }
 
     // Append suboptions.
@@ -256,9 +253,9 @@ std::vector<uint8_t>
 Option::toBinary(const bool include_header) const {
     OutputBuffer buf(len());
     try {
-        // If the option is too long, exception will be thrown. We allow
-        // for this exception to propagate to not mask this error.
-        pack(buf);
+        // The RFC3396 adds support for long options split over multiple options
+        // using the same code.
+        pack(buf, false);
 
     } catch (const std::exception &ex) {
         isc_throw(OutOfRange, "unable to obtain hexadecimal representation"
@@ -302,7 +299,7 @@ Option::headerToText(const int indent, const std::string& type_name) const {
     }
 
     output << ", len=" << std::setw(field_len) << std::setfill('0')
-           << len()-getHeaderLen();
+           << len() - getHeaderLen();
     return (output.str());
 }
 
@@ -373,12 +370,11 @@ bool Option::equals(const OptionPtr& other) const {
 }
 
 bool Option::equals(const Option& other) const {
-    return ( (getType() == other.getType()) &&
-             (getData() == other.getData()) );
+    return ((getType() == other.getType()) &&
+            (getData() == other.getData()));
 }
 
 Option::~Option() {
-
 }
 
 bool Option::lenient_parsing_;

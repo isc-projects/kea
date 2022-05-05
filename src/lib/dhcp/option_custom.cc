@@ -455,10 +455,10 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
 }
 
 void
-OptionCustom::pack(isc::util::OutputBuffer& buf) const {
+OptionCustom::pack(isc::util::OutputBuffer& buf, bool check) const {
 
     // Pack DHCP header (V4 or V6).
-    packHeader(buf);
+    packHeader(buf, check);
 
     // Write data from buffers.
     for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
@@ -472,7 +472,7 @@ OptionCustom::pack(isc::util::OutputBuffer& buf) const {
     }
 
     // Write suboptions.
-    packOptions(buf);
+    packOptions(buf, check);
 }
 
 

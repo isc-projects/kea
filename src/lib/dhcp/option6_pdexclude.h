@@ -64,7 +64,7 @@ public:
     /// section 4.2 of RFC 6603.
     ///
     /// @param [out] buf Pointer to a buffer.
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///

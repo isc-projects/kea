@@ -50,7 +50,7 @@ public:
     /// @brief Assembles on-wire form of this option
     ///
     /// @param buf pointer to packet buffer
-    void pack(isc::util::OutputBuffer& buf) const;
+    void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received data
     ///

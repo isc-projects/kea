@@ -88,7 +88,7 @@ public:
     /// Method will throw if option storing fails for some reason.
     ///
     /// @param buf output buffer (option will be stored there)
-    virtual void pack(isc::util::OutputBuffer& buf) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// Returns string representation of the option.
     ///

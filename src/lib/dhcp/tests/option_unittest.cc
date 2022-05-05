@@ -207,8 +207,8 @@ TEST_F(OptionTest, v4_toHexString) {
     opt_too_long.addOption(sub1);
     opt_too_long.addOption(sub2);
 
-    // The toHexString() should throw exception.
-    EXPECT_THROW(opt_too_long.toHexString(), isc::OutOfRange);
+    // The toHexString() should not throw exception.
+    EXPECT_NO_THROW(opt_too_long.toHexString());
 }
 
 // Tests simple constructor

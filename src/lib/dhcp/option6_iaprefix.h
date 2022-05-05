@@ -85,7 +85,7 @@ public:
     /// @throw BadValue if the address is not IPv6
     ///
     /// @param buf pointer to a buffer
-    void pack(isc::util::OutputBuffer& buf) const;
+    void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
     ///

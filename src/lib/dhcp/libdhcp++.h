@@ -192,14 +192,19 @@ public:
     /// defaults to false.
     static void packOptions4(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options,
-                             bool top = false);
+                             bool top = false, bool check = true);
 
     /// @brief Split long options in multiple options with the same option code
     /// (RFC3396).
     ///
     /// @param options The option container which needs to be updated with split
     /// options.
-    static void splitOptions4(isc::dhcp::OptionCollection& options);
+    /// @param used The size of the buffer that has already been used by the
+    /// parent option effectively shrinking the maximum supported length for
+    /// each options in the container.
+    /// @return True if any option has been split, false otherwise.
+    static bool splitOptions4(isc::dhcp::OptionCollection& options,
+                              uint32_t used = 0);
 
     /// @brief Stores DHCPv6 options in a buffer.
     ///

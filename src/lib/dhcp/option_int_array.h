@@ -53,7 +53,7 @@ typedef boost::shared_ptr<OptionUint32Array> OptionUint32ArrayPtr;
 ///
 /// @param T data field type (see above).
 template<typename T>
-class OptionIntArray: public Option {
+class OptionIntArray : public Option {
 private:
 
     /// @brief Pointer to the option type for the specified T.
@@ -141,9 +141,9 @@ public:
     /// @throw isc::dhcp::InvalidDataType if size of a data fields type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
-    void pack(isc::util::OutputBuffer& buf) const {
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const {
         // Pack option header.
-        packHeader(buf);
+        packHeader(buf, check);
         // Pack option data.
         for (size_t i = 0; i < values_.size(); ++i) {
             // Depending on the data type length we use different utility functions

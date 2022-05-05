@@ -108,9 +108,9 @@ public:
     /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
-    void pack(isc::util::OutputBuffer& buf) const {
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const {
         // Pack option header.
-        packHeader(buf);
+        packHeader(buf, check);
         // Depending on the data type length we use different utility functions
         // writeUint16 or writeUint32 which write the data in the network byte
         // order to the provided buffer. The same functions can be safely used
@@ -129,7 +129,7 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        packOptions(buf);
+        packOptions(buf, check);
     }
 
     /// @brief Parses received buffer

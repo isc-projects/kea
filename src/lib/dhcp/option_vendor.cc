@@ -34,8 +34,8 @@ OptionVendor::clone() const {
     return (cloneInternal<OptionVendor>());
 }
 
-void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
-    packHeader(buf);
+void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
+    packHeader(buf, check);
 
     // Store vendor-id
     buf.writeUint32(vendor_id_);
@@ -48,7 +48,7 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
         buf.writeUint8(dataLen());
     }
 
-    packOptions(buf);
+    packOptions(buf, check);
 }
 
 void OptionVendor::unpack(OptionBufferConstIter begin,

@@ -403,7 +403,7 @@ Option6ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
+Option6ClientFqdn::pack(isc::util::OutputBuffer& buf, bool) const {
     // Header = option code and length.
     packHeader(buf);
     // Flags field.

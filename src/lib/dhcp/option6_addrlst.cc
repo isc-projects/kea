@@ -28,16 +28,16 @@ namespace isc {
 namespace dhcp {
 
 Option6AddrLst::Option6AddrLst(uint16_t type, const AddressContainer& addrs)
-    :Option(V6, type), addrs_(addrs) {
+    : Option(V6, type), addrs_(addrs) {
 }
 
 Option6AddrLst::Option6AddrLst(uint16_t type, const isc::asiolink::IOAddress& addr)
-    :Option(V6, type), addrs_(1,addr) {
+    : Option(V6, type), addrs_(1,addr) {
 }
 
 Option6AddrLst::Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
                                OptionBufferConstIter end)
-    :Option(V6, type) {
+    : Option(V6, type) {
     unpack(begin, end);
 }
 
@@ -61,8 +61,7 @@ Option6AddrLst::setAddresses(const AddressContainer& addrs) {
     addrs_ = addrs;
 }
 
-void Option6AddrLst::pack(isc::util::OutputBuffer& buf) const {
-
+void Option6AddrLst::pack(isc::util::OutputBuffer& buf, bool) const {
     buf.writeUint16(type_);
 
     // len() returns complete option length.
@@ -82,7 +81,7 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf) const {
 }
 
 void Option6AddrLst::unpack(OptionBufferConstIter begin,
-                        OptionBufferConstIter end) {
+                            OptionBufferConstIter end) {
     if ((distance(begin, end) % V6ADDRESS_LEN) != 0) {
         isc_throw(OutOfRange, "Option " << type_
                   << " malformed: len=" << distance(begin, end)

@@ -126,7 +126,7 @@ Option6PDExclude::clone() const {
 }
 
 void
-Option6PDExclude::pack(isc::util::OutputBuffer& buf) const {
+Option6PDExclude::pack(isc::util::OutputBuffer& buf, bool) const {
     // Make sure that the subnet identifier is valid. It should never
     // be empty.
     if ((excluded_prefix_length_ == 0) || subnet_id_.empty()) {

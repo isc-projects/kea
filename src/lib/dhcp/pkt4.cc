@@ -119,6 +119,11 @@ Pkt4::pack() {
 
         // The RFC3396 adds support for long options split over multiple options
         // using the same code.
+        // The long options are split in multiple CustomOption instances which
+        // hold the data. As a result, the option type of the newly created
+        // options will differ from the ones instanciated by the
+        // @ref OptionDefinition::optionFactory. At this stage the server should
+        // not do anything useful with the options beside packing.
         LibDHCP::splitOptions4(options_);
 
         // Call packOptions4() with parameter,"top", true. This invokes
@@ -136,7 +141,6 @@ Pkt4::pack() {
 
 void
 Pkt4::unpack() {
-
     // input buffer (used during message reception)
     isc::util::InputBuffer buffer_in(&data_[0], data_.size());
 
@@ -212,6 +216,10 @@ Pkt4::unpack() {
 
     // The RFC3396 adds support for multiple options using the same code fused
     // into long options.
+    // All instances of the same option are fused together, including merging
+    // the suboption lists and fusing suboptions. As a result, the options will
+    // store more than 255 bytes of data and the regex parsers can effectively
+    // access the entire data.
     LibDHCP::fuseOptions4(options_);
 
     // No need to call check() here. There are thorough tests for this

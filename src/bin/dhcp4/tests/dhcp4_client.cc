@@ -510,7 +510,7 @@ Dhcp4Client::receiveOneMsg() {
     msg->pack();
     Pkt4Ptr msg_copy(new Pkt4(static_cast<const uint8_t*>
                               (msg->getBuffer().getData()),
-                               msg->getBuffer().getLength()));
+                              msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(msg->getRemoteAddr());
     msg_copy->setRemotePort(msg->getLocalPort());

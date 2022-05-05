@@ -348,7 +348,7 @@ Option4ClientFqdn::Option4ClientFqdn(OptionBufferConstIter first,
 }
 
 Option4ClientFqdn::~Option4ClientFqdn() {
-    delete(impl_);
+    delete (impl_);
 }
 
 Option4ClientFqdn::Option4ClientFqdn(const Option4ClientFqdn& source)
@@ -484,9 +484,9 @@ Option4ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option4ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
+Option4ClientFqdn::pack(isc::util::OutputBuffer& buf, bool check) const {
     // Header = option code and length.
-    packHeader(buf);
+    packHeader(buf, check);
     // Flags field.
     buf.writeUint8(impl_->flags_);
     // RCODE1 and RCODE2
