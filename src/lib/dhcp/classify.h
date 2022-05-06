@@ -7,10 +7,12 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <boost/multi_index_container.hpp>
+
 #include <string>
 
 /// @file   classify.h
@@ -54,6 +56,10 @@ namespace dhcp {
             // Second index is the name hash one.
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<ClassNameTag>,
+                boost::multi_index::identity<ClientClass>
+            >,
+            // Third index orders lexicographically.
+            boost::multi_index::ordered_unique<
                 boost::multi_index::identity<ClientClass>
             >
         >
@@ -130,6 +136,14 @@ namespace dhcp {
             return (container_.end());
         }
         /// @}
+
+        /// @brief Returns an index that allows iteration through a sorted set
+        ///        of all the client classes.
+        ///
+        /// @return the index iterable through range-based for looping
+        ClientClassContainer::nth_index<2>::type const& sorted() const {
+            return container_.get<2>();
+        }
 
         /// @brief returns if class x belongs to the defined classes
         ///
