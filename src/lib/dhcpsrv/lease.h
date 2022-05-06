@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,17 +11,12 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/subnet_id.h>
 #include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Unique identifier for a subnet (both v4 and v6)
-///
-/// Let's copy SubnetID definition from subnet.h. We can't include it directly,
-/// because subnet.h needs Lease::Type, so it includes lease.h
-typedef uint32_t SubnetID;
 
 struct Lease;
 
