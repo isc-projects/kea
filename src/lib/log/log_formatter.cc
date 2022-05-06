@@ -29,19 +29,17 @@ replacePlaceholder(std::string& message, const string& arg,
             message.replace(pos, mark.size(), arg);
             pos = message.find(mark, pos + arg.size());
         } while (pos != string::npos);
-    }
+    } else {
 #ifdef ENABLE_LOGGER_CHECKS
-    else {
         // We're missing the placeholder, so throw an exception
-        isc_throw(MismatchedPlaceholders,
-                  "Missing logger placeholder in message: " << message);
-    }
+        isc_throw(MismatchedPlaceholders, "Missing logger placeholder '" << mark << "' for value '"
+                                                                         << arg << "' in message '"
+                                                                         << message << "'");
 #else
-    else {
         // We're missing the placeholder, so add some complain
-        message.append(" @@Missing placeholder " + mark + " for '" + arg + "'@@");
-    }
+        message.append(" @@Missing placeholder '" + mark + "' for value '" + arg + "'@@");
 #endif /* ENABLE_LOGGER_CHECKS */
+    }
 }
 
 void
@@ -57,10 +55,11 @@ checkExcessPlaceholders(std::string& message,
 #ifdef ENABLE_LOGGER_CHECKS
         // Also, make sure we print the message so we can identify which
         // identifier has the problem.
-        cerr << "Message " << message << endl;
-        assert("Excess logger placeholders still exist in message" == NULL);
+        cerr << "Excess logger placeholder '" << mark << "' still exists in message '" << message
+             << "'." << endl;
+        assert(false);
 #else
-        message.append(" @@Excess logger placeholders still exist@@");
+        message.append(" @@Excess logger placeholder " + mark + " still exists@@");
 #endif /* ENABLE_LOGGER_CHECKS */
     }
 }
