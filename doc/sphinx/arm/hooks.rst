@@ -3586,7 +3586,6 @@ following:
 The ``network6-subnet-del`` command uses exactly the same syntax for
 both the command and the response.
 
-
 .. include:: hooks-bootp.rst
 .. include:: hooks-class-cmds.rst
 .. include:: hooks-cb-cmds.rst
@@ -3597,6 +3596,7 @@ both the command and the response.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-run-script.rst
 .. include:: hooks-ddns-tuning.rst
+.. include:: hooks-limits.rst
 .. include:: hooks-rbac.rst
 
 .. _user-context-hooks:
