@@ -68,6 +68,7 @@ namespace dhcp {
 
         /// @brief Type of iterators
         typedef ClientClassContainer::const_iterator const_iterator;
+        typedef ClientClassContainer::iterator iterator;
 
         /// @brief Default constructor.
         ClientClasses() : container_() {
@@ -104,15 +105,31 @@ namespace dhcp {
             return (container_.size());
         }
 
-        /// @brief Iterator to the first element.
+        /// @brief Iterators to the first element.
+        /// @{
         const_iterator cbegin() const {
             return (container_.cbegin());
         }
+        const_iterator begin() const {
+            return (container_.begin());
+        }
+        iterator begin() {
+            return (container_.begin());
+        }
+        /// @}
 
-        /// @brief Iterator to the past the end element.
+        /// @brief Iterators to the past the end element.
+        /// @{
         const_iterator cend() const {
             return (container_.cend());
         }
+        const_iterator end() const {
+            return (container_.end());
+        }
+        iterator end() {
+            return (container_.end());
+        }
+        /// @}
 
         /// @brief returns if class x belongs to the defined classes
         ///
