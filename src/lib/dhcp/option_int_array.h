@@ -51,7 +51,7 @@ typedef boost::shared_ptr<OptionUint32Array> OptionUint32ArrayPtr;
 /// allow addition of sub-options but they will be ignored during
 /// packing and unpacking option data.
 ///
-/// @param T data field type (see above).
+/// @tparam T data field type (see above).
 template<typename T>
 class OptionIntArray : public Option {
 private:

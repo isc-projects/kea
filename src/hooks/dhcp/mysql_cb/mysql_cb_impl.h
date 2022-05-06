@@ -644,7 +644,7 @@ public:
 
     /// @brief Creates input binding for user context parameter.
     ///
-    /// @param T Type of the configuration element to which context belongs.
+    /// @tparam T Type of the configuration element to which context belongs.
     /// @param network Pointer to a shared network, subnet or other configuration
     /// element for which binding should be created.
     /// @return Pointer to the binding (possibly null binding if context is

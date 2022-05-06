@@ -159,5 +159,25 @@ ScopedCalloutHandleState::resetState() {
     callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 }
 
+template <>
+char const* queryArgument<isc::util::DHCPv4>() {
+    return "query4";
+}
+
+template <>
+char const* queryArgument<isc::util::DHCPv6>() {
+    return "query6";
+}
+
+template <>
+char const* subnetArgument<isc::util::DHCPv4>() {
+    return "subnet4";
+}
+
+template <>
+char const* subnetArgument<isc::util::DHCPv6>() {
+    return "subnet6";
+}
+
 } // namespace hooks
 } // namespace isc

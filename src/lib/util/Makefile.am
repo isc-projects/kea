@@ -11,6 +11,7 @@ libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc
 libkea_util_la_SOURCES += buffer.h io_utilities.h
 libkea_util_la_SOURCES += chrono_time_utils.h chrono_time_utils.cc
 libkea_util_la_SOURCES += csv_file.h csv_file.cc
+libkea_util_la_SOURCES += dhcp_space.cc dhcp_space.h
 libkea_util_la_SOURCES += doubles.h
 libkea_util_la_SOURCES += file_utilities.h file_utilities.cc
 libkea_util_la_SOURCES += filename.h filename.cc
@@ -59,6 +60,7 @@ libkea_util_include_HEADERS = \
 	boost_time_utils.h \
 	buffer.h \
 	csv_file.h \
+	dhcp_space.h \
 	doubles.h \
 	file_utilities.h \
 	filename.h \

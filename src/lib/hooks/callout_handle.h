@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <hooks/library_handle.h>
 #include <hooks/parking_lots.h>
+#include <util/dhcp_space.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
@@ -500,6 +501,12 @@ private:
     /// @brief Holds pointer to the wrapped callout handle.
     CalloutHandlePtr callout_handle_;
 };
+
+template <isc::util::DhcpSpace D>
+char const* queryArgument();
+
+template <isc::util::DhcpSpace D>
+char const* subnetArgument();
 
 } // namespace hooks
 } // namespace isc

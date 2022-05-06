@@ -44,7 +44,7 @@ typedef boost::shared_ptr<OptionUint32> OptionUint32Ptr;
 /// - int16_t,
 /// - int32_t.
 ///
-/// @param T data field type (see above).
+/// @tparam T data field type (see above).
 template<typename T>
 class OptionInt: public Option {
 private:
