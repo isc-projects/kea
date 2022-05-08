@@ -36,14 +36,16 @@ enum HashAlgorithm {
 
 };
 
-// Forward declaration for createHash()
+/// \brief Forward declaration for createHash()
 class Hash;
 
-// Forward declaration for createHMAC()
+/// \brief Forward declaration for createHMAC()
 class HMAC;
 
-// Forward declaration for getRNG()
+/// \brief Forward declaration for getRNG()
 class RNG;
+
+/// \brief Type representing the pointer to the RNG.
 typedef boost::shared_ptr<RNG> RNGPtr;
 
 /// General exception class that is the base for all crypto-related
@@ -88,8 +90,13 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// Forward declarations for pimpl
+/// \brief Forward declarations for CryptoLink pimpl.
 class CryptoLinkImpl;
+
+/// \brief Type representing the pointer to the CryptoLinkImpl.
+typedef boost::shared_ptr<CryptoLinkImpl> CryptoLinkImplPtr;
+
+/// \brief Forward declarations for RNG pimpl.
 class RNGImpl;
 
 /// \brief Singleton entry point and factory class
@@ -100,10 +107,7 @@ class RNGImpl;
 ///
 /// There is only one way to access it, through getCryptoLink(), which
 /// returns a reference to the initialized library. On the first call,
-/// it will be initialized automatically. You can however initialize it
-/// manually through a call to initialize(), before your first call
-/// to getCryptoLink. Any subsequent call to initialize() will be a
-/// noop.
+/// it will be initialized automatically.
 ///
 /// In order for the CryptoLink library to be sure that the underlying
 /// library has been initialized, and because we do not want to add
@@ -144,19 +148,6 @@ public:
     ///
     /// \return Reference to the singleton instance
     static CryptoLink& getCryptoLink();
-
-    /// \brief Initialize the library manually
-    ///
-    /// If the library has already been initialized (either by a call
-    /// to initialize() or automatically in getCryptoLink()), this
-    /// function does nothing.
-    ///
-    /// \note A call to initialize() is not strictly necessary with
-    /// the current implementation.
-    ///
-    /// \exception InitializationError if initialization fails
-    ///
-    static void initialize();
 
     /// \brief Get version string
     static std::string getVersion();
@@ -223,16 +214,28 @@ public:
     virtual RNGPtr& getRNG();
 
 private:
-    // To enable us to use an optional explicit initialization call,
-    // the 'real' instance getter is private
-    static CryptoLink& getCryptoLinkInternal();
+    /// \brief Initialize the library
+    ///
+    /// If the library has already been initialized (either by a call
+    /// to initialize() or automatically in getCryptoLink()), this
+    /// function does nothing.
+    ///
+    /// \note A call to initialize() is not strictly necessary with
+    /// the current implementation.
+    ///
+    /// \exception InitializationError if initialization fails
+    ///
+    /// \param c the CryptoLink singleton instance which is being initialized.
+    void initialize(CryptoLink& c);
 
     // To prevent people constructing their own, we make the constructor
     // private too.
-    CryptoLink() : impl_(NULL) {}
+    CryptoLink() : impl_(NULL) {
+        initialize(*this);
+    }
     ~CryptoLink();
 
-    CryptoLinkImpl* impl_;
+    CryptoLinkImplPtr impl_;
 
     RNGPtr rng_;
 };

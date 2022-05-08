@@ -15,29 +15,18 @@ namespace cryptolink {
 
 CryptoLink&
 CryptoLink::getCryptoLink() {
-    CryptoLink& c = getCryptoLinkInternal();
-    if (c.impl_ == NULL) {
-        c.initialize();
-    }
-    return (c);
-}
-
-CryptoLink&
-CryptoLink::getCryptoLinkInternal() {
     static CryptoLink instance;
     return (instance);
 }
 
 Hash*
-CryptoLink::createHash(const HashAlgorithm hash_algorithm)
-{
+CryptoLink::createHash(const HashAlgorithm hash_algorithm) {
     return (new Hash(hash_algorithm));
 }
 
 HMAC*
 CryptoLink::createHMAC(const void* secret, size_t secret_len,
-                       const HashAlgorithm hash_algorithm)
-{
+                       const HashAlgorithm hash_algorithm) {
     return (new HMAC(secret, secret_len, hash_algorithm));
 }
 

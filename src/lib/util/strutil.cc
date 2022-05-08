@@ -309,6 +309,7 @@ decodeFormattedHexString(const std::string& hex_string,
 
 class StringSanitizerImpl {
 public:
+    /// @brief Constructor.
     StringSanitizerImpl(const std::string& char_set, const std::string& char_replacement)
         : char_set_(char_set), char_replacement_(char_replacement) {
         if (char_set.size() > StringSanitizer::MAX_DATA_SIZE) {
@@ -440,7 +441,6 @@ StringSanitizer::StringSanitizer(const std::string& char_set,
 }
 
 StringSanitizer::~StringSanitizer() {
-    delete impl_;
 }
 
 std::string

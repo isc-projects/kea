@@ -24,7 +24,6 @@ class CryptoLinkImpl {
 };
 
 CryptoLink::~CryptoLink() {
-    delete impl_;
 }
 
 /// \brief Botan implementation of RNG.
@@ -56,11 +55,10 @@ private:
 };
 
 void
-CryptoLink::initialize() {
-    CryptoLink& c = getCryptoLinkInternal();
+CryptoLink::initialize(CryptoLink& c) {
     if (!c.impl_) {
         try {
-            c.impl_ = new CryptoLinkImpl();
+            c.impl_.reset(new CryptoLinkImpl());
         } catch (const Botan::Exception& ex) {
             isc_throw(InitializationError, "Botan error: " << ex.what());
         }
