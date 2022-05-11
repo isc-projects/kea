@@ -6,7 +6,7 @@
 
 #include <openssl/opensslv.h>
 
-#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (LIBRESSL_VERSION_NUMBER < 0x3050200fL) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
 
 // This file is included by hash and hmac codes so KEA_H* macros
 // avoid to define unused inlines.
