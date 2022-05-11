@@ -12,7 +12,7 @@
         "    }",
         "}"
     ],
-    "description": "See <xref linkend=\"idp76\"/>",
+    "description": "See <xref linkend=\"command-network4-del\"/>",
     "hook": "subnet_cmds",
     "name": "network4-del",
     "resp-syntax": [

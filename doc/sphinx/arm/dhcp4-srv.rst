@@ -4687,7 +4687,7 @@ Kea can store host reservations in MySQL or PostgreSQL.
 See :ref:`hosts4-storage` for information on how to
 configure Kea to use reservations stored in MySQL or PostgreSQL.
 Kea provides a dedicated hook for managing reservations in a
-database; section :ref:`host-cmds` provides detailed information.
+database; section :ref:`hooks-host-cmds` provides detailed information.
 The `Kea wiki
 <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
@@ -5297,7 +5297,7 @@ reservations for the same IP address within a particular subnet, to avoid
 having two different clients compete for the same address.
 When using the default settings, the server returns a configuration error
 when it finds two or more reservations for the same IP address within
-a subnet in the Kea configuration file. The :ref:`host-cmds` hook
+a subnet in the Kea configuration file. The :ref:`hooks-host-cmds` hook
 library returns an error in response to the ``reservation-add`` command
 when it detects that the reservation exists in the database for the IP
 address for which the new reservation is being added.
@@ -6885,7 +6885,7 @@ parameters must be specified in the JSON configuration file, if
 required.
 
 All supported parameters can be configured via the ``cb_cmds`` hook library
-described in the :ref:`cb-cmds-library` section. The general rule is that
+described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 ``remote-global-parameter4-set``; shared-network-specific parameters
 are set using ``remote-network4-set``; and subnet- and pool-level
@@ -7118,7 +7118,7 @@ fail.
 
 The second hook library, ``libdhcp_cb_cmds.so``, is optional. It should
 be loaded when the Kea server instance is to be used to manage the
-configuration in the database. See the :ref:`cb-cmds-library` section for
+configuration in the database. See the :ref:`hooks-cb-cmds` section for
 details. This hook library is only available to ISC
 customers with a paid support contract.
 

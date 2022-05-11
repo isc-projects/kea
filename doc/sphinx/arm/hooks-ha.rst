@@ -1,4 +1,4 @@
-.. _high-availability-library:
+.. _hooks-high-availability:
 
 ``ha``: High Availability
 =========================

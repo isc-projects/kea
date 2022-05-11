@@ -12,7 +12,7 @@
         "    \"command\": \"network4-list\"",
         "}"
     ],
-    "description": "See <xref linkend=\"command-networkX-list\"/>",
+    "description": "See <xref linkend=\"command-network6-list\"/>",
     "hook": "subnet_cmds",
     "name": "network6-list",
     "resp-syntax": [

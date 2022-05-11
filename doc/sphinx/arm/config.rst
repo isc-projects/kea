@@ -192,11 +192,11 @@ which is DHCPv6 only.
 
 User context can be added and edited in structures supported by commands.
 
-We encourage Kea users to utilize these functions to store information 
+We encourage Kea users to utilize these functions to store information
 used by other systems and custom hooks.
 
 For example, the `subnet4-update` command can be used to add user context data
-to an existing subnet. 
+to an existing subnet.
 
 ::
 
@@ -205,11 +205,11 @@ to an existing subnet.
       "subnet": "10.20.30.0/24",
       "user-context": {
          "building": "Main"
-         "floor": 1 
+         "floor": 1
          }
     } ]
 
-The same can be done with manyu other commands like lease6-add etc.
+The same can be done with many other commands like lease6-add etc.
 
 Kea also uses user context to store non-standard data.
 Currently, only :ref:`dhcp4-store-extended-info` uses this feature.

@@ -1,7 +1,7 @@
-.. _cb-cmds-library:
+.. _hooks-cb-cmds:
 
-cb_cmds: Configuration Backend Commands
-=======================================
+``cb_cmds``: Configuration Backend Commands
+===========================================
 
 This section describes the ``cb_cmds`` hooks library, used to manage Kea
 servers' configurations in the Configuration Backends. This library must
@@ -30,58 +30,8 @@ support contract.
    Please read about :ref:`cb-limitations` before using the commands
    described in this section.
 
-Commands Structure
-~~~~~~~~~~~~~~~~~~
-
-There are 5 types of commands supported by this library:
-
--  ``del`` - delete the selected object from the database, e.g.
-   ``remote-global-parameter4-del``.
-
--  ``get`` - fetch the selected object from the database, e.g.
-   ``remote-subnet4-get``.
-
--  ``get-all`` - fetch all objects of the particular type from the
-   database, e.g. ``remote-option-def4-get-all``.
-
--  ``list`` - list all objects of the particular type in the database,
-   e.g. ``remote-network4-list``; this class of commands returns brief
-   information about each object compared to the output of ``get-all``.
-
--  ``set`` - creates or replaces an object of the given type in the
-   database, e.g. ``remote-option4-global-set``.
-
-All types of commands accept an optional ``remote`` map which selects the
-database instance to which the command refers. For example:
-
-.. code-block:: json
-
-   {
-       "command": "remote-subnet4-list",
-       "arguments": {
-           "remote": {
-               "type": "mysql",
-               "host": "192.0.2.33",
-               "port": 3302
-           }
-       }
-   }
-
-The ``cb_cmds`` library is only available to ISC customers with a paid
-support contract.
-
-.. note::
-
-   This library may only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
-
-.. note::
-
-   Please read about :ref:`cb-limitations` before using the commands
-   described in this section.
-
-Commands Structure
-~~~~~~~~~~~~~~~~~~
+Command Structure
+~~~~~~~~~~~~~~~~~
 
 There are 5 types of commands supported by this library:
 
@@ -125,16 +75,29 @@ be specified, the parameter should be omitted. In this case, the server
 will use the first backend listed in the ``config-control`` map within
 the configuration of the server receiving the command.
 
+The ``cb_cmds`` library is only available to ISC customers with a paid
+support contract.
+
 .. note::
 
-   In the present Kea release, it is possible to configure the Kea server
-   to use only one configuration backend. Strictly speaking, it is
+   This library can only be loaded by the ``kea-dhcp4`` or
+   ``kea-dhcp6`` process.
+
+.. note::
+
+   Please read about :ref:`cb-limitations` before using the commands
+   described in this section.
+
+.. note::
+
+   In the current Kea release, it is only possible to configure the Kea server
+   to use a single configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one database (either MySQL or
-   PostgreSQL) using the ``config-control`` parameter. That's why the ``remote``
-   parameter may be omitted in the commands and the cb_cmds hooks library will
-   use the sole backend by default.  The example command below most often show a
-   value of "mysql" for the ``type`` parameter.  It should be assumed that a
-   value would be "postgresql" for installations using a PostgreSQL database.
+   PostgreSQL) using the ``config-control`` parameter. Therefore, the ``remote``
+   parameter may be omitted in the commands and the ``cb_cmds`` hook library
+   uses the sole backend by default.  The example commands below most often show a
+   value of "mysql" for the ``type`` parameter; it should be assumed that the
+   value is "postgresql" for installations using a PostgreSQL database.
 
 .. _cb-cmds-dhcp:
 
@@ -201,19 +164,19 @@ command, which includes the metadata:
 
 
 Client implementations must not assume that the metadata contains only
-the ``server-tags`` parameter. In future releases, this map will be
-extended with additional information, e.g. object modification time, log
-message created during the last modification, etc.
+the ``server-tags`` parameter. In future releases, it is expected that this
+map will be extended with additional information, e.g. object modification
+time, log message created during the last modification, etc.
 
 .. _command-remote-server4-del:
 .. _command-remote-server6-del:
 
-remote-server4-del, remote-server6-del commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-server4-del``, ``remote-server6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to delete the information about a selected DHCP server from
 the configuration database. The server is identified by a unique case
-insensitive server tag.  For example:
+insensitive server tag. For example:
 
 .. code-block:: json
 
@@ -231,25 +194,25 @@ insensitive server tag.  For example:
         }
     }
 
-As a result of this command, the user defined server called `server1` is removed
-from the database. All associations of the configuration information with this
-server are automatically removed from the database. The non-shareable
-configuration information, such as: global parameters, option definitions and
-global options associated with the server are removed from the database. The
-shareable configuration information, i.e. the configuration elements which may
+As a result of this command, all associations of the configuration for the
+user-defined server called "server1" are removed from the database, including
+non-shareable configuration information, such as global parameters, option
+definitions, and global options. Any shareable configuration information,
+i.e. the configuration elements which may
 be associated with more than one server, is preserved. In particular, the
 subnets and shared networks associated with the deleted servers are
 preserved. If any of the shareable configuration elements was associated only
-with the deleted server, this object becomes unassigned (orphaned).  For
-example: if a subnet has been created and associated with the `server1` using
-the `remote-subnet4-set` command and the server1 is subsequently deleted, the
-subnet remains in the database but none of the servers can use this subnet. The
-subnet can be updated using the `remote-subnet4-set` and associated with some
-other server or with all servers using the special server tag "all". Such subnet
-can be also deleted from the database using the `remote-subnet4-del-by-id` or
-`remote-subnet4-del-by-prefix`, if it is no longer needed.
+with the deleted server, this object becomes unassigned (orphaned). For
+example: if a subnet has been created and associated with "server1" using
+the ``remote-subnet4-set`` command and "server1" is subsequently deleted, the
+subnet remains in the database but no servers can use this subnet. The
+subnet can be updated using the ``remote-subnet4-set`` command, and can be
+associated with either another server or with all servers, using the special
+server tag "all". Such a subnet can be also deleted from the database
+using the ``remote-subnet4-del-by-id`` or
+``remote-subnet4-del-by-prefix`` command, if it is no longer needed.
 
-The following is the successful response to the `remote-server4-del` command:
+The following is the successful response to the ``remote-server4-del`` command:
 
 .. code-block:: json
 
@@ -264,8 +227,8 @@ The following is the successful response to the `remote-server4-del` command:
 
 .. note::
 
-   The `remote-server4-del` and `remote-server6-del` commands must be used with
-   care, because an accidental deletion of the server causes some parts of the
+   The ``remote-server4-del`` and ``remote-server6-del`` commands must be used with
+   care, because an accidental deletion of the server can cause some parts of the
    existing configurations to be lost permanently from the database. This
    operation is not reversible. Re-creation of the accidentally deleted server
    does not revert the lost configuration for that server and such configuration
@@ -274,11 +237,11 @@ The following is the successful response to the `remote-server4-del` command:
 .. _command-remote-server4-get:
 .. _command-remote-server6-get:
 
-remote-server4-get, remote-server6-get commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-server4-get``, ``remote-server6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to fetch the information about the selected DHCP server
-from the configuration database.  For example:
+from the configuration database. For example:
 
 .. code-block:: json
 
@@ -298,8 +261,8 @@ from the configuration database.  For example:
 
 
 This command fetches the information about the DHCPv6 server identified by the
-server tag `server1`. The server tag is case insensitive.  A successful response
-returns basic information about the server, such as server tag and the user's
+server tag "server1". The server tag is case-insensitive. A successful response
+returns basic information about the server, such as the server tag and the user's
 description of the server:
 
 .. code-block:: json
@@ -321,10 +284,10 @@ description of the server:
 .. _command-remote-server4-get-all:
 .. _command-remote-server6-get-all:
 
-remote-server4-get-all, remote-server6-get-all commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-server4-get-all``, ``remote-server6-get-all`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to fetch all user defined DHCPv4 or DHCPv6 servers from the
+This command is used to fetch all user-defined DHCPv4 or DHCPv6 servers from the
 database. The command structure is very simple:
 
 .. code-block:: json
@@ -364,18 +327,18 @@ tag and description:
 .. _command-remote-server4-set:
 .. _command-remote-server6-set:
 
-remote-server4-set, remote-server6-set commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-server4-set``, ``remote-server6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create or replace an information about a DHCP server in
 the database. The information about the server must be created when there is a
 need to differentiate the configurations used by various Kea instances
 connecting to the same database. Various configuration elements, e.g. global
-parameters, subnets etc. may be explicitly associated with the selected servers
+parameters, subnets, etc. may be explicitly associated with the selected servers
 (using server tags as identifiers), allowing only these servers to use the
 respective configuration elements. Using the particular server tag to make such
 associations is only possible when the server information has been stored in the
-database via the `remote-server4-set` or `remote-server6-set` commands. The
+database via the ``remote-server4-set`` or ``remote-server6-set`` commands. The
 following command creates a new (or updates an existing) DHCPv6 server in the
 database:
 
@@ -400,7 +363,7 @@ The server tag must be unique across all servers in the database. When the
 server information under the given server tag already exists, it is replaced
 with the new information. The specified server tag is case-insensitive, and the
 maximum length of the server tag is 256 characters. The following keywords are
-reserved and must not be used as server tags: "all" and "any".
+reserved and cannot be used as server tags: "all" and "any".
 
 The following is the example response to the above command:
 
@@ -424,12 +387,12 @@ The following is the example response to the above command:
 
 .. _command-remote-global-parameter6-del:
 
-The remote-global-parameter4-del, remote-global-parameter6-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-global-parameter4-del``, ``remote-global-parameter6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to delete a global DHCP parameter from the
 configuration database. When the parameter is deleted from the database,
-the server will use the value specified in the configuration file for
+the server uses the value specified in the configuration file for
 this parameter, or a default value if the parameter is not specified in
 the configuration file.
 
@@ -449,23 +412,22 @@ parameter common for all servers from the database:
        }
    }
 
-If the server specific parameter is to be deleted, the
-`server-tags` list must contain the tag of the appropriate
+If a server-specific parameter is to be deleted, the
+``server-tags`` list must contain the tag of the appropriate
 server. There must be exactly one server tag specified in this list.
-
 
 .. _command-remote-global-parameter4-get:
 
 .. _command-remote-global-parameter6-get:
 
-The remote-global-parameter4-get, remote-global-parameter6-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-global-parameter4-get``, ``remote-global-parameter6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch a scalar global DHCP parameter from the
 configuration database.
 
 The following command attempts to fetch the ``boot-file-name``
-parameter for the "server1":
+parameter for "server1":
 
 .. code-block:: json
 
@@ -505,10 +467,10 @@ In the case of the example above, the string value is returned, e.g.:
 
 
 Note that the response above indicates that the returned parameter is associated
-with "all" servers rather than "server1" used in the command. This indicates
-that there is no server1 specific value in the database. Therefore, the value
-shared by all servers is returned. If there was the server1 specific value
-in the database this value would be returned instead.
+with "all" servers rather than "server1", used in the command. This indicates
+that there is no "server1"-specific value in the database and therefore, the value
+shared by all servers is returned. If there were a "server1"-specific value
+in the database, that value would be returned instead.
 
 The example response for the integer value is:
 
@@ -571,8 +533,8 @@ Finally, the boolean value:
 
 .. _command-remote-global-parameter6-get-all:
 
-The remote-global-parameter4-get-all, remote-global-parameter6-get-all Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-global-parameter4-get-all``, ``remote-global-parameter6-get-all`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch all global DHCP parameters from the database
 for the specified server. The following example demonstrates how to fetch all
@@ -617,13 +579,13 @@ The example response may look as follows:
     }
 
 
-The example response contains two parameters, one string parameter and one
+The example response contains two parameters: one string parameter and one
 boolean parameter. The metadata returned for each parameter indicates
-if this parameter is specific to the "server1" or all servers. Since the
-`match-client-id` value is associated with "all" servers
-it indicates that there is no server1 specific setting for this parameter.
+whether this parameter is specific to "server1" or applies to all servers. Since the
+``match-client-id`` value is associated with "all" servers,
+it indicates that there is no "server1"-specific setting for this parameter.
 Each parameter always has exactly one server tag associated with it, because
-the global parameters are non-shareable configuration elements.
+global parameters are non-shareable configuration elements.
 
 .. note::
 
@@ -637,8 +599,8 @@ the global parameters are non-shareable configuration elements.
 
 .. _command-remote-global-parameter6-set:
 
-The remote-global-parameter4-set, remote-global-parameter6-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-global-parameter4-set``, ``remote-global-parameter6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create scalar global DHCP parameters in the
 database. If any of the parameters already exists, its value is replaced
@@ -664,16 +626,15 @@ integer, real, or boolean. For example:
        }
    }
 
-
 An error is returned if any of the parameters is not supported by the DHCP
 server or its type does not match. Care should be taken when multiple parameters
 are specified in a single command, because it is possible that only some of the
-parameters are stored successfully and some fail. If an error occurs when
+parameters will be stored successfully and some will fail. If an error occurs when
 processing this command, it is recommended to use
 ``remote-global-parameter[46]-get-all`` to check which of the parameters have
 been stored/updated successfully and which have failed.
 
-The `server-tags` list is mandatory and it must contain a single server tag or
+The ``server-tags`` list is mandatory and must contain a single server tag or
 the keyword "all". In the example above, all specified parameters are associated
 with the "server1" server.
 
@@ -681,8 +642,8 @@ with the "server1" server.
 
 .. _command-remote-network6-del:
 
-The remote-network4-del, remote-network6-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-network4-del``, ``remote-network6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to delete an IPv4 or IPv6 shared network from
 the database. The optional parameter ``subnets-action`` determines
@@ -716,14 +677,14 @@ they are disassociated from the deleted shared network and become
 global. This behavior corresponds to the behavior of the
 ``network[46]-del`` commands with respect to the ``subnets-action`` parameter.
 
-Note that the `server-tags` parameter must not be used for this command.
+Note that the ``server-tags`` parameter cannot be used for this command.
 
 .. _command-remote-network4-get:
 
 .. _command-remote-network6-get:
 
-The remote-network4-get, remote-network6-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-network4-get``, ``remote-network6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to retrieve information about an IPv4 or
 IPv6 shared network. The optional parameter ``subnets-include`` denotes
@@ -752,18 +713,18 @@ with the full information about the subnets belonging to it:
        }
    }
 
-Note that the `server-tags` parameter must not be used for this command.
+Note that the ``server-tags`` parameter cannot be used for this command.
 
 .. _command-remote-network4-list:
 
 .. _command-remote-network6-list:
 
-The remote-network4-list, remote-network6-list Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-network4-list``, ``remote-network6-list`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to list all IPv4 or IPv6 shared networks for a server.
 
-The following command retrieves all shared networks to be used by the
+The following command retrieves all shared networks to be used by
 "server1" and "server2":
 
 .. code-block:: json
@@ -778,10 +739,10 @@ The following command retrieves all shared networks to be used by the
         }
     }
 
-The `server-tags` parameter is mandatory and it contains one or more server
+The ``server-tags`` parameter is mandatory and contains one or more server
 tags. It may contain the keyword "all" to fetch the shared networks associated
-with all servers. When the `server-tags` list contains the
-`null` value the returned response contains a list of unassigned shared
+with all servers. When the ``server-tags`` list contains the
+``null`` value, the returned response contains a list of unassigned shared
 networks, i.e. the networks which are associated with no servers. For example:
 
 .. code-block:: json
@@ -830,18 +791,17 @@ looks similar to this:
     }
 
 The returned information about each shared network merely contains the shared
-network name and the metadata. In order to fetch the detailed information about
-the selected shared network, use the `remote-network[46]-get` command.
+network name and the metadata. To fetch detailed information about
+the selected shared network, use the ``remote-network[46]-get`` command.
 
 The example response above contains three shared networks. One of the
 shared networks is associated with all servers, so it is included in
 the list of shared networks to be used by "server1" and "server2".
 The remaining two shared networks are returned because one of them
-is associated with the "server1" and another one is associated with
-the "server2".
+is associated with "server1" and another one is associated with
+"server2".
 
-
-When listing unassigned shared networks, the response will look similar
+When listing unassigned shared networks, the response looks similar
 to this:
 
 .. code-block:: json
@@ -862,15 +822,15 @@ to this:
         }
     }
 
-The `null` value in the metadata indicates that the
+The ``null`` value in the metadata indicates that the
 returned shared network is unassigned.
 
 .. _command-remote-network4-set:
 
 .. _command-remote-network6-set:
 
-The remote-network4-set, remote-network6-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-network4-set``, ``remote-network6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands create a new or replace an existing IPv4 or IPv6 shared
 network in the database. The structure of the shared network information
@@ -878,10 +838,10 @@ is the same as in the Kea configuration file (see
 :ref:`shared-network4` and :ref:`shared-network6` for details),
 except that specifying subnets along with the shared
 network information is not allowed. Including the ``subnet4`` or ``subnet6`` parameter
-within the shared network information will result in an error.
+within the shared network information results in an error.
 
 These commands are intended to be used for managing the shared
-network-specific information and DHCP options. In order to associate and
+network-specific information and DHCP options. To associate and
 disassociate the subnets with the shared networks, the
 ``remote-subnet[46]-set`` commands should be used.
 
@@ -914,12 +874,12 @@ database:
 This command includes the ``interface`` parameter, which sets the shared
 network-level interface name. Any remaining shared network-level parameters,
 which are not specified with the command, will be marked as
-"unspecified" in the database. The DHCP server will use the global
+"unspecified" in the database. The DHCP server uses the global
 values for unspecified parameters or, if the global values are not
-specified, the default values will be used.
+specified, the default values are used.
 
-The `server-tags` list is mandatory for this command and it must include one or
-more server tags. As a result the shared network is associated with all listed
+The ``server-tags`` list is mandatory for this command and must include one or
+more server tags. As a result, the shared network is associated with all listed
 servers. The shared network may be associated with all servers connecting to the
 database when the keyword "all" is included.
 
@@ -937,8 +897,8 @@ database when the keyword "all" is included.
 
 .. _command-remote-option-def6-del:
 
-The remote-option-def4-del, remote-option-def6-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option-def4-del``, ``remote-option-def6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to delete a DHCP option definition from the
 database. The option definition is identified by an option code and
@@ -963,20 +923,20 @@ option space. For example:
    }
 
 
-deletes the definition of the option associated with the "server1", having the
+deletes the definition of the option associated with "server1", having the
 code of 1 and belonging to the option space "isc". The default option spaces are
-"dhcp4" and "dhcp6" for the DHCPv4 and DHCPv6 top level options respectively. If
-there is no such option explicitly associated with the server1, no option is
-deleted. In order to delete an option belonging to "all" servers, the keyword
-"all" must be used as the server tag. The `server-tags` list must contain exactly
-one tag. It must not include the `null` value.
+"dhcp4" and "dhcp6" for the DHCPv4 and DHCPv6 top-level options, respectively. If
+there is no such option explicitly associated with "server1", no option is
+deleted. To delete an option belonging to "all" servers, the keyword
+"all" must be used as the server tag. The ``server-tags`` list must contain exactly
+one tag and cannot include the ``null`` value.
 
 .. _command-remote-option-def4-get:
 
 .. _command-remote-option-def6-get:
 
-The remote-option-def4-get, remote-option-def6-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option-def4-get``, ``remote-option-def6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch a specified DHCP option definition from
 the database. The option definition is identified by the option code and
@@ -1004,18 +964,18 @@ servers, having the code of 1 and belonging to the option space "isc":
        }
    }
 
-The `server-tags` list must include exactly one server tag or the keyword
-"all". It must not contain the `null` value.
+The ``server-tags`` list must include exactly one server tag or the keyword
+"all", and cannot contain the `null` value.
 
 .. _command-remote-option-def4-get-all:
 
 .. _command-remote-option-def6-get-all:
 
-The remote-option-def4-get-all, remote-option-def6-get-all Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option-def4-get-all``, ``remote-option-def6-get-all`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch all DHCP option definitions from the database
-for the particular server or all servers. For example:
+for the given server or all servers. For example:
 
 .. code-block:: json
 
@@ -1029,11 +989,10 @@ for the particular server or all servers. For example:
         }
     }
 
-
 This command attempts to fetch all DHCPv6 option definitions associated
-with "all" servers. The `server-tags` list is mandatory for
-this command and it must include exactly one server tag or the keyword "all".
-It must not include the `null` value.</para>
+with "all" servers. The ``server-tags`` list is mandatory for
+this command and must include exactly one server tag or the keyword "all".
+It cannot include the ``null`` value.
 
 The following is the example response to this command:
 
@@ -1061,22 +1020,22 @@ The following is the example response to this command:
         }
     }
 
-The response contains an option definition associated with all servers as
+The response contains an option definition associated with all servers, as
 indicated by the metadata.
 
 .. _command-remote-option-def4-set:
 
 .. _command-remote-option-def6-set:
 
-The remote-option-def4-set, remote-option-def6-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option-def4-set``, ``remote-option-def6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands create a new DHCP option definition or replace an
 existing option definition in the database. The structure of the option
 definition information is the same as in the Kea configuration file (see
 :ref:`dhcp4-custom-options` and :ref:`dhcp6-custom-options`).
 The following command creates the DHCPv4 option definition at the
-top-level "dhcp4" option space and associates it with the "server1":
+top-level "dhcp4" option space and associates it with "server1":
 
 .. code-block:: json
 
@@ -1101,17 +1060,16 @@ top-level "dhcp4" option space and associates it with the "server1":
        }
    }
 
-The `server-tags` list must include exactly one
-server tag or the keyword "all". It must not contain the
-`null` value.
-
+The ``server-tags`` list must include exactly one
+server tag or the keyword "all", and cannot contain the
+``null`` value.
 
 .. _command-remote-option4-global-del:
 
 .. _command-remote-option6-global-del:
 
-The remote-option4-global-del, remote-option6-global-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-global-del``, ``remote-option6-global-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to delete a global DHCP option from the
 database. The option is identified by an option code and option space.
@@ -1135,20 +1093,20 @@ For example:
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The `server-tags` is mandatory and it must include a
-single option tag or the keyword "all". If the explicit server tag is specified
-then this command attempts to delete a global option associated with this
+"dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The ``server-tags`` parameter is mandatory and must include a
+single option tag or the keyword "all". If the explicit server tag is specified,
+this command attempts to delete a global option associated with this
 server. If there is no such option associated with the given server, no option
-is deleted. In order to delete the option associated with all servers, the
+is deleted. To delete an option associated with all servers, the
 keyword "all" must be specified.
 
 .. _command-remote-option4-global-get:
 
 .. _command-remote-option6-global-get:
 
-The remote-option4-global-get, remote-option6-global-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-global-get``, ``remote-option6-global-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch a global DHCP option from the database.
 The option is identified by the code and option space. The top-level
@@ -1176,20 +1134,20 @@ associated with all servers:
        }
    }
 
-The `server-tags` is mandatory and it must include exactly one
-server tag or the keyword "all". It must not contain the `null`
+The ``server-tags`` parameter is mandatory and must include exactly one
+server tag or the keyword "all". It cannot contain the ``null``
 value.
 
 .. _command-remote-option4-global-get-all:
 
 .. _command-remote-option6-global-get-all:
 
-The remote-option4-global-get-all, remote-option6-global-get-all Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-global-get-all``, ``remote-option6-global-get-all`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to fetch all global DHCP options from the configuration
-database for the particular server or for all servers. The following command
-fetches all global DHCPv4 options for the "server1":
+database for the given server or for all servers. The following command
+fetches all global DHCPv4 options for "server1":
 
 .. code-block:: json
 
@@ -1203,10 +1161,12 @@ fetches all global DHCPv4 options for the "server1":
         }
     }
 
-The `server-tags` list is mandatory for this command and
-it must contain exactly one server tag or a keyword "all". It must not contain
-the `null` value. The following is the example response to this
-command with a single option being associated with the "server1" returned:
+The ``server-tags`` list is mandatory for this command and
+must contain exactly one server tag or a keyword "all"; it cannot contain
+the ``null`` value.
+
+The following is a example response to this
+command with a single option being associated with "server1" returned:
 
 .. code-block:: json
 
@@ -1230,13 +1190,12 @@ command with a single option being associated with the "server1" returned:
         }
     }
 
-
 .. _command-remote-option4-global-set:
 
 .. _command-remote-option6-global-set:
 
-The remote-option4-global-set, remote-option6-global-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-global-set``, ``remote-option6-global-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands create a new global DHCP option or replace an existing
 option in the database. The structure of the option information is the
@@ -1261,14 +1220,14 @@ and :ref:`dhcp6-std-options`). For example:
        }
    }
 
-The `server-tags` list is mandatory for this command
-and it must include exactly one server tag or the keyword "all". It must
-not include the `null` value. The command above associates
+The ``server-tags`` list is mandatory for this command
+and must include exactly one server tag or the keyword "all"; it cannot
+include the ``null`` value. The command above associates
 the option with the "server1" server.
 
 Note that specifying an option name instead of the option code only
-works reliably for the standard DHCP options. When specifying a value
-for the user-defined DHCP option, the option code should be specified
+works reliably for standard DHCP options. When specifying a value
+for a user-defined DHCP option, the option code should be indicated
 instead of the name. For example:
 
 .. code-block:: json
@@ -1291,20 +1250,20 @@ instead of the name. For example:
 
 .. _command-remote-option6-network-del:
 
-The remote-option4-network-del, remote-option6-network-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-network-del``, ``remote-option6-network-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to delete a shared network specific DHCP
+These commands are used to delete a shared-network-specific DHCP
 option from the database. The option is identified by an option code
 and option space and these two parameters are passed within the
-`options` list. Another list, `shared-networks`, contains a map
+``options`` list. Another list, ``shared-networks``, contains a map
 with the name of the shared network from which the option is to
 be deleted. If the option is not explicitly specified for this
 shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
 Such an option instance is not affected by this command as this
-command merely deletes the shared network level option. In order to
-delete a subnet level option the `remote-option[46]-subnet-del`
+command merely deletes the shared-network-level option. To
+delete a subnet-level option, the ``remote-option[46]-subnet-del``
 command must be used instead.
 
 The following command attempts to delete an option having the
@@ -1333,21 +1292,21 @@ network "fancy".
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The `server-tags` parameter must not be specified for this command.
+"dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-network-set:
 
 .. _command-remote-option6-network-set:
 
-The remote-option4-network-set, remote-option6-network-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-network-set``, ``remote-option6-network-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands create a new shared network specific DHCP option or replace
+These commands create a new shared-network-specific DHCP option or replace
 an existing option in the database. The structure of the option information
 is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
-`options` list. Another list, `shared-networks`, contains a map with the
+``options`` list. Another list, ``shared-networks``, contains a map with the
 name of the shared network for which the option is to be set. If such an option
 already exists for the shared network, it is replaced with the new instance.
 
@@ -1373,28 +1332,28 @@ already exists for the shared network, it is replaced with the new instance.
        }
    }
 
-The `sever-tags` parameter must not be specified for this command.
+The ``server-tags`` parameter cannot be specified for this command.
 
 Specifying an option name instead of the option code only works reliably
-for the standard DHCP options. When specifying a value for the user-defined
-DHCP option, the option code should be specified instead of the name.
+for standard DHCP options. When specifying a value for a user-defined
+DHCP option, the option code should be indicated instead of the name.
 
 .. _command-remote-option6-pd-pool-del:
 
-The remote-option6-pd-pool-del Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option6-pd-pool-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to delete a prefix delegation pool specific DHCPv6
+This command is used to delete a prefix delegation pool-specific DHCPv6
 option from the database. The option is identified by an option code
-and option space and these two parameters are passed within the
-`options` list. Another list, `pd-pools`, contains a map with the
-prefix delegation pool prefix and length identifying the pool. If the
+and option space, and these two parameters are passed within the
+``options`` list. Another list, ``pd-pools``, contains a map with the
+prefix-delegation-pool prefix and length identifying the pool. If the
 option is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
 the specified pool. Such an option instance is not affected by this
-command as this command merely deletes a prefix delegation pool level
-option. In order to delete a subnet level option the
-`remote-option6-subnet-del` command must be used instead.
+command, as this command merely deletes a prefix delegation pool-level
+option. To delete a subnet level option, the
+``remote-option6-subnet-del`` command must be used instead.
 
 .. code-block:: json
 
@@ -1419,21 +1378,20 @@ option. In order to delete a subnet level option the
        }
    }
 
-The "dhcp6" is the top-level option space where the standard DHCPv6 options
-belong. The `server-tags` parameter must not be specified for this command.
-
+"dhcp6" is the top-level option space where the standard DHCPv6 options
+belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option6-pd-pool-set:
 
-The remote-option6-pd-pool-set Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option6-pd-pool-set`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command creates a new prefix delegation pool-specific DHCPv6 option or
 replaces an existing option in the database. The structure of the option
 information is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
-`options` list. Another list, `pd-pools`, contains a map with the prefix
-delegation pool prefix and the prefix length identifying the pool. If such an
+``options`` list. Another list, ``pd-pools``, contains a map with the
+prefix-delegation-pool prefix and the prefix length identifying the pool. If such an
 option already exists for the prefix delegation pool, it is replaced with
 the new instance.
 
@@ -1462,30 +1420,29 @@ For example:
        }
    }
 
-The `sever-tags` parameter must not be specified for this command.
+The ``server-tags`` parameter cannot be specified for this command.
 
 Specifying an option name instead of the option code only works reliably
-for the standard DHCP options. When specifying a value for the user-defined
-DHCP option, the option code should be specified instead of the name.
-
+for standard DHCP options. When specifying a value for a user-defined
+DHCP option, the option code should be indicated instead of the name.
 
 .. _command-remote-option4-pool-del:
 
 .. _command-remote-option6-pool-del:
 
-The remote-option4-pool-del, remote-option6-pool-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-pool-del``, ``remote-option6-pool-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to delete an address pool specific DHCP
+These commands are used to delete an address-pool-specific DHCP
 option from the database. The option is identified by an option code
-and option space and these two parameters are passed within the
-`options` list. Another list, `pools`, contains a map with the
+and option space, and these two parameters are passed within the
+``options`` list. Another list, ``pools``, contains a map with the
 IP address range or prefix identifying the pool. If the option
 is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
-the specified pool. Such option instance is not affected by this
-command as this command merely deletes a pool level option. In
-order to delete subnet level option the `remote-option[46]-subnet-del`
+the specified pool. Such an option instance is not affected by this
+command, as this command merely deletes a pool-level option. To
+delete a subnet-level option, the ``remote-option[46]-subnet-del``
 command must be used instead.
 
 The following command attempts to delete an option having the
@@ -1514,22 +1471,21 @@ pool:
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The `server-tags` parameter must not be specified for this command.
-
+"dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-pool-set:
 
 .. _command-remote-option6-pool-set:
 
-The remote-option4-pool-set, remote-option6-pool-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-pool-set``, ``remote-option6-pool-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands create a new address pool specific DHCP option or replace
+These commands create a new address-pool-specific DHCP option or replace
 an existing option in the database. The structure of the option information
 is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
-`options` list. Another list, `pools`, contains a map with the IP address
+``options`` list. Another list, ``pools``, contains a map with the IP address
 range or prefix identifying the pool. If such an option already exists for
 the pool, it is replaced with the new instance.
 
@@ -1557,23 +1513,23 @@ For example:
        }
    }
 
-The `sever-tags` parameter must not be specified for this command.
+The ``server-tags`` parameter cannot be specified for this command.
 
 Specifying an option name instead of the option code only works reliably
-for the standard DHCP options. When specifying a value for the user-defined
-DHCP option, the option code should be specified instead of the name.
+for standard DHCP options. When specifying a value for a user-defined
+DHCP option, the option code should be indicated instead of the name.
 
 .. _command-remote-option4-subnet-del:
 
 .. _command-remote-option6-subnet-del:
 
-The remote-option4-subnet-del, remote-option6-subnet-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-subnet-del``, ``remote-option6-subnet-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to delete a subnet specific DHCP option
+These commands are used to delete a subnet-specific DHCP option
 from the database. The option is identified by an option code
-and option space and these two parameters are passed within the
-`options` list. Another list, `subnets`, contains a map with the
+and option space, and these two parameters are passed within the
+``options`` list. Another list, ``subnets``, contains a map with the
 identifier of the subnet from which the option is to be deleted.
 If the option is not explicitly specified for this subnet, no
 option is deleted.
@@ -1604,21 +1560,21 @@ having an identifier of 123.
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The `server-tags` parameter must not be specified for this command.
+"dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-subnet-set:
 
 .. _command-remote-option6-subnet-set:
 
-The remote-option4-subnet-set, remote-option6-subnet-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-option4-subnet-set``, ``remote-option6-subnet-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands create a new subnet specific DHCP option or replace an existing
+These commands create a new subnet-specific DHCP option or replace an existing
 option in the database. The structure of the option information is the same as
 in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
-`options` list. Another list, `subnets`, contains a map with the identifier of
+``options`` list. Another list, ``subnets``, contains a map with the identifier of
 the subnet for which the option is to be set. If such an option already exists
 for the subnet, it is replaced with the new instance.
 
@@ -1644,18 +1600,18 @@ for the subnet, it is replaced with the new instance.
        }
    }
 
-The `sever-tags` parameter must not be specified for this command.
+The ``server-tags`` parameter cannot be specified for this command.
 
 Specifying an option name instead of the option code only works reliably
 for the standard DHCP options. When specifying a value for the user-defined
-DHCP option, the option code should be specified instead of the name.
+DHCP option, the option code should be indicated instead of the name.
 
 .. _command-remote-subnet4-del-by-id:
 
 .. _command-remote-subnet6-del-by-id:
 
-The remote-subnet4-del-by-id, remote-subnet6-del-by-id Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-del-by-id``, ``remote-subnet6-del-by-id`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the first variant of the commands used to delete an IPv4 or IPv6
 subnet from the database. It uses the subnet ID to identify the subnet. For
@@ -1677,14 +1633,14 @@ example, to delete the IPv4 subnet with an ID of 5:
        }
    }
 
-The `server-tags` parameter must not be used with this command.
+The ``server-tags`` parameter cannot be used with this command.
 
 .. _command-remote-subnet4-del-by-prefix:
 
 .. _command-remote-subnet6-del-by-prefix:
 
-The remote-subnet4-del-by-prefix, remote-subnet6-del-by-prefix Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-del-by-prefix``, ``remote-subnet6-del-by-prefix`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the second variant of the commands used to delete an IPv4 or
 IPv6 subnet from the database. It uses the subnet prefix to identify the
@@ -1706,14 +1662,14 @@ subnet. For example:
        }
    }
 
-The `server-tags` parameter must not be used with this command.
+The ``server-tags`` parameter cannot be used with this command.
 
 .. _command-remote-subnet4-get-by-id:
 
 .. _command-remote-subnet6-get-by-id:
 
-The remote-subnet4-get-by-id, remote-subnet6-get-by-id Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-get-by-id``, ``remote-subnet6-get-by-id`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the first variant of the commands used to fetch an IPv4 or IPv6
 subnet from the database. It uses a subnet ID to identify the subnet.
@@ -1735,14 +1691,14 @@ For example:
        }
    }
 
-The `server-tags` parameter must not be used with this command.
+The ``server-tags`` parameter cannot be used with this command.
 
 .. _command-remote-subnet4-get-by-prefix:
 
 .. _command-remote-subnet6-get-by-prefix:
 
-The remote-subnet4-get-by-prefix, remote-subnet6-get-by-prefix Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-get-by-prefix``, ``remote-subnet6-get-by-prefix`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is the second variant of the commands used to fetch an IPv4 or IPv6
 subnet from the database. It uses a subnet prefix to identify the
@@ -1764,18 +1720,18 @@ subnet. For example:
        }
    }
 
-The `server-tags` parameter must not be used with this command.
+The ``server-tags`` parameter cannot be used with this command.
 
 .. _command-remote-subnet4-list:
 
 .. _command-remote-subnet6-list:
 
-The remote-subnet4-list, remote-subnet6-list Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-list``, ``remote-subnet6-list`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to list all IPv4 or IPv6 subnets from the database for
 selected servers or all servers. The following command retrieves all servers to
-be used by the "server1" and "server2":
+be used by "server1" and "server2":
 
 .. code-block:: json
 
@@ -1789,10 +1745,10 @@ be used by the "server1" and "server2":
         }
     }
 
-The `server-tags` parameter is mandatory and contains one or
+The ``server-tags`` parameter is mandatory and contains one or
 more server tags. It may contain the keyword "all", to fetch the subnets
-associated with all servers. When the `server-tags` list
-contains the `null` value, the returned response contains a list
+associated with all servers. When the ``server-tags`` list
+contains the ``null`` value, the returned response contains a list
 of unassigned subnets, i.e. the subnets which are associated with no servers.
 For example:
 
@@ -1839,16 +1795,16 @@ looks similar to this:
         }
     }
 
-The returned information about each subnet is limited to subnet identifier,
-prefix and associated shared network name. In order to retrieve full
-information about the selected subnet use the
-`remote-subnet[46]-get-by-id` or
-`remote-subnet[46]-get-by-prefix`.
+The returned information about each subnet is limited to the subnet identifier,
+prefix, and associated shared network name. To retrieve full
+information about the selected subnet, use
+``remote-subnet[46]-get-by-id`` or
+``remote-subnet[46]-get-by-prefix``.
 
 The example response above contains two subnets. One of the subnets is
 associated with both servers: "server1" and "server2". The second subnet is
-associated with all servers, thus it is also present in the configuration for
-the "server1" and "server2".
+associated with all servers, so it is also present in the configurations for
+"server1" and "server2".
 
 When listing unassigned subnets, the response will look similar to this:
 
@@ -1872,15 +1828,15 @@ When listing unassigned subnets, the response will look similar to this:
         }
     }
 
-The `null` value in the metadata indicates that the
+The ``null`` value in the metadata indicates that the
 returned subnet is unassigned.
 
 .. _command-remote-subnet4-set:
 
 .. _command-remote-subnet6-set:
 
-The remote-subnet4-set, remote-subnet6-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-subnet4-set``, ``remote-subnet6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands are used to create a new IPv4 or IPv6 subnet or replace
 an existing subnet in the database. Setting the subnet also associates
@@ -1919,7 +1875,6 @@ Consider the following example:
        }
    }
 
-
 It creates the subnet and associates it with the "level3" shared
 network. The "level3" shared network must be created with the ``remote-network4-set``
 command prior to creating the subnet.
@@ -1949,15 +1904,14 @@ network - the ``shared-network-name`` must be explicitly set to
        }
    }
 
-
 The subnet created in the previous example is replaced with the new
 subnet having the same parameters, but it becomes global.
 
 The ``shared-network-name`` parameter is mandatory for the
-``remote-subnet4-set`` command. The `server-tags` list is mandatory and it must
+``remote-subnet4-set`` command. The ``server-tags`` list is mandatory and must
 include one or more server tags. As a result, the subnet is associated with all
-of the listed servers. It may also be associated with "all" servers connecting
-to the database when the keyword "all" is used as the server tag.</para>
+of the listed servers. It may also be associated with all servers connecting
+to the database when the keyword "all" is used as the server tag.
 
 .. note::
 
@@ -1973,8 +1927,8 @@ to the database when the keyword "all" is used as the server tag.</para>
 
 .. _command-remote-class6-del:
 
-The remote-class4-del, remote-class6-del Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-class4-del``, ``remote-class6-del`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands delete a DHCPv4 or DHCPv6 client class by name. If any client
 classes in the database depend on the deleted class, an error is returned in
@@ -1999,18 +1953,18 @@ the dependent ones.
         }
     }
 
-The `server-tags` parameter must not be used for this command because client
+The ``server-tags`` parameter cannot be used for this command because client
 classes are uniquely identified by name.
 
 .. _command-remote-class4-get:
 
 .. _command-remote-class6-get:
 
-The remote-class4-get, remote-class6-get Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-class4-get``, ``remote-class6-get`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands retrieve DHCPv4 or DHCPv6 client class information by a client
-class name.
+These commands retrieve DHCPv4 or DHCPv6 client class information by a
+client-class name.
 
 .. code-block:: json
 
@@ -2028,7 +1982,7 @@ class name.
         }
     }
 
-The `server-tags` parameter must not be used for this command because client
+The ``server-tags`` parameter cannot be used for this command because client
 classes are uniquely identified by name.
 
 A response to the command looks similar to this:
@@ -2055,14 +2009,15 @@ A response to the command looks similar to this:
 
 .. _command-remote-class6-get-all:
 
-The remote-class4-get-all, remote-class6-get-all Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-class4-get-all``, ``remote-class6-get-all`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands retrieve all DHCPv4 or DHCPv6 client classes for a particular server,
-multiple explicitly listed servers, or all servers. For example, the following
-command retrieves all client classes defined for a server having the server tag
-of `server1` and all servers. In other words, it returns all client classes
-used by that server.
+multiple explicitly listed servers, and/or all servers. A given server has its own
+server-specific tag and also has the "all" server tag; these commands retrieve
+the classes for both an individual server and for "all" servers. For example, the
+following command retrieves all client classes defined for "server1" as well as
+the client classes defined for "all" servers:
 
 .. code-block:: json
 
@@ -2076,10 +2031,12 @@ used by that server.
         }
     }
 
-The `server-tags` parameter is mandatory and it contains one or more server
-tags. It may contain the keyword "all" to fetch the client classes associated
-with all servers. When the `server-tags` list contains the
-`null` value the returned response contains a list of unassigned client
+The ``server-tags`` parameter is mandatory and contains one or more server
+tags. If other server tags are specified, "all" does not need to be included
+in ``server-tags``, as every server automatically also has the "all" server tag.
+If ``server-tags`` contains only the keyword "all", only the client classes associated
+with "all" servers are returned. When the ``server-tags`` list contains the
+``null`` value, the returned response contains a list of unassigned client
 classes, i.e. the networks which are associated with no servers.
 
 A response to the command looks similar to this:
@@ -2109,13 +2066,12 @@ A response to the command looks similar to this:
         }
     }
 
-
 .. _command-remote-class4-set:
 
 .. _command-remote-class6-set:
 
-The remote-class4-set, remote-class6-set Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``remote-class4-set``, ``remote-class6-set`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These commands insert a new or replace an existing DHCPv4 or DHCPv6 client class in
 the database. The client class information structure is the same as in the Kea
@@ -2154,22 +2110,22 @@ configuration file (see :ref:`dhcp4-client-classifier` and
     }
 
 
-Client class ordering rules described in :ref:`classification-using-expressions`
-apply to the classes inserted into the database. It implies that the class `bar`
+Client-class ordering rules described in :ref:`classification-using-expressions`
+apply to the classes inserted into the database. They imply that the class `bar`
 referenced in the test expression must exist in the database when issuing the
 above command.
 
 By default, a new client class is inserted at the end of the class hierarchy in
 the database and can reference any class associated with the same server tag or
-with the special server tag `all`. If an existing class is updated, it remains
+with the special server tag "all". If an existing class is updated, it remains
 at its current position within the class hierarchy.
 
-However, the class commands allow for specifying a position of the inserted
-or updated client class. The optional `follow-class-name` parameter can be
-included in the command to specify the name of the existing class after which
+However, the class commands allow the position of the inserted
+or updated client class to be specified. The optional ``follow-class-name`` parameter can be
+included in the command to indicate the name of the existing class after which
 the managed class should be placed. Suppose there are two DHCPv6 classes in the
 database: `first-class` and `second-class`. To add a new class, `third-class`,
-between these two, use the command similar to the following:
+between these two, use a command similar to the following:
 
 .. code-block:: json
 
@@ -2190,12 +2146,12 @@ between these two, use the command similar to the following:
         }
     }
 
-Note that the `third-class` can depend on the `first-class` because it is placed
-after the `first-class`. The `third-class` must not depend on the `second-class`
-because it is placed before it. However, the `second-class` could now be updated to
-depend on the `third-class`.
+Note that `third-class` can depend on `first-class` because it is placed
+after `first-class`; `third-class` cannot depend on `second-class`
+because it is placed before it. However, `second-class` could be updated to
+depend on `third-class`.
 
-The `follow-class-name` parameter can be explicitly set to `null`, e.g.:
+The ``follow-class-name`` parameter can be explicitly set to ``null``, e.g.:
 
 .. code-block:: json
 
@@ -2216,6 +2172,6 @@ The `follow-class-name` parameter can be explicitly set to `null`, e.g.:
         }
     }
 
-It yields the same behavior as if the `follow-class-name` parameter is not included,
+It yields the same behavior as if the ``follow-class-name`` parameter were not included,
 i.e. the new class is appended at the end of the class hierarchy, and the updated
 class remains at the current position.

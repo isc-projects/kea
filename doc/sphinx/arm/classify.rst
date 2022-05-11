@@ -161,7 +161,7 @@ balancing. The class name is constructed by prepending the ``HA_`` prefix
 to the name of the server which should process the DHCP packet. This
 server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
-be found in :ref:`high-availability-library`.
+be found in :ref:`hooks-high-availability`.
 
 The ``BOOTP`` class is used by the BOOTP hook library to classify and
 respond to inbound BOOTP queries.

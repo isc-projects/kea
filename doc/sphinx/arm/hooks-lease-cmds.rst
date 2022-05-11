@@ -1,4 +1,4 @@
-.. _lease-cmds:
+.. _hooks-lease-cmds:
 
 ``lease_cmds``: Lease Commands
 ==============================

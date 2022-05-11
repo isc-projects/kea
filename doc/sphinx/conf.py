@@ -108,6 +108,18 @@ exclude_patterns = [
     'grammar/grammar-dhcp4-parser.rst',
     'grammar/grammar-dhcp6-parser.rst',
     'grammar/grammar-netconf-parser.rst',
+    'arm/hooks-flex-id.rst',
+    'arm/hooks-flex-option.rst',
+    'arm/hooks-legal-log.rst',
+    'arm/hooks-gss-tsig.rst',
+    'arm/hooks-host-cmds.rst',
+    'arm/hooks-cb-mysql.rst',
+    'arm/hooks-cb-pgsql.rst',
+    'arm/hooks-limits.rst',
+    'arm/hooks-rbac.rst',
+    'arm/hooks-run-script.rst',
+    'arm/hooks-subnet-cmds.rst',
+    'arm/hooks-user-chk.rst',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.

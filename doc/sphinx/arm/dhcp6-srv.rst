@@ -4080,7 +4080,7 @@ Kea can store host reservations in MySQL or PostgreSQL.
 See :ref:`hosts6-storage` for information on how to
 configure Kea to use reservations stored in MySQL or PostgreSQL.
 Kea provides a dedicated hook for managing reservations in a
-database; section :ref:`host-cmds` provides detailed information.
+database; section :ref:`hooks-host-cmds` provides detailed information.
 The `Kea wiki
 <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
@@ -4686,7 +4686,7 @@ particular subnet, to avoid having two different clients
 compete for the same lease. When using the default settings, the server
 returns a configuration error when it finds two or more reservations for
 the same lease within a subnet in the Kea configuration file. The
-:ref:`host-cmds` hook library returns an error in response to the
+:ref:`hooks-host-cmds` hook library returns an error in response to the
 ``reservation-add`` command when it detects that the reservation exists
 in the database for the lease for which the new reservation is being added.
 
@@ -6760,7 +6760,7 @@ parameters must be specified in the JSON configuration file, if
 required.
 
 All supported parameters can be configured via ``cb_cmds`` hook library
-described in the :ref:`cb-cmds-library` section. The general rule is that
+described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 ``remote-global-parameter6-set``; shared-network-specific parameters
 are set using ``remote-network6-set``; and subnet- and pool-level

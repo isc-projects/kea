@@ -32,7 +32,7 @@ network grows, the usefulness of the CB becomes obvious.
 
 One use case for the CB is a pair of Kea DHCP servers that are configured
 to support High Availability as described in
-:ref:`high-availability-library`. The configurations of both servers
+:ref:`hooks-high-availability`. The configurations of both servers
 (including the value of the ``server-tag`` parameter)
 are almost exactly the same: they may differ by the server identifier
 and designation of the server as a primary or standby (or secondary), and/or
@@ -187,7 +187,7 @@ hook library with commonly available tools, such as MySQL Workbench or
 the command-line MySQL client, or by directly working with the database;
 these avenues are neither recommended nor supported.
 
-Refer to :ref:`cb-cmds-library` for the details regarding the
+Refer to :ref:`hooks-cb-cmds` for the details regarding the
 ``cb_cmds`` hook library.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as

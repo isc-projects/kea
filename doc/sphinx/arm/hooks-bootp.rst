@@ -1,7 +1,7 @@
 .. _hooks-bootp:
 
-BOOTP Support
-=============
+``bootp``: BOOTP
+================
 
 This hook library adds support for BOOTP with vendor-information extensions
 (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__). Received BOOTP

@@ -1,7 +1,7 @@
 .. _hooks-run-script:
 
-Run Script Support
-==================
+``run_script``: Run Script
+==========================
 
 This hook library adds support for calling an external script for specific
 packet-processing hook points.

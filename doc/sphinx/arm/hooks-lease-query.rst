@@ -1,4 +1,4 @@
-.. _lease-query:
+.. _hooks-lease-query:
 
 ``lease_query``: Leasequery
 ===========================

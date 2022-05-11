@@ -1,44 +1,44 @@
 .. _hooks-RBAC:
 
-Role Based Access Control
-=========================
+``rbac``: Role-Based Access Control
+===================================
 
 .. _hooks-RBAC-overview:
 
-Role Based Access Control Overview
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Role-Based Access Control (RBAC) Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before the processing of commands in received HTTP requests, the hook
-takes some parameters e.g. the common name part of the client
-certificate subject name to assign a role to the request.
-The configuration associated to this role is used to accept or reject
-the command. After the processing the response can be rewritten e.g.
-removing parts.
+Before the processing of commands in received HTTP requests, this hook
+takes specific parameters, e.g. the common name part of the client
+certificate subject name, to assign a role to the request.
+The configuration associated with this role is used to accept or reject
+the command. After processing, the response can be rewritten, e.g.
+parts can be removed.
 
-Summary of the request processing:
- - the HTTP library records some information to be used later, e.g.
+Here is a summary of the steps in processing a request:
+ - The HTTP library records some information to be used later, e.g.
    the remote address.
- - when TLS is required but the request was not protected by TLS,
-   reject the request by sending an unauthorized response.
- - extract the command from the request.
- - assign a role using recorded information in the request.
- - use the role to accept (i.e. pass through) or reject (i.e. send
+ - When TLS is required but the request was not protected by TLS,
+   the request is rejected by sending an "unauthorized" response.
+ - The command is extracted from the request.
+ - A role is assigned using recorded information in the request.
+ - The role is used to accept (pass through) or reject (send
    a forbidden response) the command.
 
-Summary of response processing:
- - retrieve some information attached to the request during the
+Here is a summary of the steps in processing a response:
+ - The information attached to the request is retrieved during the
    request processing (when the request was accepted).
- - applies request filters to the response.
+ - Request filters are applied to the response.
 
 .. _hooks-RBAC-config:
 
-Role Based Access Control Configuration
----------------------------------------
+Role-Based Access Control Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Role Assignment
-~~~~~~~~~~~~~~~
+---------------
 
-The role assignment is governed by the configured role assignment method.
+Role assignment is governed by the configured role-assignment method.
 
 .. table:: Role assignment methods
 
@@ -57,11 +57,11 @@ The role assignment is governed by the configured role assignment method.
    +----------------------+---------------------------------------------------------+
 
 Role Configuration
-~~~~~~~~~~~~~~~~~~
+------------------
 
-If the role assignment returns the empty role the configuration of the
-``default`` role is used: by default the request is rejected.
-If the role assignment returns a not empty role without a configuration,
+If role assignment returns an empty role, the configuration of the
+``default`` role is used; by default the request is rejected.
+If role assignment returns a not-empty role without a configuration,
 the configuration of the ``unknown`` role is used.
 
 .. table:: Role configuration parameters
@@ -83,18 +83,18 @@ the configuration of the ``unknown`` role is used.
    |                  | accept and reject list by giving the list to check |
    |                  | and apply first (default accept)                   |
    +------------------+----------------------------------------------------+
-   | response-filters | filters to apply to responses                      |
+   | response-filters | the filters to apply to responses                  |
    +------------------+----------------------------------------------------+
 
 API Commands
-~~~~~~~~~~~~
+------------
 
-All commands of the REST API are described in files in a directory
-which can be found in sources in ``src/share/api`` or in installed Kea
-in ``.../share/kea/api``. The hook reads these files to take the name,
-access right (i.e. ``read`` or ``write``) and the hook name.
+All commands of the REST API are described in files in the source directory
+``src/share/api``, or in installed Kea
+in ``.../share/kea/api``. The ``rbac`` hook reads these files to take the name,
+the access right (i.e. ``read`` or ``write``), and the hook name.
 
-.. table:: Extra commands definition parameters
+.. table:: Extra command-definition parameters
 
    +--------+---------------------------------------------------------+
    | Name   | Description                                             |
@@ -103,18 +103,18 @@ access right (i.e. ``read`` or ``write``) and the hook name.
    +--------+---------------------------------------------------------+
    | access | (mandatory) the access right i.e. ``read`` or ``write`` |
    +--------+---------------------------------------------------------+
-   | hook   | (optional) the hook name (empty or not present for      |
+   | hook   | (optional) the hook name (empty or not-present for      |
    |        | commands of servers or agents)                          |
    +--------+---------------------------------------------------------+
 
 .. note::
 
-   These command description files are security sensitive e.g. with
-   too permissive access rights a local attacker may modify them and
+   These command description files are security-sensitive, e.g. with
+   too-permissive access rights a local attacker may modify them and
    defeat the RBAC goal.
 
 Access Control Lists
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Access control lists can be specified using a name (string) or a
 single entry map.
@@ -128,15 +128,15 @@ single entry map.
    +-------+----------------------------------------------+
    | NONE  | matches nothing                              |
    +-------+----------------------------------------------+
-   | READ  | matches commands with the read access right  |
+   | READ  | matches commands with the read-access right  |
    +-------+----------------------------------------------+
-   | WRITE | matches commands with the write access right |
+   | WRITE | matches commands with the write-access right |
    +-------+----------------------------------------------+
 
-Map access list specifications use a kind in the name of the single entry
+Map access list specifications use a list type in the name of the single entry
 and parameter in the value.
 
-.. table:: Access list kinds
+.. table:: Access list types
 
    +---------+-----------------+--------------------------------------+
    | Name    | Description     | Parameter                            |
@@ -155,46 +155,45 @@ and parameter in the value.
    +---------+-----------------+--------------------------------------+
 
 Response Filters
-~~~~~~~~~~~~~~~~
+----------------
 
 .. table:: Predefined response filters
 
    +---------------+---------------------------------------+
    | Name          | Description                           |
    +---------------+---------------------------------------+
-   | list-commands | Removes not allowed commands from the |
+   | list-commands | Removes not-allowed commands from the |
    |               | list-commands response                |
    +---------------+---------------------------------------+
 
-
 Global Parameters
-~~~~~~~~~~~~~~~~~
+-----------------
 
-Global parameters are:
+The global parameters are:
 
--  ``assign-role-method``: (mandatory) the name of the method
-   which is used for role assignment.
+-  ``assign-role-method``: the name of the method
+   which is used for role assignment. This parameter is mandatory.
 
--  ``api-files``: (mandatory) the path of the directory where
-   the API files describing commands can be found.
+-  ``api-files``: the path of the directory where
+   the API files describing commands can be found. This parameter is mandatory.
 
--  ``require-tls``: specifies if received requests on HTTP vs HTTPS are
-   rejected. Default to false when the role assignment method is not
+-  ``require-tls``: the specification of whether received requests on HTTP (vs HTTPS) are
+   rejected. It defaults to ``false`` when the role-assignment method is not
    based on certificates.
 
 -  ``commands``: the list of extra command configurations.
 
--  ``access-control-lists``: named access control list definitions
-   (each definition is a single entry map: the name of the entry is
-   the name of the access list, the value is the specification).
+-  ``access-control-lists``: the named access control list definitions
+   (each definition is a single entry map; the name of the entry is
+   the name of the access list, and the value is the specification).
 
--  ``roles``: role configurations.
+-  ``roles``: the role configurations.
 
 -  ``default-role``: the configuration of the default role (used
    when "" is assigned).
 
--  ``unknown-role``: takes the configuration of the unknown role
-   (used when the not empty assigned role has no configuration).
+-  ``unknown-role``: the configuration of the unknown role
+   (used when the not-empty assigned role has no configuration).
 
 Sample Configuration
 ~~~~~~~~~~~~~~~~~~~~
@@ -301,8 +300,8 @@ in the Kea source and is copied below.
 Accept/Reject Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is the pseudo-code of the accept/reject decision algorithm which returns
-true i.e. accept or false i.e. reject.
+This is the pseudo-code of the accept/reject decision algorithm which returns
+``true`` (accept) or ``false`` (reject).
 
 .. code-block:: c
 
@@ -332,8 +331,9 @@ true i.e. accept or false i.e. reject.
 Extensive Example
 ~~~~~~~~~~~~~~~~~
 
-Here is an extensive example for a role accepting all read commands at
-the exception of "config-get", e.g. for hiding passwords.
+Here is an extensive example for a role accepting all read commands, with
+the exception of ``config-get``, e.g. for hiding passwords. For any remote
+user who is not recognized as "user1", all commands should be rejected.
 
 The first option is to put the allowed commands in the "accept-commands"
 list and to reject anything else:
@@ -362,8 +362,8 @@ list and to reject anything else:
     ],
     ...
 
-A common alternative is to not set the "reject-commands" list i.e. leaving
-it empty and to rely on the "other-commands" to reject anything else.
+A common alternative is to not set the "reject-commands" list, i.e. leave
+it empty and rely on "other-commands" to reject anything else.
 
 .. code-block:: javascript
 
@@ -388,7 +388,7 @@ it empty and to rely on the "other-commands" to reject anything else.
     ],
     ...
 
-One can do the opposite i.e. setting only the "reject-commands" list.
+It is also possible to do the opposite, i.e. to set only the "reject-commands" list:
 
 .. code-block:: javascript
 
@@ -409,8 +409,8 @@ One can do the opposite i.e. setting only the "reject-commands" list.
     ],
     ...
 
-Or use both lists with the exception in the "reject-commands" list
-which must be checked first as "config-get" has the read access right.
+Or use both lists with the exception in the "reject-commands" list,
+which must be checked first as "config-get" has the read-access right.
 
 .. code-block:: javascript
 
@@ -426,6 +426,6 @@ which must be checked first as "config-get" has the read access right.
     ],
     ...
 
-To check any configuration it is a good idea to use the "list-commands"
-response filter which shows errors i.e. missing (rejected) commands
+To check any configuration, it is a good idea to use the "list-commands"
+response filter, which shows errors such as missing (rejected) commands
 and extra (accepted) commands.

@@ -1,4 +1,4 @@
-.. _class-cmds-library:
+.. _hooks-class-cmds:
 
 ``class_cmds``: Class Commands
 ==============================
