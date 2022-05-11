@@ -1,3 +1,9 @@
+2019.	[func]		tmark
+	Added new built-in class "SKIP_DDNS" which may be used in
+	conjunction with the ddns-tuning hook library to to skip
+	performing DDNS updates for a given client.
+	(Gitlab #2354)
+
 2018.	[func]		razvan
 	The kea-dhcp4 server now supports portions of RFC 3396,
 	allowing it to send and receive DHCP options longer than 255

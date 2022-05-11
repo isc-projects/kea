@@ -1,10 +1,11 @@
 .. _hooks-ddns-tuning:
 
-``ddns_tuning``: Tuning DNS updates
-===================================
+``ddns_tuning``: Tuning DDNS updates
+====================================
 
 This hook library adds support for fine tuning various DNS update aspects.
-Currently it supports procedural host name generation. The DDNS Tuning hook
+Currently it supports procedural host name generation and the ability to
+skip performing DDNS updates for select clients. The DDNS Tuning hook
 is a premium feature.
 
 The library, which was added in Kea 2.1.5, can be loaded by the ``kea-dhcp4``
@@ -148,3 +149,40 @@ response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
   6. If the value calculated by the hook is not an empty string and is different than
   the host name formed in the prior steps (1 or 2), the calculated value becomes the
   final host name.
+
+Skipping DDNS Updates
+~~~~~~~~~~~~~~~~~~~~~
+
+The ddns-tuning library also provides the ability to skip DDNS updates on a per
+client basis.  The library recognizes a special client class, "SKIP_DDNS".  When a
+client is matched to this class, kea servers (kea-dhcp4 and kea-dhcp6) will not
+send DDNS update requests (NCRs) to kea-dhcp-ddns.  A common use-case would be
+to skip DDNS updates for fixed-address host reservations.  This is done easily by
+simply assiging the class to the host reservation as shown below:
+
+.. code-block:: javascript
+
+    {
+        "reservations": [
+        {
+            "hw-address": "01:02:03:04:05:06",
+            "ip-address": "192.0.2.1",
+            "client-classes": [ "SKIP_DDNS", "foo", "bar" ]
+        }]
+    }
+
+The ddns-tuning library will spot the presence of the "SKIP_DDNS" class in the
+client's class list each time the client requests, renews, or releases its lease,
+and instruct kea-dhcp4 to bypass sending DDNS updates.  A similar work flow is
+supported for kea-dhcp6:
+
+.. code-block:: javascript
+
+    {
+        "reservations": [
+        {
+            "duid": "01:02:03:04:05:06",
+            "ip-address": "2001:db8::1",
+            "client-classes": [ "SKIP_DDNS", "foo", "bar" ]
+        }]
+    }

@@ -427,6 +427,12 @@ loaded by the correct process per the table below.
    | Backend         |               |a repository for the Kea configuration information. Kea     |
    |                 |               |servers use this library to fetch their configurations.     |
    +-----------------+---------------+------------------------------------------------------------+
+   | PostgreSQL      | Kea open      |This hook library is an implementation of the Kea           |
+   | Configuration   | source        |Configuration Backend for PostgreSQL. It uses a PostgreSQL  |
+   | Backend         |               |database as a repository for the Kea configuration          |
+   |                 |               |information. Kea servers use this library to fetch their    |
+   |                 |               |configurations.                                             |
+   +-----------------+---------------+------------------------------------------------------------+
    | Configuration   | ISC support   |This hook                                                   |
    | Backend         | customers     |library implements a collection of commands to manage       |
    | Commands        |               |Kea configuration information in a                          |
@@ -453,6 +459,10 @@ loaded by the correct process per the table below.
    | RBAC            | ISC support   |This hook library adds support to the Kea Control Agent     |
    |                 | customers     |(kea-ctrl-agent) for Role Based Access Control filtering    |
    |                 |               |of commands.                                                |
+   +-----------------+---------------+------------------------------------------------------------+
+   | DDNS-Tuning     | ISC support   |This hook library adds support for fine tuning various DDNS |
+   |                 | customers     |update aspects such as generating hostnames via expressions |
+   |                 |               |and skipping DDNS updates for select cients.                |
    +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time
