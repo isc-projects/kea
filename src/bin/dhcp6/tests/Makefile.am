@@ -7,7 +7,7 @@ TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Shell tests
-SHTESTS = dhcp6_process_tests.sh
+#SHTESTS = dhcp6_process_tests.sh
 
 # Run shell tests on "make check".
 check_SCRIPTS = $(SHTESTS)

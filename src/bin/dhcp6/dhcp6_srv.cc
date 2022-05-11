@@ -1984,6 +1984,11 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
             fqdn_resp = boost::dynamic_pointer_cast<Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
             if (fqdn) {
                 fqdn_resp->setDomainName(hook_hostname, Option6ClientFqdn::FULL);
+                if (!(hook_fwd_dns_update || hook_rev_dns_update)) {
+                    // Hook disabled updates, Set flags back to client accordingly.
+                    fqdn_resp->setFlag(Option6ClientFqdn::FLAG_S, 0);
+                    fqdn_resp->setFlag(Option6ClientFqdn::FLAG_N, 1);
+                }
             }
 
             ctx.hostname_ = hook_hostname;

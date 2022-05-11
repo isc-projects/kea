@@ -2158,6 +2158,9 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
                                             (resp->getOption(DHO_FQDN));
                 if (fqdn) {
                     fqdn->setDomainName(hook_hostname, Option4ClientFqdn::FULL);
+                    // Hook disabled updates, Set flags back to client accordingly.
+                    fqdn->setFlag(Option4ClientFqdn::FLAG_S, 0);
+                    fqdn->setFlag(Option4ClientFqdn::FLAG_N, 1);
                 }
             }
         }
