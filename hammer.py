@@ -2099,7 +2099,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20210528132302.fc34'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
-    elif system == 'centos' and revision == '8':
+    elif system in ['centos', 'rhel'] and revision == '8':
         frc_version = 'isc20200318134606.el8'
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
