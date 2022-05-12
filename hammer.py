@@ -1189,7 +1189,7 @@ ssl_key = {cert_dir}/kea-client.key
         # For all added files and directories, change owner to mysql.
         execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
 
-    if system in ['debian', 'fedora', 'centos']:
+    if system in ['debian', 'fedora', 'centos', 'rhel']:
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl restart mariadb.service')
 
@@ -1296,7 +1296,7 @@ def _configure_pgsql(system, features):
     # avoid the error:
     #   could not change as postgres user directory to "/home/jenkins": Permission denied
 
-    if system in ['fedora', 'centos']:
+    if system in ['fedora', 'centos', 'rhel']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
         if exitcode != 0:
@@ -1552,12 +1552,11 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
-        # TODO:
-        # if 'mysql' in features:
-        #     packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+        if 'mysql' in features:
+            packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
 
-        # if 'pgsql' in features:
-        #     packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+        if 'pgsql' in features:
+            packages.extend(['postgresql', 'libpq-devel', 'postgresql-server'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
