@@ -181,6 +181,12 @@ public:
     /// @return true if the status code indicates server error.
     static bool isServerError(const HttpStatusCode& status_code);
 
+    /// @brief Convenience method converting status code to numeric value.
+    ///
+    /// @param status_code Status code represented as enum.
+    /// @return Numeric representation of the status code.
+    static uint16_t statusCodeToNumber(const HttpStatusCode& status_code);
+
     /// @brief Converts status code to string.
     ///
     /// @param status_code HTTP status code.
@@ -205,12 +211,6 @@ protected:
     ///
     /// @return Current time formatted as required by RFC 1123.
     virtual std::string getDateHeaderValue() const;
-
-    /// @brief Convenience method converting status code to numeric value.
-    ///
-    /// @param status_code Status code represented as enum.
-    /// @return Numeric representation of the status code.
-    static uint16_t statusCodeToNumber(const HttpStatusCode& status_code);
 
 private:
 
