@@ -1,3 +1,4 @@
+src/hooks/agent/rbac/rbac_messages.mes
 src/hooks/dhcp/flex_option/flex_option_messages.mes
 src/hooks/dhcp/bootp/bootp_messages.mes
 src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes

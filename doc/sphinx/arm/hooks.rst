@@ -163,6 +163,7 @@ of the libraries can be verified with this command:
 ::
 
    $ ls -l /usr/local/lib/kea/hooks/*.so
+   /usr/local/lib/kea/hooks/libca_rbac.so
    /usr/local/lib/kea/hooks/libdhcp_class_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_flex_id.so
    /usr/local/lib/kea/hooks/libdhcp_flex_option.so
@@ -3582,6 +3583,7 @@ both the command and the response.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-run-script.rst
 .. include:: hooks-ddns-tuning.rst
+.. include:: hooks-rbac.rst
 
 .. _user-context-hooks:
 
