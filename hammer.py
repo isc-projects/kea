@@ -1544,7 +1544,7 @@ def prepare_system_local(features, check_times):
                     'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
                     'openssl-devel', 'postgresql-devel']
 
-        if revision == '7':
+        if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
@@ -1552,14 +1552,20 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
+        if 'docs' in features:
+            packages.extend(['python3-virtualenv'])
+
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'libpq-devel', 'postgresql-server'])
+            packages.extend(['postgresql', 'libpq-devel', 'postgresql-server', 'postgresql-server-devel'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5-devel'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1580,6 +1586,12 @@ def prepare_system_local(features, check_times):
             deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
+
+        if 'docs' in features:
+            execute('virtualenv-3 ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
