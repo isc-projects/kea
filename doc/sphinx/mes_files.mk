@@ -1,4 +1,3 @@
-mes_files += $(top_srcdir)/src/hooks/agent/rbac/rbac_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/flex_option/flex_option_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/bootp/bootp_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes
