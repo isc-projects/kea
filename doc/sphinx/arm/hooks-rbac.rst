@@ -113,7 +113,7 @@ access right (i.e. ``read`` or ``write``) and the hook name.
    too permissive access rights a local attacker may modify them and
    defeat the RBAC goal.
 
-Access control lists
+Access Control Lists
 ~~~~~~~~~~~~~~~~~~~~
 
 Access control lists can be specified using a name (string) or a
