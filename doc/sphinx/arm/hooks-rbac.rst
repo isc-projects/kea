@@ -329,3 +329,105 @@ true i.e. accept or false i.e. reject.
        }
    }
 
+Extensive Example
+~~~~~~~~~~~~~~~~~
+
+Here is an extensive example for a role accepting all read commands at
+the exception of "config-get", e.g. for hiding passwords or this access
+list to a remote user (if the user is local "config-write" should be
+rejected too.
+
+The first option is to put the allowed commands in the "accept-commands"
+list and to reject anything else:
+
+.. code-block:: javascript
+
+   ...
+   "roles": [
+   {
+       "name": "user1",
+       "accept-commands":
+       {
+           "and": [
+               "READ",
+               { "not":
+                   { "commands": [ "config-get" ] }
+               }
+           ]
+       },
+       "reject-commands": "ALL",
+       // This is the default but as the config relies on it
+       // it is explicitly set.
+       "list-match-first": "accept"
+    },
+    ...
+    ],
+    ...
+
+A common alternative is to not set the "reject-commands" list i.e. leaving
+it empty and to rely on the "other-commands" to reject anything else.
+
+.. code-block:: javascript
+
+   ...
+   "roles": [
+   {
+       "name": "user2",
+       "accept-commands":
+       {
+           "and": [
+               "READ",
+               { "not":
+                   { "commands": [ "config-get" ] }
+               }
+           ]
+       },
+       // This is the default but as the config relies on it
+       // it is explicitly set.
+       "other-commands": "reject"
+    },
+    ...
+    ],
+    ...
+
+One can do the opposite i.e. setting ony the "reject-commands" list.
+
+.. code-block:: javascript
+
+   ...
+   "roles": [
+   {
+       "name": "user3",
+       "reject-commands":
+       {
+           "or": [
+               "WRITE",
+               { "commands": [ "config-get" ] }
+           ]
+       },
+       "other-commands": "accept"
+    },
+    ...
+    ],
+    ...
+
+Or use both lists with the exception in the "reject-commands" list
+which must be checked first as "config-get" has the read access right.
+
+.. code-block:: javascript
+
+   ...
+   "roles": [
+   {
+       "name": "user4",
+       "accept-commands": "READ",
+       "reject-commands": { "commands": [ "config-get" ] },
+       "list-match-first": "reject"
+    },
+    ...
+    ],
+    ...
+
+To check any configuration it is a good idea to use the "list-commands"
+response filter which shows errors i.e. missing (rejected) commands
+and extra (accepted) commands.
