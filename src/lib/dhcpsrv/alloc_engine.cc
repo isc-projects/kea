@@ -3872,12 +3872,14 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // If the client is requesting an address which is assigned to the client
     // let's just renew this address. Also, renew this address if the client
     // doesn't request any specific address.
-    // Added extra checks: the address is reserved or belongs to the dynamic
-    // pool for the case the pool class has changed before the request.
+    // Added extra checks: the address is reserved for this client or belongs
+    // to the dynamic pool for the case the pool class has changed before the
+    // request.
     if (client_lease) {
         if (((client_lease->addr_ == ctx.requested_address_) ||
              ctx.requested_address_.isV4Zero()) &&
-            (hasAddressReservation(ctx) ||
+            ((hasAddressReservation(ctx) &&
+              (ctx.currentHost()->getIPv4Reservation() == ctx.requested_address_)) ||
              inAllowedPool(ctx, client_lease->addr_))) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,

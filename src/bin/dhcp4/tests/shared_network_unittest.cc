@@ -1013,8 +1013,47 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
-    "}"
+    "}",
 
+// Configuration #20
+// - a shared network with two subnets
+// - first subnet has a dynamic address pool
+// - second subnet has no address pool but it has a host reservation
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.3.5.6\""
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"10.0.0.0/24\","
+    "                    \"id\": 100,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"10.0.0.1 - 10.0.0.1\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"reservations\": ["
+    "                        {"
+    "                            \"circuit-id\": \"'charter950'\","
+    "                            \"ip-address\": \"192.0.2.28\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
 };
 
 /// @Brief Test fixture class for DHCPv4 server using shared networks.
@@ -1678,6 +1717,56 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     client1.setState(Dhcp4Client::SELECTING);
     testAssigned([this, &client1] {
         doDORA(client1, "192.0.2.28");
+    });
+}
+
+// Two clients use the same circuit ID and this circuit ID is used to assign a
+// host reservation. The clients compete for the reservation, and one of them
+// gets it and the other one gets an address from the dynamic pool. This test
+// checks that the assigned leases have appropriate subnet IDs. Previously, the
+// client getting the lease from the dynamic pool had a wrong subnet ID (not
+// matching the address from the dynamic pool).
+TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifier) {
+    // Create client #1 which uses a circuit ID as a host identifier.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.useRelay(true, IOAddress("192.3.5.6"));
+    client1.includeClientId("01:02:03:04");
+    client1.setCircuitId("charter950");
+
+    // Create server configuration with a shared network including two subnets.
+    // One of the subnets includes a reservation identified by the client's
+    // circuit ID.
+    configure(NETWORKS_CONFIG[20], *client1.getServer());
+
+    // Client #1 should get the reserved address.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.28", "");
+    });
+
+    // Create client #2 with the same circuit ID.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.useRelay(true, IOAddress("192.3.5.6"));
+    client2.includeClientId("02:03:04:05");
+    client2.setCircuitId("charter950");
+
+    // Client #2 presents the same circuit ID but the reserved address has been
+    // already allocated. The client should get an address from the dynamic pool.
+    testAssigned([this, &client2] {
+        doDORA(client2, "10.0.0.1", "192.0.2.28");
+    });
+
+    // Client #1 renews the lease.
+    client1.setState(Dhcp4Client::RENEWING);
+    testAssigned([this, &client1]() {
+        doRequest(client1, "192.0.2.28");
+    });
+
+    // Client #2 renews the lease.
+    client2.setState(Dhcp4Client::RENEWING);
+    // Check if the client successfully renewed its address and that the
+    // subnet id in the renewed lease is not messed up.
+    testAssigned([this, &client2]() {
+        doRequest(client2, "10.0.0.1");
     });
 }
 
