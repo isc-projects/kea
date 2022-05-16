@@ -390,7 +390,7 @@ it empty and to rely on the "other-commands" to reject anything else.
     ],
     ...
 
-One can do the opposite i.e. setting ony the "reject-commands" list.
+One can do the opposite i.e. setting only the "reject-commands" list.
 
 .. code-block:: javascript
 
