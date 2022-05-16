@@ -359,7 +359,7 @@ loaded by the correct process per the table below.
    |                 |               |parameters currently used by the server.                    |
    +-----------------+---------------+------------------------------------------------------------+
    | Lease Commands  | Kea open      |This hook library offers a number of  commands used to      |
-   |                 |               |manage leases. Kea can store lease information in various   |
+   |                 | source        |manage leases. Kea can store lease information in various   |
    |                 |               |backends: memfile, MySQL, PostgreSQL. This library provides |
    |                 |               |a unified interface to manipulate leases in an unified, safe|
    |                 |               |way. In particular, it allows manipulation of memfile leases|
