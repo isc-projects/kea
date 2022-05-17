@@ -226,7 +226,7 @@ Using HTTPS in HA setup requires use of Control Agent on all nodes.
 As the High Availability hook library is an HTTPS client, there is no
 ``cert-required`` parameter in hook configuration.
 
-Following is example HA IP v4 server pair and Control Agent
+Following is example HA server pair and Control Agent
 configuration for Hot-Standby with TLS.
 
 Server 1:
@@ -315,7 +315,42 @@ Server 2:
        }]
    }
 
-Control Agent on both servers:
+Control Agent on Server 1:
+::
+    {
+        "Control-agent": {
+            "http-host": "192.168.56.33",
+            "http-port": 8000,
+            "control-sockets": {
+                "dhcp4": {
+                    "socket-type": "unix",
+                    "socket-name": "/var/run/kea/control_socket"
+                }
+            },
+            "trust-anchor": "/var/lib/kea/CA.pem",
+            "cert-file": "/var/lib/kea/server1_cert.pem",
+            "key-file": "/var/lib/kea/server1_key.pem"
+        }
+    }
+
+Control Agent on Server 2:
+::
+    {
+        "Control-agent": {
+            "http-host": "192.168.56.66",
+            "http-port": 8000,
+            "control-sockets": {
+                "dhcp4": {
+                    "socket-type": "unix",
+                    "socket-name": "/var/run/kea/control_socket"
+                }
+            },
+            "trust-anchor": "/var/lib/kea/CA.pem",
+            "cert-file": "/var/lib/kea/server2_cert.pem",
+            "key-file": "/var/lib/kea/server2_key.pem"
+        }
+    }
+
 .. _ha-server-states:
 
 Server States
