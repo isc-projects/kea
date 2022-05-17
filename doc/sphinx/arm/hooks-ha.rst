@@ -321,6 +321,7 @@ Server 2:
 
 Control Agent on Server 1:
 ::
+
     {
         "Control-agent": {
             "http-host": "192.168.56.33",
@@ -340,6 +341,7 @@ Control Agent on Server 1:
 
 Control Agent on Server 2:
 ::
+
     {
         "Control-agent": {
             "http-host": "192.168.56.66",
