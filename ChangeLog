@@ -1,5 +1,5 @@
 2016.	[doc]		fdupont
-	Added documentation for the role based access list (rbac)
+	Added documentation for the role based access control (rbac)
 	premium hook library to the ARM.
 	(Gitlab #1263)
 

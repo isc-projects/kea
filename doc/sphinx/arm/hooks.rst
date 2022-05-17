@@ -451,8 +451,8 @@ loaded by the correct process per the table below.
    |                 | customers     |(kea-dhcp-ddns) for using GSS-TSIG to sign DNS updates.     |
    +-----------------+---------------+------------------------------------------------------------+
    | RBAC            | ISC support   |This hook library adds support to the Kea Control Agent     |
-   |                 | customers     |(kea-ctrl-agent) for Role Based Access List filtering of    |
-   |                 |               |commands.                                                   |
+   |                 | customers     |(kea-ctrl-agent) for Role Based Access Control filtering    |
+   |                 |               |of commands.                                                |
    +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time
