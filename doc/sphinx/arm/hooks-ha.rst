@@ -204,7 +204,7 @@ The HTTPS configuration parameters are:
   where the certification authority certificate of a Control Agent can
   be found.
 
-- `cert-file`` - specifies the name of the file containing
+- ``cert-file`` - specifies the name of the file containing
   the end-entity certificate to use.
 
 - ``key-file`` - specifies the private key of the end-entity
@@ -219,9 +219,103 @@ or all specified (HTTPS enabled). Specification of the empty string is
 considered not specified; this can be used, for instance, to disable
 HTTPS for a particular peer when it is enabled at the global level.
 
-As the High Availability hook library is an HTTPS client, there is no
-``cert-required`` parameter: it is configured via the Control Agent.
+Using HTTPS in HA setup requires use of Control Agent on all nodes.
+(See :ref:`tls` for Control Agent TLS configuration).
 
+
+As the High Availability hook library is an HTTPS client, there is no
+``cert-required`` parameter in hook configuration.
+
+Following is example HA IP v4 server pair and Control Agent
+configuration for Hot-Standby with TLS.
+
+Server 1:
+::
+
+   "Dhcp4": {
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                   "this-server-name": "server1",
+                   "trust-anchor": /usr/lib/kea/CA.pem,
+                   "cert-file": /usr/lib/kea/server1_cert.pem,
+                   "key-file": /usr/lib/kea/server1_key.pem
+                   "mode": "hot-standby",
+                   "heartbeat-delay": 10000,
+                   "max-response-delay": 60000,
+                   "max-ack-delay": 5000,
+                   "max-unacked-clients": 5,
+                   "peers": [{
+                       "name": "server1",
+                       "url": "http://192.168.56.33:8000/",
+                       "role": "primary",
+                       "auto-failover": true
+                   }, {
+                       "name": "server2",
+                       "url": "http://192.168.56.66:8000/",
+                       "role": "standby",
+                       "auto-failover": true
+                   }]
+               }]
+           }
+       }],
+
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.250",
+               }]
+       }]
+   }
+
+Server 2:
+::
+
+   "Dhcp4": {
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                   "this-server-name": "server2",
+                   "trust-anchor": /usr/lib/kea/CA.pem,
+                   "cert-file": /usr/lib/kea/server2_cert.pem,
+                   "key-file": /usr/lib/kea/server2_key.pem
+                   "mode": "hot-standby",
+                   "heartbeat-delay": 10000,
+                   "max-response-delay": 60000,
+                   "max-ack-delay": 5000,
+                   "max-unacked-clients": 5,
+                   "peers": [{
+                       "name": "server1",
+                       "url": "http://192.168.56.33:8000/",
+                       "role": "primary",
+                       "auto-failover": true
+                   }, {
+                       "name": "server2",
+                       "url": "http://192.168.56.66:8000/",
+                       "role": "standby",
+                       "auto-failover": true
+                   }]
+               }]
+           }
+       }],
+
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.250",
+               }]
+       }]
+   }
+
+Control Agent on both servers:
 .. _ha-server-states:
 
 Server States
