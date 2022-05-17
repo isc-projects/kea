@@ -1,10 +1,11 @@
 2017.	[bug]		marcin
-	Corrected a bug in the allocation engine, causing it to write
-	an allocated lease under the wrong subnet id within a shared
-	network. It happened when a client had a reservation for a
-	lease already allocated to another client. In that case, a
-	lease allocated vicariously from another subnet	could be
-	written under a wrong subnet id.
+	Corrected a bug in the allocation engine which caused it
+	to write an allocated lease under the wrong subnet id
+	within a shared network. This was occurring when multiple
+	clients match the same fixed address reservation. The first
+	client is assigned the fixed address while a subsequent
+	client is then given a dynamically allocated address from
+	a different subnet in the shared-network.
 	(Gitlab #2409)
 
 2016.	[doc]		fdupont
