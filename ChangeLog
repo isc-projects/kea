@@ -1,3 +1,8 @@
+2016.	[doc]		fdupont
+	Added documentation for the role based access list (rbac)
+	premium hook library to the ARM.
+	(Gitlab #1263)
+
 Kea 2.1.5 (development) released on Apr 27, 2022
 
 2015.	[bug]		tmark

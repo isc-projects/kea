@@ -450,6 +450,10 @@ loaded by the correct process per the table below.
    | GSS-TSIG        | ISC support   |This hook library adds support to the Kea D2 server         |
    |                 | customers     |(kea-dhcp-ddns) for using GSS-TSIG to sign DNS updates.     |
    +-----------------+---------------+------------------------------------------------------------+
+   | RBAC            | ISC support   |This hook library adds support to the Kea Control Agent     |
+   |                 | customers     |(kea-ctrl-agent) for Role Based Access List filtering of    |
+   |                 |               |commands.                                                   |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time
 progresses, developed both internally and externally. Since this list
