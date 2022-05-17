@@ -219,14 +219,18 @@ or all specified (HTTPS enabled). Specification of the empty string is
 considered not specified; this can be used, for instance, to disable
 HTTPS for a particular peer when it is enabled at the global level.
 
+As the High Availability hook library is an HTTPS client, there is no
+``cert-required`` parameter in this hook configuration.
+This parameter can be set in Control Agent to enforce client certificate
+in Client-Server communication. It does not affect communication
+between HA peers.
+
+
 Using HTTPS in HA setup requires use of Control Agent on all nodes.
 (See :ref:`tls` for Control Agent TLS configuration).
 
 
-As the High Availability hook library is an HTTPS client, there is no
-``cert-required`` parameter in hook configuration.
-
-Following is example HA server pair and Control Agent
+Following is an example of HA server pair and Control Agent
 configuration for Hot-Standby with TLS.
 
 Server 1:
@@ -329,7 +333,8 @@ Control Agent on Server 1:
             },
             "trust-anchor": "/var/lib/kea/CA.pem",
             "cert-file": "/var/lib/kea/server1_cert.pem",
-            "key-file": "/var/lib/kea/server1_key.pem"
+            "key-file": "/var/lib/kea/server1_key.pem",
+            "cert-required": false
         }
     }
 
@@ -347,7 +352,8 @@ Control Agent on Server 2:
             },
             "trust-anchor": "/var/lib/kea/CA.pem",
             "cert-file": "/var/lib/kea/server2_cert.pem",
-            "key-file": "/var/lib/kea/server2_key.pem"
+            "key-file": "/var/lib/kea/server2_key.pem",
+            "cert-required": false
         }
     }
 
