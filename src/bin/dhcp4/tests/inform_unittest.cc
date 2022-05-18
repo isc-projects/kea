@@ -543,7 +543,8 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
-    // Long option should have been split by the client on pack.
+    // Long option should have been split by the client on pack, serialized and
+    // then restored.
     uint32_t count = 0;
     uint8_t index = 0;
     for (auto const& option : client.getContext().query_->options_) {
@@ -555,7 +556,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
             count++;
         }
     }
-    ASSERT_EQ(11, count);
+    ASSERT_EQ(1, count);
 
     count = 0;
     for (auto const& option : resp->options_) {

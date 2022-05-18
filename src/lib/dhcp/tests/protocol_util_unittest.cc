@@ -8,6 +8,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/protocol_util.h>
 #include <util/buffer.h>
 #include <gtest/gtest.h>
@@ -410,6 +411,108 @@ TEST(ScopedEnableOptionsCopy, enableOptionsCopy) {
         }
         ASSERT_FALSE(pkt->isCopyRetrievedOptions());
         ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    }
+}
+
+TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+    pkt->addOption(option);
+    OptionCollection options = pkt->options_;
+    size_t count = options.size();
+    ASSERT_NE(0, count);
+    ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    {
+        ScopedPkt4OptionsCopy oc(*pkt);
+        ASSERT_EQ(pkt->options_, options);
+        pkt->delOption(DHO_BOOT_FILE_NAME);
+        ASSERT_EQ(pkt->options_.size(), count - 1);
+        ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
+    }
+    ASSERT_EQ(pkt->options_, options);
+    ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+    {
+        try {
+            ScopedPkt4OptionsCopy oc(*pkt);
+            ASSERT_EQ(pkt->options_, options);
+            pkt->delOption(DHO_BOOT_FILE_NAME);
+            ASSERT_EQ(pkt->options_.size(), count - 1);
+            ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
+            throw 0;
+        } catch (...) {
+            ASSERT_EQ(pkt->options_, options);
+            ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+        }
+        ASSERT_EQ(pkt->options_, options);
+        ASSERT_EQ(pkt->getOption(DHO_BOOT_FILE_NAME), option);
+    }
+}
+
+TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 2543));
+    OptionPtr option = Option::create(Option::V6, D6O_BOOTFILE_URL);
+    pkt->addOption(option);
+    OptionCollection options = pkt->options_;
+    size_t count = options.size();
+    ASSERT_NE(0, count);
+    ASSERT_EQ(option, pkt->getOption(D6O_BOOTFILE_URL));
+    {
+        ScopedPkt6OptionsCopy oc(*pkt);
+        ASSERT_EQ(pkt->options_, options);
+        pkt->delOption(D6O_BOOTFILE_URL);
+        ASSERT_EQ(pkt->options_.size(), count - 1);
+        ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
+    }
+    ASSERT_EQ(pkt->options_, options);
+    ASSERT_EQ(pkt->getOption(D6O_BOOTFILE_URL), option);
+    {
+        try {
+            ScopedPkt6OptionsCopy oc(*pkt);
+            ASSERT_EQ(pkt->options_, options);
+            pkt->delOption(D6O_BOOTFILE_URL);
+            ASSERT_EQ(pkt->options_.size(), count - 1);
+            ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
+            throw 0;
+        } catch (...) {
+            ASSERT_EQ(pkt->options_, options);
+            ASSERT_EQ(pkt->getOption(D6O_BOOTFILE_URL), option);
+        }
+        ASSERT_EQ(pkt->options_, options);
+        ASSERT_EQ(pkt->getOption(D6O_BOOTFILE_URL), option);
+    }
+}
+
+TEST(ScopedOptionsCopy, subOptionsCopy) {
+    OptionPtr initial = Option::create(Option::V4, 231);
+    OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
+    initial->addOption(option);
+    OptionCollection options = initial->getOptions();
+    size_t count = options.size();
+    ASSERT_NE(0, count);
+    ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
+    {
+        ScopedSubOptionsCopy oc(initial);
+        ASSERT_EQ(initial->getOptions(), options);
+        initial->delOption(DHO_BOOT_FILE_NAME);
+        ASSERT_EQ(initial->getOptions().size(), count - 1);
+        ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));
+    }
+    ASSERT_EQ(initial->getOptions(), options);
+    ASSERT_EQ(initial->getOption(DHO_BOOT_FILE_NAME), option);
+    {
+        try {
+            ScopedSubOptionsCopy oc(initial);
+            ASSERT_EQ(initial->getOptions(), options);
+            initial->delOption(DHO_BOOT_FILE_NAME);
+            ASSERT_EQ(initial->getOptions().size(), count - 1);
+            ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));
+            throw 0;
+        } catch (...) {
+            ASSERT_EQ(initial->getOptions(), options);
+            ASSERT_EQ(initial->getOption(DHO_BOOT_FILE_NAME), option);
+        }
+        ASSERT_EQ(initial->getOptions(), options);
+        ASSERT_EQ(initial->getOption(DHO_BOOT_FILE_NAME), option);
     }
 }
 

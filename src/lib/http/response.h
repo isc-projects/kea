@@ -202,8 +202,6 @@ public:
     /// sure to call @c finalize prior to calling this method.
     virtual std::string toString() const;
 
-protected:
-
     /// @brief Returns current time formatted as required by RFC 1123.
     ///
     /// This method is virtual so as it can be overridden in unit tests

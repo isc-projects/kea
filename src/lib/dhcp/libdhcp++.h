@@ -22,6 +22,29 @@
 namespace isc {
 namespace dhcp {
 
+typedef ScopedPktOptionsCopy<Pkt4> ScopedPkt4OptionsCopy;
+typedef ScopedPktOptionsCopy<Pkt6> ScopedPkt6OptionsCopy;
+typedef std::shared_ptr<ScopedSubOptionsCopy> ScopedOptionsCopyPtr;
+typedef std::vector<ScopedOptionsCopyPtr> ScopedOptionsCopyContainer;
+
+struct ManagedScopedOptionsCopyContainer {
+    /// @brief Constructor.
+    ManagedScopedOptionsCopyContainer() {
+    }
+
+    /// @brief Destructor.
+    ~ManagedScopedOptionsCopyContainer() {
+        // Destroy the scoped options in same order so that parent options
+        // (stored last) are kept alive longer.
+        for (auto& scoped : scoped_options_) {
+            scoped.reset();
+        }
+    }
+
+    /// @brief The container.
+    ScopedOptionsCopyContainer scoped_options_;
+};
+
 class LibDHCP {
 
 public:
@@ -204,6 +227,7 @@ public:
     /// each options in the container.
     /// @return True if any option has been split, false otherwise.
     static bool splitOptions4(isc::dhcp::OptionCollection& options,
+                              ScopedOptionsCopyContainer& scopedOptions,
                               uint32_t used = 0);
 
     /// @brief Stores DHCPv6 options in a buffer.

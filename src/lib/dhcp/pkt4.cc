@@ -69,6 +69,7 @@ Pkt4::len() {
 
 void
 Pkt4::pack() {
+    ScopedPkt4OptionsCopy scoped_options(*this);
     if (!hwaddr_) {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
@@ -117,14 +118,18 @@ Pkt4::pack() {
         // write DHCP magic cookie
         buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
+        /// Create a ManagedScopedOptionsCopy4Container to handle storing and
+        /// restoration of copied options.
+        ManagedScopedOptionsCopyContainer scoped_options;
+
         // The RFC3396 adds support for long options split over multiple options
         // using the same code.
         // The long options are split in multiple CustomOption instances which
         // hold the data. As a result, the option type of the newly created
-        // options will differ from the ones instanciated by the
+        // options will differ from the ones instantiated by the
         // @ref OptionDefinition::optionFactory. At this stage the server should
         // not do anything useful with the options beside packing.
-        LibDHCP::splitOptions4(options_);
+        LibDHCP::splitOptions4(options_, scoped_options.scoped_options_);
 
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.

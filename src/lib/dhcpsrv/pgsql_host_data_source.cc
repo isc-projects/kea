@@ -473,7 +473,7 @@ protected:
 class PgSqlHostWithOptionsExchange : public PgSqlHostExchange {
 private:
 
-    /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
+    /// @brief Number of columns holding DHCPv4 or DHCPv6 option information.
     static const size_t OPTION_COLUMNS = 7;
 
     /// @brief Receives DHCPv4 or DHCPv6 options information from the

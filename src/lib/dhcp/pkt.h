@@ -796,6 +796,90 @@ private:
 /// @brief A pointer to either Pkt4 or Pkt6 packet
 typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
+/// @brief RAII object enabling duplication of the stored options and restoring
+/// the original options on destructor.
+///
+/// This object enables duplication of the stored options and restoring the
+/// original options on destructor. When the object goes out of scope, the
+/// initial options are restored. This is applicable in cases when the server is
+/// going to invoke a callout (hook library) where the list of options in the
+/// packet will be modified. This can also be used to restore the initial
+/// suboptions of an option when the suboptions are changed (e.g. when splitting
+/// long options and suboptions). The use of RAII object eliminates the need for
+/// explicitly copying and restoring the list of options and is safer in case of
+/// exceptions thrown by callouts and a presence of multiple exit points.
+class ScopedSubOptionsCopy {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates a copy of the initial options on an option.
+    ///
+    /// @param opt Pointer to the option.
+    ScopedSubOptionsCopy(const OptionPtr& opt) : option_(opt) {
+        if (opt) {
+            options_ = opt->getMutableOptions();
+        }
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Restores the initial options on a packet.
+    ~ScopedSubOptionsCopy() {
+        if (option_) {
+            option_->getMutableOptions() = options_;
+        }
+    }
+
+private:
+
+    /// @brief Holds a pointer to the option.
+    OptionPtr option_;
+
+    /// @brief Holds the initial options.
+    OptionCollection options_;
+};
+
+/// @brief RAII object enabling duplication of the stored options and restoring
+/// the original options on destructor.
+///
+/// This object enables duplication of the stored options and restoring the
+/// original options on destructor. When the object goes out of scope, the
+/// initial options are restored. This is applicable in cases when the server is
+/// going to invoke a callout (hook library) where the list of options in the
+/// packet will be modified. The use of RAII object eliminates the need for
+/// explicitly copying and restoring the list of options and is safer in case of
+/// exceptions thrown by callouts and a presence of multiple exit points.
+///
+/// @tparam PktType Type of the packet, e.g. Pkt4, Pkt6, Pkt4o6.
+template<typename PktType>
+class ScopedPktOptionsCopy {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates a copy of the initial options on a packet.
+    ///
+    /// @param pkt Pointer to the packet.
+    ScopedPktOptionsCopy(PktType& pkt) : pkt_(pkt), options_(pkt.options_) {
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Restores the initial options on a packet.
+    ~ScopedPktOptionsCopy() {
+        pkt_.options_ = options_;
+    }
+
+private:
+
+    /// @brief Holds a reference to the packet.
+    PktType& pkt_;
+
+    /// @brief Holds the initial options.
+    OptionCollection options_;
+};
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 

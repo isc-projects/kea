@@ -931,7 +931,9 @@ LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
 }
 
 bool
-LibDHCP::splitOptions4(OptionCollection& options, uint32_t used) {
+LibDHCP::splitOptions4(OptionCollection& options,
+                       ScopedOptionsCopyContainer& scoped_options,
+                       uint32_t used) {
     bool result = false;
     // We need to loop until all options have been split.
     for (;;) {
@@ -948,11 +950,14 @@ LibDHCP::splitOptions4(OptionCollection& options, uint32_t used) {
             bool updated = false;
             bool found_suboptions = false;
             if (sub_options.size()) {
-                found_suboptions = LibDHCP::splitOptions4(sub_options, used + candidate->getHeaderLen());
+                ScopedOptionsCopyPtr candidate_scoped_options(new ScopedSubOptionsCopy(candidate));
+                found_suboptions = LibDHCP::splitOptions4(sub_options, scoped_options,
+                                                          used + candidate->getHeaderLen());
                 // Also split if the overflow is caused by adding the suboptions
                 // to the option data.
                 if (found_suboptions || candidate->len() > 255) {
                     updated = true;
+                    scoped_options.push_back(candidate_scoped_options);
                     // Erase the old options from the new container so that only
                     // the new options are present.
                     copy.erase(option.first);

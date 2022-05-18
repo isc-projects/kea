@@ -378,7 +378,7 @@ public:
             bind_[13].buffer_type = MYSQL_TYPE_STRING;
             std::string auth_key = host->getKey().toText();
             std::strncpy(auth_key_, auth_key.c_str(), TEXT_AUTH_KEY_LEN - 1);
-            auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
+            auth_key_null_ = auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
             bind_[13].buffer_length = auth_key.length();
 
@@ -836,7 +836,7 @@ private:
 class MySqlHostWithOptionsExchange : public MySqlHostExchange {
 private:
 
-    /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
+    /// @brief Number of columns holding DHCPv4 or DHCPv6 option information.
     static const size_t OPTION_COLUMNS = 7;
 
     /// @brief Receives DHCPv4 or DHCPv6 options information from the
@@ -1781,7 +1781,7 @@ public:
             bind_[0].buffer_type = MYSQL_TYPE_NULL;
 
             // code: SMALLINT UNSIGNED NOT NULL
-            type_  = option_->getType();
+            type_ = option_->getType();
             bind_[1].buffer_type = MYSQL_TYPE_SHORT;
             bind_[1].buffer = reinterpret_cast<char*>(&type_);
             bind_[1].is_unsigned = MLM_TRUE;
