@@ -967,9 +967,7 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     OptionPtr opt = option->option_;
     if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
         OutputBuffer buf(opt->len());
-        // The RFC3396 adds support for long options split over multiple options
-        // using the same code.
-        opt->pack(buf, false);
+        opt->pack(buf);
         const char* buf_ptr = static_cast<const char*>(buf.getData());
         std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
                                   buf_ptr + buf.getLength());

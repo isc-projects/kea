@@ -242,7 +242,7 @@ public:
     ///
     /// @param buf pointer to a buffer
     /// @param check flag which indicates if checking the option length is
-    /// required (used in V4 only)
+    /// required (used only in V4)
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
