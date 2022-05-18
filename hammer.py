@@ -49,14 +49,18 @@ SYSTEMS = {
         #'30',  # EOLed
         #'31',  # EOLed
         '32',   # EOLed
-        '33',
+        '33',   # EOLed
         '34',
+        '35',
+        '36'
     ],
     'centos': [
         '7',
         '8',
     ],
-    'rhel': ['8'],
+    'rhel': [
+        '8'
+    ],
     'ubuntu': [
         #'16.04',
         '18.04',
@@ -66,6 +70,7 @@ SYSTEMS = {
         '20.04',
         '20.10',
         '21.04',
+        # '22.04',
     ],
     'debian': [
         #'8',
@@ -107,6 +112,8 @@ IMAGE_TEMPLATES = {
     'fedora-32-lxc':           {'bare': 'isc/lxc-fedora-32',           'kea': 'isc/kea-fedora-32'},
     'fedora-33-lxc':           {'bare': 'isc/lxc-fedora-33',           'kea': 'isc/kea-fedora-33'},
     'fedora-34-lxc':           {'bare': 'isc/lxc-fedora-34',           'kea': 'isc/kea-fedora-34'},
+    'fedora-35-lxc':           {'bare': 'isc/lxc-fedora-35',           'kea': 'isc/kea-fedora-35'},
+    'fedora-36-lxc':           {'bare': 'isc/lxc-fedora-36',           'kea': 'isc/kea-fedora-36'},
 
     # centos
     'centos-7-lxc':            {'bare': 'isc/lxc-centos-7',            'kea': 'isc/kea-centos-7'},
@@ -1446,9 +1453,11 @@ def prepare_system_local(features, check_times):
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-devel', 'postgresql-server'])
             if int(revision) >= 30:
                 packages.extend(['postgresql-server-devel'])
+            if int(revision) <= 34:
+                packages.extend(['postgresql-devel'])
+            packages.extend(['postgresql-server'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1460,7 +1469,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            if int(revision) <= 33:
+            if int(revision) <= 33 or int(revision) >= 35:
                 packages.extend(['cmake', 'pcre-devel'])
                 deferred_functions.extend([
                     _install_libyang_from_sources,
@@ -1469,6 +1478,8 @@ def prepare_system_local(features, check_times):
             else:
                 packages.extend(['cmake', 'libyang', 'libyang-devel', 'libyang-cpp', 'libyang-cpp-devel'])
                 deferred_functions.append(_install_sysrepo_from_sources)
+
+
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -2109,6 +2120,10 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20210415094816.fc33'
     elif system == 'fedora' and revision == '34':
         frc_version = 'isc20210528132302.fc34'
+    elif system == 'fedora' and revision == '35':
+        frc_version = 'isc20220516091026.fc35'
+    elif system == 'fedora' and revision == '36':
+        frc_version = 'isc20220516091651.fc36'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system in ['centos', 'rhel'] and revision == '8':
