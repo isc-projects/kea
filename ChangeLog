@@ -1,3 +1,9 @@
+2018.	[func]		razvan
+	The kea-dhcp4 server now supports portions of RFC 3396,
+	allowing it to send and receive DHCP options longer than 255
+	bytes.
+	(Gitlab #2227)
+
 2017.	[bug]		marcin
 	Corrected a bug in the allocation engine which caused it
 	to write an allocated lease under the wrong subnet id
