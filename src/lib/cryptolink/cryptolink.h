@@ -230,13 +230,15 @@ private:
 
     // To prevent people constructing their own, we make the constructor
     // private too.
-    CryptoLink() : impl_(NULL) {
+    CryptoLink() {
         initialize(*this);
     }
     ~CryptoLink();
 
+    /// \brief Smart pointer holding the implementation.
     CryptoLinkImplPtr impl_;
 
+    /// \brief Smart pointer holding the RNG.
     RNGPtr rng_;
 };
 
