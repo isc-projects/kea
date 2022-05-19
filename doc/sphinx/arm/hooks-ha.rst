@@ -221,7 +221,7 @@ HTTPS for a particular peer when it is enabled at the global level.
 
 As the High Availability hook library is an HTTPS client, there is no
 ``cert-required`` parameter in this hook configuration.
-This parameter can be set in Control Agent to enforce client certificate
+This parameter can be set in Control Agent to require and verify client certificate
 in Client-Server communication. It does not affect communication
 between HA peers.
 
