@@ -3,8 +3,7 @@
 ``ddns_tuning``: Tuning DDNS updates
 ====================================
 
-This hook library adds support for fine tuning various DNS update aspects.
-Currently it supports procedural host name generation and the ability to
+This hook library adds support for fine tuning various DNS update aspects.  Currently it supports procedural host name generation and the ability to
 skip performing DDNS updates for select clients. The DDNS Tuning hook
 is a premium feature.
 
@@ -184,6 +183,20 @@ supported for kea-dhcp6:
             "duid": "01:02:03:04:05:06",
             "ip-address": "2001:db8::1",
             "client-classes": [ "SKIP_DDNS", "foo", "bar" ]
+        }]
+    }
+
+Although, "SKIP_DDNS" is a special class, it can be defined with a test
+expression. Defining it as shown below, would omit DDNS updates for all KNOWN
+clients:
+
+.. code-block:: javascript
+
+    {
+        "client-classes":[
+        {
+            "name": "SKIP_DDNS",
+            "test": "member('KNOWN')"
         }]
     }
 

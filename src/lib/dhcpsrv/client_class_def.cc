@@ -472,14 +472,16 @@ ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
     return (*this);
 }
 
+/// @brief List of classes for which test expressions cannot be defined.
 std::list<std::string>
 builtinNames = {
     // DROP is not in this list because it is special but not built-in.
     // In fact DROP is set from an expression as callouts can drop
     // directly the incoming packet. The expression must not depend on
     // KNOWN/UNKNOWN which are set far after the drop point.
-    // SKIP_DDNS is used by ddns-tuning hook library.
-    "ALL", "KNOWN", "UNKNOWN", "BOOTP", "SKIP_DDNS"
+    // SKIP_DDNS, used by DDNS-tuning is also omitted from this list
+    // so users may assign it a test expression.
+    "ALL", "KNOWN", "UNKNOWN", "BOOTP"
 };
 
 std::list<std::string>
