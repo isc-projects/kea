@@ -70,7 +70,7 @@ global expression for that subnet. An example subnet expression is shown below:
         // This is a subnet-specific user context.
         "user-context": {
             "ddns-tuning:" {
-                "hostame-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
+                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))",
