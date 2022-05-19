@@ -382,6 +382,8 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     EXPECT_EQ(0x8817, udp_checksum);
 }
 
+/// Test that checks the RAII implementation of ScopedEnableOptionsCopy works
+/// as expected, restoring the copy retrieve options flag.
 TEST(ScopedEnableOptionsCopy, enableOptionsCopy) {
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
     OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
@@ -414,6 +416,8 @@ TEST(ScopedEnableOptionsCopy, enableOptionsCopy) {
     }
 }
 
+/// Test that checks the RAII implementation of ScopedPkt4OptionsCopy works
+/// as expected, restoring the initial Pkt4 options.
 TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 2543));
     OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
@@ -448,6 +452,8 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     }
 }
 
+/// Test that checks the RAII implementation of ScopedPkt6OptionsCopy works
+/// as expected, restoring the initial Pkt6 options.
 TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 2543));
     OptionPtr option = Option::create(Option::V6, D6O_BOOTFILE_URL);
@@ -482,6 +488,8 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     }
 }
 
+/// Test that checks the RAII implementation of ScopedSubOptionsCopy works
+/// as expected, restoring the initial option suboptions.
 TEST(ScopedOptionsCopy, subOptionsCopy) {
     OptionPtr initial = Option::create(Option::V4, 231);
     OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);

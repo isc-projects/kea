@@ -22,9 +22,13 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief A pointer to a ScopedPktOptionsCopy object instantiated using Pkt4.
 typedef ScopedPktOptionsCopy<Pkt4> ScopedPkt4OptionsCopy;
+/// @brief A pointer to a ScopedPktOptionsCopy object instantiated using Pkt6.
 typedef ScopedPktOptionsCopy<Pkt6> ScopedPkt6OptionsCopy;
+/// @brief A pointer to a ScopedSubOptionsCopy object.
 typedef std::shared_ptr<ScopedSubOptionsCopy> ScopedOptionsCopyPtr;
+/// @brief A container of ScopedOptionsCopyPtr objects.
 typedef std::vector<ScopedOptionsCopyPtr> ScopedOptionsCopyContainer;
 
 struct ManagedScopedOptionsCopyContainer {

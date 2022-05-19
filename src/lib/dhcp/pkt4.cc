@@ -118,7 +118,7 @@ Pkt4::pack() {
         // write DHCP magic cookie
         buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
-        /// Create a ManagedScopedOptionsCopy4Container to handle storing and
+        /// Create a ManagedScopedOptionsCopyContainer to handle storing and
         /// restoration of copied options.
         ManagedScopedOptionsCopyContainer scoped_options;
 
