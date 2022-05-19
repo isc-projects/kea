@@ -2683,8 +2683,8 @@ Support for Long Options
 The kea-dhcp4 server partially supports long options (RFC3396).
 Since Kea 2.1.6, the server accepts configuring long options and suboptions
 (longer than 255 bytes). The options and suboptions are stored internally
-in their unwrapped form and they can be processed like usual using the parser
-language. On send, the server splits long options and suboptions in multiple
+in their unwrapped form and they can be processed as usual using the parser
+language. On send, the server splits long options and suboptions into multiple
 options and suboptions, using the respective option code.
 
 ::
@@ -2730,12 +2730,12 @@ options and suboptions, using the respective option code.
    support this in the configuration file.
 
 This example illustrates configuring a custom long option in a reservation.
-The server, when sending a response, will split this option in several options
-using the same code (11 options with option code 240).
+The server, when sending a response, will split this option into several options
+with the same code (11 options with option code 240).
 
 .. note::
 
-   Currently the server does not support storing long options is the database,
+   Currently the server does not support storing long options in the databases,
    either host reservations or configuration backend.
 
 The server is also able to receive packets with split options (options using
