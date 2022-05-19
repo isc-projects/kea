@@ -2115,28 +2115,4 @@ TEST_F(Pkt6Test, relayDataOption) {
     EXPECT_EQ(orig_data, clone_data);
 }
 
-// Check that sorted() allows sorted iteration.
-TEST_F(Pkt6Test, sortedClientClasses) {
-    // Add a bunch of classes to a packet.
-    Pkt6 packet(DHCPV6_SOLICIT, 1234);
-    packet.addClass("foo");
-    packet.addClass("bar");
-    packet.addClass("2");
-    packet.addClass("10");
-
-    // Check that the usual iteration yields items in order of insertion.
-    std::string client_classes;
-    for (ClientClass const& c : packet.getClasses()) {
-        client_classes += c + ',';
-    }
-    EXPECT_EQ(client_classes, "ALL,foo,bar,2,10,");
-
-    // Check sorted() yields sorted items.
-    std::string sorted_client_classes;
-    for (ClientClass const& c : packet.getClasses().sorted()) {
-        sorted_client_classes += c + ',';
-    }
-    EXPECT_EQ(sorted_client_classes, "10,2,ALL,bar,foo,");
-}
-
 }  // namespace
