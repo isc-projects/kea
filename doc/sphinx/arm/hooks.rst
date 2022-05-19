@@ -462,7 +462,7 @@ loaded by the correct process per the table below.
    +-----------------+---------------+------------------------------------------------------------+
    | DDNS-Tuning     | ISC support   |This hook library adds support for fine tuning various DDNS |
    |                 | customers     |update aspects such as generating hostnames via expressions |
-   |                 |               |and skipping DDNS updates for select cients.                |
+   |                 |               |and skipping DDNS updates for select clients.               |
    +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time

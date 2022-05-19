@@ -166,16 +166,20 @@ be found in :ref:`high-availability-library`.
 The ``BOOTP`` class is used by the BOOTP hook library to classify and
 respond to inbound BOOTP queries.
 
+The ``SKIP_DDNS`` class is used by the DDNS-tuning hook library to suppress
+DDNS updates on a per client basis.
+
 Other examples are the ``ALL`` class, to which all incoming packets belong,
 and the ``KNOWN`` class, assigned when host reservations exist for a
 particular client. By convention, the names of built-in classes begin with all
 capital letters.
 
-Currently recognized built-in class names are ``ALL``, ``KNOWN`` and ``UNKNOWN``, and the
-prefixes ``VENDOR_CLASS_``, ``HA_``, ``AFTER_``, and ``EXTERNAL_``. Although the ``AFTER_``
-prefix is a provision for an as-yet-unwritten hook, the ``EXTERNAL_``
-prefix can be freely used; built-in classes are implicitly defined so
-they never raise warnings if they do not appear in the configuration.
+Currently recognized built-in class names are ``ALL``, ``KNOWN`` and ``UNKNOWN``,
+and the prefixes ``VENDOR_CLASS_``, ``HA_``, ``AFTER_``, ``EXTERNAL_``,
+``SKIP_DDNS``. Although the ``AFTER_`` prefix is a provision for an
+as-yet-unwritten hook, the ``EXTERNAL_`` prefix can be freely used; built-in
+classes are implicitly defined so they never raise warnings if they do not
+appear in the configuration.
 
 .. _classification-using-expressions:
 
