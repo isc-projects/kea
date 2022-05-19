@@ -2675,6 +2675,74 @@ specified:
    assumes that the option data is specified as a list of comma-separated
    values to be assigned to individual fields of the DHCP option.
 
+.. _dhcp4-support-for-long-options:
+
+Support for Long Options
+------------------------
+
+The kea-dhcp4 server partially supports long options (RFC3396).
+Since Kea 2.1.6, the server accepts configuring long options and suboptions
+(longer than 255 bytes). The options and suboptions are stored internally
+in their unwrapped form and they can be processed like usual using the parser
+language. On send, the server splits long options and suboptions in multiple
+options and suboptions, using the respective option code.
+
+::
+
+   "option-def": [
+       {
+           "array": false,
+           "code\": 240,
+           "encapsulate": "",
+           "name": "my-option",
+           "space": "dhcp4",
+           "type": "string"
+       }
+   ],
+   "subnet4": [
+       {
+           "subnet": "192.0.2.0/24",
+           "reservations": [
+               {
+                   "hw-address": "aa:bb:cc:dd:ee:ff",
+                   "option-data": [
+                       {
+                           "always-send": false,
+                           "code": 240,
+                           "name": "my-option",
+                           "csv-format": true,
+                           "data": "data
+                                    -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
+                                    -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
+                                    -00010203040506070809-00010203040506070809-00010203040506070809-00010203040506070809
+                                    -data",
+                           "space": "dhcp4"
+                       }
+                   ]
+               }
+           ]
+       }
+   ]
+
+.. note::
+
+   For this example, the data has been split on several lines, but Kea does not
+   support this in the configuration file.
+
+This example illustrates configuring a custom long option in a reservation.
+The server, when sending a response, will split this option in several options
+using the same code (11 options with option code 240).
+
+.. note::
+
+   Currently the server does not support storing long options is the database,
+   either host reservations or configuration backend.
+
+The server is also able to receive packets with split options (options using
+the same option code) and to fuse the data chuncks into one option. This is
+also supported for suboptions if each suboption data chunk also contains the
+suboption code and suboption length.
+
 .. _dhcp4-stateless-configuration:
 
 Stateless Configuration of DHCPv4 Clients
