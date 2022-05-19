@@ -186,3 +186,9 @@ supported for kea-dhcp6:
             "client-classes": [ "SKIP_DDNS", "foo", "bar" ]
         }]
     }
+
+.. note::
+
+    In order for the SKIP_DDNS class to have an effect, the DDNS-tuning hook
+    library must be loaded.
+
