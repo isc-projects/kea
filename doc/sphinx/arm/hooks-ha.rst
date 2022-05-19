@@ -333,7 +333,7 @@ Control Agent on Server 1:
             "trust-anchor": "/var/lib/kea/CA.pem",
             "cert-file": "/var/lib/kea/server1_cert.pem",
             "key-file": "/var/lib/kea/server1_key.pem",
-            "cert-required": false
+            "cert-required": true
         }
     }
 
