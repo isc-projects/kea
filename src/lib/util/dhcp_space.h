@@ -7,8 +7,6 @@
 #ifndef ISC_DHCP_SPACE_H
 #define ISC_DHCP_SPACE_H 1
 
-#include <cstdint>
-
 namespace isc {
 namespace util {
 
@@ -16,12 +14,6 @@ enum DhcpSpace {
     DHCPv4,
     DHCPv6,
 };
-
-template <DhcpSpace D>
-constexpr uint16_t integerDhcpSpace();
-
-template <DhcpSpace D>
-constexpr char const* cStringDhcpSpace();
 
 }  // namespace util
 }  // namespace isc
