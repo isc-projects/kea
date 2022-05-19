@@ -225,7 +225,7 @@ This parameter can be set in Control Agent to enforce client certificate
 in Client-Server communication. It does not affect communication
 between HA peers.
 
-Curently using HTTPS in HA setup requires use of Control Agent on all peers.
+Currently using HTTPS in HA setup requires use of Control Agent on all peers.
 (See :ref:`tls` for Control Agent TLS configuration).
 
 Following is an example of HA server pair and Control Agent
