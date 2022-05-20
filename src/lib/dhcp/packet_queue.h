@@ -12,7 +12,6 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
-#include <boost/circular_buffer.hpp>
 #include <sstream>
 
 namespace isc {
