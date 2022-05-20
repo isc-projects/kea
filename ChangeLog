@@ -1,3 +1,8 @@
+2021.	[build]		razvan
+	Library version numbers bumped for Kea 2.1.6 development
+	version.
+	(Gitlab #2421)
+
 2020.	[doc]		andrei
 	Document the rate limiting feature of the new limits hook
 	library. It can apply a given limit of a certain number of
