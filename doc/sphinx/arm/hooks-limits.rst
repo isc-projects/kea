@@ -19,23 +19,24 @@ number that can be represented by an unsigned integer on 32 bits i.e. between ``
 ``year`` is 365 days for all intents and purposes of limiting. This syntax covers a high range of
 rates from one lease per year to four billion leases per second.
 
-The configured value of ``0`` packets is a convenient way of disabling packet processing for certain clients entirely. As such, it means its literary value and is not a special value for disabling
+The configured value of ``0`` packets is a convenient way of disabling packet processing for certain
+clients entirely. As such, it means its literal value and is not a special value for disabling
 limiting altogether as it might be imagined. Disabling limiting altogether is achieved by removing
 the `"rate-limit"` leaf configuration entry, the `"limits"` map around it or the user context around
 it or the hook library configuration.
 
-There are two ways to configure what packets get limited. One is through the client classes that are
-initially assigned to the packet. In this case, the limit is configured directly in the user context
-of the client class definition. As such, if a client class has no dependencies on host reservations,
-or on the special `"BOOTP"` or `"KNOWN"` classes, and is not marked with `"only-if-required"`, if
-the client class gets assigned to the packet, and it has a configured limit, the packet will be
-limited accordingly.
+There are two ways to configure which packets get limited. One is through the client classes that are
+initially assigned to the packet.  In this case, the limit is configured in the user context
+in the client class definition.  Class rate limits are checked early in packet processing cycle
+and is thus limited to those classes which are assigned to the packet via test expression and that
+do not depend on host reservations, the special "BOOTP" or "KNOWN" classes, and is not marked with
+"only-if-required".
 
 .. note::
 
     It can be tempting to think that assigning a rate limit of `n` packets per time unit results in
     `n` DORA or `n` SARR exchanges. By default, all inbound packets are counted. That means that
-    a full message exchange amounts for 2 packets. To achieve the desired effect of counting an
+    a full message exchange accounts for 2 packets. To achieve the desired effect of counting an
     exchange only once, you may use client class rate limiting with a test expression that binds
     `pkt4.msgtype` to DHCPDISCOVER messages or `pkt6.msgtype` to SOLICIT messages.
 
@@ -44,9 +45,11 @@ is added to the user context of the subnet definition.
 
 .. note::
 
-    Subnet reselection mechanisms like the one that can be enabled in the RADIUS hook, can offer the
-    illusion that a packet should have been limited, when in reality it was not. The subnet that is
-    taken into account depends on which hook library is configured first.
+    Subnet rate limits are enforced only on the initially selected subnet for a given packet.
+    If the selected subnet is subsequently changed, as may be the case for subnets in a
+    shared-network or when reselection is enabled in libraries such as the RADIUS hook, rate
+    limits on the newly selected subnet will be ignored.  In other words, packets are gated
+    only by the rate limit on the original subnet.
 
 The following is an example that adds one rate limit on a client class and another one in a subnet
 in `kea-dhcp6`. A valid configuration for `kea-dhcp4` can be easily extrapolated.
