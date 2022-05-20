@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 namespace isc {
-namespace hooks {
+namespace test {
 
 /// @brief Test fixture for testing loading and unloading of hook libraries.
 struct LibLoadTest : ::testing::Test {
@@ -43,8 +43,8 @@ struct LibLoadTest : ::testing::Test {
     /// @return true if all libraries loaded succesfully, false if one or more
     ///     libraries failed to load.
     bool loadLibraries() {
-        bool result;
-        EXPECT_NO_THROW(result = HooksManager::loadLibraries(libraries_));
+        bool result(false);
+        EXPECT_NO_THROW(result = isc::hooks::HooksManager::loadLibraries(libraries_));
         return result;
     }
 
@@ -53,16 +53,16 @@ struct LibLoadTest : ::testing::Test {
     /// @return true if all libraries unloaded successfully, false if they
     ///     are still in memory.
     bool unloadLibraries() {
-        bool result;
-        EXPECT_NO_THROW(result = HooksManager::unloadLibraries());
+        bool result(false);
+        EXPECT_NO_THROW(result = isc::hooks::HooksManager::unloadLibraries());
         return result;
     }
 
     /// @brief Libraries
-    HookLibsCollection libraries_;
+    isc::hooks::HookLibsCollection libraries_;
 };
 
-}  // namespace hooks
+}  // namespace test
 }  // namespace isc
 
 #endif  // ISC_TESTUTILS_LIB_LOAD_TEST_FIXTURE_H
