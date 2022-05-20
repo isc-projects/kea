@@ -560,7 +560,7 @@ insert into lease4 values(12,E'\\\\x3232','',40,TO_TIMESTAMP(1643212345),50,'t',
 
     # Dump lease4 to output_file
     run_command \
-        "${kea_admin}" lease-dump pgsql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump pgsql -y -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -624,7 +624,7 @@ insert into lease6 values('::12',E'\\\\x3232',30,TO_TIMESTAMP(1643212345),40,50,
 
     # Dump lease6 to output_file
     run_command \
-        "${kea_admin}" lease-dump pgsql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump pgsql -y -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -662,14 +662,14 @@ pgsql_lease4_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload pgsql -4 -u "${db_user}" \
+        "${kea_admin}" lease-upload pgsql -y -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -i "${input_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump pgsql -4 -u "${db_user}" \
+        "${kea_admin}" lease-dump pgsql -y -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -o "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
@@ -709,14 +709,14 @@ pgsql_lease6_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload pgsql -6 -u "${db_user}" \
+        "${kea_admin}" lease-upload pgsql -y -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -i "${input_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump pgsql -6 -u "${db_user}" \
+        "${kea_admin}" lease-dump pgsql -y -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
             -o "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"

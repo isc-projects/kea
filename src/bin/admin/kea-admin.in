@@ -40,6 +40,8 @@ SCRIPTS_DIR_DEFAULT="@datarootdir@/@PACKAGE@/scripts"
 scripts_dir="${SCRIPTS_DIR_DEFAULT}"
 VERSION="@PACKAGE_VERSION@"
 
+assume_yes=0
+
 # lease dump parameters
 dhcp_version=0
 dump_file=""
@@ -94,6 +96,7 @@ PARAMETERS: Parameters are optional in general, but may be required
  -d or --directory - path to upgrade scripts (default: %s)
  -v or --version - print kea-admin version and quit.
  -x or --extra - specifies extra argument(s) to pass to the database command
+ -y or --yes - assume yes on overwriting temporary files
 
  Parameters specific to lease-dump, lease-upload:
      -4 to dump IPv4 leases to file
@@ -405,19 +408,34 @@ pgsql_upgrade() {
     exit 0
 }
 
+# Remove a file if it exists
+remove_file () {
+    local file="${1}"
+    if [ ! -z "${file}" ] && [ -e "${file}" ]
+    then
+        echo "Removing file ${file}"
+        rm -f "${file}"
+    else
+        echo "File ${file} does not exist, no need to remove it."
+    fi
+}
+
 # Utility function which tests if the given file exists and
 # if so notifies the user and provides them the opportunity
 # to abort the current command.
 check_file_overwrite () {
     local file="${1}"
-    if [ -e "${file}" ]
+    if [ $assume_yes -eq 1 ]
+    then
+        remove_file "${file}"
+    elif [ -e "${file}" ]
     then
         echo "Output file, $file, exists and will be overwritten."
         echo "Do you wish to continue? (y/N)"
 
         # Ask for an answer only on an interactive shell to prevent blocking in
         # automated or non-interactive scenarios where the answer defaults to no.
-        if test -t 0; then
+        if [[ $- == *i* ]]; then
             read -r ans
         else
             log_warning 'Non-interactive tty detected. Assuming no.'
@@ -662,10 +680,6 @@ lease_upload() {
     cleaned_up_csv="/tmp/$(basename "${input_file}").tmp"
     check_file_overwrite "${cleaned_up_csv}"
     cp "${input_file}" "${cleaned_up_csv}"
-    echo "${kea_lfc}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
-        -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
-        -f "${cleaned_up_csv}.completed" -p "${cleaned_up_csv}.pid" \
-        -cignored-path >> /opt/a.txt
     "${kea_lfc}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
         -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
         -f "${cleaned_up_csv}.completed" -p "${cleaned_up_csv}.pid" \
@@ -938,6 +952,9 @@ do
             else
                 extra_arguments="${extra_arguments} ${1}"
             fi
+            ;;
+        -y|--yes)
+            assume_yes=1
             ;;
         *)
             log_error "invalid option: ${option}"
