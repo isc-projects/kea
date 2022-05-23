@@ -372,14 +372,14 @@
             // re-detected.
             "re-detect": true,
 
-            // Kea tries to bind the service sockets during initialiation. It may
+            // Kea tries to bind the service sockets during initialization. It may
             // fail due to a port being already opened or misconfiguration. Kea can
             // suppress these errors and only logs them. This flag prevents starting
             // the DHCP server without binding all sockets. If unspecified, it
             // defaults to false.
             "service-sockets-require-all": true,
 
-            // Kea tries to bind the service sockets during initialiation. This
+            // Kea tries to bind the service sockets during initialization. This
             // option specifies how many times binding to interface will be retried.
             // The default value is 0 which means that the operation will not be
             // repeated.

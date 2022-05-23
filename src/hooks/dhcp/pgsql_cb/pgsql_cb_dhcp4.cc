@@ -971,7 +971,7 @@ public:
                           << subnet->getID() << ", prefix: " << subnet->toText());
             }
 
-            // Remove existing server assocation.
+            // Remove existing server association.
             PsqlBindArray server_bindings;
             server_bindings.add(subnet->getID());
             updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_SERVER,
@@ -1533,7 +1533,7 @@ public:
             updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
                               in_bindings);
 
-            // Remove existing server assocation.
+            // Remove existing server association.
             PsqlBindArray server_bindings;
             server_bindings.addTempString(shared_network->getName());
             updateDeleteQuery(PgSqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_SERVER,

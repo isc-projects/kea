@@ -775,7 +775,7 @@ public:
 
     /// @brief Converts a column in a row in a result set to a binary bytes
     ///
-    /// Method is used to convert columns stored as BYTEA into a vectory of
+    /// Method is used to convert columns stored as BYTEA into a vector of
     /// binary bytes, (uint8_t).  It uses PQunescapeBytea to do the conversion.
     ///
     /// @param r the result set containing the query results
@@ -813,7 +813,7 @@ public:
     /// default value.  If this column is null, the Triplet is returned
     /// as unspecified.
     /// @param min_col the column number within the row that contains the
-    /// minium value.
+    /// minimum value.
     /// @param max_col the column number within the row that contains the
     /// maximum value.
     /// @return Triplet to receive the column value
@@ -975,7 +975,7 @@ public:
     /// default value.  If this column is null, the Triplet is returned
     /// as unspecified.
     /// @param min_col the column number within the row that contains the
-    /// minium value.
+    /// minimum value.
     /// @param max_col the column number within the row that contains the
     /// maximum value.
     /// @return Triplet to receive the column value

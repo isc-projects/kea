@@ -269,7 +269,7 @@ public:
     /// @param result_string The expected result of the eval
     /// @param should_throw The eval will throw
     void verifySplitEval(const std::string& test_string,
-                         const std::string& test_delimeters,
+                         const std::string& test_delimiters,
                          const std::string& test_field,
                          const std::string& result_string,
                          bool should_throw = false) {
@@ -278,7 +278,7 @@ public:
 
         // push values on stack
         values_.push(test_string);
-        values_.push(test_delimeters);
+        values_.push(test_delimiters);
         values_.push(test_field);
 
         // evaluate the token
@@ -3366,7 +3366,7 @@ TEST_F(TokenTest, integer) {
     testInteger(encode(4294967295), 4294967295);
 }
 
-// Verify TokenSplit::eval, single delimeter.
+// Verify TokenSplit::eval, single delimiter.
 TEST_F(TokenTest, split) {
     // Get the whole string
     std::string input(".two.three..five.");
@@ -3423,7 +3423,7 @@ TEST_F(TokenTest, split) {
     EXPECT_TRUE(checkFile());
 }
 
-// Verify TokenSplit::eval with more than one delimeter.
+// Verify TokenSplit::eval with more than one delimiter.
 TEST_F(TokenTest, splitMultipleDelims) {
     // Get the whole string
     std::string input(".two:three.:five.");

@@ -320,17 +320,17 @@ called before "subnet6_select".
    host name as well as whether or not forward and/or reverse updates are
    enabled.
 
-   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd_udpate</b>,
-   and <b>rev_udpate</b> have been set by the server based on the client packet,
-   and various configuration values (e.g host reservations, DDNS behaviorial
+   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd_update</b>,
+   and <b>rev_update</b> have been set by the server based on the client packet,
+   and various configuration values (e.g host reservations, DDNS behavioral
    parameters, etc).  Upon return from the callout, any changes to these
    values will be applied as follows:
    - If <b>hostname</b> has changed it will be used to update the outbound
    FQDN option (option 39) if it exists, and used as the FQDN sent in DNS
    updates
-   - Forward DNS update(s) will be done if <b>fwd_udpate</b> is true (and
+   - Forward DNS update(s) will be done if <b>fwd_update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
-   - Reverse DNS update(s) will be done if <b>rev_udpate</b> is true (and
+   - Reverse DNS update(s) will be done if <b>rev_update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.

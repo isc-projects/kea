@@ -798,7 +798,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // but the prefix will not match. According to the RFC 8415, section 18.3.5
     // the server may return delegated prefix with lifetime of 0 when it
     // finds that the lease entry for the particular IAID but the prefix
-    // is not appropriate. This constitues explicit notification to the
+    // is not appropriate. This constitutes explicit notification to the
     // client to not use this prefix.
     ASSERT_NO_THROW(client.doRebind());
     // Make sure that the server has discarded client's message. In such case,

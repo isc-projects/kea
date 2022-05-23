@@ -40,7 +40,7 @@ struct LibLoadTest : ::testing::Test {
 
     /// @brief Load all libraries.
     ///
-    /// @return true if all libraries loaded succesfully, false if one or more
+    /// @return true if all libraries loaded successfully, false if one or more
     ///     libraries failed to load.
     bool loadLibraries() {
         bool result(false);

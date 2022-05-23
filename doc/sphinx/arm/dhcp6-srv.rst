@@ -6343,13 +6343,13 @@ The DHCPv6 server supports the following statistics:
    |                                              |                | subnet separately.                 |
    +----------------------------------------------+----------------+------------------------------------+
    | v6-allocation-fail-shared-network            | integer        | Number of address allocation       |
-   |                                              |                | failures for a paticular client    |
+   |                                              |                | failures for a particular client   |
    |                                              |                | connected to a shared network.     |
    |                                              |                | This is a global statistic that    |
    |                                              |                | covers all subnets.                |
    +----------------------------------------------+----------------+------------------------------------+
    | subnet[id].v6-allocation-fail-shared-network | integer        | Number of address allocation       |
-   |                                              |                | failures for a paticular client    |
+   |                                              |                | failures for a particular client   |
    |                                              |                | connected to a shared network.     |
    |                                              |                | The *id* is the subnet-id of a     |
    |                                              |                | given subnet. This statistic is    |

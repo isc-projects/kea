@@ -55,7 +55,7 @@ public:
 
     /// Constructor, used in replying to a message.
     ///
-    /// @param msg_type type of message (e.g. DHCPDISOVER=1)
+    /// @param msg_type type of message (e.g. DHCPDISCOVER=1)
     /// @param transid transaction-id
     Pkt4(uint8_t msg_type, uint32_t transid);
 

@@ -450,7 +450,7 @@ public:
     /// @brief  Attempts to add a backend instance to the CB manager.
     ///
     /// @param access Connection access string containing the database
-    /// connetion parameters.
+    /// connection parameters.
     virtual void addBackend(const std::string& access) {
         ConfigBackendDHCPv4Mgr::instance().addBackend(access);
     }

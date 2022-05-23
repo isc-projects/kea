@@ -157,7 +157,7 @@ client basis.  The library recognizes a special client class, "SKIP_DDNS".  When
 client is matched to this class, kea servers (kea-dhcp4 and kea-dhcp6) will not
 send DDNS update requests (NCRs) to kea-dhcp-ddns.  A common use-case would be
 to skip DDNS updates for fixed-address host reservations.  This is done easily by
-simply assiging the class to the host reservation as shown below:
+simply assigning the class to the host reservation as shown below:
 
 .. code-block:: javascript
 

@@ -2739,7 +2739,7 @@ with the same code (11 options with option code 240).
    either host reservations or configuration backend.
 
 The server is also able to receive packets with split options (options using
-the same option code) and to fuse the data chuncks into one option. This is
+the same option code) and to fuse the data chunks into one option. This is
 also supported for suboptions if each suboption data chunk also contains the
 suboption code and suboption length.
 
@@ -6476,13 +6476,13 @@ The DHCPv4 server supports the following statistics:
    |                                              |                | subnet separately.                 |
    +----------------------------------------------+----------------+------------------------------------+
    | v4-allocation-fail-shared-network            | integer        | Number of address allocation       |
-   |                                              |                | failures for a paticular client    |
+   |                                              |                | failures for a particular client   |
    |                                              |                | connected to a shared network.     |
    |                                              |                | This is a global statistic that    |
    |                                              |                | covers all subnets.                |
    +----------------------------------------------+----------------+------------------------------------+
    | subnet[id].v4-allocation-fail-shared-network | integer        | Number of address allocation       |
-   |                                              |                | failures for a paticular client    |
+   |                                              |                | failures for a particular client   |
    |                                              |                | connected to a shared network.     |
    |                                              |                | The *id* is the subnet-id of a     |
    |                                              |                | given subnet. This statistic is    |

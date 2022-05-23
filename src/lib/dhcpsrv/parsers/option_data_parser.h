@@ -108,7 +108,7 @@ protected:
     /// -# ab:cd:ef   - colon delimited
     /// -# ab cd ef   - space delimited
     /// -# 0xabcdef   - 0x prefixed (no delimiters)
-    /// -# abcdef     - no prefix or delimeters
+    /// -# abcdef     - no prefix or delimiters
     ///
     /// A leading zero is assumed for odd number of digits
     /// in an octet or continuous string.

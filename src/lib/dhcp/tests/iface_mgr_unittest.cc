@@ -1989,7 +1989,7 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     EXPECT_EQ(2, errors_count_);
 }
 
-// Test that no exception is thown when a port is already bound but skip open
+// Test that no exception is thrown when a port is already bound but skip open
 // flag is provided.
 TEST_F(IfaceMgrTest, openSockets4SkipOpen) {
     NakedIfaceMgr ifacemgr;
@@ -2482,7 +2482,7 @@ TEST_F(IfaceMgrTest, openSockets6ErrorHandler) {
     EXPECT_EQ(2, errors_count_);
 }
 
-// Test that no exception is thown when a port is already bound but skip open
+// Test that no exception is thrown when a port is already bound but skip open
 // flag is provided.
 TEST_F(IfaceMgrTest, openSockets6SkipOpen) {
     NakedIfaceMgr ifacemgr;

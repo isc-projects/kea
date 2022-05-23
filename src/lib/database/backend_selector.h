@@ -82,7 +82,7 @@ public:
     ///
     /// @param host Hostname to be used for selecting a backend.
     /// @param port Port number to be used for selecting a backend. This value
-    /// is optional and is ignored when set to 0. It must be used on conjuction
+    /// is optional and is ignored when set to 0. It must be used in conjunction
     /// with hostname.
     explicit BackendSelector(const std::string& host, const uint16_t port = 0);
 
@@ -193,7 +193,7 @@ private:
 
     /// @brief Checks if the specified selector is valid.
     ///
-    /// It checks if the port number is specified in conjuction with
+    /// It checks if the port number is specified in conjunction with
     /// host.
     /// @throw BadValue if selector validation fails.
     void validate() const;

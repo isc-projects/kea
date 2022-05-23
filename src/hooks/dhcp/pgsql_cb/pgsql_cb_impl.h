@@ -550,7 +550,7 @@ public:
 
     /// @brief Adds network ddns-replace-client-name mode to a bind array.
     ///
-    /// If network's value of ddsn-replace-client-name mode has been specified
+    /// If network's value of ddns-replace-client-name mode has been specified
     /// it is added to the binding, otherwise a null is added to the binding.
     ///
     /// @param bindings PsqlBindArray to which the mode should be added.

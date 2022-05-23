@@ -1932,11 +1932,11 @@ to the option one with:
   should be created if it does not exit in the ``add`` and ``supersede``
   action. When not specified, it defaults to true.
 
-- ``container-remove`` - booleand value which specifies if the container option
+- ``container-remove`` - boolean value which specifies if the container option
   should be deleted if it remains empty after the removal of a sub-option by
   the ``remove`` action. When not specified, it defaults to true.
 
-- ``csv-format`` - booleand value which specifies if the raw value of the
+- ``csv-format`` - boolean value which specifies if the raw value of the
   evaluated expression is used (false, default) or parsed using the sub-option
   definition (true).
 

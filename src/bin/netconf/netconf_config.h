@@ -70,7 +70,7 @@ namespace netconf {
 class CfgControlSocket : public isc::data::UserContext,
     public isc::data::CfgToElement {
 public:
-    /// @brief Defines the list of possible constrol socket types.
+    /// @brief Defines the list of possible control socket types.
     enum Type {
         UNIX,    //< Unix socket.
         HTTP,    //< HTTP socket.

@@ -154,7 +154,7 @@ TEST_F(FlexSubOptionTest, subOptionConfigNoCodeName) {
     EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
 }
 
-// Verify that a sub-option configuration must retrive a space.
+// Verify that a sub-option configuration must retrieve a space.
 TEST_F(FlexSubOptionTest, subOptionConfigNoSpace) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();

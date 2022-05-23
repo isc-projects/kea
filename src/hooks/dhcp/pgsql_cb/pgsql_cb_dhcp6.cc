@@ -1140,7 +1140,7 @@ public:
                           << subnet->getID() << ", prefix: " << subnet->toText());
             }
 
-            // Remove existing server assocation.
+            // Remove existing server association.
             PsqlBindArray server_bindings;
             server_bindings.add(subnet->getID());
             updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_SERVER,
@@ -1770,7 +1770,7 @@ public:
             updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::UPDATE_SHARED_NETWORK6,
                               in_bindings);
 
-            // Remove existing server assocation.
+            // Remove existing server association.
             PsqlBindArray server_bindings;
             server_bindings.addTempString(shared_network->getName());
             updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_SERVER,
@@ -4416,7 +4416,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT2,       // 15 code (of option to update)
             OID_VARCHAR     // 16 space (of option to update)
         },
-        "UPDATE_OPTION6_CIENT_CLASS",
+        "UPDATE_OPTION6_CLIENT_CLASS",
         PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $14 AND o.code = $15 AND o.space = $16)
     },
 

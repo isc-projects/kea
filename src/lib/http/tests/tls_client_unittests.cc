@@ -524,7 +524,7 @@ public:
             }
         }));
 
-        // Record subjet and issuer: they will be check during response creation.
+        // Record subject and issuer: they will be checked during response creation.
         HttpRequest::recordSubject_ = true;
         HttpRequest::recordIssuer_ = true;
 
@@ -1138,7 +1138,7 @@ public:
 
     /// @brief Simulates external registry of Connection TCP sockets
     ///
-    /// Provides methods compatible with Connection callbacks for connnect
+    /// Provides methods compatible with Connection callbacks for connect
     /// and close operations.
     class ExternalMonitor {
     public:

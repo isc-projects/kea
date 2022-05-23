@@ -1235,7 +1235,7 @@ protected:
 /// to operate on sub-options. It also adds additional capabilities.
 ///
 /// Note: @c TokenSubOption virtually derives @c TokenOption because both
-/// classes are inherided together in more complex classes in other parts of
+/// classes are inherited together in more complex classes in other parts of
 /// the code. This makes the base class @c TokenOption to exist only once in
 /// such complex classes.
 ///

@@ -248,7 +248,7 @@ public:
     /// Access control parameters: Flags which indicate what information to record.
     /// Remote address and TLS usage are always recorded.
 
-    /// @brief Record subjet name.
+    /// @brief Record subject name.
     static bool recordSubject_;
 
     /// @brief Record issuer name.

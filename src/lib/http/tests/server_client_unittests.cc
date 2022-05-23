@@ -1799,7 +1799,7 @@ public:
 
     /// @brief Simulates external registery of Connection TCP sockets
     ///
-    /// Provides methods compatible with Connection callbacks for connnect
+    /// Provides methods compatible with Connection callbacks for connect
     /// and close operations.
     class ExternalMonitor {
     public:
