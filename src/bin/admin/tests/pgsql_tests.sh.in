@@ -526,6 +526,7 @@ pgsql_upgrade_test() {
 # determined by querying the PostgreSQL server.  This
 # updated reference data is captured in a temporary file
 # which is used for the actual comparison.
+# May accept additional parameters to be passed to lease-dump.
 pgsql_lease4_dump_test() {
     test_start "pgsql.lease4_dump_test"
 
@@ -535,8 +536,16 @@ pgsql_lease4_dump_test() {
     output_file="$output_dir/data/pgsql.lease4_dump_test.output.csv"
     ref_file="$test_dir/data/lease4_dump_test.reference.csv"
 
-    # Clean up any test files left from prior failed runs.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -560,7 +569,8 @@ insert into lease4 values(12,E'\\\\x3232','',40,TO_TIMESTAMP(1643212345),50,'t',
 
     # Dump lease4 to output_file
     run_command \
-        "${kea_admin}" lease-dump pgsql -y -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump pgsql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -599,8 +609,16 @@ pgsql_lease6_dump_test() {
     output_file="$output_dir/data/pgsql.lease6_dump_test.output.csv"
     ref_file="$test_dir/data/lease6_dump_test.reference.csv"
 
-    # Clean up any test files left from prior failed runs.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -624,7 +642,8 @@ insert into lease6 values('::12',E'\\\\x3232',30,TO_TIMESTAMP(1643212345),40,50,
 
     # Dump lease6 to output_file
     run_command \
-        "${kea_admin}" lease-dump pgsql -y -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump pgsql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -641,6 +660,7 @@ insert into lease6 values('::12',E'\\\\x3232',30,TO_TIMESTAMP(1643212345),40,50,
     test_finish 0
 }
 
+# May accept additional parameters to be passed to lease-dump or to lease-upload.
 pgsql_lease4_upload_test() {
     test_start "pgsql.lease4_upload_test"
 
@@ -650,9 +670,18 @@ pgsql_lease4_upload_test() {
     # Wipe the whole database.
     pgsql_wipe
 
-    # Make sure there's no output file left from previous failures, otherwise
-    # kea-admin is going to ask you if you want to overwrite which blocks tests.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${input_file}.tmp"
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${input_file}.tmp"
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Initialize the database.
     run_command \
@@ -662,16 +691,16 @@ pgsql_lease4_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload pgsql -y -4 -u "${db_user}" \
+        "${kea_admin}" lease-upload pgsql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}"
+            -i "${input_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump pgsql -y -4 -u "${db_user}" \
+        "${kea_admin}" lease-dump pgsql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}"
+            -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -697,9 +726,18 @@ pgsql_lease6_upload_test() {
     # Wipe the whole database.
     pgsql_wipe
 
-    # Make sure there's no output file left from previous failures, otherwise
-    # kea-admin is going to ask you if you want to overwrite which blocks tests.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${input_file}.tmp"
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${input_file}.tmp"
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Initialize the database.
     run_command \
@@ -709,16 +747,16 @@ pgsql_lease6_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload pgsql -y -6 -u "${db_user}" \
+        "${kea_admin}" lease-upload pgsql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}"
+            -i "${input_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump pgsql -y -6 -u "${db_user}" \
+        "${kea_admin}" lease-dump pgsql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}"
+            -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -1228,9 +1266,13 @@ pgsql_db_init_test
 pgsql_db_version_test
 pgsql_upgrade_test
 pgsql_lease4_dump_test
+pgsql_lease4_dump_test -y
 pgsql_lease6_dump_test
+pgsql_lease6_dump_test -y
 pgsql_lease4_upload_test
+pgsql_lease4_upload_test -y
 pgsql_lease6_upload_test
+pgsql_lease6_upload_test -y
 pgsql_lease4_stat_test
 pgsql_lease6_stat_test
 pgsql_lease_stat_upgrade_test

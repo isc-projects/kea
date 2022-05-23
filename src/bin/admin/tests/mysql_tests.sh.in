@@ -1026,8 +1026,9 @@ SET @disable_audit = 0;"
     test_finish 0
 }
 
+# May accept additional parameters to be passed to lease-dump.
 mysql_lease4_dump_test() {
-    test_start "mysql.lease4_dump_test"
+    test_start "mysql.lease4_dump_test${1-}"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
     output_dir="@abs_top_builddir@/src/bin/admin/tests"
@@ -1035,15 +1036,24 @@ mysql_lease4_dump_test() {
     output_file="$output_dir/data/mysql.lease4_dump_test.output.csv"
     ref_file="$test_dir/data/lease4_dump_test.reference.csv"
 
-    # Clean up any test files left from prior failed runs.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Let's wipe the whole database
     mysql_wipe
 
     # Ok, now let's initialize the database
     run_command \
-        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+        -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "could not create database, expected exit code %d, actual %d"
 
     # Insert the reference record
@@ -1058,7 +1068,8 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
 
     # Dump lease4 to output_file
     run_command \
-        "${kea_admin}" lease-dump mysql -y -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump mysql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1075,8 +1086,9 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
     test_finish 0
 }
 
+# May accept additional parameters to be passed to lease-dump.
 mysql_lease6_dump_test() {
-    test_start "mysql.lease6_dump_test"
+    test_start "mysql.lease6_dump_test${1-}"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
     output_dir="@abs_top_builddir@/src/bin/admin/tests"
@@ -1084,8 +1096,16 @@ mysql_lease6_dump_test() {
     output_file="$output_dir/data/mysql.lease6_dump_test.output.csv"
     ref_file="$test_dir/data/lease6_dump_test.reference.csv"
 
-    # Clean up any test files left from prior failed runs.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1107,7 +1127,8 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
 
     # Dump lease4 to output_file
     run_command \
-        "${kea_admin}" lease-dump mysql -y -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" -o $output_file
+        "${kea_admin}" lease-dump mysql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
+            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1124,8 +1145,9 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
     test_finish 0
 }
 
+# May accept additional parameters to be passed to lease-dump or to lease-upload.
 mysql_lease4_upload_test() {
-    test_start "mysql.lease4_upload_test"
+    test_start "mysql.lease4_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
     output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
@@ -1133,9 +1155,18 @@ mysql_lease4_upload_test() {
     # Wipe the whole database.
     mysql_wipe
 
-    # Make sure there's no output file left from previous failures, otherwise
-    # kea-admin is going to ask you if you want to overwrite which blocks tests.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${input_file}.tmp"
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${input_file}.tmp"
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Initialize the database.
     run_command \
@@ -1145,16 +1176,16 @@ mysql_lease4_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload mysql -y -4 -u "${db_user}" \
+        "${kea_admin}" lease-upload mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}"
+            -i "${input_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump mysql -y -4 -u "${db_user}" \
+        "${kea_admin}" lease-dump mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}"
+            -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -1171,8 +1202,9 @@ mysql_lease4_upload_test() {
     test_finish 0
 }
 
+# May accept additional parameters to be passed to lease-dump or to lease-upload.
 mysql_lease6_upload_test() {
-    test_start "mysql.lease6_upload_test"
+    test_start "mysql.lease6_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
     output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
@@ -1180,9 +1212,18 @@ mysql_lease6_upload_test() {
     # Wipe the whole database.
     mysql_wipe
 
-    # Make sure there's no output file left from previous failures, otherwise
-    # kea-admin is going to ask you if you want to overwrite which blocks tests.
-    rm -f "${output_file}"
+    # Clean up any test files left from prior failed runs unless -y was provided in which case
+    # explicitly create the file to check that it will be automatically deleted.
+    # files should be removed by kea-admin itself.
+    if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        touch "${input_file}.tmp"
+        touch "${output_file}"
+        touch "${output_file}.tmp"
+    else
+        rm -f "${input_file}.tmp"
+        rm -f "${output_file}"
+        rm -f "${output_file}.tmp"
+    fi
 
     # Initialize the database.
     run_command \
@@ -1192,16 +1233,16 @@ mysql_lease6_upload_test() {
 
     # Upload leases.
     run_command \
-        "${kea_admin}" lease-upload mysql -y -6 -u "${db_user}" \
+        "${kea_admin}" lease-upload mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}"
+            -i "${input_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
-        "${kea_admin}" lease-dump mysql -y -6 -u "${db_user}" \
+        "${kea_admin}" lease-dump mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}"
+            -o "${output_file}" "${@}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -2000,11 +2041,15 @@ mysql_db_version_test
 mysql_db_version_with_extra_test
 mysql_upgrade_test
 mysql_lease4_dump_test
+mysql_lease4_dump_test -y
 mysql_lease6_dump_test
+mysql_lease6_dump_test -y
 mysql_lease4_upload_test
+mysql_lease4_upload_test -y
 mysql_lease6_upload_test
-mysql_lease4_stat_test
+mysql_lease6_upload_test -y
 mysql_lease6_stat_test
+mysql_lease4_stat_test
 mysql_lease_stat_upgrade_test
 mysql_lease_stat_recount_test
 mysql_unused_subnet_id_test
