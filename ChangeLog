@@ -1,3 +1,5 @@
+Kea 2.1.6 (development) released on May 25 2022
+
 2022.	[func]		andrei, djt
 	kea-admin lease-upload will now call the lease file cleanup (LFC)
 	process to clean up entries with duplicate addresses in the input

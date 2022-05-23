@@ -6,14 +6,16 @@ Primary developers:
                     memfile, database interface, core libdhcp++,
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
-                    parsers, flex-id, documentation, config backend)
+                    parsers, flex-id, documentation, config backend,
+                    ddns_tuning)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
                      config backend)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
                       congestion handling, config backend, multi-threading mode
-                      of high availability, forensic logging, leasequery)
+                      of high availability, forensic logging, leasequery,
+                      ddns_tuning)
  - Wlodek Wencel (testing, release engineering, hammer, perfdhcp)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading,
@@ -24,10 +26,11 @@ Primary developers:
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
-                 release engineering, shell scripts, testing)
+                 release engineering, shell scripts, testing, limits)
  - Peter Davies (documentation)
  - Slawek Figiel (documentation)
- - Dan Theisen (documentation, option handling)
+ - Dan Theisen (documentation, option handling, shell scripts)
+ - Marcin Godzina (documentation)
 
 Former developers who are no longer active:
  - Stephen Morris (Hooks, MySQL)
