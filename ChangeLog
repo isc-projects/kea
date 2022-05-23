@@ -1,51 +1,50 @@
 Kea 2.1.6 (development) released on May 25 2022
 
 2022.	[func]		andrei, djt
-	kea-admin lease-upload will now call the lease file cleanup (LFC)
+	kea-admin lease-upload now calls the lease file cleanup (LFC)
 	process to clean up entries with duplicate addresses in the input
-	CSV file to avoid a conflict error when inserting the leases in
-	the database. kea-admin also doesn't ask for input on
-	non-interactive shells anymore and it gained a new -y|--yes flag
-	that enables automatic overwriting of any file that it writes to,
-	when dumping or uploading leases.
+	CSV file, to avoid a conflict error when inserting the leases in
+	the database. kea-admin also no longer asks for input on
+	non-interactive shells. A new -y|--yes flag has been added that
+	enables automatic overwriting of any file that kea-admin writes
+	to, when dumping or uploading leases.
 	(Gitlab #2293)
 
 2021.	[build]		razvan
-	Library version numbers bumped for Kea 2.1.6 development
-	version.
+	The library version numbers have been bumped for the Kea 2.1.6
+	development release.
 	(Gitlab #2421)
 
 2020.	[doc]		andrei
-	Document the rate limiting feature of the new limits hook
-	library. It can apply a given limit of a certain number of
+	The rate-limiting feature of the new limits hook library has been
+	documented. It can apply a specified limit of a certain number of
 	packets per time unit to a given client class or subnet.
 	(Gitlab #562, #1650)
 
 2019.	[func]		tmark
-	Added new built-in class "SKIP_DDNS" which may be used in
-	conjunction with the ddns-tuning hook library to to skip
+	A new built-in class, "SKIP_DDNS", was added, which can be used
+	in conjunction with the ddns-tuning hook library to skip
 	performing DDNS updates for a given client.
 	(Gitlab #2354)
 
 2018.	[func]		razvan
-	The kea-dhcp4 server now supports portions of RFC 3396,
-	allowing it to send and receive DHCP options longer than 255
-	bytes.
+	The kea-dhcp4 server now supports portions of RFC 3396, allowing
+	it to send and receive DHCP options longer than 255 bytes.
 	(Gitlab #2227)
 
 2017.	[bug]		marcin
-	Corrected a bug in the allocation engine which caused it
-	to write an allocated lease under the wrong subnet id
-	within a shared network. This was occurring when multiple
-	clients match the same fixed address reservation. The first
-	client is assigned the fixed address while a subsequent
-	client is then given a dynamically allocated address from
-	a different subnet in the shared-network.
+	A bug in the allocation engine, which caused it to write an
+	allocated lease under the wrong subnet ID within a shared
+	network, has been corrected. This was occurring when multiple
+	clients matched the same fixed address reservation. The first
+	client is now assigned the fixed address, while a subsequent
+	client is then given a dynamically allocated address from a
+	different subnet in the shared network.
 	(Gitlab #2409)
 
 2016.	[doc]		fdupont
-	Added documentation for the role based access control (rbac)
-	premium hook library to the ARM.
+	Documentation for the role-based access control (RBAC)
+	premium hook library was added to the ARM.
 	(Gitlab #1263)
 
 Kea 2.1.5 (development) released on Apr 27, 2022
