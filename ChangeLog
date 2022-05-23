@@ -2,9 +2,10 @@
 	kea-admin lease-upload will now call the lease file cleanup (LFC)
 	process to clean up entries with duplicate addresses in the input
 	CSV file to avoid a conflict error when inserting the leases in
-	the database. kea-admin has also gained a new -y|--yes flag that
-	enables automatic overwriting of any file that it writes to, when
-	dumping or uploading leases.
+	the database. kea-admin also doesn't ask for input on
+	non-interactive shells anymore and it gained a new -y|--yes flag
+	that enables automatic overwriting of any file that it writes to,
+	when dumping or uploading leases.
 	(Gitlab #2293)
 
 2021.	[build]		razvan

@@ -411,12 +411,10 @@ pgsql_upgrade() {
 # Remove a file if it exists
 remove_file () {
     local file="${1}"
-    if [ ! -z "${file}" ] && [ -e "${file}" ]
+    if [ -e "${file}" ]
     then
-        echo "Removing file ${file}"
+        log_info "Removing file ${file}..."
         rm -f "${file}"
-    else
-        echo "File ${file} does not exist, no need to remove it."
     fi
 }
 
@@ -435,7 +433,7 @@ check_file_overwrite () {
 
         # Ask for an answer only on an interactive shell to prevent blocking in
         # automated or non-interactive scenarios where the answer defaults to no.
-        if [[ $- == *i* ]]; then
+        if test -t 0; then
             read -r ans
         else
             log_warning 'Non-interactive tty detected. Assuming no.'
