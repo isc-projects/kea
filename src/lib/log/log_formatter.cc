@@ -37,7 +37,7 @@ replacePlaceholder(std::string& message, const string& arg,
                                                                          << message << "'");
 #else
         // We're missing the placeholder, so add some complain
-        message.append(" @@Missing placeholder '" + mark + "' for value '" + arg + "'@@");
+        message.append(" @@Missing logger placeholder '" + mark + "' for value '" + arg + "'@@");
 #endif /* ENABLE_LOGGER_CHECKS */
     }
 }
@@ -59,7 +59,7 @@ checkExcessPlaceholders(std::string& message,
              << "'." << endl;
         assert(false);
 #else
-        message.append(" @@Excess logger placeholder " + mark + " still exists@@");
+        message.append(" @@Excess logger placeholder '" + mark + "' still exists@@");
 #endif /* ENABLE_LOGGER_CHECKS */
     }
 }

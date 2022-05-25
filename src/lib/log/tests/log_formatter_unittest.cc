@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -136,7 +136,8 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     ASSERT_EQ(1, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("Missing the second argument "
-              "@@Missing placeholder %2 for 'missing'@@", outputs[0].second);
+              "@@Missing logger placeholder '%2' for value 'missing'@@",
+              outputs[0].second);
 
     EXPECT_NO_THROW(Formatter(isc::log::INFO,
                               s("Too many arguments in %1 %2"), this).
@@ -144,7 +145,7 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     ASSERT_EQ(2, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[1].first);
     EXPECT_EQ("Too many arguments in only one %2 "
-              "@@Excess logger placeholders still exist@@",
+              "@@Excess logger placeholder '%2' still exists@@",
               outputs[1].second);
 
     EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
@@ -152,7 +153,8 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     ASSERT_EQ(3, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[2].first);
     EXPECT_EQ("Missing the first argument "
-              "@@Missing placeholder %1 for 'missing'@@", outputs[2].second);
+              "@@Missing logger placeholder '%1' for value 'missing'@@",
+              outputs[2].second);
 }
 
 #endif /* ENABLE_LOGGER_CHECKS */
