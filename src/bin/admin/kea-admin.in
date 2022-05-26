@@ -96,13 +96,13 @@ PARAMETERS: Parameters are optional in general, but may be required
  -d or --directory - path to upgrade scripts (default: %s)
  -v or --version - print kea-admin version and quit.
  -x or --extra - specifies extra argument(s) to pass to the database command
- -y or --yes - assume yes on overwriting temporary files
 
  Parameters specific to lease-dump, lease-upload:
      -4 to dump IPv4 leases to file
      -6 to dump IPv6 leases to file
      -i or --input to specify the name of file from which leases will be uploaded
-     -o or --output to specify the  name of file to which leases will be dumped
+     -o or --output to specify the name of file to which leases will be dumped
+     -y or --yes - assume yes on overwriting temporary files
 ' "${VERSION}" "${0}" "${SCRIPTS_DIR_DEFAULT}"
 }
 

@@ -18,8 +18,8 @@ Synopsis
 :program:`kea-admin` [command] [backend] [**-h** database_host]
 [**-P** database_port] [**-u** database_username]
 [**-p** [database_password]] [**-n** database_name] [**-d** script_directory]
-[**-v**] [**-4** | **-6**] [**-o** output_file] [**-x** extra_argument
-[**-x** extra_argument ...]]
+[**-v**] [**-x** extra_argument [**-x** extra_argument ...]]
+[**-4** | **-6**] [**-i** input_file] [**-o** output_file] [**-y**]
 
 Description
 ~~~~~~~~~~~
@@ -116,6 +116,9 @@ Arguments
    to invoke ``mysql`` with the ``--ssl`` argument. This can be repeated
    to pass more than one argument. Quotes are not preserved. Avoid commands
    containing spaces.
+
+``-y|--yes``
+    Assume yes on overwriting temporary files.
 
 Documentation
 ~~~~~~~~~~~~~
