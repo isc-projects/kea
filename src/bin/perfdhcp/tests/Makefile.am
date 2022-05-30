@@ -17,7 +17,7 @@ CLEANFILES = *.gcno *.gcda
 CLEANFILES += test1.hex test2.hex test3.hex test4.hex test5.hex
 
 TESTS_ENVIRONMENT = \
-        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST

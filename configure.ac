@@ -677,10 +677,13 @@ elif test "${mysql_config}" != "no" ; then
     MYSQL_CONFIG="${withval}"
 fi
 
+DISTCHECK_MYSQL_CONFIGURE_FLAG=
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
         AC_MSG_ERROR([MySQL dependencies cannot be found. Please install MySQL libraries or point --with-mysql to mysql_config program if it is located in non-default directory, eg. --with-mysql=/opt/mysql/bin/mysql_config.])
     fi
+
+    DISTCHECK_MYSQL_CONFIGURE_FLAG="--with-mysql=$MYSQL_CONFIG"
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
     MYSQL_LIBS=`$MYSQL_CONFIG --libs`
@@ -689,6 +692,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 
     AC_SUBST(MYSQL_CPPFLAGS)
     AC_SUBST(MYSQL_LIBS)
+    AC_SUBST(DISTCHECK_MYSQL_CONFIGURE_FLAG)
 
     # Check that a simple program using MySQL functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -757,10 +761,13 @@ elif test "${pg_config}" != "no" ; then
     PG_CONFIG="${withval}"
 fi
 
+DISTCHECK_PGSQL_CONFIGURE_FLAG=
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
         AC_MSG_ERROR([PostgreSQL dependencies cannot be found. Please install PostgreSQL libraries or point --with-pgsql to pg_config program if it is located in non-default directory, eg. --with-pgsql=/opt/pgsql/bin/pg_config.])
     fi
+
+    DISTCHECK_PGSQL_CONFIGURE_FLAG="--with-pgsql=$PG_CONFIG"
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
     PGSQL_INCLUDEDIR=`$PG_CONFIG --includedir`
@@ -772,6 +779,7 @@ if test "$PG_CONFIG" != "" ; then
 
     AC_SUBST(PGSQL_CPPFLAGS)
     AC_SUBST(PGSQL_LIBS)
+    AC_SUBST(DISTCHECK_PGSQL_CONFIGURE_FLAG)
 
     # Check that a simple program using PostgreSQL functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"

@@ -6,8 +6,10 @@
 
 #include <config.h>
 #include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>
+#include <mysql/testutils/mysql_schema.h>
 
 using namespace isc::db;
+using namespace isc::db::test;
 
 namespace isc {
 namespace dhcp {
@@ -15,6 +17,7 @@ namespace test {
 
 MySqlGenericBackendTest::MySqlGenericBackendTest()
     : GenericBackendTest() {
+    createMySQLSchema();
 }
 
 size_t

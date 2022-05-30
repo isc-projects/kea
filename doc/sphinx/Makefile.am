@@ -188,7 +188,6 @@ update-python-dependencies: ./src/requirements.in
 
 clean-local:
 	rm -rf $(sphinxbuilddir)
-	rm -f $(srcdir)/mes-files.txt $(srcdir)/api-files.txt
 	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
 	rm -f $(srcdir)/arm/platforms.rst
 

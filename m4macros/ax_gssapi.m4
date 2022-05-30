@@ -13,6 +13,7 @@ AC_ARG_WITH([gssapi],
 ENABLE_GSSAPI=no
 GSSAPI_CFLAGS=
 GSSAPI_LIBS=
+DISTCHECK_GSSAPI_CONFIGURE_FLAG="--with-gssapi=$gssapi_path"
 
 AC_MSG_CHECKING([for gssapi support])
 if test "x$gssapi_path" = "x" ; then
@@ -86,6 +87,7 @@ fi
 
 AC_SUBST(GSSAPI_CFLAGS)
 AC_SUBST(GSSAPI_LIBS)
+AC_SUBST(DISTCHECK_GSSAPI_CONFIGURE_FLAG)
 AM_CONDITIONAL([HAVE_GSSAPI], [test $ENABLE_GSSAPI = "yes"])
 
 ])dnl AX_GSS_API

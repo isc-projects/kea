@@ -4,7 +4,7 @@ SUBDIRS = .
 EXTRA_DIST = get_config_unittest.cc.skel
 
 TESTS_ENVIRONMENT = \
-        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Shell tests
 SHTESTS = dhcp6_process_tests.sh

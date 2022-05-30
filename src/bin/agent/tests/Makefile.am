@@ -7,7 +7,7 @@ EXTRA_DIST += testdata/hiddens
 EXTRA_DIST += testdata/hiddenu
 
 TESTS_ENVIRONMENT = \
-        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Shell tests
 SHTESTS = ca_process_tests.sh

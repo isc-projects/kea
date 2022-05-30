@@ -17,7 +17,7 @@ CLEANFILES = *.gcno *.gcda
 DISTCLEANFILES = test_libraries.h
 
 TESTS_ENVIRONMENT = \
-        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST

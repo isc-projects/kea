@@ -6906,7 +6906,7 @@ All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 ``remote-global-parameter4-set``; shared-network-specific parameters
-are set using ``remote-network4-set``; and subnet- and pool-level
+are set using ``remote-network4-set``; and subnet-level and pool-level
 parameters are set using ``remote-subnet4-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
 table. Non-scalar global parameters have dedicated commands; for example,
