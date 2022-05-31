@@ -28,9 +28,17 @@ it or the hook library configuration.
 There are two ways to configure which packets get limited. One is through the client classes that are
 initially assigned to the packet.  In this case, the limit is configured in the user context
 in the client class definition.  Class rate limits are checked early in packet processing cycle
-and is thus limited to those classes which are assigned to the packet via test expression and that
-do not depend on host reservations, the special "BOOTP" or "KNOWN" classes, and is not marked with
-"only-if-required".
+and are thus limited to those classes which are assigned to the packet via test expression, that do
+not depend on host reservations, the special "BOOTP" or "KNOWN" classes, and that are not marked
+with "only-if-required".
+
+.. note::
+
+    The limits hook library uses the name to identify a client class and the ID to identify a subnet.
+    Changing a test expression in a client class or the network range of a subnet while leaving the
+    name, or the ID respectively, unchanged will not reset the limit for the respective client class
+    or subnet and what counted towards the limit prior to the change, will continue to take effect.
+    To start over, consider changing the client class name or the subnet ID.
 
 .. note::
 

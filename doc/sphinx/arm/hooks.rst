@@ -466,6 +466,11 @@ loaded by the correct process per the table below.
    |                 | customers     |update aspects such as generating hostnames via expressions |
    |                 |               |and skipping DDNS updates for select clients.               |
    +-----------------+---------------+------------------------------------------------------------+
+   | Limits          | ISC support   | Kea servers ``kea-dhcp4`` and ``kea-dhcp6`` can use this   |
+   |                 | customers     | hook library to apply a limit to the rate at which packets |
+   |                 |               | receive a response. The limit can be applied               |
+   |                 |               | per client class or per subnet.                            |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hook libraries become available as time
 progresses, developed both internally and externally. Since this list
