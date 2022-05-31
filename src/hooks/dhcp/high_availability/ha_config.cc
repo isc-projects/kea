@@ -334,8 +334,13 @@ HAConfig::validate() {
                               << " is missing or empty: all or none of"
                               << " TLS parameters must be set");
                 }
+                TlsRole tls_role = TlsRole::CLIENT;
+                // The peer entry for myself will be used for the server side.
+                if (p->second->getName() == getThisServerName()) {
+                    tls_role = TlsRole::SERVER;
+                }
                 TlsContext::configure(p->second->tls_context_,
-                                      TlsRole::CLIENT,
+                                      tls_role,
                                       ca.get(),
                                       cert.get(),
                                       key.get());

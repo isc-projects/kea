@@ -108,9 +108,12 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
             // Fetch how many threads the listener will use.
             uint32_t listener_threads = config_->getHttpListenerThreads();
 
+            // Fetch the TLS context.
+            auto tls_context = config_->getThisServerConfig()->getTlsContext();
+
             // Instantiate the listener.
             listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
-                                                listener_threads));
+                                                listener_threads, tls_context));
         }
     }
 
