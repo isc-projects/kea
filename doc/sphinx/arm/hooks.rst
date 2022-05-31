@@ -3630,3 +3630,67 @@ subnets, client classes, option data and definitions, host
 reservations, control socket, DHCP-DDNS, loggers, and server ID. These
 are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
 which is DHCPv6 only.
+
+Some hooks use user-context for configuration to enable easy changes by commands.
+
+DDNS-Tuning Hook uses user-context to configure per subner behavior. Example:
+
+::
+
+    "subnet4": [{
+        "subnet": "192.0.2.0/24",
+        "pools": [{
+            "pool": "192.0.2.10 - 192.0.2.20",
+        } ],
+        "user-context": {
+            "ddns-tuning:" {
+                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
+                                        +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
+                                        +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
+                                        +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+            },
+            "last-modified": "2017-09-04 13:32",
+            "phones": [ "x1234", "x2345" ],
+            "devices-registered": 42,
+            "billing": false
+        }
+    }]
+
+
+Rate limiting hook uses user-context in clases and subnets to set parameters. Example:
+
+::
+    
+    "Dhcp6": {
+        "client-classes": [
+        {
+            "name": "gold",
+            "user-context": {
+            "limits": {
+                "rate-limit": "1000 packets per second"
+            }
+            }
+        }
+        ],
+        "hooks-libraries": [
+        {
+            "library": "/usr/local/lib/libdhcp_limits.so"
+        }
+        ],
+        "subnet6": [
+        {
+            "id": 1,
+            "pools": [
+            {
+                "pool": "2001:db8::/64"
+            }
+            ],
+            "subnet": "2001:db8::/64",
+            "user-context": {
+            "limits": {
+                "rate-limit": "10 packets per minute"
+            }
+            }
+        }
+        ]
+    }
