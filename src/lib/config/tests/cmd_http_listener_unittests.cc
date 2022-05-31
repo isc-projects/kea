@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/testutils/test_tls.h>
 #include <cc/command_interpreter.h>
 #include <config/cmd_http_listener.h>
 #include <config/command_mgr.h>
@@ -24,10 +25,11 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::asiolink::test;
 using namespace isc::config;
 using namespace isc::data;
 using namespace boost::asio::ip;
-using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::util;
 namespace ph = std::placeholders;
@@ -731,7 +733,7 @@ public:
 TEST_F(CmdHttpListenerTest, basics) {
     // Make sure multi-threading is off.
     MultiThreadingMgr::instance().setMode(false);
-    asiolink::IOAddress address(SERVER_ADDRESS);
+    IOAddress address(SERVER_ADDRESS);
     uint16_t port = SERVER_PORT;
 
     // Make sure we can create one.
@@ -742,6 +744,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getAddress(), address);
     EXPECT_EQ(listener_->getPort(), port);
     EXPECT_EQ(listener_->getThreadPoolSize(), 1);
+    EXPECT_FALSE(listener_->getTlsContext());
 
     // It should not have an IOService, should not be listening and
     // should have no threads.
@@ -940,6 +943,38 @@ TEST_F(CmdHttpListenerTest, pauseAndResume) {
     size_t num_clients = 18;
     size_t num_pauses = 3;
     workPauseAndResume(num_threads, num_clients, num_pauses);
+}
+
+// Check if a TLS listener can be created.
+TEST_F(CmdHttpListenerTest, tls) {
+    IOAddress address(SERVER_ADDRESS);
+    uint16_t port = SERVER_PORT;
+    TlsContextPtr context;
+    configServer(context);
+
+    // Make sure we can create the listener.
+    ASSERT_NO_THROW_LOG(listener_.reset(new CmdHttpListener(address, port, 1, context)));
+    EXPECT_EQ(listener_->getAddress(), address);
+    EXPECT_EQ(listener_->getPort(), port);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 1);
+    EXPECT_EQ(listener_->getTlsContext(), context);
+    EXPECT_TRUE(listener_->isStopped());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
+
+    // Make sure we can start it and it's listening with 1 thread.
+    ASSERT_NO_THROW_LOG(listener_->start());
+    ASSERT_TRUE(listener_->isRunning());
+    EXPECT_EQ(listener_->getThreadCount(), 1);
+    ASSERT_TRUE(listener_->getThreadIOService());
+    EXPECT_FALSE(listener_->getThreadIOService()->stopped());
+
+    // Stop it.
+    ASSERT_NO_THROW_LOG(listener_->stop());
+    ASSERT_TRUE(listener_->isStopped());
+    EXPECT_EQ(listener_->getThreadCount(), 0);
+    EXPECT_EQ(listener_->getThreadPoolSize(), 1);
+    ASSERT_FALSE(listener_->getThreadIOService());
+    EXPECT_TRUE(listener_->isStopped());
 }
 
 } // end of anonymous namespace
