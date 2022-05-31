@@ -43,7 +43,7 @@ const char* values[] = {
     "COMMAND_ACCEPTOR_START", "Starting to accept connections via unix domain socket bound to %1",
     "COMMAND_DEREGISTERED", "Command %1 deregistered",
     "COMMAND_EXTENDED_REGISTERED", "Command %1 registered",
-    "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on %2:%3",
+    "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4",
     "COMMAND_HTTP_LISTENER_STOPPED", "Command HTTP listener for %1:%2 stopped.",
     "COMMAND_HTTP_LISTENER_STOPPING", "Stopping Command HTTP listener for %1:%2",
     "COMMAND_PROCESS_ERROR1", "Error while processing command: %1",

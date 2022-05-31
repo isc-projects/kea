@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,8 @@ class CmdHttpListener {
 public:
     /// @brief Constructor
     CmdHttpListener(const asiolink::IOAddress& address, const uint16_t port,
-                    const uint16_t thread_pool_size = 1);
+                    const uint16_t thread_pool_size = 1,
+                    asiolink::TlsContextPtr context = asiolink::TlsContextPtr());
 
     /// @brief Destructor
     virtual ~CmdHttpListener();
@@ -100,6 +101,13 @@ public:
         return (thread_pool_size_);
     }
 
+    /// @brief Fetches the TLS context.
+    ///
+    /// @return TLS context.
+    asiolink::TlsContextPtr getTlsContext() const {
+        return (tls_context_);
+    }
+
     /// @brief Fetches the number of threads in the pool.
     ///
     /// @return uint16_t containing the number of running threads.
@@ -138,6 +146,9 @@ private:
 
     /// @brief The pool of threads that do IO work.
     http::HttpThreadPoolPtr thread_pool_;
+
+    /// @brief The TLS context.
+    asiolink::TlsContextPtr tls_context_;
 };
 
 /// @brief Defines a shared pointer to CmdHttpListener.

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,9 +27,11 @@ namespace isc {
 namespace config {
 
 CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
-                                 const uint16_t thread_pool_size /* = 1 */)
+                                 const uint16_t thread_pool_size /* = 1 */,
+                                 TlsContextPtr context /* = () */)
     : address_(address), port_(port), thread_io_service_(), http_listener_(),
-      thread_pool_size_(thread_pool_size), thread_pool_() {
+      thread_pool_size_(thread_pool_size), thread_pool_(),
+      tls_context_(context) {
 }
 
 CmdHttpListener::~CmdHttpListener() {
@@ -60,8 +62,8 @@ CmdHttpListener::start() {
 
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.
-        TlsContextPtr tls_context;
-        http_listener_.reset(new HttpListener(*thread_io_service_, address_, port_, tls_context, rcf,
+        http_listener_.reset(new HttpListener(*thread_io_service_, address_,
+                                              port_, tls_context_, rcf,
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
@@ -74,9 +76,10 @@ CmdHttpListener::start() {
 
         // OK, seems like we're good to go.
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STARTED)
-                  .arg(thread_pool_size_)
-                  .arg(address_)
-                  .arg(port_);
+            .arg(thread_pool_size_)
+            .arg(address_)
+            .arg(port_)
+            .arg(!!tls_context_);
     } catch (const std::exception& ex) {
         isc_throw(Unexpected, "CmdHttpListener::run failed:" << ex.what());
     }
