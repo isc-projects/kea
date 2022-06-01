@@ -195,8 +195,8 @@ User context can be added and edited easily in structures suported by API comman
 We encourage Kea users to utilize this functions to store information 
 used by other systems and custom hooks.
 
-For example `subnet4-update` command can be used to add user context data
-to existing subnet. 
+For example, the `subnet4-update` command can be used to add user context data
+to an existing subnet. 
 
 ::
 
