@@ -186,13 +186,13 @@ use user-context.
 Kea supports user contexts at the following levels: global scope,
 interfaces configuration, shared networks,
 subnets, client classes, option data and definitions, host
-reservations, control socket, DHCP-DDNS, loggers, leases and server ID. These
+reservations, control socket, DHCP-DDNS, loggers, leases, and server ID. These
 are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
 which is DHCPv6 only.
 
-User context can be added and edited easily in structures suported by API commands.
+User context can be added and edited easily in structures supported by API commands.
 
-We encourage Kea users to utilize this functions to store information 
+We encourage Kea users to utilize these functions to store information 
 used by other systems and custom hooks.
 
 For example, the `subnet4-update` command can be used to add user context data
