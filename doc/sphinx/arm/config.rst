@@ -211,7 +211,7 @@ to an existing subnet.
 
 The same can be done with manyu other commands like lease6-add etc.
 
-Kea also uses user context to store non standart data.
+Kea also uses user context to store non-standard data.
 As of this moment only :ref:`dhcp4-store-extended-info` uses this feature.
 
 When enabled it adds ISC key in `user-context` to differentiate automatically
