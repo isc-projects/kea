@@ -212,9 +212,9 @@ to an existing subnet.
 The same can be done with manyu other commands like lease6-add etc.
 
 Kea also uses user context to store non-standard data.
-As of this moment only :ref:`dhcp4-store-extended-info` uses this feature.
+Currently, only :ref:`dhcp4-store-extended-info` uses this feature.
 
-When enabled it adds ISC key in `user-context` to differentiate automatically
+When enabled, it adds the ISC key in `user-context` to differentiate automatically
 added content.
 
 Example of relay information stored in a lease:
@@ -252,9 +252,9 @@ Example of relay information stored in a lease:
    }
 
 
-Of course user context can store configuration for multiple hooks and comments at once.
+User context can store configuration for multiple hooks and comments at once.
 
-For a discussion about user-context used in hooks, see :ref:`user-context-hooks`.
+For a discussion about user context used in hooks, see :ref:`user-context-hooks`.
 
 
 Simplified Notation

@@ -3626,10 +3626,10 @@ operations, for example.
 If user context is supported in a given context, the parser translates
 "comment" entries into user context with a "comment" entry.
 
-Of course user context can store configuration for multiple hooks and comments at once.
+User context can store configuration for multiple hooks and comments at once.
 
-Some hooks use user-context for configuration that can be easily edited 
-without the need to restart of the server.
+Some hooks use user context for a configuration that can be easily edited 
+without the need to restart the server.
 
 The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
 
