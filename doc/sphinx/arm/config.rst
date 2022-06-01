@@ -183,6 +183,30 @@ configuration. It is not uncommon for a call for ``config-set`` followed by a
 The best way to avoid this problem is simply to abandon JSON comments and
 use user-context.
 
+Kea supports user contexts at the following levels: global scope,
+interfaces configuration, shared networks,
+subnets, client classes, option data and definitions, host
+reservations, control socket, DHCP-DDNS, loggers, leases and server ID. These
+are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
+which is DHCPv6 only.
+
+User context can be added and edited in structures suported by Commands.
+
+For example `subnet4-update` command can be used to add user context data
+to existing subnet. 
+
+::
+
+   "subnet4": [ {
+      "id": 1,
+      "subnet": "10.20.30.0/24",
+      "user-context": {
+         "building": "Main"
+         "floor": 1 
+         }
+    } ]
+
+
 For a discussion about user-context used in hooks, see :ref:`user-context-hooks`.
 
 

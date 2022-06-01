@@ -3624,12 +3624,7 @@ operations, for example.
 If user context is supported in a given context, the parser translates
 "comment" entries into user context with a "comment" entry.
 
-Kea supports user contexts at the following levels: global scope,
-interfaces configuration, shared networks,
-subnets, client classes, option data and definitions, host
-reservations, control socket, DHCP-DDNS, loggers, and server ID. These
-are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
-which is DHCPv6 only.
+
 
 Some hooks use user-context for configuration to enable easy changes by commands.
 
