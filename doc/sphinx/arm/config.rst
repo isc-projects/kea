@@ -206,6 +206,44 @@ to existing subnet.
          }
     } ]
 
+Kea also uses user context to store non standart data.
+As of this moment only Storing Extended Lease Information uses this feature.
+When enabled it adds ISC key in `user-context` to differentiate automaticly
+added content.
+Example of relay information stored in lease:
+
+::
+{
+  "arguments": {
+    "client-id": "42:42:42:42:42:42:42:42",
+    "cltt": 12345678,
+    "fqdn-fwd": false,
+    "fqdn-rev": true,
+    "hostname": "myhost.example.com.",
+    "hw-address": "08:08:08:08:08:08",
+    "ip-address": "192.0.2.1",
+    "state": 0,
+    "subnet-id": 44,
+    "valid-lft": 3600
+    "user-context": {
+      "ISC": {
+        "relays": [
+        {
+            "hop": 2,
+            "link": "2001:db8::1",
+            "peer": "2001:db8::2"
+        },
+        {
+            "hop": 1,
+            "link": "2001:db8::3",
+            "options": "0x00C800080102030405060708",
+            "peer": "2001:db8::4"
+        }]
+      }
+    }
+  }
+
+
 
 For a discussion about user-context used in hooks, see :ref:`user-context-hooks`.
 
