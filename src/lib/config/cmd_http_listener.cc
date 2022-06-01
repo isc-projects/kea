@@ -79,7 +79,7 @@ CmdHttpListener::start() {
             .arg(thread_pool_size_)
             .arg(address_)
             .arg(port_)
-            .arg(!!tls_context_);
+            .arg(tls_context_ ? "true" : "false");
     } catch (const std::exception& ex) {
         isc_throw(Unexpected, "CmdHttpListener::run failed:" << ex.what());
     }
