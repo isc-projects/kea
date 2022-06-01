@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,19 +8,24 @@
 
 #include <config/cmd_response_creator.h>
 #include <config/command_mgr.h>
-#include <cc/data.h>
+#include <config/config_log.h>
+#include <cc/command_interpreter.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
 #include <boost/pointer_cast.hpp>
 #include <iostream>
 
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
+using namespace std;
 
 namespace isc {
 namespace config {
 
 HttpAuthConfigPtr CmdResponseCreator::http_auth_config_;
+
+unordered_set<string> CmdResponseCreator::command_accept_list_;
 
 HttpRequestPtr
 CmdResponseCreator::createNewHttpRequest() const {
@@ -58,8 +63,7 @@ createStockHttpResponseInternal(const HttpRequestPtr& request,
 }
 
 HttpResponsePtr
-CmdResponseCreator::
-createDynamicHttpResponse(HttpRequestPtr request) {
+CmdResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     HttpResponseJsonPtr http_response;
 
     // Check the basic HTTP authentication.
@@ -86,6 +90,12 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     // We have already checked that the request is finalized so the call
     // to getBodyAsJson must not trigger an exception.
     ConstElementPtr command = request_json->getBodyAsJson();
+
+    // Filter the command.
+    http_response = filterCommand(request, command, command_accept_list_);
+    if (http_response) {
+        return (http_response);
+    }
 
     // Process command doesn't generate exceptions but can possibly return
     // null response, if the handler is not implemented properly. This is
@@ -114,6 +124,52 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     http_response->finalize();
 
     return (http_response);
+}
+
+HttpResponseJsonPtr
+CmdResponseCreator::filterCommand(const HttpRequestPtr& request,
+                                  const ConstElementPtr& body,
+                                  const unordered_set<string>& accept) {
+    HttpResponseJsonPtr response;
+    if (!body || accept.empty()) {
+        return (response);
+    }
+    if (body->getType() != Element::map) {
+        return (response);
+    }
+    ConstElementPtr elem = body->get(CONTROL_COMMAND);
+    if (!elem || (elem->getType() != Element::string)) {
+        return (response);
+    }
+    string command = elem->stringValue();
+    if (command.empty() || accept.count(command)) {
+        return (response);
+    }
+
+    // Reject the command.
+    LOG_DEBUG(command_logger, DBG_COMMAND,
+              COMMAND_HTTP_LISTENER_COMMAND_REJECTED)
+        .arg(command)
+        .arg(request->getRemote());
+    // From CtrlAgentResponseCreator::createStockHttpResponseInternal.
+    HttpVersion http_version(request->context()->http_version_major_,
+                             request->context()->http_version_minor_);
+    if ((http_version < HttpVersion(1, 0)) ||
+        (HttpVersion(1, 1) < http_version)) {
+        http_version.major_ = 1;
+        http_version.minor_ = 0;
+    }
+    HttpStatusCode status_code = HttpStatusCode::FORBIDDEN;
+    response.reset(new HttpResponseJson(http_version, status_code));
+    ElementPtr response_body = Element::createMap();
+    uint16_t result = HttpResponse::statusCodeToNumber(status_code);
+    response_body->set(CONTROL_RESULT,
+                       Element::create(static_cast<long long>(result)));
+    const string& text = HttpResponse::statusCodeToString(status_code);
+    response_body->set(CONTROL_TEXT, Element::create(text));
+    response->setBodyAsJson(response_body);
+    response->finalize();
+    return (response);
 }
 
 } // end of namespace isc::config

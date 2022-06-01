@@ -11,6 +11,7 @@ namespace config {
 extern const isc::log::MessageID COMMAND_ACCEPTOR_START;
 extern const isc::log::MessageID COMMAND_DEREGISTERED;
 extern const isc::log::MessageID COMMAND_EXTENDED_REGISTERED;
+extern const isc::log::MessageID COMMAND_HTTP_LISTENER_COMMAND_REJECTED;
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STARTED;
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPED;
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPING;

@@ -23,6 +23,10 @@ This debug message indicates that the daemon started supporting specified
 command. The handler for the registered command includes a parameter holding
 entire command to be processed.
 
+% COMMAND_HTTP_LISTENER_COMMAND_REJECTED Command HTTP listener rejected command '%1' from '%2'
+This debug messages is issued when a command is rejected. Arguments detail
+the command and the address the request was received from.
+
 % COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4
 This debug messages is issued when an HTTP listener has been started to
 accept connections from Command API clients through which commands can be

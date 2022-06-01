@@ -10,6 +10,7 @@
 #include <http/response_creator.h>
 #include <http/basic_auth_config.h>
 #include <boost/shared_ptr.hpp>
+#include <unordered_set>
 
 namespace isc {
 namespace config {
@@ -65,10 +66,28 @@ public:
         return (emulate_agent_response_);
     }
 
+    /// @brief Filter commands.
+    ///
+    /// From RBAC code: if the access list is empty or the command
+    /// cannot be found just return.
+    ///
+    /// @param request The HTTP request (for the HTTP version).
+    /// @param body The request body.
+    /// @param accept The accept access list.
+    http::HttpResponseJsonPtr
+    filterCommand(const http::HttpRequestPtr& request,
+                  const data::ConstElementPtr& body,
+                  const std::unordered_set<std::string>& accept);
+
     /// @brief The server current authentication configuration.
     ///
     /// Default to the empty HttpAuthConfigPtr.
     static http::HttpAuthConfigPtr http_auth_config_;
+
+    /// @brief The server command accept list.
+    ///
+    /// Default to the empty list which means to accept everything.
+    static std::unordered_set<std::string> command_accept_list_;
 
 private:
 

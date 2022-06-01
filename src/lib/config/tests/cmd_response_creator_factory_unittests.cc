@@ -33,6 +33,9 @@ TEST(CmdResponseCreatorFactory, createDefault) {
     // Authorization configuration should be an empty pointer.
     EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
 
+    // By default all commands are accepted.
+    EXPECT_TRUE(CmdResponseCreator::command_accept_list_.empty());
+
     // Invoke create() again.
     CmdResponseCreatorPtr response2;
     ASSERT_NO_THROW(response2 = boost::dynamic_pointer_cast<
@@ -60,6 +63,9 @@ TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
 
     // Authorization configuration should be an empty pointer.
     EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
+
+    // By default all commands are accepted.
+    EXPECT_TRUE(CmdResponseCreator::command_accept_list_.empty());
 }
 
 } // end of anonymous namespace
