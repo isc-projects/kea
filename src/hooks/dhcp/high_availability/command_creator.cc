@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,25 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace std;
 
 namespace isc {
 namespace ha {
+
+unordered_set<string> CommandCreator::ha_commands4_ = {
+    "list-commands", "status-get",
+    "dhcp-disable", "dhcp-enable", "ha-reset", "ha-heartbeat",
+    "lease4-update", "lease4-del", "lease4-get-all", "lease4-get-page",
+    "ha-maintenance-notify", "ha-sync-complete-notify"
+};
+
+unordered_set<string> CommandCreator::ha_commands6_ = {
+    "list-commands", "status-get",
+    "dhcp-disable", "dhcp-enable", "ha-reset", "ha-heartbeat",
+    "lease6-bulk-apply", "lease6-update", "lease6-del", "lease6-get-all",
+    "lease6-get-page",
+    "ha-maintenance-notify", "ha-sync-complete-notify"
+};
 
 ConstElementPtr
 CommandCreator::createDHCPDisable(const unsigned int max_period,
@@ -248,7 +264,7 @@ void
 CommandCreator::insertService(ConstElementPtr& command,
                               const HAServerType& server_type) {
     ElementPtr service = Element::createList();
-    const std::string service_name = (server_type == HAServerType::DHCPv4 ? "dhcp4" : "dhcp6");
+    const string service_name = (server_type == HAServerType::DHCPv4 ? "dhcp4" : "dhcp6");
     service->add(Element::create(service_name));
 
     // We have no better way of setting a new element here than

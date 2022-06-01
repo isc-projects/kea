@@ -32,6 +32,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "max-response-delay",      Element::integer, "60000" },
     { "max-unacked-clients",     Element::integer, "10" },
     { "require-client-certs",    Element::boolean, "true" },
+    { "restrict-commands",       Element::boolean, "false" },
     { "send-lease-updates",      Element::boolean, "true" },
     { "sync-leases",             Element::boolean, "true" },
     { "sync-timeout",            Element::integer, "60000" },
@@ -232,6 +233,9 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
 
     // Get 'require-client-certs'.
     config_storage->setRequireClientCerts(getBoolean(c, "require-client-certs"));
+
+    // Get 'restrict-commands'.
+    config_storage->setRestrictCommands(getBoolean(c, "restrict-commands"));
 
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();

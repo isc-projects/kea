@@ -12,6 +12,7 @@
 #include <ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/cmd_response_creator.h>
 #include <config/timeouts.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -114,6 +115,16 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
             // Instantiate the listener.
             listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
                                                 listener_threads, tls_context));
+            // Set the command filter when enabled.
+            if (config_->getRestrictCommands()) {
+                if (server_type == HAServerType::DHCPv4) {
+                    CmdResponseCreator::command_accept_list_ =
+                        CommandCreator::ha_commands4_;
+                } else {
+                    CmdResponseCreator::command_accept_list_ =
+                        CommandCreator::ha_commands6_;
+                }
+            }
         }
     }
 

@@ -167,7 +167,8 @@ HAConfig::HAConfig()
       enable_multi_threading_(false), http_dedicated_listener_(false),
       http_listener_threads_(0), http_client_threads_(0),
       trust_anchor_(), cert_file_(), key_file_(), require_client_certs_(true),
-      peers_(), state_machine_(new StateMachineConfig()) {
+      restrict_commands_(false), peers_(),
+      state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr

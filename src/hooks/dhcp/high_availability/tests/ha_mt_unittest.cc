@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
+#include <config/cmd_response_creator.h>
 #include <ha_test.h>
 #include <ha_config.h>
 #include <ha_service.h>
@@ -125,6 +126,7 @@ public:
     HAMtServiceTest()
         : HATest() {
         MultiThreadingMgr::instance().setMode(true);
+        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief Destructor.
@@ -134,6 +136,7 @@ public:
         io_service_->get_io_service().reset();
         io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
+        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -162,6 +165,7 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         "        \"this-server-name\": \"server1\","
         "        \"mode\": \"passive-backup\","
         "        \"wait-backup-ack\": true,"
+        "        \"restrict-commands\": true,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -194,6 +198,9 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
                                                         ha_config)));
     // Multi-threading should be enabled.
     ASSERT_TRUE(ha_config->getEnableMultiThreading());
+
+    // Command filtering is enabled.
+    EXPECT_FALSE(CmdResponseCreator::command_accept_list_.empty());
 
     // Now we'll start, pause, resume and stop a few times.
     for (int i = 0; i < 3; ++i) {

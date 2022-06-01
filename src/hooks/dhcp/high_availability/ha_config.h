@@ -680,6 +680,18 @@ public:
         require_client_certs_ = flag;
     }
 
+    /// @brief Returns restrict-commands.
+    bool getRestrictCommands() const {
+        return (restrict_commands_);
+    }
+
+    /// @brief Sets restrict-commands.
+    ///
+    /// @param flag Restrict commands to HA flag value.
+    void setRestrictCommands(bool flag) {
+        restrict_commands_ = flag;
+    }
+
     /// @brief Returns configuration of the specified server.
     ///
     /// @param name Server name.
@@ -765,6 +777,7 @@ public:
     util::Optional<std::string> cert_file_;    ///< Certificate file.
     util::Optional<std::string> key_file_;     ///< Private key file.
     bool require_client_certs_;                ///< Require client certs flag.
+    bool restrict_commands_;                   ///< Restrict commands to HA flag.
     PeerConfigMap peers_;                      ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_;      ///< State machine configuration.
 };

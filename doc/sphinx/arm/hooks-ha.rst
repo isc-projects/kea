@@ -237,6 +237,10 @@ Since Kea 2.2.0 the HTTPS server side is supported:
   are required and verified, i.e. like ``cert-required``. It defaults
   to true and is a HA config (vs peer config) parameter.
 
+Kea 2.2.0 adds to a new security feature with the ``restrict-commands``
+HA config parameter: when it is configured to ``true`` (default is
+``false``) commands which are not used by the hook are rejected.
+
 Following is an example of HA server pair and Control Agent
 configuration for Hot-Standby with TLS.
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <ha_server_type.h>
 #include <cc/data.h>
 #include <dhcpsrv/lease.h>
+#include <unordered_set>
 #include <string>
 
 namespace isc {
@@ -171,6 +172,12 @@ public:
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
     createSyncCompleteNotify(const HAServerType& server_type);
+
+    /// @brief List of commands used by the High Availability in v4.
+    static std::unordered_set<std::string> ha_commands4_;
+
+    /// @brief List of commands used by the High Availability in v6.
+    static std::unordered_set<std::string> ha_commands6_;
 
 private:
 
