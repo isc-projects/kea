@@ -20,6 +20,8 @@ using namespace isc::http;
 namespace isc {
 namespace config {
 
+HttpAuthConfigPtr CmdResponseCreator::http_auth_config_;
+
 HttpRequestPtr
 CmdResponseCreator::createNewHttpRequest() const {
     return (HttpRequestPtr(new PostHttpRequestJson()));
@@ -60,10 +62,9 @@ CmdResponseCreator::
 createDynamicHttpResponse(HttpRequestPtr request) {
     HttpResponseJsonPtr http_response;
 
-    /// @todo getAuthConfig currently always returns an empty config.
-    const HttpAuthConfigPtr& auth_config = getHttpAuthConfig();
-    if (auth_config) {
-        http_response = auth_config->checkAuth(*this, request);
+    // Check the basic HTTP authentication.
+    if (http_auth_config_) {
+        http_response = http_auth_config_->checkAuth(*this, request);
         if (http_response) {
             return (http_response);
         }

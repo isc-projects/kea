@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ TEST(CmdResponseCreatorFactory, createDefault) {
     EXPECT_TRUE(response1->emulateAgentResponse());
 
     // Authorization configuration should be an empty pointer.
-    EXPECT_FALSE(response1->getHttpAuthConfig());
+    EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
 
     // Invoke create() again.
     CmdResponseCreatorPtr response2;
@@ -59,7 +59,7 @@ TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
     EXPECT_FALSE(response->emulateAgentResponse());
 
     // Authorization configuration should be an empty pointer.
-    EXPECT_FALSE(response->getHttpAuthConfig());
+    EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
 }
 
 } // end of anonymous namespace

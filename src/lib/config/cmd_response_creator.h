@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,25 +58,17 @@ public:
     createStockHttpResponse(const http::HttpRequestPtr& request,
                             const http::HttpStatusCode& status_code) const;
 
-    /// @brief Fetches the current authentication configuration.
-    ///
-    /// @todo The constructor will have to accept either a pointer
-    /// to the authorization config to use, or a pointer to a function to
-    /// return the authorization config.  For now we just return an empty
-    /// pointer.
-    ///
-    /// @return an empty HttpAuthConfigPtr.
-    const http::HttpAuthConfigPtr& getHttpAuthConfig() {
-        static http::HttpAuthConfigPtr no_config;
-        return (no_config);
-    }
-
     /// @brief Indicates whether or not agent response emulation is enabled.
     ///
     /// @return true if emulation is enabled.
     bool emulateAgentResponse() {
         return (emulate_agent_response_);
     }
+
+    /// @brief The server current authentication configuration.
+    ///
+    /// Default to the empty HttpAuthConfigPtr.
+    static http::HttpAuthConfigPtr http_auth_config_;
 
 private:
 
