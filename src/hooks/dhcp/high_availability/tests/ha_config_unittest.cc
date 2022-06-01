@@ -59,30 +59,6 @@ public:
                 " exception type";
         }
     }
-
-    /// @brief Replace a pattern in a configuration.
-    ///
-    /// @param config Configuration to patch.
-    /// @param from String to replace.
-    /// @param repl String which replaces all occurrences of from.
-    /// @result A copy of config where all occurrences of from were replaced
-    /// by repl.
-    std::string replaceInConfig(const std::string& config,
-                                const std::string& from,
-                                const std::string& repl) {
-        std::string result(config);
-        if (from.empty()) {
-            return (result);
-        }
-        for (;;) {
-            size_t where = result.find(from);
-            if (where == std::string::npos) {
-                return (result);
-            }
-            result.replace(where, from.size(), repl);
-        }
-        return (result);
-    }
 };
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -1356,6 +1332,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"my-server\","
@@ -1403,6 +1380,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
     expected = TEST_CA_DIR;
     expected += "/kea-client.key";
     EXPECT_EQ(expected, impl->getConfig()->getKeyFile().get());
+    EXPECT_FALSE(impl->getConfig()->getRequireClientCerts());
 
     // Check the first peer parameters: it inherits them from the global level.
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
@@ -1448,6 +1426,7 @@ TEST_F(HAConfigTest, missingTrustAnchor) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -1483,6 +1462,7 @@ TEST_F(HAConfigTest, missingCertFile) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -1518,6 +1498,7 @@ TEST_F(HAConfigTest, missingKeyFile) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -1553,6 +1534,7 @@ TEST_F(HAConfigTest, badTrustAnchor) {
         "        \"trust-anchor\": \"/this-file-does-not-exist\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -1592,6 +1574,7 @@ TEST_F(HAConfigTest, badCertFile) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"/this-file-does-not-exist\","
         "        \"key-file\": \"!CA!/kea-client.key\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -1631,6 +1614,7 @@ TEST_F(HAConfigTest, badKeyFile) {
         "        \"trust-anchor\": \"!CA!/kea-ca.crt\","
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"/this-file-does-not-exist\","
+        "        \"require-client-certs\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","

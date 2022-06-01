@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,6 +179,124 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     ss << "," << makeHAMtJson(true, true, 3, 3) << "}]";
     ConstElementPtr config_json;
     ASSERT_NO_THROW_LOG(config_json = Element::fromJSON(ss.str()));
+
+    // Enable DHCP multi-threading configuration in CfgMgr with 3 threads.
+    setDHCPMultiThreadingConfig(true, 3);
+
+    // Create the HA configuration
+    HAConfigPtr ha_config(new HAConfig());
+    HAConfigParser parser;
+    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+
+    // Instantiate the service.
+    TestHAServicePtr service;
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
+                                                        ha_config)));
+    // Multi-threading should be enabled.
+    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+
+    // Now we'll start, pause, resume and stop a few times.
+    for (int i = 0; i < 3; ++i) {
+        // Verify we're stopped.
+        // Client should exist but be stopped.
+        ASSERT_TRUE(service->client_);
+        ASSERT_TRUE(service->client_->isStopped());
+        if (i == 0) {
+            EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+        } else {
+            EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+        }
+
+        // Listener should exist but be stopped.
+        ASSERT_TRUE(service->listener_);
+        ASSERT_TRUE(service->listener_->isStopped());
+        EXPECT_FALSE(service->listener_->getThreadIOService());
+
+        // Start client and listener.
+        ASSERT_NO_THROW_LOG(service->startClientAndListener());
+
+        // Verify we've started.
+        // Client should be running.
+        ASSERT_TRUE(service->client_->isRunning());
+        ASSERT_TRUE(service->client_->getThreadIOService());
+        EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+        EXPECT_EQ(service->client_->getThreadPoolSize(), 3);
+        EXPECT_EQ(service->client_->getThreadCount(), 3);
+
+        // Listener should be running.
+        ASSERT_TRUE(service->listener_->isRunning());
+        ASSERT_TRUE(service->listener_->getThreadIOService());
+        EXPECT_FALSE(service->listener_->getThreadIOService()->stopped());
+        EXPECT_EQ(service->listener_->getThreadPoolSize(), 3);
+        EXPECT_EQ(service->listener_->getThreadCount(), 3);
+
+        {
+            // Entering a critical section should pause both client
+            // and listener.
+            MultiThreadingCriticalSection cs;
+
+            // Client should be paused.
+            ASSERT_TRUE(service->client_->isPaused());
+            EXPECT_TRUE(service->client_->getThreadIOService()->stopped());
+
+            // Listener should be paused.
+            ASSERT_TRUE(service->listener_->isPaused());
+            EXPECT_TRUE(service->listener_->getThreadIOService()->stopped());
+        }
+
+        // Exiting critical section should resume both client
+        // and listener.
+
+        // Client should be running.
+        ASSERT_TRUE(service->client_->isRunning());
+        EXPECT_FALSE(service->client_->getThreadIOService()->stopped());
+
+        // Listener should be running.
+        ASSERT_TRUE(service->listener_->isRunning());
+        EXPECT_FALSE(service->listener_->getThreadIOService()->stopped());
+
+        // Stop should succeed.
+        ASSERT_NO_THROW_LOG(service->stopClientAndListener());
+    }
+}
+
+// Verifies multiThreadingBasics can be extended to use HTTPS/TLS>
+TEST_F(HAMtServiceTest, multiThreadingTls) {
+
+    // Build the HA JSON configuration.
+    std::stringstream ss;
+    ss <<
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"passive-backup\","
+        "        \"wait-backup-ack\": true,"
+        "        \"require-client-certs\": false,"
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"https://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "                \"cert-file\": \"!CA!/kea-server.crt\","
+        "                \"key-file\": \"!CA!/kea-server.key\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"https://127.0.0.1:8081/\","
+        "                \"role\": \"backup\","
+        "                \"trust-anchor\": \"!CA!/kea-ca.crt\","
+        "                \"cert-file\": \"!CA!/kea-client.crt\","
+        "                \"key-file\": \"!CA!/kea-client.key\""
+        "            }"
+        "        ]";
+
+    // Enable MT, listener, and 3 threads for both client and listener.
+    ss << "," << makeHAMtJson(true, true, 3, 3) << "}]";
+    ConstElementPtr config_json;
+    const std::string& patched = replaceInConfig(ss.str(), "!CA!",
+                                                 TEST_CA_DIR);
+    ASSERT_NO_THROW_LOG(config_json = Element::fromJSON(patched));
 
     // Enable DHCP multi-threading configuration in CfgMgr with 3 threads.
     setDHCPMultiThreadingConfig(true, 3);

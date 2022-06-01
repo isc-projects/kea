@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -234,6 +234,30 @@ public:
     void setDHCPMultiThreadingConfig(bool enable_multi_threading,
                                      uint32_t thread_pool_size = 0,
                                      uint32_t queue_size = 16);
+
+    /// @brief Replace a pattern in a configuration.
+    ///
+    /// @param config Configuration to patch.
+    /// @param from String to replace.
+    /// @param repl String which replaces all occurrences of from.
+    /// @result A copy of config where all occurrences of from were replaced
+    /// by repl.
+    std::string replaceInConfig(const std::string& config,
+                                const std::string& from,
+                                const std::string& repl) {
+        std::string result(config);
+        if (from.empty()) {
+            return (result);
+        }
+        for (;;) {
+            size_t where = result.find(from);
+            if (where == std::string::npos) {
+                return (result);
+            }
+            result.replace(where, from.size(), repl);
+        }
+        return (result);
+    }
 
     /// @brief Constructs JSON string for HA "multi-threading" element.
     ///
