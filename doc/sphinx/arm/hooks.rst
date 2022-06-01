@@ -3631,7 +3631,7 @@ Of course user context can store configuration for multiple hooks and comments a
 Some hooks use user-context for configuration that can be easily edited 
 without the need to restart of the server.
 
-DDNS-Tuning Hook uses user-context to configure per subner behavior. Example:
+The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
 
 ::
 
