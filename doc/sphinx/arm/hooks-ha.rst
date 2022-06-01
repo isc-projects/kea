@@ -221,12 +221,21 @@ HTTPS for a particular peer when it is enabled at the global level.
 
 As the High Availability hook library is an HTTPS client, there is no
 ``cert-required`` parameter in this hook configuration.
-This parameter can be set in Control Agent to require and verify client certificate
-in Client-Server communication. It does not affect communication
-between HA peers.
+This parameter can be set in Control Agent to require and verify
+client certificate in Client-Server communication. It does not affect
+communication between HA peers at the client side, see below for
+the server side.
 
-Currently using HTTPS in HA setup requires use of Control Agent on all peers.
-(See :ref:`tls` for Control Agent TLS configuration).
+Before Kea 2.2.0 using HTTPS in HA setup requires use of Control Agent
+on all peers.  (See :ref:`tls` for Control Agent TLS configuration).
+
+Since Kea 2.2.0 the HTTPS server side is supported:
+
+- the peer entry for the server name is used for the TLS setting.
+
+- the new ``require-client-certs`` specifies if client certificates
+  are required and verified, i.e. like ``cert-required``. It defaults
+  to true and is a HA config (vs peer config) parameter.
 
 Following is an example of HA server pair and Control Agent
 configuration for Hot-Standby with TLS.
