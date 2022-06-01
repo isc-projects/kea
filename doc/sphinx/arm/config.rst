@@ -190,7 +190,10 @@ reservations, control socket, DHCP-DDNS, loggers, leases and server ID. These
 are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
 which is DHCPv6 only.
 
-User context can be added and edited in structures suported by Commands.
+User context can be added and edited easily in structures suported by API commands.
+
+We encourage Kea users to utilize this functions to store information 
+used by other systems and custom hooks.
 
 For example `subnet4-update` command can be used to add user context data
 to existing subnet. 
@@ -206,11 +209,15 @@ to existing subnet.
          }
     } ]
 
+The same can be done with manyu other commands like lease6-add etc.
+
 Kea also uses user context to store non standart data.
-As of this moment only Storing Extended Lease Information uses this feature.
-When enabled it adds ISC key in `user-context` to differentiate automaticly
+As of this moment only :ref:`dhcp4-store-extended-info` uses this feature.
+
+When enabled it adds ISC key in `user-context` to differentiate automatically
 added content.
-Example of relay information stored in lease:
+
+Example of relay information stored in a lease:
 
 ::
 
@@ -244,6 +251,8 @@ Example of relay information stored in lease:
       }
    }
 
+
+Of course user context can store configuration for multiple hooks and comments at once.
 
 For a discussion about user-context used in hooks, see :ref:`user-context-hooks`.
 

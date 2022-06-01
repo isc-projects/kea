@@ -229,6 +229,8 @@ be used if the library supports it. This topic is explained in detail in
 the `Hooks Developer's Guide section of the Kea Developer's Guide
 <https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>`__.
 
+Some hooks use user context to set the parameters. See :ref:`user-context-hooks`.
+
 Notes:
 
 -  The full path to each library should be given.
@@ -3624,9 +3626,10 @@ operations, for example.
 If user context is supported in a given context, the parser translates
 "comment" entries into user context with a "comment" entry.
 
+Of course user context can store configuration for multiple hooks and comments at once.
 
-
-Some hooks use user-context for configuration to enable easy changes by commands.
+Some hooks use user-context for configuration that can be easily edited 
+without the need to restart of the server.
 
 DDNS-Tuning Hook uses user-context to configure per subner behavior. Example:
 
