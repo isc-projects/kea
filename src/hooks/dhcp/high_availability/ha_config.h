@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -668,6 +668,18 @@ public:
         key_file_ = key;
     }
 
+    /// @brief Returns require-client-certs.
+    bool getRequireClientCerts() const {
+        return (require_client_certs_);
+    }
+
+    /// @brief Sets require-client-certs.
+    ///
+    /// @param flag Require client certs flag value.
+    void setRequireClientCerts(bool flag) {
+        require_client_certs_ = flag;
+    }
+
     /// @brief Returns configuration of the specified server.
     ///
     /// @param name Server name.
@@ -752,6 +764,7 @@ public:
     util::Optional<std::string> trust_anchor_; ///< Trust anchor.
     util::Optional<std::string> cert_file_;    ///< Certificate file.
     util::Optional<std::string> key_file_;     ///< Private key file.
+    bool require_client_certs_;                ///< Require client certs flag.
     PeerConfigMap peers_;                      ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_;      ///< State machine configuration.
 };

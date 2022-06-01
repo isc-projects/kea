@@ -166,7 +166,7 @@ HAConfig::HAConfig()
       max_ack_delay_(10000), max_unacked_clients_(10), wait_backup_ack_(false),
       enable_multi_threading_(false), http_dedicated_listener_(false),
       http_listener_threads_(0), http_client_threads_(0),
-      trust_anchor_(), cert_file_(), key_file_(),
+      trust_anchor_(), cert_file_(), key_file_(), require_client_certs_(true),
       peers_(), state_machine_(new StateMachineConfig()) {
 }
 
@@ -335,15 +335,18 @@ HAConfig::validate() {
                               << " TLS parameters must be set");
                 }
                 TlsRole tls_role = TlsRole::CLIENT;
+                bool cert_required = true;
                 // The peer entry for myself will be used for the server side.
                 if (p->second->getName() == getThisServerName()) {
                     tls_role = TlsRole::SERVER;
+                    cert_required = getRequireClientCerts();
                 }
                 TlsContext::configure(p->second->tls_context_,
                                       tls_role,
                                       ca.get(),
                                       cert.get(),
-                                      key.get());
+                                      key.get(),
+                                      cert_required);
             } catch (const isc::Exception& ex) {
                 isc_throw(HAConfigValidationError, "bad TLS config for server "
                           << p->second->getName() << ": " << ex.what());

@@ -31,6 +31,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "max-ack-delay",           Element::integer, "10000" },
     { "max-response-delay",      Element::integer, "60000" },
     { "max-unacked-clients",     Element::integer, "10" },
+    { "require-client-certs",    Element::boolean, "true" },
     { "send-lease-updates",      Element::boolean, "true" },
     { "sync-leases",             Element::boolean, "true" },
     { "sync-timeout",            Element::integer, "60000" },
@@ -214,20 +215,23 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get optional 'trust-anchor'.
     ConstElementPtr ca = c->get("trust-anchor");
     if (ca) {
-        config_storage->setTrustAnchor(getString(c, ("trust-anchor")));
+        config_storage->setTrustAnchor(getString(c, "trust-anchor"));
     }
 
     // Get optional 'cert-file'.
     ConstElementPtr cert = c->get("cert-file");
     if (cert) {
-        config_storage->setCertFile(getString(c, ("cert-file")));
+        config_storage->setCertFile(getString(c, "cert-file"));
     }
 
     // Get optional 'key-file'.
     ConstElementPtr key = c->get("key-file");
     if (key) {
-        config_storage->setKeyFile(getString(c, ("key-file")));
+        config_storage->setKeyFile(getString(c, "key-file"));
     }
+
+    // Get 'require-client-certs'.
+    config_storage->setRequireClientCerts(getBoolean(c, "require-client-certs"));
 
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();
