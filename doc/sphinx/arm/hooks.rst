@@ -3655,7 +3655,7 @@ DDNS-Tuning Hook uses user-context to configure per subner behavior. Example:
     }]
 
 
-Rate limiting hook uses user-context in clases and subnets to set parameters. Example:
+The Limits hook uses user-context in classes and subnets to set parameters. Example:
 
 ::
     
