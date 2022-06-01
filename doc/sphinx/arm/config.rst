@@ -190,7 +190,7 @@ reservations, control socket, DHCP-DDNS, loggers, leases, and server ID. These
 are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
 which is DHCPv6 only.
 
-User context can be added and edited easily in structures supported by API commands.
+User context can be added and edited in structures supported by commands.
 
 We encourage Kea users to utilize these functions to store information 
 used by other systems and custom hooks.
