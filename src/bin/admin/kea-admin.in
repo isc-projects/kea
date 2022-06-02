@@ -58,7 +58,7 @@ fi
 if test -d "@sbindir@"; then
     kea_lfc="@sbindir@/kea-lfc"
 else
-    kea_lfc="@abs_top_srcdir@/src/bin/lfc/kea-lfc"
+    kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 fi
 
 # Prints out usage version.
@@ -344,16 +344,31 @@ mysql_upgrade() {
     checked_mysql_version
     printf '\n'
 
+    upgrade_scripts_dir=${scripts_dir}/mysql
+
     # Check if the scripts directory exists at all.
-    if [ ! -d ${scripts_dir}/mysql ]; then
-        log_error "Invalid scripts directory: ${scripts_dir}/mysql"
+    if [ ! -d ${upgrade_scripts_dir} ]; then
+        log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
         exit 1
     fi
 
     # Check if there are any files in it
-    num_files=$(find "${scripts_dir}/mysql" -name 'upgrade*.sh' -type f | wc -l)
+    num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
     if [ "$num_files" -eq 0 ]; then
-        log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
+        upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/mysql
+
+        # Check if the scripts directory exists at all.
+        if [ ! -d ${upgrade_scripts_dir} ]; then
+            log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
+            exit 1
+        fi
+
+        # Check if there are any files in it
+        num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
+    fi
+
+    if [ "$num_files" -eq 0 ]; then
+        log_error "No scripts in ${upgrade_scripts_dir} or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
 
@@ -363,7 +378,7 @@ mysql_upgrade() {
     printf "Verifying upgrade permissions for %s\n" "$db_user"
     mysql_can_create
 
-    for script in "${scripts_dir}"/mysql/upgrade*.sh
+    for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
         echo "Processing $script file..."
         "${script}" --host="${db_host}" --user="${db_user}" \
@@ -379,16 +394,31 @@ pgsql_upgrade() {
     version=$(checked_pgsql_version)
     printf "Database version reported before upgrade: %s\n" "$version"
 
+    upgrade_scripts_dir=${scripts_dir}/pgsql
+
     # Check if the scripts directory exists at all.
-    if [ ! -d ${scripts_dir}/pgsql ]; then
-        log_error "Invalid scripts directory: ${scripts_dir}/pgsql"
+    if [ ! -d ${upgrade_scripts_dir} ]; then
+        log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
         exit 1
     fi
 
     # Check if there are any files in it
-    num_files=$(find "${scripts_dir}/pgsql" -name 'upgrade*.sh' -type f | wc -l)
+    num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
     if [ "$num_files" -eq 0 ]; then
-        log_error "No scripts in ${scripts_dir}/pgsql or the directory is not readable or does not have any upgrade* scripts."
+        upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/pgsql
+
+        # Check if the scripts directory exists at all.
+        if [ ! -d ${upgrade_scripts_dir} ]; then
+            log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
+            exit 1
+        fi
+
+        # Check if there are any files in it
+        num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
+    fi
+
+    if [ "$num_files" -eq 0 ]; then
+        log_error "No scripts in ${upgrade_scripts_dir} or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
 
@@ -396,7 +426,7 @@ pgsql_upgrade() {
     # thru an env
     export PGPASSWORD=$db_password
 
-    for script in "${scripts_dir}"/pgsql/upgrade*.sh
+    for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
         echo "Processing $script file..."
         "${script}" -U "${db_user}" -h "${db_host}" \

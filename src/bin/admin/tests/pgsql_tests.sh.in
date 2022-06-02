@@ -761,7 +761,7 @@ pgsql_upgrade_12_to_13_test() {
 }
 
 pgsql_upgrade_test() {
-    test_start "pgsql.upgrade-test"
+    test_start "pgsql.upgrade"
 
     # Wipe the whole database
     pgsql_wipe
@@ -883,8 +883,9 @@ insert into lease4 values(12,E'\\\\x3232','',40,TO_TIMESTAMP(1643212345),50,'t',
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff "${ref_file}" "${output_file}")"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -956,8 +957,9 @@ insert into lease6 values('::12',E'\\\\x3232',30,TO_TIMESTAMP(1643212345),40,50,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff "${ref_file}" "${output_file}")"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -970,7 +972,14 @@ pgsql_lease4_upload_test() {
     test_start "pgsql.lease4_upload_test"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     pgsql_wipe
@@ -1013,8 +1022,13 @@ pgsql_lease4_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff "${input_file}" "${output_file}")"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     pgsql_wipe
@@ -1026,7 +1040,14 @@ pgsql_lease6_upload_test() {
     test_start "pgsql.lease6_upload_test"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     pgsql_wipe
@@ -1069,8 +1090,13 @@ pgsql_lease6_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff "${input_file}" "${output_file}")"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     pgsql_wipe
@@ -1083,16 +1109,31 @@ pgsql_lease6_upload_test() {
 pgsql_upgrade_schema_to_version() {
     target_version=$1
 
+    upgrade_scripts_dir=${db_scripts_dir}/pgsql
+
     # Check if the scripts directory exists at all.
-    if [ ! -d ${db_scripts_dir}/pgsql ]; then
-        log_error "Invalid scripts directory: ${db_scripts_dir}/pgsql"
+    if [ ! -d ${upgrade_scripts_dir} ]; then
+        log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
         exit 1
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${db_scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
+    num_files=$(find ${upgrade_scripts_dir}/upgrade*.sh -type f | wc -l)
     if [ "${num_files}" -eq 0 ]; then
-        log_error "No scripts in ${db_scripts_dir}/pgsql?"
+        upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/pgsql
+
+        # Check if the scripts directory exists at all.
+        if [ ! -d ${upgrade_scripts_dir} ]; then
+            log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
+            exit 1
+        fi
+
+        # Check if there are any files in it
+        num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
+    fi
+
+    if [ "${num_files}" -eq 0 ]; then
+        log_error "No scripts in ${upgrade_scripts_dir}?"
         exit 1
     fi
 
@@ -1100,7 +1141,7 @@ pgsql_upgrade_schema_to_version() {
     # thru an env
     export PGPASSWORD=$db_password
 
-    for script in "${db_scripts_dir}"/pgsql/upgrade*.sh
+    for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
         version=$(pgsql_version)
         if [ "${version}" = "${target_version}" ]

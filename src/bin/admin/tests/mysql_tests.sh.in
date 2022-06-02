@@ -64,7 +64,6 @@ run_statement() {
     fi
 }
 
-
 # Wipe all tables from the DB:
 mysql_wipe() {
     printf "Wiping whole database %s...\n" "${db_name}"
@@ -158,7 +157,7 @@ INSERT INTO schema_version VALUES (1, 7);'
 }
 
 mysql_db_version_with_extra_test() {
-    test_start "mysql.db-version-with-extra"
+    test_start "mysql.db-version_with_extra"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -189,13 +188,13 @@ INSERT INTO schema_version VALUES (1, 7);'
     # Multiple -x.
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-        -x --protocol=TCP -x --hello 2> "@abs_top_srcdir@/src/bin/admin/test-data"
+        -x --protocol=TCP -x --hello 2> "@abs_top_builddir@/src/bin/admin/test-data"
     assert_eq 2 "${EXIT_CODE}" "kea-admin -x -x succeeded. (expected %d, exit code %d)"
-    if ! grep -F "unknown option '--hello'" "@abs_top_srcdir@/src/bin/admin/test-data"; then
+    if ! grep -F "unknown option '--hello'" "@abs_top_builddir@/src/bin/admin/test-data"; then
         printf 'second parameter --hello was not passed to mysql with -x\n'
         test_finish 1
     fi
-    rm -f "@abs_top_srcdir@/src/bin/admin/test-data"
+    rm -f "@abs_top_builddir@/src/bin/admin/test-data"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -268,20 +267,35 @@ mysql_host_reservation_init_test() {
 mysql_upgrade_schema_to_version() {
     target_version=$1
 
+    upgrade_scripts_dir=${db_scripts_dir}/mysql
+
     # Check if the scripts directory exists at all.
-    if [ ! -d ${db_scripts_dir}/mysql ]; then
-        log_error "Invalid scripts directory: ${db_scripts_dir}/mysql"
+    if [ ! -d ${upgrade_scripts_dir} ]; then
+        log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
         exit 1
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${db_scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    num_files=$(find ${upgrade_scripts_dir}/upgrade*.sh -type f | wc -l)
     if [ "${num_files}" -eq 0 ]; then
-        log_error "No scripts in ${db_scripts_dir}/mysql?"
+        upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/mysql
+
+        # Check if the scripts directory exists at all.
+        if [ ! -d ${upgrade_scripts_dir} ]; then
+            log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
+            exit 1
+        fi
+
+        # Check if there are any files in it
+        num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
+    fi
+
+    if [ "${num_files}" -eq 0 ]; then
+        log_error "No scripts in ${upgrade_scripts_dir}?"
         exit 1
     fi
 
-    for script in "${db_scripts_dir}"/mysql/upgrade*.sh
+    for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
         version=$(mysql_version)
         if [ "${version}" = "${target_version}" ]
@@ -1381,8 +1395,9 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1443,8 +1458,9 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1457,7 +1473,14 @@ mysql_lease4_upload_test() {
     test_start "mysql.lease4_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     mysql_wipe
@@ -1502,8 +1525,13 @@ mysql_lease4_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1516,7 +1544,14 @@ mysql_lease6_upload_test() {
     test_start "mysql.lease6_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     mysql_wipe
@@ -1561,8 +1596,13 @@ mysql_lease6_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     mysql_wipe
@@ -2359,8 +2399,8 @@ mysql_lease4_upload_test
 mysql_lease4_upload_test -y
 mysql_lease6_upload_test
 mysql_lease6_upload_test -y
-mysql_lease6_stat_test
 mysql_lease4_stat_test
+mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
 mysql_lease_stat_recount_test
 mysql_unused_subnet_id_test

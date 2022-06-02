@@ -25,8 +25,8 @@ prefix="@prefix@"
 
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+if [ -e "@abs_top_srcdir@/src/bin/admin/admin-utils.sh" ]; then
+    . "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
 else
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
