@@ -1631,6 +1631,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_011_to_012.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_011_to_012.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_012_to_013.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_012_to_013.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_013_to_014.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_013_to_014.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
@@ -1666,6 +1668,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_009_to_010.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_009_to_010.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_010_to_011.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_010_to_011.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_011_to_012.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_011_to_012.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])

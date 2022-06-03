@@ -2391,16 +2391,16 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
                 AuditEntry::ModificationType::DELETE, "deleted all shared networks"
             },
             {
+                "dhcp6_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
+                "dhcp6_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
                 "dhcp6_shared_network",
                 AuditEntry::ModificationType::DELETE, "deleted all shared networks"
-            },
-            {
-                "dhcp6_subnet",
-                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
-            },
-            {
-                "dhcp6_subnet",
-                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
             }
         });
 

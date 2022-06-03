@@ -375,6 +375,26 @@ mysql_upgrade_12_to_13_test() {
     assert_str_eq '' "${OUTPUT}"
 }
 
+mysql_upgrade_13_to_14_test() {
+   # Check function source code
+    run_command \
+         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp4_shared_network_BDEL'";
+
+    assert_eq 0 "${EXIT_CODE}" "function func_dhcp4_shared_network_BDEL() broken or missing. (expected status code %d, returned %d)"
+
+    count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp4_subnet SET shared_network_name = NULL') || true
+    assert_eq 1 "${count}" "function func_dhcp4_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
+
+   # Check function source code
+    run_command \
+         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp6_shared_network_BDEL'";
+
+    assert_eq 0 "${EXIT_CODE}" "function func_dhcp6_shared_network_BDEL() broken or missing. (expected status code %d, returned %d)"
+
+    count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp6_subnet SET shared_network_name = NULL') || true
+    assert_eq 1 "${count}" "function func_dhcp6_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -389,14 +409,14 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 13.0.
+    # Ok, we have a 1.0 database. Let's upgrade it to 14.0.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
 
-    # Verify upgraded schema reports version 13.0.
+    # Verify upgraded schema reports version 14.0.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "13.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1019,6 +1039,9 @@ SET @disable_audit = 0;"
 
     # Check upgrade from 12.0 to 13.0.
     mysql_upgrade_12_to_13_test
+
+    # Check upgrade from 13.0 to 14.0.
+    mysql_upgrade_13_to_14_test
 
     # Let's wipe the whole database
     mysql_wipe

@@ -267,8 +267,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, deleteSharedNetworkSubnets6Test) {
     deleteSharedNetworkSubnets6Test();
 }
 
-/// @todo This test is disabled pending resolution of #2299.
-TEST_F(MySqlConfigBackendDHCPv6Test, DISABLED_getAllSharedNetworks6Test) {
+TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6Test) {
     getAllSharedNetworks6Test();
 }
 

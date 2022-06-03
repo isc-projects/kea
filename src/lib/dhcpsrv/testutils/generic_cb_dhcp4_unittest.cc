@@ -2364,16 +2364,16 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
                 AuditEntry::ModificationType::DELETE, "deleted all shared networks"
             },
             {
+                "dhcp4_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
+                "dhcp4_subnet",
+                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
+            },
+            {
                 "dhcp4_shared_network",
                 AuditEntry::ModificationType::DELETE, "deleted all shared networks"
-            },
-            {
-                "dhcp4_subnet",
-                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
-            },
-            {
-                "dhcp4_subnet",
-                AuditEntry::ModificationType::UPDATE, "deleted all shared networks"
             }
         });
 
