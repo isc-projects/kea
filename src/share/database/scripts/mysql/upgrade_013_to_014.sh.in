@@ -52,6 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
+
 -- Modify shared-network-name foreign key contraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp4_subnet update trigger leaving the updated subnets without audit_entries.
@@ -59,9 +60,9 @@ ALTER TABLE dhcp4_subnet
     DROP FOREIGN KEY fk_dhcp4_subnet_shared_network;
 
 ALTER TABLE dhcp4_subnet
-     ADD CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
-         REFERENCES dhcp4_shared_network (name)
-         ON DELETE NO ACTION ON UPDATE NO ACTION;
+    ADD CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp4_shared_network (name)
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- Modify BEFORE delete trigger on dhcp4_shared_network to explicitly
 -- update dhcp4_subnets. This ensures there are audit entries for updated
@@ -87,12 +88,12 @@ ALTER TABLE dhcp6_subnet
     DROP FOREIGN KEY fk_dhcp6_subnet_shared_network;
 
 ALTER TABLE dhcp6_subnet
-     ADD CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
-         REFERENCES dhcp6_shared_network (name)
-         ON DELETE NO ACTION ON UPDATE NO ACTION;
+    ADD CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp6_shared_network (name)
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- Modify BEFORE delete trigger on dhcp6_shared_network to explicitly
--- update dhcp4_subnets. This ensures there are audit entries for updated
+-- update dhcp6_subnets. This ensures there are audit entries for updated
 -- subnets.
 DROP TRIGGER dhcp6_shared_network_BDEL;
 
@@ -113,4 +114,5 @@ UPDATE schema_version
     SET version = '14', minor = '0';
 
 -- This line concludes database upgrade to version 14.
+
 EOF

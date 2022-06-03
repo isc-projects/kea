@@ -4346,8 +4346,6 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '14', minor = '0';
 
-
-
 -- This line concludes database upgrade to version 14.
 
 # Notes:
