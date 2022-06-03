@@ -1,3 +1,11 @@
+2023	[bug]		tmark
+	Corrected a MySQL CB issue that caused subnets to be
+	updated without having audit entries created when their
+	when their shared-network is deleted.  This can cause
+	the subnets to be excluded from subsequent CB refresh
+	cycles.
+	(Gitlab #2299)
+
 Kea 2.1.6 (development) released on May 25 2022
 
 2022.	[func]		andrei, djt
