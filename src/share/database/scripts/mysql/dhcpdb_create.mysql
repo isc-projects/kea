@@ -4286,6 +4286,8 @@ UPDATE schema_version
 
 -- This line concludes database upgrade to version 13.
 
+-- This line starts database upgrade to version 14.0.
+
 -- Modify shared-network-name foreign key contraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp4_subnet update trigger leaving the updated subnets without audit_entries.
