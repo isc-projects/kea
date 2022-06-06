@@ -804,6 +804,17 @@ The server map parameters are described below:
 
 - ``comment`` is allowed but currently ignored.
 
+.. note::
+
+    Even when the client keytab can be specified either in the configuration
+    or the environment variable, leaving the library acquiring and caching
+    client credentials, to use cached client credentials is far better.
+
+    For instance only the read access right is needed to use the cache,
+    to fetch credentials and update the cache requires the write access
+    right too.
+
+
 GSS-TSIG Automatic Key Removal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
