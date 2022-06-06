@@ -226,10 +226,10 @@ client certificate in Client-Server communication. It does not affect
 communication between HA peers at the client side, see below for
 the server side.
 
-Before Kea 2.2.0 using HTTPS in HA setup requires use of Control Agent
+Before Kea 2.1.7 using HTTPS in HA setup requires use of Control Agent
 on all peers.  (See :ref:`tls` for Control Agent TLS configuration).
 
-Since Kea 2.2.0 the HTTPS server side is supported:
+Since Kea 2.1.7 the HTTPS server side is supported:
 
 - the peer entry for the server name is used for the TLS setting.
 
@@ -237,7 +237,7 @@ Since Kea 2.2.0 the HTTPS server side is supported:
   are required and verified, i.e. like ``cert-required``. It defaults
   to true and is a HA config (vs peer config) parameter.
 
-Kea 2.2.0 adds to a new security feature with the ``restrict-commands``
+Kea 2.1.7 adds to a new security feature with the ``restrict-commands``
 HA config parameter: when it is configured to ``true`` (default is
 ``false``) commands which are not used by the hook are rejected.
 
