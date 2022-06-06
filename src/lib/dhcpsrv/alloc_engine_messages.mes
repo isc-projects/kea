@@ -90,10 +90,10 @@ misconfigurations causing some clients to be refused the service.
 
 % ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv4 address in the subnet %2, subnet-id %3, shared network %4
 This warning message is issued when the allocation engine fails to allocate
-a lease for a client connected to a subnet that does not belong to a shared
-network. The first argument includes the client identification information.
-The second and third arguments identify the subnet. The fourth argument
-specifies the shared network, if the subnet belongs to a shared network.
+a lease for a client connected to a subnet. The first argument includes the
+client identification information. The second and third arguments identify
+the subnet. The fourth argument specifies the shared network, if the subnet
+belongs to a shared network.
 
 There are many reasons for failing lease allocations. One of them may be the
 address pools exhaustion or existing reservations for the free leases.
