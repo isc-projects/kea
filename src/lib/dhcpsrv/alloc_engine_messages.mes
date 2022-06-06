@@ -96,12 +96,11 @@ the subnet. The fourth argument specifies the shared network, if the subnet
 belongs to a shared network.
 
 There are many reasons for failing lease allocations. One of them may be the
-address pools exhaustion or existing reservations for the free leases.
-However, in some cases, the allocation engine may fail to find a suitable
-pool for the client when the pools are only available to certain client
-classes, but the requesting client does not belong to them. Further log
-messages provide more information to distinguish between these different
-cases.
+pools exhaustion or existing reservations for the free leases. However, in
+some cases, the allocation engine may fail to find a suitable pool for the
+client when the pools are only available to certain client classes, but the
+requesting client does not belong to them. Further log messages provide more
+information to distinguish between these different cases.
 
 % ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
@@ -346,11 +345,12 @@ an operator can identify the situations when there are no leases left
 in some of the pools. He or she can also identify client classification
 misconfigurations causing some clients to be refused the service.
 
-% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv6 lease in the subnet with id %2
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv6 address in the subnet %2, subnet-id %3, shared network %4
 This warning message is issued when the allocation engine fails to allocate
-a lease for a client connected to a subnet that does not belong to a shared
-network. The first argument includes the client identification information.
-The second argument specifies the subnet identifier.
+a lease for a client connected to a subnet. The first argument includes the
+client identification information. The second and third arguments identify
+the subnet. The fourth argument specifies the shared network, if the subnet
+belongs to a shared network.
 
 There are many reasons for failing lease allocations. One of them may be the
 pools exhaustion or existing reservations for the free leases. However, in

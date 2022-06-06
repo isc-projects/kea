@@ -1228,9 +1228,15 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     } else {
         // The client is not connected to a shared network. It is connected
         // to a subnet. Let's log the ID of that subnet.
+        std::string shared_network = ctx.subnet_->getSharedNetworkName();
+        if (shared_network.empty()) {
+            shared_network = "(none)";
+        }
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET)
             .arg(ctx.query_->getLabel())
-            .arg(ctx.subnet_->getID());
+            .arg(ctx.subnet_->toText())
+            .arg(ctx.subnet_->getID())
+            .arg(shared_network);
         StatsMgr::instance().addValue("v6-allocation-fail-subnet",
                                       static_cast<int64_t>(1));
         StatsMgr::instance().addValue(
