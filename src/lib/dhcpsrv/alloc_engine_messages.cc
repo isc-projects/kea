@@ -127,7 +127,7 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES", "%1: Failed to allocate an IPv6 address for client with classes: %2",
     "ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS", "%1: no pools were available for the lease allocation",
     "ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK", "%1: failed to allocate a lease in the shared network %2: %3 subnets have no available leases, %4 subnets have no matching pools",
-    "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv6 lease in the subnet with id %2",
+    "ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET", "%1: failed to allocate an IPv6 address in the subnet %2, subnet-id %3, shared network %4",
     "ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS", "%1: lease type %2 for reserved address/prefix %3 already exists",
     "ALLOC_ENGINE_V6_ALLOC_LEASES_HR", "leases and static reservations found for client %1",
     "ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR", "no reservations found but leases exist for client %1",
