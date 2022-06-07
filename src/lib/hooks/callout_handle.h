@@ -502,12 +502,6 @@ private:
     CalloutHandlePtr callout_handle_;
 };
 
-template <isc::util::DhcpSpace D>
-char const* queryArgument();
-
-template <isc::util::DhcpSpace D>
-char const* subnetArgument();
-
 } // namespace hooks
 } // namespace isc
 

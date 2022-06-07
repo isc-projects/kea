@@ -30,6 +30,7 @@ run_unittests_SOURCES += boost_time_utils_unittest.cc
 run_unittests_SOURCES += buffer_unittest.cc
 run_unittests_SOURCES += chrono_time_utils_unittest.cc
 run_unittests_SOURCES += csv_file_unittest.cc
+run_unittests_SOURCES += dhcp_space_unittest.cc
 run_unittests_SOURCES += doubles_unittest.cc
 run_unittests_SOURCES += fd_share_tests.cc
 run_unittests_SOURCES += fd_tests.cc
