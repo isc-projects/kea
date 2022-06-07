@@ -386,6 +386,9 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     class1->setSname("cool");
     class1->setFilename("epc.cfg");
     class1->setValid(Triplet<uint32_t>(30, 60, 90));
+    ElementPtr user_context = Element::createMap();
+    user_context->set("melon", Element::create("water"));
+    class1->setContext(user_context);
     test_client_classes_.push_back(class1);
 
     auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);

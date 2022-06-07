@@ -422,6 +422,9 @@ GenericConfigBackendDHCPv6Test::initTestClientClasses() {
     class1->setValid(Triplet<uint32_t>(30, 60, 90));
     class1->setPreferred(Triplet<uint32_t>(25, 55, 85));
     test_client_classes_.push_back(class1);
+    ElementPtr user_context = Element::createMap();
+    user_context->set("melon", Element::create("water"));
+    class1->setContext(user_context);
 
     auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);
     class2->setCfgOptionDef(boost::make_shared<CfgOptionDef>());

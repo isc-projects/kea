@@ -110,6 +110,10 @@ CREATE TRIGGER dhcp6_shared_network_BDEL BEFORE DELETE ON dhcp6_shared_network
     END $$
 DELIMITER ;
 
+-- Add user_context column to Client class tables.
+ALTER TABLE dhcp4_client_class ADD COLUMN user_context LONGTEXT NULL;
+ALTER TABLE dhcp6_client_class ADD COLUMN user_context LONGTEXT NULL;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '14', minor = '0';

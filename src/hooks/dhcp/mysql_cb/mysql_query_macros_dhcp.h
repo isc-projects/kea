@@ -675,6 +675,7 @@ namespace {
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
     "  c.modification_ts," \
+    "  c.user_context," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -737,6 +738,7 @@ namespace {
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
     "  c.modification_ts," \
+    "  c.user_context," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -1073,7 +1075,8 @@ namespace {
     "  max_valid_lifetime = ?," \
     "  depend_on_known_directly = ?," \
     follow_class_name_set \
-    "  modification_ts = ? " \
+    "  modification_ts = ?, " \
+    "  user_context = ? " \
     "WHERE name = ?"
 #endif
 
@@ -1091,7 +1094,8 @@ namespace {
     "  preferred_lifetime = ?, " \
     "  min_preferred_lifetime = ?, " \
     "  max_preferred_lifetime = ?, " \
-    "  modification_ts = ? " \
+    "  modification_ts = ?, " \
+    "  user_context = ? " \
     "WHERE name = ?"
 #endif
 

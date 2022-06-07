@@ -2808,6 +2808,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // depend on known directly
             MySqlBinding::createInteger<uint8_t>(), // depend on known indirectly
             MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint64_t>(), // option def: id
             MySqlBinding::createInteger<uint16_t>(), // option def: code
             MySqlBinding::createString(OPTION_NAME_BUF_LENGTH), // option def: name
@@ -2887,40 +2888,46 @@ public:
                 // modification_ts
                 last_client_class->setModificationTime(out_bindings[9]->getTimestamp());
 
+                // user_context
+                ElementPtr user_context = out_bindings[10]->getJSON();
+                if (user_context) {
+                    last_client_class->setContext(user_context);
+                }
+
                 // preferred lifetime: default, min, max
-                last_client_class->setPreferred(createTriplet(out_bindings[33],
-                                                              out_bindings[34],
-                                                              out_bindings[35]));
+                last_client_class->setPreferred(createTriplet(out_bindings[34],
+                                                              out_bindings[35],
+                                                              out_bindings[36]));
 
                 class_list.push_back(last_client_class);
             }
 
             // server tag
-            if (!out_bindings[32]->amNull() &&
-                (last_tag != out_bindings[32]->getString())) {
-                last_tag = out_bindings[32]->getString();
+            if (!out_bindings[33]->amNull() &&
+                (last_tag != out_bindings[33]->getString())) {
+                last_tag = out_bindings[33]->getString();
                 if (!last_tag.empty() && !last_client_class->hasServerTag(ServerTag(last_tag))) {
                     last_client_class->setServerTag(last_tag);
                 }
             }
 
-            // Parse client class specific option definition from 10 to 19.
-            if (!out_bindings[10]->amNull() &&
-                (last_option_def_id < out_bindings[10]->getInteger<uint64_t>())) {
-                last_option_def_id = out_bindings[10]->getInteger<uint64_t>();
+            // Parse client class specific option definition from 11 to 20.
+            if (!out_bindings[11]->amNull() &&
+                (last_option_def_id < out_bindings[11]->getInteger<uint64_t>())) {
+                last_option_def_id = out_bindings[11]->getInteger<uint64_t>();
 
-                auto def = processOptionDefRow(out_bindings.begin() + 10);
+                auto def = processOptionDefRow(out_bindings.begin() + 11);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 20 to 31.
-            if (!out_bindings[20]->amNull() &&
-                (last_option_id < out_bindings[20]->getInteger<uint64_t>())) {
-                last_option_id = out_bindings[20]->getInteger<uint64_t>();
+            // Parse client class specific option from 21 to 32.
+            if (!out_bindings[21]->amNull() &&
+                (last_option_id < out_bindings[21]->getInteger<uint64_t>())) {
+                last_option_id = out_bindings[21]->getInteger<uint64_t>();
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 20);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 21);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -3045,6 +3052,7 @@ public:
             createMinBinding(client_class->getPreferred()),
             createMaxBinding(client_class->getPreferred()),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
+            createInputContextBinding(client_class)
         };
 
         MySqlTransaction transaction(conn_);
@@ -3730,8 +3738,9 @@ TaggedStatementArray tagged_statements = { {
       "  preferred_lifetime,"
       "  min_preferred_lifetime,"
       "  max_preferred_lifetime,"
-      "  modification_ts"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "  modification_ts, "
+      "  user_context "
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
 
     // Insert association of a client class with a server.

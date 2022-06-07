@@ -2368,6 +2368,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // depend on known directly
             MySqlBinding::createInteger<uint8_t>(), // depend on known indirectly
             MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint64_t>(), // option def: id
             MySqlBinding::createInteger<uint16_t>(), // option def: code
             MySqlBinding::createString(OPTION_NAME_BUF_LENGTH), // option def: name
@@ -2459,35 +2460,41 @@ public:
                 // modification_ts
                 last_client_class->setModificationTime(out_bindings[12]->getTimestamp());
 
+                // user_context
+                ElementPtr user_context = out_bindings[13]->getJSON();
+                if (user_context) {
+                    last_client_class->setContext(user_context);
+                }
+
                 class_list.push_back(last_client_class);
             }
 
             // server tag
-            if (!out_bindings[35]->amNull() &&
-                (last_tag != out_bindings[35]->getString())) {
-                last_tag = out_bindings[35]->getString();
+            if (!out_bindings[36]->amNull() &&
+                (last_tag != out_bindings[36]->getString())) {
+                last_tag = out_bindings[36]->getString();
                 if (!last_tag.empty() && !last_client_class->hasServerTag(ServerTag(last_tag))) {
                     last_client_class->setServerTag(last_tag);
                 }
             }
 
-            // Parse client class specific option definition from 13 to 22.
-            if (!out_bindings[13]->amNull() &&
-                (last_option_def_id < out_bindings[13]->getInteger<uint64_t>())) {
-                last_option_def_id = out_bindings[13]->getInteger<uint64_t>();
+            // Parse client class specific option definition from 14 to 23.
+            if (!out_bindings[14]->amNull() &&
+                (last_option_def_id < out_bindings[14]->getInteger<uint64_t>())) {
+                last_option_def_id = out_bindings[14]->getInteger<uint64_t>();
 
-                auto def = processOptionDefRow(out_bindings.begin() + 13);
+                auto def = processOptionDefRow(out_bindings.begin() + 14);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 23 to 34.
-            if (!out_bindings[23]->amNull() &&
-                (last_option_id < out_bindings[23]->getInteger<uint64_t>())) {
-                last_option_id = out_bindings[23]->getInteger<uint64_t>();
+            // Parse client class specific option from 24 to 35.
+            if (!out_bindings[24]->amNull() &&
+                (last_option_id < out_bindings[24]->getInteger<uint64_t>())) {
+                last_option_id = out_bindings[24]->getInteger<uint64_t>();
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 23);
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 24);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -2612,6 +2619,7 @@ public:
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
+            createInputContextBinding(client_class)
         };
 
         MySqlTransaction transaction(conn_);
@@ -3279,8 +3287,9 @@ TaggedStatementArray tagged_statements = { {
       "  max_valid_lifetime,"
       "  depend_on_known_directly,"
       "  follow_class_name,"
-      "  modification_ts"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "  modification_ts,"
+      "  user_context "
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
 
     // Insert association of a client class with a server.
