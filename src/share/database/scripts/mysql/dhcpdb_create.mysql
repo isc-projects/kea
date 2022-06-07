@@ -4288,7 +4288,7 @@ UPDATE schema_version
 
 -- This line starts database upgrade to version 14.0.
 
--- Modify shared-network-name foreign key contraint on dhcp4_subnet to not perform
+-- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp4_subnet update trigger leaving the updated subnets without audit_entries.
 ALTER TABLE dhcp4_subnet
@@ -4311,12 +4311,12 @@ CREATE TRIGGER dhcp4_shared_network_BDEL BEFORE DELETE ON dhcp4_shared_network
         CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, "delete");
         -- In MySQL Foreign key constraint triggered updates will not cascade, so we explicitly
         -- update subnets first which should ensure they get audit entries.
-        UPDATE dhcp4_subnet SET shared_network_name = NULL  WHERE shared_network_name = OLD.name;
+        UPDATE dhcp4_subnet SET shared_network_name = NULL WHERE shared_network_name = OLD.name;
         DELETE FROM dhcp4_options WHERE shared_network_name = OLD.name;
     END $$
 DELIMITER ;
 
--- Modify shared-network-name foreign key contraint on dhcp6_subnet to not perform
+-- Modify shared-network-name foreign key constraint on dhcp6_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp6_subnet update trigger leaving the updated subnets without audit_entries.
 ALTER TABLE dhcp6_subnet
@@ -4339,7 +4339,7 @@ CREATE TRIGGER dhcp6_shared_network_BDEL BEFORE DELETE ON dhcp6_shared_network
         CALL createAuditEntryDHCP6('dhcp6_shared_network', OLD.id, "delete");
         -- In MySQL Foreign key constraint triggered updates will not cascade, so we explicitly
         -- update subnets first which should ensure they get audit entries.
-        UPDATE dhcp6_subnet SET shared_network_name = NULL  WHERE shared_network_name = OLD.name;
+        UPDATE dhcp6_subnet SET shared_network_name = NULL WHERE shared_network_name = OLD.name;
         DELETE FROM dhcp6_options WHERE shared_network_name = OLD.name;
     END $$
 DELIMITER ;

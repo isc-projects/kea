@@ -38,7 +38,7 @@ START TRANSACTION;
 
 -- This starts schema update to 12.0.
 
--- Modify shared-network-name foreign key contraint on dhcp4_subnet to not perform
+-- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp4_subnet update trigger leaving the updated subnets without audit_entries.
 ALTER TABLE dhcp4_subnet
@@ -57,14 +57,14 @@ BEGIN
     -- Explicitly update subnets now rather than via foreign key constraint, this ensures the
     -- audit entries for subnets will preceded that of the shared-network, keeping the order
     -- of the entries the same as they are for MySQL.
-    UPDATE dhcp4_subnet SET shared_network_name = NULL  WHERE shared_network_name = OLD.name;
+    UPDATE dhcp4_subnet SET shared_network_name = NULL WHERE shared_network_name = OLD.name;
     DELETE FROM dhcp4_options WHERE shared_network_name = OLD.name;
     RETURN OLD;
 END;
 \$dhcp4_shared_network_BDEL\$
 LANGUAGE plpgsql;
 
--- Modify shared-network-name foreign key contraint on dhcp6_subnet to not perform
+-- Modify shared-network-name foreign key constraint on dhcp6_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
 -- dhcp6_subnet update trigger leaving the updated subnets without audit_entries.
 ALTER TABLE dhcp6_subnet
@@ -83,7 +83,7 @@ BEGIN
     -- Explicitly update subnets now rather than via foreign key constraint, this ensures the
     -- audit entries for subnets will preceded that of the shared-network, keeping the order
     -- of the entries the same as they are for MySQL.
-    UPDATE dhcp6_subnet SET shared_network_name = NULL  WHERE shared_network_name = OLD.name;
+    UPDATE dhcp6_subnet SET shared_network_name = NULL WHERE shared_network_name = OLD.name;
     DELETE FROM dhcp6_options WHERE shared_network_name = OLD.name;
     RETURN OLD;
 END;
