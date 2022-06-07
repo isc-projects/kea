@@ -34,8 +34,11 @@ $ are-scripts-in-sync.py $gitref1 $gitref2
   All the SQL scripts changed between $gitref1 and $gitref2 are checked.''')
 
 
-def filter_the_noise(text, is_upgrade_script):
+def filter_the_noise(file, text, is_upgrade_script):
     ''' Removes portions of the script which are always different.
+
+    :param file: the name of the file that {text} was taken from
+    :type file: str
 
     :param text: the script content to be analyzed
     :type text: str
@@ -47,15 +50,32 @@ def filter_the_noise(text, is_upgrade_script):
     :return: the trimmed down portion of text
     :type: str
     '''
+
+    # Determine the schema's latest version.
+    version = 0
+    for i in text:
+        m = re.findall(r"SET version = '(\d+)', minor = '\d+';", i)
+        if m is not None:
+            version = max(version, int(m[0]) if len(m) else 0)
+    if version == 0:
+        print(f"ERROR: expected schema version upgrade statement of format \"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
+        sys.exit(2)
+
     append = False
     result = []
+    first_delimiter = r'<<EOF$' if is_upgrade_script else fr'^-- This line starts the database upgrade to version {version}'
+    second_delimiter = r'^EOF$' if is_upgrade_script else r' Notes:$'
+    first_delimiter_found = False
+    second_delimiter_found = False
     for i in text:
-        if re.search('<<EOF$' if is_upgrade_script else 'This.*starts', i):
+        if re.search(first_delimiter, i):
+            first_delimiter_found = True
             append = True
             if not is_upgrade_script:
-                # 'This.*starts' is not noise.
+                # 'This line starts the database upgrade to version' is not considered noise.
                 result.append(i)
-        elif re.search('^EOF$' if is_upgrade_script else 'Notes:', i):
+        elif re.search(second_delimiter, i):
+            second_delimiter_found = True
             append = False
         elif re.search('^START TRANSACTION;$', i) or \
                 re.search('^COMMIT;$', i) or \
@@ -64,6 +84,15 @@ def filter_the_noise(text, is_upgrade_script):
             pass
         elif append:
             result.append(i)
+
+    if not first_delimiter_found:
+        print(f'ERROR: Expected delimiter "{first_delimiter}" in file {file}, but not found.', file=sys.stderr)
+        sys.exit(3)
+
+    if not second_delimiter_found:
+        print(f'ERROR: Expected delimiter "{second_delimiter}" in file {file}, but not found.', file=sys.stderr)
+        sys.exit(4)
+
     return result
 
 
@@ -102,8 +131,8 @@ def diff(dhcpdb_create_script, upgrade_script):
 
     # Removes portions of the script which are always different: the beginning
     # and the end.
-    create_text = filter_the_noise(create_text, False)
-    upgrade_text = filter_the_noise(upgrade_text, True)
+    create_text = filter_the_noise(dhcpdb_create_script, create_text, False)
+    upgrade_text = filter_the_noise(upgrade_script, upgrade_text, True)
 
     # Use difflib to create the diff.
     raw_diff = ''.join(difflib.context_diff(create_text, upgrade_text, n=0)).splitlines()

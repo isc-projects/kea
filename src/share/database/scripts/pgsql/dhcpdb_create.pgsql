@@ -4915,7 +4915,7 @@ UPDATE schema_version
 
 -- Schema 11.0 specification ends here.
 
--- This starts schema update to 12.0.
+-- This line starts the database upgrade to version 12.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
