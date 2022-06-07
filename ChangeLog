@@ -10,13 +10,14 @@ Kea 2.1.6 (development) released on May 25 2022
 
 2023.	[func]		djt
 	The ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET log message format has been
-	slightly modified, so that when it is emitted for a subnet that is
-	not within a shared network, it emits "(none)" for the value of the
-	shared network. The ARM documentation for this parameter has been
-	updated to reflect that subnets within shared networks will in fact
-	display which shared network the subnet belongs to. The
-	ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET log message format has changed to
-	be consistent with the format of ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET.
+	slightly modified, so that when it is emitted for a subnet that
+	is not within a shared network, it emits "(none)" for the value
+	of the shared network. The ARM documentation for this parameter
+	has been updated to reflect that subnets within shared networks
+	will in fact display which shared network the subnet belongs to.
+	The ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET log message format has
+	changed to be consistent with the format of
+	ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET.
 
 2022.	[func]		andrei, djt
 	kea-admin lease-upload now calls the lease file cleanup (LFC)
