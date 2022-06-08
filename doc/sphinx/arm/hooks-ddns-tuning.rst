@@ -1,12 +1,14 @@
 .. _hooks-ddns-tuning:
 
-``ddns_tuning``: Tuning DDNS Updates
-====================================
+DDNS Tuning: Fine-Tune DDNS Updates
+===================================
 
-This hook library adds support for fine-tuning various DNS update aspects.
-Currently it supports procedural host-name generation and the ability to skip
-performing DDNS updates for select clients. The DDNS Tuning hook
-is a premium feature.
+The ``ddns_tuning`` hook library adds support for fine-tuning various DNS update aspects.
+It currently supports procedural host-name generation and the ability to skip
+performing DDNS updates for select clients.
+
+The DDNS Tuning hook library is only available to ISC customers with a paid
+support contract.
 
 The library, which was added in Kea 2.1.5, can be loaded by the ``kea-dhcp4``
 and ``kea-dhcp6`` daemons by adding it to the ``hooks-libraries`` element of the
