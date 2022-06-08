@@ -188,8 +188,8 @@ supported for ``kea-dhcp6``:
         }]
     }
 
-Although, "SKIP_DDNS" is a special class, it can be defined with a test
-expression. Defining it as shown below, would omit DDNS updates for all KNOWN
+Although "SKIP_DDNS" is a special class, it can be defined with a test
+expression. Defining it as shown below would omit DDNS updates for all KNOWN
 clients:
 
 .. code-block:: javascript
