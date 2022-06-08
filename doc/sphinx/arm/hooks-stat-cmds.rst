@@ -1,9 +1,9 @@
 .. _hooks-stat-cmds:
 
-``stat_cmds``: Supplemental Statistics Commands
-===============================================
+Statistics Commands: Supplemental Lease Statistics
+==================================================
 
-This library provides additional commands for retrieving lease
+The ``stat_cmds`` library provides additional commands for retrieving lease
 statistics from Kea DHCP servers. These commands were added to address
 an issue with obtaining accurate lease statistics in deployments running
 multiple Kea servers that use a shared lease backend. The in-memory
@@ -19,10 +19,10 @@ for retrieving these statistics.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or
+   This library can only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
-The commands currently provided by this library are:
+The commands provided by this library are:
 
 -  ``stat-lease4-get`` - fetches DHCPv4 lease statistics.
 
