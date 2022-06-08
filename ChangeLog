@@ -1,3 +1,8 @@
+2025.	[bug]		tmark
+	Added missing support for client-class user-context to
+	both MySQL and PostgreSQL CB hook libraries.
+	(Gitlab #2430)
+
 2024.	[func]		djt
 	The ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET log message format has been
 	slightly modified, so that when it is emitted for a subnet that
