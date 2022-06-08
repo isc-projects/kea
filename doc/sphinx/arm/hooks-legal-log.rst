@@ -1,9 +1,9 @@
 .. _hooks-legal-log:
 
-``legal_log``: Forensic Logging Hooks
+Forensic Logging: Maintain Legal Logs
 =====================================
 
-This section describes the Forensic Logging hook library. This library provides
+The ``legal_log`` hook library provides
 hooks that record a detailed log of assignments, renewals, releases, and other
 lease events into a set of log files.
 
@@ -72,8 +72,8 @@ described below; see :ref:`forensic-log-configuration`.
 
 .. _forensic-log-configuration:
 
-Configuring the Forensic Log Hooks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuring the Forensic Logging Hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use this functionality, the hook library must be included in the
 configuration of the desired DHCP server modules. The ``legal_log`` library
