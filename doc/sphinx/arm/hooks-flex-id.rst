@@ -1,7 +1,7 @@
 .. _hooks-flex-id:
 
-Flexible Identifiers: Easier Management of Host Reservations
-============================================================
+Flexible Identifier: Easier Management of Host Reservations
+===========================================================
 
 The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
