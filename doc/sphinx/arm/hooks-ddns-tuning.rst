@@ -204,5 +204,5 @@ clients:
 
 .. note::
 
-    The ``ddns-tuning` hook library must be loaded for the "SKIP_DDNS" class
-to have an effect.
+    The ``ddns-tuning`` hook library must be loaded for the "SKIP_DDNS" class
+    to have an effect.
