@@ -1,12 +1,12 @@
 .. _hooks-host-cache:
 
-``host_cache``: Caching Host Reservations
-=========================================
+Host Cache: Caching Host Reservations for Improved Performance
+==============================================================
 
 Some database backends, such as RADIUS, are slow and may take
 a long time to respond. Since Kea in general is synchronous, backend
 performance directly affects DHCP performance. To minimize the
-impact and improve performance, the Host Cache library provides a way to
+impact and improve performance, the ``host_cache`` library provides a way to
 cache information from the database locally. This includes negative
 caching, i.e. the ability to remember that there is no client
 information in the database.
