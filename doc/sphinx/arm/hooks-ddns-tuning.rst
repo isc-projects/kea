@@ -154,11 +154,11 @@ response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 Skipping DDNS Updates
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ddns-tuning library also provides the ability to skip DDNS updates on a per
-client basis.  The library recognizes a special client class, "SKIP_DDNS".  When a
-client is matched to this class, kea servers (kea-dhcp4 and kea-dhcp6) will not
-send DDNS update requests (NCRs) to kea-dhcp-ddns.  A common use-case would be
-to skip DDNS updates for fixed-address host reservations.  This is done easily by
+The ``ddns-tuning`` library also provides the ability to skip DDNS updates on a
+per-client basis. The library recognizes a special client class, "SKIP_DDNS"; when a
+client is matched to this class, the Kea servers (``kea-dhcp4`` and ``kea-dhcp6``) do not
+send DDNS update requests (NCRs) to ``kea-dhcp-ddns``. A common use case would be
+to skip DDNS updates for fixed-address host reservations. This is done easily by
 simply assigning the class to the host reservation as shown below:
 
 .. code-block:: javascript
