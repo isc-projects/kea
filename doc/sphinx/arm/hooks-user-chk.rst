@@ -1,7 +1,7 @@
 .. _hooks-user-chk:
 
-``user_chk``: Checking User Access
-==================================
+User Check: Checking User Access
+================================
 
 The ``user_chk`` library serves several purposes:
 
