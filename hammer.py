@@ -70,7 +70,7 @@ SYSTEMS = {
         '20.04',
         '20.10',
         '21.04',
-        # '22.04',
+        '22.04',
     ],
     'debian': [
         #'8',
@@ -138,6 +138,7 @@ IMAGE_TEMPLATES = {
     'ubuntu-20.04-lxc':        {'bare': 'isc/lxc-ubuntu-20.04',        'kea': 'isc/kea-ubuntu-20.04'},
     'ubuntu-20.10-lxc':        {'bare': 'isc/lxc-ubuntu-20.10',        'kea': 'isc/kea-ubuntu-20.10'},
     'ubuntu-21.04-lxc':        {'bare': 'isc/lxc-ubuntu-21.04',        'kea': 'isc/kea-ubuntu-21.04'},
+    'ubuntu-22.04-lxc':        {'bare': 'isc/lxc-ubuntu-22.04',        'kea': 'isc/lxc-ubuntu-22.04'},
 
     # debian
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
@@ -1648,7 +1649,8 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            if float(revision) <= 21.04:
+            if float(revision) <= 21.04 or revision == '22.04':
+                # at the moment of adding 22.04 there are no libsysrepo-cpp-dev packages
                 packages.extend(['cmake', 'libpcre3-dev'])
                 deferred_functions.extend([
                     _install_libyang_from_sources,
@@ -2209,6 +2211,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20210419151920'
     elif system == 'ubuntu' and revision == '21.04':
         frc_version = 'isc20210528123038'
+    elif system == 'ubuntu' and revision == '22.04':
+        frc_version = 'isc20220608134906'
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
