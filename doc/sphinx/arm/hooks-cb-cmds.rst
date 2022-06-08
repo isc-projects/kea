@@ -1,10 +1,10 @@
 .. _hooks-cb-cmds:
 
-``cb_cmds``: Configuration Backend Commands
-===========================================
+Configuration Backend Commands: Manage Kea Configurations via a Database
+========================================================================
 
-This section describes the ``cb_cmds`` hooks library, used to manage Kea
-servers' configurations in the Configuration Backends. This library must
+This section describes the ``cb_cmds`` hook library, used to manage Kea
+servers' configurations in the configuration backends. This library must
 be used in conjunction with the available CB hooks libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
@@ -16,6 +16,10 @@ configuration management.
 To manage the configuration information in a PostgreSQL database, both the
 ``pgsql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
 configuration management.
+
+More information on how to configure the Configuration Backend hook library for
+use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
+and :ref:`dhcp6-cb` sections.
 
 The ``cb_cmds`` library is only available to ISC customers with a paid
 support contract.
@@ -225,7 +229,7 @@ The following is the successful response to the ``remote-server4-del`` command:
     }
 
 
-.. note::
+.. warning::
 
    The ``remote-server4-del`` and ``remote-server6-del`` commands must be used with
    care, because an accidental deletion of the server can cause some parts of the
