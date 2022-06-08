@@ -1,10 +1,10 @@
 .. _hooks-lease-cmds:
 
-``lease_cmds``: Lease Commands
-==============================
+Lease Commands: Easier Lease Management
+=======================================
 
 Kea allows users to store lease information in several
-backends (memfile, MySQL and PostgreSQL), and this library provides an
+backends (memfile, MySQL and PostgreSQL), and the ``lease_cmds`` library provides an
 interface that can manipulate leases in a unified, safe way.
 In particular, it allows things that were previously impossible: lease
 manipulation in memfile while Kea is running, sanity check changes,
@@ -21,7 +21,7 @@ available to every Kea user.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or the
+   This library can only be loaded by the ``kea-dhcp4`` or the
    ``kea-dhcp6`` process.
 
 There are many situations where an administrative command may be useful;
