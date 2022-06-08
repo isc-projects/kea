@@ -402,6 +402,17 @@ loaded by the correct process per the table below.
    |                                                           |              | database. This library may only be used in conjunction with  |
    |                                                           |              | one of the supported Configuration Backend implementations.  |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
+   | :ref:`Configuration Backend: MySQL <hooks-cb-mysql>`      | Kea open     | This hook library is an implementation of the Kea            |
+   |                                                           | source       | Configuration Backend for MySQL. It uses a MySQL database as |
+   |                                                           |              | a repository for the Kea configuration information. Kea      |
+   |                                                           |              | servers use this library to fetch their configurations.      |
+   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
+   | :ref:`Configuration Backend: PostgreSQL <hooks-cb-pgsql>` | Kea open     | This hook library is an implementation of the Kea            |
+   |                                                           | source       | Configuration Backend for PostgreSQL. It uses a PostgreSQL   |
+   |                                                           |              | database as a repository for the Kea configuration           |
+   |                                                           |              | information. Kea servers use this library to fetch their     |
+   |                                                           |              | configurations.                                              |
+   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | ISC support  | This hook library adds custom behaviors related to Dynamic   |
    |                                                           | customers    | DNS updates on a per-client basis. Its primary feature is to |
    |                                                           |              | allow the host name used for DNS to be                       |
