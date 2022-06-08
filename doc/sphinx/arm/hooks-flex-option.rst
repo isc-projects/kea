@@ -1,9 +1,9 @@
 .. _hooks-flex-option:
 
-``flex_option``: Flexible Option for Option Value Settings
+Flexible Option: Defined Actions for Option Value Settings
 ==========================================================
 
-This library allows administrators to define an action to take, for a given
+The ``flex_option`` library allows administrators to define an action to take, for a given
 option, based upon on the result of an expression. These actions are carried
 out during the final stages of constructing a query response packet, just
 before it is sent to the client. The three actions currently supported are
@@ -23,7 +23,7 @@ used instead.
 
 The ``add`` action adds an option only when the option does not already
 exist and the expression does not evaluate to the empty string.
-The ``supersede`` action does the same but it overwrites the option value
+The ``supersede`` action is similar, but it overwrites the option value
 if it already exists. The ``remove`` action removes the option from
 the response packet if it already exists and the expression evaluates to
 true.
