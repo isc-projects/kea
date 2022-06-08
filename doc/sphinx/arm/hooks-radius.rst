@@ -1,9 +1,9 @@
 .. _hooks-radius:
 
-``radius``: RADIUS Server Support
-=================================
+RADIUS: RADIUS Server Support
+=============================
 
-The RADIUS hook library allows Kea to interact with two types of RADIUS
+The ``radius`` hook library allows Kea to interact with two types of RADIUS
 servers: access and accounting. Although the most common DHCP and RADIUS
 integration is done on the DHCP relay-agent level (DHCP clients send
 DHCP packets to DHCP relays; those relays contact the RADIUS server and
