@@ -1,9 +1,9 @@
 .. _hooks-class-cmds:
 
-``class_cmds``: Class Commands
-==============================
+Class Commands: Manage Client Classes Without Restarting Servers
+================================================================
 
-This section describes the Class Commands hooks library, which exposes
+The ``class_cmds`` hook library exposes
 several control commands for manipulating client classes (part of the
 Kea DHCP servers' configurations) without the need to restart those
 servers. Using these commands it is possible to add, update, delete, and
@@ -11,10 +11,10 @@ list the client classes configured for a given server.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or
+   This library can only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
-The Class Commands hooks library is currently available only to ISC
+The Class Commands hook library is currently available only to ISC
 customers with a paid support contract.
 
 .. _command-class-add:
