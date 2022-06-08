@@ -2258,12 +2258,20 @@ public:
                 // modification_ts
                 last_client_class->setModificationTime(worker.getTimestamp(12));
 
+                // user_context at 13.
+                if (!worker.isColumnNull(13)) {
+                    ElementPtr user_context = worker.getJSON(13);
+                    if (user_context) {
+                        last_client_class->setContext(user_context);
+                    }
+                }
+
                 class_list.push_back(last_client_class);
             }
 
-            // Check for new server tags at 35.
-            if (!worker.isColumnNull(35)) {
-                std::string new_tag = worker.getString(35);
+            // Check for new server tags at 36.
+            if (!worker.isColumnNull(36)) {
+                std::string new_tag = worker.getString(36);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_client_class->hasServerTag(ServerTag(new_tag))) {
                         last_client_class->setServerTag(new_tag);
@@ -2273,23 +2281,23 @@ public:
                 }
             }
 
-            // Parse client class specific option definition from 13 to 22.
-            if (!worker.isColumnNull(13) &&
-                (last_option_def_id < worker.getBigInt(13))) {
-                last_option_def_id = worker.getBigInt(13);
+            // Parse client class specific option definition from 14 to 23.
+            if (!worker.isColumnNull(14) &&
+                (last_option_def_id < worker.getBigInt(14))) {
+                last_option_def_id = worker.getBigInt(14);
 
-                auto def = processOptionDefRow(worker, 13);
+                auto def = processOptionDefRow(worker, 14);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 23 to 34.
-            if (!worker.isColumnNull(23) &&
-                (last_option_id < worker.getBigInt(23))) {
-                last_option_id = worker.getBigInt(23);
+            // Parse client class specific option from 24 to 35.
+            if (!worker.isColumnNull(24) &&
+                (last_option_id < worker.getBigInt(24))) {
+                last_option_id = worker.getBigInt(24);
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V4, worker, 23);
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, worker, 24);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -2418,6 +2426,7 @@ public:
         }
 
         in_bindings.addTimestamp(client_class->getModificationTime());
+        in_bindings.add(client_class->getContext());
 
         PgSqlTransaction transaction(conn_);
 
@@ -3559,7 +3568,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert client class.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4,
-        12,
+        13,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -3572,7 +3581,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  9 max_valid_lifetime
             OID_BOOL,       // 10 depend_on_known_directly
             OID_VARCHAR,    // 11 follow_class_name
-            OID_TIMESTAMP   // 12 modification_ts
+            OID_TIMESTAMP,  // 12 modification_ts
+            OID_TEXT        // 13 user_context cast as JSON
         },
         "INSERT_CLIENT_CLASS4",
         "INSERT INTO dhcp4_client_class("
@@ -3587,9 +3597,10 @@ TaggedStatementArray tagged_statements = { {
         "  max_valid_lifetime,"
         "  depend_on_known_directly,"
         "  follow_class_name,"
-        "  modification_ts"
+        "  modification_ts, "
+        "  user_context "
         ") VALUES ("
-            "$1, $2, cast($3 as inet), $4, $5, $6, $7, $8, $9, $10, $11, $12"
+            "$1, $2, cast($3 as inet), $4, $5, $6, $7, $8, $9, $10, $11, $12, cast($13 as JSON)"
         ")"
     },
 
@@ -3980,7 +3991,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class with specifying its position.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
-        13,
+        14,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -3994,7 +4005,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 10 depend_on_known_directly
             OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_VARCHAR     // 13 name (of class to update)
+            OID_TEXT,       // 13 user_context cast as JSON
+            OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS4",
         PGSQL_UPDATE_CLIENT_CLASS4("follow_class_name = $11,")
@@ -4003,7 +4015,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class without specifying its position.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4_SAME_POSITION,
-        13,
+        14,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4017,7 +4029,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 10 depend_on_known_directly
             OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_VARCHAR     // 13 name (of class to update)
+            OID_TEXT,       // 13 user_context cast as JSON
+            OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS4_SAME_POSITION",
         PGSQL_UPDATE_CLIENT_CLASS4("")

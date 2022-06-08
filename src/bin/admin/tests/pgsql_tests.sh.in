@@ -481,6 +481,18 @@ pgsql_upgrade_11_0_to_12_0() {
 
     count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp6_subnet SET shared_network_name = NULL') || true
     assert_eq 1 "${count}" "function func_dhcp6_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
+
+    # user_context should have been added to dhcp4_client_class
+    qry="select user_context from dhcp4_client_class limit 1;"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # user_context should have been added to dhcp6_client_class
+    qry="select user_context from dhcp6_client_class limit 1;"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {

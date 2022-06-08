@@ -90,6 +90,10 @@ END;
 \$dhcp6_shared_network_BDEL\$
 LANGUAGE plpgsql;
 
+-- Add user_context column to Client class tables.
+ALTER TABLE dhcp4_client_class ADD COLUMN user_context JSON DEFAULT NULL;
+ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '12', minor = '0';

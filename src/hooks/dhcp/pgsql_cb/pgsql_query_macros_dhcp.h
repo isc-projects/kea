@@ -671,6 +671,7 @@ namespace {
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
     "  gmt_epoch(c.modification_ts) as modification_ts, " \
+    "  c.user_context," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -733,6 +734,7 @@ namespace {
     "  c.depend_on_known_directly," \
     "  o.depend_on_known_indirectly, " \
     "  gmt_epoch(c.modification_ts) as modification_ts, " \
+    "  c.user_context, " \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -1086,8 +1088,9 @@ namespace {
     "  max_valid_lifetime = $9," \
     "  depend_on_known_directly = $10," \
     follow_class_name_set \
-    "  modification_ts = $12 " \
-    "WHERE name = $13"
+    "  modification_ts = $12, " \
+    "  user_context = cast($13 as json)" \
+    "WHERE name = $14"
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS6
@@ -1104,8 +1107,9 @@ namespace {
     "  preferred_lifetime = $9, " \
     "  min_preferred_lifetime = $10, " \
     "  max_preferred_lifetime = $11, " \
-    "  modification_ts = $12 " \
-    "WHERE name = $13"
+    "  modification_ts = $12, " \
+    "  user_context = cast($13 as json) " \
+    "WHERE name = $14"
 #endif
 
 #ifndef PGSQL_UPDATE_SERVER

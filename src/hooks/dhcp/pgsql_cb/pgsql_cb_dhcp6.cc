@@ -2579,18 +2579,26 @@ public:
                 // modification_ts
                 last_client_class->setModificationTime(worker.getTimestamp(9));
 
-                // class specific option definition from 10 to 19.
-                // class specific option from 20 to 31.
+                // user_context at 10.
+                if (!worker.isColumnNull(10)) {
+                    ElementPtr user_context = worker.getJSON(10);
+                    if (user_context) {
+                        last_client_class->setContext(user_context);
+                    }
+                }
+
+                // class specific option definition from 11 to 20.
+                // class specific option from 21 to 32.
 
                 // preferred lifetime: default, min, max
-                last_client_class->setPreferred(worker.getTriplet(33, 34, 35));
+                last_client_class->setPreferred(worker.getTriplet(34, 35, 36));
 
                 class_list.push_back(last_client_class);
             }
 
-            // Check for new server tags at 32.
-            if (!worker.isColumnNull(32)) {
-                std::string new_tag = worker.getString(32);
+            // Check for new server tags at 33.
+            if (!worker.isColumnNull(33)) {
+                std::string new_tag = worker.getString(33);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_client_class->hasServerTag(ServerTag(new_tag))) {
                         last_client_class->setServerTag(new_tag);
@@ -2600,23 +2608,23 @@ public:
                 }
             }
 
-            // Parse client class specific option definition from 10 to 19.
-            if (!worker.isColumnNull(10) &&
-                (last_option_def_id < worker.getBigInt(10))) {
-                last_option_def_id = worker.getBigInt(10);
+            // Parse client class specific option definition from 11 to 20.
+            if (!worker.isColumnNull(11) &&
+                (last_option_def_id < worker.getBigInt(11))) {
+                last_option_def_id = worker.getBigInt(11);
 
-                auto def = processOptionDefRow(worker, 10);
+                auto def = processOptionDefRow(worker, 11);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 20 to 31.
-            if (!worker.isColumnNull(20) &&
-                (last_option_id < worker.getBigInt(20))) {
-                last_option_id = worker.getBigInt(20);
+            // Parse client class specific option from 21 to 32.
+            if (!worker.isColumnNull(21) &&
+                (last_option_id < worker.getBigInt(21))) {
+                last_option_id = worker.getBigInt(21);
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 20);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 21);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -2745,6 +2753,7 @@ public:
         in_bindings.add(client_class->getPreferred().getMin());
         in_bindings.add(client_class->getPreferred().getMax());
         in_bindings.addTimestamp(client_class->getModificationTime());
+        in_bindings.add(client_class->getContext());
 
         PgSqlTransaction transaction(conn_);
 
@@ -3980,7 +3989,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert client class.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_CLIENT_CLASS6,
-        12,
+        13,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -3993,7 +4002,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  9 preferred_lifetime
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
-            OID_TIMESTAMP   // 12 modification_ts
+            OID_TIMESTAMP,  // 12 modification_ts
+            OID_TEXT        // 13 user_context cast as JSON
         },
         "INSERT_CLIENT_CLASS6",
         "INSERT INTO dhcp6_client_class("
@@ -4008,9 +4018,10 @@ TaggedStatementArray tagged_statements = { {
         "  preferred_lifetime,"
         "  min_preferred_lifetime,"
         "  max_preferred_lifetime,"
-        "  modification_ts"
+        "  modification_ts,"
+        "  user_context "
         ") VALUES ("
-        "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12"
+        "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, cast($13 as JSON)"
         ")"
     },
 
@@ -4423,7 +4434,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class with specifying its position.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6,
-        13,
+        14,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4437,7 +4448,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_VARCHAR     // 13 name (of class to update)
+            OID_TEXT,       // 13 user_conetx
+            OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6",
         PGSQL_UPDATE_CLIENT_CLASS6("follow_class_name = $8,")
@@ -4446,7 +4458,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class without specifying its position.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
-        13,
+        14,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4460,7 +4472,8 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_VARCHAR     // 13 name (of class to update)
+            OID_TEXT,       // 13 user_conetx
+            OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6_SAME_POSITION",
         PGSQL_UPDATE_CLIENT_CLASS6("")
