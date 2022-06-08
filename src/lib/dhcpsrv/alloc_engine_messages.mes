@@ -88,7 +88,7 @@ an operator can identify the situations when there are no addresses left
 in some of the pools. He or she can also identify a client classification
 misconfigurations causing some clients to be refused the service.
 
-% ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv4 address in the subnet %2, subnet-id %3, shared network %4
+% ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv4 lease in the subnet %2, subnet-id %3, shared network %4
 This warning message is issued when the allocation engine fails to allocate
 a lease for a client connected to a subnet. The first argument includes the
 client identification information. The second and third arguments identify
@@ -345,7 +345,7 @@ an operator can identify the situations when there are no leases left
 in some of the pools. He or she can also identify client classification
 misconfigurations causing some clients to be refused the service.
 
-% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv6 address in the subnet %2, subnet-id %3, shared network %4
+% ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET %1: failed to allocate an IPv6 lease in the subnet %2, subnet-id %3, shared network %4
 This warning message is issued when the allocation engine fails to allocate
 a lease for a client connected to a subnet. The first argument includes the
 client identification information. The second and third arguments identify

@@ -18,6 +18,7 @@ Kea 2.1.6 (development) released on May 25 2022
 	The ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET log message format has
 	changed to be consistent with the format of
 	ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET.
+	(Gitlab #2395)
 
 2022.	[func]		andrei, djt
 	kea-admin lease-upload now calls the lease file cleanup (LFC)
