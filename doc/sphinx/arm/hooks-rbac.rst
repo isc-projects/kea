@@ -1,14 +1,14 @@
 .. _hooks-RBAC:
 
-``rbac``: Role-Based Access Control
-===================================
+RBAC: Role-Based Access Control
+===============================
 
 .. _hooks-RBAC-overview:
 
 Role-Based Access Control (RBAC) Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before the processing of commands in received HTTP requests, this hook
+Before the processing of commands in received HTTP requests, the ``rbac`` hook
 takes specific parameters, e.g. the common name part of the client
 certificate subject name, to assign a role to the request.
 The configuration associated with this role is used to accept or reject
