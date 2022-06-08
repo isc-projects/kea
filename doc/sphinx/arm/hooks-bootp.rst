@@ -1,9 +1,9 @@
 .. _hooks-bootp:
 
-``bootp``: BOOTP
-================
+BOOTP: Support for BOOTP Clients
+================================
 
-This hook library adds support for BOOTP with vendor-information extensions
+The ``bootp`` hook library adds support for BOOTP with vendor-information extensions
 (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__). Received BOOTP
 requests are recognized, translated into DHCPREQUEST packets by adding
 a ``dhcp-message-type`` option, and put into the "BOOTP" client class.
