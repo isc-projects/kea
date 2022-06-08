@@ -1148,6 +1148,206 @@ merge(ElementPtr element, ConstElementPtr other) {
     }
 }
 
+void
+mergeDiffAdd(ElementPtr& element, ElementPtr& other,
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "mergeDiffAdd arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        // Store new elements in a separate container so we don't overwrite
+        // options as we add them (if there are duplicates).
+        ElementPtr new_elements = Element::createList();
+        for (auto& right : other->listValue()) {
+            // Check if we have any description of the key in the configuration
+            // hierarchy.
+            auto f = hierarchy[idx].find(key);
+            if (f != hierarchy[idx].end()) {
+                bool found = false;
+                for (auto& left : element->listValue()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
+                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
+                    // Check if the elements refer to the same configuration
+                    // entity.
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        found = true;
+                        mergeDiffAdd(mutable_left, mutable_right, hierarchy, key, idx);
+                    }
+                }
+                if (!found) {
+                    new_elements->add(right);
+                }
+            } else {
+                new_elements->add(right);
+            }
+        }
+        // Finally add the new elements.
+        for (auto& right : new_elements->listValue()) {
+            element->add(right);
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        for (auto kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key) &&
+                    (value->getType() == Element::map ||
+                     value->getType() == Element::list)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    mergeDiffAdd(mutable_element, value, hierarchy, current_key, idx + 1);
+                } else {
+                    element->set(current_key, value);
+                }
+            }
+        }
+        return;
+    }
+    element = other;
+}
+
+void
+mergeDiffDel(ElementPtr& element, ElementPtr& other,
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "mergeDiffDel arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        for (auto const& value : other->listValue()) {
+            for (uint32_t iter = 0; iter < element->listValue().size();) {
+                bool removed = false;
+                // Check if we have any description of the key in the
+                // configuration hierarchy.
+                auto f = hierarchy[idx].find(key);
+                if (f != hierarchy[idx].end()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(element->listValue().at(iter));
+                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(value);
+                    // Check if the elements refer to the same configuration
+                    // entity.
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        // Check if the user supplied data only contains
+                        // identification information, so the intent is to
+                        // delete the element, not just element data.
+                        if (f->second.no_data_(mutable_right)) {
+                            element->remove(iter);
+                            removed = true;
+                        } else {
+                            mergeDiffDel(mutable_left, mutable_right, hierarchy, key, idx);
+                            if (mutable_left->empty()) {
+                                element->remove(iter);
+                                removed = true;
+                            }
+                        }
+                    }
+                } else if (element->listValue().at(iter)->equals(*value)) {
+                    element->remove(iter);
+                    removed = true;
+                }
+                if (!removed) {
+                    ++iter;
+                }
+            }
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        // If the resulting element still contains data, we need to restore the
+        // key parameters, so we store them here.
+        ElementPtr new_elements = Element::createMap();
+        for (auto kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    if (mutable_element->getType() == Element::map ||
+                        mutable_element->getType() == Element::list) {
+                        mergeDiffDel(mutable_element, value, hierarchy, current_key, idx + 1);
+                        if (mutable_element->empty()) {
+                            element->remove(current_key);
+                        }
+                    } else {
+                        // Check if we have any description of the key in the
+                        // configuration hierarchy.
+                        auto f = hierarchy[idx].find(key);
+                        if (f != hierarchy[idx].end()) {
+                            // Check if the key is used for element
+                            // identification.
+                            if (f->second.is_key_(current_key)) {
+                                // Store the key parameter.
+                                new_elements->set(current_key, mutable_element);
+                            }
+                        }
+                        element->remove(current_key);
+                    }
+                }
+            }
+        }
+        // If the element still contains data, restore the key elements.
+        if (element->size()) {
+            for (auto kv : new_elements->mapValue()) {
+                element->set(kv.first, kv.second);
+            }
+        }
+        return;
+    }
+    element = ElementPtr(new NullElement);
+}
+
+void
+extend(const std::string& container, const std::string& extension,
+       ElementPtr& element, ElementPtr& other, HierarchyDescriptor& hierarchy,
+       std::string key, size_t idx, bool alter) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "extend arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        for (auto& right : other->listValue()) {
+            // Check if we have any description of the key in the configuration
+            // hierarchy.
+            auto f = hierarchy[idx].find(key);
+            if (f != hierarchy[idx].end()) {
+                for (auto& left : element->listValue()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
+                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
+                    if (container == key) {
+                        alter = true;
+                    }
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        extend(container, extension, mutable_left, mutable_right,
+                               hierarchy, key, idx, alter);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        for (auto kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key) &&
+                    (value->getType() == Element::map ||
+                     value->getType() == Element::list)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    extend(container, extension, mutable_element, value, hierarchy, current_key, idx + 1);
+                } else if (alter && current_key == extension) {
+                    element->set(current_key, value);
+                }
+            }
+        }
+        return;
+    }
+}
+
 ElementPtr
 copy(ConstElementPtr from, int level) {
     if (!from) {

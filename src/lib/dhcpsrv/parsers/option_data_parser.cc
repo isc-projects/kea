@@ -258,7 +258,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     const Option::Universe universe = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
 
-    Optional<uint32_t> code_param =  extractCode(option_data);
+    Optional<uint32_t> code_param = extractCode(option_data);
     Optional<std::string> name_param = extractName(option_data);
     Optional<bool> csv_format_param = extractCSVFormat(option_data);
     Optional<bool> persist_param = extractPersistent(option_data);

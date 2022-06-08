@@ -339,7 +339,7 @@ RelayInfoParser::addAddress(const std::string& name,
         relay_info->addAddress(*ip);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "cannot add address: " << address_str
-                  << "to relay info: " << ex.what()
+                  << " to relay info: " << ex.what()
                   << " (" << getPosition(name, relay_elem) << ")");
     }
 }
@@ -1607,7 +1607,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         new_config->setContext(user_context);
     }
 
-    return(new_config);
+    return (new_config);
 }
 
 /// @brief This table defines default values for D2 client configuration
