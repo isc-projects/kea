@@ -172,10 +172,10 @@ simply assigning the class to the host reservation as shown below:
         }]
     }
 
-The ddns-tuning library will spot the presence of the "SKIP_DDNS" class in the
+The ``ddns-tuning`` library notes the presence of the "SKIP_DDNS" class in the
 client's class list each time the client requests, renews, or releases its lease,
-and instruct kea-dhcp4 to bypass sending DDNS updates.  A similar work flow is
-supported for kea-dhcp6:
+and instructs ``kea-dhcp4`` to bypass sending DDNS updates. A similar workflow is
+supported for ``kea-dhcp6``:
 
 .. code-block:: javascript
 
