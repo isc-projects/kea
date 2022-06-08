@@ -1,9 +1,9 @@
 .. _hooks-subnet-cmds:
 
-``subnet_cmds``: Subnet Commands
-================================
+Subnet Commands: Manage Subnets and Shared Networks
+===================================================
 
-This application offers commands used to query and manipulate subnet and shared network
+The ``subnet_cmds`` library offers commands used to query and manipulate subnet and shared network
 configurations in Kea. These can be very useful in deployments
 with a large number of subnets being managed by the DHCP servers,
 when those subnets are frequently updated. The commands offer a lightweight
@@ -13,12 +13,12 @@ ability to manage shared networks (listing, retrieving details, adding
 new ones, removing existing ones, and adding subnets to and removing them from
 shared networks) is also provided.
 
-Currently this library is only available to ISC customers with a paid support
+This library is only available to ISC customers with a paid support
 contract.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
 The following commands are currently supported:
