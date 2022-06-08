@@ -56,98 +56,6 @@ requires the FreeRadius-client library to be present. If
 the ``--with-freeradius`` option is not specified, the RADIUS library is not
 built.
 
-.. _user-context-hooks:
-
-User Contexts in Hooks
-======================
-
-Hook libraries can have their own configuration parameters, which is
-convenient if the parameter applies to the whole library. However,
-sometimes it is useful to extend certain configuration entities
-with additional configuration data. This is where the concept
-of user contexts comes in. A system administrator can define an arbitrary set of
-data and attach it to Kea structures, as long as the data is specified
-as a JSON map. In particular, it is possible to define fields that are
-integers, strings, boolean, lists, or maps. It is possible to define
-nested structures of arbitrary complexity. Kea does not use that data on
-its own; it simply stores it and makes it available for the hook libraries.
-
-Another use case for user contexts may be storing comments and other
-information that will be retained by Kea. Regular comments are discarded
-when the configuration is loaded, but user contexts are retained. This is
-useful if administrators want their comments to survive ``config-set`` or ``config-get``
-operations, for example.
-
-If user context is supported in a given context, the parser translates
-"comment" entries into user context with a "comment" entry.
-
-User context can store configuration for multiple hooks and comments at once.
-
-Some hooks use user context for a configuration that can be easily edited
-without the need to restart the server.
-
-The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
-
-::
-
-    "subnet4": [{
-        "subnet": "192.0.2.0/24",
-        "pools": [{
-            "pool": "192.0.2.10 - 192.0.2.20",
-        } ],
-        "user-context": {
-            "ddns-tuning:" {
-                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))",
-            },
-            "last-modified": "2017-09-04 13:32",
-            "phones": [ "x1234", "x2345" ],
-            "devices-registered": 42,
-            "billing": false
-        }
-    }]
-
-
-The Limits hook uses user-context in classes and subnets to set parameters. Example:
-
-::
-
-    "Dhcp6": {
-        "client-classes": [
-        {
-            "name": "gold",
-            "user-context": {
-            "limits": {
-                "rate-limit": "1000 packets per second"
-            }
-            }
-        }
-        ],
-        "hooks-libraries": [
-        {
-            "library": "/usr/local/lib/libdhcp_limits.so"
-        }
-        ],
-        "subnet6": [
-        {
-            "id": 1,
-            "pools": [
-            {
-                "pool": "2001:db8::/64"
-            }
-            ],
-            "subnet": "2001:db8::/64",
-            "user-context": {
-            "limits": {
-                "rate-limit": "10 packets per minute"
-            }
-            }
-        }
-        ]
-    }
-
 Installing Hook Packages
 ========================
 
@@ -343,6 +251,98 @@ Notes:
 
 At the moment, only the ``kea-dhcp4`` and ``kea-dhcp6`` processes support
 hook libraries.
+
+.. _user-context-hooks:
+
+User Contexts in Hooks
+~~~~~~~~~~~~~~~~~~~~~~
+
+Hook libraries can have their own configuration parameters, which is
+convenient if the parameter applies to the whole library. However,
+sometimes it is useful to extend certain configuration entities
+with additional configuration data. This is where the concept
+of user contexts comes in. A system administrator can define an arbitrary set of
+data and attach it to Kea structures, as long as the data is specified
+as a JSON map. In particular, it is possible to define fields that are
+integers, strings, boolean, lists, or maps. It is possible to define
+nested structures of arbitrary complexity. Kea does not use that data on
+its own; it simply stores it and makes it available for the hook libraries.
+
+Another use case for user contexts may be storing comments and other
+information that will be retained by Kea. Regular comments are discarded
+when the configuration is loaded, but user contexts are retained. This is
+useful if administrators want their comments to survive ``config-set`` or ``config-get``
+operations, for example.
+
+If user context is supported in a given context, the parser translates
+"comment" entries into user context with a "comment" entry.
+
+User context can store configuration for multiple hooks and comments at once.
+
+Some hooks use user context for a configuration that can be easily edited
+without the need to restart the server.
+
+The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
+
+::
+
+    "subnet4": [{
+        "subnet": "192.0.2.0/24",
+        "pools": [{
+            "pool": "192.0.2.10 - 192.0.2.20",
+        } ],
+        "user-context": {
+            "ddns-tuning:" {
+                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
+                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
+                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
+                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+            },
+            "last-modified": "2017-09-04 13:32",
+            "phones": [ "x1234", "x2345" ],
+            "devices-registered": 42,
+            "billing": false
+        }
+    }]
+
+
+The Limits hook uses user-context in classes and subnets to set parameters. Example:
+
+::
+
+    "Dhcp6": {
+        "client-classes": [
+        {
+            "name": "gold",
+            "user-context": {
+            "limits": {
+                "rate-limit": "1000 packets per second"
+            }
+            }
+        }
+        ],
+        "hooks-libraries": [
+        {
+            "library": "/usr/local/lib/libdhcp_limits.so"
+        }
+        ],
+        "subnet6": [
+        {
+            "id": 1,
+            "pools": [
+            {
+                "pool": "2001:db8::/64"
+            }
+            ],
+            "subnet": "2001:db8::/64",
+            "user-context": {
+            "limits": {
+                "rate-limit": "10 packets per minute"
+            }
+            }
+        }
+        ]
+    }
 
 Available Hook Libraries
 ========================
