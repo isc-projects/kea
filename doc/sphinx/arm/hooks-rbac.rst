@@ -333,9 +333,7 @@ Extensive Example
 ~~~~~~~~~~~~~~~~~
 
 Here is an extensive example for a role accepting all read commands at
-the exception of "config-get", e.g. for hiding passwords or this access
-list to a remote user (if the user is local "config-write" should be
-rejected too.
+the exception of "config-get", e.g. for hiding passwords.
 
 The first option is to put the allowed commands in the "accept-commands"
 list and to reject anything else:
