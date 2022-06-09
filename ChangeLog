@@ -1,14 +1,4 @@
-2023.	[bug]		tmark
-	Corrected a MySQL CB issue that caused subnets to be
-	updated without having audit entries created when the
-	affiliated shared-network is deleted.  This can cause
-	the subnets to be excluded from subsequent CB refresh
-	cycles.
-	(Gitlab #2299)
-
-Kea 2.1.6 (development) released on May 25 2022
-
-2023.	[func]		djt
+2024.	[func]		djt
 	The ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET log message format has been
 	slightly modified, so that when it is emitted for a subnet that
 	is not within a shared network, it emits "(none)" for the value
@@ -19,6 +9,16 @@ Kea 2.1.6 (development) released on May 25 2022
 	changed to be consistent with the format of
 	ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET.
 	(Gitlab #2395)
+
+2023.	[bug]		tmark
+	Corrected a MySQL CB issue that caused subnets to be
+	updated without having audit entries created when the
+	affiliated shared-network is deleted.  This can cause
+	the subnets to be excluded from subsequent CB refresh
+	cycles.
+	(Gitlab #2299)
+
+Kea 2.1.6 (development) released on May 25 2022
 
 2022.	[func]		andrei, djt
 	kea-admin lease-upload now calls the lease file cleanup (LFC)
