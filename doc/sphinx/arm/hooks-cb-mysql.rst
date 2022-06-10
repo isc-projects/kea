@@ -1,7 +1,7 @@
 .. _hooks-cb-mysql:
 
-Configuration Backend: MySQL
-============================
+mysql_cb: Configuration Backend for MySQL
+=========================================
 
 The ``mysql_cb`` hook library works in conjunction with the ``cb_cmds`` library to
 implement the API to create, read, update, and delete (CRUD) the
