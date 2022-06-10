@@ -59,6 +59,15 @@ public:
     /// are optional.
     virtual bool getCertRequired() const;
 
+    /// @brief Get the error message.
+    ///
+    /// @note Wrapper against OpenSSL 3.x not returning error messages
+    /// from system errors.
+    ///
+    /// @param ec The Boost error code.
+    /// @return The error message.
+    static std::string getErrMsg(boost::system::error_code ec);
+
 protected:
     /// @brief Set the peer certificate requirement mode.
     ///

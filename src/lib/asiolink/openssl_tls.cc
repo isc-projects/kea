@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ TlsContext::setCertRequired(bool cert_required) {
     }
     context_.set_verify_mode(mode, ec);
     if (ec) {
-        isc_throw(LibraryError, ec.message());
+        isc_throw(LibraryError, getErrMsg(ec));
     }
 }
 
@@ -81,7 +81,7 @@ TlsContext::loadCaFile(const std::string& ca_file) {
     error_code ec;
     context_.load_verify_file(ca_file, ec);
     if (ec) {
-        isc_throw(LibraryError, ec.message());
+        isc_throw(LibraryError, getErrMsg(ec));
     }
 }
 
@@ -90,7 +90,7 @@ TlsContext::loadCaPath(const std::string& ca_path) {
     error_code ec;
     context_.add_verify_path(ca_path, ec);
     if (ec) {
-        isc_throw(LibraryError, ec.message());
+        isc_throw(LibraryError, getErrMsg(ec));
     }
 }
 
@@ -99,7 +99,7 @@ TlsContext::loadCertFile(const std::string& cert_file) {
     error_code ec;
     context_.use_certificate_chain_file(cert_file, ec);
     if (ec) {
-        isc_throw(LibraryError, ec.message());
+        isc_throw(LibraryError, getErrMsg(ec));
     }
 }
 
@@ -108,8 +108,29 @@ TlsContext::loadKeyFile(const std::string& key_file) {
     error_code ec;
     context_.use_private_key_file(key_file, context::file_format::pem, ec);
     if (ec) {
-        isc_throw(LibraryError, ec.message());
+        isc_throw(LibraryError, getErrMsg(ec));
     }
+}
+
+std::string
+TlsContext::getErrMsg(error_code ec) {
+    unsigned long err = static_cast<unsigned long>(ec.value());
+    std::string msg = ec.message();
+#ifdef ERR_SYSTEM_ERROR
+    // The SSL category message() method uses ERR_reason_error_string()
+    // which since OpenSSL 3.0 returns NULL on system errors in order
+    // to avoid a memory leak with the strerror_r() buffer.
+    // This code recovers the user-friendly message from the error code
+    // value i.e. the OpenSSL error. Layout of OpenSSL errors is detailed
+    // in the OpenSSL err.h header.
+    if ((msg == "asio.ssl error") && (ERR_SYSTEM_ERROR(err))) {
+        char buf[1024];
+        if (strerror_r(err & ERR_SYSTEM_MASK, &buf[0], sizeof(buf)) == 0) {
+            msg = buf;
+        }
+    }
+#endif
+    return (msg);
 }
 
 } // namespace asiolink

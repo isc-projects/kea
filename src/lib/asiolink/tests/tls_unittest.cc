@@ -532,6 +532,7 @@ TEST(TLSTest, loadKeyCA) {
     exps.addNoError();
     // Recent OpenSSL errors.
     exps.addThrow("no certificate or crl found");
+    exps.addThrow("no certificate or crl found (x509 certificate routines)");
     exps.addThrow("no certificate or crl found (x509 certificate routines, CRYPTO_internal)");
     exps.addThrow("no certificate or crl found (x509 certificate routines, X509_load_cert_crl_file)");
     exps.runCanThrow([] {
@@ -577,6 +578,7 @@ TEST(TLSTest, loadCsrCertFile) {
     exps.addThrow("Expected a certificate, got 'CERTIFICATE REQUEST'");
     // OpenSSL errors.
     exps.addThrow("no start line");
+    exps.addThrow("no start line (PEM routines)");
     exps.addThrow("no start line (PEM routines, get_name)");
     exps.addThrow("no start line (PEM routines, CRYPTO_internal)");
     exps.runCanThrow([] {
@@ -626,9 +628,11 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow(botan_error);
     // OpenSSL errors.
     exps.addThrow("no start line");
+    exps.addThrow("no start line (PEM routines)");
     exps.addThrow("no start line (PEM routines, get_name)");
     exps.addThrow("no start line (PEM routines, CRYPTO_internal)");
     exps.addThrow("PEM lib");
+    exps.addThrow("PEM lib (SSL routines)");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
@@ -793,6 +797,7 @@ TEST(TLSTest, noHandshake) {
     exps.addError("InvalidObjectState");
     // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines)");
     exps.addError("uninitialized (SSL routines, ST_BEFORE_ACCEPT)");
     exps.addError("uninitialized (SSL routines, ssl_write_internal)");
     exps.checkAsync("send", send_cb);
@@ -819,6 +824,7 @@ TEST(TLSTest, noHandshake) {
     exps.addTimeout();
     // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines)");
     exps.addError("uninitialized (SSL routines, ST_BEFORE_ACCEPT)");
     exps.addError("uninitialized (SSL routines, ssl_read_internal)");
     exps.checkAsync("receive", receive_cb);
@@ -901,6 +907,7 @@ TEST(TLSTest, serverNotConfigured) {
     exps.addError("no shared cipher");
     // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("no shared cipher (SSL routines)");
     exps.addError("no shared cipher (SSL routines, ACCEPT_SR_CLNT_HELLO_C)");
     exps.addError("no shared cipher (SSL routines, tls_post_process_client_hello)");
     // Recent LibreSSL error.
@@ -915,6 +922,7 @@ TEST(TLSTest, serverNotConfigured) {
     exps.addTimeout();
     // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("sslv3 alert handshake failure (SSL routines)");
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_SRVR_HELLO)");
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_CERT)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
@@ -996,6 +1004,7 @@ TEST(TLSTest, clientNotConfigured) {
     exps.addTimeout();
     // OpenSSL errors.
     exps.addError("tlsv1 alert unknown ca");
+    exps.addError("tlsv1 alert unknown ca (SSL routines)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ACCEPT_SR_CERT)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ACCEPT_SR_CERT_VRFY)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ssl3_read_bytes)");
@@ -1015,6 +1024,7 @@ TEST(TLSTest, clientNotConfigured) {
     exps.addError("tlsv1 alert unknown ca");
     // OpenSSL errors.
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, CONNECT_CR_CERT)");
     exps.addError("certificate verify failed (SSL routines, (UNKNOWN)SSL_internal)");
     exps.addError("certificate verify failed (SSL routines, tls_process_server_certificate)");
@@ -1099,6 +1109,7 @@ TEST(TLSTest, clientHTTPnoS) {
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors (OpenSSL recognizes HTTP).
     exps.addError("http request");
+    exps.addError("http request (SSL routines)");
     exps.addError("http request (SSL routines, ACCEPT_SR_CLNT_HELLO)");
     exps.addError("http request (SSL routines, ssl3_get_record)");
     // Another OpenSSL error (not all OpenSSL recognizes HTTP).
@@ -1194,6 +1205,7 @@ TEST(TLSTest, unknownClient) {
     exps.addError("unknown protocol");
     // Recent OpenSSL errors.
     exps.addError("wrong version number");
+    exps.addError("wrong version number (SSL routines)");
     exps.addError("wrong version number (SSL routines, ssl3_get_record)");
     // Recent LibreSSL error.
     exps.addError("unknown protocol (SSL routines, ACCEPT_SR_CLNT_HELLO)");
@@ -1280,6 +1292,7 @@ TEST(TLSTest, anotherClient) {
     // Full error is:
     // error 20 at 0 depth lookup:unable to get local issuer certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     // Recent LibreSSL errors.
     exps.addError("no certificate returned (SSL routines, ACCEPT_SR_CERT)");
@@ -1380,6 +1393,7 @@ TEST(TLSTest, selfSigned) {
     // Full error is:
     // error 18 at 0 depth lookup:self signed certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     // Recent LibreSSL errors.
     exps.addError("no certificate returned (SSL routines, ACCEPT_SR_CERT)");
@@ -1483,6 +1497,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     exps.addError("InvalidObjectState");
     // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines)");
     exps.addError("uninitialized (SSL routines, ST_BEFORE_ACCEPT)");
     exps.addError("uninitialized (SSL routines, ssl_write_internal)");
     exps.checkAsync("send", send_cb);
@@ -1509,6 +1524,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     exps.addError("stream truncated");
     // OpenSSL errors.
     exps.addError("uninitialized");
+    exps.addError("uninitialized (SSL routines)");
     exps.addError("uninitialized (SSL routines, ST_BEFORE_ACCEPT)");
     exps.addError("uninitialized (SSL routines, ssl_read_internal)");
     exps.checkAsync("receive", receive_cb);
@@ -1587,6 +1603,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("no shared cipher");
     // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("no shared cipher (SSL routines)");
     exps.addError("no shared cipher (SSL routines, ACCEPT_SR_CLNT_HELLO_C)");
     exps.addError("no shared cipher (SSL routines, tls_post_process_client_hello)");
     // Recent LibreSSL error.
@@ -1603,6 +1620,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("short read");
     // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
+    exps.addError("sslv3 alert handshake failure (SSL routines)");
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_SRVR_HELLO)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     // Recent LibreSSL error.
@@ -1683,6 +1701,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     exps.addError("short read");
     // OpenSSL errors.
     exps.addError("tlsv1 alert unknown ca");
+    exps.addError("tlsv1 alert unknown ca (SSL routines)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ACCEPT_SR_CERT)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ACCEPT_SR_CERT_VRFY)");
     exps.addError("tlsv1 alert unknown ca (SSL routines, ssl3_read_bytes)");
@@ -1698,6 +1717,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     exps.addError("tlsv1 alert unknown ca");
     // OpenSSL errors.
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, CONNECT_CR_CERT)");
     exps.addError("certificate verify failed (SSL routines, tls_process_server_certificate)");
     // Recent LibreSSL error.
@@ -1783,6 +1803,7 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors when OpenSSL recognizes HTTP.
     exps.addError("http request");
+    exps.addError("http request (SSL routines)");
     exps.addError("http request (SSL routines, ACCEPT_SR_CLNT_HELLO)");
     exps.addError("http request (SSL routines, ssl3_get_record)");
     // Another OpenSSL error (not all OpenSSL recognizes HTTP).
@@ -1875,6 +1896,7 @@ TEST(TLSTest, anotherClientCloseonError) {
     // Full error is:
     // error 20 at 0 depth lookup:unable to get local issuer certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     // Recent LibreSSL errors.
     exps.addError("no certificate returned (SSL routines, ACCEPT_SR_CERT)");
@@ -1973,6 +1995,7 @@ TEST(TLSTest, selfSignedCloseonError) {
     // Full error is:
     // error 18 at 0 depth lookup:self signed certificate
     exps.addError("certificate verify failed");
+    exps.addError("certificate verify failed (SSL routines)");
     exps.addError("certificate verify failed (SSL routines, tls_process_client_certificate)");
     // Recent LibreSSL errors.
     exps.addError("no certificate returned (SSL routines, ACCEPT_SR_CERT)");
