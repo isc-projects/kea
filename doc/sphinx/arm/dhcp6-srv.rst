@@ -244,7 +244,7 @@ Lease Storage
 -------------
 
 All leases issued by the server are stored in the lease database.
-There are four database backends available: memfile
+There are three database backends available: memfile
 (the default), MySQL, PostgreSQL.
 
 Memfile - Basic Storage for Leases
