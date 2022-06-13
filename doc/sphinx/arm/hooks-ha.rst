@@ -1,9 +1,9 @@
 .. _hooks-high-availability:
 
-High Availability: Outage Resilience for Kea Servers
-====================================================
+``ha``: High Availability Outage Resilience for Kea Servers
+===========================================================
 
-The ``ha`` hook library can be
+This hook library can be
 loaded on a pair of DHCPv4 or DHCPv6 servers, to increase the reliability
 of the DHCP service in the event of an outage of one of the servers.
 This library was previously only available to ISC's paid subscribers,
