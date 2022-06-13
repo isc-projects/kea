@@ -3069,8 +3069,108 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
 }
 
+// This test verifies a negative value for the subnet ID is rejected (v4).
+TEST_F(ParseConfigTest, negativeSubnetId4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": -1"
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "subnet configuration failed: ";
+    expected += "The 'id' value (-1) is not within expected range: ";
+    expected += "(0 - 4294967294)";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies a negative value for the subnet ID is rejected (v6).
+TEST_F(ParseConfigTest, negativeSubnetId6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": -1"
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, true);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "subnet configuration failed: ";
+    expected += "The 'id' value (-1) is not within expected range: ";
+    expected += "(0 - 4294967294)";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies a too high value for the subnet ID is rejected (v4).
+TEST_F(ParseConfigTest, reservedSubnetId4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 4294967295"
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "subnet configuration failed: ";
+    expected += "The 'id' value (4294967295) is not within expected range: ";
+    expected += "(0 - 4294967294)";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies a too high value for the subnet ID is rejected (v6).
+TEST_F(ParseConfigTest, reservedSubnetId6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 4294967295"
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, true);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "subnet configuration failed: ";
+    expected += "The 'id' value (4294967295) is not within expected range: ";
+    expected += "(0 - 4294967294)";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in
 // src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).
 
-};  // Anonymous namespace
+}  // Anonymous namespace

@@ -725,7 +725,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // Subnet ID is optional. If it is not supplied the value of 0 is used,
     // which means autogenerate. The value was inserted earlier by calling
     // SimpleParser4::setAllDefaults.
-    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+    int64_t subnet_id_max = static_cast<int64_t>(SUBNET_ID_MAX);
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 0,
+                                                          subnet_id_max));
 
     Subnet4Ptr subnet4(new Subnet4(addr, len, Triplet<uint32_t>(),
                                    Triplet<uint32_t>(), Triplet<uint32_t>(),
@@ -1238,7 +1240,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     // Subnet ID is optional. If it is not supplied the value of 0 is used,
     // which means autogenerate. The value was inserted earlier by calling
     // SimpleParser6::setAllDefaults.
-    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+    int64_t subnet_id_max = static_cast<int64_t>(SUBNET_ID_MAX);
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 0,
+                                                          subnet_id_max));
 
     // We want to log whether rapid-commit is enabled, so we get this
     // before the actual subnet creation.
