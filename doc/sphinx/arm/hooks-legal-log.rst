@@ -1,9 +1,9 @@
 .. _hooks-legal-log:
 
-Forensic Logging: Maintain Legal Logs
-=====================================
+``legal_log``: Forensic Logging
+===============================
 
-The ``legal_log`` hook library provides
+The Forensic Logging hook library provides
 hooks that record a detailed log of assignments, renewals, releases, and other
 lease events into a set of log files.
 
