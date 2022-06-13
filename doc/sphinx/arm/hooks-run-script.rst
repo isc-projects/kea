@@ -1,9 +1,9 @@
 .. _hooks-run-script:
 
-Run Script: Support for External Hook Scripts
-=============================================
+``run_script``: Run Script Support for External Hook Scripts
+============================================================
 
-The ``run_script`` hook library adds support for calling an external script for specific
+The Run Script hook library adds support for calling an external script for specific
 packet-processing hook points.
 
 The library, which was added in Kea 1.9.5, can be loaded in a
