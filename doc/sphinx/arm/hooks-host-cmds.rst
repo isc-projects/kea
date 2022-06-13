@@ -1,11 +1,11 @@
 .. _hooks-host-cmds:
 
-Host Commands: Manage Host Reservations Without Restarting Servers
-==================================================================
+``host_cmds``: Host Commands
+============================
 
 Kea can store host reservations in a database; in many larger deployments,
 it is useful to be able to manage that information while the server is
-running. The ``host_cmds`` library provides management commands for adding, querying,
+running. The Host Commands library provides management commands for adding, querying,
 and deleting host reservations in a safe way without restarting the
 server. In particular, it validates the parameters, so an attempt to
 insert incorrect data - such as adding a host with a conflicting identifier in the
