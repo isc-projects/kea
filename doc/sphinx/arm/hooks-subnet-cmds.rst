@@ -1,9 +1,9 @@
 .. _hooks-subnet-cmds:
 
-Subnet Commands: Manage Subnets and Shared Networks
-===================================================
+``subnet_cmds``: Subnet Commands to Manage Subnets and Shared Networks
+======================================================================
 
-The ``subnet_cmds`` library offers commands used to query and manipulate subnet and shared network
+This library offers commands used to query and manipulate subnet and shared network
 configurations in Kea. These can be very useful in deployments
 with a large number of subnets being managed by the DHCP servers,
 when those subnets are frequently updated. The commands offer a lightweight
