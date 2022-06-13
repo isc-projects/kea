@@ -1,9 +1,9 @@
 .. _hooks-flex-option:
 
-Flexible Option: Defined Actions for Option Value Settings
-==========================================================
+``flex_option``: Flexible Option Actions for Option Value Settings
+==================================================================
 
-The ``flex_option`` library allows administrators to define an action to take, for a given
+This library allows administrators to define an action to take, for a given
 option, based upon on the result of an expression. These actions are carried
 out during the final stages of constructing a query response packet, just
 before it is sent to the client. The three actions currently supported are
