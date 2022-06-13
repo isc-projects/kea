@@ -1,7 +1,7 @@
 .. _hooks-flex-id:
 
-Flexible Identifier: Easier Management of Host Reservations
-===========================================================
+``flex_id``: Flexible Identifier for Host Reservations
+======================================================
 
 The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
@@ -13,7 +13,7 @@ above, use parts of specific options, or perhaps even use a combination of
 several options and fields to uniquely identify a client. Those
 scenarios are addressed by the Flexible Identifiers hook application.
 
-The ``flex_id`` library is only available to ISC customers with a paid support
+The Flexible Identifier library is only available to ISC customers with a paid support
 contract.
 
 .. note::
@@ -21,7 +21,7 @@ contract.
    This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
-The library allows the definition of an expression, using notation initially
+The ``flex_id`` library allows the definition of an expression, using notation initially
 used only for client classification. (See
 :ref:`classification-using-expressions` for a detailed description of
 the syntax available.) One notable difference is that for client
