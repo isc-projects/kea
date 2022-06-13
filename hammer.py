@@ -59,7 +59,8 @@ SYSTEMS = {
         '8',
     ],
     'rhel': [
-        '8'
+        '8',
+        '9',
     ],
     'ubuntu': [
         #'16.04',
@@ -264,7 +265,7 @@ def get_system_revision():
                     for l in f.readlines():
                         if '=' in l:
                             key, val = l.split('=', 1)
-                            vals[key.strip()] = val.strip()
+                            vals[key.strip()] = val.strip().replace('"', '')
 
                 for i in ['ID', 'ID_LIKE']:
                     if i in vals and vals[i] in SYSTEMS:
@@ -280,7 +281,7 @@ def get_system_revision():
                 if revision is None:
                     raise Exception('cannot determine revision')
 
-                if system == 'alpine':
+                if system in ['alpine', 'rhel']:
                     revision = revision.rsplit('.', 1)[0]
             else:
                 raise Exception('cannot determine system or its revision')
@@ -490,7 +491,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
         # but we want an error
         cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False'
-    elif system == 'fedora' or (system in ['centos', 'rhel'] and revision == '8'):
+    elif system == 'fedora' or (system in ['centos', 'rhel'] and revision in ['8', '9']):
         cmd = 'sudo dnf -y install'
     elif system in ['debian', 'ubuntu']:
         # prepare the command for ubuntu/debian
@@ -1268,22 +1269,26 @@ ssl_key = {cert_dir}/kea-client.key
         execute(cmd)
 
 
-def _enable_postgresql(system):
+def _enable_postgresql(system, revision):
     if system == 'alpine':
         execute('sudo rc-update add postgresql')
     elif system == 'freebsd':
         execute('sudo sysrc postgresql_enable="yes"')
+    elif system == 'rhel' and revision == '9':
+        execute('sudo systemctl enable postgresql-14.service')
     else:
         execute('sudo systemctl enable postgresql.service')
 
 
-def _restart_postgresql(system):
+def _restart_postgresql(system, revision):
     if system == 'freebsd':
         # redirecting output from start script to /dev/null otherwise the postgresql rc.d script will hang
         # calling restart instead of start allow hammer.py to pass even if postgresql is already installed
         execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
         execute('sudo /etc/init.d/postgresql restart')
+    elif system == 'rhel' and revision == '9':
+        execute('sudo systemctl restart postgresql-14.service')
     else:
         execute('sudo systemctl restart postgresql.service')
 
@@ -1297,7 +1302,7 @@ def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
         connection_type, connection_type, auth_method, hba_file), cwd='/tmp')
 
 
-def _configure_pgsql(system, features):
+def _configure_pgsql(system, features, revision):
     """ Configure PostgreSQL DB """
 
     # execute() calls will set cwd='/tmp' when switching user to postgres to
@@ -1310,6 +1315,8 @@ def _configure_pgsql(system, features):
         if exitcode != 0:
             if system == 'centos':
                 execute('sudo postgresql-setup initdb')
+            elif system == 'rhel' and revision == '9':
+                execute('sudo postgresql-14-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
@@ -1329,8 +1336,8 @@ def _configure_pgsql(system, features):
         # the initial start of the postgresql will create the 'postmaster.opts' file
         execute('sudo test ! -f {}/postmaster.opts && sudo service postgresql onestart || true'.format(var_db_postgres_data))
 
-    _enable_postgresql(system)
-    _restart_postgresql(system)
+    _enable_postgresql(system, revision)
+    _restart_postgresql(system, revision)
 
     # Change auth-method to 'md5' on all connections.
     cmd = "sudo -u postgres psql -t -c 'SHOW hba_file' | xargs"
@@ -1350,7 +1357,7 @@ def _configure_pgsql(system, features):
 {}
 ' '{}'""".format(auth_header, postgres_auth_line, hba_file))
 
-    _restart_postgresql(system)
+    _restart_postgresql(system, revision)
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
         DROP DATABASE IF EXISTS keatest;
@@ -1553,7 +1560,7 @@ def prepare_system_local(features, check_times):
     # prepare rhel
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
+                    'libtool', 'log4cplus-devel', 'make',
                     'openssl-devel', 'postgresql-devel']
 
         if revision in ['7', '8']:
@@ -1564,14 +1571,26 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
-        if 'docs' in features:
+        if 'docs' in features and int(revision) < 9:
             packages.extend(['python3-virtualenv'])
 
         if 'mysql' in features:
-            packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
+            packages.extend(['mariadb', 'mariadb-server'])
+            if int(revision) < 9:
+                packages.extend(['mariadb-devel'])
+            else:
+                packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'libpq-devel', 'postgresql-server', 'postgresql-server-devel'])
+            if revision == '9':
+                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
+                        env=env, timeout=60, check_times=check_times)
+                execute('sudo dnf -qy module disable postgresql',
+                        env=env, timeout=60, check_times=check_times)
+                packages.extend(['postgresql14-devel', 'postgresql14-server'])
+            else:
+                packages.extend(['postgresql-server-devel', 'postgresql-server'])
+            packages.extend(['postgresql', 'libpq-devel'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1600,7 +1619,7 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
         if 'docs' in features:
-            execute('virtualenv-3 ~/venv',
+            execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
@@ -1875,7 +1894,7 @@ def prepare_system_local(features, check_times):
         _configure_mysql(system, revision, features)
 
     if 'pgsql' in features:
-        _configure_pgsql(system, features)
+        _configure_pgsql(system, features, revision)
 
     if 'radius' in features and 'native-pkg' not in features:
         _install_freeradius_client(system, revision, features, env, check_times)
@@ -1942,6 +1961,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
+        if system == 'rhel' and revision == '9':
+            cmd += '=/usr/pgsql-14/bin/pg_config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
         if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
@@ -1959,11 +1980,9 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             pass
         else:
             raise NotImplementedError('no implementation for %s' % system)
-    if 'docs' in features and not (system == 'rhel' and revision == '8'):
+    if 'docs' in features and not system == 'rhel':
         cmd += ' --enable-generate-docs'
-        if system == 'debian' and revision == '8':
-            cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
-        elif system == 'centos' and revision in ['7', '8']:
+        if system == 'debian' and revision == '8' or system == 'centos' and revision in ['7', '8']:
             cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
@@ -2130,6 +2149,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20200318122047.el7'
     elif system in ['centos', 'rhel'] and revision == '8':
         frc_version = 'isc20200318134606.el8'
+    elif system == 'rhel' and revision == '9':
+        frc_version = 'isc20220613134625.el9'
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
