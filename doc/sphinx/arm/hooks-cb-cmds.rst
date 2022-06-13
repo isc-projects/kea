@@ -1,10 +1,10 @@
 .. _hooks-cb-cmds:
 
-``cb_cmds``: Manage Kea Configurations via a Database
-=====================================================
+``cb_cmds``: Configuration Backend Commands
+===========================================
 
-The Configuration Backend Commands hook library is used to manage Kea
-servers' configurations in the configuration backends. This library must
+This hook library is used to manage Kea
+servers' configurations in a configuration backend database. This library must
 be used in conjunction with the available CB hooks libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
