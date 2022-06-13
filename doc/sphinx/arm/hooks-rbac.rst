@@ -1,7 +1,7 @@
 .. _hooks-RBAC:
 
-RBAC: Role-Based Access Control
-===============================
+``rbac``: Role-Based Access Control
+===================================
 
 .. _hooks-RBAC-overview:
 
