@@ -1,9 +1,9 @@
 .. _hooks-class-cmds:
 
-Class Commands: Manage Client Classes Without Restarting Servers
-================================================================
+``class_cmds``: Class Commands
+==============================
 
-The ``class_cmds`` hook library exposes
+This hook library exposes
 several control commands for manipulating client classes (part of the
 Kea DHCP servers' configurations) without the need to restart those
 servers. Using these commands it is possible to add, update, delete, and
