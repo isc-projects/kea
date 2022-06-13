@@ -1,9 +1,9 @@
 .. _hooks-user-chk:
 
-User Check: Checking User Access
-================================
+``user_chk``: User Check
+========================
 
-The ``user_chk`` library serves several purposes:
+This library serves several purposes:
 
 -  To assign "new" or "unregistered" users to a restricted subnet, while
    "known" or "registered" users are assigned to unrestricted subnets.
@@ -16,6 +16,8 @@ The ``user_chk`` library serves several purposes:
 
 -  To serve as a demonstration of various capabilities possible using
    the hooks interface.
+
+This library is part of the Kea open source and is available to all users.
 
 Once loaded, the library allows the separation of incoming requests into known
 and unknown clients. For known clients, packets are processed
