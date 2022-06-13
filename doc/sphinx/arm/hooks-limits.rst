@@ -1,9 +1,9 @@
 .. _hooks-limits:
 
-Rate Limiting: Manage Packet Processing
-=======================================
+``limits``: Limits to Manage Packet Processing
+==============================================
 
-The ``limits`` hook library enables limiting the rate at which packets are being processed.
+This hook library enables limiting the rate at which packets are being processed.
 
 The limits hook library is only available to ISC customers with a paid support contract.
 
