@@ -1,10 +1,10 @@
 .. _hooks-lease-cmds:
 
-Lease Commands: Easier Lease Management
-=======================================
+``lease_cmds``: Lease Commands for Easier Lease Management
+==========================================================
 
 Kea allows users to store lease information in several
-backends (memfile, MySQL and PostgreSQL), and the ``lease_cmds`` library provides an
+backends (memfile, MySQL, and PostgreSQL), and the Lease Commands library provides an
 interface that can manipulate leases in a unified, safe way.
 In particular, it allows things that were previously impossible: lease
 manipulation in memfile while Kea is running, sanity check changes,
@@ -16,7 +16,7 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
-The lease commands library is part of the open source code and is
+The Lease Commands library is part of the open source code and is
 available to every Kea user.
 
 .. note::
