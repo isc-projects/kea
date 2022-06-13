@@ -1,9 +1,9 @@
 .. _hooks-ddns-tuning:
 
-DDNS Tuning: Fine-Tune DDNS Updates
-===================================
+``ddns_tuning``: DDNS Tuning
+============================
 
-The ``ddns_tuning`` hook library adds support for fine-tuning various DNS update aspects.
+This hook library adds support for fine-tuning various DNS update aspects.
 It currently supports procedural host-name generation and the ability to skip
 performing DDNS updates for select clients.
 
