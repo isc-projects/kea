@@ -4448,7 +4448,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_TEXT,       // 13 user_conetx
+            OID_TEXT,       // 13 user_context
             OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6",
@@ -4472,7 +4472,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 10 min_preferred_lifetime
             OID_INT8,       // 11 max_preferred_lifetime
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_TEXT,       // 13 user_conetx
+            OID_TEXT,       // 13 user_context
             OID_VARCHAR     // 14 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS6_SAME_POSITION",

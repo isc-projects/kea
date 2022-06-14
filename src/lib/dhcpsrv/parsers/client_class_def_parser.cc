@@ -142,6 +142,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Parse user context
     ConstElementPtr user_context = class_def_cfg->get("user-context");
+    if (user_context) {
+        if (user_context->getType() != Element::map) {
+            isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                      << user_context->getPosition() << ")");
+        }
+    }
 
     // Let's try to parse the only-if-required flag
     bool required = false;

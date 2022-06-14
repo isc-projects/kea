@@ -1438,5 +1438,17 @@ TEST_F(ClientClassDefParserTest, preferredLifetimeTests) {
     }
 }
 
+// Verifies that an invalid user-context fails to parse.
+TEST_F(ClientClassDefParserTest, invalidUserContext) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "   \"user-context\": \"i am not a map\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text, AF_INET),
+                 DhcpConfigError, "User context has to be a map (<string>:3:20)");
+}
 
 } // end of anonymous namespace
