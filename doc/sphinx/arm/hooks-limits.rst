@@ -3,9 +3,9 @@
 ``limits``: Limits to Manage Packet Processing
 ==============================================
 
-This hook library enables limiting the rate at which packets are being processed.
+This hook library enables limiting of the rate at which packets are processed.
 
-The limits hook library is only available to ISC customers with a paid support contract.
+The Limits hook library is only available to ISC customers with a paid support contract.
 
 Configuration
 ~~~~~~~~~~~~~
