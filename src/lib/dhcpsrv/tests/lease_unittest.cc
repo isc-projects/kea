@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -622,6 +622,7 @@ TEST_F(Lease4Test, fromElementInvalidValues) {
     testInvalidElement<Lease4>(json, "state", 1234, false);
     testInvalidElement<Lease4>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease4>(json, "subnet-id", -5, false);
+    testInvalidElement<Lease4>(json, "subnet-id", 0x100000000, false);
     testInvalidElement<Lease4>(json, "valid-lft", std::string("xyz"));
     testInvalidElement<Lease4>(json, "valid-lft", -3, false);
     testInvalidElement<Lease4>(json, "user-context", "[ ]", false);
@@ -1362,6 +1363,7 @@ TEST(Lease6Test, fromElementInvalidValues) {
     testInvalidElement<Lease6>(json, "state", 1234, false);
     testInvalidElement<Lease6>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease6>(json, "subnet-id", -5, false);
+    testInvalidElement<Lease6>(json, "subnet-id", 0x100000000, false);
     testInvalidElement<Lease6>(json, "type", std::string("IA_XY"));
     testInvalidElement<Lease6>(json, "type", -3, false);
     testInvalidElement<Lease6>(json, "valid-lft", std::string("xyz"));

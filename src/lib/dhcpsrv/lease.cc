@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -173,7 +173,10 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
 
     if (subnet_id->intValue() <= 0) {
         isc_throw(BadValue, "subnet-id " << subnet_id->intValue() << " is not"
-                            << " a positive integer");
+                  << " a positive integer");
+    } else if (subnet_id->intValue() > numeric_limits<uint32_t>::max()) {
+        isc_throw(BadValue, "subnet-id " << subnet_id->intValue() << " is not"
+                  << " a 32 bit unsigned integer");
     }
 
     lease->subnet_id_ = SubnetID(subnet_id->intValue());
