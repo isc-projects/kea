@@ -63,7 +63,7 @@ def filter_the_noise(file, text, is_upgrade_script):
 
     append = False
     result = []
-    first_delimiter = r'<<EOF$' if is_upgrade_script else fr'^-- This line starts the database upgrade to version {version}'
+    first_delimiter = r'<<EOF$' if is_upgrade_script else fr'^-- This line starts the schema upgrade to version {version}'
     second_delimiter = r'^EOF$' if is_upgrade_script else r' Notes:$'
     first_delimiter_found = False
     second_delimiter_found = False
@@ -72,7 +72,7 @@ def filter_the_noise(file, text, is_upgrade_script):
             first_delimiter_found = True
             append = True
             if not is_upgrade_script:
-                # 'This line starts the database upgrade to version' is not considered noise.
+                # 'This line starts the schema upgrade to version' is not considered noise.
                 result.append(i)
         elif re.search(second_delimiter, i):
             second_delimiter_found = True
@@ -124,10 +124,6 @@ def diff(dhcpdb_create_script, upgrade_script):
     if latest_upgrade_script is None:
         print('Warning: could not find latest upgrade script.', file=sys.stderr)
         return 0
-    if upgrade_script == latest_upgrade_script:
-        # Truncate the create script to the length of the upgrade script to
-        # exclude chances of wrong matching.
-        create_text = create_text[len(create_text)-len(upgrade_text):]
 
     # Removes portions of the script which are always different: the beginning
     # and the end.

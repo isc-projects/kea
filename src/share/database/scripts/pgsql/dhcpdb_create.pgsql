@@ -4510,6 +4510,10 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '9', minor = '0';
+
 -- Schema 9.0 specification ends here.
 
 -- This starts schema update to 10.0.
@@ -4801,6 +4805,10 @@ END;
 $dhcp6_client_class_check_dependency_BINS$
 LANGUAGE plpgsql;
 
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '10', minor = '0';
+
 -- Schema 10.0 specification ends here.
 
 -- This starts schema update to 11.0.
@@ -4915,7 +4923,7 @@ UPDATE schema_version
 
 -- Schema 11.0 specification ends here.
 
--- This line starts the database upgrade to version 12.
+-- This line starts the schema upgrade to version 12.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -4976,6 +4984,8 @@ ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '12', minor = '0';
+
+-- This line concludes the schema upgrade to version 12.
 
 -- Commit the script transaction.
 COMMIT;

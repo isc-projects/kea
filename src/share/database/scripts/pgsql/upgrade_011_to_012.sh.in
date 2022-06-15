@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This line starts the database upgrade to version 12.
+-- This line starts the schema upgrade to version 12.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -97,6 +97,8 @@ ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '12', minor = '0';
+
+-- This line concludes the schema upgrade to version 12.
 
 -- Commit the script transaction.
 COMMIT;
