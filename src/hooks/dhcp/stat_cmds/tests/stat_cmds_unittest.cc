@@ -13,7 +13,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <process/daemon.h>
