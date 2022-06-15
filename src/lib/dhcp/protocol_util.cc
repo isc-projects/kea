@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,14 +117,18 @@ writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
     // Set destination HW address.
     HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
     if (remote_addr) {
-        if (remote_addr->hwaddr_.size() == HWAddr::ETHERNET_HWADDR_LEN) {
-            out_buf.writeData(&remote_addr->hwaddr_[0],
-                              HWAddr::ETHERNET_HWADDR_LEN);
-        } else {
+        if (remote_addr->hwaddr_.size() != HWAddr::ETHERNET_HWADDR_LEN) {
             isc_throw(BadValue, "invalid size of the remote HW address "
                       << remote_addr->hwaddr_.size() << " when constructing"
                       << " an ethernet frame header; expected size is"
                       << " " << HWAddr::ETHERNET_HWADDR_LEN);
+        } else if (!pkt->isRelayed() &&
+                   (pkt->getFlags() & Pkt4::FLAG_BROADCAST_MASK)) {
+            out_buf.writeData(&std::vector<uint8_t>(HWAddr::ETHERNET_HWADDR_LEN,255)[0],
+                              HWAddr::ETHERNET_HWADDR_LEN);
+        } else {
+            out_buf.writeData(&remote_addr->hwaddr_[0],
+                              HWAddr::ETHERNET_HWADDR_LEN);
         }
     } else {
         // HW address has not been specified. This is possible when receiving
