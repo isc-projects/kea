@@ -1,3 +1,8 @@
+2026.	[func]		andrei
+	The MySQL schema has been changed to provide initial support for
+	the lease limiting feature, part of the limits hook library.
+	(Gitlab #2438)
+
 2025.	[bug]		tmark
 	Added missing support for client-class user-context to
 	both MySQL and PostgreSQL CB hook libraries.
