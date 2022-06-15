@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,15 +13,19 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
+#include <process/daemon.h>
 
 #include <gtest/gtest.h>
 #include <errno.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::hooks;
 using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::hooks;
+using namespace isc::process;
+using namespace std;
 
 namespace {
 
@@ -71,6 +75,76 @@ public:
     HookLibsCollection libraries_;
 };
 
+// Simple test that checks the library can be loaded in a DHCPv4 server.
+TEST_F(LibLoadTest, validLoadDhcp4) {
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    ElementPtr name = Element::create(RUN_SCRIPT_TEST_SH);
+    params->set("name", name);
+    ElementPtr sync = Element::create(false);
+    params->set("sync", sync);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
+    addLib(LIBRUN_SCRIPT_SO, params);
+    EXPECT_TRUE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded in a DHCPv6 server.
+TEST_F(LibLoadTest, validLoadDhcp6) {
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    ElementPtr name = Element::create(RUN_SCRIPT_TEST_SH);
+    params->set("name", name);
+    ElementPtr sync = Element::create(false);
+    params->set("sync", sync);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp6");
+
+    addLib(LIBRUN_SCRIPT_SO, params);
+    EXPECT_TRUE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded in a DHCPv4 server
+// only if it is set for IPv4.
+TEST_F(LibLoadTest, invalidLoadDhcp4) {
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    ElementPtr name = Element::create(RUN_SCRIPT_TEST_SH);
+    params->set("name", name);
+    ElementPtr sync = Element::create(false);
+    params->set("sync", sync);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp4");
+
+    addLib(LIBRUN_SCRIPT_SO, params);
+    EXPECT_FALSE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded in a DHCPv6 server
+// only if it is set for IPv6.
+TEST_F(LibLoadTest, invalidLoadDhcp6) {
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    ElementPtr name = Element::create(RUN_SCRIPT_TEST_SH);
+    params->set("name", name);
+    ElementPtr sync = Element::create(false);
+    params->set("sync", sync);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp6");
+
+    addLib(LIBRUN_SCRIPT_SO, params);
+    EXPECT_FALSE(loadLibs());
+}
+
 // Simple test that checks the library can be loaded and unloaded several times.
 TEST_F(LibLoadTest, validLoad) {
     // Prepare parameters for the callout parameters library.
@@ -79,6 +153,10 @@ TEST_F(LibLoadTest, validLoad) {
     params->set("name", name);
     ElementPtr sync = Element::create(false);
     params->set("sync", sync);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
 
     addLib(LIBRUN_SCRIPT_SO, params);
 
@@ -94,6 +172,11 @@ TEST_F(LibLoadTest, validLoad) {
 TEST_F(LibLoadTest, invalidLoad) {
     // Prepare parameters for the callout parameters library.
     ElementPtr params = Element::createMap();
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
     addLib(LIBRUN_SCRIPT_SO, params);
 
     // The name parameter is mandatory.

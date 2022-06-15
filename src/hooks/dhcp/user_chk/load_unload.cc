@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,6 +68,10 @@ int load(LibraryHandle&) {
     int ret_val = 0;
 
     try {
+        // If the hook library is dedicated to a specific server(s)
+        // please check here process name (Daemon::getProcName() from
+        // the process library).
+
         // Instantiate the registry.
         user_registry.reset(new UserRegistry());
 

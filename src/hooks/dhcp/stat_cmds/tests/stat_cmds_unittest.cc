@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,13 @@
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <config/command_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 
@@ -24,11 +26,12 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::hooks;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::asiolink;
+using namespace isc::hooks;
+using namespace isc::process;
 using namespace isc::stats;
 using namespace boost::posix_time;
 
@@ -48,6 +51,17 @@ public:
     /// Removes files that may be left over from previous tests
     virtual ~LibLoadTest() {
         unloadLibs();
+    }
+
+    /// @brief Set family.
+    void setFamily(bool v6 = false) {
+        if (!v6) {
+            CfgMgr::instance().setFamily(AF_INET);
+            Daemon::setProcName("kea-dhcp4");
+        } else {
+            CfgMgr::instance().setFamily(AF_INET6);
+            Daemon::setProcName("kea-dhcp6");
+        }
     }
 
     /// @brief Adds library/parameters to list of libraries to be loaded
@@ -604,11 +618,13 @@ TEST_F(StatCmdsTest, commands) {
 
     vector<string> cmds = { "stat-lease4-get",
                             "stat-lease6-get" };
+    setFamily();
     testCommands(cmds);
 }
 
 // Check that the library can be loaded and unloaded multiple times.
 TEST_F(StatCmdsTest, multipleLoads) {
+    setFamily();
     testMultipleLoads();
 }
 
@@ -621,6 +637,8 @@ struct TestScenario {
 
 // Verifies detection of invalid v4 input parameters.
 TEST_F(StatCmdsTest, StatLease4GetBadParams) {
+    setFamily(false);
+
     // Initialize lease manager
     initLeaseMgr4();
 
@@ -787,6 +805,7 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
 // Verifies result content for valid v4 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease4GetValid) {
+    setFamily(false);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -986,6 +1005,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
 // Verifies result content for valid v4 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
+    setFamily(false);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1046,6 +1066,8 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
 
 // Verifies detection of invalid v6 input parameters.
 TEST_F(StatCmdsTest, StatLease6GetBadParams) {
+    setFamily(true);
+
     // Initialize lease manager
     initLeaseMgr6();
 
@@ -1212,6 +1234,7 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
 // Verifies result content for valid v6 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease6GetValid) {
+    setFamily(true);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1418,6 +1441,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
 // Verifies result content for valid v6 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
+    setFamily(true);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1478,6 +1502,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
 // Verifies that statistics for v4 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease4OrphanedStats) {
+    setFamily(false);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1529,6 +1554,7 @@ TEST_F(StatCmdsTest, statLease4OrphanedStats) {
 // Verifies that statistics for v6 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease6OrphanedStats) {
+    setFamily(true);
 
     // Initialize lease manager.
     initLeaseMgr6();

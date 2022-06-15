@@ -10,7 +10,9 @@
 
 #include <config.h>
 
+#include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
+#include <process/daemon.h>
 #include <mysql_cb_impl.h>
 
 #include <mysql_cb_dhcp4.h>
@@ -21,6 +23,7 @@ using namespace isc::cb;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::process;
 
 extern "C" {
 
@@ -30,6 +33,21 @@ extern "C" {
 /// @return 0 when initialization is successful, 1 otherwise
 
 int load(LibraryHandle& /* handle */) {
+    // Make the hook library not loadable by d2 or ca.
+    uint16_t family = CfgMgr::instance().getFamily();
+    const std::string& proc_name = Daemon::getProcName();
+    if (family == AF_INET) {
+        if (proc_name != "kea-dhcp4") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp4");
+        }
+    } else {
+        if (proc_name != "kea-dhcp6") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp6");
+        }
+    }
+
     LOG_INFO(mysql_cb_logger, MYSQL_CB_INIT_OK);
     // Register MySQL CB factories with CB Managers
     isc::dhcp::MySqlConfigBackendDHCPv4::registerBackendType();

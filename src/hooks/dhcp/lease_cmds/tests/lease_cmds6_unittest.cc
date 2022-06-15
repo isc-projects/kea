@@ -45,6 +45,11 @@ namespace {
 /// unloading the lease_cmds library.
 class Lease6CmdsTest : public LeaseCmdsTest {
 public:
+    /// @brief Constructor.
+    Lease6CmdsTest() {
+        setFamily(true);
+    }
+
     /// @brief Checks if specified response contains IPv6 lease
     ///
     /// @param lease Element tree that represents a lease

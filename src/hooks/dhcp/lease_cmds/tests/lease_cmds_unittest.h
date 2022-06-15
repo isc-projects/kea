@@ -16,6 +16,7 @@
 #include <dhcpsrv/resource_handler.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -47,6 +48,17 @@ public:
     /// Removes files that may be left over from previous tests
     virtual ~LibLoadTest() {
         unloadLibs();
+    }
+
+    /// @brief Set family.
+    void setFamily(bool v6) {
+        if (!v6) {
+            isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
+            isc::process::Daemon::setProcName("kea-dhcp4");
+        } else {
+            isc::dhcp::CfgMgr::instance().setFamily(AF_INET6);
+            isc::process::Daemon::setProcName("kea-dhcp6");
+        }
     }
 
     /// @brief Adds library/parameters to list of libraries to be loaded

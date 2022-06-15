@@ -45,6 +45,11 @@ namespace {
 /// unloading the lease_cmds library.
 class Lease4CmdsTest : public LeaseCmdsTest {
 public:
+    /// @brief Constructor.
+    Lease4CmdsTest() {
+        setFamily(false);
+    }
+
     /// @brief Checks if specified response contains IPv4 lease
     ///
     /// @param lease Element tree that represents a lease

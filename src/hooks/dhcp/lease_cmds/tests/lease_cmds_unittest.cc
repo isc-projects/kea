@@ -54,6 +54,7 @@ TEST_F(LeaseCmdsTest, commands) {
         "lease4-wipe",              "lease6-wipe",
         "lease4-resend-ddns",       "lease6-resend-ddns"
     };
+    setFamily(false);
     testCommands(cmds);
 }
 
@@ -86,15 +87,18 @@ void LeaseCmdsTest::testLeaseXDelBadUpdateDdnsParam() {
 
 // Check that the library can be loaded and unloaded multiple times.
 TEST_F(LeaseCmdsTest, multipleLoads) {
+    setFamily(false);
     testMultipleLoads();
 }
 
 TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParam) {
+    setFamily(false);
     testLeaseXDelBadUpdateDdnsParam();
 }
 
 TEST_F(LeaseCmdsTest, leaseXDelBadUpdateDdnsParamMultiThreading) {
     MultiThreadingTest mt(true);
+    setFamily(false);
     testLeaseXDelBadUpdateDdnsParam();
 }
 
