@@ -299,7 +299,7 @@ public:
                                      "universe=6" : "universe=4");
             LeaseMgrFactory::create(s.str());
         } catch (const std::exception& ex) {
-            std::cerr << "*** ERROR: unable to create instance of the Memfile\n"
+            std::cerr << "*** ERROR: unable to create instance of the Memfile"
                 " lease database backend: " << ex.what() << std::endl;
             throw;
         }

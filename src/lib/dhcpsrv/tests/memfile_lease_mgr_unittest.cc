@@ -210,7 +210,7 @@ public:
         try {
             LeaseMgrFactory::create(getConfigString(u));
         } catch (...) {
-            std::cerr << "*** ERROR: unable to create instance of the Memfile\n"
+            std::cerr << "*** ERROR: unable to create instance of the Memfile"
                 " lease database backend.\n";
             throw;
         }
