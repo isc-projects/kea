@@ -37,6 +37,12 @@ The following commands are currently supported:
 -  ``subnet4-del``/``subnet6-del`` - removes a subnet from the server's
    configuration.
 
+-  ``subnet4-delta-add``/``subnet6-delta-add`` - updates (replaces) parts of a
+   single subnet in the server's configuration.
+
+-  ``subnet4-delta-del``/``subnet6-delta-del`` - removes parts of a single subnet in
+   the server's configuration.
+
 -  ``network4-list``/``network6-list`` - lists all configured shared networks.
 
 -  ``network4-get``/``network6-get`` - retrieves detailed information about a
@@ -561,6 +567,306 @@ A successful response may look like this:
        ]
    }
 
+.. _command-subnet4-delta-add:
+
+The ``subnet4-delta-add`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to update (overwrite) parts of a single subnet in the
+existing server configuration. This operation has no impact on other subnets.
+The subnet identifier is used to identify the subnet to update; it must be
+specified and must be unique among all subnets. The subnet prefix should
+not be updated.
+
+The subnet information within this command has the same structure as the
+subnet information in the server configuration file, with the exception
+that static host reservations cannot be specified within
+``subnet4-delta-add``. The commands described in :ref:`hooks-host-cmds` should be used
+to update, remove, and modify static reservations.
+
+::
+
+   {
+       "command": "subnet4-delta-add",
+       "arguments": {
+           "subnet4": [ {
+               ...
+               "id": 123,
+               "subnet": "10.20.30.0/24",
+               "option-data": [
+                   ...
+               ],
+               "pools": [
+                   ...
+                   {
+                       ...
+                       "pool": "10.20.30.1-10.20.30.10",
+                       "option-data": [
+                           ...
+                       ]
+                   }
+               ]
+           } ]
+       }
+   }
+
+The response to this command has the following structure:
+
+::
+
+   {
+       "result": 0,
+       "text": "IPv4 subnet updated",
+       "arguments": {
+           "subnet4": [
+               {
+                   "id": 123,
+                   "subnet": "10.20.30.0/24"
+               }
+           ]
+       }
+   }
+
+.. _command-subnet6-delta-add:
+
+The ``subnet6-delta-add`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to update (overwrite) parts of a single subnet in the
+existing server configuration. This operation has no impact on other subnets.
+The subnet identifier is used to identify the subnet to update; it must be
+specified and must be unique among all subnets. The subnet prefix should
+not be updated.
+
+The subnet information within this command has the same structure as the
+subnet information in the server configuration file, with the exception
+that static host reservations cannot be specified within
+``subnet6-delta-add``. The commands described in :ref:`hooks-host-cmds` should be used
+to update, remove, and modify static reservations.
+
+::
+
+   {
+       "command": "subnet6-delta-add",
+       "arguments": {
+           "subnet6": [ {
+               ...
+               "id": 243,
+               "subnet": "2001:db8:1::/64",
+               "option-data": [
+                   ...
+               ],
+               "pd-pools": [
+                   ...
+                   {
+                       ...
+                       "prefix": "2001:db8:2::",
+                       "prefix-len": 48,
+                       "delegated-len": 64,
+                       "option-data": [
+                           ...
+                       ]
+                   }
+               ],
+               "pools": [
+                   ...
+                   {
+                       ...
+                       "pool": "2001:db8:1::1-2001:db8:1::10",
+                       "option-data": [
+                           ...
+                       ]
+                   }
+               ]
+           } ]
+       }
+   }
+
+The response to this command has the following structure:
+
+::
+
+   {
+       "result": 0,
+       "text": "IPv6 subnet updated",
+       "arguments": {
+           "subnet6": [
+               {
+                   "id": 234,
+                   "subnet": "2001:db8:1::/64"
+               }
+           ]
+       }
+   }
+
+.. _command-subnet4-delta-del:
+
+The ``subnet4-delta-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to update (overwrite) parts of a single subnet in the
+existing server configuration. This operation has no impact on other subnets.
+The subnet identifier is used to identify the subnet to update; it must be
+specified and must be unique among all subnets. The subnet prefix should
+not be updated.
+
+The subnet information within this command has the same structure as the
+subnet information in the server configuration file, with the exception
+that static host reservations cannot be specified within
+``subnet4-delta-del``. The commands described in :ref:`hooks-host-cmds` should be used
+to update, remove, and modify static reservations.
+
+The command is flexible and can delete the part of the subnet by either
+specifying the entire object that needs to be deleted, or just the keys
+identifying the respective object. The address pools are identified by the
+'pool' parameter, the options are identified by the 'name' or 'code' and
+'space' parameters. The 'space' parameter can be omitted if the option belongs
+to the default 'dhcp4' space.
+
+::
+
+   {
+       "command": "subnet4-delta-del",
+       "arguments": {
+           "subnet4": [ {
+               ...
+               "id": 123,
+               "subnet": "10.20.30.0/24",
+               "option-data" [
+                   ...
+                   { "code": 23 },
+                   { "code": 31 }
+               ]
+               "pools": [
+                   ...
+                   {
+                       ...
+                       "option-data": [
+                           ...
+                           { "code": 23 },
+                           { "code": 31 }
+                       ]
+                       "pool": "10.20.30.11-10.20.30.20"
+                   },
+                   {
+                       "pool": "10.20.30.21-10.20.30.30"
+                   }
+               ]
+           } ]
+       }
+   }
+
+The response to this command has the following structure:
+
+::
+
+   {
+       "result": 0,
+       "text": "IPv4 subnet updated",
+       "arguments": {
+           "subnet4": [
+               {
+                   "id": 123,
+                   "subnet": "10.20.30.0/24"
+               }
+           ]
+       }
+   }
+
+.. _command-subnet6-delta-del:
+
+The ``subnet6-delta-del`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to update (overwrite) parts of a single subnet in the
+existing server configuration. This operation has no impact on other subnets.
+The subnet identifier is used to identify the subnet to update; it must be
+specified and must be unique among all subnets. The subnet prefix should
+not be updated.
+
+The subnet information within this command has the same structure as the
+subnet information in the server configuration file, with the exception
+that static host reservations cannot be specified within
+``subnet6-delta-del``. The commands described in :ref:`hooks-host-cmds` should be used
+to update, remove, and modify static reservations.
+
+The command is flexible and can delete the part of the subnet by either
+specifying the entire object that needs to be deleted, or just the keys
+identifying the respective object. The address pools are identified by the
+'pool' parameter, the prefix pools are identified by the "prefix", "prefix-len"
+and "delegated-len" parameters, the options are identified by the 'name' or
+'code' and 'space' parameters. The 'space' parameter can be omitted if the
+option belongs to the default 'dhcp6' space.
+
+::
+
+   {
+       "command": "subnet6-delta-del",
+       "arguments": {
+           "subnet6": [ {
+               ...
+               "id": 234,
+               "subnet": "2001:db8:1::/64",
+               "option-data" [
+                   ...
+                   { "code": 23 },
+                   { "code": 31 }
+               ]
+               "pd-pools": [
+                   ...
+                   {
+                       ...
+                       "prefix": "2001:db8:3::",
+                       "prefix-len": 48,
+                       "delegated-len": 64,
+                       "option-data": [
+                           ...
+                           { "code": 23 },
+                           { "code": 31 }
+                       ]
+                   },
+                   {
+                       "prefix": "2001:db8:4::",
+                       "prefix-len": 48,
+                       "delegated-len": 64,
+                   }
+               ],
+               "pools": [
+                   ...
+                   {
+                       ...
+                       "option-data": [
+                           ...
+                           { "code": 23 },
+                           { "code": 31 }
+                       ]
+                       "pool": "2001:db8:1::11-2001:db8:1::20"
+                   },
+                   {
+                       "pool": "2001:db8:1::21-2001:db8:1::30"
+                   }
+               ]
+           } ]
+       }
+   }
+
+The response to this command has the following structure:
+
+::
+
+   {
+       "result": 0,
+       "text": "IPv6 subnet updated",
+       "arguments": {
+           "subnet6": [
+               {
+                   "id": 234,
+                   "subnet": "2001:db8:1::/64"
+               }
+           ]
+       }
+   }
+
 .. _command-network4-list:
 
 .. _command-network6-list:
@@ -596,8 +902,8 @@ An example response for ``network4-list`` looks as follows:
        "text": "2 IPv4 network(s) found"
    }
 
-``network6-list`` follows exactly the same syntax for both the query and
-the response.
+The ``network6-list`` command uses exactly the same syntax for both the
+command and the response.
 
 .. _command-network4-get:
 
@@ -868,8 +1174,8 @@ return a response similar to the following:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor13'"
    }
 
-The ``network6-subnet-add`` command uses exactly the same syntax for
-both the command and the response.
+The ``network6-subnet-add`` command uses exactly the same syntax for both the
+command and the response.
 
 .. note::
 
@@ -919,5 +1225,5 @@ following:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
    }
 
-The ``network6-subnet-del`` command uses exactly the same syntax for
-both the command and the response.
+The ``network6-subnet-del`` command uses exactly the same syntax for both the
+command and the response.

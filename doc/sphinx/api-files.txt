@@ -175,11 +175,15 @@ src/share/api/statistic-sample-count-set.json
 src/share/api/status-get.json
 src/share/api/subnet4-add.json
 src/share/api/subnet4-del.json
+src/share/api/subnet4-delta-add.json
+src/share/api/subnet4-delta-del.json
 src/share/api/subnet4-get.json
 src/share/api/subnet4-list.json
 src/share/api/subnet4-update.json
 src/share/api/subnet6-add.json
 src/share/api/subnet6-del.json
+src/share/api/subnet6-delta-add.json
+src/share/api/subnet6-delta-del.json
 src/share/api/subnet6-get.json
 src/share/api/subnet6-list.json
 src/share/api/subnet6-update.json

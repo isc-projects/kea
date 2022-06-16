@@ -4,12 +4,9 @@
     "brief": [
         "This command retrieves the full list of currently configured shared networks."
     ],
-    "cmd-comment": [
-        "The ``network6-list`` command uses exactly the same syntax as ``network4-list`` for both the query and the response."
-    ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"network4-list\"",
+        "    \"command\": \"network6-list\"",
         "}"
     ],
     "description": "See <xref linkend=\"command-network6-list\"/>",
@@ -24,7 +21,7 @@
         "        ]",
         "    },",
         "    \"result\": 0,",
-        "    \"text\": \"2 IPv4 network(s) found\"",
+        "    \"text\": \"2 IPv6 network(s) found\"",
         "}"
     ],
     "support": [

@@ -24,7 +24,7 @@
         "    \"result\": 0,",
         "    \"text\": \"IPv6 subnet added\",",
         "    \"arguments\": {",
-        "        \"subnet6\": [",
+        "        \"subnets\": [",
         "            {",
         "                \"id\": 234,",
         "                \"subnet\": \"2001:db8:1::/64\"",

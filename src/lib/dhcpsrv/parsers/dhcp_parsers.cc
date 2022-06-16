@@ -403,7 +403,7 @@ PoolParser::parse(PoolStoragePtr pools,
                 isc_throw(OutOfRange, "");
             }
             len = static_cast<uint8_t>(val_len);
-        } catch (...)  {
+        } catch (...) {
             isc_throw(DhcpConfigError, "Failed to parse pool "
                       "definition: " << txt << " ("
                       << text_pool->getPosition() << ")");
@@ -428,7 +428,7 @@ PoolParser::parse(PoolStoragePtr pools,
             try {
                 min = isc::asiolink::IOAddress(txt.substr(0, pos));
                 max = isc::asiolink::IOAddress(txt.substr(pos + 1));
-            } catch (...)  {
+            } catch (...) {
                 isc_throw(DhcpConfigError, "Failed to parse pool "
                           "definition: " << txt << " ("
                           << text_pool->getPosition() << ")");
@@ -503,7 +503,7 @@ PoolParser::parse(PoolStoragePtr pools,
 
 boost::shared_ptr<OptionDataListParser>
 PoolParser::createOptionDataListParser(const uint16_t address_family) const {
-    auto parser =  boost::make_shared<OptionDataListParser>(address_family);
+    auto parser = boost::make_shared<OptionDataListParser>(address_family);
     return (parser);
 }
 
@@ -622,7 +622,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         ConstElementPtr elem = params->get("subnet");
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len
-                  << " (" <<  elem->getPosition() << ")");
+                  << " (" << elem->getPosition() << ")");
     }
 
     // Call the subclass's method to instantiate the subnet
@@ -1573,7 +1573,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                   "D2ClientConfig error: address family mismatch: "
                   << "server-ip: " << server_ip.toText()
                   << " is: " << (server_ip.isV4() ? "IPv4" : "IPv6")
-                  << " while sender-ip: "  << sender_ip.toText()
+                  << " while sender-ip: " << sender_ip.toText()
                   << " is: " << (sender_ip.isV4() ? "IPv4" : "IPv6")
                   << " (" << getPosition("sender-ip", client_config) << ")");
     }
@@ -1596,7 +1596,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             max_queue_size,
                                             ncr_protocol,
                                             ncr_format));
-    }  catch (const std::exception& ex) {
+    } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
     }

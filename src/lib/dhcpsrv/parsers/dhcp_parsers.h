@@ -973,12 +973,12 @@ protected:
     bool check_iface_;
 };
 
-/// @brief Parser for  D2ClientConfig
+/// @brief Parser for D2ClientConfig
 ///
 /// This class parses the configuration element "dhcp-ddns" common to the
 /// config files for both dhcp4 and dhcp6. It creates an instance of a
 /// D2ClientConfig.
-class D2ClientConfigParser : public  isc::data::SimpleParser {
+class D2ClientConfigParser : public isc::data::SimpleParser {
 public:
 
     /// @brief Parses a given dhcp-ddns element into D2ClientConfig.

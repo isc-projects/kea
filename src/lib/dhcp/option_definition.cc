@@ -458,7 +458,7 @@ OptionDefinition::convertToBool(const std::string& value_str) const {
     // if it is not an integer wrapped in a string.
     int result;
     try {
-       result = boost::lexical_cast<int>(value_str);
+        result = boost::lexical_cast<int>(value_str);
 
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(BadDataTypeCast, "unable to covert the value '"

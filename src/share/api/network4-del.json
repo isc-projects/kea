@@ -17,6 +17,7 @@
     "name": "network4-del",
     "resp-syntax": [
         "{",
+        "    \"command\": \"network4-del\",",
         "    \"arguments\": {",
         "        \"shared-networks\": [",
         "            {",

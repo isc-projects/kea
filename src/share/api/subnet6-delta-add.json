@@ -1,12 +1,12 @@
 {
     "access": "write",
-    "avail": "1.6.0",
+    "avail": "2.1.7",
     "brief": [
-        "This command updates (overwrites) a single subnet in the existing server configuration. This operation has no impact on other subnets."
+        "This command updates (adds or overwrites) parts of a single subnet in the existing server configuration. This operation has no impact on other subnets."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"subnet6-update\",",
+        "    \"command\": \"subnet6-delta-add\",",
         "    \"arguments\": {",
         "        \"subnet6\": [ {",
         "            \"id\": 234,",
@@ -18,7 +18,7 @@
     ],
     "description": "See <xref linkend=\"idp70\"/>",
     "hook": "subnet_cmds",
-    "name": "subnet6-update",
+    "name": "subnet6-delta-add",
     "resp-syntax": [
         "{",
         "    \"result\": 0,",

@@ -4,12 +4,9 @@
     "brief": [
         "This command removes a subnet that is part of an existing shared network and demotes it to a plain, stand-alone subnet."
     ],
-    "cmd-comment": [
-        "The ``network6-subnet-del`` command uses exactly the same syntax as ``network4-subnet-del`` for both the query and the response."
-    ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"network4-subnet-del\",",
+        "    \"command\": \"network6-subnet-del\",",
         "    \"arguments\": {",
         "        \"name\": \"floor13\",",
         "        \"id\": 5",
@@ -22,7 +19,7 @@
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'\"",
+        "    \"text\": \"IPv6 subnet 2003:db8::/64 (id 5) is now removed from shared network 'floor13'\"",
         "}"
     ],
     "support": [
