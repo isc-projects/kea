@@ -20,16 +20,20 @@ namespace ha {
 
 unordered_set<string> CommandCreator::ha_commands4_ = {
     "list-commands", "status-get",
-    "dhcp-disable", "dhcp-enable", "ha-reset", "ha-heartbeat",
-    "lease4-update", "lease4-del", "lease4-get-all", "lease4-get-page",
+    "dhcp-disable", "dhcp-enable",
+    "ha-reset", "ha-heartbeat",
+    "lease4-update", "lease4-del",
+    "lease4-get-all", "lease4-get-page",
     "ha-maintenance-notify", "ha-sync-complete-notify"
 };
 
 unordered_set<string> CommandCreator::ha_commands6_ = {
     "list-commands", "status-get",
-    "dhcp-disable", "dhcp-enable", "ha-reset", "ha-heartbeat",
-    "lease6-bulk-apply", "lease6-update", "lease6-del", "lease6-get-all",
-    "lease6-get-page",
+    "dhcp-disable", "dhcp-enable",
+    "ha-reset", "ha-heartbeat",
+    "lease6-bulk-apply",
+    "lease6-update", "lease6-del",
+    "lease6-get-all", "lease6-get-page",
     "ha-maintenance-notify", "ha-sync-complete-notify"
 };
 
