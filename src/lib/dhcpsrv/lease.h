@@ -108,6 +108,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Destructor
     virtual ~Lease() {}
 
+    /// @brief Returns Lease type
+    ///
+    /// One of normal address, temporary address, or prefix, or V4
+    virtual Lease::Type getType() const = 0;
+
     /// @brief IPv4 ot IPv6 address
     ///
     /// IPv4, IPv6 address or, in the case of a prefix delegation, the prefix.
@@ -352,6 +357,16 @@ struct Lease4 : public Lease {
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
 
+    /// @brief Returns Lease type
+    ///
+    /// Since @c Lease does not define a member for lease type, we implement this
+    /// so we don't the same value to a billion v4 lease instances.
+    ///
+    /// @return Lease::TYPE_V4
+    virtual Lease::Type getType() const {
+        return (Lease::TYPE_V4);
+    }
+
     /// @brief Returns name of the lease states specific to DHCPv4.
     ///
     /// @todo Currently it simply returns common states for DHCPv4 and DHCPv6.
@@ -572,6 +587,16 @@ struct Lease6 : public Lease {
     ///
     /// Initialize fields that don't have a default constructor.
     Lease6();
+
+    /// @brief Returns Lease type
+    ///
+    /// Since @c Lease does not define a member for lease type, we implement this
+    /// so code that only has LeasePtr can see what it has.
+    ///
+    /// @return Type of lease
+    virtual Lease::Type getType() const {
+        return (type_);
+    }
 
     /// @brief Returns name of the lease states specific to DHCPv6.
     ///
