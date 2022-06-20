@@ -139,11 +139,11 @@ pgsql_db_version_test() {
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    # Verify that kea-admin db-version returns the correct version
+    # Verify that kea-admin db-version returns the latest version.
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "12.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "13.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -495,6 +495,271 @@ pgsql_upgrade_11_0_to_12_0() {
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
+pgsql_upgrade_12_to_13_test() {
+    # -- lease counting tests --
+
+    # Clean up.
+    query='DELETE FROM lease4; DELETE FROM lease6;'
+    run_command \
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Populate the lease tables. Also check that @json_supported is NULL at
+    # first, and then it is set after inserting leases.
+    run_command \
+        pgsql_execute "
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (100,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (101,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (102,1,2,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (103,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (104,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (105,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (100,0,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (101,0,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (102,0,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (103,0,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (104,2,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (105,2,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (106,2,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (107,2,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+        "
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO leases when upgrading from 11 to 12 failed. expected %d, returned %d'
+    assert_str_eq '' "${OUTPUT}" "INSERT INTO leases when upgrading from 11 to 12 failed. expected output %s, returned %s"
+
+    # Check that @json_supported is NULL by default.
+    query='SELECT isJsonSupported()'
+    run_command \
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    json_supported="${OUTPUT}"
+    if test "${json_supported}" != 'f' && test "${json_supported}" != 't'; then
+        assert_str_eq '[ft]' "${json_supported}" "${query}. expected '[ft]', returned '${json_supported}'"
+    fi
+
+    for v in 4 6; do
+        # Check that client classes were counted correctly.
+        query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1;"
+        run_command \
+            pgsql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        if test "${json_supported}" = 't'; then
+            assert_str_eq 2 "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        # -- Verify some calls to checkLeaseXLimits(). --
+
+        query="SELECT checkLease${v}Limits('');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        fi
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{}');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        fi
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 } ] } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 1 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 1 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 } ] } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 2 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 2 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 } ] } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        fi
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        fi
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 }, { \"name\": \"bar\", \"address-limit\": 1 } ], \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 1 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 2 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq "address limit 2 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            pgsql_execute "${query}"
+        if test "${json_supported}" = 't'; then
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        else
+            # Should fail with ERROR: operator does not exist: json -> unknown
+            assert_eq 3 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        fi
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+    done
+
+    # Check that leases counters cannot go negative.
+    for v in 4 6; do
+        query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
+        run_command \
+            pgsql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        # Artificially change the subnet counter from 2 down to 1.
+        query="UPDATE lease${v}_stat SET leases = 1 WHERE subnet_id = 1 AND state = 0"
+        run_command \
+            pgsql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        if test "${json_supported}" = 't'; then
+            query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
+            run_command \
+                pgsql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+            # Artificially change the client class counter from 2 down to 1.
+            query="UPDATE lease${v}_stat_by_client_class SET leases = 1 WHERE client_class = 'foo'"
+            run_command \
+                pgsql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        # Clean up.
+        query="DELETE FROM lease${v}"
+        run_command \
+            pgsql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        # SELECT should finish succesfully and the subnet counter should be 0.
+        query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
+        run_command \
+            pgsql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        if test "${json_supported}" = 't'; then
+            # SELECT should finish succesfully and the client class counter should be 0.
+            query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
+            run_command \
+                pgsql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+    done
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade-test"
 
@@ -510,9 +775,9 @@ pgsql_upgrade_test() {
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
-    # Verify upgraded schema reports version 12.0.
+    # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "12.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "13.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0
@@ -543,6 +808,9 @@ pgsql_upgrade_test() {
 
     # Check 11.0 to 12.0 upgrade
     pgsql_upgrade_11_0_to_12_0
+
+    # Check 12 to 13 upgrade
+    pgsql_upgrade_12_to_13_test
 
     # Let's wipe the whole database
     pgsql_wipe
