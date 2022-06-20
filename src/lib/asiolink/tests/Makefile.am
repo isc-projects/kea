@@ -17,8 +17,7 @@ DISTCLEANFILES = process_spawn_app.sh
 
 noinst_SCRIPTS = process_spawn_app.sh
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST

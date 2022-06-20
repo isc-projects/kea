@@ -16,8 +16,7 @@ CLEANFILES = *.gcno *.gcda
 # unit tests and have to be removed.
 CLEANFILES += test1.hex test2.hex test3.hex test4.hex test5.hex
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST

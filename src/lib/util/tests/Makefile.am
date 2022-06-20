@@ -17,8 +17,7 @@ CLEANFILES = *.gcno *.gcda
 # CSV files are created by unit tests for CSVFile class.
 CLEANFILES += *.csv
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST

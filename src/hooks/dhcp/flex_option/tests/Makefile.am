@@ -17,7 +17,8 @@ EXTRA_DIST =
 
 CLEANFILES = *.gcno *.gcda
 
-# TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 LOG_COMPILER = $(LIBTOOL)
 AM_LOG_FLAGS = --mode=execute
 

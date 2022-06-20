@@ -80,8 +80,7 @@ noinst_SCRIPTS = $(SHTESTS)
 
 if HAVE_GTEST
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Set of unit tests for the general logging classes
 PROGRAM_TESTS = run_unittests

@@ -5,8 +5,7 @@ EXTRA_DIST  =
 EXTRA_DIST += testdata/d2_cfg_tests.json
 EXTRA_DIST += testdata/get_config.json
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Shell tests
 SHTESTS = d2_process_tests.sh

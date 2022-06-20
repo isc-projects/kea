@@ -3,8 +3,7 @@ SUBDIRS = .
 # Add to the tarball:
 EXTRA_DIST = get_config_unittest.cc.skel
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Shell tests
 SHTESTS = dhcp6_process_tests.sh
