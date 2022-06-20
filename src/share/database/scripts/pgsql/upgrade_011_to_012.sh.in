@@ -104,4 +104,3 @@ UPDATE schema_version
 COMMIT;
 
 EOF
-

@@ -177,3 +177,28 @@ DROP FUNCTION IF EXISTS lease4Upload();
 DROP FUNCTION IF EXISTS lease6Upload();
 
 DROP FUNCTION IF EXISTS gmt_epoch(input_time TIMESTAMP WITH TIME ZONE);
+
+-- lease limiting tables and functions
+DROP TABLE IF EXISTS lease4_stat_by_client_class;
+DROP TABLE IF EXISTS lease6_stat_by_client_class;
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat();
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat();
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat();
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat();
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat();
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat();
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat_by_client_class();
+DROP FUNCTION IF EXISTS func_lease4_AINS();
+DROP FUNCTION IF EXISTS func_lease4_AUPD();
+DROP FUNCTION IF EXISTS func_lease4_ADEL();
+DROP FUNCTION IF EXISTS func_lease6_AINS();
+DROP FUNCTION IF EXISTS func_lease6_AUPD();
+DROP FUNCTION IF EXISTS func_lease6_ADEL();
+DROP FUNCTION IF EXISTS checkLease4Limits();
+DROP FUNCTION IF EXISTS checkLease6Limits();
+DROP FUNCTION IF EXISTS isJsonSupported();

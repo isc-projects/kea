@@ -72,6 +72,8 @@ DELETE FROM lease4_stat;
 DELETE FROM lease6;
 DELETE FROM lease6_stat;
 DELETE FROM logs;
+DELETE FROM lease4_stat_by_client_class;
+DELETE FROM lease6_stat_by_client_class;
 
 -- Config Backend tables
 DELETE FROM dhcp4_audit;
