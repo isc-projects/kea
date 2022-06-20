@@ -146,7 +146,8 @@ INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
 # Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS');
 
-UPDATE schema_version SET version='2', minor='0';
+UPDATE schema_version
+SET version = '2', minor = '0';
 
 # This line concludes database upgrade to version 2.0.
 
