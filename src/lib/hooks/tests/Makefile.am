@@ -37,9 +37,8 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-noinst_LTLIBRARIES = \
-	libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
-	liblecl.la libucl.la libfcl.la libpcl.la libacl.la
+noinst_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la
+noinst_LTLIBRARIES += liblecl.la libucl.la libfcl.la libpcl.la libacl.la
 
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules

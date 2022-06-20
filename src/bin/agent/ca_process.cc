@@ -197,7 +197,7 @@ void
 CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
     // We expect only one active listener. If there are more (most likely 2),
     // it means we have just reconfigured the server and need to shut down all
-    // listeners execept the most recently added.
+    // listeners except the most recently added.
     if (http_listeners_.size() > leaving) {
         // Stop no longer used listeners.
         for (auto l = http_listeners_.begin();
