@@ -469,12 +469,6 @@ mysql_upgrade_13_to_14_test() {
     fi
 
     for v in 4 6; do
-        if test "${v}" = 4; then
-            lease_type='address'
-        else
-            lease_type='IA_NA'
-        fi
-
         # Check that client classes were counted correctly.
         query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1;"
         run_command \
@@ -483,7 +477,7 @@ mysql_upgrade_13_to_14_test() {
         if test "${json_supported}" = 1; then
             assert_str_eq 2 "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
-            assert_str_eq 0 "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
         # -- Verify some calls to checkLeaseXLimits(). --
@@ -511,7 +505,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 1 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -523,7 +517,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 1 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -533,10 +527,9 @@ mysql_upgrade_13_to_14_test() {
         query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 } ] } } }');"
         run_command \
             mysql_execute "${query}"
-        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 2 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -548,7 +541,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 2 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -582,7 +575,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 1 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -594,7 +587,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 2 for client class \"foo\", current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -606,7 +599,7 @@ mysql_upgrade_13_to_14_test() {
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-            assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+            assert_str_eq "address limit 2 for subnet ID 1, current lease count 2" "${OUTPUT}" "${query}: expected output %s, returned %s"
         else
             # Should fail with ERROR 1305 (42000) at line 1: FUNCTION keatest.JSON_EXTRACT does not exist
             assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
