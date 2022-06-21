@@ -40,6 +40,8 @@ using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::util;
 
+using isc::data::ConstElementPtr;
+
 namespace isc {
 namespace dhcp {
 
@@ -2055,6 +2057,16 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
         .arg(subnet_id).arg(num);
 
     return (num);
+}
+
+std::string
+Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& user_context) const {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
+}
+
+std::string
+Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& user_context) const {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
 }
 
 }  // namespace dhcp

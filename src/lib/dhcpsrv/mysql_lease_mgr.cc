@@ -325,9 +325,11 @@ tagged_statements = { {
                     "SELECT subnet_id, lease_type, state, leases as state_count "
                         "FROM lease6_stat "
                         "WHERE subnet_id >= ? and subnet_id <= ? "
-                        "ORDER BY subnet_id, lease_type, state"}
-    }
-};
+                        "ORDER BY subnet_id, lease_type, state"},
+    // TODO: remove single quotes from the following two SELECTs when the functions are implemented
+    {MySqlLeaseMgr::CHECK_LEASE4_LIMITS, "SELECT 'checkLease4Limits(?)'"},
+    {MySqlLeaseMgr::CHECK_LEASE6_LIMITS, "SELECT 'checkLease6Limits(?)'"},
+} };  // tagged_statements
 
 }  // namespace
 
@@ -3089,6 +3091,95 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
         .arg(deleted_leases);
 
     return (deleted_leases);
+}
+
+string
+MySqlLeaseMgr::checkLimits(ConstElementPtr const& user_context, StatementIndex const stindex) const {
+    constexpr int column_count(1);
+
+    // Set up the WHERE clause value.
+    MYSQL_BIND inbind[column_count];
+    memset(inbind, 0, sizeof(inbind));
+    std::string const& user_context_string(user_context->str());
+    inbind[0].buffer = const_cast<char*>(user_context_string.c_str());
+    inbind[0].buffer_length = user_context_string.length();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+
+    my_bool error[column_count];
+    MySqlLeaseExchange::setErrorIndicators(inbind, error, column_count);
+
+    // Get a context and a prepared statement.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+    MYSQL_STMT* prepared_statement(ctx->conn_.statements_[stindex]);
+
+    // Bind the selection parameters to the statement.
+    int status(mysql_stmt_bind_param(prepared_statement, inbind));
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
+
+    // Set up the MYSQL_BIND array for the data being returned and bind it to
+    // the statement.
+    std::vector<MYSQL_BIND> outbind;
+    outbind.push_back(MYSQL_BIND());
+    my_bool result_null(MLM_FALSE);
+    char result[USER_CONTEXT_MAX_LEN];
+    unsigned long result_length(sizeof(result));
+    outbind[0].buffer_type = MYSQL_TYPE_STRING;
+    outbind[0].buffer = reinterpret_cast<char*>(result);
+    outbind[0].buffer_length = result_length;
+    outbind[0].length = &result_length;
+    outbind[0].is_null = &result_null;
+    status = mysql_stmt_bind_result(prepared_statement, &outbind[0]);
+    checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
+
+    // Execute the statement.
+    status = MysqlExecuteStatement(prepared_statement);
+    checkError(ctx, status, stindex, "unable to execute");
+
+    // Ensure that all the lease information is retrieved in one go to avoid
+    // overhead of going back and forth between client and server.
+    status = mysql_stmt_store_result(prepared_statement);
+    checkError(ctx, status, stindex, "unable to set up for storing all results");
+
+    // Set up the fetch "release" object to release resources associated
+    // with the call to mysql_stmt_fetch when this method exits, then
+    // retrieve the data.
+    MySqlFreeResult fetch_release(prepared_statement);
+    int count = 0;
+    while ((status = mysql_stmt_fetch(prepared_statement)) == 0) {
+        // "result" should be populated now. We'll use that directly outside the loop.
+
+        if (++count > 1) {
+            isc_throw(MultipleRecords, "multiple records were found in the "
+                      "database where only one was expected for query "
+                      << ctx->conn_.text_statements_[stindex]);
+        }
+    }
+
+    // How did the fetch end?
+    if (status == 1) {
+        // Error - unable to fetch results
+        checkError(ctx, status, stindex, "unable to fetch results");
+    } else if (status == MYSQL_DATA_TRUNCATED) {
+        // Data truncated - throw an exception indicating what was at fault.
+        std::string columns[column_count];
+        columns[0] = "limits";
+        isc_throw(DataTruncated, ctx->conn_.text_statements_[stindex]
+                  << " returned truncated data: columns affected are "
+                  << MySqlLeaseExchange::getColumnsInError(error, columns, column_count));
+    }
+
+    return result;
+}
+
+string
+MySqlLeaseMgr::checkLimits4(ConstElementPtr const& user_context) const {
+    return checkLimits(user_context, CHECK_LEASE4_LIMITS);
+}
+
+string
+MySqlLeaseMgr::checkLimits6(ConstElementPtr const& user_context) const {
+    return checkLimits(user_context, CHECK_LEASE6_LIMITS);
 }
 
 LeaseStatsQueryPtr

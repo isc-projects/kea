@@ -361,6 +361,14 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::wipeLeases6 not implemented");
     }
 
+    std::string checkLimits4(isc::data::ConstElementPtr const& user_context) const override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits4() not implemented");
+    }
+
+    std::string checkLimits6(isc::data::ConstElementPtr const& user_context) const override{
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits6() not implemented");
+    }
+
     /// @brief Returns backend type.
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

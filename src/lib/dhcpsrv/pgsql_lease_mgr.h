@@ -699,6 +699,8 @@ public:
         ALL_LEASE6_STATS,            // Fetches IPv6 lease statistics
         SUBNET_LEASE6_STATS,         // Fetched IPv6 lease stats for a single subnet.
         SUBNET_RANGE_LEASE6_STATS,   // Fetched IPv6 lease stats for a subnet range.
+        CHECK_LEASE4_LIMITS,         // Check if allocated IPv4 leases are inside the set limits.
+        CHECK_LEASE6_LIMITS,         // Check if allocated IPv6 leases are inside the set limits.
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -898,6 +900,46 @@ private:
     /// @return Number of leases deleted.
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
+
+    /// @brief Checks if the lease limits set in the given user context are exceeded.
+    /// Contains common logic used by @ref checkLimits4 and @ref checkLimits6.
+    ///
+    /// @param user_context all or part of the lease's user context which, for the intents and
+    /// purposes of lease limiting should have the following format
+    /// (not all nodes are mandatory and values are given only as examples):
+    /// { "ISC": { "limits": { "client-classes": [ { "name": "foo", "address-limit": 2, "prefix-limit": 1 } ],
+    ///                        "subnet": { "id": 1, "address-limit": 2, "prefix-limit": 1 } } } }
+    ///
+    /// @return a string describing a limit that is being exceeded, or an empty
+    /// string if no limits are exceeded
+    std::string
+    checkLimits(isc::data::ConstElementPtr const& user_context, StatementIndex const stindex) const;
+
+    /// @brief Checks if the IPv4 lease limits set in the given user context are exceeded.
+    /// PostgreSQL implementation.
+    ///
+    /// @param user_context all or part of the lease's user context which, for the intents and
+    /// purposes of lease limiting should have the following format
+    /// (not all nodes are mandatory and values are given only as examples):
+    /// { "ISC": { "limits": { "client-classes": [ { "name": "foo", "address-limit": 2 } ],
+    ///                        "subnet": { "id": 1, "address-limit": 2 } } } }
+    ///
+    /// @return a string describing a limit that is being exceeded, or an empty
+    /// string if no limits are exceeded
+    std::string checkLimits4(isc::data::ConstElementPtr const& user_context) const override;
+
+    /// @brief Checks if the IPv6 lease limits set in the given user context are exceeded.
+    /// MySQL implementation.
+    ///
+    /// @param user_context all or part of the lease's user context which, for the intents and
+    /// purposes of lease limiting should have the following format
+    /// (not all nodes are mandatory and values are given only as examples):
+    /// { "ISC": { "limits": { "client-classes": [ { "name": "foo", "address-limit": 2, "prefix-limit": 1 } ],
+    ///                        "subnet": { "id": 1, "address-limit": 2, "prefix-limit": 1 } } } }
+    ///
+    /// @return a string describing a limit that is being exceeded, or an empty
+    /// string if no limits are exceeded
+    std::string checkLimits6(isc::data::ConstElementPtr const& user_context) const override;
 
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {
