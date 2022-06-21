@@ -2060,12 +2060,12 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 }
 
 std::string
-Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& user_context) const {
+Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& /* user_context */) const {
     isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
 }
 
 std::string
-Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& user_context) const {
+Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& /* user_context */) const {
     isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
 }
 
