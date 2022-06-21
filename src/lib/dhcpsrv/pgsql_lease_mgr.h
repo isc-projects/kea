@@ -613,6 +613,12 @@ public:
     /// @return number of leases removed.
     virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
+    /// @brief Checks if JSON support is enabled in the database.
+    /// PostgreSQL implementation.
+    ///
+    /// @return true if there is JSON support, false otherwise
+    bool isJsonSupported() const override;
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

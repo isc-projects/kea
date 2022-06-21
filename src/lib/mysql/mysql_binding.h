@@ -447,6 +447,12 @@ public:
                 createInteger<float> (static_cast<float>(value.get())));
     }
 
+    /// @brief Creates binding having a bool type for receiving data.
+    ///
+    /// @return Pointer to the created binding holding an @c uint8_t
+    /// value representing the boolean value.
+    static MySqlBindingPtr createBool();
+
     /// @brief Creates binding having a bool type for sending data.
     ///
     /// @param value Boolean value to be sent to the database.

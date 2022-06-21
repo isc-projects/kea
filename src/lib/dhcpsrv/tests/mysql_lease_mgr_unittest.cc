@@ -1072,4 +1072,13 @@ TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
     testLeaseStatsQueryAttribution6();
 }
 
+/// @brief Checks that no exceptions are thrown when inquiring about JSON
+/// support and prints an informative message.
+TEST_F(MySqlLeaseMgrTest, isJsonSupported) {
+    bool json_supported;
+    ASSERT_NO_THROW(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    std::cout << "JSON support is " << (json_supported ? "" : "not ") <<
+                 "enabled in the database." << std::endl;
+}
+
 }  // namespace

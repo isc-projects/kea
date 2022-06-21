@@ -369,6 +369,13 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits6() not implemented");
     }
 
+    /// @brief Checks if JSON support is enabled in the database.
+    ///
+    /// @return true if there is JSON support, false otherwise
+    bool isJsonSupported() const override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::isJsonSupported() not implemented");
+    }
+
     /// @brief Returns backend type.
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

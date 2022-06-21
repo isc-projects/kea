@@ -132,6 +132,11 @@ MySqlBinding::createFloat(const float value) {
 }
 
 MySqlBindingPtr
+MySqlBinding::createBool() {
+    return (createInteger<uint8_t>(static_cast<uint8_t>(false)));
+}
+
+MySqlBindingPtr
 MySqlBinding::createBool(const bool value) {
     return (createInteger<uint8_t>(static_cast<uint8_t>(value)));
 }

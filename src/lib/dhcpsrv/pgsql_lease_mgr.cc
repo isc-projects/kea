@@ -2425,6 +2425,11 @@ PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases6 is not implemented for PostgreSQL backend");
 }
 
+bool
+PgSqlLeaseMgr::isJsonSupported() const {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::isJsonSupported() not implemented");
+}
+
 std::string
 PgSqlLeaseMgr::getName() const {
     // Get a context

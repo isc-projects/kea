@@ -724,6 +724,12 @@ public:
     /// string if no limits are exceeded
     virtual std::string checkLimits6(isc::data::ConstElementPtr const& user_context) const = 0;
 
+    /// @brief Checks if JSON support is enabled in the database.
+    /// Abstract method.
+    ///
+    /// @return true if there is JSON support, false otherwise
+    virtual bool isJsonSupported() const = 0;
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

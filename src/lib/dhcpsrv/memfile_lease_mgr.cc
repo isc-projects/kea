@@ -2069,6 +2069,10 @@ Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& /* user_context */) const 
     isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
 }
 
+bool
+Memfile_LeaseMgr::isJsonSupported() const {
+    return true;
+}
+
 }  // namespace dhcp
 }  // namespace isc
-

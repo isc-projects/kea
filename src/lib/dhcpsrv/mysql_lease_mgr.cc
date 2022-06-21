@@ -329,6 +329,7 @@ tagged_statements = { {
     // TODO: remove single quotes from the following two SELECTs when the functions are implemented
     {MySqlLeaseMgr::CHECK_LEASE4_LIMITS, "SELECT 'checkLease4Limits(?)'"},
     {MySqlLeaseMgr::CHECK_LEASE6_LIMITS, "SELECT 'checkLease6Limits(?)'"},
+    {MySqlLeaseMgr::IS_JSON_SUPPORTED, "SELECT isJsonSupported()"},
 } };  // tagged_statements
 
 }  // namespace
@@ -3276,6 +3277,28 @@ MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
 size_t
 MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases6 is not implemented for MySQL backend");
+}
+
+bool
+MySqlLeaseMgr::isJsonSupported() const {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Create bindings.
+    MySqlBindingCollection in_bindings;
+    MySqlBindingCollection out_bindings({
+        MySqlBinding::createBool()
+    });
+
+    // Execute the select.
+    bool json_supported(false);
+    ctx->conn_.selectQuery(IS_JSON_SUPPORTED, in_bindings, out_bindings,
+                           [&json_supported] (MySqlBindingCollection const& result) {
+        json_supported = result[0]->getBool();
+    });
+
+    return json_supported;
 }
 
 // Miscellaneous database methods.
