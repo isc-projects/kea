@@ -9,6 +9,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -40,6 +41,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -360,6 +362,30 @@ public:
                                    hostname.str()));
         lease->cltt_ = timestamp;
         return (lease);
+    }
+
+    /// @brief Create a user-context with a given list of classes
+    ///
+    /// Creates an Element::map with the following content:
+    ///
+    /// {
+    ///     "classes": [ "class0", "class1", ... ]
+    /// }
+    ///
+    /// @param classes  list of classes to include in the context
+    /// @return ElementPtr containing the user-context
+    ElementPtr makeContextWithClasses(const std::list<ClientClass>& classes) {
+        ElementPtr ctx = Element::createMap();
+        if (classes.size()) {
+            ElementPtr clist = Element::createList();
+            for (auto client_class : classes ) {
+                clist->add(Element::create(client_class));
+            }
+
+            ctx->set("classes", clist);
+        }
+
+        return (ctx);
     }
 
     /// @brief Object providing access to v4 lease IO.
@@ -2580,6 +2606,329 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
             ++i;
         }
     }
+}
+
+TEST_F(MemfileLeaseMgrTest, classLeaseCount4) {
+    startBackend(V4);
+
+    // Make user-contexts with different class lists.
+    std::list<ClientClass> classes1{"water"};
+    ElementPtr ctx1 = makeContextWithClasses(classes1);
+
+    std::list<ClientClass> classes2{"melon"};
+    ElementPtr ctx2 = makeContextWithClasses(classes2);
+
+    // Counts should be 0.
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+
+    // Create a lease to add to the lease store.
+    vector<Lease4Ptr> leases = createLeases4();
+    Lease4Ptr lease = leases[1];
+
+    // Set the lease state to STATE_DEFAULT so it classes should be counted.
+    lease->state_ = Lease::STATE_DEFAULT;
+
+    // Add class list 1 to the lease.
+    lease->setContext(ctx1);
+
+    // Add the lease to the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->addLease(lease));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+
+    // Re-fetch lease. This returns a copy of the persisted lease, which is
+    // what Kea logic always does. Fetches a copy.  Otherwise we're changing
+    // the persisted lease which would make old and new the same thing.
+    lease = lmptr_->getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Change the class list.
+    lease->setContext(ctx2);
+
+    // Update the lease in the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->updateLease4(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("melon"));
+
+    lease = lmptr_->getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Now delete the lease from the store and verify counts.
+    ASSERT_NO_THROW_LOG(lmptr_->deleteLease(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+
+    lease = lmptr_->getLease4(lease->addr_);
+    ASSERT_FALSE(lease);
+}
+
+TEST_F(MemfileLeaseMgrTest, classLeaseCount6_NA) {
+    startBackend(V6);
+
+    // Make user-contexts with different class lists.
+    std::list<ClientClass> classes1{"water"};
+    ElementPtr ctx1 = makeContextWithClasses(classes1);
+
+    std::list<ClientClass> classes2{"melon"};
+    ElementPtr ctx2 = makeContextWithClasses(classes2);
+
+    // Counts should be 0.
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_NA));
+
+    // Create a lease to add to the lease store.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+    lease->type_ = Lease::TYPE_NA;
+
+    // Set the lease state to STATE_DEFAULT so it classes should be counted.
+    lease->state_ = Lease::STATE_DEFAULT;
+
+    // Add class list 1 to the lease.
+    lease->setContext(ctx1);
+
+    // Add the lease to the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->addLease(lease));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_NA));
+
+    // Re-fetch lease. This returns a copy of the persisted lease, which is
+    // what Kea logic always does. Fetches a copy.  Otherwise we're changing
+    // the persisted lease which would make old and new the same thing.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Change the class list.
+    lease->setContext(ctx2);
+
+    // Update the lease in the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->updateLease6(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("melon", Lease::TYPE_NA));
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Now delete the lease from the store and verify counts.
+    ASSERT_NO_THROW_LOG(lmptr_->deleteLease(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_NA));
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_FALSE(lease);
+}
+
+TEST_F(MemfileLeaseMgrTest, classLeaseCount6_PD) {
+    startBackend(V6);
+
+    // Make user-contexts with different class lists.
+    std::list<ClientClass> classes1{"water"};
+    ElementPtr ctx1 = makeContextWithClasses(classes1);
+
+    std::list<ClientClass> classes2{"melon"};
+    ElementPtr ctx2 = makeContextWithClasses(classes2);
+
+    // Counts should be 0.
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_PD));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_PD));
+
+    // Create a lease to add to the lease store.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+    lease->type_ = Lease::TYPE_PD;
+
+    // Set the lease state to STATE_DEFAULT so it classes should be counted.
+    lease->state_ = Lease::STATE_DEFAULT;
+
+    // Add class list 1 to the lease.
+    lease->setContext(ctx1);
+
+    // Add the lease to the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->addLease(lease));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("water", Lease::TYPE_PD));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_PD));
+
+    // Re-fetch lease. This returns a copy of the persisted lease, which is
+    // what Kea logic always does. Fetches a copy.  Otherwise we're changing
+    // the persisted lease which would make old and new the same thing.
+    lease = lmptr_->getLease6(Lease::TYPE_PD, lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Change the class list.
+    lease->setContext(ctx2);
+
+    // Update the lease in the lease store and verify class lease counts.
+    ASSERT_NO_THROW_LOG(lmptr_->updateLease6(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_PD));
+    EXPECT_EQ(1, lmptr_->getClassLeaseCount("melon", Lease::TYPE_PD));
+
+    lease = lmptr_->getLease6(Lease::TYPE_PD, lease->addr_);
+    ASSERT_TRUE(lease);
+
+    // Now delete the lease from the store and verify counts.
+    ASSERT_NO_THROW_LOG(lmptr_->deleteLease(lease));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", Lease::TYPE_PD));
+    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", Lease::TYPE_PD));
+
+    lease = lmptr_->getLease6(Lease::TYPE_PD, lease->addr_);
+    ASSERT_FALSE(lease);
+}
+
+TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
+    startBackend(V4);
+
+    // Create a subnet
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+    Pool4Ptr pool;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 777));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    Memfile_LeaseMgr* memfile_mgr = dynamic_cast<Memfile_LeaseMgr*>(lmptr_);
+    ASSERT_TRUE(memfile_mgr);
+
+    // Verify class lease counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Structure that describes a recipe for a lease.
+    struct Recipe {
+        std::string address_;
+        uint32_t state_;
+        std::list<ClientClass> classes_;
+    };
+
+    // List of lease recipes.
+    std::list<Recipe> recipes{
+        { "192.0.1.100", Lease::STATE_DEFAULT, {"water", "slice"} },
+        { "192.0.1.101", Lease::STATE_DEFAULT, {"melon"} },
+        { "192.0.1.102", Lease::STATE_DEFAULT, {"melon", "slice"} }
+    };
+
+    // Bake all the leases.
+    for ( auto recipe : recipes ) {
+        Lease4Ptr lease = makeLease4(recipe.address_, 777, recipe.state_, false);
+        ElementPtr ctx = makeContextWithClasses(recipe.classes_);
+        lease->setContext(makeContextWithClasses(recipe.classes_));
+        ASSERT_NO_THROW_LOG(memfile_mgr->addLease(lease));
+    }
+
+    // Verify counts are as expected.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Clear counts
+    ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
+
+    // Verify counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Recount
+    ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases4());
+
+    // Verify counts are recounted correctly.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+}
+
+TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
+    startBackend(V6);
+
+    // Create a subnet
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+
+    subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, 777));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    Memfile_LeaseMgr* memfile_mgr = dynamic_cast<Memfile_LeaseMgr*>(lmptr_);
+    ASSERT_TRUE(memfile_mgr);
+
+    // Verify class lease counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Structure that describes a recipe for a lease.
+    struct Recipe {
+        Lease::Type ltype_;
+        std::string address_;
+        uint32_t prefix_len_;
+        uint32_t state_;
+        std::list<ClientClass> classes_;
+    };
+
+    // List of lease recipes.
+    std::list<Recipe> recipes{
+        { Lease::TYPE_NA, "3001::1", 0, Lease::STATE_DEFAULT, {"water", "slice"} },
+        { Lease::TYPE_NA, "3001::2", 0, Lease::STATE_DEFAULT, {"melon"} },
+        { Lease::TYPE_NA, "3001::3", 0, Lease::STATE_DEFAULT, {"melon", "slice"} },
+
+        { Lease::TYPE_PD, "3001:1:2:0100::", 112, Lease::STATE_DEFAULT, {"grapes", "slice"} },
+        { Lease::TYPE_PD, "3001:1:2:0200::", 112, Lease::STATE_DEFAULT, {"wrath"} },
+        { Lease::TYPE_PD, "3001:1:2:0300::", 112, Lease::STATE_DEFAULT, {"wrath", "slice"} },
+    };
+
+    // Bake all the leases.
+    for ( auto recipe : recipes ) {
+        Lease6Ptr lease = makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, false);
+        ElementPtr ctx = makeContextWithClasses(recipe.classes_);
+        lease->setContext(makeContextWithClasses(recipe.classes_));
+        ASSERT_NO_THROW_LOG(memfile_mgr->addLease(lease));
+    }
+
+    // Verify counts are as expected.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Clear counts
+    ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
+
+    // Verify counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Recount
+    ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases6());
+
+    // Verify counts are recounted correctly.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 }
 
 }  // namespace

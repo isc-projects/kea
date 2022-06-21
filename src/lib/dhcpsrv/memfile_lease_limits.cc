@@ -14,7 +14,8 @@ namespace isc {
 namespace dhcp {
 
 size_t
-ClassLeaseCounter::getClassCount(const ClientClass& client_class, const Lease::Type& ltype) {
+ClassLeaseCounter::getClassCount(const ClientClass& client_class,
+                                 const Lease::Type& ltype) {
     ClassCountMap& leases_by_class = getCountMap(ltype);
     auto it = leases_by_class.find(client_class);
     if (it == leases_by_class.end()) {
@@ -114,11 +115,6 @@ ClassLeaseCounter::updateLease(LeasePtr new_lease, LeasePtr old_lease) {
         isc_throw(BadValue, "updateLease(): old_lease cannot be empty");
     }
 
-    if (new_lease->getType() != old_lease->getType()) {
-        // Leases cannot change type, but I don't know if we care?
-        isc_throw(BadValue, "updateLease(): lease types do not match?");
-    }
-
     ConstElementPtr new_classes = getLeaseClientClasses(new_lease);
     uint32_t new_state = new_lease->state_;
 
@@ -126,7 +122,10 @@ ClassLeaseCounter::updateLease(LeasePtr new_lease, LeasePtr old_lease) {
     uint32_t old_state = old_lease->state_;
 
     // Did we change states or classes?
-    if (old_state != new_state || old_classes != new_classes) {
+    // Note we do not worry about lease type changes, because its makes no
+    // business sense to repurpose a lease as a different type. Other than
+    // some unit tests unrelated to this it never occurs in the code.
+    if ((old_state != new_state) || (old_classes != new_classes)) {
         // Old classes are moving out of a counted state.
         if (old_state == Lease::STATE_DEFAULT) {
             adjustClassCounts(old_classes, -1, old_lease->getType());

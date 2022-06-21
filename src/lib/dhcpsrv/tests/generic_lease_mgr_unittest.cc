@@ -2914,6 +2914,7 @@ GenericLeaseMgrTest::makeLease4(const std::string& address,
     if (user_context) {
         lease->setContext(user_context);
     }
+
     EXPECT_TRUE(lmptr_->addLease(lease));
     return lease;
 }
@@ -2938,6 +2939,7 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
     if (user_context) {
         lease->setContext(user_context);
     }
+
     EXPECT_TRUE(lmptr_->addLease(lease));
     return lease;
 }

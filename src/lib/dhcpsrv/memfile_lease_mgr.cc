@@ -715,6 +715,9 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
 
+    // Increment class lease counters.
+    class_lease_counter_.addLease(lease);
+
     return (true);
 }
 
@@ -750,6 +753,9 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    // Increment class lease counters.
+    class_lease_counter_.addLease(lease);
 
     return (true);
 }
@@ -1412,6 +1418,9 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, *lease_it);
+
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
 }
@@ -1459,6 +1468,9 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, *lease_it);
+
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
 }
@@ -1500,7 +1512,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
                 return false;
             }
         }
+
         storage4_.erase(l);
+
+        // Decrement class lease counters.
+        class_lease_counter_.removeLease(lease);
+
         return (true);
     }
 }
@@ -1542,7 +1559,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
                 return false;
             }
         }
+
         storage6_.erase(l);
+
+        // Decrement class lease counters.
+        class_lease_counter_.removeLease(lease);
+
         return (true);
     }
 }
@@ -2057,6 +2079,48 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
         .arg(subnet_id).arg(num);
 
     return (num);
+}
+
+
+void
+Memfile_LeaseMgr::recountClassLeases4() {
+    auto & idx = storage4_.get<AddressIndexTag>();
+
+    auto lower = idx.begin();
+    auto upper = idx.end();
+
+    for (auto lease = lower; lease != upper; ++lease) {
+        // Bump the appropriate accumulator
+        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(*lease);
+        }
+    }
+}
+
+void
+Memfile_LeaseMgr::recountClassLeases6() {
+    auto & idx = storage6_.get<AddressIndexTag>();
+
+    auto lower = idx.begin();
+    auto upper = idx.end();
+
+    for (auto lease = lower; lease != upper; ++lease) {
+        // Bump the appropriate accumulator
+        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(*lease);
+        }
+    }
+}
+
+size_t
+Memfile_LeaseMgr::getClassLeaseCount(const ClientClass& client_class,
+                                     const Lease::Type& ltype /* = Lease::TYPE_V4*/) {
+    return(class_lease_counter_.getClassCount(client_class, ltype));
+}
+
+void
+Memfile_LeaseMgr::clearClassLeaseCounts() {
+    return(class_lease_counter_.clear());
 }
 
 std::string
