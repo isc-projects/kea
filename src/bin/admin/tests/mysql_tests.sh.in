@@ -405,6 +405,130 @@ mysql_upgrade_13_to_14_test() {
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # -- lease counting tests --
+
+    # Clean up.
+    run_command \
+        mysql_execute 'DELETE FROM lease4; DELETE FROM lease6;'
+    assert_eq 0 "${EXIT_CODE}" 'DELETE FROM lease'
+
+    # Populate the lease tables.
+    run_command \
+        mysql_execute "
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (100,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (101,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (102,1,2,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (103,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (104,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (105,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (100,0,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (101,0,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (102,0,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (103,0,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (104,2,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (105,2,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (106,2,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (107,2,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
+        "
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO leases when upgrading from 13 to 14 failed. expected %d, returned %d'
+
+    for v in 4 6; do
+        if test "${v}" = 4; then
+            lease_type='address'
+        else
+            lease_type='IA_NA'
+        fi
+
+        # Check that client classes were counted correctly.
+        query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1;"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq 2 "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        # -- Verify some calls to checkLeaseXLimits(). --
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 } ] } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 } ] } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 } ] } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 }, { \"name\": \"bar\", \"address-limit\": 1 } ], \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 1, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"client-class\", \"name\": \"foo\", \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq "{\"limit-type\": \"subnet\", \"id\": 1, \"lease-type\": \"${lease_type}\", \"limit\": 2, \"count\": 2}" "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+    done
+
+    # Clean up.
+    query='DELETE FROM lease4; DELETE FROM lease6;'
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
 }
 
 mysql_upgrade_test() {
@@ -421,12 +545,12 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 14.0.
+    # Ok, we have a 1.0 database. Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
 
-    # Verify upgraded schema reports version 14.0.
+    # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
@@ -1074,13 +1198,16 @@ mysql_lease4_dump_test() {
     # Clean up any test files left from prior failed runs unless -y was provided in which case
     # explicitly create the file to check that it will be automatically deleted.
     # files should be removed by kea-admin itself.
-    if printf '%s' "${@}" | grep 'y' > /dev/null; then
-        touch "${output_file}"
-        touch "${output_file}.tmp"
-    else
-        rm -f "${output_file}"
-        rm -f "${output_file}.tmp"
-    fi
+    for i in "${output_file}" \
+             "${output_file}.tmp" \
+             "/tmp/$(basename "${output_file}").tmp" \
+    ; do
+        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+            touch "${i}"
+        else
+            rm -f "${i}"
+        fi
+    done
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1134,13 +1261,16 @@ mysql_lease6_dump_test() {
     # Clean up any test files left from prior failed runs unless -y was provided in which case
     # explicitly create the file to check that it will be automatically deleted.
     # files should be removed by kea-admin itself.
-    if printf '%s' "${@}" | grep 'y' > /dev/null; then
-        touch "${output_file}"
-        touch "${output_file}.tmp"
-    else
-        rm -f "${output_file}"
-        rm -f "${output_file}.tmp"
-    fi
+    for i in "${output_file}" \
+             "${output_file}.tmp" \
+             "/tmp/$(basename "${output_file}").tmp" \
+    ; do
+        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+            touch "${i}"
+        else
+            rm -f "${i}"
+        fi
+    done
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1193,15 +1323,17 @@ mysql_lease4_upload_test() {
     # Clean up any test files left from prior failed runs unless -y was provided in which case
     # explicitly create the file to check that it will be automatically deleted.
     # files should be removed by kea-admin itself.
-    if printf '%s' "${@}" | grep 'y' > /dev/null; then
-        touch "${input_file}.tmp"
-        touch "${output_file}"
-        touch "${output_file}.tmp"
-    else
-        rm -f "${input_file}.tmp"
-        rm -f "${output_file}"
-        rm -f "${output_file}.tmp"
-    fi
+    for i in "${input_file}.tmp" \
+             "${output_file}" \
+             "${output_file}.tmp" \
+             "/tmp/$(basename "${input_file}").tmp" \
+    ; do
+        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+            touch "${i}"
+        else
+            rm -f "${i}"
+        fi
+    done
 
     # Initialize the database.
     run_command \
@@ -1250,15 +1382,17 @@ mysql_lease6_upload_test() {
     # Clean up any test files left from prior failed runs unless -y was provided in which case
     # explicitly create the file to check that it will be automatically deleted.
     # files should be removed by kea-admin itself.
-    if printf '%s' "${@}" | grep 'y' > /dev/null; then
-        touch "${input_file}.tmp"
-        touch "${output_file}"
-        touch "${output_file}.tmp"
-    else
-        rm -f "${input_file}.tmp"
-        rm -f "${output_file}"
-        rm -f "${output_file}.tmp"
-    fi
+    for i in "${input_file}.tmp" \
+             "${output_file}" \
+             "${output_file}.tmp" \
+             "/tmp/$(basename "${input_file}").tmp" \
+    ; do
+        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+            touch "${i}"
+        else
+            rm -f "${i}"
+        fi
+    done
 
     # Initialize the database.
     run_command \
@@ -1454,7 +1588,7 @@ mysql_lease_stat_upgrade_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 4.0 database with leases. Let's upgrade it to 6.0
+    # Ok, we have a 4.0 database with leases. Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
