@@ -2084,6 +2084,7 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
 void
 Memfile_LeaseMgr::recountClassLeases4() {
+    class_lease_counter_.clear();
     auto & idx = storage4_.get<AddressIndexTag>();
 
     auto lower = idx.begin();
@@ -2099,6 +2100,7 @@ Memfile_LeaseMgr::recountClassLeases4() {
 
 void
 Memfile_LeaseMgr::recountClassLeases6() {
+    class_lease_counter_.clear();
     auto & idx = storage6_.get<AddressIndexTag>();
 
     auto lower = idx.begin();

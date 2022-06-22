@@ -792,24 +792,6 @@ public:
         return (io_service_);
     }
 
-    /// @brief Recount the leases per class for V4 leases.
-    ///
-    /// Clears the current class-lease counts and then iterates
-    /// over existing leases, retabulating counts based on class
-    /// lists in each lease user-context.
-    ///
-    /// For RDBMs back ends this is a NOP.
-    virtual void recountClassLeases4() {}
-
-    /// @brief Recount the leases per class for V6 leases.
-    ///
-    /// Clears the current class-lease counts and then iterates
-    /// over existing leases, retabulating counts based on class
-    /// lists in each lease user-context.
-    ///
-    /// For RDBMs back ends this is a NOP.
-    virtual void recountClassLeases6() {}
-
     /// @brief Returns the class lease count for a given class and lease type.
     ///
     /// @param client_class client class for which the count is desired
