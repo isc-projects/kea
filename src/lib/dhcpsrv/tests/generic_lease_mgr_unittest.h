@@ -509,6 +509,28 @@ public:
     void checkLeaseRange(const Lease4Collection& returned,
                          const std::vector<std::string>& expected_addresses);
 
+    /// @brief Create a user-context with a given list of classes
+    ///
+    /// Creates an Element::map with the following content:
+    ///
+    /// {
+    ///     "classes": [ "class0", "class1", ... ]
+    /// }
+    ///
+    /// @param classes  list of classes to include in the context
+    /// @return ElementPtr containing the user-context
+    data::ElementPtr makeContextWithClasses(const std::list<ClientClass>& classes);
+
+    /// @brief Tests class lease counts when adding, updating, and deleting
+    /// leases with class lists.
+    void testClassLeaseCount4();
+
+    /// @brief Tests class lease counts when adding, updating, and deleting
+    /// leases with class lists.
+    ///
+    /// @param ltype type of lease, either Lease::TYPE_NA or Lease::TYPE_PD
+    void testClassLeaseCount6(Lease::Type ltype);
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;
 
