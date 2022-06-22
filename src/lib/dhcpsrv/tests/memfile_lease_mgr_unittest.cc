@@ -9,7 +9,6 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
-#include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -41,7 +40,6 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
