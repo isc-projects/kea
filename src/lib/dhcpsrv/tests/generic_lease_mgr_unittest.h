@@ -127,11 +127,13 @@ public:
     /// @param address - IPv4 address for the lease
     /// @param subnet_id - subnet ID to which the lease belongs
     /// @param state - the state of the lease
+    /// @param user_context - the lease's user context
     ///
     /// @return pointer to created Lease4
     Lease4Ptr makeLease4(const std::string& address,
                          const SubnetID& subnet_id,
-                         const uint32_t state = Lease::STATE_DEFAULT);
+                         const uint32_t state = Lease::STATE_DEFAULT,
+                         const data::ConstElementPtr user_context = data::ConstElementPtr());
 
     /// @brief Constructs a minimal IPv6 lease and adds it to the lease storage
     ///
@@ -142,13 +144,15 @@ public:
     /// @param prefix_len = length of the prefix (should be 0 for TYPE_NA)
     /// @param subnet_id - subnet ID to which the lease belongs
     /// @param state - the state of the lease
+    /// @param user_context - the lease's user context
     ///
     /// @return pointer to created Lease6
     Lease6Ptr makeLease6(const Lease::Type& type,
                          const std::string& address,
                          uint8_t prefix_len,
                          const SubnetID& subnet_id,
-                         const uint32_t state = Lease::STATE_DEFAULT);
+                         const uint32_t state = Lease::STATE_DEFAULT,
+                         const data::ConstElementPtr user_context = data::ConstElementPtr());
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
@@ -488,6 +492,9 @@ public:
     /// @note We can check the lease type change too but in the real
     /// world this never happens.
     void testLeaseStatsQueryAttribution6();
+
+    /// @brief Checks a few limit checking scenarios.
+    void testLeaseLimits();
 
     /// @brief Compares LeaseQueryStats content to expected set of rows
     ///

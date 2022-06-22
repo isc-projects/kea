@@ -2066,7 +2066,7 @@ Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& /* user_context */) const 
 
 std::string
 Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& /* user_context */) const {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits6() not implemented");
 }
 
 bool

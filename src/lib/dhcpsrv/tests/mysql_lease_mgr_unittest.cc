@@ -14,6 +14,7 @@
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 
@@ -1076,9 +1077,40 @@ TEST_F(MySqlLeaseMgrTest, leaseStatsQueryAttribution6MultiThreading) {
 /// support and prints an informative message.
 TEST_F(MySqlLeaseMgrTest, isJsonSupported) {
     bool json_supported;
-    ASSERT_NO_THROW(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
     std::cout << "JSON support is " << (json_supported ? "" : "not ") <<
                  "enabled in the database." << std::endl;
+}
+
+/// @brief Checks that a null user context allows allocation.
+TEST_F(MySqlLeaseMgrTest, checkLimitsNull) {
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(nullptr));
+    EXPECT_TRUE(text.empty());
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+/// @brief Checks a few limit checking scenarios.
+TEST_F(MySqlLeaseMgrTest, checkLimits) {
+    // Limit checking should be precluded at reconfiguration time on systems
+    // that don't have JSON support in the database. It's fine if it throws.
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits4(
+            isc::data::Element::createMap()), isc::db::DbOperationError,
+            "unable to set up for storing all results for "
+            "<SELECT checkLease4Limits(?)>, reason: FUNCTION "
+            "keatest.JSON_EXTRACT does not exist (error code 1305)");
+        ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits6(
+            isc::data::Element::createMap()), isc::db::DbOperationError,
+            "unable to set up for storing all results for "
+            "<SELECT checkLease6Limits(?)>, reason: FUNCTION "
+            "keatest.JSON_EXTRACT does not exist (error code 1305)");
+        return;
+    }
+
+    // The rest of the checks are only for databases with JSON support.
+    testLeaseLimits();
 }
 
 }  // namespace

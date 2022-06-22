@@ -16,6 +16,7 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -2893,7 +2894,8 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
 Lease4Ptr
 GenericLeaseMgrTest::makeLease4(const std::string& address,
                                 const SubnetID& subnet_id,
-                                const uint32_t state) {
+                                const uint32_t state,
+                                const ConstElementPtr user_context /* = ConstElementPtr() */) {
     Lease4Ptr lease(new Lease4());
 
     // set the address
@@ -2909,6 +2911,9 @@ GenericLeaseMgrTest::makeLease4(const std::string& address,
     lease->cltt_ = 168256;
     lease->subnet_id_ = subnet_id;
     lease->state_ = state;
+    if (user_context) {
+        lease->setContext(user_context);
+    }
     EXPECT_TRUE(lmptr_->addLease(lease));
     return lease;
 }
@@ -2918,7 +2923,8 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
                                 const std::string& address,
                                 uint8_t prefix_len,
                                 const SubnetID& subnet_id,
-                                const uint32_t state) {
+                                const uint32_t state,
+                                const ConstElementPtr user_context /* = ConstElementPtr() */) {
     IOAddress addr(address);
 
     // make a DUID from the address
@@ -2929,6 +2935,9 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
                                16000, 24000, subnet_id, HWAddrPtr(),
                                prefix_len));
     lease->state_ = state;
+    if (user_context) {
+        lease->setContext(user_context);
+    }
     EXPECT_TRUE(lmptr_->addLease(lease));
     return lease;
 }
@@ -3891,6 +3900,79 @@ GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
 
     // Verify contents
     checkQueryAgainstRowSet(query, expected_rows);
+}
+
+void
+GenericLeaseMgrTest::testLeaseLimits() {
+    std::string text;
+    ElementPtr user_context;
+
+    // -- A limit of 0 always denies a lease. --
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 0 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 0 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 0 for subnet ID 1, current lease count 0");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 0 for subnet ID 1, current lease count 0");
+
+    // -- A limit of 1 with no leases should allow a lease. --
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 1 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "");
+
+    // -- A limit of 1 with 1 current lease should deny further leases. --
+
+    makeLease4("192.0.1.1", 1, Lease::STATE_DEFAULT, Element::fromJSON(
+        R"({ "ISC": { "client-classes": [ "foo" ] } })"));
+
+    makeLease6(Lease::TYPE_NA, "2001:db8::", 0, 1, Lease::STATE_DEFAULT, Element::fromJSON(
+        R"({ "ISC": { "client-classes": [ "foo" ] } })"));
+
+    makeLease6(Lease::TYPE_PD, "2001:db8:1::", 64, 1, Lease::STATE_DEFAULT, Element::fromJSON(
+        R"({ "ISC": { "client-classes": [ "foo" ] } })"));
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 1 for client class \"foo\", current lease count 1");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 1 for client class \"foo\", current lease count 1");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "prefix-limit": 1 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "prefix limit 1 for client class \"foo\", current lease count 1");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 1 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 1 for subnet ID 1, current lease count 1");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 1 for subnet ID 1, current lease count 1");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "prefix-limit": 1 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "prefix limit 1 for subnet ID 1, current lease count 1");
 }
 
 }  // namespace test
