@@ -82,6 +82,10 @@ public:
     /// @brief The server current authentication configuration.
     ///
     /// Default to the empty HttpAuthConfigPtr.
+    ///
+    /// @note: This is currently not used, except in unit-tests. For the time being,
+    /// we postponed writing the corresponding code in the HA, so http_auth_config_
+    /// is left to its empty default value.
     static http::HttpAuthConfigPtr http_auth_config_;
 
     /// @brief The server command accept list.
