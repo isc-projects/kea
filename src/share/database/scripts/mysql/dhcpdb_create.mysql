@@ -4521,7 +4521,8 @@ BEGIN
     DECLARE length INT;
     DECLARE i INT;
 
-    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
     -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
     -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
     DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
@@ -4578,7 +4579,7 @@ BEGIN
                 SET class = JSON_UNQUOTE(JSON_EXTRACT(old_client_classes, CONCAT('\$[', i, ']')));
 
                 -- Decrement the lease count if the record exists.
-                UPDATE lease4_stat_by_client_class SET leases = leases - 1
+                UPDATE lease4_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
                     WHERE client_class = class;
 
                 SET i = i + 1;
@@ -4618,7 +4619,8 @@ BEGIN
     DECLARE length INT;
     DECLARE i INT;
 
-    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
     -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
     -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
     DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
@@ -4635,7 +4637,7 @@ BEGIN
             SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
 
             -- Decrement the lease count if the record exists.
-            UPDATE lease4_stat_by_client_class SET leases = leases - 1
+            UPDATE lease4_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
                 WHERE client_class = class;
 
             SET i = i + 1;
@@ -4656,7 +4658,8 @@ BEGIN
     DECLARE length INT;
     DECLARE i INT;
 
-    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
     -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
     -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
     DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
@@ -4714,7 +4717,7 @@ BEGIN
                 SET class = JSON_UNQUOTE(JSON_EXTRACT(old_client_classes, CONCAT('\$[', i, ']')));
 
                 -- Decrement the lease count if the record exists.
-                UPDATE lease6_stat_by_client_class SET leases = leases - 1
+                UPDATE lease6_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
                     WHERE client_class = class AND lease_type = old_lease_type;
 
                 SET i = i + 1;
@@ -4755,7 +4758,8 @@ BEGIN
     DECLARE length INT;
     DECLARE i INT;
 
-    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
     -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
     -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
     DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
@@ -4772,7 +4776,7 @@ BEGIN
             SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
 
             -- Decrement the lease count if the record exists.
-            UPDATE lease6_stat_by_client_class SET leases = leases - 1
+            UPDATE lease6_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
                 WHERE client_class = class AND lease_type = old_lease_type;
 
             SET i = i + 1;

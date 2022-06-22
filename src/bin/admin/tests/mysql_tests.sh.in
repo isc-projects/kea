@@ -618,12 +618,59 @@ mysql_upgrade_13_to_14_test() {
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
     done
 
-    # Clean up.
-    query='DELETE FROM lease4; DELETE FROM lease6;'
-    run_command \
-        mysql_execute "${query}"
-    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
-    assert_str_eq "" "${OUTPUT}" "${query}: expected output %s, returned %s"
+    # Check that leases counters cannot go negative.
+    for v in 4 6; do
+        query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        # Artifically change the subnet counter from 2 down to 1.
+        query="UPDATE lease${v}_stat SET leases = 1 WHERE subnet_id = 1 AND state = 0"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        if test "${json_supported}" = 1; then
+            query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
+            run_command \
+                mysql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+            # Artifically change the client class counter from 2 down to 1.
+            query="UPDATE lease${v}_stat SET leases = 1 WHERE client_class = 'foo'"
+            run_command \
+                mysql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+
+        # Clean up.
+        query="DELETE FROM lease${v}"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        # SELECT should finish succesfully and the subnet counter should be 0.
+        query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+        assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+        if test "${json_supported}" = 1; then
+            # SELECT should finish succesfully and the client class counter should be 0.
+            query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
+            run_command \
+                mysql_execute "${query}"
+            assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+            assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
+        fi
+    done
 }
 
 mysql_upgrade_test() {
