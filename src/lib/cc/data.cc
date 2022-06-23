@@ -1165,9 +1165,9 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
                 bool found = false;
+                ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
                 for (auto& left : element->listValue()) {
                     ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
-                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
                     // Check if the elements refer to the same configuration
                     // entity.
                     if (f->second.match_(mutable_left, mutable_right)) {
@@ -1313,9 +1313,9 @@ extend(const std::string& container, const std::string& extension,
             // hierarchy.
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
+                ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
                 for (auto& left : element->listValue()) {
                     ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
-                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
                     if (container == key) {
                         alter = true;
                     }

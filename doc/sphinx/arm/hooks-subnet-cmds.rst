@@ -379,8 +379,8 @@ not be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-update``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet4-update``. The commands described in :ref:`hooks-host-cmds` should be
+used to update, remove, and modify static reservations.
 
 ::
 
@@ -426,8 +426,8 @@ not be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-update``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet6-update``. The commands described in :ref:`hooks-host-cmds` should be
+used to update, remove, and modify static reservations.
 
 ::
 
@@ -572,17 +572,17 @@ A successful response may look like this:
 The ``subnet4-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update (overwrite) parts of a single subnet in the
-existing server configuration. This operation has no impact on other subnets.
-The subnet identifier is used to identify the subnet to update; it must be
-specified and must be unique among all subnets. The subnet prefix should
-not be updated.
+This command is used to update by adding or overwriting parts of a single subnet
+in the existing server configuration. This operation has no impact on other
+subnets. The subnet identifier is used to identify the subnet to update; it must
+be specified and must be unique among all subnets. The subnet prefix should not
+be updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-delta-add``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet4-delta-add``. The commands described in :ref:`hooks-host-cmds` should
+be used to update, remove, and modify static reservations.
 
 ::
 
@@ -590,19 +590,31 @@ to update, remove, and modify static reservations.
        "command": "subnet4-delta-add",
        "arguments": {
            "subnet4": [ {
-               ...
+               "valid-lifetime": 120,
                "id": 123,
                "subnet": "10.20.30.0/24",
                "option-data": [
-                   ...
+                   {
+                       "always-send": false,
+                       "code": 3,
+                       "csv-format": true,
+                       "data": "192.0.3.1",
+                       "name": "routers",
+                       "space": "dhcp4"
+                   }
                ],
                "pools": [
-                   ...
                    {
-                       ...
                        "pool": "10.20.30.1-10.20.30.10",
                        "option-data": [
-                           ...
+                           {
+                               "always-send": false,
+                               "code": 4,
+                               "csv-format": true,
+                               "data": "192.0.4.1",
+                               "name": "time-servers",
+                               "space": "dhcp4"
+                           }
                        ]
                    }
                ]
@@ -627,22 +639,27 @@ The response to this command has the following structure:
        }
    }
 
+The command updates subnet "10.20.30.0/24" with id 123 by changing the valid
+lifetime, adding or changing the subnet level option 3 ("routers"), by adding
+or changing the pool "10.20.30.1-10.20.30.10" and by adding or changing the pool
+level option 4 ("time-servers").
+
 .. _command-subnet6-delta-add:
 
 The ``subnet6-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update (overwrite) parts of a single subnet in the
-existing server configuration. This operation has no impact on other subnets.
-The subnet identifier is used to identify the subnet to update; it must be
-specified and must be unique among all subnets. The subnet prefix should
-not be updated.
+This command is used to update by adding or overwriting parts of a single subnet
+in the existing server configuration. This operation has no impact on other
+subnets. The subnet identifier is used to identify the subnet to update; it must
+be specified and must be unique among all subnets. The subnet prefix should not
+be updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-delta-add``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet6-delta-add``. The commands described in :ref:`hooks-host-cmds` should
+be used to update, remove, and modify static reservations.
 
 ::
 
@@ -650,31 +667,48 @@ to update, remove, and modify static reservations.
        "command": "subnet6-delta-add",
        "arguments": {
            "subnet6": [ {
-               ...
+               "valid-lifetime": 120,
                "id": 243,
                "subnet": "2001:db8:1::/64",
                "option-data": [
-                   ...
+                   {
+                       "always-send": false,
+                       "code": 23,
+                       "csv-format": true,
+                       "data": "3000::3:1",
+                       "name": "dns-servers",
+                       "space": "dhcp6"
+                   }
                ],
                "pd-pools": [
-                   ...
                    {
-                       ...
                        "prefix": "2001:db8:2::",
                        "prefix-len": 48,
                        "delegated-len": 64,
                        "option-data": [
-                           ...
+                           {
+                               "always-send": false,
+                               "code": 22,
+                               "csv-format": true,
+                               "data": "3000::4:1",
+                               "name": "sip-server-addr",
+                               "space": "dhcp6"
+                           }
                        ]
                    }
                ],
                "pools": [
-                   ...
                    {
-                       ...
                        "pool": "2001:db8:1::1-2001:db8:1::10",
                        "option-data": [
-                           ...
+                           {
+                               "always-send": false,
+                               "code": 31,
+                               "csv-format": true,
+                               "data": "3000::5:1",
+                               "name": "sntp-servers",
+                               "space": "dhcp6"
+                           }
                        ]
                    }
                ]
@@ -699,22 +733,29 @@ The response to this command has the following structure:
        }
    }
 
+The command updates subnet "2001:db8:1::/64" with id 243 by changing the valid
+lifetime, adding or changing the subnet level option 23 ("dns-servers"), by
+adding or changing the pool "2001:db8:1::1-2001:db8:1::10", by adding or
+changing the pool level option 31 ("sntp-servers"), by adding or changing the
+pd-pool "2001:db8:2::" with prefix-len 48 and by adding or changing the pd-pool
+level option 22 ("sip-server-addr").
+
 .. _command-subnet4-delta-del:
 
 The ``subnet4-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update (overwrite) parts of a single subnet in the
+This command is used to update by removing parts of a single subnet in the
 existing server configuration. This operation has no impact on other subnets.
 The subnet identifier is used to identify the subnet to update; it must be
-specified and must be unique among all subnets. The subnet prefix should
-not be updated.
+specified and must be unique among all subnets. The subnet prefix should not be
+updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-delta-del``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet4-delta-del``. The commands described in :ref:`hooks-host-cmds` should
+be used to update, remove, and modify static reservations.
 
 The command is flexible and can delete the part of the subnet by either
 specifying the entire object that needs to be deleted, or just the keys
@@ -729,22 +770,16 @@ to the default 'dhcp4' space.
        "command": "subnet4-delta-del",
        "arguments": {
            "subnet4": [ {
-               ...
+               "valid-lifetime": 120,
                "id": 123,
                "subnet": "10.20.30.0/24",
                "option-data" [
-                   ...
-                   { "code": 23 },
-                   { "code": 31 }
+                   { "name": "routers" }
                ]
                "pools": [
-                   ...
                    {
-                       ...
                        "option-data": [
-                           ...
-                           { "code": 23 },
-                           { "code": 31 }
+                           { "code": 4 }
                        ]
                        "pool": "10.20.30.11-10.20.30.20"
                    },
@@ -773,22 +808,27 @@ The response to this command has the following structure:
        }
    }
 
+The command updates subnet "10.20.30.0/24" with id 123 by removing the valid
+lifetime, removing the subnet level option 3 ("routers"), by removing the pool
+"10.20.30.21-10.20.30.30" and by removing the pool level option 4
+("time-servers") in pool "10.20.30.11-10.20.30.20".
+
 .. _command-subnet6-delta-del:
 
 The ``subnet6-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update (overwrite) parts of a single subnet in the
+This command is used to update by removing parts of a single subnet in the
 existing server configuration. This operation has no impact on other subnets.
 The subnet identifier is used to identify the subnet to update; it must be
-specified and must be unique among all subnets. The subnet prefix should
-not be updated.
+specified and must be unique among all subnets. The subnet prefix should not be
+updated.
 
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-delta-del``. The commands described in :ref:`hooks-host-cmds` should be used
-to update, remove, and modify static reservations.
+``subnet6-delta-del``. The commands described in :ref:`hooks-host-cmds` should
+be used to update, remove, and modify static reservations.
 
 The command is flexible and can delete the part of the subnet by either
 specifying the entire object that needs to be deleted, or just the keys
@@ -804,25 +844,19 @@ option belongs to the default 'dhcp6' space.
        "command": "subnet6-delta-del",
        "arguments": {
            "subnet6": [ {
-               ...
+               "valid-lifetime": 120,
                "id": 234,
                "subnet": "2001:db8:1::/64",
                "option-data" [
-                   ...
-                   { "code": 23 },
-                   { "code": 31 }
+                   { "name": "dns-servers" }
                ]
                "pd-pools": [
-                   ...
                    {
-                       ...
                        "prefix": "2001:db8:3::",
                        "prefix-len": 48,
                        "delegated-len": 64,
                        "option-data": [
-                           ...
-                           { "code": 23 },
-                           { "code": 31 }
+                           { "code": 22 }
                        ]
                    },
                    {
@@ -832,12 +866,8 @@ option belongs to the default 'dhcp6' space.
                    }
                ],
                "pools": [
-                   ...
                    {
-                       ...
                        "option-data": [
-                           ...
-                           { "code": 23 },
                            { "code": 31 }
                        ]
                        "pool": "2001:db8:1::11-2001:db8:1::20"
@@ -866,6 +896,13 @@ The response to this command has the following structure:
            ]
        }
    }
+
+The command updates subnet "2001:db8:1::/64" with id 243 by removing the valid
+lifetime, removing the subnet level option 23 ("dns-servers"), by removing the
+pool "2001:db8:1::21-2001:db8:1::30", by removing the pool level option 31
+("sntp-servers") in pool "2001:db8:1::11-2001:db8:1::20", by removing the
+pd-pool "2001:db8:4::" with prefix-len 48, by removing the pd-pool level option
+22 ("sip-server-addr") in pd-pool "2001:db8:3::" with prefix-len 48.
 
 .. _command-network4-list:
 

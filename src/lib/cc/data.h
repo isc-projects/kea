@@ -799,17 +799,13 @@ void removeIdentical(ElementPtr a, ConstElementPtr b);
 /// Raises a TypeError if a or b are not MapElements
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
-/// @brief Merges the data from other into element.
-/// (on the first level). Both elements must be
-/// MapElements.
-/// Every string,value pair in other is copied into element
-/// (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is a NullElement, in which case the
-/// key is removed from element, rather than setting the value to
-/// the given NullElement.
-/// This way, we can remove values from for instance maps with
-/// configuration data (which would then result in reverting back
-/// to the default).
+/// @brief Merges the data from other into element. (on the first level). Both
+/// elements must be MapElements. Every string, value pair in other is copied
+/// into element (the ElementPtr of value is copied, this is not a new object)
+/// Unless the value is a NullElement, in which case the key is removed from
+/// element, rather than setting the value to the given NullElement.
+/// This way, we can remove values from for instance maps with configuration
+/// data (which would then result in reverting back to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
@@ -844,7 +840,7 @@ struct HierarchyTraversalTest {
 typedef std::map<std::string, HierarchyTraversalTest> FunctionMap;
 
 /// @brief Hierarchy descriptor of the containers in a specific Element
-/// hierarchy tree. The position inside the vector indicates the level on which
+/// hierarchy tree. The position inside the vector indicates the level at which
 /// the respective containers are located.
 ///
 /// e.g.
@@ -859,7 +855,7 @@ typedef std::map<std::string, HierarchyTraversalTest> FunctionMap;
 typedef std::vector<FunctionMap> HierarchyDescriptor;
 
 /// @brief Merges the diff data by adding the missing elements from 'other'
-/// to 'element' (recursively). Both elements must be same Element type.
+/// to 'element' (recursively). Both elements must be the same Element type.
 /// Raises a TypeError if elements are not the same Element type.
 /// @note
 /// for non map and list elements the values are updated with the new values
@@ -880,8 +876,8 @@ void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
                   size_t idx = 0);
 
-/// @brief Merges the diff data by removing the existing elements from 'other'
-/// to 'element' (recursively). Both elements must be same Element type.
+/// @brief Merges the diff data by removing the data present in 'other' from
+/// 'element' (recursively). Both elements must be the same Element type.
 /// Raises a TypeError if elements are not the same Element type.
 /// for non map and list elements the values are set to NullElement
 /// for maps:
@@ -903,7 +899,7 @@ void mergeDiffDel(ElementPtr& element, ElementPtr& other,
 
 /// @brief Extends data by adding the specified 'extension' elements from
 /// 'other' inside the 'container' element (recursively). Both elements must be
-/// same Element type.
+/// the same Element type.
 /// Raises a TypeError if elements are not the same Element type.
 ///
 /// @param container The container holding the data that must be extended.
