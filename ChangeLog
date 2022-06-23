@@ -1,8 +1,8 @@
-2029.	[bug]		fdupont	
+2029.	[bug]		fdupont
 	The check of the subnet id in configuration is stricter:
 	values outside the 0..4294967295 are rejected. Note that
 	the value 0 means to leave Kea to assign itself the id.
-	(Gitlan #2086)
+	(Gitlab #2086)
 
 2028.	[build]		orbea, fdupont
 	Compatibility with LibreSSL 3.5.2 improved.
