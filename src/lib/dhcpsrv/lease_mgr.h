@@ -799,7 +799,7 @@ public:
     /// Lease::TYPE_V4.
     ///
     /// @return count of leases
-    /// @throw NotImplemented if a derviation does not override this.
+    /// @throw NotImplemented if a derivation does not override this.
     virtual size_t getClassLeaseCount(const ClientClass& client_class,
                                       const Lease::Type& ltype = Lease::TYPE_V4) {
         // For now we throw, ultimately this should be pure virtual.

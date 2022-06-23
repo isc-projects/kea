@@ -66,7 +66,7 @@ public:
     /// If no entry exists in container for the class and type, a new one is created.
     ///
     /// @param client_class client class to adjust
-    /// @param offset signed amount to add the current count
+    /// @param offset signed amount to add to the current count
     /// @param ltype lease type for which the count is desired, defaults
     /// to Lease::TYPE_V4
     void adjustClassCount(const ClientClass& client_class, int offset,
@@ -147,7 +147,7 @@ private:
 
     /// @brief Contains counts for classes for addresses.  This map is used
     /// to house either Lease::TYPE_V4 when used for V4 or Lease::TYPE_NA
-    /// when use for V6.
+    /// when used for V6.
     ClassCountMap addresses_by_class_;
 
     /// @brief Contains counts for classes for Lease::TYPE_PD.  Applicable
