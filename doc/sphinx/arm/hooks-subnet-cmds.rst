@@ -770,7 +770,7 @@ to the default 'dhcp4' space.
        "command": "subnet4-delta-del",
        "arguments": {
            "subnet4": [ {
-               "valid-lifetime": 120,
+               "valid-lifetime": 0,
                "id": 123,
                "subnet": "10.20.30.0/24",
                "option-data" [
@@ -812,6 +812,9 @@ The command updates subnet "10.20.30.0/24" with id 123 by removing the valid
 lifetime, removing the subnet level option 3 ("routers"), by removing the pool
 "10.20.30.21-10.20.30.30" and by removing the pool level option 4
 ("time-servers") in pool "10.20.30.11-10.20.30.20".
+The scalar values don't need to match what is configured, but still need to be
+present to maintain a valid json structure and to be a valid value to be able to
+be parsed.
 
 .. _command-subnet6-delta-del:
 
@@ -844,7 +847,7 @@ option belongs to the default 'dhcp6' space.
        "command": "subnet6-delta-del",
        "arguments": {
            "subnet6": [ {
-               "valid-lifetime": 120,
+               "valid-lifetime": 0,
                "id": 234,
                "subnet": "2001:db8:1::/64",
                "option-data" [
@@ -903,6 +906,9 @@ pool "2001:db8:1::21-2001:db8:1::30", by removing the pool level option 31
 ("sntp-servers") in pool "2001:db8:1::11-2001:db8:1::20", by removing the
 pd-pool "2001:db8:4::" with prefix-len 48, by removing the pd-pool level option
 22 ("sip-server-addr") in pd-pool "2001:db8:3::" with prefix-len 48.
+The scalar values don't need to match what is configured, but still need to be
+present to maintain a valid json structure and to be a valid value to be able to
+be parsed.
 
 .. _command-network4-list:
 
