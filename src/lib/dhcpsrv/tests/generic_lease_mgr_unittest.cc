@@ -3958,8 +3958,8 @@ GenericLeaseMgrTest::testLeaseLimits6() {
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "client-classes": [ { "name": "foo", "address-limit": 0 } ] } } })");
-    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "subnet": { "id": 1, "address-limit": 0 } } } })");

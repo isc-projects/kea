@@ -1113,7 +1113,7 @@ TEST_F(MySqlLeaseMgrTest, checkLimitsNull) {
 }
 
 /// @brief Checks a few limit checking scenarios.
-TEST_F(MySqlLeaseMgrTest, checkLimits) {
+TEST_F(MySqlLeaseMgrTest, checkLimits4) {
     // Limit checking should be precluded at reconfiguration time on systems
     // that don't have JSON support in the database. It's fine if it throws.
     if (!LeaseMgrFactory::instance().isJsonSupported()) {
@@ -1122,6 +1122,18 @@ TEST_F(MySqlLeaseMgrTest, checkLimits) {
             "unable to set up for storing all results for "
             "<SELECT checkLease4Limits(?)>, reason: FUNCTION "
             "keatest.JSON_EXTRACT does not exist (error code 1305)");
+        return;
+    }
+
+    // The rest of the checks are only for databases with JSON support.
+    testLeaseLimits4();
+}
+
+/// @brief Checks a few limit checking scenarios.
+TEST_F(MySqlLeaseMgrTest, checkLimits6) {
+    // Limit checking should be precluded at reconfiguration time on systems
+    // that don't have JSON support in the database. It's fine if it throws.
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
         ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits6(
             isc::data::Element::createMap()), isc::db::DbOperationError,
             "unable to set up for storing all results for "
@@ -1131,7 +1143,6 @@ TEST_F(MySqlLeaseMgrTest, checkLimits) {
     }
 
     // The rest of the checks are only for databases with JSON support.
-    testLeaseLimits4();
     testLeaseLimits6();
 }
 
