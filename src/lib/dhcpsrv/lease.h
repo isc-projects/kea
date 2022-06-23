@@ -360,7 +360,7 @@ struct Lease4 : public Lease {
     /// @brief Returns Lease type
     ///
     /// Since @c Lease does not define a member for lease type, we implement this
-    /// so we don't the same value to a billion v4 lease instances.
+    /// so we don't store the same value in a billion v4 lease instances.
     ///
     /// @return Lease::TYPE_V4
     virtual Lease::Type getType() const {
