@@ -1082,6 +1082,27 @@ TEST_F(MySqlLeaseMgrTest, isJsonSupported) {
                  "enabled in the database." << std::endl;
 }
 
+// Verifies that v4 class lease counts are correctly adjusted
+// when leases have class lists.
+// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
+TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount4) {
+    testClassLeaseCount4();
+}
+
+// Verifies that v6 IA_NA class lease counts are correctly adjusted
+// when leases have class lists.
+// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
+TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount6_NA) {
+    testClassLeaseCount6(Lease::TYPE_NA);
+}
+
+// Verifies that v6 IA_PD class lease counts are correctly adjusted
+// when leases have class lists.
+// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
+TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount6_PD) {
+    testClassLeaseCount6(Lease::TYPE_PD);
+}
+
 /// @brief Checks that a null user context allows allocation.
 TEST_F(MySqlLeaseMgrTest, checkLimitsNull) {
     std::string text;
@@ -1110,7 +1131,8 @@ TEST_F(MySqlLeaseMgrTest, checkLimits) {
     }
 
     // The rest of the checks are only for databases with JSON support.
-    testLeaseLimits();
+    testLeaseLimits4();
+    testLeaseLimits6();
 }
 
 }  // namespace

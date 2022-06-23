@@ -2583,6 +2583,22 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
     }
 }
 
+// Verifies that isJsonSupported() returns true for Memfile.
+TEST_F(MemfileLeaseMgrTest, isJsonSupported4) {
+    startBackend(V4);
+    bool json_supported;
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    ASSERT_TRUE(json_supported);
+}
+
+// Verifies that isJsonSupported() returns true for Memfile.
+TEST_F(MemfileLeaseMgrTest, isJsonSupported6) {
+    startBackend(V6);
+    bool json_supported;
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    ASSERT_TRUE(json_supported);
+}
+
 // Verifies that v4 class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(MemfileLeaseMgrTest, classLeaseCount4) {
@@ -2602,6 +2618,38 @@ TEST_F(MemfileLeaseMgrTest, classLeaseCount6_NA) {
 TEST_F(MemfileLeaseMgrTest, classLeaseCount6_PD) {
     startBackend(V6);
     testClassLeaseCount6(Lease::TYPE_PD);
+}
+
+// brief Checks that a null user context allows allocation.
+// DISABLED_ until Memfile_LeaseMgr implements checkLimits4().
+TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimitsNull4) {
+    startBackend(V4);
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+// brief Checks that a null user context allows allocation.
+// DISABLED_ until Memfile_LeaseMgr implements checkLimits6().
+TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimitsNull6) {
+    startBackend(V6);
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+// Checks a few V4 lease limit checking scenarios.
+// Disabbled until Memfile_LeaseMgr implements checkLimits4() function.
+TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimits4) {
+    startBackend(V4);
+    testLeaseLimits4();
+}
+
+// Checks a few V4 lease limit checking scenarios.
+// Disabbled until Memfile_LeaseMgr implements checkLimits4() function.
+TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimits6) {
+    startBackend(V6);
+    testLeaseLimits6();
 }
 
 // Verifies that v4 class lease counts can be recounted.
@@ -2643,10 +2691,8 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
 
     // Bake all the leases.
     for ( auto recipe : recipes ) {
-        Lease4Ptr lease = makeLease4(recipe.address_, 777, recipe.state_, false);
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
-        lease->setContext(makeContextWithClasses(recipe.classes_));
-        ASSERT_NO_THROW_LOG(memfile_mgr->addLease(lease));
+        ASSERT_TRUE(makeLease4(recipe.address_, 777, recipe.state_, ctx));
     }
 
     // Verify counts are as expected.
@@ -2724,10 +2770,8 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
 
     // Bake all the leases.
     for ( auto recipe : recipes ) {
-        Lease6Ptr lease = makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, false);
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
-        lease->setContext(makeContextWithClasses(recipe.classes_));
-        ASSERT_NO_THROW_LOG(memfile_mgr->addLease(lease));
+        ASSERT_TRUE(makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, ctx));
     }
 
     // Verify counts are as expected.

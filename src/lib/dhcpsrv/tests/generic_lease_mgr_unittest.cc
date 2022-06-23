@@ -3904,7 +3904,8 @@ GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
     checkQueryAgainstRowSet(query, expected_rows);
 }
 
-GenericLeaseMgrTest::testLeaseLimits() {
+void
+GenericLeaseMgrTest::testLeaseLimits4() {
     std::string text;
     ElementPtr user_context;
 
@@ -3914,14 +3915,10 @@ GenericLeaseMgrTest::testLeaseLimits() {
         "client-classes": [ { "name": "foo", "address-limit": 0 } ] } } })");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
     EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
-    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "subnet": { "id": 1, "address-limit": 0 } } } })");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
-    EXPECT_EQ(text, "address limit 0 for subnet ID 1, current lease count 0");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
     EXPECT_EQ(text, "address limit 0 for subnet ID 1, current lease count 0");
 
     // -- A limit of 1 with no leases should allow a lease. --
@@ -3930,14 +3927,10 @@ GenericLeaseMgrTest::testLeaseLimits() {
         "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
     EXPECT_EQ(text, "");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
-    EXPECT_EQ(text, "");
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "subnet": { "id": 1, "address-limit": 1 } } } })");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
-    EXPECT_EQ(text, "");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
     EXPECT_EQ(text, "");
 
     // -- A limit of 1 with 1 current lease should deny further leases. --
@@ -3945,6 +3938,47 @@ GenericLeaseMgrTest::testLeaseLimits() {
     makeLease4("192.0.1.1", 1, Lease::STATE_DEFAULT, Element::fromJSON(
         R"({ "ISC": { "client-classes": [ "foo" ] } })"));
 
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 1 for client class \"foo\", current lease count 1");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 1 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
+    EXPECT_EQ(text, "address limit 1 for subnet ID 1, current lease count 1");
+}
+
+void
+GenericLeaseMgrTest::testLeaseLimits6() {
+    std::string text;
+    ElementPtr user_context;
+
+    // -- A limit of 0 always denies a lease. --
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 0 } ] } } })");
+    EXPECT_EQ(text, "address limit 0 for client class \"foo\", current lease count 0");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 0 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "address limit 0 for subnet ID 1, current lease count 0");
+
+    // -- A limit of 1 with no leases should allow a lease. --
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "");
+
+    user_context = Element::fromJSON(R"({ "ISC": { "limits": {
+        "subnet": { "id": 1, "address-limit": 1 } } } })");
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
+    EXPECT_EQ(text, "");
+
+    // -- A limit of 1 with 1 current lease should deny further leases. --
     makeLease6(Lease::TYPE_NA, "2001:db8::", 0, 1, Lease::STATE_DEFAULT, Element::fromJSON(
         R"({ "ISC": { "client-classes": [ "foo" ] } })"));
 
@@ -3953,8 +3987,6 @@ GenericLeaseMgrTest::testLeaseLimits() {
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
-    EXPECT_EQ(text, "address limit 1 for client class \"foo\", current lease count 1");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
     EXPECT_EQ(text, "address limit 1 for client class \"foo\", current lease count 1");
 
@@ -3965,8 +3997,6 @@ GenericLeaseMgrTest::testLeaseLimits() {
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "subnet": { "id": 1, "address-limit": 1 } } } })");
-    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
-    EXPECT_EQ(text, "address limit 1 for subnet ID 1, current lease count 1");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(user_context));
     EXPECT_EQ(text, "address limit 1 for subnet ID 1, current lease count 1");
 

@@ -493,9 +493,6 @@ public:
     /// world this never happens.
     void testLeaseStatsQueryAttribution6();
 
-    /// @brief Checks a few limit checking scenarios.
-    void testLeaseLimits();
-
     /// @brief Compares LeaseQueryStats content to expected set of rows
     ///
     /// @param qry - a started LeaseStatsQuery
@@ -532,6 +529,12 @@ public:
     ///
     /// @param ltype type of lease, either Lease::TYPE_NA or Lease::TYPE_PD
     void testClassLeaseCount6(Lease::Type ltype);
+
+    /// @brief Checks a few v4 lease limit checking scenarios.
+    void testLeaseLimits4();
+
+    /// @brief Checks a few v6 lease limit checking scenarios.
+    void testLeaseLimits6();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;
