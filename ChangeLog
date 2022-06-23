@@ -1,3 +1,7 @@
+2028.	[build]		orbea, fdupont
+	Compatibility with LibreSSL 3.5.2 improved.
+	(Github #121, Gitlab #2411)
+
 2027.	[func]		fdupont
 	The TLS is now supported with Multi-Threaded HA (HA+MT) scenario.
 	Additional parameters (trust-anchor, cert-file, key-file,
