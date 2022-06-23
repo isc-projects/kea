@@ -142,7 +142,7 @@ private:
     ///
     /// @return Reference to the map for the lease type
     ClassCountMap& getCountMap(const Lease::Type& ltype = Lease::TYPE_V4) {
-        return (ltype != Lease::TYPE_PD ? addresses_by_class_ : pds_by_class_);
+        return (ltype == Lease::TYPE_PD ? pds_by_class_ : addresses_by_class_);
     }
 
     /// @brief Contains counts for classes for addresses.  This map is used

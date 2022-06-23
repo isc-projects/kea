@@ -3985,7 +3985,9 @@ GenericLeaseMgrTest::makeContextWithClasses(const std::list<ClientClass>& classe
             clist->add(Element::create(client_class));
         }
 
-        ctx->set("classes", clist);
+        ElementPtr extended_info = Element::createMap();
+        extended_info->set("classes", clist);
+        ctx->set("ISC", extended_info);
     }
 
     return (ctx);

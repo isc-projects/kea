@@ -58,14 +58,8 @@ ClassLeaseCounter::getLeaseClientClasses(LeasePtr lease) const {
     ConstElementPtr classes;
     auto ctx = lease->getContext();
     if (ctx) {
-        // Look for ddns-tuning map within user-context.
-        classes = ctx->get("classes");
-        if (!classes) {
-            // Return an empty list;
-            return (Element::createList());
-        }
-
-        if (classes->getType() != Element::list) {
+        classes = ctx->find("ISC/classes");
+        if (classes && classes->getType() != Element::list) {
             isc_throw(Unexpected, "getLeaseClientClasses: "
                       << lease->toText() << " is not a list!");
         }

@@ -47,7 +47,9 @@ public:
     /// Creates an Element::map with the following content:
     ///
     /// {
-    ///     "classes": [ "class0", "class1", ... ]
+    ///     "ISC": {
+    ///         "classes": [ "class0", "class1", ... ]
+    ///     }
     /// }
     ///
     /// @param classes  list of classes to include in the context
@@ -60,7 +62,9 @@ public:
                 clist->add(Element::create(client_class));
             }
 
-            ctx->set("classes", clist);
+            ElementPtr extended_info = Element::createMap();
+            extended_info->set("classes", clist);
+            ctx->set("ISC", extended_info);
         }
 
         return (ctx);
@@ -159,7 +163,7 @@ public:
         checkClassCounts(classes1_, std::list<size_t>({ 2, 2, 2 }), ltype);
 
         // Set lease state to EXPIRED_RECLAIMED and add it. Counts should not increment.
-        lease->state_ = Lease::STATE_DECLINED;
+        lease->state_ = Lease::EXPIRED_RECLAIMED;
         ASSERT_NO_THROW_LOG(clc_.addLease(lease));
         checkClassCounts(classes1_, std::list<size_t>({ 2, 2, 2 }), ltype);
 
@@ -174,7 +178,7 @@ public:
         checkClassCounts(classes1_, std::list<size_t>({ 1, 1, 1 }), ltype);
 
         // Set lease state to EXPIRED_RECLAIMED and remove it. Counts should not decrement.
-        lease->state_ = Lease::STATE_DECLINED;
+        lease->state_ = Lease::EXPIRED_RECLAIMED;
         ASSERT_NO_THROW_LOG(clc_.removeLease(lease));
         checkClassCounts(classes1_, std::list<size_t>({ 1, 1, 1 }), ltype);
 

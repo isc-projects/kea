@@ -1224,15 +1224,15 @@ public:
     /// @param client_class client class for which the count is desired
     /// @param ltype type of lease for which the count is desired. Defaults to
     /// Lease::TYPE_V4.
-    virtual size_t getClassLeaseCount(const ClientClass& client_class,
-                                      const Lease::Type& ltype = Lease::TYPE_V4);
+    size_t getClassLeaseCount(const ClientClass& client_class,
+                              const Lease::Type& ltype = Lease::TYPE_V4) override;
 
     /// @brief Recount the leases per class for V4 leases.
     ///
     /// Clears the current class-lease count map and then iterates
     /// over all, retabulating counts based on class lists in each lease
     /// user-context.
-    virtual void recountClassLeases4();
+    void recountClassLeases4();
 
     /// @brief Recount the leases per class for V6 leases.
     ///

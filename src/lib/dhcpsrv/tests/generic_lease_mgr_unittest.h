@@ -514,7 +514,9 @@ public:
     /// Creates an Element::map with the following content:
     ///
     /// {
-    ///     "classes": [ "class0", "class1", ... ]
+    ///     "ISC": {
+    ///         "classes": [ "class0", "class1", ... ]
+    ///     }
     /// }
     ///
     /// @param classes  list of classes to include in the context
