@@ -1218,6 +1218,7 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
 
     if (element->getType() == Element::list) {
         for (auto const& value : other->listValue()) {
+            ElementPtr mutable_right = boost::const_pointer_cast<Element>(value);
             for (uint32_t iter = 0; iter < element->listValue().size();) {
                 bool removed = false;
                 // Check if we have any description of the key in the
@@ -1225,7 +1226,6 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                 auto f = hierarchy[idx].find(key);
                 if (f != hierarchy[idx].end()) {
                     ElementPtr mutable_left = boost::const_pointer_cast<Element>(element->listValue().at(iter));
-                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(value);
                     // Check if the elements refer to the same configuration
                     // entity.
                     if (f->second.match_(mutable_left, mutable_right)) {

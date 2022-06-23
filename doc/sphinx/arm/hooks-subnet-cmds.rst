@@ -572,8 +572,8 @@ A successful response may look like this:
 The ``subnet4-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update by adding or overwriting parts of a single subnet
-in the existing server configuration. This operation has no impact on other
+This command is used to update a subnet by adding or overwriting its parts in
+the existing server configuration. This operation has no impact on other
 subnets. The subnet identifier is used to identify the subnet to update; it must
 be specified and must be unique among all subnets. The subnet prefix should not
 be updated.
@@ -649,8 +649,8 @@ level option 4 ("time-servers").
 The ``subnet6-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update by adding or overwriting parts of a single subnet
-in the existing server configuration. This operation has no impact on other
+This command is used to update a subnet by adding or overwriting its parts in
+the existing server configuration. This operation has no impact on other
 subnets. The subnet identifier is used to identify the subnet to update; it must
 be specified and must be unique among all subnets. The subnet prefix should not
 be updated.
@@ -745,8 +745,8 @@ level option 22 ("sip-server-addr").
 The ``subnet4-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update by removing parts of a single subnet in the
-existing server configuration. This operation has no impact on other subnets.
+This command is used to update a subnet by removing its parts in the existing
+server configuration. This operation has no impact on other subnets.
 The subnet identifier is used to identify the subnet to update; it must be
 specified and must be unique among all subnets. The subnet prefix should not be
 updated.
@@ -818,8 +818,8 @@ lifetime, removing the subnet level option 3 ("routers"), by removing the pool
 The ``subnet6-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to update by removing parts of a single subnet in the
-existing server configuration. This operation has no impact on other subnets.
+This command is used to update a subnet by removing its parts in the existing
+server configuration. This operation has no impact on other subnets.
 The subnet identifier is used to identify the subnet to update; it must be
 specified and must be unique among all subnets. The subnet prefix should not be
 updated.
