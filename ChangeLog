@@ -1,5 +1,5 @@
 2027.	[func]		fdupont
-        The TLS is now supported with Multi-Threaded HA (HA+MT) scenario.
+	The TLS is now supported with Multi-Threaded HA (HA+MT) scenario.
 	Additional parameters (trust-anchor, cert-file, key-file,
 	require-client-certs) are now supported in the HA configuration.
 	(Gitlab #1706)
