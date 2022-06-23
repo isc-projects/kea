@@ -279,7 +279,7 @@ CREATE PROCEDURE lease4_AINS_lease4_stat_by_client_class(IN new_state TINYINT,
 BEGIN
     -- Declarations
     DECLARE client_classes TEXT;
-    DECLARE class VARCHAR(128);
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -324,7 +324,7 @@ BEGIN
     -- Declarations
     DECLARE old_client_classes TEXT;
     DECLARE new_client_classes TEXT;
-    DECLARE class VARCHAR(128);
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -377,7 +377,7 @@ CREATE PROCEDURE lease4_ADEL_lease4_stat_by_client_class(IN old_state TINYINT,
 BEGIN
     -- Declarations
     DECLARE client_classes TEXT;
-    DECLARE class VARCHAR(128);
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -416,7 +416,7 @@ CREATE PROCEDURE lease6_AINS_lease6_stat_by_client_class(IN new_state TINYINT,
 BEGIN
     -- Declarations
     DECLARE client_classes TEXT;
-    DECLARE class VARCHAR(128);
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -462,7 +462,7 @@ BEGIN
     -- Declarations
     DECLARE old_client_classes TEXT;
     DECLARE new_client_classes TEXT;
-    DECLARE class VARCHAR(128);
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -515,8 +515,8 @@ CREATE PROCEDURE lease6_ADEL_lease6_stat_by_client_class(IN old_state TINYINT,
                                                          IN old_lease_type TINYINT)
 BEGIN
     -- Declarations
-    DECLARE client_classes VARCHAR(1024);
-    DECLARE class VARCHAR(128);
+    DECLARE client_classes TEXT;
+    DECLARE class VARCHAR(255);
     DECLARE length INT;
     DECLARE i INT;
 
@@ -674,7 +674,7 @@ BEGIN
     DECLARE json_element TEXT;
     DECLARE length INT;
     DECLARE class TEXT;
-    DECLARE name VARCHAR(128);
+    DECLARE name VARCHAR(255);
     DECLARE i INT;
     DECLARE lease_limit INT;
     DECLARE lease_count INT;
@@ -738,7 +738,7 @@ BEGIN
     DECLARE json_element TEXT;
     DECLARE length INT;
     DECLARE class TEXT;
-    DECLARE name VARCHAR(128);
+    DECLARE name VARCHAR(255);
     DECLARE i INT;
     DECLARE lease_limit INT;
     DECLARE lease_count INT;

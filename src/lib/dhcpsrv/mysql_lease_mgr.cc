@@ -97,6 +97,9 @@ const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 /// @brief Maximum length of user context.
 const size_t USER_CONTEXT_MAX_LEN = 8192;
 
+/// @brief Maximum length of the text returned by the limit checking functions.
+const size_t LIMITS_TEXT_MAX_LEN = 512;
+
 boost::array<TaggedStatement, MySqlLeaseMgr::NUM_STATEMENTS>
 tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE4,
@@ -3109,7 +3112,7 @@ MySqlLeaseMgr::checkLimits(ConstElementPtr const& user_context, StatementIndex c
         MySqlBinding::createString(user_context->str())
     });
     MySqlBindingCollection out_bindings({
-        MySqlBinding::createString(128)
+        MySqlBinding::createString(LIMITS_TEXT_MAX_LEN)
     });
 
     // Execute the select.

@@ -363,13 +363,13 @@ public:
 
     /// @brief Pretends to check if the IPv4 lease limits set in the given user
     /// context are exceeded.
-    std::string checkLimits4(isc::data::ConstElementPtr const& user_context) const override {
+    std::string checkLimits4(isc::data::ConstElementPtr const& /* user_context */) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits4() not implemented");
     }
 
-    /// @brief Pretends to check if the IPv4 lease limits set in the given user
+    /// @brief Pretends to check if the IPv6 lease limits set in the given user
     /// context are exceeded.
-    std::string checkLimits6(isc::data::ConstElementPtr const& user_context) const override{
+    std::string checkLimits6(isc::data::ConstElementPtr const& /* user_context */) const override{
         isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits6() not implemented");
     }
 
