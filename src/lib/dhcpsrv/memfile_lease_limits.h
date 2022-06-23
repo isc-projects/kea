@@ -45,7 +45,7 @@ public:
     /// Lease::TYPE_V4
     ///
     /// @return Number of leases for the class and lease type.  If there is no
-    /// found for the class and lease type, a value of zero is returned.
+    /// entry found for the class and lease type, a value of zero is returned.
     size_t getClassCount(const ClientClass& client_class,
                          const Lease::Type& ltype = Lease::TYPE_V4);
 
@@ -55,9 +55,6 @@ public:
     /// @param count new count value for the class and lease type.
     /// @param ltype lease type for which the count is desired, defaults
     /// to Lease::TYPE_V4
-    ///
-    /// @return Number of leases for the class and lease type.  If there is no
-    /// found for the class and lease type, a value of zero is returned.
     void setClassCount(const ClientClass& client_class, size_t count,
                        const Lease::Type& ltype = Lease::TYPE_V4);
 

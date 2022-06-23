@@ -1418,11 +1418,15 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
-    // Adjust class lease counters.
-    class_lease_counter_.updateLease(lease, *lease_it);
+    // Save a copy of the old lease as lease_it will point to the new
+    // one after the replacement.
+    Lease4Ptr old_lease = *lease_it;
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
+
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, old_lease);
 }
 
 void
@@ -1468,11 +1472,15 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
-    // Adjust class lease counters.
-    class_lease_counter_.updateLease(lease, *lease_it);
+    // Save a copy of the old lease as lease_it will point to the new
+    // one after the replacement.
+    Lease6Ptr old_lease = *lease_it;
 
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
+
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, old_lease);
 }
 
 void
@@ -2085,12 +2093,7 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 void
 Memfile_LeaseMgr::recountClassLeases4() {
     class_lease_counter_.clear();
-    auto & idx = storage4_.get<AddressIndexTag>();
-
-    auto lower = idx.begin();
-    auto upper = idx.end();
-
-    for (auto lease = lower; lease != upper; ++lease) {
+    for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease) {
         // Bump the appropriate accumulator
         if ((*lease)->state_ == Lease::STATE_DEFAULT) {
             class_lease_counter_.addLease(*lease);
@@ -2101,12 +2104,7 @@ Memfile_LeaseMgr::recountClassLeases4() {
 void
 Memfile_LeaseMgr::recountClassLeases6() {
     class_lease_counter_.clear();
-    auto & idx = storage6_.get<AddressIndexTag>();
-
-    auto lower = idx.begin();
-    auto upper = idx.end();
-
-    for (auto lease = lower; lease != upper; ++lease) {
+    for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease) {
         // Bump the appropriate accumulator
         if ((*lease)->state_ == Lease::STATE_DEFAULT) {
             class_lease_counter_.addLease(*lease);
