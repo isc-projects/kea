@@ -1338,7 +1338,10 @@ extend(const std::string& container, const std::string& extension,
                     (value->getType() == Element::map ||
                      value->getType() == Element::list)) {
                     ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
-                    extend(container, extension, mutable_element, value, hierarchy, current_key, idx + 1);
+                    if (container == key) {
+                        alter = true;
+                    }
+                    extend(container, extension, mutable_element, value, hierarchy, current_key, idx + 1, alter);
                 } else if (alter && current_key == extension) {
                     element->set(current_key, value);
                 }

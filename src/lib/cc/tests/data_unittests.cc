@@ -1528,7 +1528,7 @@ TEST(Element, removeEmptyContainersRecursively) {
 
 /// @brief Function which creates an imaginary configuration hierarchy used to
 /// test mergeDiffAdd, mergeDiffDel and extend.
-isc::data::HierarchyDescriptor createHierarchy() {
+isc::data::HierarchyDescriptor createHierarchy(bool any = false) {
     auto const& element_empty = [](ElementPtr& element) {
         for (auto const& kv : element->mapValue()) {
             auto const& key = kv.first;
@@ -1541,6 +1541,9 @@ isc::data::HierarchyDescriptor createHierarchy() {
     auto const& element_match = [](ElementPtr& left, ElementPtr& right) -> bool {
         return (left->get("id")->intValue() == right->get("id")->intValue());
     };
+    auto const& element_any_match = [](ElementPtr&, ElementPtr&) -> bool {
+        return (true);
+    };
     auto const& element_is_key = [](const std::string& key) -> bool {
         return (key == "id");
     };
@@ -1549,9 +1552,18 @@ isc::data::HierarchyDescriptor createHierarchy() {
         { { "elements", { element_match, element_empty, element_is_key } },
           { "elements-other", { element_match, element_empty, element_is_key } } }
     };
+    if (any) {
+        hierarchy = {
+            { { "root", { element_any_match, element_empty, element_is_key } } },
+            { { "elements", { element_any_match, element_empty, element_is_key } },
+              { "elements-other", { element_any_match, element_empty, element_is_key } } }
+        };
+    }
     return (hierarchy);
 }
 
+/// @brief Test which checks that mergeDiffAdd throws if called with wrong
+/// element types.
 TEST(Element, mergeDiffAddBadParams) {
     {
         SCOPED_TRACE("root bad scalars");
@@ -1588,6 +1600,7 @@ TEST(Element, mergeDiffAddBadParams) {
     }
 }
 
+/// @brief Test which checks that mergeDiffAdd works as expected.
 TEST(Element, mergeDiffAdd) {
     {
         SCOPED_TRACE("scalar bool");
@@ -1771,6 +1784,8 @@ TEST(Element, mergeDiffAdd) {
     }
 }
 
+/// @brief Test which checks that mergeDiffDel throws if called with wrong
+/// element types.
 TEST(Element, mergeDiffDelBadParams) {
     {
         SCOPED_TRACE("root bad scalars");
@@ -1807,6 +1822,7 @@ TEST(Element, mergeDiffDelBadParams) {
     }
 }
 
+/// @brief Test which checks that mergeDiffDel works as expected.
 TEST(Element, mergeDiffDel) {
     {
         SCOPED_TRACE("scalar bool");
@@ -2014,6 +2030,8 @@ TEST(Element, mergeDiffDel) {
     }
 }
 
+/// @brief Test which checks that extend throws if called with wrong element
+/// types.
 TEST(Element, extendBadParam) {
     {
         SCOPED_TRACE("root bad scalars");
@@ -2050,8 +2068,88 @@ TEST(Element, extendBadParam) {
     }
 }
 
+/// @brief Test which checks that extend works as expected.
 TEST(Element, extend) {
-
+    {
+        SCOPED_TRACE("scalar in map but alter flag is not set");
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        left->set("elements", Element::create("left"));
+        left->set("other-elements", Element::create("other"));
+        // scalar element which is not updated
+        right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right->set("new-elements", Element::create("new"));
+        EXPECT_NE(left->str(), right->str());
+        extend("root", "new-elements", left, right, hierarchy, "root", 0, false);
+        EXPECT_EQ(left->str(), "{ \"elements\": \"left\", \"other-elements\": \"other\" }");
+    }
+    {
+        SCOPED_TRACE("scalar in map");
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        left->set("elements", Element::create("left"));
+        left->set("other-elements", Element::create("other"));
+        // scalar element which is not updated
+        right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right->set("new-elements", Element::create("new"));
+        EXPECT_NE(left->str(), right->str());
+        extend("root", "new-elements", left, right, hierarchy, "root", 0, true);
+        EXPECT_EQ(left->str(), "{ \"elements\": \"left\", \"new-elements\": \"new\", \"other-elements\": \"other\" }");
+    }
+    {
+        SCOPED_TRACE("scalar in map in map");
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(1));
+        // scalar element which is not updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right_right->set("new-elements", Element::create("new"));
+        left->set("elements", left_left);
+        // map element which is used for extension
+        right->set("elements", right_right);
+        EXPECT_NE(left->str(), right->str());
+        extend("root", "new-elements", left, right, hierarchy, "root");
+        EXPECT_EQ(left->str(), "{ \"elements\": { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } }");
+    }
+    {
+        SCOPED_TRACE("scalar in map in list");
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createList();
+        ElementPtr right = Element::createList();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(1));
+        // scalar element which is not updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right_right->set("new-elements", Element::create("new"));
+        left->add(left_left);
+        // map element which is used for extension
+        right->add(right_right);
+        EXPECT_NE(left->str(), right->str());
+        extend("root", "new-elements", left, right, hierarchy, "root");
+        EXPECT_EQ(left->str(), "[ { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } ]");
+    }
 }
 
 }  // namespace
