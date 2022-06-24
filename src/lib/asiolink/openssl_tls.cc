@@ -125,9 +125,13 @@ TlsContext::getErrMsg(error_code ec) {
     // in the OpenSSL err.h header.
     if ((msg == "asio.ssl error") && (ERR_SYSTEM_ERROR(err))) {
         char buf[1024];
+#ifndef __USE_GNU
         if (strerror_r(err & ERR_SYSTEM_MASK, &buf[0], sizeof(buf)) == 0) {
             msg = buf;
         }
+#else
+        msg = strerror_r(err & ERR_SYSTEM_MASK, &buf[0], sizeof(buf));
+#endif
     }
 #endif
     return (msg);
