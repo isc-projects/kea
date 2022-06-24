@@ -466,7 +466,7 @@ An excerpt from a D2 server configuration is provided below; more examples are a
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-107
+   :emphasize-lines: 57-113
 
 
     {
@@ -525,7 +525,7 @@ An excerpt from a D2 server configuration is provided below; more examples are a
             ]
         },
 
-        // Need to add gss-tsig hook here
+        // The GSS-TSIG hook is loaded and its configuration is specified here.
         "hooks-libraries": [
         {
             "library": "/opt/lib/libddns_gss_tsig.so",
@@ -538,7 +538,13 @@ An excerpt from a D2 server configuration is provided below; more examples are a
 
                 "server-principal": "DNS/server.example.org@EXAMPLE.ORG",
                 "client-principal": "DHCP/admin.example.org@EXAMPLE.ORG",
-                "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
+
+                // client-keytab and credentials-cache can both be used to
+                // store client keys. As credentials cache is more flexible,
+                // it is recommended to use it. Typically, using both at the
+                // same time may cause problems.
+                //
+                // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "tkey-lifetime": 3600, // 1 hour
                 "rekey-interval": 2700, // 45 minutes
