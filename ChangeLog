@@ -1,3 +1,8 @@
+2031.	[func]		fdupont
+	Improved compatiblity with OpenSSL 3.0.x, in particular
+	recover system error messages.
+	(Gitlab #1614)
+
 2030.	[doc]		fdupont,tomek
 	GSS-TSIG examples updated. The recommendation to not use
 	client-keytab and credentials-cache at the same time added.
