@@ -1143,7 +1143,6 @@ TEST(Element, isEquivalent) {
     }
 }
 
-
 // This test checks the pretty print function.
 TEST(Element, prettyPrint) {
 
@@ -1610,7 +1609,11 @@ TEST(Element, mergeDiffAdd) {
         EXPECT_NE(left->boolValue(), right->boolValue());
         mergeDiffAdd(left, right, hierarchy, "");
         EXPECT_EQ(left->boolValue(), right->boolValue());
-        EXPECT_EQ(left->str(), "false");
+        std::string expected_str("false");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar int");
@@ -1620,7 +1623,11 @@ TEST(Element, mergeDiffAdd) {
         EXPECT_NE(left->intValue(), right->intValue());
         mergeDiffAdd(left, right, hierarchy, "");
         EXPECT_EQ(left->intValue(), right->intValue());
-        EXPECT_EQ(left->str(), "2");
+        std::string expected_str("2");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar double");
@@ -1630,7 +1637,11 @@ TEST(Element, mergeDiffAdd) {
         EXPECT_NE(left->doubleValue(), right->doubleValue());
         mergeDiffAdd(left, right, hierarchy, "");
         EXPECT_EQ(left->doubleValue(), right->doubleValue());
-        EXPECT_EQ(left->str(), "0.2");
+        std::string expected_str("0.2");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar string");
@@ -1640,7 +1651,11 @@ TEST(Element, mergeDiffAdd) {
         EXPECT_NE(left->stringValue(), right->stringValue());
         mergeDiffAdd(left, right, hierarchy, "");
         EXPECT_EQ(left->stringValue(), right->stringValue());
-        EXPECT_EQ(left->str(), "\"right\"");
+        std::string expected_str("\"right\"");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in map");
@@ -1654,9 +1669,13 @@ TEST(Element, mergeDiffAdd) {
         right->set("elements", Element::create("right"));
         // scalar element which is added
         right->set("new-elements", Element::create("new"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "{ \"elements\": \"right\", \"new-elements\": \"new\", \"other-elements\": \"other\" }");
+        std::string expected_str("{ \"elements\": \"right\", \"new-elements\": \"new\", \"other-elements\": \"other\" }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in list");
@@ -1673,9 +1692,13 @@ TEST(Element, mergeDiffAdd) {
         right->add(Element::create("new"));
         // scalar element which already exists but is still added
         right->add(Element::create("test"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "[ \"left\", \"other\", \"test\", \"right\", \"new\", \"test\" ]");
+        std::string expected_str("[ \"left\", \"other\", \"test\", \"right\", \"new\", \"test\" ]");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar and list and map in map");
@@ -1722,12 +1745,16 @@ TEST(Element, mergeDiffAdd) {
         left->set("other", left_other_left);
         // list element which is updated
         right->set("other", right_other_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "{ \"elements\": { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" }, "
+        std::string expected_str("{ \"elements\": { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" }, "
                                  "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
                                  "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
                                  "\"right-other-elements\": { \"elements\": \"other-right\", \"id\": 2 } }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar and list and map in list");
@@ -1774,13 +1801,17 @@ TEST(Element, mergeDiffAdd) {
         left_left->set("other", left_other_left);
         // list element which is updated
         right_right->set("other", right_other_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "[ { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", "
+        std::string expected_str("[ { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", "
                                    "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
                                    "\"other-elements\": \"other\" }, "
                                  "{ \"elements\": \"other-left\", \"id\": 1 }, "
                                  "{ \"elements\": \"other-right\", \"id\": 2 } ]");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
 }
 
@@ -1831,7 +1862,7 @@ TEST(Element, mergeDiffDel) {
         ElementPtr right = Element::create(false);
         EXPECT_NE(left->boolValue(), right->boolValue());
         mergeDiffDel(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "null");
+        EXPECT_EQ(left->getType(), Element::null);
     }
     {
         SCOPED_TRACE("scalar int");
@@ -1840,7 +1871,7 @@ TEST(Element, mergeDiffDel) {
         ElementPtr right = Element::create(2);
         EXPECT_NE(left->intValue(), right->intValue());
         mergeDiffDel(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "null");
+        EXPECT_EQ(left->getType(), Element::null);
     }
     {
         SCOPED_TRACE("scalar double");
@@ -1849,7 +1880,7 @@ TEST(Element, mergeDiffDel) {
         ElementPtr right = Element::create(0.2);
         EXPECT_NE(left->doubleValue(), right->doubleValue());
         mergeDiffDel(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "null");
+        EXPECT_EQ(left->getType(), Element::null);
     }
     {
         SCOPED_TRACE("scalar string");
@@ -1858,7 +1889,7 @@ TEST(Element, mergeDiffDel) {
         ElementPtr right = Element::create("right");
         EXPECT_NE(left->stringValue(), right->stringValue());
         mergeDiffDel(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "null");
+        EXPECT_EQ(left->getType(), Element::null);
     }
     {
         SCOPED_TRACE("scalar in map");
@@ -1872,9 +1903,13 @@ TEST(Element, mergeDiffDel) {
         right->set("elements", Element::create("right"));
         // scalar element which does not exist and does nothing
         right->set("new-elements", Element::create("new"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "{ \"other-elements\": \"other\" }");
+        std::string expected_str("{ \"other-elements\": \"other\" }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in list");
@@ -1894,9 +1929,13 @@ TEST(Element, mergeDiffDel) {
         right->add(Element::create("other-right"));
         // scalar element which is removed
         right->add(Element::create("new"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "");
-        EXPECT_EQ(left->str(), "[ \"left\", \"other-left\" ]");
+        std::string expected_str("[ \"left\", \"other-left\" ]");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar and list and map in map");
@@ -1957,12 +1996,16 @@ TEST(Element, mergeDiffDel) {
         // map element which is not removed because it is contained in a map and
         // the key can not be removed
         right->set("elements-other", right_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "{ \"elements\": { \"id\": 0, \"other-elements\": \"other\" }, "
+        std::string expected_str("{ \"elements\": { \"id\": 0, \"other-elements\": \"other\" }, "
                                  "\"elements-other\": { \"elements\": \"new-left\", \"id\": 3, \"other-elements\": \"new-other\" }, "
                                  "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
                                  "\"other\": [ \"left-other-left\", \"left-other-left-other\" ] }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar and list and map in list");
@@ -2023,10 +2066,14 @@ TEST(Element, mergeDiffDel) {
         // map element which is removed by key
         // the key can not be removed
         right->add(right_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "[ { \"id\": 0, \"other\": [ \"left-other-left\", \"left-other-left-other\" ], \"other-elements\": \"other\" }, "
+        std::string expected_str("[ { \"id\": 0, \"other\": [ \"left-other-left\", \"left-other-left-other\" ], \"other-elements\": \"other\" }, "
                                  "{ \"elements\": \"other-left\", \"id\": 1 } ]");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
 }
 
@@ -2082,9 +2129,13 @@ TEST(Element, extend) {
         right->set("elements", Element::create("right"));
         // scalar element which is extended
         right->set("new-elements", Element::create("new"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         extend("root", "new-elements", left, right, hierarchy, "root", 0, false);
-        EXPECT_EQ(left->str(), "{ \"elements\": \"left\", \"other-elements\": \"other\" }");
+        std::string expected_str("{ \"elements\": \"left\", \"other-elements\": \"other\" }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in map");
@@ -2098,9 +2149,13 @@ TEST(Element, extend) {
         right->set("elements", Element::create("right"));
         // scalar element which is extended
         right->set("new-elements", Element::create("new"));
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         extend("root", "new-elements", left, right, hierarchy, "root", 0, true);
-        EXPECT_EQ(left->str(), "{ \"elements\": \"left\", \"new-elements\": \"new\", \"other-elements\": \"other\" }");
+        std::string expected_str("{ \"elements\": \"left\", \"new-elements\": \"new\", \"other-elements\": \"other\" }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in map in map");
@@ -2122,9 +2177,13 @@ TEST(Element, extend) {
         left->set("elements", left_left);
         // map element which is used for extension
         right->set("elements", right_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         extend("root", "new-elements", left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "{ \"elements\": { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } }");
+        std::string expected_str("{ \"elements\": { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } }");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
     {
         SCOPED_TRACE("scalar in map in list");
@@ -2146,9 +2205,13 @@ TEST(Element, extend) {
         left->add(left_left);
         // map element which is used for extension
         right->add(right_right);
-        EXPECT_NE(left->str(), right->str());
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
         extend("root", "new-elements", left, right, hierarchy, "root");
-        EXPECT_EQ(left->str(), "[ { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } ]");
+        std::string expected_str("[ { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } ]");
+        ElementPtr expected = Element::fromJSON(expected_str);
+        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
+            << "Actual: " << left->str()
+            << "\nExpected: " << expected->str();
     }
 }
 
