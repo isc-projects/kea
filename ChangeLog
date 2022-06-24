@@ -1,3 +1,8 @@
+2030.	[doc]		fdupont,tomek
+	GSS-TSIG examples updated. The recommendation to not use
+	client-keytab and credentials-cache at the same time added.
+	(Gitlab #2247)
+
 2029.	[bug]		fdupont
 	The check of the subnet id in configuration is stricter:
 	values outside the 0..4294967295 are rejected. Note that
