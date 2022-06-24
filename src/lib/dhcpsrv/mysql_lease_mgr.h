@@ -162,7 +162,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease4Ptr& lease);
+    virtual bool addLease(const Lease4Ptr& lease) override;
 
     /// @brief Adds an IPv6 lease
     ///
@@ -173,7 +173,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease6Ptr& lease);
+    virtual bool addLease(const Lease6Ptr& lease) override;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
@@ -193,7 +193,7 @@ public:
     ///        programming error.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const override;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -211,7 +211,7 @@ public:
     ///        programming error.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
+    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const override;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
@@ -230,7 +230,7 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
-                                SubnetID subnet_id) const;
+                                SubnetID subnet_id) const override;
 
     /// @brief Returns existing IPv4 leases for specified client-id
     ///
@@ -248,7 +248,7 @@ public:
     ///        programming error.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Collection getLease4(const ClientId& clientid) const;
+    virtual Lease4Collection getLease4(const ClientId& clientid) const override;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -266,26 +266,26 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
-                                SubnetID subnet_id) const;
+                                SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv4 leases for the particular subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv4 leases for the particular hostname.
     ///
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(const std::string& hostname) const;
+    virtual Lease4Collection getLeases4(const std::string& hostname) const override;
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const;
+    virtual Lease4Collection getLeases4() const override;
 
     /// @brief Returns range of IPv4 leases using paging.
     ///
@@ -313,7 +313,7 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection
     getLeases4(const asiolink::IOAddress& lower_bound_address,
-               const LeasePageSize& page_size) const;
+               const LeasePageSize& page_size) const override;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -334,7 +334,7 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(Lease::Type type,
-                                const isc::asiolink::IOAddress& addr) const;
+                                const isc::asiolink::IOAddress& addr) const override;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -357,7 +357,7 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                        uint32_t iaid) const;
+                                        uint32_t iaid) const override;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -376,33 +376,33 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                        uint32_t iaid, SubnetID subnet_id) const;
+                                        uint32_t iaid, SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv6 leases for the particular hostname.
     ///
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(const std::string& hostname) const;
+    virtual Lease6Collection getLeases6(const std::string& hostname) const override;
 
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6() const;
+    virtual Lease6Collection getLeases6() const override;
 
     /// @brief Returns all IPv6 leases for the DUID.
     ///
     /// @todo: implement an optimised of the query using index.
     /// @return Lease collection (may be empty if no IPv6 lease found)
     /// for the DUID.
-    virtual Lease6Collection getLeases6(const DUID& duid) const;
+    virtual Lease6Collection getLeases6(const DUID& duid) const override;
 
     /// @brief Returns range of IPv6 leases using paging.
     ///
@@ -430,7 +430,7 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection
     getLeases6(const asiolink::IOAddress& lower_bound_address,
-               const LeasePageSize& page_size) const;
+               const LeasePageSize& page_size) const override;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -443,7 +443,7 @@ public:
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases4(Lease4Collection& expired_leases,
-                                   const size_t max_leases) const;
+                                   const size_t max_leases) const override;
 
     /// @brief Returns a collection of expired DHCPv6 leases.
     ///
@@ -456,7 +456,7 @@ public:
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases6(Lease6Collection& expired_leases,
-                                   const size_t max_leases) const;
+                                   const size_t max_leases) const override;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -478,7 +478,7 @@ public:
     /// the value matches the one received on the SELECT query, effectively
     /// enforcing no update on the lease between SELECT and UPDATE with
     /// different expiration time.
-    virtual void updateLease4(const Lease4Ptr& lease4);
+    virtual void updateLease4(const Lease4Ptr& lease4) override;
 
     /// @brief Updates IPv6 lease.
     ///
@@ -500,7 +500,7 @@ public:
     /// the value matches the one received on the SELECT query, effectively
     /// enforcing no update on the lease between SELECT and UPDATE with
     /// different expiration time.
-    virtual void updateLease6(const Lease6Ptr& lease6);
+    virtual void updateLease6(const Lease6Ptr& lease6) override;
 
     /// @brief Deletes an IPv4 lease.
     ///
@@ -516,7 +516,7 @@ public:
     /// the value matches the one received on the SELECT query, effectively
     /// enforcing no update on the lease between SELECT and DELETE with
     /// different expiration time.
-    virtual bool deleteLease(const Lease4Ptr& lease);
+    virtual bool deleteLease(const Lease4Ptr& lease) override;
 
     /// @brief Deletes an IPv6 lease.
     ///
@@ -532,7 +532,7 @@ public:
     /// the value matches the one received on the SELECT query, effectively
     /// enforcing no update on the lease between SELECT and DELETE with
     /// different expiration time.
-    virtual bool deleteLease(const Lease6Ptr& lease);
+    virtual bool deleteLease(const Lease6Ptr& lease) override;
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
     ///
@@ -541,7 +541,7 @@ public:
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs) override;
 
     /// @brief Deletes all expired-reclaimed DHCPv6 leases.
     ///
@@ -550,7 +550,7 @@ public:
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs) override;
 
     /// @brief Creates and runs the IPv4 lease stats query
     ///
@@ -560,7 +560,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
 
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
@@ -570,7 +570,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) override;
 
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
@@ -582,7 +582,7 @@ public:
     /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
-                                                                const SubnetID& last_subnet_id);
+                                                                const SubnetID& last_subnet_id) override;
 
     /// @brief Creates and runs the IPv6 lease stats query
     ///
@@ -592,7 +592,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -602,7 +602,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) override;
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -614,7 +614,7 @@ public:
     /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
-                                                                const SubnetID& last_subnet_id);
+                                                                const SubnetID& last_subnet_id) override;
 
     /// @brief Removes specified IPv4 leases.
     ///
@@ -625,7 +625,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+    virtual size_t wipeLeases4(const SubnetID& subnet_id) override;
 
     /// @brief Removed specified IPv6 leases.
     ///
@@ -636,20 +636,20 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+    virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
     /// @brief Checks if JSON support is enabled in the database.
     /// MySQL implementation.
     ///
     /// @return true if there is JSON support, false otherwise
-    bool isJsonSupported() const override;
+    virtual bool isJsonSupported() const override;
 
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
     ///
     /// @return Type of the backend.
-    virtual std::string getType() const {
+    virtual std::string getType() const override {
         return (std::string("mysql"));
     }
 
@@ -658,14 +658,14 @@ public:
     /// Each backend have specific name.
     ///
     /// @return Name of the backend.
-    virtual std::string getName() const;
+    virtual std::string getName() const override;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
     ///
     /// @return Description of the backend.
-    virtual std::string getDescription() const;
+    virtual std::string getDescription() const override;
 
     /// @brief Returns backend version.
     ///
@@ -674,7 +674,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual std::pair<uint32_t, uint32_t> getVersion() const override;
 
     /// @brief Commit Transactions
     ///
@@ -682,7 +682,7 @@ public:
     /// support transactions, this is a no-op.
     ///
     /// MySQL supports transactions but this manager does not use them.
-    virtual void commit();
+    virtual void commit() override;
 
     /// @brief Rollback Transactions
     ///
@@ -690,7 +690,7 @@ public:
     /// support transactions, this is a no-op.
     ///
     /// MySQL supports transactions but this manager does not use them.
-    virtual void rollback();
+    virtual void rollback() override;
 
     /// @brief Statement Tags
     ///
@@ -959,7 +959,8 @@ private:
     ///
     /// @return a string describing a limit that is being exceeded, or an empty
     /// string if no limits are exceeded
-    std::string checkLimits4(isc::data::ConstElementPtr const& user_context) const override;
+    virtual std::string
+    checkLimits4(isc::data::ConstElementPtr const& user_context) const override;
 
     /// @brief Checks if the IPv6 lease limits set in the given user context are exceeded.
     /// MySQL implementation.
@@ -972,7 +973,8 @@ private:
     ///
     /// @return a string describing a limit that is being exceeded, or an empty
     /// string if no limits are exceeded
-    std::string checkLimits6(isc::data::ConstElementPtr const& user_context) const override;
+    virtual std::string
+    checkLimits6(isc::data::ConstElementPtr const& user_context) const override;
 
     /// @brief Check Error and Throw Exception
     ///

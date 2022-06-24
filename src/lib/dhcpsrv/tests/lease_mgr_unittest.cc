@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,14 +47,14 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(const Lease4Ptr&) {
+    virtual bool addLease(const Lease4Ptr&) override {
         return (false);
     }
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(const Lease6Ptr&) {
+    virtual bool addLease(const Lease6Ptr&) override {
         return (false);
     }
 
@@ -63,7 +63,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress&) const {
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress&) const override {
         return (Lease4Ptr());
     }
 
@@ -77,7 +77,7 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const HWAddr&) const {
+    virtual Lease4Collection getLease4(const HWAddr&) const override {
         return (Lease4Collection());
     }
 
@@ -91,7 +91,7 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const HWAddr&, SubnetID) const {
+    virtual Lease4Ptr getLease4(const HWAddr&, SubnetID) const override {
         return (Lease4Ptr());
     }
 
@@ -100,21 +100,8 @@ public:
     /// @param clientid client identifier
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const ClientId&) const {
+    virtual Lease4Collection getLease4(const ClientId&) const override {
         return (Lease4Collection());
-    }
-
-    /// @brief Returns existing IPv4 lease for specified client identifier,
-    /// HW address and subnet identifier.
-    ///
-    /// @param client_id A client identifier
-    /// @param hwaddr A HW address.
-    /// @param subnet_id A subnet identifier.
-    ///
-    /// @return A pointer to an existing lease or NULL if lease not found.
-    virtual Lease4Ptr
-    getLease4(const ClientId&, const HWAddr&, SubnetID) const {
-        return (Lease4Ptr());
     }
 
     /// @brief Returns existing IPv4 lease for specified client-id
@@ -126,7 +113,7 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const ClientId&, SubnetID) const {
+    virtual Lease4Ptr getLease4(const ClientId&, SubnetID) const override {
         return (Lease4Ptr());
     }
 
@@ -135,7 +122,7 @@ public:
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID) const {
+    virtual Lease4Collection getLeases4(SubnetID) const override {
         return (Lease4Collection());
     }
 
@@ -144,14 +131,14 @@ public:
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(const std::string&) const {
+    virtual Lease4Collection getLeases4(const std::string&) const override {
         return (Lease4Collection());
     }
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const {
+    virtual Lease4Collection getLeases4() const override {
         return (Lease4Collection());
     }
 
@@ -181,7 +168,7 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection
     getLeases4(const asiolink::IOAddress& /* lower_bound_address */,
-               const LeasePageSize& /* page_size */) const {
+               const LeasePageSize& /* page_size */) const override {
         return (Lease4Collection());
     }
 
@@ -191,7 +178,7 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Ptr getLease6(Lease::Type /* not used yet */,
-                                const isc::asiolink::IOAddress&) const {
+                                const isc::asiolink::IOAddress&) const override {
         return (Lease6Ptr());
     }
 
@@ -202,7 +189,7 @@ public:
     ///
     /// @return whatever is set in leases6_ field
     virtual Lease6Collection getLeases6(Lease::Type /* not used yet */,
-                                        const DUID&, uint32_t) const {
+                                        const DUID&, uint32_t) const override {
         return (leases6_);
     }
 
@@ -214,7 +201,7 @@ public:
     ///
     /// @return whatever is set in leases6_ field
     virtual Lease6Collection getLeases6(Lease::Type /* not used yet */,
-                                        const DUID&, uint32_t, SubnetID) const {
+                                        const DUID&, uint32_t, SubnetID) const override {
         return (leases6_);
     }
 
@@ -222,7 +209,7 @@ public:
     ///
     /// @param duid ignored
     /// @return whatever is set in leases6_ field
-    virtual Lease6Collection getLeases6(const DUID&) const {
+    virtual Lease6Collection getLeases6(const DUID&) const override {
         return (leases6_);
     }
 
@@ -231,7 +218,7 @@ public:
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(SubnetID) const {
+    virtual Lease6Collection getLeases6(SubnetID) const override {
         return (Lease6Collection());
     }
 
@@ -240,14 +227,14 @@ public:
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(const std::string&) const {
+    virtual Lease6Collection getLeases6(const std::string&) const override {
         return (Lease6Collection());
     }
 
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6() const {
+    virtual Lease6Collection getLeases6() const override {
         return (Lease6Collection());
     }
 
@@ -277,14 +264,14 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection
     getLeases6(const asiolink::IOAddress& /* lower_bound_address */,
-               const LeasePageSize& /* page_size */) const {
+               const LeasePageSize& /* page_size */) const override {
         return (Lease6Collection());
     };
 
     /// @brief Returns expired DHCPv6 leases.
     ///
     /// This method is not implemented.
-    virtual void getExpiredLeases6(Lease6Collection&, const size_t) const {
+    virtual void getExpiredLeases6(Lease6Collection&, const size_t) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases6 is not"
                   " implemented");
     }
@@ -292,7 +279,7 @@ public:
     /// @brief Returns expired DHCPv4 leases.
     ///
     /// This method is not implemented.
-    virtual void getExpiredLeases4(Lease4Collection&, const size_t) const {
+    virtual void getExpiredLeases4(Lease4Collection&, const size_t) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases4 is not"
                   " implemented");
     }
@@ -302,21 +289,21 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease4(const Lease4Ptr&) {}
+    virtual void updateLease4(const Lease4Ptr&) override {}
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease6(const Lease6Ptr&) {}
+    virtual void updateLease6(const Lease6Ptr&) override {}
 
     /// @brief Deletes an IPv4 lease.
     ///
     /// @param lease IPv4 lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
-    virtual bool deleteLease(const Lease4Ptr&) {
+    virtual bool deleteLease(const Lease4Ptr&) override {
         return (false);
     }
 
@@ -325,7 +312,7 @@ public:
     /// @param lease IPv6 lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists.
-    virtual bool deleteLease(const Lease6Ptr&) {
+    virtual bool deleteLease(const Lease6Ptr&) override {
         return (false);
     }
 
@@ -334,7 +321,7 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t) {
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases4"
                   " is not implemented");
     }
@@ -344,20 +331,20 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) {
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
                   " is not implemented");
     }
 
     /// @brief Pretends to wipe all IPv4 leases from a subnet
     /// @param subnet_id (ignored, but one day may specify the subnet)
-    virtual size_t wipeLeases4(const SubnetID&) {
+    virtual size_t wipeLeases4(const SubnetID&) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::wipeLeases4 not implemented");
     }
 
     /// @brief Pretends to wipe all IPv4 leases from a subnet
     /// @param subnet_id (ignored, but one day may specify the subnet)
-    virtual size_t wipeLeases6(const SubnetID&) {
+    virtual size_t wipeLeases6(const SubnetID&) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::wipeLeases6 not implemented");
     }
 
@@ -385,7 +372,7 @@ public:
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
     ///
     /// @return Type of the backend.
-    virtual std::string getType() const {
+    virtual std::string getType() const override {
         return (std::string("concrete"));
     }
 
@@ -395,7 +382,7 @@ public:
     /// file.  Otherwise it is just the same as the type.
     ///
     /// @return Name of the backend.
-    virtual std::string getName() const {
+    virtual std::string getName() const override {
         return (std::string("concrete"));
     }
 
@@ -404,21 +391,21 @@ public:
     /// This description may be multiline text that describes the backend.
     ///
     /// @return Description of the backend.
-    virtual std::string getDescription() const {
+    virtual std::string getDescription() const override {
         return (std::string("This is a dummy concrete backend implementation."));
     }
 
     /// @brief Returns backend version.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
+    virtual std::pair<uint32_t, uint32_t> getVersion() const override {
         return (make_pair(uint32_t(0), uint32_t(0)));
     }
 
     /// @brief Commit transactions
-    virtual void commit() {
+    virtual void commit() override {
     }
 
     /// @brief Rollback transactions
-    virtual void rollback() {
+    virtual void rollback() override {
     }
 
     // We need to use it in ConcreteLeaseMgr
