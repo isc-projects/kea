@@ -127,7 +127,7 @@
         // {
         //     "name": "dns-servers",
         //     "code": 23,
-        //     "csv-format": "true",
+        //     "csv-format": true,
         //     "space": "dhcp6",
         //     "data": "2001:db8:2::45, 2001:db8:2::100"
         // }
