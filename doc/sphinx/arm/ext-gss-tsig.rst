@@ -817,7 +817,7 @@ The server map parameters are described below:
     differ between Kerberos implementations. The client keytab is just for
     the client key and is typically used to specify the key explicitly in more
     static manner, while the credentials cache can be used to store multiple
-    credentials and can be dynamically updated by the Keberos library. As such,
+    credentials and can be dynamically updated by the Kerberos library. As such,
     the credentials-cache is more flexible and thus the recommended alternative.
 
     Also note that only the read access right is needed to use the cache.
