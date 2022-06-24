@@ -806,13 +806,17 @@ The server map parameters are described below:
 
 .. note::
 
-    Even when the client keytab can be specified either in the configuration
-    or the environment variable, leaving the library acquiring and caching
-    client credentials, to use cached client credentials is far better.
+    Generally it is not recommended to specify both the client keytab (``client-keytab``)
+    and the credentials cache (``credentials-cache``), although this may
+    differ between Kerberos implementations. The client keytab is just for
+    the client key and is typically used to specify the key explicitly in more
+    static manner, while the credentials cache can be used to store multiple
+    credentials and can be dynamically updated by the Keberos library. As such,
+    the credentials-cache is more flexible and thus the recommended alternative.
 
-    For instance only the read access right is needed to use the cache,
-    to fetch credentials and update the cache requires the write access
-    right too.
+    Also note that only the read access right is needed to use the cache.
+    Fetching credentials and updating the cache requires the write access
+    right.
 
 
 GSS-TSIG Automatic Key Removal
