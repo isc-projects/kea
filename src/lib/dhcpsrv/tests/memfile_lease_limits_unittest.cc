@@ -48,7 +48,7 @@ public:
     ///
     /// {
     ///     "ISC": {
-    ///         "classes": [ "class0", "class1", ... ]
+    ///         "client-classes": [ "class0", "class1", ... ]
     ///     }
     /// }
     ///
@@ -62,9 +62,9 @@ public:
                 clist->add(Element::create(client_class));
             }
 
-            ElementPtr extended_info = Element::createMap();
-            extended_info->set("classes", clist);
-            ctx->set("ISC", extended_info);
+            ElementPtr client_classes = Element::createMap();
+            client_classes->set("client-classes", clist);
+            ctx->set("ISC", client_classes);
         }
 
         return (ctx);

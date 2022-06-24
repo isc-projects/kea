@@ -58,7 +58,7 @@ ClassLeaseCounter::getLeaseClientClasses(LeasePtr lease) const {
     ConstElementPtr classes;
     auto ctx = lease->getContext();
     if (ctx) {
-        classes = ctx->find("ISC/classes");
+        classes = ctx->find("ISC/client-classes");
         if (classes && classes->getType() != Element::list) {
             isc_throw(Unexpected, "getLeaseClientClasses: "
                       << lease->toText() << " is not a list!");
@@ -116,7 +116,7 @@ ClassLeaseCounter::updateLease(LeasePtr new_lease, LeasePtr old_lease) {
     uint32_t old_state = old_lease->state_;
 
     // Did we change states or classes?
-    // Note we do not worry about lease type changes, because its makes no
+    // Note we do not worry about lease type changes, because it makes no
     // business sense to repurpose a lease as a different type. Other than
     // some unit tests unrelated to this it never occurs in the code.
     if ((old_state != new_state) || (old_classes != new_classes)) {
