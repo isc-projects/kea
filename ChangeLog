@@ -1,3 +1,8 @@
+2032.	[build]         razvan
+	The library version numbers have been bumped for the Kea 2.1.7
+	development release.
+	(Gitlab #2455)
+
 2031.	[func]		fdupont
 	Improved compatiblity with OpenSSL 3.0.x, in particular
 	recover system error messages.

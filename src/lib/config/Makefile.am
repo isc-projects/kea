@@ -30,7 +30,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 25:0:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 36:0:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 # The message file should be in the distribution.

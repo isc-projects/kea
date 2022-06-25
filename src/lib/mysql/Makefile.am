@@ -20,7 +20,7 @@ libkea_mysql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_mysql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_mysql_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_mysql_la_LDFLAGS = -no-undefined -version-info 37:0:0
+libkea_mysql_la_LDFLAGS = -no-undefined -version-info 38:0:0
 
 libkea_mysql_la_LDFLAGS += $(MYSQL_LIBS)
 
