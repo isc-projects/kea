@@ -1527,6 +1527,9 @@ TEST(Element, removeEmptyContainersRecursively) {
 
 /// @brief Function which creates an imaginary configuration hierarchy used to
 /// test mergeDiffAdd, mergeDiffDel and extend.
+///
+/// @param any Flag which indicates if traversing the hierarchy should use exact
+/// element match or not.
 isc::data::HierarchyDescriptor createHierarchy(bool any = false) {
     auto const& element_empty = [](ElementPtr& element) {
         for (auto const& kv : element->mapValue()) {
