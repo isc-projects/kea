@@ -1748,9 +1748,9 @@ TEST(Element, mergeDiffAdd) {
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "root");
         std::string expected_str("{ \"elements\": { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" }, "
-                                 "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
-                                 "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
-                                 "\"right-other-elements\": { \"elements\": \"other-right\", \"id\": 2 } }");
+                                   "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
+                                   "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
+                                   "\"right-other-elements\": { \"elements\": \"other-right\", \"id\": 2 } }");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
             << "Actual: " << left->str()
@@ -1804,10 +1804,10 @@ TEST(Element, mergeDiffAdd) {
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffAdd(left, right, hierarchy, "root");
         std::string expected_str("[ { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", "
-                                   "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
-                                   "\"other-elements\": \"other\" }, "
-                                 "{ \"elements\": \"other-left\", \"id\": 1 }, "
-                                 "{ \"elements\": \"other-right\", \"id\": 2 } ]");
+                                     "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
+                                     "\"other-elements\": \"other\" }, "
+                                   "{ \"elements\": \"other-left\", \"id\": 1 }, "
+                                   "{ \"elements\": \"other-right\", \"id\": 2 } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
             << "Actual: " << left->str()
@@ -1999,9 +1999,9 @@ TEST(Element, mergeDiffDel) {
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "root");
         std::string expected_str("{ \"elements\": { \"id\": 0, \"other-elements\": \"other\" }, "
-                                 "\"elements-other\": { \"elements\": \"new-left\", \"id\": 3, \"other-elements\": \"new-other\" }, "
-                                 "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
-                                 "\"other\": [ \"left-other-left\", \"left-other-left-other\" ] }");
+                                   "\"elements-other\": { \"elements\": \"new-left\", \"id\": 3, \"other-elements\": \"new-other\" }, "
+                                   "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
+                                   "\"other\": [ \"left-other-left\", \"left-other-left-other\" ] }");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
             << "Actual: " << left->str()
@@ -2069,7 +2069,7 @@ TEST(Element, mergeDiffDel) {
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         mergeDiffDel(left, right, hierarchy, "root");
         std::string expected_str("[ { \"id\": 0, \"other\": [ \"left-other-left\", \"left-other-left-other\" ], \"other-elements\": \"other\" }, "
-                                 "{ \"elements\": \"other-left\", \"id\": 1 } ]");
+                                   "{ \"elements\": \"other-left\", \"id\": 1 } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
             << "Actual: " << left->str()
