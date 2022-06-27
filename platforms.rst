@@ -39,7 +39,7 @@ do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
 * FreeBSD - 11
-* macOS — 10.13, 10.14, 10.15, 11, 12
+* macOS —  10.15, 11, 12
 
 Community-Maintained
 --------------------
@@ -56,10 +56,11 @@ These include platforms past their respective EOL dates, such as:
 
 * Alpine — 3.10 (1 May 2021), 3.11, 3.12
 * CentOS — 6 (30 November 2020), 8 (31 December 2021)
-* Fedora — 31, 32, 33
-* Ubuntu — 14.04, 18.10, 19.04, 19.10, 21.04
 * Debian — 8 (30 June 2020)
+* Fedora — 31, 32, 33
 * FreeBSD — 10 (31 October 2018)
+* macOS — 10.13, 10.14
+* Ubuntu — 14.04, 18.10, 19.04, 19.10, 21.04
 
 Unsupported Platforms
 ---------------------
