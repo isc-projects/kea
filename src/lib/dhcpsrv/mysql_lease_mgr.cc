@@ -3135,6 +3135,28 @@ MySqlLeaseMgr::checkLimits6(ConstElementPtr const& user_context) const {
     return checkLimits(user_context, CHECK_LEASE6_LIMITS);
 }
 
+bool
+MySqlLeaseMgr::isJsonSupported() const {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Create bindings.
+    MySqlBindingCollection in_bindings;
+    MySqlBindingCollection out_bindings({
+        MySqlBinding::createBool()
+    });
+
+    // Execute the select.
+    bool json_supported(false);
+    ctx->conn_.selectQuery(IS_JSON_SUPPORTED, in_bindings, out_bindings,
+                           [&json_supported] (MySqlBindingCollection const& result) {
+        json_supported = result[0]->getBool();
+    });
+
+    return json_supported;
+}
+
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery4() {
     // Get a context
@@ -3229,28 +3251,6 @@ MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
 size_t
 MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases6 is not implemented for MySQL backend");
-}
-
-bool
-MySqlLeaseMgr::isJsonSupported() const {
-    // Get a context.
-    MySqlLeaseContextAlloc get_context(*this);
-    MySqlLeaseContextPtr ctx = get_context.ctx_;
-
-    // Create bindings.
-    MySqlBindingCollection in_bindings;
-    MySqlBindingCollection out_bindings({
-        MySqlBinding::createBool()
-    });
-
-    // Execute the select.
-    bool json_supported(false);
-    ctx->conn_.selectQuery(IS_JSON_SUPPORTED, in_bindings, out_bindings,
-                           [&json_supported] (MySqlBindingCollection const& result) {
-        json_supported = result[0]->getBool();
-    });
-
-    return json_supported;
 }
 
 // Miscellaneous database methods.

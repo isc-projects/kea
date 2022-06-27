@@ -638,12 +638,6 @@ public:
     /// @return number of leases removed.
     virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
-    /// @brief Checks if JSON support is enabled in the database.
-    /// MySQL implementation.
-    ///
-    /// @return true if there is JSON support, false otherwise
-    virtual bool isJsonSupported() const override;
-
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -975,6 +969,12 @@ private:
     /// string if no limits are exceeded
     virtual std::string
     checkLimits6(isc::data::ConstElementPtr const& user_context) const override;
+
+    /// @brief Checks if JSON support is enabled in the database.
+    /// MySQL implementation.
+    ///
+    /// @return true if there is JSON support, false otherwise
+    bool isJsonSupported() const override;
 
     /// @brief Check Error and Throw Exception
     ///

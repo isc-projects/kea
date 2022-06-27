@@ -613,12 +613,6 @@ public:
     /// @return number of leases removed.
     virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
-    /// @brief Checks if JSON support is enabled in the database.
-    /// PostgreSQL implementation.
-    ///
-    /// @return true if there is JSON support, false otherwise
-    virtual bool isJsonSupported() const override;
-
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -707,6 +701,7 @@ public:
         SUBNET_RANGE_LEASE6_STATS,   // Fetched IPv6 lease stats for a subnet range.
         CHECK_LEASE4_LIMITS,         // Check if allocated IPv4 leases are inside the set limits.
         CHECK_LEASE6_LIMITS,         // Check if allocated IPv6 leases are inside the set limits.
+        IS_JSON_SUPPORTED,           // Checks if JSON support is enabled in the database.
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -948,6 +943,12 @@ private:
     /// string if no limits are exceeded
     virtual std::string
     checkLimits6(isc::data::ConstElementPtr const& user_context) const override;
+
+    /// @brief Checks if JSON support is enabled in the database.
+    /// PostgreSQL implementation.
+    ///
+    /// @return true if there is JSON support, false otherwise
+    bool isJsonSupported() const override;
 
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {

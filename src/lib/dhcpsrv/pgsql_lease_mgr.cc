@@ -359,17 +359,20 @@ PgSqlTaggedStatement tagged_statements[] = {
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
       "  ORDER BY subnet_id, lease_type, state" },
 
-    // TODO: remove single quotes from the following two SELECTs when the functions are implemented
-
     // CHECK_LEASE4_LIMITS
     { 1, { OID_TEXT },
       "check_lease4_limits",
-      "SELECT 'checkLease4Limits($1)'" },
+      "SELECT checkLease4Limits($1)" },
 
     // CHECK_LEASE6_LIMITS
     { 1, { OID_TEXT },
       "check_lease6_limits",
-      "SELECT 'checkLease6Limits($1)'" },
+      "SELECT checkLease6Limits($1)" },
+
+    // IS_JSON_SUPPORTED
+    { 0, { OID_NONE },
+      "is_json_supported",
+      "SELECT isJsonSupported()" },
 
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
@@ -2290,30 +2293,28 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
 string
 PgSqlLeaseMgr::checkLimits(ConstElementPtr const& user_context, StatementIndex const stindex) const {
-    // Bindings
-    PsqlBindArray bind_array;
-    std::string const user_context_str(user_context->str());
-    bind_array.add(user_context_str);
+    // No user context means no limits means allocation allowed means empty string.
+    if (!user_context) {
+        return string();
+    }
 
     // Get a context.
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx(get_context.ctx_);
 
+    // Create bindings.
+    PsqlBindArray bind_array;
+    std::string const user_context_str(user_context->str());
+    bind_array.add(user_context_str);
+
+    // Execute the select.
     PgSqlResult r(PQexecPrepared(ctx->conn_,
                                  tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
                                  &bind_array.formats_[0], 0));
-
     ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
-
-    int rows = PQntuples(r);
-    if (rows > 1) {
-        isc_throw(MultipleRecords, "multiple records were found in the "
-                      "database where only one was expected for query "
-                      << tagged_statements[stindex].name);
-    }
 
     std::string const limits(PgSqlExchange::getRawColumnValue(r, 0, 0));
     return limits;
@@ -2327,6 +2328,22 @@ PgSqlLeaseMgr::checkLimits4(ConstElementPtr const& user_context) const {
 string
 PgSqlLeaseMgr::checkLimits6(ConstElementPtr const& user_context) const {
     return checkLimits(user_context, CHECK_LEASE6_LIMITS);
+}
+
+bool
+PgSqlLeaseMgr::isJsonSupported() const {
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx(get_context.ctx_);
+
+    // Execute the select.
+    StatementIndex const stindex(IS_JSON_SUPPORTED);
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 0, 0, 0, 0, 0));
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+
+    bool const json_supported(PgSqlExchange::getRawColumnValue(r, 0, 0));
+    return json_supported;
 }
 
 LeaseStatsQueryPtr
@@ -2423,11 +2440,6 @@ PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
 size_t
 PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases6 is not implemented for PostgreSQL backend");
-}
-
-bool
-PgSqlLeaseMgr::isJsonSupported() const {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::isJsonSupported() not implemented");
 }
 
 std::string
