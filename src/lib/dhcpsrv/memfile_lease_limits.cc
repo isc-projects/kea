@@ -15,8 +15,8 @@ namespace dhcp {
 
 size_t
 ClassLeaseCounter::getClassCount(const ClientClass& client_class,
-                                 const Lease::Type& ltype) {
-    ClassCountMap& leases_by_class = getCountMap(ltype);
+                                 const Lease::Type& ltype) const {
+    const ClassCountMap& leases_by_class = getConstCountMap(ltype);
     auto it = leases_by_class.find(client_class);
     if (it == leases_by_class.end()) {
         return (0);

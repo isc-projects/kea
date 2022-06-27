@@ -3906,6 +3906,15 @@ GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
 
 void
 GenericLeaseMgrTest::testLeaseLimits4() {
+    // Create a subnet.  We need the subnet to exist so statistics will exist.
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
     std::string text;
     ElementPtr user_context;
 
@@ -3938,6 +3947,9 @@ GenericLeaseMgrTest::testLeaseLimits4() {
     makeLease4("192.0.1.1", 1, Lease::STATE_DEFAULT, Element::fromJSON(
         R"({ "ISC": { "client-classes": [ "foo" ] } })"));
 
+    // Since we did not go through allocation engine stats won't be altered.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(user_context));
@@ -3951,6 +3963,15 @@ GenericLeaseMgrTest::testLeaseLimits4() {
 
 void
 GenericLeaseMgrTest::testLeaseLimits6() {
+    // Create a subnet.  We need the subnet to exist so statistics will exist.
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
     std::string text;
     ElementPtr user_context;
 
@@ -3984,6 +4005,9 @@ GenericLeaseMgrTest::testLeaseLimits6() {
 
     makeLease6(Lease::TYPE_PD, "2001:db8:1::", 64, 1, Lease::STATE_DEFAULT, Element::fromJSON(
         R"({ "ISC": { "client-classes": [ "foo" ] } })"));
+
+    // Since we did not go through allocation engine stats won't be altered.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
 
     user_context = Element::fromJSON(R"({ "ISC": { "limits": {
         "client-classes": [ { "name": "foo", "address-limit": 1 } ] } } })");

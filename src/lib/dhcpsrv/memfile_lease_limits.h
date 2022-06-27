@@ -47,7 +47,7 @@ public:
     /// @return Number of leases for the class and lease type.  If there is no
     /// entry found for the class and lease type, a value of zero is returned.
     size_t getClassCount(const ClientClass& client_class,
-                         const Lease::Type& ltype = Lease::TYPE_V4);
+                         const Lease::Type& ltype = Lease::TYPE_V4) const;
 
     /// @brief Sets the lease count for the given class and lease type to a value.
     ///
@@ -120,8 +120,8 @@ public:
     /// defaults to Lease::TYPE_V4
     ///
     /// @return Number of entries for the lease type
-    size_t size(const Lease::Type& ltype = Lease::TYPE_V4) {
-        return (getCountMap(ltype).size());
+    size_t size(const Lease::Type& ltype = Lease::TYPE_V4) const {
+        return (getConstCountMap(ltype).size());
     }
 
     /// @brief Fetches the list of classes from the lease's user-context
@@ -139,6 +139,10 @@ private:
     ///
     /// @return Reference to the map for the lease type
     ClassCountMap& getCountMap(const Lease::Type& ltype = Lease::TYPE_V4) {
+        return (ltype == Lease::TYPE_PD ? pds_by_class_ : addresses_by_class_);
+    }
+
+    const ClassCountMap& getConstCountMap(const Lease::Type& ltype = Lease::TYPE_V4) const {
         return (ltype == Lease::TYPE_PD ? pds_by_class_ : addresses_by_class_);
     }
 

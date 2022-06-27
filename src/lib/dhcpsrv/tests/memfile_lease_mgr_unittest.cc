@@ -2621,8 +2621,7 @@ TEST_F(MemfileLeaseMgrTest, classLeaseCount6_PD) {
 }
 
 // brief Checks that a null user context allows allocation.
-// DISABLED_ until Memfile_LeaseMgr implements checkLimits4().
-TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimitsNull4) {
+TEST_F(MemfileLeaseMgrTest, checkLimitsNull4) {
     startBackend(V4);
     std::string text;
     ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(nullptr));
@@ -2639,15 +2638,13 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimitsNull6) {
 }
 
 // Checks a few V4 lease limit checking scenarios.
-// Disabbled until Memfile_LeaseMgr implements checkLimits4() function.
-TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimits4) {
+TEST_F(MemfileLeaseMgrTest, checkLimits4) {
     startBackend(V4);
     testLeaseLimits4();
 }
 
 // Checks a few V4 lease limit checking scenarios.
-// Disabbled until Memfile_LeaseMgr implements checkLimits4() function.
-TEST_F(MemfileLeaseMgrTest, DISABLED_checkLimits6) {
+TEST_F(MemfileLeaseMgrTest, checkLimits6) {
     startBackend(V6);
     testLeaseLimits6();
 }

@@ -14,8 +14,10 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
+
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
@@ -37,10 +39,10 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 }  // namespace
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::util;
-
-using isc::data::ConstElementPtr;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -2089,7 +2091,6 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
     return (num);
 }
 
-
 void
 Memfile_LeaseMgr::recountClassLeases4() {
     class_lease_counter_.clear();
@@ -2114,7 +2115,7 @@ Memfile_LeaseMgr::recountClassLeases6() {
 
 size_t
 Memfile_LeaseMgr::getClassLeaseCount(const ClientClass& client_class,
-                                     const Lease::Type& ltype /* = Lease::TYPE_V4*/) {
+                                     const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
     return(class_lease_counter_.getClassCount(client_class, ltype));
 }
 
@@ -2124,19 +2125,228 @@ Memfile_LeaseMgr::clearClassLeaseCounts() {
 }
 
 std::string
-Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& /* user_context */) const {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
+Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) const {
+    if (!user_context) {
+        return ("");
+    }
+
+    ConstElementPtr limits = user_context->find("ISC/limits");
+    if (!limits) {
+        return ("");
+    }
+
+    // Iterate of the 'client-classes' list in 'limits'. For each class that specifies
+    // an "address-limit", check its value against the class's lease count.
+    ConstElementPtr classes = limits->get("client-classes");
+    if (classes) {
+        for (int i = 0; i < classes->size(); ++i) {
+            ConstElementPtr class_elem = classes->get(i);
+            // Get class name.
+            ConstElementPtr name_elem = class_elem->get("name");
+            if (!name_elem) {
+                isc_throw(BadValue, "checkLimits4 - client-class.name is missing: "
+                          << prettyPrint(limits));
+            }
+
+            std::string name = name_elem->stringValue();
+
+            // Now look for an address-limit
+            size_t limit;
+            if (!getLeaseLimit(class_elem, Lease::TYPE_V4, limit)) {
+                // No limit, go to the next class.
+                continue;
+            }
+
+            // If the limit is > 0 look up the class lease count.  Limit of 0 always
+            // denies the lease.
+            size_t lease_count = 0;
+            if (limit) {
+                lease_count = getClassLeaseCount(name);
+            }
+
+            // If we're over the limit, return the error, no need to evaluate any others.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << "address limit " << limit << " for client class \""
+                   << name << "\", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // If there were class limits we passed them, now look for a subnet limit.
+    ConstElementPtr subnet_elem = limits->get("subnet");
+    if (subnet_elem) {
+        // Get the subnet id.
+        ConstElementPtr id_elem = subnet_elem->get("id");
+        if (!id_elem) {
+            isc_throw(BadValue, "checkLimits4 - subnet.id is missing: "
+                      << prettyPrint(limits));
+        }
+
+        SubnetID subnet_id = id_elem->intValue();
+
+        // Now look for an address-limit.
+        size_t limit;
+        if (getLeaseLimit(subnet_elem, Lease::TYPE_V4, limit)) {
+            // If the limit is > 0 look up the subnet lease count. Limit of 0 always
+            // denies the lease.
+            auto lease_count = 0;
+            if (limit) {
+                lease_count = getSubnetStat(subnet_id, "assigned-addresses");
+            }
+
+            // If we're over the limit, return the error.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << "address limit " << limit << " for subnet ID " << subnet_id
+                   << ", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // No limits exceeded!
+    return ("");
 }
 
 std::string
-Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& /* user_context */) const {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits6() not implemented");
+Memfile_LeaseMgr:: checkLimits6(isc::data::ConstElementPtr const& user_context) const {
+    if (!user_context) {
+        return ("");
+    }
+
+    ConstElementPtr limits = user_context->find("ISC/limits");
+    if (!limits) {
+        return ("");
+    }
+
+    // Iterate over the 'client-classes' list in 'limits'. For each class that specifies
+    // limit (either "address-limit" or "prefix-limit", check its value against the appropriate
+    // class lease count.
+    ConstElementPtr classes = limits->get("client-classes");
+    if (classes) {
+        for (int i = 0; i < classes->size(); ++i) {
+            ConstElementPtr class_elem = classes->get(i);
+            // Get class name.
+            ConstElementPtr name_elem = class_elem->get("name");
+            if (!name_elem) {
+                isc_throw(BadValue, "client-class.name is missing: "
+                          << prettyPrint(limits));
+            }
+
+            std::string name = name_elem->stringValue();
+
+            // Now look for either address-limit or a prefix=limit.
+            size_t limit = 0;
+            Lease::Type ltype = Lease::TYPE_NA;
+            if (!getLeaseLimit(class_elem, ltype, limit)) {
+                ltype = Lease::TYPE_PD;
+                if (!getLeaseLimit(class_elem, ltype, limit)) {
+                    // No limits for this class, skip to the next.
+                    continue;
+                }
+            }
+
+            // If the limit is > 0 look up the class lease count.  Limit of 0 always
+            // denies the lease.
+            size_t lease_count = 0;
+            if (limit) {
+                lease_count = getClassLeaseCount(name, ltype);
+            }
+
+            // If we're over the limit, return the error, no need to evaluate any others.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
+                   << " limit " << limit << " for client class \""
+                   << name << "\", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // If there were class limits we passed them, now look for a subnet limit.
+    ConstElementPtr subnet_elem = limits->get("subnet");
+    if (subnet_elem) {
+        // Get the subnet id.
+        ConstElementPtr id_elem = subnet_elem->get("id");
+        if (!id_elem) {
+            isc_throw(BadValue, "subnet.id is missing: "
+                      << prettyPrint(limits));
+        }
+
+        SubnetID subnet_id = id_elem->intValue();
+
+        // Now look for either address-limit or a prefix=limit.
+        size_t limit = 0;
+        Lease::Type ltype = Lease::TYPE_NA;
+        if (!getLeaseLimit(subnet_elem, ltype, limit)) {
+            ltype = Lease::TYPE_PD;
+            if (!getLeaseLimit(subnet_elem, ltype, limit)) {
+                // No limits for the subnet so none exceeded!
+                return ("");
+            }
+        }
+
+        // If the limit is > 0 look up the class lease count.  Limit of 0 always
+        // denies the lease.
+        size_t lease_count = 0;
+        if (limit) {
+            lease_count = getSubnetStat(subnet_id, (ltype == Lease::TYPE_NA ?
+                                                    "assigned-nas" : "assigned-pds"));
+        }
+
+        // If we're over the limit, return the error.
+        if (lease_count >= limit) {
+            std::ostringstream ss;
+            ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
+               << " limit " << limit << " for subnet ID " << subnet_id
+               << ", current lease count " << lease_count;
+            return (ss.str());
+        }
+    }
+
+    // No limits exceeded!
+    return ("");
 }
 
 bool
 Memfile_LeaseMgr::isJsonSupported() const {
     return true;
 }
+
+int64_t
+Memfile_LeaseMgr::getSubnetStat(const SubnetID& subnet_id, const std::string& stat_label) const {
+    /// @todo This could be simplified if StatsMgr provided a mechanism to
+    /// return the most recent sample as an InterSample.
+    std::string stat_name = StatsMgr::generateName("subnet", subnet_id, stat_label);
+    ConstElementPtr stat = StatsMgr::instance().get(stat_name);
+    ConstElementPtr samples = stat->get(stat_name);
+    if (samples && samples->size()) {
+        auto sample = samples->get(0);
+        if (sample->size()) {
+            auto count_elem = sample->get(0);
+            return (count_elem->intValue());
+        }
+    }
+
+    return (0);
+}
+
+bool
+Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_t& limit) const {
+    ConstElementPtr limit_elem = parent->get(ltype == Lease::TYPE_PD ?
+                                             "prefix-limit" : "address-limit");
+    if (limit_elem) {
+        limit = limit_elem->intValue();
+        return (true);
+    }
+
+    return (false);
+}
+
+
 
 }  // namespace dhcp
 }  // namespace isc

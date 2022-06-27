@@ -840,6 +840,26 @@ private:
                                           StorageType& storage,
                                           LeaseFileType& lease_file) const;
 
+    /// @brief Fetches the most recent value for a subnet statistic
+    ///
+    /// @param subnet_id subnet id of the subnet for which the stat is desired
+    /// @param stat_label name of the statisitic desired (e.g. "assigned-addresses")
+    ///
+    /// @return Value of the statistic or zero if there are no entries found.
+    int64_t getSubnetStat(const SubnetID& subnet_id, const std::string& stat_label) const;
+
+    /// @brief Fetches the integer value of lease limit element from a parent element based
+    /// on Lease::Type.
+    ///
+    /// @param parent parent element (e.g. "client-class" or "subnet") in which to look for
+    /// the limit
+    /// @param ltype Lease::Type of the limit for which to look (one of Lease::TYPE_V4,
+    /// Lease::TYPE_NA, or Lease::TYPE_PD)
+    /// @param[out] limit contains the value of the limit if found
+    ///
+    /// @return bool true if a limit for the lease type was found, false otherwise.
+    bool getLeaseLimit(data::ConstElementPtr parent, Lease::Type ltype, size_t& limit) const;
+
 public:
 
     /// @brief Return backend type
@@ -1225,7 +1245,7 @@ public:
     /// @param ltype type of lease for which the count is desired. Defaults to
     /// Lease::TYPE_V4.
     size_t getClassLeaseCount(const ClientClass& client_class,
-                              const Lease::Type& ltype = Lease::TYPE_V4) override;
+                              const Lease::Type& ltype = Lease::TYPE_V4) const override;
 
     /// @brief Recount the leases per class for V4 leases.
     ///
