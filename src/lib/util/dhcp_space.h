@@ -27,7 +27,7 @@ enum DhcpSpace {
 template <DhcpSpace D>
 char const* cStringDhcpSpace();
 
-/// @brief Replaces all occurences of {} with 4 or 6 based on the templated DHCP space.
+/// @brief Replaces all occurrences of {} with 4 or 6 based on the templated DHCP space.
 ///
 /// @tparam D DHCP space
 ///
