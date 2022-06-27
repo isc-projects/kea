@@ -1639,6 +1639,8 @@ def prepare_system_local(features, check_times):
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
+            if revision == '22.04':
+                packages.extend(['tex-gyre'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
