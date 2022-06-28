@@ -1252,6 +1252,8 @@ public:
     /// Clears the current class-lease count map and then iterates
     /// over all, retabulating counts based on class lists in each lease
     /// user-context.
+    ///
+    /// Must be called from a thread-safe context.
     void recountClassLeases4();
 
     /// @brief Recount the leases per class for V6 leases.
@@ -1259,9 +1261,13 @@ public:
     /// Clears the current class-lease count map and then iterates
     /// over all, retabulating counts based on class lists in each lease
     /// user-context.
+    ///
+    /// Must be called from a thread-safe context.
     void recountClassLeases6();
 
     /// @brief Clears the class-lease count map.
+    ///
+    /// Must be called from a thread-safe context.
     void clearClassLeaseCounts();
 };
 

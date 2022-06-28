@@ -2116,7 +2116,12 @@ Memfile_LeaseMgr::recountClassLeases6() {
 size_t
 Memfile_LeaseMgr::getClassLeaseCount(const ClientClass& client_class,
                                      const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
-    return(class_lease_counter_.getClassCount(client_class, ltype));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return(class_lease_counter_.getClassCount(client_class, ltype));
+    } else {
+        return(class_lease_counter_.getClassCount(client_class, ltype));
+    }
 }
 
 void
