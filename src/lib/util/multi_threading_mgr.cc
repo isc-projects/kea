@@ -227,6 +227,12 @@ MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
     MultiThreadingMgr::instance().exitCriticalSection();
 }
 
+MultiThreadingLock::MultiThreadingLock(std::mutex& mutex) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_ = std::unique_lock<std::mutex>(mutex);
+    }
+}
+
 void
 CSCallbackSetList::addCallbackSet(const std::string& name,
                                   const CSCallbackSet::Callback& check_cb,

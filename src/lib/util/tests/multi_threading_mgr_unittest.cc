@@ -324,6 +324,40 @@ TEST(MultiThreadingMgrTest, criticalSection) {
     MultiThreadingMgr::instance().apply(false, 0, 0);
 }
 
+/// @brief Checks that the lock works only when multi-threading is enabled and
+/// only during its lifetime.
+TEST(MultiThreadingLockTest, scope) {
+    // Check that the mutex is unlocked by default at first.
+    std::mutex mutex;
+    ASSERT_TRUE(mutex.try_lock());
+    mutex.unlock();
+
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(false));
+
+    // Check that the lock does not locks the mutex if multi-threading is disabled.
+    {
+        MultiThreadingLock lock(mutex);
+        ASSERT_TRUE(mutex.try_lock());
+        mutex.unlock();
+    }
+
+    // Check that the mutex is still unlocked when the lock goes out of scope.
+    ASSERT_TRUE(mutex.try_lock());
+    mutex.unlock();
+
+    EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
+
+    // Check that the lock actively locks the mutex if multi-threading is enabled.
+    {
+        MultiThreadingLock lock(mutex);
+        ASSERT_FALSE(mutex.try_lock());
+    }
+
+    // Check that the mutex is unlocked when the lock goes out of scope.
+    ASSERT_TRUE(mutex.try_lock());
+    mutex.unlock();
+}
+
 /// @brief Test fixture for exercised CriticalSection callbacks.
 class CriticalSectionCallbackTest : public ::testing::Test {
 public:
