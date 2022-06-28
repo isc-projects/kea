@@ -1085,14 +1085,26 @@ TEST_F(PgSqlLeaseMgrTest, checkLimits) {
     if (!LeaseMgrFactory::instance().isJsonSupported()) {
         ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits4(
             isc::data::Element::createMap()), isc::db::DbOperationError,
-            "unable to set up for storing all results for "
-            "<SELECT checkLease4Limits(?)>, reason: FUNCTION "
-            "keatest.JSON_EXTRACT does not exist (error code 1305)");
+            "Statement exec failed for: check_lease4_limits, status: 7sqlstate:[ 42883 ], "
+            "reason: ERROR:  operator does not exist: json -> unknown\n"
+            "LINE 1: ...* FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'...\n"
+            "                                                             ^\n"
+            "HINT:  No operator matches the given name and argument type(s). "
+            "You might need to add explicit type casts.\n"
+            "QUERY:  SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)"
+            "->'ISC'->'limits'->'client-classes')\n"
+            "CONTEXT:  PL/pgSQL function checklease4limits(text) line 10 at FOR over SELECT rows\n");
         ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits6(
             isc::data::Element::createMap()), isc::db::DbOperationError,
-            "unable to set up for storing all results for "
-            "<SELECT checkLease6Limits(?)>, reason: FUNCTION "
-            "keatest.JSON_EXTRACT does not exist (error code 1305)");
+            "Statement exec failed for: check_lease6_limits, status: 7sqlstate:[ 42883 ], "
+            "reason: ERROR:  operator does not exist: json -> unknown\n"
+            "LINE 1: ...* FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'...\n"
+            "                                                             ^\n"
+            "HINT:  No operator matches the given name and argument type(s). "
+            "You might need to add explicit type casts.\n"
+            "QUERY:  SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)"
+            "->'ISC'->'limits'->'client-classes')\n"
+            "CONTEXT:  PL/pgSQL function checklease6limits(text) line 10 at FOR over SELECT rows\n");
         return;
     }
 

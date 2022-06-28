@@ -2342,8 +2342,8 @@ PgSqlLeaseMgr::isJsonSupported() const {
                                  0, 0, 0, 0, 0));
     ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
 
-    bool const json_supported(PgSqlExchange::getRawColumnValue(r, 0, 0));
-    return json_supported;
+    std::string const json_supported(PgSqlExchange::getRawColumnValue(r, 0, 0));
+    return json_supported == "t";
 }
 
 LeaseStatsQueryPtr
