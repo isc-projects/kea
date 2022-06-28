@@ -212,6 +212,7 @@ testGetValueInt() {
     T el;
     int64_t i;
     int32_t i32;
+    uint32_t ui32;
     long l;
     long long ll;
     double d;
@@ -259,6 +260,14 @@ testGetValueInt() {
     });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(i32, i);
+
+    ui32 = 4294967295L;
+    el = Element::create(ui32);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(ui32, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(ui32, i);
 
     l = 2147483647L;
     el = Element::create(l);

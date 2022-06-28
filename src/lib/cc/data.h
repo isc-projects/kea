@@ -380,6 +380,8 @@ public:
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const long int i,
                              const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const uint32_t i,
+                             const Position& pos = ZERO_POSITION());
     static ElementPtr create(const double d,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const bool b,

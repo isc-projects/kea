@@ -258,6 +258,11 @@ Element::create(const long int i, const Position& pos) {
 }
 
 ElementPtr
+Element::create(const uint32_t i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+}
+
+ElementPtr
 Element::create(const double d, const Position& pos) {
     return (ElementPtr(new DoubleElement(d, pos)));
 }
