@@ -2191,7 +2191,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
         if (getLeaseLimit(subnet_elem, Lease::TYPE_V4, limit)) {
             // If the limit is > 0 look up the subnet lease count. Limit of 0 always
             // denies the lease.
-            auto lease_count = 0;
+            int64_t lease_count = 0;
             if (limit) {
                 lease_count = getSubnetStat(subnet_id, "assigned-addresses");
             }
@@ -2211,7 +2211,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
 }
 
 std::string
-Memfile_LeaseMgr:: checkLimits6(isc::data::ConstElementPtr const& user_context) const {
+Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) const {
     if (!user_context) {
         return ("");
     }
@@ -2231,7 +2231,7 @@ Memfile_LeaseMgr:: checkLimits6(isc::data::ConstElementPtr const& user_context) 
             // Get class name.
             ConstElementPtr name_elem = class_elem->get("name");
             if (!name_elem) {
-                isc_throw(BadValue, "client-class.name is missing: "
+                isc_throw(BadValue, "checkLimits6 - client-class.name is missing: "
                           << prettyPrint(limits));
             }
 
@@ -2272,7 +2272,7 @@ Memfile_LeaseMgr:: checkLimits6(isc::data::ConstElementPtr const& user_context) 
         // Get the subnet id.
         ConstElementPtr id_elem = subnet_elem->get("id");
         if (!id_elem) {
-            isc_throw(BadValue, "subnet.id is missing: "
+            isc_throw(BadValue, "checkLimits6 - subnet.id is missing: "
                       << prettyPrint(limits));
         }
 
@@ -2291,7 +2291,7 @@ Memfile_LeaseMgr:: checkLimits6(isc::data::ConstElementPtr const& user_context) 
 
         // If the limit is > 0 look up the class lease count.  Limit of 0 always
         // denies the lease.
-        size_t lease_count = 0;
+        int64_t lease_count = 0;
         if (limit) {
             lease_count = getSubnetStat(subnet_id, (ltype == Lease::TYPE_NA ?
                                                     "assigned-nas" : "assigned-pds"));

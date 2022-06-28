@@ -129,7 +129,7 @@ public:
     /// @param lease lease from which to fetch classes
     /// @return ElementPtr to an Element::List containing the client classes or an
     /// empty List.
-    data::ConstElementPtr getLeaseClientClasses(LeasePtr lease) const;
+    static data::ConstElementPtr getLeaseClientClasses(LeasePtr lease);
 
 private:
     /// @brief Fetches the map used to count the given lease type.

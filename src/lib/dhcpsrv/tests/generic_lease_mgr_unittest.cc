@@ -3906,15 +3906,6 @@ GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
 
 void
 GenericLeaseMgrTest::testLeaseLimits4() {
-    // Create a subnet.  We need the subnet to exist so statistics will exist.
-    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
-    Subnet4Ptr subnet;
-
-    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
-    cfg->add(subnet);
-
-    ASSERT_NO_THROW(CfgMgr::instance().commit());
-
     std::string text;
     ElementPtr user_context;
 
@@ -3963,15 +3954,6 @@ GenericLeaseMgrTest::testLeaseLimits4() {
 
 void
 GenericLeaseMgrTest::testLeaseLimits6() {
-    // Create a subnet.  We need the subnet to exist so statistics will exist.
-    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
-    Subnet4Ptr subnet;
-
-    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
-    cfg->add(subnet);
-
-    ASSERT_NO_THROW(CfgMgr::instance().commit());
-
     std::string text;
     ElementPtr user_context;
 

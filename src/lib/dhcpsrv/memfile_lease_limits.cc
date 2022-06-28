@@ -54,15 +54,23 @@ ClassLeaseCounter::adjustClassCount(const ClientClass& client_class, int offset,
 
 
 ConstElementPtr
-ClassLeaseCounter::getLeaseClientClasses(LeasePtr lease) const {
+ClassLeaseCounter::getLeaseClientClasses(LeasePtr lease) {
+    if (!lease) {
+        isc_throw(BadValue, "getLeaseClientCLasses - lease cannot be empty");
+    }
+
     ConstElementPtr classes;
     auto ctx = lease->getContext();
-    if (ctx) {
-        classes = ctx->find("ISC/client-classes");
-        if (classes && classes->getType() != Element::list) {
-            isc_throw(Unexpected, "getLeaseClientClasses: "
-                      << lease->toText() << " is not a list!");
+    try {
+        if (ctx) {
+            classes = ctx->find("ISC/client-classes");
+            if (classes && classes->getType() != Element::list) {
+                isc_throw(BadValue, "client-classes is not a list");
+            }
         }
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "getLeaseClientClasses - invalid context: "
+                  << data::prettyPrint(ctx) << ", " << ex.what());
     }
 
     return (classes);
@@ -84,7 +92,7 @@ ClassLeaseCounter::adjustClassCounts(ConstElementPtr classes, int offset,
 void
 ClassLeaseCounter::addLease(LeasePtr lease) {
     if (!lease) {
-        isc_throw(BadValue, "addLease(): lease cannot be empty");
+        isc_throw(BadValue, "addLease - lease cannot be empty");
     }
 
     ConstElementPtr classes = getLeaseClientClasses(lease);
@@ -102,11 +110,11 @@ void
 ClassLeaseCounter::updateLease(LeasePtr new_lease, LeasePtr old_lease) {
     // Sanity checks.
     if (!new_lease) {
-        isc_throw(BadValue, "updateLease(): new_lease cannot be empty");
+        isc_throw(BadValue, "updateLease - new_lease cannot be empty");
     }
 
     if (!old_lease) {
-        isc_throw(BadValue, "updateLease(): old_lease cannot be empty");
+        isc_throw(BadValue, "updateLease - old_lease cannot be empty");
     }
 
     ConstElementPtr new_classes = getLeaseClientClasses(new_lease);
@@ -135,7 +143,7 @@ ClassLeaseCounter::updateLease(LeasePtr new_lease, LeasePtr old_lease) {
 void
 ClassLeaseCounter::removeLease(LeasePtr lease) {
     if (!lease) {
-        isc_throw(BadValue, "removeLease(): lease cannot be empty");
+        isc_throw(BadValue, "removeLease - lease cannot be empty");
     }
 
     ConstElementPtr classes = getLeaseClientClasses(lease);

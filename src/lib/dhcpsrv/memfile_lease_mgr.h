@@ -843,7 +843,7 @@ private:
     /// @brief Fetches the most recent value for a subnet statistic
     ///
     /// @param subnet_id subnet id of the subnet for which the stat is desired
-    /// @param stat_label name of the statisitic desired (e.g. "assigned-addresses")
+    /// @param stat_label name of the statistic desired (e.g. "assigned-addresses")
     ///
     /// @return Value of the statistic or zero if there are no entries found.
     int64_t getSubnetStat(const SubnetID& subnet_id, const std::string& stat_label) const;

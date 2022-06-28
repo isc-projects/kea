@@ -195,7 +195,7 @@ public:
     /// #brief Test updating type of lease for given old and new states and class lists
     ///
     /// The test creates an old and new version of the same lease and passes them into
-    /// @c ClassLeaseCount::updateLease().  It then verifies the class lease counts
+    /// @c ClassLeaseCounter::updateLease().  It then verifies the class lease counts
     /// against expected count lists.
     ///
     /// @param old_state state of the old lease
@@ -304,6 +304,26 @@ public:
 
     }
 
+    /// @brief Verifies ClassLeaseCounter::adjustClassCounts
+    ///
+    /// @param ltype type of lease to count.
+    void adjustClassCountsTest(const Lease::Type ltype) {
+        ConstElementPtr class_list1 =  ctx1_->find("ISC/client-classes");
+        ASSERT_TRUE(class_list1);
+
+        // Increment the classes by 2 and verify.
+        ASSERT_NO_THROW_LOG(clc_.adjustClassCounts(class_list1, 2, ltype));
+        checkClassCounts(classes1_, std::list<size_t>({ 2, 2, 2 }), ltype);
+
+        // Decrement the classes by 1 and verify.
+        ASSERT_NO_THROW_LOG(clc_.adjustClassCounts(class_list1, -1, ltype));
+        checkClassCounts(classes1_, std::list<size_t>({ 1, 1, 1 }), ltype);
+
+        // Decrement the classes by 2 and verify that roll-over is avoided..
+        ASSERT_NO_THROW_LOG(clc_.adjustClassCounts(class_list1, -2, ltype));
+        checkClassCounts(classes1_, std::list<size_t>({ 0, 0, 0 }), ltype);
+    }
+
     /// @brief First test list of classes
     std::list<ClientClass> classes1_;
 
@@ -373,6 +393,19 @@ TEST_F(ClassLeaseCounterTest, basicCountingTests4) {
 }
 
 // Tests getting and adjusting basic class counts for
+// a Lease::TYPE_V4.
+TEST_F(ClassLeaseCounterTest, adjustClassCountsTest4) {
+    adjustClassCountsTest(Lease::TYPE_V4);
+}
+
+// Tests getting and adjusting basic class counts for
+// a Lease::TYPE_NA and TYPE_PD.
+TEST_F(ClassLeaseCounterTest, adjustClassCountsTest6) {
+    adjustClassCountsTest(Lease::TYPE_NA);
+    adjustClassCountsTest(Lease::TYPE_PD);
+}
+
+// Tests getting and adjusting basic class counts for
 // a Lease::TYPE_NA and TYPE_PD.
 TEST_F(ClassLeaseCounterTest, basicCountingTests6) {
     // Create test classes.
@@ -434,6 +467,110 @@ TEST_F(ClassLeaseCounterTest, basicCountingTests6) {
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -4, Lease::TYPE_PD));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_PD));
     EXPECT_EQ(0, count);
+}
+
+// Exercises ClassLeaseCounter::getLeaseClientClasses()
+// No need for v4 and v6 versions of this test, getLeaseClientClasses()
+// is not protocol specific.
+TEST_F(ClassLeaseCounterTest, getLeaseClientClassesTest) {
+    LeasePtr lease;
+
+    // Describes an invalid context scenario, that
+    // is expected to cause an exception throw.
+    struct InvalidScenario {
+        std::string ctx_json_;      // User context contents in JSON form.
+        std::string exp_message_;   // Expected exception text.
+    };
+
+    // Invalid context scenarios.
+    std::list<InvalidScenario> invalid_scenarios {
+        {
+          " \"bogus\" ",
+          "getLeaseClientClasses - invalid context: \"bogus\","
+          " find(string) called on a non-map Element in (<string>:1:2)"
+        },
+        {
+            "{\"ISC\": \"bogus\" }",
+            "getLeaseClientClasses - invalid context: {\n  \"ISC\": \"bogus\"\n},"
+            " find(string) called on a non-map Element in (<string>:1:9)"
+        },
+        {
+            "{\"ISC\": { \"client-classes\": \"bogus\" } }",
+            "getLeaseClientClasses - invalid context:"
+            " {\n  \"ISC\": {\n    \"client-classes\": \"bogus\"\n  }\n},"
+            " client-classes is not a list"
+        }
+    };
+
+    // Iterate over the invalid scenarios.
+    for (auto scenario : invalid_scenarios) {
+        // Cosntruct the lease and context.
+        lease = leaseFactory(Lease::TYPE_V4);
+        ElementPtr ctx;
+        ASSERT_NO_THROW(ctx = Element::fromJSON(scenario.ctx_json_))
+                        << "test is broken" << scenario.ctx_json_;
+        lease->setContext(ctx);
+
+        // Calling getLeaseClientClasses() should throw.
+        ASSERT_THROW_MSG(clc_.getLeaseClientClasses(lease), BadValue, scenario.exp_message_);
+    }
+
+    // Describes an valid context scenario, that is expected
+    // to return normally.
+    struct ValidScenario {
+        std::string ctx_json_;      // User context contents in JSON form.
+        std::string exp_classes_;   // Expected class list in JSON form.
+    };
+
+    // Valid scenarios.
+    std::list<ValidScenario> valid_scenarios {
+        {
+            // No context
+            "",
+            ""
+        },
+        {
+            // No client-classes element
+            "{\"ISC\": {} }",
+            ""
+        },
+        {
+            // Empty client-classes list
+            "{\"ISC\": { \"client-classes\": []} }",
+             "[]"
+        },
+        {
+            "{\"ISC\": { \"client-classes\": [ \"one\", \"two\", \"three\" ]} }",
+            "[ \"one\", \"two\", \"three\" ]"
+        }
+    };
+
+    // Iterate over the scenarios.
+    for (auto scenario : valid_scenarios) {
+        // Cosntruct the lease and context.
+        lease = leaseFactory(Lease::TYPE_V4);
+        if (!scenario.ctx_json_.empty()) {
+            ElementPtr ctx;
+            ASSERT_NO_THROW(ctx = Element::fromJSON(scenario.ctx_json_))
+                            << "test is broken" << scenario.ctx_json_;
+            lease->setContext(ctx);
+        }
+
+        // Call getLeaseClientClasses().
+        ConstElementPtr classes;
+        ASSERT_NO_THROW_LOG(classes = clc_.getLeaseClientClasses(lease));
+
+        // Verify we got the expected outcome for a class list.
+        if (scenario.exp_classes_.empty()) {
+            ASSERT_FALSE(classes);
+        } else {
+            ASSERT_TRUE(classes);
+            ElementPtr exp_classes;
+            ASSERT_NO_THROW(exp_classes = Element::fromJSON(scenario.exp_classes_))
+                            << "test is broken" << scenario.exp_classes_;
+            EXPECT_EQ(*classes, *exp_classes);
+        }
+    }
 }
 
 TEST_F(ClassLeaseCounterTest, addRemoveLeaseTest4) {
