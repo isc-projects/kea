@@ -5088,7 +5088,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,
                                                    IN new_subnet_id BIGINT,
-                                                   IN new_lease_type BIGINT)
+                                                   IN new_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 BEGIN
@@ -5108,10 +5108,10 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
                                                    IN old_subnet_id BIGINT,
-                                                   IN old_lease_type BIGINT,
+                                                   IN old_lease_type SMALLINT,
                                                    IN new_state BIGINT,
                                                    IN new_subnet_id BIGINT,
-                                                   IN new_lease_type BIGINT)
+                                                   IN new_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 BEGIN
@@ -5144,7 +5144,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat(IN old_state BIGINT,
                                                    IN old_subnet_id BIGINT,
-                                                   IN old_lease_type BIGINT)
+                                                   IN old_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 BEGIN
@@ -5167,7 +5167,7 @@ CREATE TABLE lease4_stat_by_client_class (
 
 CREATE TABLE lease6_stat_by_client_class (
     client_class VARCHAR(128) NOT NULL,
-    lease_type BIGINT NOT NULL,
+    lease_type SMALLINT NOT NULL,
     leases BIGINT NOT NULL,
     PRIMARY KEY (client_class, lease_type),
     CONSTRAINT fk_lease6_stat_by_client_class_lease_type FOREIGN KEY (lease_type)
@@ -5271,7 +5271,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat_by_client_class(IN new_state BIGINT,
                                                                    IN new_user_context TEXT,
-                                                                   IN new_lease_type BIGINT)
+                                                                   IN new_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 DECLARE
@@ -5299,10 +5299,10 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat_by_client_class(IN old_state BIGINT,
                                                                    IN old_user_context TEXT,
-                                                                   IN old_lease_type BIGINT,
+                                                                   IN old_lease_type SMALLINT,
                                                                    IN new_state BIGINT,
                                                                    IN new_user_context TEXT,
-                                                                   IN new_lease_type BIGINT)
+                                                                   IN new_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 DECLARE
@@ -5348,7 +5348,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat_by_client_class(IN old_state BIGINT,
                                                                    IN old_user_context TEXT,
-                                                                   IN old_lease_type BIGINT)
+                                                                   IN old_lease_type SMALLINT)
 RETURNS VOID
 AS $$
 DECLARE
