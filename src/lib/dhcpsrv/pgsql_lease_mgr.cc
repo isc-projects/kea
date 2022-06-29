@@ -2316,7 +2316,8 @@ PgSqlLeaseMgr::checkLimits(ConstElementPtr const& user_context, StatementIndex c
                                  &bind_array.formats_[0], 0));
     ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
 
-    std::string const limits(PgSqlExchange::getRawColumnValue(r, 0, 0));
+    std::string limits;
+    PgSqlExchange::getColumnValue(r, 0, 0, limits);
     return limits;
 }
 
@@ -2342,8 +2343,9 @@ PgSqlLeaseMgr::isJsonSupported() const {
                                  0, 0, 0, 0, 0));
     ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
 
-    std::string const json_supported(PgSqlExchange::getRawColumnValue(r, 0, 0));
-    return json_supported == "t";
+    bool json_supported;
+    PgSqlExchange::getColumnValue(r, 0, 0, json_supported);
+    return json_supported;
 }
 
 LeaseStatsQueryPtr
