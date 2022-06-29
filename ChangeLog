@@ -1,3 +1,8 @@
+2034.	[func]		andrei
+	The PostgreSQL schema has been changed to provide initial support
+	for the lease limiting feature, part of the limits hook library.
+	(Gitlab #2445)
+
 2033.	[func]		tmark
 	Functionality needed to support the lease limiting feature of
 	of the limits hook library has been added Memfile_LeaseMgr.
