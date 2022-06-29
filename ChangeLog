@@ -1,3 +1,8 @@
+2033.	[func]		tmark
+	Functionality needed to support the lease limiting feature of
+	of the limits hook library has been added Memfile_LeaseMgr.
+	(Gitlab #2436)
+
 Kea 2.1.7 (development) released on June 29, 2022
 
 2032.	[build]         razvan
