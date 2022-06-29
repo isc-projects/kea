@@ -173,32 +173,56 @@ DROP FUNCTION IF EXISTS set_session_value(name text, value TEXT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BIGINT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BOOLEAN);
 
-DROP FUNCTION IF EXISTS lease4Upload();
-DROP FUNCTION IF EXISTS lease6Upload();
+DROP FUNCTION IF EXISTS lease4Upload(address VARCHAR, hwaddr VARCHAR,
+    client_id VARCHAR, valid_lifetime BIGINT, expire BIGINT, subnet_id BIGINT,
+    fqdn_fwd INT, fqdn_rev INT, hostname VARCHAR, state INT8,
+    user_context VARCHAR);
+DROP FUNCTION IF EXISTS lease6Upload(address VARCHAR, duid VARCHAR,
+    valid_lifetime BIGINT, expire BIGINT, subnet_id BIGINT,
+    pref_lifetime BIGINT, lease_type INT, iaid INT, prefix_len INT,
+    fqdn_fwd INT, fqdn_rev INT, hostname VARCHAR, hwaddr VARCHAR,
+    state INT8, user_context VARCHAR, hwtype INT, hwaddr_source INT);
+DROP FUNCTION IF EXISTS colonSeparatedHex(TEXT);
 
 DROP FUNCTION IF EXISTS gmt_epoch(input_time TIMESTAMP WITH TIME ZONE);
 
 -- lease limiting tables and functions
 DROP TABLE IF EXISTS lease4_stat_by_client_class;
 DROP TABLE IF EXISTS lease6_stat_by_client_class;
-DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat();
-DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat();
-DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat();
-DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat();
-DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat();
-DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat();
-DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat_by_client_class();
-DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat_by_client_class();
-DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat_by_client_class();
-DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat_by_client_class();
-DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat_by_client_class();
-DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat_by_client_class();
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat(new_state BIGINT,
+                                                new_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat(old_state BIGINT,
+        old_subnet_id BIGINT, new_state BIGINT, new_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat(old_state BIGINT,
+                                                old_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_lease_type SMALLINT, new_state BIGINT,
+        new_subnet_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat_by_client_class(
+        new_state BIGINT, new_user_context TEXT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT,
+        new_state BIGINT, new_user_context TEXT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat_by_client_class(
+        new_state BIGINT, new_user_context TEXT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT, old_lease_type SMALLINT,
+        new_state BIGINT, new_user_context TEXT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT, old_lease_type SMALLINT);
 DROP FUNCTION IF EXISTS func_lease4_AINS();
 DROP FUNCTION IF EXISTS func_lease4_AUPD();
 DROP FUNCTION IF EXISTS func_lease4_ADEL();
 DROP FUNCTION IF EXISTS func_lease6_AINS();
 DROP FUNCTION IF EXISTS func_lease6_AUPD();
 DROP FUNCTION IF EXISTS func_lease6_ADEL();
-DROP FUNCTION IF EXISTS checkLease4Limits();
-DROP FUNCTION IF EXISTS checkLease6Limits();
+DROP FUNCTION IF EXISTS checkLease4Limits(user_context TEXT);
+DROP FUNCTION IF EXISTS checkLease6Limits(user_context TEXT);
 DROP FUNCTION IF EXISTS isJsonSupported();
+DROP FUNCTION IF EXISTS json_cast(json_candidate TEXT);
