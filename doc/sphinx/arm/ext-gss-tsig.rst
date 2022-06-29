@@ -451,6 +451,12 @@ zone similar to the one configured in Kea. To do that, open the "DNS Manager" an
 "DNS" from the list; from the dropdown list, choose "Reverse Lookup Zones"; then
 click "Action" and "New Zone"; finally, follow the New Zone Wizard to add a new zone.
 
+The standard requires both anti-replay and sequence services. Experiences with the BIND 9 nsupdate
+showed the sequence service led to problems so it is disable by default in the hook. It seems
+the anti-replay service can also lead to problems with Microsoft DNS servers so it is now
+configurable. Note that these security services are useless for DNS dynamic update which was
+designed to run over UDP so with out of order and duplicated messages.
+
 .. _gss-tsig-using:
 
 Using GSS-TSIG
@@ -466,7 +472,7 @@ An excerpt from a D2 server configuration is provided below; more examples are a
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-113
+   :emphasize-lines: 57-117
 
 
     {
@@ -546,6 +552,8 @@ An excerpt from a D2 server configuration is provided below; more examples are a
                 //
                 // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
+                "gss-replay-flag": true, // GSS anti replay service
+                "gss-sequence-flag": false, // no GSS sequence service
                 "tkey-lifetime": 3600, // 1 hour
                 "rekey-interval": 2700, // 45 minutes
                 "retry-interval": 120, // 2 minutes
@@ -564,6 +572,8 @@ An excerpt from a D2 server configuration is provided below; more examples are a
                         "port": 53,
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
+                        "gss-replay-flag": false, // no GSS anti replay service
+                        "gss-sequence-flag": false, // no GSS sequence service
                         "tkey-lifetime": 7200, // 2 hours
                         "rekey-interval": 5400, // 90 minutes
                         "retry-interval": 240, // 4 minutes
@@ -624,6 +634,12 @@ defined, or if all servers have different values.
    +-------------------+----------+---------+---------------------+--------------------------------+
    | client-principal  | global / | string  | empty               | the Kerberos principal name of |
    |                   | server   |         |                     | the Kea D2 service             |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | gss-replay-flag   | global / | true /  | true                | require the GSS anti replay    |
+   |                   | server   | false   |                     | service (GSS_C_REPLAY_FLAG)    |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | gss-sequence-flag | global / | true /  | false               | require the GSS sequence       |
+   |                   | server   | false   |                     | service (GSS_C_SEQUENCE_FLAG)  |
    +-------------------+----------+---------+---------------------+--------------------------------+
    | tkey-protocol     | global / | string  | "TCP"               | the protocol used to establish |
    |                   | server   | "TCP" / |                     | the security context with the  |
@@ -699,6 +715,13 @@ The global parameters are described below:
   service. It is optional, and uses the typical Kerberos notation:
   ``<SERVICE-NAME>/<server-domain-name>@<REALM>``.
 
+- ``gss-replay-flag`` determines if the GSS anti replay service is
+  required. It is by default but this can be disabled.
+
+- ``gss-sequence-flag`` determines if the GSS sequence service is
+  required. It is not by default but is required by the standard
+  so it can be enabled.
+
 - ``tkey-protocol`` determines which protocol is used to establish the
   security context with the DNS servers. Currently, the only supported
   values are TCP (the default) and UDP.
@@ -763,6 +786,16 @@ The server map parameters are described below:
 - ``client-principal`` is the Kerberos principal name of the Kea D2
   service for this DNS server. The ``client-principal`` parameter set at the per-server
   level takes precedence over one set at the global level. It is an optional parameter.
+
+- ``gss-replay-flag`` determines if the GSS anti replay service is
+  required. The ``gss-replay-flag`` parameter set at the per-server
+  level takes precedence over one set at the global level. It is an optional parameter
+  which defaults to true.
+
+- ``gss-sequence-flag`` determines if the GSS sequence service is
+  required. The ``gss-sequence-flag`` parameter set at the per-server
+  level takes precedence over one set at the global level. It is an optional parameter
+  which defaults to false.
 
 - ``tkey-protocol`` determines which protocol is used to establish the
   security context with the DNS server. The ``tkey-protocol`` parameter set at the per-server

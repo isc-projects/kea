@@ -78,6 +78,8 @@
             // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
             "credentials-cache": "FILE:/etc/ccache",     // toplevel only
 
+            "gss-replay-flag": true, // GSS anti replay service
+            "gss-sequence-flag": false, // no GSS sequence service
             "tkey-lifetime": 3600, // 1 hour
             "rekey-interval": 2700, // 45 minutes
             "retry-interval": 120, // 2 minutes
@@ -96,6 +98,8 @@
                     "port": 53,
                     "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                     "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
+                    "gss-replay-flag": false, // no GSS anti replay service
+                    "gss-sequence-flag": false, // no GSS sequence service
                     "tkey-lifetime": 7200, // 2 hours
                     "rekey-interval": 5400, // 90 minutes
                     "retry-interval": 240, // 4 minutes
