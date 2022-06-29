@@ -88,11 +88,12 @@ SYSTEMS = {
     ],
     'alpine': [
         #'3.10',   # EOLed
-        '3.11',
-        '3.12',
+        #'3.11',   # EOLed
+        #'3.12',   # EOLed
         '3.13',
         '3.14',
         '3.15',
+        '3.16',
     ],
     'arch': []
 }
@@ -162,6 +163,7 @@ IMAGE_TEMPLATES = {
     'alpine-3.13-lxc':         {'bare': 'isc/lxc-alpine-3.13',         'kea': 'isc/kea-alpine-3.13'},
     'alpine-3.14-lxc':         {'bare': 'isc/lxc-alpine-3.14',         'kea': 'isc/kea-alpine-3.14'},
     'alpine-3.15-lxc':         {'bare': 'isc/lxc-alpine-3.15',         'kea': 'isc/kea-alpine-3.15'},
+    'alpine-3.16-lxc':         {'bare': 'isc/lxc-alpine-3.16',         'kea': 'isc/kea-alpine-3.16'},
 }
 
 # NOTES
@@ -1814,7 +1816,7 @@ def prepare_system_local(features, check_times):
     elif system == 'alpine':
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev', 'procps', 'tar']
+                    'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev']
 
         if 'docs' in features:
             if revision == '3.10':
@@ -1855,10 +1857,6 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
-
-        # log4cplus needs to be taken from extra repository, edge testing
-        execute('sudo apk add log4cplus log4cplus-dev --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted',
-                env=env, timeout=60, check_times=check_times)
 
         # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
         try:

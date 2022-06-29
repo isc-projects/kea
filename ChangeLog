@@ -1,3 +1,7 @@
+2040.	[func]		djt
+	Added support for Alpine 3.16 in hammer.py.
+	(Gitlab #2491)
+
 2039.	[doc]		andrei
 	Updated limits hook library ARM documentation to reflect
 	support for lease limits.
