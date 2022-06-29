@@ -5222,6 +5222,8 @@ BEGIN
         IF old_state = 0 THEN
             -- Dive into client classes.
             FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
                 -- Decrement the lease count if the record exists.
                 UPDATE lease4_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
                     WHERE client_class = class;
@@ -5232,6 +5234,8 @@ BEGIN
         IF new_state = 0 THEN
             -- Dive into client classes.
             FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
                 -- Upsert to increment the lease count.
                 UPDATE lease4_stat_by_client_class SET leases = leases + 1
                     WHERE client_class = class;
@@ -5316,6 +5320,8 @@ BEGIN
         IF old_state = 0 THEN
             -- Dive into client classes.
             FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
                 -- Decrement the lease count if the record exists.
                 UPDATE lease6_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
                     WHERE client_class = class AND lease_type = old_lease_type;
@@ -5326,6 +5332,8 @@ BEGIN
         IF new_state = 0 THEN
             -- Dive into client classes.
             FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
                 -- Upsert to increment the lease count.
                 UPDATE lease6_stat_by_client_class SET leases = leases + 1
                     WHERE client_class = class AND lease_type = new_lease_type;
