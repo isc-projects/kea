@@ -1084,22 +1084,34 @@ TEST_F(MySqlLeaseMgrTest, isJsonSupported) {
 
 // Verifies that v4 class lease counts are correctly adjusted
 // when leases have class lists.
-// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
-TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount4) {
+TEST_F(MySqlLeaseMgrTest, classLeaseCount4) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
     testClassLeaseCount4();
 }
 
 // Verifies that v6 IA_NA class lease counts are correctly adjusted
 // when leases have class lists.
-// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
-TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount6_NA) {
+TEST_F(MySqlLeaseMgrTest, classLeaseCount6_NA) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
     testClassLeaseCount6(Lease::TYPE_NA);
 }
 
 // Verifies that v6 IA_PD class lease counts are correctly adjusted
 // when leases have class lists.
-// Disabled until MySqlLeaseMgr implements LeaseMgr::getClassLeaseCount()
-TEST_F(MySqlLeaseMgrTest, DISABLED_classLeaseCount6_PD) {
+TEST_F(MySqlLeaseMgrTest, classLeaseCount6_PD) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
     testClassLeaseCount6(Lease::TYPE_PD);
 }
 
@@ -1112,7 +1124,7 @@ TEST_F(MySqlLeaseMgrTest, checkLimitsNull) {
     EXPECT_TRUE(text.empty());
 }
 
-/// @brief Checks a few limit checking scenarios.
+/// @brief Checks a few v4 limit checking scenarios.
 TEST_F(MySqlLeaseMgrTest, checkLimits4) {
     // Limit checking should be precluded at reconfiguration time on systems
     // that don't have JSON support in the database. It's fine if it throws.
@@ -1129,7 +1141,7 @@ TEST_F(MySqlLeaseMgrTest, checkLimits4) {
     testLeaseLimits4();
 }
 
-/// @brief Checks a few limit checking scenarios.
+/// @brief Checks a few v6 limit checking scenarios.
 TEST_F(MySqlLeaseMgrTest, checkLimits6) {
     // Limit checking should be precluded at reconfiguration time on systems
     // that don't have JSON support in the database. It's fine if it throws.

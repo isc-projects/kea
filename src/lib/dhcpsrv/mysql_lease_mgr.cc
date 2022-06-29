@@ -332,6 +332,14 @@ tagged_statements = { {
     {MySqlLeaseMgr::CHECK_LEASE4_LIMITS, "SELECT checkLease4Limits(?)"},
     {MySqlLeaseMgr::CHECK_LEASE6_LIMITS, "SELECT checkLease6Limits(?)"},
     {MySqlLeaseMgr::IS_JSON_SUPPORTED, "SELECT isJsonSupported()"},
+    {MySqlLeaseMgr::GET_LEASE4_COUNT_BY_CLASS,
+                    "SELECT leases "
+                        "FROM lease4_stat_by_client_class "
+                        "WHERE client_class = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_COUNT_BY_CLASS,
+                    "SELECT leases "
+                        "FROM lease6_stat_by_client_class "
+                        "WHERE client_class = ? AND lease_type = ?"},
 } };  // tagged_statements
 
 }  // namespace
@@ -3155,6 +3163,36 @@ MySqlLeaseMgr::isJsonSupported() const {
     });
 
     return json_supported;
+}
+
+size_t
+MySqlLeaseMgr::getClassLeaseCount(const ClientClass& client_class,
+                                  const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Create bindings.
+    MySqlBindingCollection in_bindings({
+        MySqlBinding::createString(client_class)
+    });
+    if (ltype != Lease::TYPE_V4) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(ltype));
+    }
+    MySqlBindingCollection out_bindings({
+        MySqlBinding::createInteger<int64_t>()
+    });
+
+    // Execute the select.
+    StatementIndex const stindex(ltype == Lease::TYPE_V4 ? GET_LEASE4_COUNT_BY_CLASS :
+                                                           GET_LEASE6_COUNT_BY_CLASS);
+    size_t count(0);
+    ctx->conn_.selectQuery(stindex, in_bindings, out_bindings,
+                           [&count] (MySqlBindingCollection const& result) {
+        count = result[0]->getInteger<int64_t>();
+    });
+
+    return count;
 }
 
 LeaseStatsQueryPtr

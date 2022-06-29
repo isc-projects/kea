@@ -374,6 +374,20 @@ PgSqlTaggedStatement tagged_statements[] = {
       "is_json_supported",
       "SELECT isJsonSupported()" },
 
+    // GET_LEASE4_COUNT_BY_CLASS
+    { 1, { OID_VARCHAR },
+      "get_lease4_count_by_class",
+      "SELECT leases "
+          "FROM lease4_stat_by_client_class "
+          "WHERE client_class = $1"},
+
+    // GET_LEASE6_COUNT_BY_CLASS
+    { 2, { OID_VARCHAR, OID_INT2 },
+      "get_lease6_count_by_class",
+      "SELECT leases "
+          "FROM lease6_stat_by_client_class "
+          "WHERE client_class = $1 AND lease_type = $2"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
@@ -2346,6 +2360,42 @@ PgSqlLeaseMgr::isJsonSupported() const {
     bool json_supported;
     PgSqlExchange::getColumnValue(r, 0, 0, json_supported);
     return json_supported;
+}
+
+size_t
+PgSqlLeaseMgr::getClassLeaseCount(const ClientClass& client_class,
+                                  const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx(get_context.ctx_);
+
+    // Create bindings.
+    PsqlBindArray bind_array;
+    bind_array.add(client_class);
+    if (ltype != Lease::TYPE_V4) {
+        bind_array.add(ltype);
+    }
+
+    // Execute the select.
+    StatementIndex const stindex(ltype == Lease::TYPE_V4 ? GET_LEASE4_COUNT_BY_CLASS :
+                                                           GET_LEASE6_COUNT_BY_CLASS);
+    PgSqlResult r(PQexecPrepared(ctx->conn_,
+                                 tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+
+    int rows = PQntuples(r);
+    if (rows == 0) {
+        // No entries means 0 leases.
+        return 0;
+    }
+
+    size_t count;
+    PgSqlExchange::getColumnValue(r, 0, 0, count);
+    return count;
 }
 
 LeaseStatsQueryPtr

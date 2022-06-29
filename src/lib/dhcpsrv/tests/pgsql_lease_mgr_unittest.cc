@@ -1060,6 +1060,39 @@ TEST_F(PgSqlGenericBackendTest, leaseCount) {
     EXPECT_EQ(0, countRows(conn, "lease4"));
 }
 
+// Verifies that v4 class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount4) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
+    testClassLeaseCount4();
+}
+
+// Verifies that v6 IA_NA class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_NA) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
+    testClassLeaseCount6(Lease::TYPE_NA);
+}
+
+// Verifies that v6 IA_PD class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_PD) {
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
+        return;
+    }
+
+    testClassLeaseCount6(Lease::TYPE_PD);
+}
+
 /// @brief Checks that no exceptions are thrown when inquiring about JSON
 /// support and prints an informative message.
 TEST_F(PgSqlLeaseMgrTest, isJsonSupported) {
@@ -1078,8 +1111,8 @@ TEST_F(PgSqlLeaseMgrTest, checkLimitsNull) {
     EXPECT_TRUE(text.empty());
 }
 
-/// @brief Checks a few limit checking scenarios.
-TEST_F(PgSqlLeaseMgrTest, checkLimits) {
+/// @brief Checks a few v4 limit checking scenarios.
+TEST_F(PgSqlLeaseMgrTest, checkLimits4) {
     // Limit checking should be precluded at reconfiguration time on systems
     // that don't have JSON support in the database. It's fine if it throws.
     if (!LeaseMgrFactory::instance().isJsonSupported()) {
@@ -1094,6 +1127,18 @@ TEST_F(PgSqlLeaseMgrTest, checkLimits) {
             "QUERY:  SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)"
             "->'ISC'->'limits'->'client-classes')\n"
             "CONTEXT:  PL/pgSQL function checklease4limits(text) line 10 at FOR over SELECT rows\n");
+        return;
+    }
+
+    // The rest of the checks are only for databases with JSON support.
+    testLeaseLimits4();
+}
+
+/// @brief Checks a few v6 limit checking scenarios.
+TEST_F(PgSqlLeaseMgrTest, checkLimits6) {
+    // Limit checking should be precluded at reconfiguration time on systems
+    // that don't have JSON support in the database. It's fine if it throws.
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
         ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits6(
             isc::data::Element::createMap()), isc::db::DbOperationError,
             "Statement exec failed for: check_lease6_limits, status: 7sqlstate:[ 42883 ], "
@@ -1109,7 +1154,7 @@ TEST_F(PgSqlLeaseMgrTest, checkLimits) {
     }
 
     // The rest of the checks are only for databases with JSON support.
-    testLeaseLimits();
+    testLeaseLimits6();
 }
 
 }  // namespace

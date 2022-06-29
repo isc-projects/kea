@@ -798,14 +798,9 @@ public:
     /// @param ltype type of lease for which the count is desired. Defaults to
     /// Lease::TYPE_V4.
     ///
-    /// @return count of leases
-    /// @throw NotImplemented if a derivation does not override this.
+    /// @return number of leases
     virtual size_t getClassLeaseCount(const ClientClass& client_class,
-                                      const Lease::Type& ltype = Lease::TYPE_V4) const {
-        // For now we throw, ultimately this should be pure virtual.
-        isc_throw(NotImplemented, "LeaseMgr::getClassLeaseCount "
-                  << client_class << ":" << ltype);
-    }
+                                      const Lease::Type& ltype = Lease::TYPE_V4) const = 0;
 
 private:
     /// The IOService object, used for all ASIO operations.

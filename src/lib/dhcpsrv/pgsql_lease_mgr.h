@@ -702,6 +702,8 @@ public:
         CHECK_LEASE4_LIMITS,         // Check if allocated IPv4 leases are inside the set limits.
         CHECK_LEASE6_LIMITS,         // Check if allocated IPv6 leases are inside the set limits.
         IS_JSON_SUPPORTED,           // Checks if JSON support is enabled in the database.
+        GET_LEASE4_COUNT_BY_CLASS,   // Fetches the IPv4 lease count for a given class.
+        GET_LEASE6_COUNT_BY_CLASS,   // Fetches the IPv6 lease count for given class and lease type.
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -949,6 +951,16 @@ private:
     ///
     /// @return true if there is JSON support, false otherwise
     bool isJsonSupported() const override;
+
+    /// @brief Returns the class lease count for a given class and lease type.
+    ///
+    /// @param client_class client class for which the count is desired
+    /// @param ltype type of lease for which the count is desired. Defaults to
+    /// Lease::TYPE_V4.
+    ///
+    /// @return number of leases
+    virtual size_t getClassLeaseCount(const ClientClass& client_class,
+                                      const Lease::Type& ltype = Lease::TYPE_V4) const override;
 
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {
