@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ protected:
         io_service_(), timer_called_(false), timer_cancel_success_(false)
     {}
     ~IntervalTimerTest() {}
-    class TimerCallBack : public std::unary_function<void, void> {
+    class TimerCallBack {
     public:
         TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
         void operator()() const {
@@ -39,7 +39,7 @@ protected:
     private:
         IntervalTimerTest* test_obj_;
     };
-    class TimerCallBackCounter : public std::unary_function<void, void> {
+    class TimerCallBackCounter {
     public:
         TimerCallBackCounter(IntervalTimerTest* test_obj) :
             test_obj_(test_obj)
@@ -54,7 +54,7 @@ protected:
     private:
         IntervalTimerTest* test_obj_;
     };
-    class TimerCallBackCancelDeleter : public std::unary_function<void, void> {
+    class TimerCallBackCancelDeleter {
     public:
         TimerCallBackCancelDeleter(IntervalTimerTest* test_obj,
                                    IntervalTimer* timer,
@@ -102,7 +102,7 @@ protected:
         unsigned int& counter_;
         IntervalTimer& itimer_;
     };
-    class TimerCallBackOverwriter : public std::unary_function<void, void> {
+    class TimerCallBackOverwriter {
     public:
         TimerCallBackOverwriter(IntervalTimerTest* test_obj,
                                 IntervalTimer& timer)
@@ -128,7 +128,7 @@ protected:
         IntervalTimer& timer_;
         int count_;
     };
-    class TimerCallBackAccumulator: public std::unary_function<void, void> {
+    class TimerCallBackAccumulator {
     public:
         TimerCallBackAccumulator(IntervalTimerTest* test_obj, int &counter) :
             test_obj_(test_obj), counter_(counter) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ namespace ph = std::placeholders;
 
 namespace {
 // A callback functor for masterLoad() commonly used for the following tests.
-class TestCallback : public unary_function<ConstRRsetPtr, void> {
+class TestCallback {
 public:
     TestCallback(vector<ConstRRsetPtr>& rrsets) : rrsets_(rrsets) {}
     void operator()(ConstRRsetPtr rrset) {
@@ -362,7 +362,7 @@ TEST_F(MasterLoadTest, loadBadRRText) {
 
 // This is a helper callback to test the case the input stream becomes bad
 // in the middle of processing.
-class StreamInvalidator : public unary_function<ConstRRsetPtr, void> {
+class StreamInvalidator {
 public:
     StreamInvalidator(stringstream& ss) : ss_(ss) {}
     void operator()(ConstRRsetPtr) {

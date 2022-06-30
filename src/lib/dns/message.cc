@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -682,7 +682,7 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
 }
 
 namespace {
-struct MatchRR : public unary_function<RRsetPtr, bool> {
+struct MatchRR {
     MatchRR(const Name& name, const RRType& rrtype, const RRClass& rrclass) :
         name_(name), rrtype_(rrtype), rrclass_(rrclass) {}
     bool operator()(const RRsetPtr& rrset) const {
