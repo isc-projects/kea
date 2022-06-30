@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,9 +47,7 @@ CICharLess(char c1, char c2) {
             tolower(static_cast<unsigned char>(c2)));
 }
 
-struct CIStringLess :
-        public binary_function<string, string, bool>
-{
+struct CIStringLess {
     bool operator()(const string& s1, const string& s2) const
     {
         return (lexicographical_compare(s1.begin(), s1.end(),
