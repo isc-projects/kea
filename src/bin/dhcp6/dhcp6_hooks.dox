@@ -339,8 +339,8 @@ called before "subnet6_select".
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
-   - name: @b deleted_leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
+   - name: @b leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has
    applied all lease changes as a result of DHCP message

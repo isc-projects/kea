@@ -288,8 +288,8 @@ called before "subnet4_select".
 
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
-   - name: @b leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
-   - name: @b deleted_leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has applied all
    lease changes as a result of DHCP message processing. This includes
