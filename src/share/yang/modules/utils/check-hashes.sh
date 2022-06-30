@@ -29,7 +29,7 @@ fi
 exit_code=0
 for m in *.yang
 do
-    hash1=$(yanglint -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //')
+    hash1=$(yanglint -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //' | sed 's/SHA2-256//')
     h="hashes/$(basename "${m}" .yang).hash"
     if test -f "${h}"
     then
