@@ -1,3 +1,9 @@
+2035.	[doc]		Daniel Bjors
+	The developer's guide now correctly uses the Lease4CollectionPtr
+	and Lease6CollectionPtr types. Thanks to Daniel Bjors for
+	reporting this typo.
+	(Gitlab #2447)
+
 2034.	[func]		andrei
 	The PostgreSQL schema has been changed to provide initial support
 	for the lease limiting feature, part of the limits hook library.
@@ -20,7 +26,7 @@ Kea 2.1.7 (development) released on June 29, 2022
 	recover system error messages.
 	(Gitlab #1614)
 
-2030.	[doc]		fdupont,tomek
+2030.	[doc]		fdupont, tomek
 	GSS-TSIG examples updated. The recommendation to not use
 	client-keytab and credentials-cache at the same time added.
 	(Gitlab #2247)
