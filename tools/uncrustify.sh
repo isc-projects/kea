@@ -27,6 +27,9 @@ print_usage() {
 Options:
   [-d|--debug]                 enable debug mode, showing every executed command
   [-h|--help]                  print usage (this text)
+  [$directory|$file ...]       one or multiple files to format; if directories
+                               are passed instead, they are searched for all C++
+                               files under it which are then formatted
 ' \
     "$(basename "${0}")"
 }
@@ -38,7 +41,7 @@ while test ${#} -gt 0; do
     '-d'|'--debug') set -vx ;;
 
     # [-h|--help]              print usage (this text).
-    '-h'|'--help') print_usage ;;
+    '-h'|'--help') print_usage; exit 0 ;;
 
     # Allow extra arguments, they should be directories or files to be formatted.
     *) break ;;
@@ -85,6 +88,13 @@ while test ${#} -gt 0; do
     # We specifically want word splitting for the parameters.
     uncrustify -c "${script_path}/../.uncrustify.cfg" --replace $(printf '%s' "${parameters}") "${file}"
   elif test -d "${file}"; then
+    # Keep CWD for later use.
+    pwd="${PWD}"
+
+    # First checkout target directory so that the following "git ls-files" call
+    # acts on the proper git repository.
+    cd "${file}"
+
     # Get list of files to format.
     cd "$(git rev-parse --show-toplevel)"
     files=$(git ls-files | xargs -n1 printf "${PWD}/%s\\n" | grep -F "${file}" \
@@ -95,8 +105,13 @@ while test ${#} -gt 0; do
       files=$(printf '%s\n' "${files}" | grep -Fv "${file}" | sed '/^$/d')
     done
 
+    # Restore directory to what it initially was because ${files} contains
+    # relative paths.
+    cd "${pwd}"
+
     # For all files...
     for i in ${files}; do
+      # Run recursively to format file or iterate further through directories.
       "${0}" "${i}"
     done
   fi
