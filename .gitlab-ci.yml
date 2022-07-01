@@ -17,15 +17,13 @@ variables:
   # Leave only bandit, flawfinder, semgrep.
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
+image: "${CI_REGISTRY_IMAGE}:latest"
+
 stages:
   - test
 
 shellcheck:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - SCRIPTS=
     - SCRIPTS+="src/bin/admin/admin-utils.sh "
@@ -106,6 +104,7 @@ shellcheck:
     - SCRIPTS+="tools/add-config-h.sh "
     - SCRIPTS+="tools/bump-lib-versions.sh "
     - SCRIPTS+="tools/check-for-duplicate-includes.sh "
+    - SCRIPTS+="tools/check-for-missing-api-commands.sh "
     - SCRIPTS+="tools/mk_cfgrpt.sh "
     - SCRIPTS+="tools/path_replacer.sh.in "
     - SCRIPTS+="tools/print-generated-files.sh "
@@ -116,9 +115,6 @@ shellcheck:
 danger:
   stage: test
   image: registry.gitlab.isc.org/isc-projects/stork/ci-danger
-  tags:
-    - linux
-    - amd64
   before_script:
     - export CI_MERGE_REQUEST_ID=$(git ls-remote -q origin merge-requests\*\head | grep $CI_COMMIT_SHA | sed 's/.*refs\/merge-requests\/\([0-9]*\)\/head/\1/g')
     - export CI_PROJECT_PATH=$CI_PROJECT_ID #some version of gitlab has problems with searching by project path
@@ -133,25 +129,21 @@ danger:
 dhcpdb_create-upgrade-consistency:
   allow_failure: false
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
   script:
     - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
 duplicate-includes:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - ./tools/check-for-duplicate-includes.sh
 
+missing-api-commands:
+  stage: test
+  script:
+    - ./tools/check-for-missing-api-commands.sh
+
 missing-config-h-include:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - FILES=$(./tools/add-config-h.sh -n)
     - printf '%s\n' "${FILES}"
@@ -159,10 +151,6 @@ missing-config-h-include:
 
 missing-git-attribute:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\ngit diff should be empty here under all circumstances. CI broken?\n' "${git_diff}"; exit 1; fi
