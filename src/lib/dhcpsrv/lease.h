@@ -14,6 +14,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
+#include <util/dhcp_space.h>
 
 namespace isc {
 namespace dhcp {
@@ -671,6 +672,32 @@ typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 /// @return a reference to the output stream parameter
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease);
+
+/// @brief adapters for linking templates to qualified names
+/// @{
+namespace {
+
+template <isc::util::DhcpSpace D>
+struct adapter_Lease {};
+
+template <>
+struct adapter_Lease<isc::util::DHCPv4> {
+    using type = Lease4;
+};
+
+template <>
+struct adapter_Lease<isc::util::DHCPv6> {
+    using type = Lease6;
+};
+
+}  // namespace
+
+template <isc::util::DhcpSpace D>
+using LeaseT = typename adapter_Lease<D>::type;
+
+template <isc::util::DhcpSpace D>
+using LeaseTPtr = boost::shared_ptr<LeaseT<D>>;
+/// @}
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
