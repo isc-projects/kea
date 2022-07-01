@@ -1,3 +1,10 @@
+2036.	[build]		andrei
+	Added a tool that checks if there are any missing REST commands
+	from the API Reference section of the ARM.
+	See tools/check-for-missing-api-commands.sh.
+	It has been integrated into Gitlab CI and runs on every push.
+	(Gitlab #2379)
+
 2035.	[doc]		Daniel Bjors
 	The developer's guide now correctly uses the Lease4CollectionPtr
 	and Lease6CollectionPtr types. Thanks to Daniel Bjors for
