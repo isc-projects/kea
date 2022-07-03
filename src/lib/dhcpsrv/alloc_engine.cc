@@ -3701,6 +3701,13 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
                     .arg(ctx.currentHost()->getIPv4Reservation().toText())
                     .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
                          "(no lease info)");
+                StatsMgr::instance().addValue(StatsMgr::generateName(
+                                                  "subnet",
+                                                  new_lease->subnet_id_,
+                                                  "reservation-conflicts"),
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("v4-reservation-conflicts",
+                                              static_cast<int64_t>(1));
             }
 
         } else {

@@ -134,7 +134,8 @@ std::set<std::string> dhcp4_statistics = {
     "v4-allocation-fail-shared-network",
     "v4-allocation-fail-subnet",
     "v4-allocation-fail-no-pools",
-    "v4-allocation-fail-classes"
+    "v4-allocation-fail-classes",
+    "v4-reservation-conflicts"
 };
 
 } // end of anonymous namespace
