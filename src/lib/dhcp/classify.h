@@ -7,6 +7,8 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <cc/data.h>
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/identity.hpp>
@@ -149,7 +151,14 @@ namespace dhcp {
         /// @param separator Separator to be used between class names. The
         /// default separator comprises comma sign followed by space
         /// character.
+        ///
+        /// @return the string representation of all classes
         std::string toText(const std::string& separator = ", ") const;
+
+        /// @brief Returns all class names as an ElementPtr of type ListElement
+        ///
+        /// @return the list
+        isc::data::ElementPtr toElement() const;
 
     private:
         /// @brief container part

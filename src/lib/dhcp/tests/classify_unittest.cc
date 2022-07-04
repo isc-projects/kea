@@ -132,6 +132,26 @@ TEST(ClassifyTest, ClientClassesToText) {
     EXPECT_EQ("alpha.gamma.beta", classes.toText("."));
 }
 
+// Check that the ClientClasses::toElement function returns
+// correct values.
+TEST(ClassifyTest, ClientClassesToElement) {
+    // No classes.
+    ClientClasses classes;
+    EXPECT_TRUE(classes.toElement()->empty());
+
+    // Insert single class name and see that it's there.
+    classes.insert("alpha");
+    EXPECT_EQ("[ \"alpha\" ]", classes.toElement()->str());
+
+    // Insert next class name and see that both classes are present.
+    classes.insert("gamma");
+    EXPECT_EQ("[ \"alpha\", \"gamma\" ]", classes.toElement()->str());
+
+    // Insert third class and make sure they get ordered in insert order.
+    classes.insert("beta");
+    EXPECT_EQ("[ \"alpha\", \"gamma\", \"beta\" ]", classes.toElement()->str());
+}
+
 // Check that selected class can be erased.
 TEST(ClassifyTest, Erase) {
     ClientClasses classes;

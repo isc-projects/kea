@@ -5,16 +5,22 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <util/strutil.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
+
 #include <sstream>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
+
+using namespace isc::data;
 
 ClientClasses::ClientClasses(const std::string& class_names)
     : container_() {
@@ -55,6 +61,15 @@ ClientClasses::toText(const std::string& separator) const {
         s << *class_it;
     }
     return (s.str());
+}
+
+ElementPtr
+ClientClasses::toElement() const {
+    ElementPtr result(Element::createList());
+    for (ClientClass c : container_) {
+        result->add(Element::create(c));
+    }
+    return (result);
 }
 
 } // end of namespace isc::dhcp
