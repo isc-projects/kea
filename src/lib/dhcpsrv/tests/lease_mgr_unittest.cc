@@ -379,6 +379,21 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getClassLeaseCount() not implemented");
     }
 
+    /// @brief Pretends to recount the leases per class for V4 leases.
+    void recountClassLeases4() override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::recountClassLeases4() not implemented");
+    }
+
+    /// @brief Pretends to recount the leases per class for V6 leases.
+    void recountClassLeases6() override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::recountClassLeases6() not implemented");
+    }
+
+    /// @brief Pretends to clear the class-lease count map.
+    void clearClassLeaseCounts() override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::clearClassLeaseCounts() not implemented");
+    }
+
     /// @brief Returns backend type.
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

@@ -2398,6 +2398,21 @@ PgSqlLeaseMgr::getClassLeaseCount(const ClientClass& client_class,
     return count;
 }
 
+void
+PgSqlLeaseMgr::recountClassLeases4() {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::recountClassLeases4() not implemented");
+}
+
+void
+PgSqlLeaseMgr::recountClassLeases6() {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::recountClassLeases6() not implemented");
+}
+
+void
+PgSqlLeaseMgr::clearClassLeaseCounts() {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::clearClassLeaseCounts() not implemented");
+}
+
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery4() {
     // Get a context

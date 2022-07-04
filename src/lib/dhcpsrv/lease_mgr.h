@@ -792,6 +792,8 @@ public:
         return (io_service_);
     }
 
+    // -- The following are memfile only, but defined in the base LeaseMgr for convenience. --
+
     /// @brief Returns the class lease count for a given class and lease type.
     ///
     /// @param client_class client class for which the count is desired
@@ -801,6 +803,15 @@ public:
     /// @return number of leases
     virtual size_t getClassLeaseCount(const ClientClass& client_class,
                                       const Lease::Type& ltype = Lease::TYPE_V4) const = 0;
+
+    /// @brief Recount the leases per class for V4 leases.
+    virtual void recountClassLeases4() = 0;
+
+    /// @brief Recount the leases per class for V6 leases.
+    virtual void recountClassLeases6() = 0;
+
+    /// @brief Clears the class-lease count map.
+    virtual void clearClassLeaseCounts() = 0;
 
 private:
     /// The IOService object, used for all ASIO operations.

@@ -1256,7 +1256,7 @@ public:
     /// user-context.
     ///
     /// Must be called from a thread-safe context.
-    void recountClassLeases4();
+    void recountClassLeases4() override;
 
     /// @brief Recount the leases per class for V6 leases.
     ///
@@ -1265,12 +1265,12 @@ public:
     /// user-context.
     ///
     /// Must be called from a thread-safe context.
-    void recountClassLeases6();
+    void recountClassLeases6() override;
 
     /// @brief Clears the class-lease count map.
     ///
     /// Must be called from a thread-safe context.
-    void clearClassLeaseCounts();
+    void clearClassLeaseCounts() override;
 };
 
 }  // namespace dhcp

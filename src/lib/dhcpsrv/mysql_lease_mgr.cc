@@ -3195,6 +3195,21 @@ MySqlLeaseMgr::getClassLeaseCount(const ClientClass& client_class,
     return count;
 }
 
+void
+MySqlLeaseMgr::recountClassLeases4() {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::recountClassLeases4() not implemented");
+}
+
+void
+MySqlLeaseMgr::recountClassLeases6() {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::recountClassLeases6() not implemented");
+}
+
+void
+MySqlLeaseMgr::clearClassLeaseCounts() {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::clearClassLeaseCounts() not implemented");
+}
+
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery4() {
     // Get a context

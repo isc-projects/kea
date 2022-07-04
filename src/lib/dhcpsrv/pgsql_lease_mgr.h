@@ -962,6 +962,15 @@ private:
     virtual size_t getClassLeaseCount(const ClientClass& client_class,
                                       const Lease::Type& ltype = Lease::TYPE_V4) const override;
 
+    /// @brief Recount the leases per class for V4 leases.
+    void recountClassLeases4() override;
+
+    /// @brief Recount the leases per class for V6 leases.
+    void recountClassLeases6() override;
+
+    /// @brief Clears the class-lease count map.
+    void clearClassLeaseCounts() override;
+
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {
     public:
