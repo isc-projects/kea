@@ -149,6 +149,10 @@ ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle)
 
 ScopedCalloutHandleState::~ScopedCalloutHandleState() {
     resetState();
+
+    if (on_completion_) {
+        on_completion_();
+    }
 }
 
 void

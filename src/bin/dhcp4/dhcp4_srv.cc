@@ -1420,11 +1420,31 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
     if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
+        // The ScopedCalloutHandleState class which guarantees that the task
+        // is added to the thread pool after the response is reset (if needed)
+        // and CalloutHandle state is reset. In ST it does nothing.
+        // A smart pointer is used to store the ScopedCalloutHandleState so that
+        // a copy of the pointer is created by the lambda and only on the
+        // destruction of the last reference the task is added.
+        // In MT there are 2 cases:
+        // 1. packet is unparked before current thread smart pointer to
+        //    ScopedCalloutHandleState is destroyed:
+        //  - the lamba uses the smart pointer to set the callout which adds the
+        //    task, but the task is added after ScopedCalloutHandleState is
+        //    destroyed, on the destruction of the last reference which is held
+        //    by the current thread.
+        // 2. packet is unparked after the current thread smart pointer to
+        //    ScopedCalloutHandleState is destroyed:
+        //  - the current thread reference to ScopedCalloutHandleState is
+        //    destroyed, but the reference in the lambda keeps it alive until
+        //    the lamba is called and the last reference is released, at which
+        //    time the task is actually added.
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
         // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
+        std::shared_ptr<ScopedCalloutHandleState> callout_handle_state =
+                std::make_shared<ScopedCalloutHandleState>(callout_handle);
 
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
@@ -1477,13 +1497,15 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
             // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
             // executed when the hook library unparks the packet.
             HooksManager::park("leases4_committed", query,
-            [this, callout_handle, query, rsp]() mutable {
+            [this, callout_handle, query, rsp, callout_handle_state]() mutable {
                 if (MultiThreadingMgr::instance().getMode()) {
                     typedef function<void()> CallBack;
                     boost::shared_ptr<CallBack> call_back =
                         boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
                                                                this, callout_handle, query, rsp));
-                    MultiThreadingMgr::instance().getThreadPool().add(call_back);
+                    callout_handle_state->on_completion_ = [call_back]() {
+                        MultiThreadingMgr::instance().getThreadPool().add(call_back);
+                    };
                 } else {
                     processPacketPktSend(callout_handle, query, rsp);
                     processPacketBufferSend(callout_handle, rsp);
