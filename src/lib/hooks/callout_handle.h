@@ -490,6 +490,9 @@ public:
     /// Resets state of the callout handle.
     ~ScopedCalloutHandleState();
 
+    /// @brief Continuation callback.
+    std::function<void()> on_completion_;
+
 private:
 
     /// @brief Resets the callout handle state.
