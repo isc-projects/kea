@@ -648,7 +648,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
         "v4-allocation-fail-shared-network",
         "v4-allocation-fail-subnet",
         "v4-allocation-fail-no-pools",
-        "v4-allocation-fail-classes"
+        "v4-allocation-fail-classes",
+        "v4-reservation-conflicts"
     };
 
     // preparing the schema which check if all statistics are set to zero

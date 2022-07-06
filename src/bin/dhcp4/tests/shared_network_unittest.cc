@@ -1771,7 +1771,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifi
 
     // Ensure stats are being recorded for HR conflicts
     ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
-        "subnet[100].reservation-conflicts");
+        "subnet[10].reservation-conflicts");
     ASSERT_TRUE(subnet_conflicts);
     ASSERT_EQ(1, subnet_conflicts->getInteger().first);
     ObservationPtr global_conflicts = StatsMgr::instance().getObservation(
