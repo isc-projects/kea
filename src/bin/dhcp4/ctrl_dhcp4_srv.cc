@@ -914,7 +914,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     try {
         Dhcp4to6Ipc::instance().open();
     } catch (const std::exception& ex) {
-        std::ostringstream err;
         err << "error starting DHCPv4-over-DHCPv6 IPC "
                " after server reconfiguration: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -1013,8 +1012,16 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
                                    *callout_handle);
 
-        // Ignore status code as none of them would have an effect on further
-        // operation.
+        // If next step is DROP, report a configuration error.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            string error;
+            try {
+                callout_handle->getArgument("error", error);
+            } catch (NoSuchArgument const& ex) {
+                error = "unknown error";
+            }
+            return (isc::config::createAnswer(CONTROL_RESULT_ERROR, error));
+        }
     }
 
     // Apply multi threading settings.

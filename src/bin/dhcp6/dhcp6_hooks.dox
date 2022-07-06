@@ -63,8 +63,12 @@ to the end of this list.
    provides access to the DHCP service state of the server and allows for
    enabling and disabling the DHCP service from the hooks libraries.
 
- - <b>Next step status</b>: Status codes returned by the callouts installed on
-   this hook point are ignored.
+
+ - <b>Next step status</b>: If any callout sets the status to DROP, the server
+   will interrupt the reconfiguration process. The hook callout is expected to
+   have completed the cause of the interruption under the "error" handle argument
+   with a std::string which is then logged. Finally, this leads to the
+   termination of kea-dhcp6.
 
  @subsection dhcpv6HooksCb6Update cb6_updated
  - @b Arguments:
