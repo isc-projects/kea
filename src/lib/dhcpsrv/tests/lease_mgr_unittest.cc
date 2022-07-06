@@ -374,8 +374,8 @@ public:
     /// Lease::TYPE_V4.
     ///
     /// @return number of leases
-    virtual size_t getClassLeaseCount(const ClientClass& client_class,
-                                      const Lease::Type& ltype = Lease::TYPE_V4) const override {
+    size_t getClassLeaseCount(const ClientClass& /* client_class */,
+                              const Lease::Type& /* ltype = Lease::TYPE_V4 */) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getClassLeaseCount() not implemented");
     }
 
