@@ -6569,6 +6569,24 @@ The DHCPv4 server supports the following statistics:
    |                                              |                | statistic is exposed for each      |
    |                                              |                | subnet separately.                 |
    +----------------------------------------------+----------------+------------------------------------+
+   | v4-reservation-conflicts                     | integer        | Number of host reservation         |
+   |                                              |                | allocation conflicts which have    |
+   |                                              |                | occurred across every subnet. When |
+   |                                              |                | a client sends a DHCP Discover and |
+   |                                              |                | is matched to a host reservation   |
+   |                                              |                | which is already leased out by     |
+   |                                              |                | another client, this counter is    |
+   |                                              |                | increased by 1.                    |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].reservation-conflicts             | integer        | Number of host reservation         |
+   |                                              |                | allocation conflicts which have    |
+   |                                              |                | occurred in a specific subnet.     |
+   |                                              |                | When a client sends a DHCP         |
+   |                                              |                | Discover and is matched to a host  |
+   |                                              |                | reservation which is already       |
+   |                                              |                | leased out by another client, this |
+   |                                              |                | counter is increased by 1.         |
+   +----------------------------------------------+----------------+------------------------------------+
 
 .. note::
 

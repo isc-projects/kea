@@ -43,11 +43,13 @@
         "       \"subnet[1].reclaimed-declined-addresses\": [ [ 0, \"2022-02-11 17:54:17.487595\" ] ],",
         "       \"subnet[1].reclaimed-leases\": [ [ 0, \"2022-02-11 17:54:17.487604\" ] ],",
         "       \"subnet[1].total-addresses\": [ [ 200, \"2022-02-11 17:54:17.487512\" ] ],",
+        "       \"subnet[1].reservation-conflicts\": [ [ 0, \"2022-02-11 17:54:17.487520\" ] ]",
         "       \"v4-allocation-fail\": [ [ 0, \"2022-02-11 17:54:17.455302\" ] ],",
         "       \"v4-allocation-fail-classes\": [ [ 0, \"2022-02-11 17:54:17.455306\" ] ],",
         "       \"v4-allocation-fail-no-pools\": [ [ 0, \"2022-02-11 17:54:17.455310\" ] ],",
         "       \"v4-allocation-fail-shared-network\": [ [ 0, \"2022-02-11 17:54:17.455319\" ] ],",
         "       \"v4-allocation-fail-subnet\": [ [ 0, \"2022-02-11 17:54:17.455323\" ] ]",
+        "       \"v4-reservation-conflicts\": [ [ 0, \"2022-02-11 17:54:17.455330\" ] ]",
         "   }",
         "}"
     ],
