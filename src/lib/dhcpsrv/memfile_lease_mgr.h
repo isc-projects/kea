@@ -1246,8 +1246,8 @@ public:
     /// Lease::TYPE_V4.
     ///
     /// @return number of leases
-    size_t getClassLeaseCount(const ClientClass& client_class,
-                              const Lease::Type& ltype = Lease::TYPE_V4) const override;
+    virtual size_t getClassLeaseCount(const ClientClass& client_class,
+                                      const Lease::Type& ltype = Lease::TYPE_V4) const override;
 
     /// @brief Recount the leases per class for V4 leases.
     ///
@@ -1256,7 +1256,7 @@ public:
     /// user-context.
     ///
     /// Must be called from a thread-safe context.
-    void recountClassLeases4() override;
+    virtual void recountClassLeases4() override;
 
     /// @brief Recount the leases per class for V6 leases.
     ///
@@ -1265,12 +1265,12 @@ public:
     /// user-context.
     ///
     /// Must be called from a thread-safe context.
-    void recountClassLeases6() override;
+    virtual void recountClassLeases6() override;
 
     /// @brief Clears the class-lease count map.
     ///
     /// Must be called from a thread-safe context.
-    void clearClassLeaseCounts() override;
+    virtual void clearClassLeaseCounts() override;
 };
 
 }  // namespace dhcp

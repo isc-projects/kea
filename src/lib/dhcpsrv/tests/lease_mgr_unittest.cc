@@ -350,20 +350,22 @@ public:
 
     /// @brief Pretends to check if the IPv4 lease limits set in the given user
     /// context are exceeded.
-    std::string checkLimits4(isc::data::ConstElementPtr const& /* user_context */) const override {
+    virtual std::string
+    checkLimits4(isc::data::ConstElementPtr const& /* user_context */) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits4() not implemented");
     }
 
     /// @brief Pretends to check if the IPv6 lease limits set in the given user
     /// context are exceeded.
-    std::string checkLimits6(isc::data::ConstElementPtr const& /* user_context */) const override{
+    virtual std::string
+    checkLimits6(isc::data::ConstElementPtr const& /* user_context */) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::checkLimits6() not implemented");
     }
 
     /// @brief Pretends to check if JSON support is enabled in the database.
     ///
     /// @return true if there is JSON support, false otherwise
-    bool isJsonSupported() const override {
+    virtual bool isJsonSupported() const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::isJsonSupported() not implemented");
     }
 
@@ -374,23 +376,23 @@ public:
     /// Lease::TYPE_V4.
     ///
     /// @return number of leases
-    size_t getClassLeaseCount(const ClientClass& /* client_class */,
+    virtual size_t getClassLeaseCount(const ClientClass& /* client_class */,
                               const Lease::Type& /* ltype = Lease::TYPE_V4 */) const override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getClassLeaseCount() not implemented");
     }
 
     /// @brief Pretends to recount the leases per class for V4 leases.
-    void recountClassLeases4() override {
+    virtual void recountClassLeases4() override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::recountClassLeases4() not implemented");
     }
 
     /// @brief Pretends to recount the leases per class for V6 leases.
-    void recountClassLeases6() override {
+    virtual void recountClassLeases6() override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::recountClassLeases6() not implemented");
     }
 
     /// @brief Pretends to clear the class-lease count map.
-    void clearClassLeaseCounts() override {
+    virtual void clearClassLeaseCounts() override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::clearClassLeaseCounts() not implemented");
     }
 
