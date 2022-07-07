@@ -1,10 +1,9 @@
-2038.   [func]      djt
-    Add additional stats counters for host reservation
-    conflicts to global and subnet stats scope. The new
-    global stat is called v4-reservation-conflicts and
-    the subnet specific stat can be found at
-    subnet[id].reservation-conflicts
-    (Gitlab #2419)
+2038.	[func]		djt
+	Add additional stats counters for host reservation
+	conflicts to global and subnet scope stats. The new global
+	stat is called v4-reservation-conflicts and the subnet
+	specific stat is called	subnet[id].reservation-conflicts.
+	(Gitlab #2419)
 
 2037.	[bug]		razvan, marcin
 	Fixed a crash in HA+MT scenario caused by a race condition
