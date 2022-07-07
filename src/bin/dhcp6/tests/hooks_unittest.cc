@@ -38,6 +38,7 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
@@ -5186,67 +5187,87 @@ TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
 // Checks if callouts installed on the dhcp6_srv_configured ared indeed called
 // and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
-    boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
+    for (string parameters : {
+        "",
+        R"(, "parameters": { "mode": "fail-without-error" } )",
+        R"(, "parameters": { "mode": "fail-with-error" } )"}) {
 
-    // Ensure no marker files to start with.
-    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(SRV_CONFIG_MARKER_FILE));
+        reset();
 
-    // Minimal valid configuration for the server. It includes the
-    // section which loads the callout library #3, which implements
-    // dhcp6_srv_configured callout.
-    std::string config_str =
-        "{"
-        "    \"interfaces-config\": {"
-        "        \"interfaces\": [ ]"
-        "    },"
-        "    \"preferred-lifetime\": 3000,"
-        "    \"rebind-timer\": 2000,"
-        "    \"renew-timer\": 1000,"
-        "    \"subnet6\": [ ],"
-        "    \"valid-lifetime\": 4000,"
-        "    \"lease-database\": {"
-        "         \"type\": \"memfile\","
-        "         \"persist\": false"
-        "    },"
-        "    \"hooks-libraries\": ["
-        "        {"
-        "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
-        "        }"
-        "    ]"
-        "}";
+        boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
 
-    ConstElementPtr config = Element::fromJSON(config_str);
+        // Ensure no marker files to start with.
+        ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+        ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+        ASSERT_FALSE(checkMarkerFileExists(SRV_CONFIG_MARKER_FILE));
 
-    // Configure the server.
-    ConstElementPtr answer;
-    ASSERT_NO_THROW(answer = srv->processConfig(config));
+        // Minimal valid configuration for the server. It includes the
+        // section which loads the callout library #3, which implements
+        // dhcp6_srv_configured callout.
+        string config_str =
+            "{"
+            "    \"interfaces-config\": {"
+            "        \"interfaces\": [ ]"
+            "    },"
+            "    \"preferred-lifetime\": 3000,"
+            "    \"rebind-timer\": 2000,"
+            "    \"renew-timer\": 1000,"
+            "    \"subnet6\": [ ],"
+            "    \"valid-lifetime\": 4000,"
+            "    \"lease-database\": {"
+            "         \"type\": \"memfile\","
+            "         \"persist\": false"
+            "    },"
+            "    \"hooks-libraries\": ["
+            "        {"
+            "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
+            + parameters +
+            "        }"
+            "    ]"
+            "}";
 
-    // Make sure there were no errors.
-    int status_code;
-    isc::config::parseAnswer(status_code, answer);
-    ASSERT_EQ(0, status_code);
+        ConstElementPtr config = Element::fromJSON(config_str);
 
-    // The hook library should have been loaded.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-    // The dhcp6_srv_configured should have been invoked and the provided
-    // parameters should be recorded.
-    //// not yet network_state
-    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
-                                "3io_contextjson_confignetwork_stateserver_config"));
+        // Configure the server.
+        ConstElementPtr answer;
+        ASSERT_NO_THROW(answer = srv->processConfig(config));
 
-    // Destroy the server, instance which should unload the libraries.
-    srv.reset();
+        // Make sure there were no errors.
+        int status_code;
+        parseAnswer(status_code, answer);
+        if (parameters.empty()) {
+            EXPECT_EQ(0, status_code);
+            EXPECT_EQ(answer->str(), R"({ "result": 0, "text": "Configuration successful." })");
+        } else {
+            EXPECT_EQ(1, status_code);
+            if (parameters.find("fail-without-error") != string::npos) {
+                EXPECT_EQ(answer->str(), R"({ "result": 1, "text": "unknown error" })");
+            } else if (parameters.find("fail-with-error") != string::npos) {
+                EXPECT_EQ(answer->str(),
+                          R"({ "result": 1, "text": "user explicitly configured me to fail" })");
+            } else {
+                GTEST_FAIL() << "unchecked test case";
+            }
+        }
 
-    // The server was destroyed, so the unload() function should now
-    // include the library number in its marker file.
-    //// not yet network_state
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
-    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
-                                "3io_contextjson_confignetwork_stateserver_config"));
+        // The hook library should have been loaded.
+        EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+        EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+        // The dhcp6_srv_configured should have been invoked and the provided
+        // parameters should be recorded.
+        EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                    "3io_contextjson_confignetwork_stateserver_config"));
+
+        // Destroy the server, instance which should unload the libraries.
+        srv.reset();
+
+        // The server was destroyed, so the unload() function should now
+        // include the library number in its marker file.
+        EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+        EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
+        EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                    "3io_contextjson_confignetwork_stateserver_config"));
+    }
 }
 
 // This test verifies that parked-packet-limit is enforced.

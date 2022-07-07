@@ -9,9 +9,12 @@
 /// hook point.
 ///
 static const int LIBRARY_NUMBER = 3;
+
 #include <config.h>
 
 #include <dhcp4/tests/callout_library_common.h>
+#include <dhcpsrv/srv_config.h>
+
 #include <string>
 #include <vector>
 
@@ -30,6 +33,7 @@ extern "C" {
 /// @return 0 on success, 1 otherwise.
 int
 dhcp4_srv_configured(CalloutHandle& handle) {
+
     // Append library number.
     if (appendDigit(SRV_CONFIG_MARKER_FILE)) {
         return (1);
@@ -41,6 +45,24 @@ dhcp4_srv_configured(CalloutHandle& handle) {
         if (appendArgument(SRV_CONFIG_MARKER_FILE, arg->c_str()) != 0) {
             return (1);
         }
+    }
+
+    // Determine if this callout is configured to fail.
+    isc::dhcp::SrvConfigPtr config;
+    handle.getArgument("server_config", config);
+    isc::data::ConstElementPtr mode_element(config ? config->toElement() ?
+        config->toElement()->find("Dhcp4/hooks-libraries") ?
+        config->toElement()->find("Dhcp4/hooks-libraries")->get(0) ?
+        config->toElement()->find("Dhcp4/hooks-libraries")->get(0)->get("parameters") ?
+        config->toElement()->find("Dhcp4/hooks-libraries")->get(0)->get("parameters")->get("mode")
+        : 0 : 0 : 0 : 0 : 0);
+    std::string mode(mode_element ? mode_element->stringValue() : "");
+    if (mode == "fail-without-error") {
+        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+    } else if (mode == "fail-with-error") {
+        std::string error("user explicitly configured me to fail");
+        handle.setArgument("error", error);
+        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     }
 
     return (0);
