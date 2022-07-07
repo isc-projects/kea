@@ -1705,6 +1705,14 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     EXPECT_EQ(DHCPACK, resp1->getType());
     EXPECT_NE("10.0.0.29", resp1->getYiaddr().toText());
     EXPECT_NE("192.0.2.28", resp1->getYiaddr().toText());
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[10].reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 
     // Client #2 is now doing 4-way exchange and should get its newly reserved
     // address, released by the 4-way transaction of client 1.
@@ -1774,10 +1782,9 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifi
         "subnet[10].reservation-conflicts");
     ASSERT_TRUE(subnet_conflicts);
     ASSERT_EQ(1, subnet_conflicts->getInteger().first);
-    ObservationPtr global_conflicts = StatsMgr::instance().getObservation(
-        "v4-reservation-conflicts");
-    ASSERT_TRUE(global_conflicts);
-    ASSERT_EQ(1, global_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 }
 
 // Reserved address can't be assigned as long as access to a subnet is

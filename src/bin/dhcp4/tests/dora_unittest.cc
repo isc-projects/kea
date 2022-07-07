@@ -33,6 +33,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 
 namespace {
 
@@ -2023,6 +2024,14 @@ DORATest::reservationsWithConflicts() {
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     IOAddress client_b_addr = clientB.config_.lease_.addr_;
     ASSERT_NE(client_b_addr, in_pool_addr);
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[1].reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 
     // Client A renews the lease.
     client.setState(Dhcp4Client::RENEWING);
@@ -2046,6 +2055,13 @@ DORATest::reservationsWithConflicts() {
     ASSERT_EQ(DHCPACK, static_cast<int>(clientB.getContext().response_->getType()));
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
     ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
+    // Ensure stats are being recorded for HR conflicts
+    subnet_conflicts = StatsMgr::instance().getObservation("subnet[1].reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(2, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(2, subnet_conflicts->getInteger().first);
 
     // Client B renews its lease.
     clientB.setState(Dhcp4Client::RENEWING);

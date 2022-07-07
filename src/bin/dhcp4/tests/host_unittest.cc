@@ -23,6 +23,8 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
+
 
 namespace {
 
@@ -768,6 +770,14 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
     // server should not assign this address because another client
     // has taken it already.
     EXPECT_NE("10.0.0.123", resp->getYiaddr().toText());
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[10].reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 
     // If the client1 releases the reserved lease, the client2 should acquire it.
     ASSERT_NO_THROW(client1.doRelease());
