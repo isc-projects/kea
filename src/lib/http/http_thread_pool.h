@@ -37,7 +37,7 @@ public:
     /// @param pool_size Maximum number of threads in the pool.  Currently the
     /// number of threads is fixed at this value.
     /// @param defer_start If true, creation of the threads is deferred until
-    /// a subsequent call to @ref start().  In this case the pool's operational
+    /// a subsequent call to @ref run().  In this case the pool's operational
     /// state post construction is STOPPED.  If false, the constructor will
     /// invoke run() to transition the pool into the RUNNING state.
     HttpThreadPool(asiolink::IOServicePtr io_service, size_t pool_size,

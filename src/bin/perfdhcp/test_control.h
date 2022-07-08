@@ -352,6 +352,7 @@ protected:
 
     /// \brief Creates DHCPREQUEST from a DHCPACK message.
     ///
+    /// @param msg_type the message type to be created (DHCPREQUEST or DHCPRELEASE)
     /// \param ack An instance of the DHCPACK message to be used to
     /// create a new message.
     ///

@@ -508,7 +508,7 @@ public:
 
     /// @brief Saves new total number of unsent lease updates from the partner.
     ///
-    /// @param unsent_updates_count new total number of unsent lease updates from
+    /// @param unsent_update_count new total number of unsent lease updates from
     /// the partner.
     void setPartnerUnsentUpdateCount(uint64_t unsent_update_count);
 
@@ -516,7 +516,7 @@ private:
 
     /// @brief Thread unsafe implementation of the @c setPartnerUnsentUpdateCount.
     ///
-    /// @param unsent_updates_count new total number of unsent lease updates from
+    /// @param unsent_update_count new total number of unsent lease updates from
     /// the partner.
     void setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_count);
 
