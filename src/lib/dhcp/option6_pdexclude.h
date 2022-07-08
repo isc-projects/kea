@@ -64,6 +64,7 @@ public:
     /// section 4.2 of RFC 6603.
     ///
     /// @param [out] buf Pointer to a buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.

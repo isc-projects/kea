@@ -310,9 +310,10 @@ public:
     /// or full.
     DomainNameType getDomainNameType() const;
 
-   /// @brief Writes option in the wire format into a buffer.
+    /// @brief Writes option in the wire format into a buffer.
     ///
     /// @param [out] buf output buffer where option data will be stored.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses option from the received buffer.

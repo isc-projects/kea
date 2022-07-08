@@ -88,6 +88,7 @@ public:
     /// Method will throw if option storing fails for some reason.
     ///
     /// @param buf output buffer (option will be stored there)
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// Returns string representation of the option.

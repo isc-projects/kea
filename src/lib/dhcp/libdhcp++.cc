@@ -458,7 +458,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
                         const std::string& option_space,
                         isc::dhcp::OptionCollection& options,
                         std::list<uint16_t>& deferred,
-                        bool flexible_pad_end) {
+                        bool check) {
     size_t offset = 0;
     size_t last_offset = 0;
 
@@ -477,8 +477,8 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
     const OptionDefContainerTypeIndex& runtime_idx = runtime_option_defs->get<1>();
 
     // Flexible PAD and END parsing.
-    bool flex_pad = (flexible_pad_end && (runtime_idx.count(DHO_PAD) == 0));
-    bool flex_end = (flexible_pad_end && (runtime_idx.count(DHO_END) == 0));
+    bool flex_pad = (check && (runtime_idx.count(DHO_PAD) == 0));
+    bool flex_end = (check && (runtime_idx.count(DHO_END) == 0));
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
@@ -490,7 +490,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
         uint8_t opt_type = buf[offset++];
 
         // DHO_END is a special, one octet long option
-        // Valid in dhcp4 space or when flexible_pad_end is true and
+        // Valid in dhcp4 space or when check is true and
         // there is a sub-option configured for this code.
         if ((opt_type == DHO_END) && (space_is_dhcp4 || flex_end)) {
             // just return. Don't need to add DHO_END option
@@ -501,7 +501,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
         // DHO_PAD is just a padding after DHO_END. Let's continue parsing
         // in case we receive a message without DHO_END.
-        // Valid in dhcp4 space or when flexible_pad_end is true and
+        // Valid in dhcp4 space or when check is true and
         // there is a sub-option configured for this code.
         if ((opt_type == DHO_PAD) && (space_is_dhcp4 || flex_pad)) {
             continue;

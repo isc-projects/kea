@@ -68,6 +68,7 @@ public:
     /// @brief Renders option into the buffer in the wire format.
     ///
     /// @param [out] buf Buffer to which the option is rendered.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses buffer holding an option.

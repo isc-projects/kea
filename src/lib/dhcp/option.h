@@ -516,6 +516,7 @@ protected:
     /// directly by other classes.
     ///
     /// @param [out] buf output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     void packHeader(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Store sub options in a buffer.
@@ -526,6 +527,7 @@ protected:
     /// derived classes that override pack.
     ///
     /// @param [out] buf output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     ///
     /// @todo The set of exceptions thrown by this function depend on
     /// exceptions thrown by pack methods invoked on objects

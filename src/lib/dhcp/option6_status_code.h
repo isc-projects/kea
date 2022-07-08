@@ -46,6 +46,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
@@ -74,7 +75,7 @@ public:
 
     /// @brief Returns numeric status code.
     uint16_t getStatusCode() const {
-        return (status_code_);        
+        return (status_code_);
     }
 
     /// @brief Returns the name of the status code.
@@ -140,6 +141,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.
@@ -169,7 +171,7 @@ public:
 
     /// @brief Returns mandatory flag
     bool getMandatoryFlag() const {
-        return (mandatory_flag_);        
+        return (mandatory_flag_);
     }
 
     /// @brief Sets new mandatory flag.

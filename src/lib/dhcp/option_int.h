@@ -104,6 +104,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
+    /// @param check if set to false, allows options larger than 255 for v4
     ///
     /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function

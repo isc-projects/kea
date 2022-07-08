@@ -217,6 +217,9 @@ public:
     /// @param top indicates if this is the first call to pack the options.
     /// When true logic to emit the message type first is executed. It
     /// defaults to false.
+    /// @param check indicates if the code should be more flexible with
+    /// PAD and END options. If true, PAD and END options will not be parsed.
+    /// This is useful for partial parsing and slightly broken packets.
     static void packOptions4(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options,
                              bool top = false, bool check = true);
@@ -226,6 +229,8 @@ public:
     ///
     /// @param options The option container which needs to be updated with split
     /// options.
+    /// @param scopedOptions temporary storage for options that are going to be
+    /// split. See @ref ScopedPktOptionsCopy for explanation.
     /// @param used The size of the buffer that has already been used by the
     /// parent option effectively shrinking the maximum supported length for
     /// each options in the container.
