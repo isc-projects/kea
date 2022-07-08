@@ -323,7 +323,7 @@ public:
     ///
     /// Parses an integer triplet parameter of the form:
     ///
-    ///    min-<name>, <name>, max-<name>
+    ///    min-{name}, {name}, max-{name}
     ///
     /// @param scope Data element holding e.g. shared network configuration
     /// to be parsed.

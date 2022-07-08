@@ -119,7 +119,7 @@ Reference Manual: https://kea.readthedocs.io/en/latest/arm/integrations.html#yan
 
 You also need to install YANG modules, so the unit tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several Kea modules (src/share/yang/modules/*.yang), mostly usable in
+There are several Kea modules (*.yang in src/share/yang/modules/), mostly usable in
 production, but one called keatest-module is only used in unit tests. To be able
 to run unit tests as a non-root user, which is the recommended way, make sure
 the sysrepo repository and /dev/shm/sr* are owned by said user. One way to
