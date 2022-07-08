@@ -1,8 +1,8 @@
 2038.	[func]		djt
-	Add additional stats counters for host reservation
-	conflicts to global and subnet scope stats. The new global
-	stat is called v4-reservation-conflicts and the subnet
-	specific stat is called	subnet[id].reservation-conflicts.
+	Added a new statistic to kea-dhcp4 that counts host
+	reservation conflicts. It is tracked at both the global
+	and subnet level as v4-reservation-conflicts and
+	subnet[id].v4-reservation-conflicts respectively.
 	(Gitlab #2419)
 
 2037.	[bug]		razvan, marcin

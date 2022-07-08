@@ -532,7 +532,8 @@ CfgSubnets4::updateStatistics() {
         if (!stats_mgr.getObservation(name)) {
             stats_mgr.setValue(name, static_cast<int64_t>(0));
         }
-        name = StatsMgr::generateName("subnet", subnet_id, "reservation-conflicts");
+
+        name = StatsMgr::generateName("subnet", subnet_id, "v4-reservation-conflicts");
         if (!stats_mgr.getObservation(name)) {
             stats_mgr.setValue(name, static_cast<int64_t>(0));
         }

@@ -3704,7 +3704,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
                 StatsMgr::instance().addValue(StatsMgr::generateName(
                                                   "subnet",
                                                   ctx.conflicting_lease_->subnet_id_,
-                                                  "reservation-conflicts"),
+                                                  "v4-reservation-conflicts"),
                                               static_cast<int64_t>(1));
                 StatsMgr::instance().addValue("v4-reservation-conflicts",
                                               static_cast<int64_t>(1));

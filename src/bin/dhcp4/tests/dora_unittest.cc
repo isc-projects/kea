@@ -2026,7 +2026,7 @@ DORATest::reservationsWithConflicts() {
     ASSERT_NE(client_b_addr, in_pool_addr);
     // Ensure stats are being recorded for HR conflicts
     ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
-        "subnet[1].reservation-conflicts");
+        "subnet[1].v4-reservation-conflicts");
     ASSERT_TRUE(subnet_conflicts);
     ASSERT_EQ(1, subnet_conflicts->getInteger().first);
     subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
@@ -2056,7 +2056,8 @@ DORATest::reservationsWithConflicts() {
     ASSERT_NE(clientB.config_.lease_.addr_, in_pool_addr);
     ASSERT_EQ(client_b_addr, clientB.config_.lease_.addr_);
     // Ensure stats are being recorded for HR conflicts
-    subnet_conflicts = StatsMgr::instance().getObservation("subnet[1].reservation-conflicts");
+    subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[1].v4-reservation-conflicts");
     ASSERT_TRUE(subnet_conflicts);
     ASSERT_EQ(2, subnet_conflicts->getInteger().first);
     subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");

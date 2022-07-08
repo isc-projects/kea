@@ -772,7 +772,7 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
     EXPECT_NE("10.0.0.123", resp->getYiaddr().toText());
     // Ensure stats are being recorded for HR conflicts
     ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
-        "subnet[10].reservation-conflicts");
+        "subnet[10].v4-reservation-conflicts");
     ASSERT_TRUE(subnet_conflicts);
     ASSERT_EQ(1, subnet_conflicts->getInteger().first);
     subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
