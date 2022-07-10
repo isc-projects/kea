@@ -1,8 +1,8 @@
 .. _hooks-libraries:
 
-***************
+**************
 Hook Libraries
-***************
+**************
 
 .. _hooks-libraries-introduction:
 
@@ -308,40 +308,46 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
 
 The Limits hook uses user-context in classes and subnets to set parameters. Example:
 
-::
+.. code-block:: json
 
-    "Dhcp6": {
+    {
+      "Dhcp6": {
         "client-classes": [
-        {
+          {
             "name": "gold",
             "user-context": {
-            "limits": {
+              "limits": {
+                "address-limit": 2,
+                "prefix-limit": 1,
                 "rate-limit": "1000 packets per second"
+              }
             }
-            }
-        }
+          }
         ],
         "hooks-libraries": [
-        {
+          {
             "library": "/usr/local/lib/libdhcp_limits.so"
-        }
+          }
         ],
         "subnet6": [
-        {
+          {
             "id": 1,
             "pools": [
-            {
+              {
                 "pool": "2001:db8::/64"
-            }
+              }
             ],
             "subnet": "2001:db8::/64",
             "user-context": {
-            "limits": {
+              "limits": {
+                "address-limit": 4,
+                "prefix-limit": 2,
                 "rate-limit": "10 packets per minute"
+              }
             }
-            }
-        }
+          }
         ]
+      }
     }
 
 Available Hook Libraries

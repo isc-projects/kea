@@ -42,6 +42,11 @@ private (codes 224-254) and code 43 options, assignment of different
 options, and, for DHCPv4 cable modems, the setting of specific options
 for use with the TFTP server address and the boot file field.
 
+.. _classify-classification-steps:
+
+Classification Steps
+--------------------
+
 The classification process is conducted in several steps:
 
 1.  The ``ALL`` class is associated with the incoming packet.
@@ -63,6 +68,10 @@ The classification process is conducted in several steps:
     dropped and an informational message is logged with the packet
     information.
 
+.. note::
+
+    pkt4_receive, pkt6_receive callouts are called here.
+
 6.  When the ``early-global-reservations-lookup`` global parameter is
     configured to true global reservations are looked for and the 8, 9
     and 10 steps are partially performed: the lookup is limited to
@@ -76,6 +85,10 @@ The classification process is conducted in several steps:
     etc.). It uses the first subnet it finds that either has no
     class associated with it, or has a class which matches one of the
     packet's classes.
+
+.. note::
+
+    subnet4_select, subnet6_select callouts are called here.
 
 8.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
@@ -103,6 +116,11 @@ The classification process is conducted in several steps:
 11. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
     class members.
+
+.. note::
+
+    lease4_select, lease4_renew, lease6_select, lease6_renew, lease6_rebind
+    callouts are called here.
 
 12. Classes marked as "required" are evaluated in the order in which
     they are listed: first the shared network, then the subnet, and
@@ -955,11 +973,10 @@ To enable the debug statements in the classification system,
 the severity must be set to ``DEBUG`` and the debug level to at least 55.
 The specific loggers are ``kea-dhcp4.eval`` and ``kea-dhcp6.eval``.
 
-To understand the logging statements, it is essential to understand a bit
-about how expressions are evaluated; for a more complete description,
-refer to the design document at
-https://gitlab.isc.org/isc-projects/kea/wikis/designs/Design-documents. In
-brief, there are two structures used during the evaluation of an
+To understand the logging statements, it is essential to understand a bit about
+how expressions are evaluated; for a more complete description, refer to
+[the design document](https://gitlab.isc.org/isc-projects/kea/-/wikis/designs/client-classification-design).
+In brief, there are two structures used during the evaluation of an
 expression: a list of tokens which represent the expressions, and a value
 stack which represents the values being manipulated.
 
