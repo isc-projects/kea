@@ -641,7 +641,7 @@ only difference that ``this-server-name`` should be set to "server2" and
    Remember that ``load-balancing`` mode requires the address pools and
    delegated prefix pools to be split between the active servers. During normal
    operation, the servers use non-overlapping pools to avoid allocating the same
-   lease to different clients by both instances. A server will only use the pool
+   lease to different clients by both instances. A server only uses the pool
    fragments owned by the partner when the partner is not running. See the notes
    in :ref:`ha-supported-configurations` highlighting differences between the
    ``load-balancing`` and ``hot-standby`` modes. The semantics of pool
@@ -712,7 +712,7 @@ Two hook libraries must be loaded to enable HA: ``libdhcp_lease_cmds.so`` and
 enables control commands required by HA to fetch and manipulate leases on the
 remote servers. In the example provided above, it is assumed that Kea libraries
 are installed in the ``/usr/lib`` directory. If Kea is not installed in the
-``/usr`` directory, the hook libraries locations must be updated accordingly.
+``/usr`` directory, the hook libraries' locations must be updated accordingly.
 
 The HA configuration is specified within the scope of ``libdhcp_ha.so``.
 Note that while the top-level parameter ``high-availability`` is a list, only a
@@ -722,8 +722,7 @@ The following are the global parameters which control the server's behavior with
 respect to HA:
 
 -  ``this-server-name`` - is a unique identifier of the server within this HA
-   setup. It must match with one of the servers specified within the ``peers``
-   list.
+   setup. It must match one of the servers specified within the ``peers`` list.
 
 -  ``mode`` - specifies an HA mode of operation. The currently supported modes
    are ``load-balancing`` and ``hot-standby``.
@@ -794,13 +793,13 @@ The ``delayed-updates-limit`` parameter is used to enable or disable the
 ``load-balancing`` mode.
 
 If a server in the ``load-balancing`` state experiences communication issues
-with its partner (a heartbeat or lease update fail), the server transitions to
-the ``communication-recovery`` state. In this state, the server keeps responding
-to DHCP queries but does not send lease updates to the partner. The lease
-updates are queued until communication is re-established, to ensure that DHCP
-service remains available even in the event of the communication loss between
-the partners. There may appear to be communication loss when either one of the
-servers has terminated, or when both servers remain available but cannot
+with its partner (a heartbeat or lease-update failure), the server transitions
+to the ``communication-recovery`` state. In this state, the server keeps
+responding to DHCP queries but does not send lease updates to the partner. The
+lease updates are queued until communication is re-established, to ensure that
+DHCP service remains available even in the event of the communication loss
+between the partners. There may appear to be communication loss when either one
+of the servers has terminated, or when both servers remain available but cannot
 communicate with each other. In the former case, the surviving server will
 follow the normal procedure and should eventually transition to the
 ``partner-down`` state. In the latter case, both servers should transition to
@@ -816,8 +815,8 @@ servers having communication issues used to drop DHCP packets before
 transitioning to the ``partner-down`` state. In some cases they both
 transitioned to the ``partner-down`` state, which could potentially result in
 allocations of the same IP addresses or delegated prefixes to different clients
-by the respective servers. By entering the intermediate
-``communication-recovery`` state, these problems are avoided.
+by both servers. By entering the intermediate ``communication-recovery`` state,
+these problems are avoided.
 
 If a server in the ``communication-recovery`` state re-establishes communication
 with its partner, it tries to send the partner all of the outstanding lease
@@ -865,8 +864,8 @@ list:
    server.
 
 -  ``basic-auth-user`` - specifies the user ID for basic HTTP authentication. If
-   not specified or specified as an empty string, no authentication header will
-   be added to HTTP transactions. It must not contain the colon (:) character.
+   not specified or specified as an empty string, no authentication header is
+   added to HTTP transactions. It must not contain the colon (:) character.
 
 -  ``basic-auth-password`` - specifies the password for basic HTTP
    authentication. This parameter is ignored when the user ID is not specified
@@ -1178,7 +1177,7 @@ latency should be minimal.
    for transmission to accumulate faster than they can be delivered. As client
    traffic lessens the queues begin to empty. Since Kea 2.0.0, active servers
    monitor the size of these queues and emit periodic warnings (see
-   HTTP_CILENT_QUEUE_SIZE_GROWING in :ref:`kea-messages`) if they perceive a
+   HTTP_CLIENT_QUEUE_SIZE_GROWING in :ref:`kea-messages`) if they perceive a
    queue as growing too quickly. The warnings cease once the queue size begins
    to shrink. These messages are intended as a bellwether and seeing them
    sporadically during times of heavy traffic load does not necessarily indicate
@@ -1661,9 +1660,9 @@ as illustrated below:
                          {
                              "name": "server1",
                              // This specifies the URL of our server instance.
-                             // Since the HA+MT uses direct connection, the
-                             // DHCPv4 server open its own socket. Note it must
-                             // be different than the one used by the CA
+                             // Since the HA+MT uses a direct connection, the
+                             // DHCPv4 server open its own socket. Note that it
+                             // must be different than the one used by the CA
                              // (typically 8000). In this example, 8001 is used.
                              "url": "http://192.0.2.1:8001/",
                              // This server is primary. The other one must be
@@ -1674,12 +1673,14 @@ as illustrated below:
                          {
                              "name": "server2",
                              // This specifies the URL of our server instance.
-                             // Since the HA+MT uses direct connection, the
-                             // DHCPv4 server open its own socket. Note it must
-                             // be different than the one used by the CA
+                             // Since the HA+MT uses a direct connection, the
+                             // DHCPv4 server open its own socket. Note that it
+                             // must be different than the one used by the CA
                              // (typically 8000). In this example, 8001 is used.
                              "url": "http://192.0.2.2:8001/",
-                             // The partner is a secondary. Our is primary.
+                             // The partner is a secondary. This server is
+                             // primary as specified before in previous 'peers'
+                             // entry and 'this-server-name' before that.
                              "role": "secondary"
                          }
                        ...
@@ -1764,7 +1765,7 @@ fewer drops but with longer response times. Currently, the default value for
 
 .. _ha-maintenance:
 
-Controlled Shutdown and Maintenance of DHCP servers
+Controlled Shutdown and Maintenance of DHCP Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Having a pair of servers providing High Availability allows for controlled
@@ -1787,7 +1788,7 @@ stop serving any DHCP clients, so it can be safely shut down.
 
 The maintenance feature of the High Availability hook library addresses this
 situation. The ``ha-maintenance-start`` command was introduced to allow the
-administrator to put the pair of the active servers in states in which one of
+administrator to put the pair of the active servers in a state in which one of
 them is responding to all DHCP queries and the other one is awaiting shutdown.
 
 Suppose that the HA setup includes two active servers, ``server1`` and
@@ -1827,18 +1828,18 @@ normal operation of the HA pair. This is achieved by sending the
 ``partner-in-maintenance`` state. However, if the server has already
 transitioned to the ``partner-down`` state as a result of detecting that the
 partner is offline, canceling the maintenance is no longer possible. In that
-case, it is necessary to restart the other server and allowing it to complete
-its normal state negotiation process.
+case, it is necessary to restart the other server and allow it to complete its
+normal state negotiation process.
 
 Upgrading from Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To upgrade from an older HA hook library to the current version, the
 administrator must shut down one of the servers and rely on the failover
-mechanism to force the online server to transition to the ``partner-down`` state
-and start serving all DHCP clients. Once the hook library on the first server is
-upgraded to a current version, the ``ha-maintenance-start`` command can be used
-to upgrade the second server.
+mechanism to force the online server to transition to the ``partner-down`` state,
+where it starts serving all DHCP clients. Once the hook library on the first
+server is upgraded to a current version, the ``ha-maintenance-start`` command
+can be used to upgrade the second server.
 
 In such a case, shut down the server running the old version. Next, send the
 ``ha-maintenance-start`` command to the server that has been upgraded. This
@@ -2063,7 +2064,7 @@ has entered the ``partner-down`` state.
 
    Always send the ``ha-heartbeat`` command to both active HA servers to check
    the state of the entire HA setup. Sending it to only one of the servers may
-   not reflect issues with one of the servers that just began.
+   not reflect issues that just began with one of the servers.
 
 .. _command-ha-status-get:
 
@@ -2170,8 +2171,8 @@ state:
 
 -  ``unacked-clients`` - this is the number of different clients which have been
    considered "unacked", i.e. the clients which have been trying to get the
-   lease longer than the value of the "secs" field, or for which the
-   "Elapsed Time" exceeded the ``max-response-delay`` setting.
+   lease longer than the value of the ``secs`` field, or for which the
+   ``Elapsed Time`` exceeded the ``max-response-delay`` setting.
 
 -  ``unacked-clients-left`` - this indicates the number of additional clients
    which have to be considered "unacked" before the server enters the
@@ -2203,7 +2204,7 @@ status of the backup servers.
 The ``ha-maintenance-start`` Command
 ------------------------------------
 
-This command is used to initiate transition of the server's partner into the
+This command is used to initiate the transition of the server's partner into the
 ``in-maintenance`` state and the transition of the server receiving the command
 into the ``partner-in-maintenance`` state. See the :ref:`ha-maintenance` section
 for details.
@@ -2274,7 +2275,8 @@ connection after a temporary connection failure. It is also required when the
 ``delayed-updates-limit`` is exceeded, when the server is in the
 ``communication-recovery`` state.
 
-A server administrator may send the command to reset a misbehaving state machine.
+A server administrator may send this command to reset a misbehaving state
+machine.
 
 This command includes no arguments:
 
