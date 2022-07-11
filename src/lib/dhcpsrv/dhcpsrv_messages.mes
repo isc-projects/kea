@@ -1099,41 +1099,41 @@ information. The second argument includes the leased address.
 A debug message issued when the server was unable to select any subnet for the
 DHCPv4o6 packet.
 
-% DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED Failed to select any subnet using address: %1
-A debug message issued when the server was unable to select any subnet using
-specified address.
+% DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH No subnet matches address: %1
+A debug message issued when the server was unable to select a subnet using
+the specified address.
 
-% DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED Failed to select any subnet using interface: %1
-A debug message issued when the server was unable to select any subnet using
-specified interface name.
+% DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH No subnet matches interface: %1
+A debug message issued when the server was unable to select a subnet using
+the specified interface name.
 
-% DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED Failed to select any subnet using relay address: %1
-A debug message issued when the server was unable to select any subnet using
+% DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH No subnet matches relay address: %1
+A debug message issued when the server was unable to select a subnet using
 the specified relay address.
 
-% DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS Failed to select any subnet because no suitable address to use for subnet selection was found.
-A debug message issued when the server was unable to select any subnet because
-no suitable address to use for subnet selection was found.
+% DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS No subnet selected because no suitable address to use for subnet selection was found.
+A debug message issued when the server was find a suitable address to use for
+susubnet selection.
 
-% DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS Failed to select any subnet because no suitable address to use for subnet selection was found in the relay supplied options.
-A debug message issued when the server was unable to select any subnet because
-no suitable address to use for subnet selection was found in the relay supplied options.
+% DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS No RAI options found to use for subnet selection.
+A debug message issued by the server when the client query does not include RAI
+options suitable for use with subnet selection.
 
-% DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS Failed to select any subnet because no relay address to use for subnet selection was found.
-A debug message issued when the server was unable to select any subnet because
-no relay address to use for subnet selection was found.
+% DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS Relay address (giaddr) in client packet is empty.
+A debug message issued when no relay address was specified to use for subnet
+selection.
 
-% DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED Failed to select any subnet using address: %1
-A debug message issued when the server was unable to select any subnet using
-specified address.
+% DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH No subnet matches address: %1
+A debug message issued when the server was unable to select a subnet using
+the specified address.
 
-% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED Failed to select any subnet using interface: %1
-A debug message issued when the server was unable to select any subnet using
-specified interface name.
+% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH No subnet matches interface: %1
+A debug message issued when the server was unable to select a subnet using
+the specified interface name.
 
-% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED Failed to select any subnet using interface-id: %1
-A debug message issued when the server was unable to select any subnet using
-specified interface id.
+% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH No subnet matches interface id: %1
+A debug message issued when the server was unable to select a subnet using
+the specified interface id.
 
 % DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
 This error message is emitted when the timer elapsed and the

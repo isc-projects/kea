@@ -305,7 +305,7 @@ CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_FAILED)
+              DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH)
         .arg(address.toText());
 
     // Nothing found.
@@ -333,7 +333,7 @@ CfgSubnets6::selectSubnet(const std::string& iface_name,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_FAILED)
+              DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH)
         .arg(iface_name);
 
     // No subnet found for this interface name.
@@ -362,7 +362,7 @@ CfgSubnets6::selectSubnet(const OptionPtr& interface_id,
         }
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_FAILED)
+                  DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH)
             .arg(interface_id->toText());
     }
 

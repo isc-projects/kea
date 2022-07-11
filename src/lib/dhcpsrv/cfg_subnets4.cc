@@ -300,7 +300,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                              selector.client_classes_));
     } else {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS);
     }
 
     // If relayed message has been received, try to match the giaddr with the
@@ -337,11 +337,11 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
             }
         }
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED)
+                  DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH)
             .arg(selector.giaddr_.toText());
     } else {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS);
     }
 
     // If we got to this point it means that we were not able to match the
@@ -394,7 +394,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // Unable to find a suitable address to use for subnet selection.
     if (address.isV4Zero()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS);
 
         return (Subnet4Ptr());
     }
@@ -441,7 +441,7 @@ CfgSubnets4::selectSubnet(const std::string& iface,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED)
+              DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH)
         .arg(iface);
 
     // Failed to find a subnet.
@@ -480,7 +480,7 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED)
+              DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH)
         .arg(address.toText());
 
     // Failed to find a subnet.
