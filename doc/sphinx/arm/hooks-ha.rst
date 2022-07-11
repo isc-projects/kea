@@ -745,7 +745,7 @@ respect to HA:
 
 -  ``max-ack-delay`` - is one of the parameters controlling partner
    failure-detection. When communication with the partner is interrupted, the
-   server examines the values of the ``secs`` field (DHCPv4) or ``Elapsed Time``
+   server examines the values of the "secs" field (DHCPv4) or "elapsed time"
    option (DHCPv6), which denote how long the DHCP client has been trying to
    communicate with the DHCP server. This parameter specifies the maximum time
    in milliseconds for the client to try to communicate with the DHCP server,
@@ -2171,8 +2171,8 @@ state:
 
 -  ``unacked-clients`` - this is the number of different clients which have been
    considered "unacked", i.e. the clients which have been trying to get the
-   lease longer than the value of the ``secs`` field, or for which the
-   ``Elapsed Time`` exceeded the ``max-response-delay`` setting.
+   lease longer than the value of the "secs" field, or for which the
+   "elapsed time" exceeded the ``max-response-delay`` setting.
 
 -  ``unacked-clients-left`` - this indicates the number of additional clients
    which have to be considered "unacked" before the server enters the
