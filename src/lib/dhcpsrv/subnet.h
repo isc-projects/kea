@@ -1005,22 +1005,22 @@ using SubnetFetcher6 = SubnetFetcher<Subnet6Ptr, Subnet6Collection>;
 namespace {
 
 template <isc::util::DhcpSpace D>
-struct adapter_Subnet {};
+struct AdapterSubnet {};
 
 template <>
-struct adapter_Subnet<isc::util::DHCPv4> {
+struct AdapterSubnet<isc::util::DHCPv4> {
     using type = Subnet4;
 };
 
 template <>
-struct adapter_Subnet<isc::util::DHCPv6> {
+struct AdapterSubnet<isc::util::DHCPv6> {
     using type = Subnet6;
 };
 
 }  // namespace
 
 template <isc::util::DhcpSpace D>
-using SubnetT = typename adapter_Subnet<D>::type;
+using SubnetT = typename AdapterSubnet<D>::type;
 
 template <isc::util::DhcpSpace D>
 using SubnetTPtr = boost::shared_ptr<SubnetT<D>>;

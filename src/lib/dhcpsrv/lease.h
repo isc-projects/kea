@@ -678,22 +678,22 @@ operator<<(std::ostream& os, const Lease& lease);
 namespace {
 
 template <isc::util::DhcpSpace D>
-struct adapter_Lease {};
+struct AdapterLease {};
 
 template <>
-struct adapter_Lease<isc::util::DHCPv4> {
+struct AdapterLease<isc::util::DHCPv4> {
     using type = Lease4;
 };
 
 template <>
-struct adapter_Lease<isc::util::DHCPv6> {
+struct AdapterLease<isc::util::DHCPv6> {
     using type = Lease6;
 };
 
 }  // namespace
 
 template <isc::util::DhcpSpace D>
-using LeaseT = typename adapter_Lease<D>::type;
+using LeaseT = typename AdapterLease<D>::type;
 
 template <isc::util::DhcpSpace D>
 using LeaseTPtr = boost::shared_ptr<LeaseT<D>>;
