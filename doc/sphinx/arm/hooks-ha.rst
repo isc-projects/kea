@@ -908,7 +908,7 @@ password "bar".
 
 .. _ha-load-balancing-advanced-config:
 
-Load Balancing with Advanced Classification
+Load Balancing With Advanced Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the previous section, we provided an example of a ``load-balancing``
@@ -1678,9 +1678,9 @@ as illustrated below:
                              // must be different than the one used by the CA
                              // (typically 8000). In this example, 8001 is used.
                              "url": "http://192.0.2.2:8001/",
-                             // The partner is a secondary. This server is
-                             // primary as specified before in previous 'peers'
-                             // entry and 'this-server-name' before that.
+                             // The partner is a secondary. This server is a
+                             // primary as specified in the previous "peers"
+                             // entry and in "this-server-name" before that.
                              "role": "secondary"
                          }
                        ...
@@ -1831,7 +1831,7 @@ partner is offline, canceling the maintenance is no longer possible. In that
 case, it is necessary to restart the other server and allow it to complete its
 normal state negotiation process.
 
-Upgrading from Older HA Versions
+Upgrading From Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To upgrade from an older HA hook library to the current version, the
