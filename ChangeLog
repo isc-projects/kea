@@ -1,3 +1,19 @@
+1960.	[bug]		marcin
+	A bug in the allocation engine, which caused it to write an
+	allocated lease under the wrong subnet ID within a shared
+	network, has been corrected. This was occurring when multiple
+	clients matched the same fixed address reservation. The first
+	client is now assigned the fixed address, while a subsequent
+	client is then given a dynamically allocated address from a
+	different subnet in the shared network.
+	(Gitlab #2409, #2485)
+
+1959.	[bug]		razvan, marcin
+	Fixed a crash in HA+MT scenario caused by a race condition
+	between resetting the CalloutHandle state and accessing hook
+	point parameters from different threads when unparking packets.
+	(Gitlab #2473, #2477)
+
 1958.	[build]		andrei
 	Froze sphinx dependency versions used to build documentation.
 	Added the update-python-dependencies Makefile rule to bump the
