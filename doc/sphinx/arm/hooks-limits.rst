@@ -104,32 +104,13 @@ This is how a lease limit is defined for a subnet inside a shared network:
       }
     }
 
-A trick to enforce a global limit (same limit for all clients) is to define the special client class
-``"ALL"`` and assign the limit to it.
-
-.. code-block:: json
-
-    {
-      "Dhcp6": {
-        "client-classes": [
-          {
-            "name": "ALL",
-            "user-context": {
-              "limits": {
-                "<limit>": "<limit-value>"
-              }
-            }
-          }
-        ]
-      }
-    }
-
 .. note::
 
-    The Limits hook library uses the class name to identify a client class and the subnet ID to identify a subnet.
-    Changing a test expression in a client class or the network range of a subnet while leaving the
-    name or ID unchanged does not reset the lease count for the respective client class
-    or subnet. To reset the lease count, change the client class name or the subnet ID.
+    The Limits hook library uses the class name to identify a client class and the subnet ID to
+    identify a subnet.  Changing a test expression in a client class or the network range of a
+    subnet while leaving the name or ID unchanged does not reset the lease count for the
+    respective client class or subnet. To reset the lease count, change the client class name
+    or the subnet ID.
 
 .. _hooks-limits-lease-limiting:
 
@@ -160,7 +141,7 @@ As a result, classes for which ``"only-if-required"`` is "true" cannot be lease-
 Please refer to :ref:`the classification steps <classify-classification-steps>` for more information on which
 client classes can be used to limit the number of leases.
 
-.. warning::
+.. note::
 
     Under load, a Kea DHCP server may allocate more leases than the limit strictly allows. This only has a chance of
     happening during high traffic surges, coming from clients belonging to the same class or the
