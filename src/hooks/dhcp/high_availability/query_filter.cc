@@ -47,6 +47,70 @@ std::array<uint8_t, 256> loadb_mx_tbl = { {
     149, 80, 170, 68, 6, 169, 234, 151 }
 };
 
+/// @brief Table indicating which DHCPv4 message types are of interest to HA.
+std::array<bool, DHCP_TYPES_EOF> v4_ha_types = {
+    false,  // DHCP_NOTYPE          = 0
+    true,   // DHCPDISCOVER         = 1
+    false,  // DHCPOFFER            = 2
+    true,   // DHCPREQUEST          = 3
+    true,   // DHCPDECLINE          = 4
+    false,  // DHCPACK              = 5
+    false,  // DHCPNAK              = 6
+    true,   // DHCPRELEASE          = 7
+    true,   // DHCPINFORM           = 8
+    false,  // DHCPFORCERENEW       = 9
+    false,  // DHCPLEASEQUERY       = 10
+    false,  // DHCPLEASEUNASSIGNED  = 11
+    false,  // DHCPLEASEUNKNOWN     = 12
+    false,  // DHCPLEASEACTIVE      = 13
+    false,  // DHCPBULKLEASEQUERY   = 14
+    false,  // DHCPLEASEQUERYDONE   = 15
+    false,  // DHCPACTIVELEASEQUERY = 16
+    false,  // DHCPLEASEQUERYSTATUS = 17
+    false   // DHCPTLS              = 18
+};
+
+/// @brief Table indicating which DHCPv6 message types are of interest to HA.
+std::array<bool, DHCPV6_TYPES_EOF> v6_ha_types = {
+    false,  // DHCPV6_NOTYPE               = 0
+    true,   // DHCPV6_SOLICIT              = 1
+    false,  // DHCPV6_ADVERTISE            = 2
+    true,   // DHCPV6_REQUEST              = 3
+    true,   // DHCPV6_CONFIRM              = 4
+    true,   // DHCPV6_RENEW                = 5
+    true,   // DHCPV6_REBIND               = 6
+    false,  // DHCPV6_REPLY                = 7
+    true,   // DHCPV6_RELEASE              = 8
+    true,   // DHCPV6_DECLINE              = 9
+    false,  // DHCPV6_RECONFIGURE          = 10
+    false,  // DHCPV6_INFORMATION_REQUEST  = 11
+    false,  // DHCPV6_RELAY_FORW           = 12
+    false,  // DHCPV6_RELAY_REPL           = 13
+    false,  // DHCPV6_LEASEQUERY           = 14
+    false,  // DHCPV6_LEASEQUERY_REPLY     = 15
+    false,  // DHCPV6_LEASEQUERY_DONE      = 16
+    false,  // DHCPV6_LEASEQUERY_DATA      = 17
+    false,  // DHCPV6_RECONFIGURE_REQUEST  = 18
+    false,  // DHCPV6_RECONFIGURE_REPLY    = 19
+    false,  // DHCPV6_DHCPV4_QUERY         = 20
+    false,  // DHCPV6_DHCPV4_RESPONSE      = 21
+    false,  // DHCPV6_ACTIVELEASEQUERY     = 22
+    false,  // DHCPV6_STARTTLS             = 23
+    false,  // DHCPV6_BNDUPD               = 24
+    false,  // DHCPV6_BNDREPLY             = 25
+    false,  // DHCPV6_POOLREQ              = 26
+    false,  // DHCPV6_POOLRESP             = 27
+    false,  // DHCPV6_UPDREQ               = 28
+    false,  // DHCPV6_UPDREQALL            = 29
+    false,  // DHCPV6_UPDDONE              = 30
+    false,  // DHCPV6_CONNECT              = 31
+    false,  // DHCPV6_CONNECTREPLY         = 32
+    false,  // DHCPV6_DISCONNECT           = 33
+    false,  // DHCPV6_STATE                = 34
+    false   // DHCPV6_CONTACT              = 35
+};
+
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -281,6 +345,19 @@ QueryFilter::getServedScopesInternal() const {
 }
 
 bool
+QueryFilter::isHaType(const dhcp::Pkt4Ptr& query4) {
+    auto msg_type = query4->getType();
+    return (msg_type < v4_ha_types.size() && v4_ha_types[msg_type]);
+}
+
+bool
+QueryFilter::isHaType(const dhcp::Pkt6Ptr& query) {
+    auto msg_type = query->getType();
+    return (msg_type < v6_ha_types.size() && v6_ha_types[msg_type]);
+}
+
+
+bool
 QueryFilter::inScope(const dhcp::Pkt4Ptr& query4, std::string& scope_class) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -306,6 +383,14 @@ QueryFilter::inScopeInternal(const QueryPtrType& query,
                              std::string& scope_class) const {
     if (!query) {
         isc_throw(BadValue, "query must not be null");
+    }
+
+
+    // If it's not a type HA cares about, it's in scope for this peer.
+    if (!isHaType(query)) {
+        auto scope = peers_[0]->getName();
+        scope_class = makeScopeClass(scope);
+        return (true);
     }
 
     int candidate_server = 0;

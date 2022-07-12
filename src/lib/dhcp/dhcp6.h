@@ -201,6 +201,7 @@ enum DHCPv6StatusCode {
  * DHCPv6 message types, defined in section 7.3 of RFC 8415
  */
 enum DHCPv6MessageType {
+   DHCPV6_NOTYPE               = 0,
    DHCPV6_SOLICIT              = 1,
    DHCPV6_ADVERTISE            = 2,
    DHCPV6_REQUEST              = 3,
@@ -218,30 +219,31 @@ enum DHCPv6MessageType {
    DHCPV6_LEASEQUERY           = 14,
    DHCPV6_LEASEQUERY_REPLY     = 15,
    /* RFC 5460 */
-// DHCPV6_LEASEQUERY_DONE      = 16,
-// DHCPV6_LEASEQUERY_DATA      = 17,
+   DHCPV6_LEASEQUERY_DONE      = 16,
+   DHCPV6_LEASEQUERY_DATA      = 17,
    /* RFC 6977 */
-// DHCPV6_RECONFIGURE_REQUEST  = 18,
-// DHCPV6_RECONFIGURE_REPLY    = 19,
+   DHCPV6_RECONFIGURE_REQUEST  = 18,
+    DHCPV6_RECONFIGURE_REPLY   = 19,
    /* RFC 7341 */
    DHCPV6_DHCPV4_QUERY         = 20,
-   DHCPV6_DHCPV4_RESPONSE      = 21
+   DHCPV6_DHCPV4_RESPONSE      = 21,
    /* RFC 7653 */
-// DHCPV6_ACTIVELEASEQUERY     = 22,
-// DHCPV6_STARTTLS             = 23,
+   DHCPV6_ACTIVELEASEQUERY     = 22,
+   HCPV6_STARTTLS              = 23,
    /* RFC 8156 */
-// DHCPV6_BNDUPD               = 24,
-// DHCPV6_BNDREPLY             = 25,
-// DHCPV6_POOLREQ              = 26,
-// DHCPV6_POOLRESP             = 27,
-// DHCPV6_UPDREQ               = 28,
-// DHCPV6_UPDREQALL            = 29,
-// DHCPV6_UPDDONE              = 30,
-// DHCPV6_CONNECT              = 31,
-// DHCPV6_CONNECTREPLY         = 32,
-// DHCPV6_DISCONNECT           = 33,
-// DHCPV6_STATE                = 34,
-// DHCPV6_CONTACT              = 35
+   DHCPV6_BNDUPD               = 24,
+   DHCPV6_BNDREPLY             = 25,
+   DHCPV6_POOLREQ              = 26,
+   DHCPV6_POOLRESP             = 27,
+   DHCPV6_UPDREQ               = 28,
+   DHCPV6_UPDREQALL            = 29,
+   DHCPV6_UPDDONE              = 30,
+   DHCPV6_CONNECT              = 31,
+   DHCPV6_CONNECTREPLY         = 32,
+   DHCPV6_DISCONNECT           = 33,
+   DHCPV6_STATE                = 34,
+   DHCPV6_CONTACT              = 35,
+   DHCPV6_TYPES_EOF
 };
 
 extern const char *dhcpv6_type_names[];

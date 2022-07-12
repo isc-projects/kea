@@ -168,6 +168,20 @@ public:
     /// server, false otherwise.
     bool inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const;
 
+    /// @brief Determines if a DHCPv4 query is a message type HA should process.
+    ///
+    /// @param query4 DHCPv4 packet to test. Must not be null.
+    ///
+    /// @return
+    static bool isHaType(const dhcp::Pkt4Ptr& query4);
+
+    /// @brief Determines if a DHCPv6 query is a message type HA should process.
+    ///
+    /// @param query6 DHCPv6 packet to test. Must not be null.
+    ///
+    /// @return
+    static bool isHaType(const dhcp::Pkt6Ptr& query6);
+
 private:
     /// @brief Enable scope.
     ///

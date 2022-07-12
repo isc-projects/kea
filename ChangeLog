@@ -1,3 +1,12 @@
+2041.	[bug]		tmark
+	HA now applies load balancing and scoping only to inbound
+	client packet types that apply to client lease fulfillment,
+	e.g. DHCPDISCOVER, DHCPREQUEST, DHCPV6_SOLICIT, DHCPV6_REQUEST,
+	etc. Prior to this it was indiscriminatly balancing and
+	scoping all inbound packets including those related to lease
+	query.
+	(Gitlab #1781)
+
 2040.	[func]		djt
 	Added support for Alpine 3.16 in hammer.py.
 	(Gitlab #2491)
