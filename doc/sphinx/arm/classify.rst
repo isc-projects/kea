@@ -70,7 +70,7 @@ The classification process is conducted in several steps:
 
 .. note::
 
-    pkt4_receive, pkt6_receive callouts are called here.
+    The ``pkt4_receive`` and ``pkt6_receive`` callouts are called here.
 
 6.  When the ``early-global-reservations-lookup`` global parameter is
     configured to true global reservations are looked for and the 8, 9
@@ -88,7 +88,7 @@ The classification process is conducted in several steps:
 
 .. note::
 
-    subnet4_select, subnet6_select callouts are called here.
+    The ``subnet4_select`` and ``subnet6_select`` callouts are called here.
 
 8.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
@@ -119,7 +119,7 @@ The classification process is conducted in several steps:
 
 .. note::
 
-    lease4_select, lease4_renew, lease6_select, lease6_renew, lease6_rebind
+    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``, and ``lease6_rebind``
     callouts are called here.
 
 12. Classes marked as "required" are evaluated in the order in which

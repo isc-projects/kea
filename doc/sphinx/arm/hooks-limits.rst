@@ -5,8 +5,8 @@
 
 This hook library enables two types of limits:
 
-1. Lease limiting: allow a maximum of `n` leases assigned at any one time.
-2. Rate limiting: allow a maximum of `n` packets per `time_unit` to receive a response.
+1. Lease limiting: allow a maximum of ``n`` leases assigned at any one time.
+2. Rate limiting: allow a maximum of ``n`` packets per ``time_unit`` to receive a response.
 
 The Limits hook library is only available to ISC customers with a paid support contract.
 
@@ -15,8 +15,8 @@ The Limits hook library is only available to ISC customers with a paid support c
 Configuration
 ~~~~~~~~~~~~~
 
-The following examples are for ``kea-dhcp6``, but they can be easily extrapolated to its
-``kea-dhcp4`` counterpart. Wildcards ``"<limit-key>"`` and ``"<limit-value>"`` need be replaced
+The following examples are for ``kea-dhcp6``, but they apply equally to
+``kea-dhcp4``. The wildcards ``"<limit-type>"`` and ``"<limit-value>"`` need to be replaced
 with the respective keys and values for each limit type described in the sections following this
 one.
 
@@ -126,11 +126,10 @@ A trick to enforce a global limit (same limit for all clients) is to define the 
 
 .. note::
 
-    The Limits hook library uses the name to identify a client class and the ID to identify a subnet.
+    The Limits hook library uses the class name to identify a client class and the subnet ID to identify a subnet.
     Changing a test expression in a client class or the network range of a subnet while leaving the
-    name, or the ID respectively, unchanged will not reset the limit for the respective client class
-    or subnet. What counted towards the limit prior to the change will continue to take effect.
-    To start over, consider changing the client class name or the subnet ID.
+    name or ID unchanged does not reset the lease count for the respective client class
+    or subnet. To reset the lease count, change the client class name or the subnet ID.
 
 .. _hooks-limits-lease-limiting:
 
@@ -140,7 +139,7 @@ Lease Limiting
 It is possible to limit the number of leases that a group of clients can get from a Kea DHCP server
 or from a set of collaborating Kea DHCP servers.
 
-The value of a lease limit can be specified as an unsigned integer on 32 bits i.e. between ``0`` and
+The value of a lease limit can be specified as an unsigned integer in 32 bits, i.e. between ``0`` and
 ``4,294,967,295``. Each lease type can be limited individually. IPv4 leases and IPv6 IA_NA leases
 are limited through the ``"address-limit"`` configuration entry. IPv6 IA_PD leases are limited
 through the ``"prefix-limit"`` configuration entry. Here are some examples:
@@ -148,8 +147,8 @@ through the ``"prefix-limit"`` configuration entry. Here are some examples:
 * ``"address-limit": 4``
 * ``"prefix-limit": 2``
 
-Inasmuch as lease limiting is regarded, client classes and the associated lease counts that are
-checked against the configued limits, are updated for each lease in the following hook callouts:
+For lease limiting, client classes and the associated lease counts - which are
+checked against the configured limits - are updated for each lease in the following hook callouts:
 
 * ``lease4_select``
 * ``lease4_renew``
@@ -157,22 +156,16 @@ checked against the configued limits, are updated for each lease in the followin
 * ``lease6_renew``
 * ``lease6_rebind``
 
-As a result, packets that are marked with ``"only-if-required": true`` cannot be lease limited.
-See :ref:`the classification steps <classify-classification-steps>` to have the full picture on what
+As a result, classes for which ``"only-if-required"`` is "true" cannot be lease-limited.
+Please refer to :ref:`the classification steps <classify-classification-steps>` for more information on which
 client classes can be used to limit the number of leases.
 
 .. warning::
 
-    Due to technical conveniences, lease limits are not strictly enforced. Occasionally, a Kea DHCP
-    server may allocate more leases than the limit would strictly allow. This only has a chance of
-    happening during high traffic surges coming from clients belonging to the same class or to the
-    same subnet (based on what is limited). Even in those scenarios and other circumstances that
-    would favor the race condition that causes surpassing the limit e.g. a global rate of inbound
-    packets that matches the server's response rate performance, and a thread count close to the
-    the number of cores, empirically, it seems that the unfortunate event is rare and only results
-    in one lease past the limit. One hard guarantee is that the race can only happen again after the
-    lease count has retreated below the limit. For an airtight solution, follow the development of
-    `GitLab issue #2449 atomic lease limits <https://gitlab.isc.org/isc-projects/kea/-/issues/2449>`__.
+    Under load, a Kea DHCP server may allocate more leases than the limit strictly allows. This only has a chance of
+    happening during high traffic surges, coming from clients belonging to the same class or the
+    same subnet, depending on what is limited. Users may be interested in following the development of
+    `atomic lease limits <https://gitlab.isc.org/isc-projects/kea/-/issues/2449>`__ in ISC's GitLab instance.
 
 .. _hooks-limits-rate-limiting:
 
@@ -182,12 +175,13 @@ Rate Limiting
 It is possible to limit the frequency or rate at which inbound packets receive a response.
 
 The value of a rate limit can be specified in the format ``"<p> packets per <time-unit>"``. ``<p>``
-is any number that can be represented by an unsigned integer on 32 bits i.e. between ``0`` and
+is any number that can be represented by an unsigned integer in 32 bits, i.e. between ``0`` and
 ``4,294,967,295``. ``<time-unit>`` can be any of ``second``, ``minute``, ``hour``, ``day``,
-``week``, ``month``, ``year``. ``month`` is considered to be 30 days for simplicity. Similarly,
-``year`` is 365 days for all intents and purposes of limiting. This syntax covers a high range of
-rates from one lease per year to four billion leases per second. This vaue is assigned to the
-``"rate-limit"`` configuration entry. Here are some examples:
+``week``, ``month``, or ``year``. A ``month`` is considered to be 30 days for
+simplicity; similarly, a ``year`` is 365 days for limiting purposes. This syntax
+covers a wide range of rates, from one lease per year to four billion leases per
+second. This value is assigned to the ``"rate-limit"`` configuration entry.
+Here are some examples:
 
 * ``"rate-limit": 1 packet per second``
 * ``"rate-limit": 4 packets per minute``
@@ -195,30 +189,30 @@ rates from one lease per year to four billion leases per second. This vaue is as
 
 The configured value of ``0`` packets is a convenient way of disabling packet processing for certain
 clients entirely. As such, it means its literal value and is not a special value for disabling
-limiting altogether as it might be imagined. Disabling limiting altogether is achieved by removing
-the ``"rate-limit"`` leaf configuration entry, the ``"limits"`` map around it or the user context
-around it or the hook library configuration. The same can be said about the value of ``0`` in lease
-limiting. However, that use case is best achieved with rate limiting as it puts less computational
-strain on Kea since the action of dropping the request or sending a NAK is decided earlier on.
+limiting altogether, as might be imagined. Disabling limiting entirely is achieved by removing
+the ``"rate-limit"`` leaf configuration entry, the ``"limits"`` map or user context
+around it, or the hook library configuration. The same applies to the value of ``0`` in lease
+limiting. However, that use case is best achieved with rate limiting; it puts less computational
+strain on Kea, since the action of dropping the request or sending a NAK is decided earlier.
 
-Inasmuch as rate limiting is regarded, client classes are evalated at the ``pkt4_receive`` and the
-``pkt6_receive`` callout respectively so that rate limits are checked as early as possible in the
-packet processing cycle. Thus, only those classes which are assigned to the packet solely via an
+In terms of rate limiting, client classes are evalated at the ``pkt4_receive`` and the
+``pkt6_receive`` callout, respectively, so that rate limits are checked as early as possible in the
+packet-processing cycle. Thus, only those classes which are assigned to the packet solely via an
 independent test expression can be used. Classes that depend on host reservations or the special
 ``BOOTP`` or ``KNOWN`` classes, and classes that are marked with ``"only-if-required": true``,
-cannot be rate limited. See :ref:`the classification steps <classify-classification-steps>` to
-have the full picture on what client classes can be used to limit packet rate.
+cannot be rate limited. See :ref:`the classification steps <classify-classification-steps>` for
+more details on which client classes can be used to limit the packet rate.
 
 Rate limits based on subnet are enforced only on the initially selected subnet for a given packet.
 If the selected subnet is subsequently changed, as may be the case for subnets in a
-shared-network or when reselection is enabled in libraries such as the RADIUS hook, rate
-limits on the newly selected subnet will be ignored. In other words, packets are gated only by
+shared network or when reselection is enabled in libraries such as the RADIUS hook, rate
+limits on the newly selected subnet are ignored. In other words, packets are gated only by
 the rate limit on the original subnet.
 
 .. note::
 
-    It can be tempting to think that assigning a rate limit of ``n`` packets per time unit results
-    in ``n`` DORA or ``n`` SARR exchanges. By default, all inbound packets are counted. That means
-    that a full message exchange accounts for 2 packets. To achieve the desired effect of counting an
-    exchange only once, you may use client class rate limiting with a test expression that binds
+    It may seem logical to think that assigning a rate limit of ``n`` packets per time unit results
+    in ``n`` DORA or ``n`` SARR exchanges. However, by default, all inbound packets are counted - meaning
+    that a full message exchange accounts for two packets. To achieve the effect of counting an
+    exchange only once, use client-class rate-limiting with a test expression that binds
     ``pkt4.msgtype`` to DHCPDISCOVER messages or ``pkt6.msgtype`` to SOLICIT messages.

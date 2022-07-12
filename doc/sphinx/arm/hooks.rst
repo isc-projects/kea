@@ -306,7 +306,7 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
     }]
 
 
-The Limits hook uses user-context in classes and subnets to set parameters. Example:
+The Limits hook uses user-context in classes and subnets to set parameters. For example:
 
 .. code-block:: json
 
