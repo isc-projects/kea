@@ -1,3 +1,8 @@
+2039.	[doc]		andrei
+	Updated limits hook library ARM documentation to reflect
+	support for lease limits.
+	(Gitlab #2481)
+
 2038.	[func]		djt
 	Added a new statistic to kea-dhcp4 that counts host
 	reservation conflicts. It is tracked at both the global
