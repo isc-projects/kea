@@ -110,7 +110,6 @@ std::array<bool, DHCPV6_TYPES_EOF> v6_ha_types = {
     false   // DHCPV6_CONTACT              = 35
 };
 
-
 } // end of anonymous namespace
 
 namespace isc {
