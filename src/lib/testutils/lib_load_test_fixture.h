@@ -8,6 +8,8 @@
 #define ISC_TESTUTILS_LIB_LOAD_TEST_FIXTURE_H
 
 #include <cc/data.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <process/daemon.h>
 
 #include <gtest/gtest.h>
 
@@ -15,9 +17,12 @@ namespace isc {
 namespace test {
 
 /// @brief Test fixture for testing loading and unloading of hook libraries.
-struct LibLoadTest : ::testing::Test {
+class LibLoadTest : public ::testing::Test {
+public:
     /// @brief Constructor. Unloads any previously loaded libraries.
-    LibLoadTest() {
+    ///
+    /// @param lib_so_name_ full pathname to the library so file under test
+    LibLoadTest(const std::string lib_so_name = "no lib specified") : lib_so_name_(lib_so_name) {
         unloadLibraries();
     }
 
@@ -57,6 +62,30 @@ struct LibLoadTest : ::testing::Test {
         EXPECT_NO_THROW(result = isc::hooks::HooksManager::unloadLibraries());
         return result;
     }
+
+    /// @brief Verifies that a valid daemon can load and unload a library multiple times.
+    ///
+    /// @param daemon_name name of the daemon that should try to load the library
+    /// @param family Protocol family of the loading daemon, either AF_INET or AF_INET6.
+    /// Defaults to AF_INET.
+    /// @param params ElementPtr to set of parameters that are valid for the library.
+    /// Defaults to an empty pointer.
+    void validDaemonTest(const std::string& daemon_name, uint8_t family = AF_INET,
+                         const isc::data::ElementPtr& params = isc::data::ElementPtr());
+
+    /// @brief Verifies that an invalid daemon cannot load the library.
+    ///
+    /// @param libname full patch to the library's SO. Typically this value is defined
+    /// in the Makefile (e.g. -DLIBDHCP_BOOTP_SO=...)
+    /// @param daemon_name name of the daemon that should try to load the library
+    /// @param family Protocol family of the loading daemon, either AF_INET or AF_INET6.
+    /// Defaults to AF_INET.
+    /// @param params ElementPtr to set of parameters that are valid for the library.
+    /// Defaults to an empty pointer.
+    void invalidDaemonTest(const std::string& daemon_name, uint8_t family = AF_INET,
+                           const isc::data::ElementPtr& params = isc::data::ElementPtr());
+    /// @brief full pathname to the library so file under test;
+    std::string lib_so_name_;
 
     /// @brief Libraries
     isc::hooks::HookLibsCollection libraries_;
