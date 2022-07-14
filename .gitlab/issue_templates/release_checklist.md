@@ -10,11 +10,12 @@ This is thoroughly documented in [the Kea Release Process guide](https://wiki.is
 ## Pre-Release Preparation
 
 Some of those checks and updates can be made before the actual freeze.
+For new stable releases or maintenance releases please don't use `kea-dev` build farm, use dedicated build farm for each release cycle.
 
 1. Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
    1. [ ] Check [Jenkins Tests Report](https://jenkins.aws.isc.org/job/kea-dev/job/jenkins-tests-report/).
-   1. [ ] Check [tarball check report](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/Kea_20Build_20Checks/)
+   1. [ ] Check [tarball check report](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/Kea_20Build_20Checks/)
 1. [ ] Check [Performance Test Results](https://jenkins.isc.org/job/kea-dev/job/performance/KeaPerformanceReport/) in Jenkins for drops in performance.
 1. Check versioning, ask the development team if:
    - the library versions are being updated
@@ -27,8 +28,8 @@ Some of those checks and updates can be made before the actual freeze.
    1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-2.1.0
-   1. [ ] Finish release notes and conduct its review
-1. [ ] Run [release-pkgs-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-upload-internal/) and [release-pkgs-check-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check-internal/) to test repositories for correctness.
+   1. [ ] Finish release notes and conduct its review. Alos please notify @sgoldlust or @vicky that release notes are ready for review.
+1. [ ] Run [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/) as running parameter `TarballOrPkg` select `packages` and [release-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) to test repositories for correctness.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
       1. [ ] Make sure access tokens have been been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
@@ -70,7 +71,7 @@ The following steps may involve changing files in the repository.
 
 This is the last moment to freeze code! :snowflake:
 
-1. [ ] Go to [tarball-internal](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/) Jenkins job and pick the last tarball built - it will be a release candidate.
+1. [ ] Go to [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/) Jenkins job and pick the last tarball built - it will be a release candidate.
 1. [ ] Check tarball before requesting sanity checks from the development team.
    1. Download tarballs from picked Jenkins build
    1. Check hook libraries.
@@ -89,7 +90,7 @@ This is the last moment to freeze code! :snowflake:
    1. Check if documentation is properly formatted, has correct versions and dates.
       1. it's advised to search for previous version numbers, some of them are statically added in statements that are no longer valid
 1. [ ] Upload tarballs to repo.isc.org using Jenkins and send sanity checks request.
-   1. Go to [release-tarball-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload-internal/) Jenkins job.
+   1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
    1. Click "Build with Parameters"
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick:
@@ -112,12 +113,12 @@ This is the last moment to freeze code! :snowflake:
 
 1. [ ] Update Release Notes with ChangeLog entries
 1. [ ] Upload final RPM & DEB packages to cloudsmith.io
-   1. Go to [release-pkgs-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-upload-internal/).
+   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
    1. Click "Build with Parameters" link
-   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"` and click Build button.
-   1. When it finishes run check: [releases-pkgs-check-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check-internal/).
+   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"`, `TarballOrPkg: "both"` and click Build button.
+   1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
 1. [ ] Upload final tarballs to repo.isc.org
-   1. Go to [release-tarball-upload-internal](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload-internal/) Jenkins job.
+   1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
    1. Click "Build with Parameters"
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick final <br>
@@ -129,9 +130,9 @@ This is the last moment to freeze code! :snowflake:
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
    1. For stable releases, change the default version to point to this stable release.
-1. [ ] Mark Jenkins jobs with release artifacts to be kept forever: <br>
-   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button: <br>
-   1. [tarball-internal job](https://jenkins.aws.isc.org/job/kea-dev/job/tarball-internal/)
+1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released kea (e.g. Kea-2.2.2): <br>
+   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit description: <br>
+   1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/)
    1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
     * `a.b.z-git` where `z == c + 1` or
