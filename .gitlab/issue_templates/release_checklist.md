@@ -10,7 +10,7 @@ This is thoroughly documented in [the Kea Release Process guide](https://wiki.is
 ## Pre-Release Preparation
 
 Some of those checks and updates can be made before the actual freeze.
-For new stable releases or maintenance releases please don't use `kea-dev` build farm, use dedicated build farm for each release cycle.
+For new stable releases or maintenance releases, please don't use `kea-dev` build farm. Use dedicated build farm for each release cycle.
 
 1. Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
@@ -28,11 +28,11 @@ For new stable releases or maintenance releases please don't use `kea-dev` build
    1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-2.1.0
-   1. [ ] Finish release notes and conduct its review. Alos please notify @sgoldlust or @vicky that release notes are ready for review.
+   1. [ ] Finish release notes and conduct its review. Also please notify @sgoldlust or @vicky that release notes are ready for review.
 1. [ ] Run [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/) as running parameter `TarballOrPkg` select `packages` and [release-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) to test repositories for correctness.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
-      1. [ ] Make sure access tokens have been been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
+      1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
 1. [ ] Check if ReadTheDocs can build Kea documentation.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
@@ -112,11 +112,6 @@ This is the last moment to freeze code! :snowflake:
 ## Releasing Tarballs and Packages
 
 1. [ ] Update Release Notes with ChangeLog entries
-1. [ ] Upload final RPM & DEB packages to cloudsmith.io
-   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
-   1. Click "Build with Parameters" link
-   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"`, `TarballOrPkg: "both"` and click Build button.
-   1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
 1. [ ] Upload final tarballs to repo.isc.org
    1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
    1. Click "Build with Parameters"
@@ -126,6 +121,12 @@ This is the last moment to freeze code! :snowflake:
       - open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) requesting signing final tarballs on repo.isc.org
       - create Git tags `Kea-a.b.c` in Kea main and premium repositories
       - send a signing request issue link on the DHCP Mattermost channel
+   Wait until tarballs are signed.
+1. [ ] Upload final RPM & DEB packages, tarballs and sign files to cloudsmith.io
+   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
+   1. Click "Build with Parameters" link
+   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"`, `TarballOrPkg: "both"` and click Build button.
+   1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
 1. [ ] Update ReadTheDocs
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
