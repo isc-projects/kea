@@ -3973,7 +3973,7 @@ configuration:
            "reservations": [
                {
                    "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
-                   "ip-addresses": [ "2001:db8:1::100" ]
+                   "ip-addresses": [ "2001:db8:1::100" ],
                    "hostname": "alice-laptop"
                }
            ]
@@ -4001,7 +4001,7 @@ different clients with different domain names:
            "reservations": [
                {
                    "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
-                   "ip-addresses": [ "2001:db8:1::100" ]
+                   "ip-addresses": [ "2001:db8:1::100" ],
                    "hostname": "mark-desktop.example.org."
                }
            ]
