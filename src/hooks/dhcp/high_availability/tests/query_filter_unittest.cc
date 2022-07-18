@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,11 +102,11 @@ public:
     /// disable certain scopes.
     void explicitlyServeScopes();
 
-    /// @brief This test verifies that load balancing only affects the socpe of
+    /// @brief This test verifies that load balancing only affects the scope of
     /// DHCPv4 message types that HA cares about.
     void loadBalancingHaTypes4();
 
-    /// @brief This test verifies that load balancing only affects the socpe of
+    /// @brief This test verifies that load balancing only affects the scope of
     /// DHCPv6 message types that HA cares about.
     void loadBalancingHaTypes6();
 };
