@@ -768,7 +768,9 @@ QueryFilterTest::loadBalancingHaTypes4() {
     ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
                 << max_scope_tries << ", load balance broken?";
 
-    // We exceed DHCP_TYPES_EOF just to be sure.
+    // Iterate over message types.  While setting message type to zero is
+    // semantically invalid, it is useful for testing here. Similarly we exceed
+    // DHCP_TYPES_EOF just to be sure.
     for (uint8_t msg_type = 0; msg_type < DHCP_TYPES_EOF + 2; ++msg_type) {
         // All message types should be in scope for server1.
         server1_pkt->setType(msg_type);
@@ -844,7 +846,9 @@ QueryFilterTest::loadBalancingHaTypes6() {
     ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
                 << max_scope_tries << ", load balance broken?";
 
-    // We exceed DHCPV6_TYPES_EOF just to be sure.
+    // Iterate over message types.  While setting message type to zero is
+    // semantically invalid, it is useful for testing here. Similarly we exceed
+    // DHCPV6_TYPES_EOF just to be sure.
     for (uint8_t msg_type = 0; msg_type < DHCPV6_TYPES_EOF + 2; ++msg_type) {
         // All message types should be in scope for server1.
         server1_pkt->setType(msg_type);
