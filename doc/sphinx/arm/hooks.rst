@@ -252,7 +252,7 @@ Notes:
 At the moment, only the ``kea-dhcp4`` and ``kea-dhcp6`` processes support
 hook libraries.
 
-.. _order-of-configuation-hooks:
+.. _order-of-configuration-hooks:
 
 Order of Configuration:
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,7 +263,7 @@ in cases where more than one hook library implements the same callout.  For
 example, if you wish to use the flex-id hook library to formulate the client
 IDs in conjunction with HA hook library for load-balanced HA, it is essential
 that the flex-id library be specified first in your server's ``hooks-libraries``
-section.  This ensures that the client ID is formualted by the flex-id library
+section.  This ensures that the client ID is formulated by the flex-id library
 before the HA library uses it for load-balancing. Similarly it would be best to
 specify forensic logging last, to ensure any other install hooks have made
 their contributions to the packet processing.
